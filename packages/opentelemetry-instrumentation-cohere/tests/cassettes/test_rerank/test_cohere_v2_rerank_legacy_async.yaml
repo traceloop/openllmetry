@@ -1,0 +1,76 @@
+interactions:
+- request:
+    body: '{"model": "rerank-english-v3.0", "query": "What is the capital of the United
+      States?", "documents": ["Carson City is the capital city of the American state
+      of Nevada. At the  2010 United States Census, Carson City had a population of
+      55,274.", "The Commonwealth of the Northern Mariana Islands is a group of islands
+      in the Pacific Ocean that are a political division controlled by the United
+      States. Its capital is Saipan.", "Charlotte Amalie is the capital and largest
+      city of the United States Virgin Islands. It has about 20,000 people. The city
+      is on the island of Saint Thomas.", "Washington, D.C. (also known as simply
+      Washington or D.C., and officially as the District of Columbia) is the capital
+      of the United States. It is a federal district. ", "Capital punishment (the
+      death penalty) has existed in the United States since before the United States
+      was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+      "North Dakota is a state in the United States. 672,591 people lived in North
+      Dakota in the year 2010. The capital and seat of government is Bismarck."],
+      "top_n": 3}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1104'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/rerank
+  response:
+    body:
+      string: '{"id":"4a07fec0-e0d2-438d-a52a-986e465aa7bb","results":[{"index":3,"relevance_score":0.999071},{"index":4,"relevance_score":0.7779754},{"index":1,"relevance_score":0.08882029}],"meta":{"api_version":{"version":"2"},"billed_units":{"search_units":1}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '250'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 03:08:05 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 7874a0d2c0ac809c78a02164b072f7f6
+      x-envoy-upstream-service-time:
+      - '47'
+    status:
+      code: 200
+      message: OK
+version: 1

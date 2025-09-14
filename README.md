@@ -108,6 +108,7 @@ Traceloop.init(disable_batch=True)
 - ✅ [SigNoz](https://www.traceloop.com/docs/openllmetry/integrations/signoz)
 - ✅ [Sentry](https://www.traceloop.com/docs/openllmetry/integrations/sentry)
 - ✅ [Splunk](https://www.traceloop.com/docs/openllmetry/integrations/splunk)
+- ✅ [Tencent Cloud](https://www.traceloop.com/docs/openllmetry/integrations/tencent)
 
 See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) for instructions on connecting to each one.
 

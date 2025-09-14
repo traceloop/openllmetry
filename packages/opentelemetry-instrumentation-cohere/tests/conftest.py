@@ -52,6 +52,21 @@ def cohere_client():
     return cohere.Client(os.environ.get("COHERE_API_KEY"))
 
 
+@pytest.fixture
+def async_cohere_client():
+    return cohere.AsyncClient(os.environ.get("COHERE_API_KEY"))
+
+
+@pytest.fixture
+def cohere_client_v2():
+    return cohere.ClientV2(os.environ.get("COHERE_API_KEY"))
+
+
+@pytest.fixture
+def async_cohere_client_v2():
+    return cohere.AsyncClientV2(os.environ.get("COHERE_API_KEY"))
+
+
 @pytest.fixture(scope="function")
 def instrument_legacy(tracer_provider):
     instrumentor = CohereInstrumentor()
