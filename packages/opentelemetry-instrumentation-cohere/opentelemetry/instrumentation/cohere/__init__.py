@@ -89,12 +89,6 @@ WRAPPED_METHODS = [
     {
         "module": "cohere.client_v2",
         "object": "ClientV2",
-        "method": "generate",
-        "span_name": "cohere.embed",
-    },
-    {
-        "module": "cohere.client_v2",
-        "object": "ClientV2",
         "method": "rerank",
         "span_name": "cohere.rerank",
     },
@@ -144,12 +138,6 @@ WRAPPED_AMETHODS = [
         "module": "cohere.client",
         "object": "AsyncClient",
         "method": "embed",
-        "span_name": "cohere.embed",
-    },
-    {
-        "module": "cohere.client_v2",
-        "object": "AsyncClientV2",
-        "method": "generate",
         "span_name": "cohere.embed",
     },
     {

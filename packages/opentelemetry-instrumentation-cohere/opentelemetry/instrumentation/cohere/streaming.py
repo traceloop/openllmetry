@@ -82,7 +82,6 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
             pass
         yield item_to_yield
 
-    print(f"final_response: {final_response}")
     set_span_response_attributes(span, final_response)
     if should_emit_events():
         emit_response_events(event_logger, llm_request_type, final_response)

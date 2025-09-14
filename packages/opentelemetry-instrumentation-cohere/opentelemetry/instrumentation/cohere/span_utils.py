@@ -82,11 +82,6 @@ def set_input_content_attributes(span, llm_request_type, kwargs):
                     f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{index}.parameters",
                     dump_object(function.get("parameters")),
                 )
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{index}.parameters",
-                    dump_object(function.get("parameters")),
-                )
         elif llm_request_type == LLMRequestTypeValues.RERANK:
             for index, document in enumerate(kwargs.get("documents", [])):
                 _set_span_attribute(
