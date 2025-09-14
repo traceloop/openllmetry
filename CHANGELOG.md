@@ -1,3 +1,13 @@
+## v0.47.1 (2025-09-14)
+
+### Fix
+
+- **mcp**: better instrumentation for FastMCP (#3372)
+- **anthropic**: preserve streaming helper methods in instrumentation (#3377)
+- **cohere**: add v2 api instrumentation (#3378)
+- **mistralai**: instrumentation for version 1.9+ compatibility (#3376)
+- **sdk**: dual bearer send via httpx (#3373)
+
 ## v0.47.0 (2025-09-10)
 
 ### Feat
