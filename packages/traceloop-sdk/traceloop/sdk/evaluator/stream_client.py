@@ -21,7 +21,7 @@ class SSEClient:
         """
         try:
             headers = {
-                "Authorization": f"Bearer {self.client.headers.get('Authorization')}",
+                "Authorization": self.client.headers.get('Authorization'),
                 "Accept": "text/event-stream",
                 "Cache-Control": "no-cache",
             }
