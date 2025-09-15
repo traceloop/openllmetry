@@ -19,7 +19,6 @@ from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
 
-
 _instruments = ("mcp >= 1.6.0",)
 
 
@@ -87,7 +86,6 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
-
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
                 "mcp.client.streamable_http",
