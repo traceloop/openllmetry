@@ -39,6 +39,7 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
+pytest-asyncio = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core"]

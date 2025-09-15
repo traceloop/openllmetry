@@ -57,54 +57,68 @@ class FastMCPInstrumentor:
                 tool_arguments = args[1] if len(args) > 1 else {}
 
             entity_name = tool_key if tool_key else "unknown_tool"
-            span_name = f"{entity_name}.tool"
 
-            with self._tracer.start_as_current_span(span_name) as span:
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+            # Create parent server.mcp span
+            with self._tracer.start_as_current_span("mcp.server") as mcp_span:
+                mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
+                mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
 
-                if self._should_send_prompts():
-                    try:
-                        input_data = {
-                            "tool_name": entity_name,
-                            "arguments": tool_arguments
-                        }
-                        json_input = json.dumps(input_data, cls=self._get_json_encoder())
-                        truncated_input = self._truncate_json_if_needed(json_input)
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, truncated_input)
-                    except (TypeError, ValueError):
-                        pass  # Skip input logging if serialization fails
+                # Create nested tool span
+                span_name = f"{entity_name}.tool"
+                with self._tracer.start_as_current_span(span_name) as tool_span:
+                    tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
+                    tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
-                try:
-                    result = await wrapped(*args, **kwargs)
-
-                    # Add output in traceloop format
-                    if self._should_send_prompts() and result:
+                    if self._should_send_prompts():
                         try:
-                            # Convert FastMCP Content objects to serializable format
-                            output_data = []
-                            for item in result:
-                                if hasattr(item, 'text'):
-                                    output_data.append({"type": "text", "content": item.text})
-                                elif hasattr(item, '__dict__'):
-                                    output_data.append(item.__dict__)
-                                else:
-                                    output_data.append(str(item))
-
-                            json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                            truncated_output = self._truncate_json_if_needed(json_output)
-                            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
+                            input_data = {
+                                "tool_name": entity_name,
+                                "arguments": tool_arguments
+                            }
+                            json_input = json.dumps(input_data, cls=self._get_json_encoder())
+                            truncated_input = self._truncate_json_if_needed(json_input)
+                            tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, truncated_input)
                         except (TypeError, ValueError):
-                            pass  # Skip output logging if serialization fails
+                            pass  # Skip input logging if serialization fails
 
-                    span.set_status(Status(StatusCode.OK))
-                    return result
+                    try:
+                        result = await wrapped(*args, **kwargs)
 
-                except Exception as e:
-                    span.set_attribute(ERROR_TYPE, type(e).__name__)
-                    span.record_exception(e)
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    raise
+                        # Add output in traceloop format to tool span
+                        if self._should_send_prompts() and result:
+                            try:
+                                # Convert FastMCP Content objects to serializable format
+                                output_data = []
+                                for item in result:
+                                    if hasattr(item, 'text'):
+                                        output_data.append({"type": "text", "content": item.text})
+                                    elif hasattr(item, '__dict__'):
+                                        output_data.append(item.__dict__)
+                                    else:
+                                        output_data.append(str(item))
+
+                                json_output = json.dumps(output_data, cls=self._get_json_encoder())
+                                truncated_output = self._truncate_json_if_needed(json_output)
+                                tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
+
+                                # Also add response to MCP span
+                                mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
+                            except (TypeError, ValueError):
+                                pass  # Skip output logging if serialization fails
+
+                        tool_span.set_status(Status(StatusCode.OK))
+                        mcp_span.set_status(Status(StatusCode.OK))
+                        return result
+
+                    except Exception as e:
+                        tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
+                        tool_span.record_exception(e)
+                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                        mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
+                        mcp_span.record_exception(e)
+                        mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        raise
 
         return traced_method
 
