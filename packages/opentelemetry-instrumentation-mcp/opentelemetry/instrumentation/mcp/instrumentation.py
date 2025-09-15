@@ -19,6 +19,7 @@ from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
 
+
 _instruments = ("mcp >= 1.6.0",)
 
 
@@ -86,6 +87,7 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
+
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
                 "mcp.client.streamable_http",
@@ -607,10 +609,9 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
 
     @dont_throw
     async def send(self, item: Any) -> Any:
-        # Create ResponseStreamWriter span for server-side responses
-        with self._tracer.start_as_current_span("ResponseStreamWriter") as _:
-            ctx = context.get_current()
-            return await self.__wrapped__.send(ItemWithContext(item, ctx))
+        # Removed RequestStreamWriter span creation - we don't need low-level protocol spans
+        ctx = context.get_current()
+        return await self.__wrapped__.send(ItemWithContext(item, ctx))
 
 
 class ContextAttachingStreamReader(ObjectProxy):  # type: ignore
