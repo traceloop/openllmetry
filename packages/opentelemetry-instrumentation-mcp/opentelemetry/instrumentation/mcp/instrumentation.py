@@ -119,7 +119,6 @@ class McpInstrumentor(BaseInstrumentor):
         unwrap("mcp.client.streamable_http", "streamablehttp_client")
         unwrap("mcp.server.streamable_http", "StreamableHTTPServerTransport.connect")
         unwrap("mcp.server.session", "ServerSession.__init__")
-        unwrap("mcp.server.lowlevel.server", "Server.handle_request")
         unwrap("mcp.shared.session", "BaseSession.send_request")
         unwrap("mcp.types", "JSONRPCResponse.__init__")
         self._fastmcp_instrumentor.uninstrument()
@@ -178,7 +177,6 @@ class McpInstrumentor(BaseInstrumentor):
     def _jsonrpc_response_init_wrapper(self, tracer):
         @dont_throw
         def traced_method(wrapped, instance, args, kwargs):
-            # Extract result from kwargs or args
             result_value = kwargs.get("result", None)
             if result_value is None and len(args) > 1:
                 result_value = args[1]
