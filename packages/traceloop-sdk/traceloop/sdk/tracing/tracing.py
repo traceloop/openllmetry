@@ -458,6 +458,9 @@ def init_instrumentations(
         elif instrument == Instruments.CREWAI:
             if init_crewai_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.FASTAPI:
+            if init_fastapi_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
             if init_google_generativeai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
@@ -1138,6 +1141,23 @@ def init_mcp_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing MCP instrumentor: {e}")
+        Telemetry().log_exception(e)
+    return False
+
+
+def init_fastapi_instrumentor():
+    try:
+        if is_package_installed("fastapi"):
+            Telemetry().capture("instrumentation:fastapi:init")
+            from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+            instrumentor = FastAPIInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            print("NOMI - FastAPI instrumentor initialized")
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing FastAPI instrumentor: {e}")
         Telemetry().log_exception(e)
     return False
 
