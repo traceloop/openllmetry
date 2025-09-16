@@ -14,7 +14,7 @@ import os
 from typing import List, Dict
 import openai
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, task
+from traceloop.sdk.decorators import workflow
 import dotenv
 
 dotenv.load_dotenv()
@@ -48,6 +48,7 @@ client = None
 
 # Initialize Traceloop for OpenTelemetry instrumentation
 Traceloop.init()
+
 
 @workflow(name="medical_response_generation")
 def get_medical_response(question: str) -> Dict[str, str]:
@@ -86,6 +87,7 @@ def get_medical_response(question: str) -> Dict[str, str]:
             "status": "error"
         }
 
+
 def run_single_mode(question: str = None) -> Dict[str, str]:
     """Run in single question mode."""
     if not question:
@@ -96,10 +98,11 @@ def run_single_mode(question: str = None) -> Dict[str, str]:
 
     result = get_medical_response(question)
 
-    print(f"\nDoctor's Response:")
-    print(f"{result['answer']}")
+    print("\nDoctor's Response:")
+    print(result['answer'])
 
     return result
+
 
 def run_batch_mode(questions: List[str] = None) -> List[Dict[str, str]]:
     """Run in batch mode with sample questions."""
@@ -115,11 +118,12 @@ def run_batch_mode(questions: List[str] = None) -> List[Dict[str, str]]:
         results.append(result)
 
         if result['status'] == 'success':
-            print(f"✓ Response generated")
+            print("✓ Response generated")
         else:
             print(f"✗ Error: {result['answer']}")
 
     return results
+
 
 def save_results(results: List[Dict[str, str]], filename: str = "medical_qa_results.json"):
     """Save results to a JSON file."""
@@ -127,10 +131,11 @@ def save_results(results: List[Dict[str, str]], filename: str = "medical_qa_resu
         json.dump(results, f, indent=2)
     print(f"\nResults saved to {filename}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Medical Doctor Q&A using LLM")
     parser.add_argument("--mode", choices=["single", "batch"], default="single",
-                      help="Run mode: single question or batch processing")
+                        help="Run mode: single question or batch processing")
     parser.add_argument("--question", type=str, help="Question for single mode")
     parser.add_argument("--save", action="store_true", help="Save batch results to JSON file")
     parser.add_argument("--api-key", type=str, help="OpenAI API key (or set OPENAI_API_KEY env var)")
@@ -158,7 +163,7 @@ def main():
 
             # Print summary
             successful = sum(1 for r in results if r['status'] == 'success')
-            print(f"\n" + "=" * 60)
+            print("\n" + "=" * 60)
             print(f"Batch processing complete: {successful}/{len(results)} successful responses")
 
             if args.save:
@@ -169,6 +174,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     exit(main())
