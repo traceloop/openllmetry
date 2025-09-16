@@ -17,15 +17,16 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
-from opentelemetry.instrumentation.mcp.utils import dont_throw
+from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
 
 _instruments = ("mcp >= 1.6.0",)
 
 
 class McpInstrumentor(BaseInstrumentor):
-    def __init__(self):
+    def __init__(self, exception_logger=None):
         super().__init__()
+        Config.exception_logger = exception_logger
         self._fastmcp_instrumentor = FastMCPInstrumentor()
 
     def instrumentation_dependencies(self) -> Collection[str]:
