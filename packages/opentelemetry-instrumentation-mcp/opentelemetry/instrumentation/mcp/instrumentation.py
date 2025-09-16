@@ -114,12 +114,6 @@ class McpInstrumentor(BaseInstrumentor):
     def _uninstrument(self, **kwargs):
         unwrap("mcp.client.stdio", "stdio_client")
         unwrap("mcp.server.stdio", "stdio_server")
-        unwrap("mcp.client.sse", "sse_client")
-        unwrap("mcp.server.sse", "SseServerTransport.connect_sse")
-        unwrap("mcp.client.streamable_http", "streamablehttp_client")
-        unwrap("mcp.server.streamable_http", "StreamableHTTPServerTransport.connect")
-        unwrap("mcp.server.session", "ServerSession.__init__")
-        unwrap("mcp.shared.session", "BaseSession.send_request")
         unwrap("mcp.types", "JSONRPCResponse.__init__")
         self._fastmcp_instrumentor.uninstrument()
 
@@ -552,36 +546,10 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
 
     @dont_throw
     async def send(self, item: Any) -> Any:
-        # Extract method name for main span
-        method_name = "unknown"
-        if hasattr(item, "request") and hasattr(item.request, "root") and hasattr(item.request.root, "method"):
-            method_name = item.request.root.method
-
-        # Create main MCP span first
-        main_span_name = f"{method_name}.mcp"
-        with self._tracer.start_as_current_span(main_span_name) as main_span:
-            main_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, method_name)
-            main_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.WORKFLOW.value)
-
-            with self._tracer.start_as_current_span("RequestStreamWriter") as span:
-                if hasattr(item, "request_id"):
-                    span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{item.request_id}")
-                if hasattr(item, "request"):
-                    if hasattr(item.request, "root"):
-                        if hasattr(item.request.root, "method"):
-                            span.set_attribute(
-                                SpanAttributes.MCP_METHOD_NAME,
-                                f"{item.request.root.method}",
-                            )
-                        if hasattr(item.request.root, "params"):
-                            span.set_attribute(
-                                SpanAttributes.MCP_REQUEST_ARGUMENT,
-                                f"{serialize(item.request.root.params)}",
-                            )
-
-                ctx = context.get_current()
-                item_with_context = ItemWithContext(item=item, ctx=ctx)
-                return await self.__wrapped__.send(item_with_context)
+        # Create ResponseStreamWriter span for server-side responses
+        with self._tracer.start_as_current_span("ResponseStreamWriter") as _:
+            ctx = context.get_current()
+            return await self.__wrapped__.send(ItemWithContext(item, ctx))
 
 
 class ContextAttachingStreamReader(ObjectProxy):  # type: ignore
