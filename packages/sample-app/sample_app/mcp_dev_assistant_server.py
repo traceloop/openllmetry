@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 from pydantic import BaseModel
 from traceloop.sdk import Traceloop
+from traceloop.sdk.instruments import Instruments
 
 # Load environment variables
 load_dotenv()
@@ -22,7 +23,9 @@ load_dotenv()
 # Initialize OpenTelemetry with Traceloop SDK (automatically includes MCP instrumentation)
 Traceloop.init(
     app_name="dev-assistant-mcp-server",
-    disable_batch=True,  # For real-time tracing in demo
+    disable_batch=True, 
+    instruments={Instruments.FASTAPI, Instruments.MCP}
+    # For real-time tracing in demo
 )
 
 # Initialize the MCP server

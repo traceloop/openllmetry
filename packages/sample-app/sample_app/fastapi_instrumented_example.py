@@ -6,16 +6,21 @@ import logging
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task
+from traceloop.sdk.instruments import Instruments
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 
 # Initialize Traceloop SDK with console exporter for debugging
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
+
 Traceloop.init(
     app_name="fastapi-openllmetry-example",
     disable_batch=True,
+    exporter=ConsoleSpanExporter(),
+    instruments={Instruments.FASTAPI}
 )
 
 # Create FastAPI app

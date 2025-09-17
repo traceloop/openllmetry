@@ -15,6 +15,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from traceloop.sdk import Traceloop
+from traceloop.sdk.instruments import Instruments
 
 
 class MCPDevAssistantDemo:
@@ -26,7 +27,9 @@ class MCPDevAssistantDemo:
         Traceloop.init(
             app_name="mcp-dev-assistant-demo-client",
             exporter=ConsoleSpanExporter(),
-            disable_batch=True,  # For real-time tracing in demo
+            disable_batch=True, 
+            instruments={Instruments.FASTAPI, Instruments.MCP}
+            # For real-time tracing in demo
         )
 
     async def connect_to_dev_assistant(self):
