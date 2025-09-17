@@ -16,7 +16,6 @@ from openai.types.responses import (
     ResponseOutputRefusal,
 )
 
-
 load_dotenv()
 
 Traceloop.init(
