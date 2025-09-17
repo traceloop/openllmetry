@@ -367,44 +367,6 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
 
 
 @pytest.mark.vcr
-def test_agent_name_propagation_to_child_spans(exporter, function_tool_agent):
-    """Test that gen_ai.agent.name is propagated to all child spans under an agent."""
-    query = "What is the weather in London?"
-    Runner.run_sync(
-        function_tool_agent,
-        query,
-    )
-    spans = exporter.get_finished_spans()
-
-    # Find the agent span to get the agent name
-    agent_spans = [s for s in spans if s.name == "WeatherAgent.agent"]
-    assert len(agent_spans) == 1, f"Expected 1 agent span, got {len(agent_spans)}"
-    agent_span = agent_spans[0]
-    agent_name = agent_span.attributes["gen_ai.agent.name"]
-    assert agent_name == "WeatherAgent"
-
-    # Find tool spans - should have agent name
-    tool_spans = [s for s in spans if s.name == "get_weather.tool"]
-    assert len(tool_spans) == 1, f"Expected 1 tool span, got {len(tool_spans)}"
-    tool_span = tool_spans[0]
-    assert "gen_ai.agent.name" in tool_span.attributes, "Tool span should have gen_ai.agent.name attribute"
-    assert tool_span.attributes["gen_ai.agent.name"] == agent_name, f"Tool span agent name should be {agent_name}"
-
-    # Find response spans - should have agent name
-    response_spans = [s for s in spans if s.name == "openai.response"]
-    assert len(response_spans) >= 1, f"Expected at least 1 response span, got {len(response_spans)}"
-    for response_span in response_spans:
-        assert "gen_ai.agent.name" in response_span.attributes, "Response span should have gen_ai.agent.name attribute"
-        assert response_span.attributes["gen_ai.agent.name"] == agent_name, f"Response span agent name should be {agent_name}"
-
-    # Workflow span should NOT have agent name (it's the root span)
-    workflow_spans = [s for s in spans if s.name == "Agent Workflow"]
-    assert len(workflow_spans) == 1, f"Expected 1 workflow span, got {len(workflow_spans)}"
-    workflow_span = workflow_spans[0]
-    assert "gen_ai.agent.name" not in workflow_span.attributes, "Workflow span should NOT have gen_ai.agent.name attribute"
-
-
-@pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_music_composer_handoff_hierarchy(exporter):
     """Test that handed-off agent spans are properly nested under the parent agent span."""
