@@ -17,15 +17,16 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
-from opentelemetry.instrumentation.mcp.utils import dont_throw
+from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
 
 _instruments = ("mcp >= 1.6.0",)
 
 
 class McpInstrumentor(BaseInstrumentor):
-    def __init__(self):
+    def __init__(self, exception_logger=None):
         super().__init__()
+        Config.exception_logger = exception_logger
         self._fastmcp_instrumentor = FastMCPInstrumentor()
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -37,6 +38,20 @@ class McpInstrumentor(BaseInstrumentor):
 
         # Instrument FastMCP
         self._fastmcp_instrumentor.instrument(tracer)
+
+        # Instrument FastMCP Client to create a session-level span
+        register_post_import_hook(
+            lambda _: wrap_function_wrapper(
+                "fastmcp.client", "Client.__aenter__", self._fastmcp_client_enter_wrapper(tracer)
+            ),
+            "fastmcp.client",
+        )
+        register_post_import_hook(
+            lambda _: wrap_function_wrapper(
+                "fastmcp.client", "Client.__aexit__", self._fastmcp_client_exit_wrapper(tracer)
+            ),
+            "fastmcp.client",
+        )
 
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
@@ -179,6 +194,52 @@ class McpInstrumentor(BaseInstrumentor):
             else:
                 return await self._handle_mcp_method(tracer, method, args, kwargs, wrapped)
 
+        return traced_method
+
+    def _fastmcp_client_enter_wrapper(self, tracer):
+        """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
+        @dont_throw
+        async def traced_method(wrapped, instance, args, kwargs):
+            # Start a root span for the MCP client session and make it current
+            span_context_manager = tracer.start_as_current_span("mcp.client.session")
+            span = span_context_manager.__enter__()
+            span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session")
+
+            # Store the span context manager on the instance to properly exit it later
+            setattr(instance, '_tracing_session_context_manager', span_context_manager)
+
+            try:
+                # Call the original method
+                result = await wrapped(*args, **kwargs)
+                return result
+            except Exception as e:
+                span.set_attribute(ERROR_TYPE, type(e).__name__)
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
+        return traced_method
+
+    def _fastmcp_client_exit_wrapper(self, tracer):
+        """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
+        @dont_throw
+        async def traced_method(wrapped, instance, args, kwargs):
+            try:
+                # Call the original method first
+                result = await wrapped(*args, **kwargs)
+
+                # End the session span context manager
+                context_manager = getattr(instance, '_tracing_session_context_manager', None)
+                if context_manager:
+                    context_manager.__exit__(None, None, None)
+
+                return result
+            except Exception as e:
+                # End the session span context manager with exception info
+                context_manager = getattr(instance, '_tracing_session_context_manager', None)
+                if context_manager:
+                    context_manager.__exit__(type(e), e, e.__traceback__)
+                raise
         return traced_method
 
     async def _handle_tool_call(self, tracer, method, params, args, kwargs, wrapped):
