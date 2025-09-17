@@ -1132,9 +1132,7 @@ def init_mcp_instrumentor():
             Telemetry().capture("instrumentation:mcp:init")
             from opentelemetry.instrumentation.mcp import McpInstrumentor
 
-            instrumentor = McpInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = McpInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True

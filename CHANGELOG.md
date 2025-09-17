@@ -1,3 +1,9 @@
+## v0.47.2 (2025-09-17)
+
+### Fix
+
+- **mcp**: add mcp.server parent span wrapper for FastMCP tool calls (#3382)
+
 ## v0.47.1 (2025-09-14)
 
 ### Fix
