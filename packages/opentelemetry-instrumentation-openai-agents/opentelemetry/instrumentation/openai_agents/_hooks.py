@@ -27,6 +27,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
         self._last_model_settings: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
+        self._agent_name: str = None  # Track current active agent name
 
     @dont_throw
     def on_trace_start(self, trace):
@@ -73,6 +74,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if isinstance(span_data, AgentSpanData):
             agent_name = getattr(span_data, 'name', None) or "unknown_agent"
+
+            self._agent_name = agent_name
 
             handoff_parent = None
             trace_id = getattr(span, 'trace_id', None)
@@ -132,6 +135,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             if from_agent and from_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.from_agent"] = from_agent
+                handoff_attributes["gen_ai.agent.name"] = from_agent
             if to_agent and to_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.to_agent"] = to_agent
 
@@ -158,6 +162,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
+            current_agent_name = self._get_current_agent_name()
+            if current_agent_name:
+                tool_attributes["gen_ai.agent.name"] = current_agent_name
+
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
                 desc = span_data.description
@@ -182,6 +190,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.operation.name": "response"
             }
 
+            current_agent_name = self._get_current_agent_name()
+            if current_agent_name:
+                response_attributes["gen_ai.agent.name"] = current_agent_name
+
             otel_span = self.tracer.start_span(
                 "openai.response",
                 kind=SpanKind.CLIENT,
@@ -200,6 +212,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.system": "openai",
                 "gen_ai.operation.name": "chat"
             }
+
+            current_agent_name = self._get_current_agent_name()
+            if current_agent_name:
+                response_attributes["gen_ai.agent.name"] = current_agent_name
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -493,6 +509,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         # Note: prompt_attributes, completion_attributes, and usage tokens are now
                         # on response spans only
 
+                # Clear agent context when agent span ends
+                self._agent_name = None
+
             if hasattr(span, 'error') and span.error:
                 otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
             else:
@@ -523,6 +542,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         except (AttributeError, TypeError):
             pass
         return None
+
+    def _get_current_agent_name(self) -> str:
+        """Get the currently active agent name."""
+        return self._agent_name
 
     def force_flush(self):
         """Force flush any pending spans."""
