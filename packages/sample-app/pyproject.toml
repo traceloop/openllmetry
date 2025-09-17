@@ -57,6 +57,10 @@ ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
 openai-agents = "^0.2.7"
+fastapi = "^0.115.0"
+uvicorn = "^0.32.0"
+opentelemetry-instrumentation-fastapi = "^0.48b0"
+fastmcp = "*"
 
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
