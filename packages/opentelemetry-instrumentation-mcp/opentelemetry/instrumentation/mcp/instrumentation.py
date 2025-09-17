@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast, Union
 import json
+import logging
 import re
 from http import HTTPStatus
 
@@ -102,8 +103,11 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.streamable_http",
         )
-        # Try multiple response creation points
-        # Try direct wrapping instead of post-import hook
+        wrap_function_wrapper(
+            "mcp.shared.session",
+            "BaseSession.send_request",
+            self.patch_mcp_client(tracer),
+        )
         try:
             wrap_function_wrapper(
                 "mcp.types",
@@ -120,11 +124,6 @@ class McpInstrumentor(BaseInstrumentor):
                 ),
                 "mcp.types",
             )
-        wrap_function_wrapper(
-            "mcp.shared.session",
-            "BaseSession.send_request",
-            self.patch_mcp_client(tracer),
-        )
 
     def _uninstrument(self, **kwargs):
         unwrap("mcp.client.stdio", "stdio_client")
@@ -155,31 +154,12 @@ class McpInstrumentor(BaseInstrumentor):
                         yield InstrumentedStreamReader(
                             read_stream, tracer
                         ), InstrumentedStreamWriter(write_stream, tracer), get_session_id_callback
-                    except Exception:
+                    except Exception as e:
+                        logging.warning(f"mcp instrumentation _transport_wrapper exception: {e}")
                         yield result
-                except Exception:
+                except Exception as e:
+                    logging.warning(f"mcp instrumentation transport_wrapper exception: {e}")
                     yield result
-
-        return traced_method
-
-    def _base_session_init_wrapper(self, tracer):
-        def traced_method(
-            wrapped: Callable[..., None], instance: Any, args: Any, kwargs: Any
-        ) -> None:
-            wrapped(*args, **kwargs)
-            reader = getattr(instance, "_incoming_message_stream_reader", None)
-            writer = getattr(instance, "_incoming_message_stream_writer", None)
-            if reader and writer:
-                setattr(
-                    instance,
-                    "_incoming_message_stream_reader",
-                    ContextAttachingStreamReader(reader, tracer),
-                )
-                setattr(
-                    instance,
-                    "_incoming_message_stream_writer",
-                    ContextSavingStreamWriter(writer, tracer),
-                )
 
         return traced_method
 
@@ -213,6 +193,27 @@ class McpInstrumentor(BaseInstrumentor):
             # Call the original method
             result = wrapped(*args, **kwargs)
             return result
+
+        return traced_method
+
+    def _base_session_init_wrapper(self, tracer):
+        def traced_method(
+            wrapped: Callable[..., None], instance: Any, args: Any, kwargs: Any
+        ) -> None:
+            wrapped(*args, **kwargs)
+            reader = getattr(instance, "_incoming_message_stream_reader", None)
+            writer = getattr(instance, "_incoming_message_stream_writer", None)
+            if reader and writer:
+                setattr(
+                    instance,
+                    "_incoming_message_stream_reader",
+                    ContextAttachingStreamReader(reader, tracer),
+                )
+                setattr(
+                    instance,
+                    "_incoming_message_stream_writer",
+                    ContextSavingStreamWriter(writer, tracer),
+                )
 
         return traced_method
 
@@ -576,18 +577,39 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
         else:
             return await self.__wrapped__.send(item)
 
-        if not isinstance(request, JSONRPCRequest):
+        with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
+            if hasattr(request, "result"):
+                span.set_attribute(
+                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
+                )
+                if "isError" in request.result:
+                    if request.result["isError"] is True:
+                        span.set_status(
+                            Status(
+                                StatusCode.ERROR,
+                                f"{request.result['content'][0]['text']}",
+                            )
+                        )
+                        error_type = get_error_type(
+                            request.result["content"][0]["text"]
+                        )
+                        if error_type is not None:
+                            span.set_attribute(ERROR_TYPE, error_type)
+            if hasattr(request, "id"):
+                span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
+
+            if not isinstance(request, JSONRPCRequest):
+                return await self.__wrapped__.send(item)
+            meta = None
+            if not request.params:
+                request.params = {}
+            meta = request.params.setdefault("_meta", {})
+
+            propagate.get_global_textmap().inject(meta)
             return await self.__wrapped__.send(item)
-        meta = None
-        if not request.params:
-            request.params = {}
-        meta = request.params.setdefault("_meta", {})
-
-        propagate.get_global_textmap().inject(meta)
-        return await self.__wrapped__.send(item)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class ItemWithContext:
     item: Any
     ctx: context.Context
