@@ -1,14 +1,10 @@
 """Integration test for sample app workflow to verify agent name propagation in complex scenarios."""
 
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
 from typing import Dict, List
 from dataclasses import dataclass
 from pydantic import BaseModel
 
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.instrumentation.openai_agents import OpenAIAgentsInstrumentor
 from agents import Agent, function_tool, Runner, RunContextWrapper
 
 

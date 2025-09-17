@@ -7,7 +7,7 @@ from collections import OrderedDict
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, get_current_span, set_span_in_context
 from opentelemetry import context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_COMPLETION
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_COMPLETION, GEN_AI_AGENT_NAME
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
@@ -86,7 +86,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                "gen_ai.agent.name": agent_name,
+                GEN_AI_AGENT_NAME: agent_name,
                 "gen_ai.system": "openai_agents"
             }
 
@@ -135,7 +135,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             if from_agent and from_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.from_agent"] = from_agent
-                handoff_attributes["gen_ai.agent.name"] = from_agent
+                handoff_attributes[GEN_AI_AGENT_NAME] = from_agent
             if to_agent and to_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.to_agent"] = to_agent
 
@@ -164,13 +164,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             current_agent_name = self._get_current_agent_name()
             if current_agent_name:
-                tool_attributes["gen_ai.agent.name"] = current_agent_name
+                tool_attributes[GEN_AI_AGENT_NAME] = current_agent_name
             else:
                 # Fallback: try to get agent name from parent span
                 if current_agent_span:
-                    parent_agent_name = current_agent_span.attributes.get("gen_ai.agent.name")
+                    parent_agent_name = current_agent_span.attributes.get(GEN_AI_AGENT_NAME)
                     if parent_agent_name:
-                        tool_attributes["gen_ai.agent.name"] = parent_agent_name
+                        tool_attributes[GEN_AI_AGENT_NAME] = parent_agent_name
 
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
@@ -198,13 +198,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             current_agent_name = self._get_current_agent_name()
             if current_agent_name:
-                response_attributes["gen_ai.agent.name"] = current_agent_name
+                response_attributes[GEN_AI_AGENT_NAME] = current_agent_name
             else:
                 # Fallback: try to get agent name from parent span
                 if current_agent_span:
-                    parent_agent_name = current_agent_span.attributes.get("gen_ai.agent.name")
+                    parent_agent_name = current_agent_span.attributes.get(GEN_AI_AGENT_NAME)
                     if parent_agent_name:
-                        response_attributes["gen_ai.agent.name"] = parent_agent_name
+                        response_attributes[GEN_AI_AGENT_NAME] = parent_agent_name
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -227,13 +227,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             current_agent_name = self._get_current_agent_name()
             if current_agent_name:
-                response_attributes["gen_ai.agent.name"] = current_agent_name
+                response_attributes[GEN_AI_AGENT_NAME] = current_agent_name
             else:
                 # Fallback: try to get agent name from parent span
                 if current_agent_span:
-                    parent_agent_name = current_agent_span.attributes.get("gen_ai.agent.name")
+                    parent_agent_name = current_agent_span.attributes.get(GEN_AI_AGENT_NAME)
                     if parent_agent_name:
-                        response_attributes["gen_ai.agent.name"] = parent_agent_name
+                        response_attributes[GEN_AI_AGENT_NAME] = parent_agent_name
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -576,12 +576,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if current_span and hasattr(current_span, 'attributes'):
             # Check if current span is an agent span
             if hasattr(current_span, 'name') and current_span.name and current_span.name.endswith('.agent'):
-                agent_name = current_span.attributes.get("gen_ai.agent.name")
+                agent_name = current_span.attributes.get(GEN_AI_AGENT_NAME)
                 if agent_name:
                     return agent_name
 
             # Check if current span has agent name attribute (child of agent)
-            agent_name = current_span.attributes.get("gen_ai.agent.name")
+            agent_name = current_span.attributes.get(GEN_AI_AGENT_NAME)
             if agent_name:
                 return agent_name
 

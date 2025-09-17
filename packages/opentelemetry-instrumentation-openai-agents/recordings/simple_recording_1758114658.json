@@ -1,0 +1,63 @@
+{
+  "timestamp": 1758114658.825509,
+  "total_spans": 6,
+  "issues_found": 0,
+  "issues": [],
+  "spans": [
+    {
+      "name": "Main Chat Agent.agent",
+      "attributes": {
+        "traceloop.span.kind": "agent",
+        "gen_ai.agent.name": "Main Chat Agent",
+        "gen_ai.system": "openai_agents",
+        "openai.agent.handoff0": "{\"name\": \"unknown\", \"instructions\": \"No instructions\"}"
+      },
+      "has_agent_name": true
+    },
+    {
+      "name": "Agent Workflow",
+      "attributes": {
+        "traceloop.span.kind": "workflow",
+        "gen_ai.system": "openai_agents",
+        "gen_ai.workflow.name": "Agent Workflow"
+      },
+      "has_agent_name": false
+    },
+    {
+      "name": "Recipe Editor Agent.agent",
+      "attributes": {
+        "traceloop.span.kind": "agent",
+        "gen_ai.agent.name": "Recipe Editor Agent",
+        "gen_ai.system": "openai_agents"
+      },
+      "has_agent_name": true
+    },
+    {
+      "name": "Agent Workflow",
+      "attributes": {
+        "traceloop.span.kind": "workflow",
+        "gen_ai.system": "openai_agents",
+        "gen_ai.workflow.name": "Agent Workflow"
+      },
+      "has_agent_name": false
+    },
+    {
+      "name": "Simple Agent.agent",
+      "attributes": {
+        "traceloop.span.kind": "agent",
+        "gen_ai.agent.name": "Simple Agent",
+        "gen_ai.system": "openai_agents"
+      },
+      "has_agent_name": true
+    },
+    {
+      "name": "Agent Workflow",
+      "attributes": {
+        "traceloop.span.kind": "workflow",
+        "gen_ai.system": "openai_agents",
+        "gen_ai.workflow.name": "Agent Workflow"
+      },
+      "has_agent_name": false
+    }
+  ]
+}
