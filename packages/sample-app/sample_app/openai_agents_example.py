@@ -16,8 +16,6 @@ from openai.types.responses import (
     ResponseOutputRefusal,
 )
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv()
 

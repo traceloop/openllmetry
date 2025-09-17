@@ -541,49 +541,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             pass
         return None
 
-    def _get_current_agent_name(self) -> str:
-        """Get the currently active agent name from the current OpenTelemetry span context."""
-        # First try the global context (for backward compatibility)
-        if self._agent_name:
-            return self._agent_name
-
-        # Try to find agent name from current span hierarchy
-        current_span = get_current_span()
-        if current_span and hasattr(current_span, 'attributes'):
-            # Check if current span is an agent span
-            if hasattr(current_span, 'name') and current_span.name and current_span.name.endswith('.agent'):
-                agent_name = current_span.attributes.get(GEN_AI_AGENT_NAME)
-                if agent_name:
-                    return agent_name
-
-            # Check if current span has agent name attribute (child of agent)
-            agent_name = current_span.attributes.get(GEN_AI_AGENT_NAME)
-            if agent_name:
-                return agent_name
-
-        # Try to find from active agent span in our tracking
-        for agents_span, otel_span in self._otel_spans.items():
-            span_data = getattr(agents_span, 'span_data', None)
-            if span_data and type(span_data).__name__ == 'AgentSpanData':
-                # Check if this span is currently active (in the OpenTelemetry context)
-                if otel_span.is_recording():
-                    agent_name = getattr(span_data, 'name', None)
-                    if agent_name:
-                        return agent_name
-
-        return None
 
     def _set_agent_name_attribute(self, attributes: Dict[str, Any], current_agent_span=None):
-        """Set the agent name attribute using current agent name or fallback to parent span."""
-        current_agent_name = self._get_current_agent_name()
-        if current_agent_name:
-            attributes[GEN_AI_AGENT_NAME] = current_agent_name
-        else:
-            # Fallback: try to get agent name from parent span
-            if current_agent_span:
-                parent_agent_name = current_agent_span.attributes.get(GEN_AI_AGENT_NAME)
-                if parent_agent_name:
-                    attributes[GEN_AI_AGENT_NAME] = parent_agent_name
+        """Set the agent name attribute using current agent name."""
+        if self._agent_name:
+            attributes[GEN_AI_AGENT_NAME] = self._agent_name
+     
 
     def force_flush(self):
         """Force flush any pending spans."""
