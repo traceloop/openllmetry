@@ -28,7 +28,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
         self._last_model_settings: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
-        self._agent_name: str = None  # Track current active agent name
 
     @dont_throw
     def on_trace_start(self, trace):
@@ -75,9 +74,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if isinstance(span_data, AgentSpanData):
             agent_name = getattr(span_data, 'name', None) or "unknown_agent"
-
-            self._agent_name = agent_name
-
             # Set agent name in OpenTelemetry context for propagation to child spans
             set_agent_name(agent_name)
 
@@ -500,13 +496,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                             otel_span.set_attribute("openai.agent.model.frequency_penalty", value)
                         # Note: prompt_attributes, completion_attributes, and usage tokens are now
                         # on response spans only
-
-                # Only clear agent context if this agent matches current context
-                # This prevents premature clearing in complex handoff scenarios
-                if span_data and hasattr(span_data, 'name'):
-                    agent_name = getattr(span_data, 'name', None)
-                    if self._agent_name == agent_name:
-                        self._agent_name = None
 
             if hasattr(span, 'error') and span.error:
                 otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))

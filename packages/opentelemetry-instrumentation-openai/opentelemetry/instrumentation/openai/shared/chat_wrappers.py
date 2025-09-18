@@ -265,7 +265,6 @@ async def achat_wrapper(
 async def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs, instance)
     _set_client_attributes(span, instance)
-
     if should_emit_events():
         for message in kwargs.get("messages", []):
             emit_event(
