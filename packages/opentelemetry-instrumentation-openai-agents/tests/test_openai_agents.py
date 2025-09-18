@@ -430,3 +430,28 @@ async def test_music_composer_handoff_hierarchy(exporter):
         f"Found unexpected root spans that should be child spans: {unexpected_root_spans}. "
         f"All spans should be children of 'Agent Workflow' root span."
     )
+
+
+@pytest.mark.vcr
+def test_agent_name_propagation_to_agent_spans(exporter, test_agent):
+    """Test that agent name is set into agent spans through the context propagation mechanism."""
+    from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_AGENT_NAME
+
+    query = "What is AI?"
+    Runner.run_sync(
+        test_agent,
+        query,
+    )
+    spans = exporter.get_finished_spans()
+
+    # Find the agent span
+    agent_spans = [s for s in spans if s.name == "testAgent.agent"]
+    assert len(agent_spans) == 1, f"Expected 1 agent span, got {len(agent_spans)}"
+    agent_span = agent_spans[0]
+
+    # Verify the agent span has the agent name attribute set via context propagation
+    assert GEN_AI_AGENT_NAME in agent_span.attributes, f"Agent span should have {GEN_AI_AGENT_NAME} attribute"
+    assert agent_span.attributes[GEN_AI_AGENT_NAME] == "testAgent", (
+        f"Expected agent name 'testAgent', got '{agent_span.attributes[GEN_AI_AGENT_NAME]}'"
+    )
+
