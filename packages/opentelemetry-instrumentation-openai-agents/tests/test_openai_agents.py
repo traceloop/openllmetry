@@ -454,4 +454,3 @@ def test_agent_name_propagation_to_agent_spans(exporter, test_agent):
     assert agent_span.attributes[GEN_AI_AGENT_NAME] == "testAgent", (
         f"Expected agent name 'testAgent', got '{agent_span.attributes[GEN_AI_AGENT_NAME]}'"
     )
-
