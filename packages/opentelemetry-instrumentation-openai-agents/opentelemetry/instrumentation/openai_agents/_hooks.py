@@ -79,9 +79,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             self._agent_name = agent_name
 
             # Set agent name in OpenTelemetry context for propagation to child spans
-            print(f"Setting agent name in OpenTelemetry context: {agent_name}")
             set_agent_name(agent_name)
-            print(f"Agent name in OpenTelemetry context: {agent_name}")
 
             handoff_parent = None
             trace_id = getattr(span, 'trace_id', None)
@@ -168,7 +166,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
-            self._set_agent_name_attribute(tool_attributes, current_agent_span)
+            self._set_agent_name_attribute(tool_attributes)
 
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
@@ -194,7 +192,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.operation.name": "response"
             }
 
-            self._set_agent_name_attribute(response_attributes, current_agent_span)
+            self._set_agent_name_attribute(response_attributes)
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -215,7 +213,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.operation.name": "chat"
             }
 
-            self._set_agent_name_attribute(response_attributes, current_agent_span)
+            self._set_agent_name_attribute(response_attributes)
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -547,7 +545,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             pass
         return None
 
-    def _set_agent_name_attribute(self, attributes: Dict[str, Any], current_agent_span=None):
+    def _set_agent_name_attribute(self, attributes: Dict[str, Any]):
         """Set the agent name attribute using current agent name."""
         if self._agent_name:
             attributes[GEN_AI_AGENT_NAME] = self._agent_name

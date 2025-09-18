@@ -48,7 +48,7 @@ class FastMCPInstrumentor:
     def _fastmcp_init_wrapper(self):
         """Create wrapper for FastMCP initialization to capture server name."""
         @dont_throw
-        def traced_method(wrapped, _instance, args, kwargs):
+        def traced_method(wrapped, instance, args, kwargs):
             # Call the original __init__ first
             result = wrapped(*args, **kwargs)
 
@@ -63,7 +63,7 @@ class FastMCPInstrumentor:
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
         @dont_throw
-        async def traced_method(wrapped, _instance, args, kwargs):
+        async def traced_method(wrapped, instance, args, kwargs):
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
 

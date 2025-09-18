@@ -262,7 +262,6 @@ def set_workflow_name(workflow_name: str) -> None:
 
 
 def set_agent_name(agent_name: str) -> None:
-    print(f"Setting agent name in tracing: {agent_name}")
     attach(set_value("agent_name", agent_name))
 
 
