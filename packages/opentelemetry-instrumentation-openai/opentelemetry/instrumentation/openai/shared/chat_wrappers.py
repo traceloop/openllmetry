@@ -268,11 +268,6 @@ async def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs, instance)
     _set_client_attributes(span, instance)
 
-    # Set agent name attribute if available in context
-    agent_name = get_value("agent_name")
-    if agent_name is not None:
-        _set_span_attribute(span, GEN_AI_AGENT_NAME, str(agent_name))
-
     if should_emit_events():
         for message in kwargs.get("messages", []):
             emit_event(
