@@ -36,49 +36,26 @@ class FastMCPInstrumentor:
         """Remove FastMCP-specific instrumentation."""
         # Note: wrapt doesn't provide a clean way to unwrap post-import hooks
         # This is a limitation we'll need to document
+        self._server_name = None
         pass
 
     def _get_fastmcp_server_name(self, instance):
-        """
-        Get the FastMCP server name by inspecting the call stack and finding FastMCP instances.
-
-        Args:
-            instance: The ToolManager instance from the wrapped call
-
-        Returns:
-            str: The server name if found, otherwise None
-        """
+        """Get the FastMCP MCP server name by inspecting the call stack and finding FastMCP instances."""
         try:
-            # First, try to find FastMCP instance through stack inspection
-            frame = inspect.currentframe()
-            frame_count = 0
+            referrers = gc.get_referrers(instance)
 
-            while frame and frame_count < 15:  # Look up the stack
-                frame_locals = frame.f_locals
+            for ref in referrers:
+                if (hasattr(ref, '__class__') and
+                    ref.__class__.__name__ == 'FastMCP' and
+                    hasattr(ref, '_tool_manager') and
+                    ref._tool_manager is instance):
 
-                # Look for FastMCP instances in the current frame's locals
-                for name, value in frame_locals.items():
-                    if hasattr(value, '__class__') and value.__class__.__name__ == 'FastMCP':
-                        server_name = getattr(value, 'name', None)
-                        if server_name:
-                            return server_name
-
-                frame = frame.f_back
-                frame_count += 1
-
-            # Fallback: Search for FastMCP instances in memory
-            # This might be less reliable if multiple servers exist, but better than nothing
-            for obj in gc.get_objects():
-                if hasattr(obj, '__class__') and obj.__class__.__name__ == 'FastMCP':
-                    # Check if this server's tool manager is the same instance
-                    server_tool_manager = getattr(obj, '_tool_manager', None)
-                    if server_tool_manager is instance:
-                        return getattr(obj, 'name', None)
-
-            return None
+                    mcp_server = getattr(ref, '_mcp_server', None)
+                    if mcp_server and hasattr(mcp_server, 'name'):
+                        server_name = mcp_server.name
+                        return f"{server_name}.mcp"
 
         except Exception:
-            # If anything fails during server name detection, don't break the instrumentation
             return None
 
     def _fastmcp_tool_wrapper(self):
