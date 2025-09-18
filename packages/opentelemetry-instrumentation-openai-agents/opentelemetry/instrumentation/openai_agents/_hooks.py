@@ -166,8 +166,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 f"{GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
-            self._set_agent_name_attribute(tool_attributes)
-
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
                 desc = span_data.description
@@ -192,8 +190,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.operation.name": "response"
             }
 
-            self._set_agent_name_attribute(response_attributes)
-
             otel_span = self.tracer.start_span(
                 "openai.response",
                 kind=SpanKind.CLIENT,
@@ -212,8 +208,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 "gen_ai.system": "openai",
                 "gen_ai.operation.name": "chat"
             }
-
-            self._set_agent_name_attribute(response_attributes)
 
             otel_span = self.tracer.start_span(
                 "openai.response",
@@ -544,11 +538,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         except (AttributeError, TypeError):
             pass
         return None
-
-    def _set_agent_name_attribute(self, attributes: Dict[str, Any]):
-        """Set the agent name attribute using current agent name."""
-        if self._agent_name:
-            attributes[GEN_AI_AGENT_NAME] = self._agent_name
 
     def force_flush(self):
         """Force flush any pending spans."""
