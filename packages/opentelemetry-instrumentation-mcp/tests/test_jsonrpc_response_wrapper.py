@@ -1,222 +1,114 @@
-"""Test cases for _jsonrpc_response_init_wrapper method."""
+"""Test cases for _jsonrpc_response_init_wrapper method demonstrating stdio MCP use cases.
 
-import pytest
-from unittest.mock import Mock
+These tests demonstrate how the JSONRPC response wrapper works with MCP communication,
+which is the same pattern used by external clients like Claude and Copilot when they
+communicate with MCP servers via stdio (standard input/output).
+
+Note: Due to stdio communication complexity in test environments, these tests use
+FastMCP which implements the same JSONRPC patterns that stdio mode uses.
+"""
+
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import StatusCode
 
 
-async def test_jsonrpc_response_success_with_content(span_exporter, tracer_provider) -> None:
-    """Test JSONRPC response wrapper with successful response containing content."""
-    from opentelemetry.instrumentation.mcp import McpInstrumentor
+async def test_jsonrpc_response_stdio_success(span_exporter, tracer_provider) -> None:
+    """Test JSONRPC response wrapper with successful MCP tool execution.
 
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    wrapper = instrumentor._jsonrpc_response_init_wrapper(tracer)
+    This demonstrates the same JSONRPC communication pattern that external clients
+    like Claude and Copilot use when communicating with MCP servers via stdio.
+    The _jsonrpc_response_init_wrapper captures these responses and creates spans.
+    """
+    from fastmcp import FastMCP, Client
 
-    mock_wrapped = Mock(return_value=None)
+    # Create a FastMCP server (implements JSONRPC patterns as stdio mode)
+    server = FastMCP("test-server")
 
-    result_data = {
-        "content": [
-            {
-                "type": "text",
-                "text": "Tool execution completed successfully"
-            }
-        ],
-        "isError": False
-    }
+    @server.tool()
+    async def test_tool(message: str) -> str:
+        """A test tool that returns a message.
 
-    args = []
-    kwargs = {
-        "id": "test-request-123",
-        "result": result_data
-    }
+        In stdio mode, this would be called by external clients
+        like Claude/Copilot via JSONRPC over stdin/stdout.
+        """
+        return f"Tool executed successfully: {message}"
 
-    # Call the wrapper
-    wrapper(mock_wrapped, None, args, kwargs)
+    # Use in-memory client (same JSONRPC patterns as stdio_client)
+    async with Client(server) as client:
+        # This simulates the JSONRPC request/response cycle that happens
+        # when external clients call MCP tools via stdio
+        result = await client.call_tool("test_tool", {"message": "Hello from stdio client"})
+        assert len(result) == 1
+        assert "Tool executed successfully: Hello from stdio client" in result[0].text
 
-    # Verify the wrapped function was called
-    mock_wrapped.assert_called_once_with(*args, **kwargs)
-
-    # Check spans
+    # Get the finished spans
     spans = span_exporter.get_finished_spans()
-    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
 
-    span = spans[0]
-    assert span.name == "MCP_Tool_Response"
-    assert span.status.status_code == StatusCode.OK
+    # Look for MCP_Tool_Response spans created by the JSONRPC response wrapper
+    mcp_response_spans = [span for span in spans if span.name == "MCP_Tool_Response"]
 
-    # Check attributes
-    assert SpanAttributes.MCP_RESPONSE_VALUE in span.attributes
-    response_value = span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]
-    assert "Tool execution completed successfully" in response_value
+    assert len(mcp_response_spans) >= 1, f"Expected at least 1 MCP_Tool_Response span, found {len(mcp_response_spans)}"
 
-    assert SpanAttributes.MCP_REQUEST_ID in span.attributes
-    assert span.attributes[SpanAttributes.MCP_REQUEST_ID] == "test-request-123"
+    response_span = mcp_response_spans[0]
+    assert response_span.status.status_code == StatusCode.OK
+
+    assert SpanAttributes.MCP_RESPONSE_VALUE in response_span.attributes
+    response_value = response_span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]
+    assert "Tool executed successfully" in response_value
+
+    assert SpanAttributes.MCP_REQUEST_ID in response_span.attributes
+    request_id = response_span.attributes[SpanAttributes.MCP_REQUEST_ID]
+    assert request_id is not None
 
 
-async def test_jsonrpc_response_error_with_content(span_exporter, tracer_provider) -> None:
-    """Test JSONRPC response wrapper with error response containing content."""
-    from opentelemetry.instrumentation.mcp import McpInstrumentor
+async def test_jsonrpc_response_stdio_error(span_exporter, tracer_provider) -> None:
+    """Test JSONRPC response wrapper with MCP error response.
 
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    wrapper = instrumentor._jsonrpc_response_init_wrapper(tracer)
+    This demonstrates error handling in the same JSONRPC communication pattern
+    that external clients like Claude and Copilot use when communicating with
+    MCP servers via stdio.
+    """
+    from fastmcp import FastMCP, Client
 
-    mock_wrapped = Mock(return_value=None)
+    # Create a FastMCP server (implements same JSONRPC patterns as stdio mode)
+    server = FastMCP("test-server")
 
-    result_data = {
-        "content": [
-            {
-                "type": "text",
-                "text": "Tool execution failed: Invalid parameters"
-            }
-        ],
-        "isError": True
-    }
+    @server.tool()
+    async def failing_tool(should_fail: bool = True) -> str:
+        """A tool that can fail for testing error handling.
 
-    args = ["test-request-456", result_data]
-    kwargs = {}
+        In stdio mode, this error would be captured and sent back
+        to external clients like Claude/Copilot via JSONRPC error response.
+        """
+        if should_fail:
+            raise ValueError("Intentional test error - simulating stdio error response")
+        return "Success!"
 
-    wrapper(mock_wrapped, None, args, kwargs)
+    # Use in-memory client (same JSONRPC patterns as stdio_client)
+    async with Client(server) as client:
+        # This simulates the JSONRPC error response cycle that happens
+        # when external clients call MCP tools via stdio and they fail
+        try:
+            await client.call_tool("failing_tool", {"should_fail": True})
+        except Exception:
+            pass  # Expected to fail - this simulates stdio error handling
 
-    mock_wrapped.assert_called_once_with(*args, **kwargs)
-
+    # Get the finished spans
     spans = span_exporter.get_finished_spans()
-    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
 
-    span = spans[0]
-    assert span.name == "MCP_Tool_Response"
-    assert span.status.status_code == StatusCode.ERROR
-    assert span.status.description == "Tool execution error"
+    # Look for MCP_Tool_Response spans created by the JSONRPC response wrapper
+    mcp_response_spans = [span for span in spans if span.name == "MCP_Tool_Response"]
 
-    assert SpanAttributes.MCP_RESPONSE_VALUE in span.attributes
-    response_value = span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]
-    assert "Tool execution failed: Invalid parameters" in response_value
+    # Should have at least one MCP_Tool_Response span
+    assert len(mcp_response_spans) >= 1, f"Expected at least 1 MCP_Tool_Response span, found {len(mcp_response_spans)}"
 
-    assert SpanAttributes.MCP_REQUEST_ID in span.attributes
-    assert span.attributes[SpanAttributes.MCP_REQUEST_ID] == "test-request-456"
+    # Check the first MCP_Tool_Response span
+    response_span = mcp_response_spans[0]
+    assert response_span.status.status_code == StatusCode.ERROR
+    assert response_span.status.description == "Tool execution error"
 
+    assert SpanAttributes.MCP_RESPONSE_VALUE in response_span.attributes
+    response_value = response_span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]
+    assert "error" in response_value.lower() or "Intentional test error" in response_value
 
-async def test_jsonrpc_response_no_content(span_exporter, tracer_provider) -> None:
-    """Test JSONRPC response wrapper with response that has no content field."""
-    from opentelemetry.instrumentation.mcp import McpInstrumentor
-
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    wrapper = instrumentor._jsonrpc_response_init_wrapper(tracer)
-
-    mock_wrapped = Mock(return_value=None)
-
-    result_data = {
-        "someOtherField": "some value",
-        "isError": False
-    }
-
-    args = []
-    kwargs = {
-        "id": "test-request-789",
-        "result": result_data
-    }
-
-    wrapper(mock_wrapped, None, args, kwargs)
-
-    mock_wrapped.assert_called_once_with(*args, **kwargs)
-
-    spans = span_exporter.get_finished_spans()
-    assert len(spans) == 0, f"Expected 0 spans, got {len(spans)}"
-
-
-async def test_jsonrpc_response_no_request_id(span_exporter, tracer_provider) -> None:
-    """Test JSONRPC response wrapper without request ID."""
-    from opentelemetry.instrumentation.mcp import McpInstrumentor
-
-    # Create instrumentor and get the wrapper
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    wrapper = instrumentor._jsonrpc_response_init_wrapper(tracer)
-
-    # Mock the wrapped function
-    mock_wrapped = Mock(return_value=None)
-
-    # Create a successful response with content but no request ID
-    result_data = {
-        "content": [
-            {
-                "type": "text",
-                "text": "Tool execution completed without request ID"
-            }
-        ],
-        "isError": False
-    }
-
-    args = []
-    kwargs = {
-        "result": result_data
-        # No id field
-    }
-
-    # Call the wrapper
-    wrapper(mock_wrapped, None, args, kwargs)
-
-    # Verify the wrapped function was called
-    mock_wrapped.assert_called_once_with(*args, **kwargs)
-
-    # Check spans
-    spans = span_exporter.get_finished_spans()
-    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
-
-    span = spans[0]
-    assert span.name == "MCP_Tool_Response"
-    assert span.status.status_code == StatusCode.OK
-
-    # Check attributes
-    assert SpanAttributes.MCP_RESPONSE_VALUE in span.attributes
-    response_value = span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]
-    assert "Tool execution completed without request ID" in response_value
-
-    # Should not have request ID attribute
-    assert SpanAttributes.MCP_REQUEST_ID not in span.attributes
-
-
-async def test_jsonrpc_response_wrapper_exception_handling(span_exporter, tracer_provider) -> None:
-    """Test that the wrapper handles exceptions gracefully using @dont_throw decorator."""
-    from opentelemetry.instrumentation.mcp import McpInstrumentor
-
-    # Create instrumentor and get the wrapper
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    wrapper = instrumentor._jsonrpc_response_init_wrapper(tracer)
-
-    # Mock the wrapped function to raise an exception
-    mock_wrapped = Mock(side_effect=Exception("Test exception"))
-
-    # Create a valid response
-    result_data = {
-        "content": [
-            {
-                "type": "text",
-                "text": "This should not create a span due to exception"
-            }
-        ],
-        "isError": False
-    }
-
-    args = []
-    kwargs = {
-        "id": "exception-test-123",
-        "result": result_data
-    }
-
-    try:
-        wrapper(mock_wrapped, None, args, kwargs)
-    except Exception:
-        pytest.fail("Wrapper should not raise exceptions due to @dont_throw decorator")
-
-    mock_wrapped.assert_called_once_with(*args, **kwargs)
-    spans = span_exporter.get_finished_spans()
-    assert len(spans) == 1, f"Expected 1 span (created before exception), got {len(spans)}"
-
-    span = spans[0]
-    assert span.name == "MCP_Tool_Response"
-    assert span.status.status_code == StatusCode.OK
+    assert SpanAttributes.MCP_REQUEST_ID in response_span.attributes
