@@ -2,6 +2,8 @@
 
 import json
 import os
+import gc
+import inspect
 
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -17,6 +19,38 @@ class FastMCPInstrumentor:
 
     def __init__(self):
         self._tracer = None
+
+    def _find_fastmcp_server_name(self, instance):
+        """Find the FastMCP server name by inspecting the call stack and garbage collector."""
+        try:
+            # First, try to find the server by checking if this tool manager belongs to a FastMCP server
+            for obj in gc.get_objects():
+                # Look for FastMCP instances that have this tool manager
+                print("NOMI - _find_fastmcp_server_name: obj:", obj)
+                if (hasattr(obj, '__class__') and
+                        obj.__class__.__name__ == 'FastMCP' and
+                        hasattr(obj, '_tool_manager') and
+                        obj._tool_manager is instance):
+                    if hasattr(obj, 'name') and obj.name:
+                        print("NOMI - _find_fastmcp_server_name: obj.name:", obj.name)
+                        return obj.name
+                    break
+
+            # Fallback: Try to find any FastMCP server in the current frame stack
+            current_frame = inspect.currentframe()
+            while current_frame:
+                for local_var in current_frame.f_locals.values():
+                    if (hasattr(local_var, '__class__') and
+                            local_var.__class__.__name__ == 'FastMCP' and
+                            hasattr(local_var, 'name') and local_var.name):
+                        print("NOMI - _find_fastmcp_server_name: local_var.name:", local_var.name)
+                        return local_var.name
+                current_frame = current_frame.f_back
+
+        except Exception:
+            pass
+
+        return None
 
     def instrument(self, tracer: Tracer):
         """Apply FastMCP-specific instrumentation."""
@@ -63,11 +97,20 @@ class FastMCPInstrumentor:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
 
+                # Try to find and set the FastMCP server name as workflow name
+                server_name = self._find_fastmcp_server_name(instance)
+                if server_name:
+                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, f"{server_name}.mcp")
+
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
                 with self._tracer.start_as_current_span(span_name) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+
+                    # Set workflow name on tool span as well if we found it
+                    if server_name:
+                        tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
 
                     if self._should_send_prompts():
                         try:

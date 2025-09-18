@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 from pydantic import BaseModel
 from traceloop.sdk import Traceloop
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,7 @@ load_dotenv()
 # Initialize OpenTelemetry with Traceloop SDK (automatically includes MCP instrumentation)
 Traceloop.init(
     app_name="dev-assistant-mcp-server",
+    exporter=ConsoleSpanExporter(),  # Use console exporter to see server-side spans
     disable_batch=True,  # For real-time tracing in demo
 )
 
