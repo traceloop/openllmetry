@@ -9,8 +9,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 
 
-
-
 @pytest.mark.vcr
 def test_agent_name_propagation_to_response_spans_basic(exporter):
     """Test that agent names are properly propagated to response spans in simple queries."""
@@ -84,5 +82,3 @@ def test_agent_name_propagation_to_tool_spans(exporter, function_tool_agent):
     # Verify tool span has correct tool-specific attributes
     assert tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.TOOL.value
     assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "get_weather"
-
-

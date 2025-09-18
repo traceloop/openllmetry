@@ -547,12 +547,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             pass
         return None
 
-
     def _set_agent_name_attribute(self, attributes: Dict[str, Any], current_agent_span=None):
         """Set the agent name attribute using current agent name."""
         if self._agent_name:
             attributes[GEN_AI_AGENT_NAME] = self._agent_name
-     
 
     def force_flush(self):
         """Force flush any pending spans."""

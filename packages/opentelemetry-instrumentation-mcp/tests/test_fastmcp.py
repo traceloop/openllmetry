@@ -136,8 +136,8 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
 
     # Verify TRACELOOP_WORKFLOW_NAME is also set on tool spans
     server_tool_spans = [span for span in spans if span.name == 'add_numbers.tool'
-                        and span.attributes.get('traceloop.span.kind') == 'tool'
-                        and 'traceloop.workflow.name' in span.attributes]
+                         and span.attributes.get('traceloop.span.kind') == 'tool'
+                         and 'traceloop.workflow.name' in span.attributes]
     assert len(server_tool_spans) >= 1, (
         f"Expected at least 1 server-side tool span with workflow name, found {len(server_tool_spans)}"
     )

@@ -7,7 +7,6 @@ from functools import singledispatch
 from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.context import get_value
 import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
