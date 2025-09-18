@@ -11,14 +11,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_A
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
-# Import set_agent_name with graceful fallback
-try:
-    from traceloop.sdk.tracing import set_agent_name
-except ImportError:
-    # If traceloop is not available, create a no-op function for test mode
-    def set_agent_name(name):
-        """No-op implementation when traceloop is not available."""
-        pass
+from traceloop.sdk.tracing import set_agent_name
 
 
 class OpenTelemetryTracingProcessor(TracingProcessor):

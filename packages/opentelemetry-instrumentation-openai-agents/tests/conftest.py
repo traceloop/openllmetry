@@ -1,7 +1,9 @@
 """Unit tests configuration module."""
 
 import os
+import sys
 import pytest
+from unittest.mock import MagicMock
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
@@ -21,6 +23,27 @@ from pydantic import BaseModel
 from typing import List, Dict, Union
 
 pytest_plugins = []
+
+# Mock traceloop modules before any imports
+mock_traceloop = MagicMock()
+mock_sdk = MagicMock()
+mock_tracing = MagicMock()
+mock_set_agent_name = MagicMock()
+
+mock_tracing.set_agent_name = mock_set_agent_name
+mock_sdk.tracing = mock_tracing
+mock_traceloop.sdk = mock_sdk
+
+sys.modules['traceloop'] = mock_traceloop
+sys.modules['traceloop.sdk'] = mock_sdk
+sys.modules['traceloop.sdk.tracing'] = mock_tracing
+
+
+@pytest.fixture
+def mock_set_agent_name():
+    """Provide access to the mocked set_agent_name function for test assertions."""
+    mock_set_agent_name.reset_mock()  # Reset mock between tests
+    return mock_set_agent_name
 
 
 @pytest.fixture(scope="session")
