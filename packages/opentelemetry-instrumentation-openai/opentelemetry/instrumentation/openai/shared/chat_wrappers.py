@@ -7,6 +7,7 @@ from functools import singledispatch
 from typing import List, Optional, Union
 
 from opentelemetry import context as context_api
+from opentelemetry.context import get_value
 import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
@@ -24,6 +25,7 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
     set_tools_attributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_AGENT_NAME
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
@@ -265,6 +267,12 @@ async def achat_wrapper(
 async def _handle_request(span, kwargs, instance):
     _set_request_attributes(span, kwargs, instance)
     _set_client_attributes(span, instance)
+
+    # Set agent name attribute if available in context
+    agent_name = get_value("agent_name")
+    if agent_name is not None:
+        _set_span_attribute(span, GEN_AI_AGENT_NAME, str(agent_name))
+
     if should_emit_events():
         for message in kwargs.get("messages", []):
             emit_event(

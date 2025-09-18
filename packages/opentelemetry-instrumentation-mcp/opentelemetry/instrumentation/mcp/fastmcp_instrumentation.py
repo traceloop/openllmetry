@@ -2,7 +2,6 @@
 
 import json
 import os
-import inspect
 import gc
 
 from opentelemetry.trace import Tracer
@@ -36,24 +35,29 @@ class FastMCPInstrumentor:
         """Remove FastMCP-specific instrumentation."""
         # Note: wrapt doesn't provide a clean way to unwrap post-import hooks
         # This is a limitation we'll need to document
-        self._server_name = None
         pass
 
     def _get_fastmcp_server_name(self, instance):
         """Get the FastMCP MCP server name by inspecting the call stack and finding FastMCP instances."""
         try:
+            # Find the FastMCP instance that owns this tool manager
             referrers = gc.get_referrers(instance)
 
             for ref in referrers:
                 if (hasattr(ref, '__class__') and
                     ref.__class__.__name__ == 'FastMCP' and
                     hasattr(ref, '_tool_manager') and
-                    ref._tool_manager is instance):
+                        ref._tool_manager is instance):
 
+                    # Try to get the name directly from the FastMCP instance
+                    if hasattr(ref, 'name'):
+                        return ref.name
+
+                    # Fallback to the existing approach
                     mcp_server = getattr(ref, '_mcp_server', None)
                     if mcp_server and hasattr(mcp_server, 'name'):
                         server_name = mcp_server.name
-                        return f"{server_name}.mcp"
+                        return server_name  # Remove .mcp suffix since we want clean name
 
         except Exception:
             return None
@@ -80,7 +84,6 @@ class FastMCPInstrumentor:
 
             entity_name = tool_key if tool_key else "unknown_tool"
 
-            # Get the FastMCP server name for workflow attribution
             server_name = self._get_fastmcp_server_name(instance)
 
             # Create parent server.mcp span

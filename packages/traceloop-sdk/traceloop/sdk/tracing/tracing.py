@@ -260,6 +260,11 @@ def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
 
+def set_agent_name(agent_name: str) -> None:
+    print(f"Setting agent name in tracing: {agent_name}")
+    attach(set_value("agent_name", agent_name))
+
+
 def set_entity_path(entity_path: str) -> None:
     attach(set_value("entity_path", entity_path))
 
@@ -314,6 +319,10 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     workflow_name = get_value("workflow_name")
     if workflow_name is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
+
+    agent_name = get_value("agent_name")
+    if agent_name is not None:
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, str(agent_name))
 
     entity_path = get_value("entity_path")
     if entity_path is not None:
@@ -1167,6 +1176,10 @@ def metrics_common_attributes():
     workflow_name = get_value("workflow_name")
     if workflow_name is not None:
         common_attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] = workflow_name
+
+    agent_name = get_value("agent_name")
+    if agent_name is not None:
+        common_attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] = agent_name
 
     entity_name = get_value("entity_name")
     if entity_name is not None:
