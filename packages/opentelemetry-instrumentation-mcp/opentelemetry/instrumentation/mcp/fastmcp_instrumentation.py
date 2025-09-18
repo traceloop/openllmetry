@@ -2,8 +2,8 @@
 
 import json
 import os
-import gc
 import inspect
+import gc
 
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -38,6 +38,49 @@ class FastMCPInstrumentor:
         # This is a limitation we'll need to document
         pass
 
+    def _get_fastmcp_server_name(self, instance):
+        """
+        Get the FastMCP server name by inspecting the call stack and finding FastMCP instances.
+
+        Args:
+            instance: The ToolManager instance from the wrapped call
+
+        Returns:
+            str: The server name if found, otherwise None
+        """
+        try:
+            # First, try to find FastMCP instance through stack inspection
+            frame = inspect.currentframe()
+            frame_count = 0
+
+            while frame and frame_count < 15:  # Look up the stack
+                frame_locals = frame.f_locals
+
+                # Look for FastMCP instances in the current frame's locals
+                for name, value in frame_locals.items():
+                    if hasattr(value, '__class__') and value.__class__.__name__ == 'FastMCP':
+                        server_name = getattr(value, 'name', None)
+                        if server_name:
+                            return server_name
+
+                frame = frame.f_back
+                frame_count += 1
+
+            # Fallback: Search for FastMCP instances in memory
+            # This might be less reliable if multiple servers exist, but better than nothing
+            for obj in gc.get_objects():
+                if hasattr(obj, '__class__') and obj.__class__.__name__ == 'FastMCP':
+                    # Check if this server's tool manager is the same instance
+                    server_tool_manager = getattr(obj, '_tool_manager', None)
+                    if server_tool_manager is instance:
+                        return getattr(obj, 'name', None)
+
+            return None
+
+        except Exception:
+            # If anything fails during server name detection, don't break the instrumentation
+            return None
+
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
         @dont_throw
@@ -60,21 +103,23 @@ class FastMCPInstrumentor:
 
             entity_name = tool_key if tool_key else "unknown_tool"
 
+            # Get the FastMCP server name for workflow attribution
+            server_name = self._get_fastmcp_server_name(instance)
+
             # Create parent server.mcp span
             with self._tracer.start_as_current_span("mcp.server") as mcp_span:
-                mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(instance))
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
-
-                server_name = instance.name if hasattr(instance, 'name') else "unknown_instance"
                 if server_name:
-                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, f"{server_name}.mcp")
+                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
                 with self._tracer.start_as_current_span(span_name) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+                    if server_name:
+                        tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
 
                     if self._should_send_prompts():
                         try:
