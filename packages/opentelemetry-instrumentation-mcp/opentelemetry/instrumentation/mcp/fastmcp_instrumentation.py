@@ -74,6 +74,8 @@ class FastMCPInstrumentor:
         """Create wrapper for FastMCP tool execution."""
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
+            print("NOMI - _fastmcp_tool_wrapper: args:", args)
+            print("NOMI - _fastmcp_tool_wrapper: kwargs:", kwargs)
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
 
@@ -92,13 +94,29 @@ class FastMCPInstrumentor:
 
             entity_name = tool_key if tool_key else "unknown_tool"
 
+            # Best practice: read FastMCP server name from execution context
+            context = None
+            if kwargs and 'context' in kwargs:
+                context = kwargs.get('context')
+            elif args and len(args) >= 3:
+                # call_tool(self, key, arguments, context=...)
+                context = args[2]
+
+            server_name = None
+            if context is not None:
+                fastmcp_obj = getattr(context, 'fastmcp', None)
+                if fastmcp_obj is not None:
+                    server_name = getattr(fastmcp_obj, 'name', None)
+            print("NOMI - _fastmcp_tool_wrapper: server_name:", server_name)
+
             # Create parent server.mcp span
             with self._tracer.start_as_current_span("mcp.server") as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
 
-                # Try to find and set the FastMCP server name as workflow name
-                server_name = self._find_fastmcp_server_name(instance)
+                # # Try to set the FastMCP server name as workflow name (prefer context, fallback to discovery)
+                # if not server_name:
+                #     server_name = self._find_fastmcp_server_name(instance)
                 if server_name:
                     mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, f"{server_name}.mcp")
 
