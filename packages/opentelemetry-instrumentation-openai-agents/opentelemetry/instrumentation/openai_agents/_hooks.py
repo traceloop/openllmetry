@@ -3,7 +3,6 @@
 from typing import Dict, Any
 import json
 import time
-import os
 from collections import OrderedDict
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, get_current_span, set_span_in_context
 from opentelemetry import context
@@ -12,18 +11,14 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_A
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
-# Import set_agent_name only if not in test mode
-if not os.getenv("OPENAI_AGENTS_TEST_MODE"):
-    try:
-        from traceloop.sdk.tracing import set_agent_name
-        print(f"NOMI  - Setting agent name: {set_agent_name}")
-    except ImportError:
-        # If traceloop is not available, create a no-op function
-        def set_agent_name(name): pass
-else:
-    # In test mode, create a no-op function
-    print(f"ASAF - Setting agent name: {set_agent_name}")
-    def set_agent_name(name): pass
+# Import set_agent_name with graceful fallback
+try:
+    from traceloop.sdk.tracing import set_agent_name
+except ImportError:
+    # If traceloop is not available, create a no-op function for test mode
+    def set_agent_name(name):
+        """No-op implementation when traceloop is not available."""
+        pass
 
 
 class OpenTelemetryTracingProcessor(TracingProcessor):
