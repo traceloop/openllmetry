@@ -25,7 +25,6 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
     set_tools_attributes,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_AGENT_NAME
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (

@@ -130,8 +130,8 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
 
     for server_span in mcp_server_spans:
         workflow_name = server_span.attributes.get('traceloop.workflow.name')
-        assert workflow_name == 'test-server', (
-            f"Expected workflow name 'test-server', got '{workflow_name}'"
+        assert workflow_name == 'test-server.mcp', (
+            f"Expected workflow name 'test-server.mcp', got '{workflow_name}'"
         )
 
     # Verify TRACELOOP_WORKFLOW_NAME is also set on tool spans
@@ -144,6 +144,6 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
 
     for tool_span in server_tool_spans:
         workflow_name = tool_span.attributes.get('traceloop.workflow.name')
-        assert workflow_name == 'test-server', (
-            f"Expected workflow name 'test-server' on tool span, got '{workflow_name}'"
+        assert workflow_name == 'test-server.mcp', (
+            f"Expected workflow name 'test-server.mcp' on tool span, got '{workflow_name}'"
         )
