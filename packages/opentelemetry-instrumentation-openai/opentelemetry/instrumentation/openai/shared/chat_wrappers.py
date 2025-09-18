@@ -888,6 +888,7 @@ def _build_from_streaming_response(
 
     shared_attributes = {
         SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
+        "gen_ai.request.model": request_kwargs.get("model") if request_kwargs else None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
@@ -959,6 +960,7 @@ async def _abuild_from_streaming_response(
 
     shared_attributes = {
         SpanAttributes.LLM_RESPONSE_MODEL: complete_response.get("model") or None,
+        "gen_ai.request.model": request_kwargs.get("model") if request_kwargs else None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }

@@ -4,7 +4,17 @@
     <img src="https://badge.fury.io/py/opentelemetry-instrumentation-openai.svg">
 </a>
 
+
 This library allows tracing OpenAI prompts and completions sent with the official [OpenAI library](https://github.com/openai/openai-python).
+
+## Meter Attributes
+
+As of vNEXT, all meter data points now include both the response and request model names:
+
+* `gen_ai.response.model` — The model name returned in the response (e.g., "gpt-3.5-turbo-0125").
+* `gen_ai.request.model` — The model name specified in the request payload (e.g., "gpt-3.5-turbo").
+
+This provides richer context for metrics and observability.
 
 ## Installation
 
