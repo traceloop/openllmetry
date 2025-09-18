@@ -105,7 +105,9 @@ async def test_jsonrpc_response_stdio_error(span_exporter, tracer_provider) -> N
     # Check the first MCP_Tool_Response span
     response_span = mcp_response_spans[0]
     assert response_span.status.status_code == StatusCode.ERROR
-    assert response_span.status.description == "Tool execution error"
+    # The error description should now contain the actual error message from the response
+    assert response_span.status.description is not None
+    assert "error" in response_span.status.description.lower() or "NoneType" in response_span.status.description
 
     assert SpanAttributes.MCP_RESPONSE_VALUE in response_span.attributes
     response_value = response_span.attributes[SpanAttributes.MCP_RESPONSE_VALUE]

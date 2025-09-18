@@ -178,7 +178,19 @@ class McpInstrumentor(BaseInstrumentor):
 
                     # Set span status
                     if result_value.get("isError", False):
-                        span.set_status(Status(StatusCode.ERROR, "Tool execution error"))
+                        # Extract error reason from content if available
+                        error_reason = "Tool execution error"
+                        if "content" in result_value and result_value["content"]:
+                            try:
+                                if isinstance(result_value["content"], list) and len(result_value["content"]) > 0:
+                                    content_item = result_value["content"][0]
+                                    if isinstance(content_item, dict) and "text" in content_item:
+                                        error_reason = content_item["text"]
+                                    elif isinstance(content_item, str):
+                                        error_reason = content_item
+                            except (KeyError, IndexError, TypeError):
+                                pass
+                        span.set_status(Status(StatusCode.ERROR, error_reason))
                     else:
                         span.set_status(Status(StatusCode.OK))
 
