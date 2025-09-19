@@ -41,3 +41,39 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
         )
         if write_cached_tokens > 0:
             span.set_attribute(CacheSpanAttrs.CACHED, "write")
+
+
+def prompt_caching_converse_handling(response, vendor, model, metric_params):
+    base_attrs = {
+        "gen_ai.system": vendor,
+        "gen_ai.response.model": model,
+    }
+    span = trace.get_current_span()
+    if not isinstance(span, trace.Span):
+        return
+
+    usage = response.get("usage", {})
+    read_cached_tokens = usage.get("cache_read_input_tokens", 0)
+    write_cached_tokens = usage.get("cache_creation_input_tokens", 0)
+
+    if read_cached_tokens > 0:
+        if metric_params.prompt_caching:
+            metric_params.prompt_caching.add(
+                read_cached_tokens,
+                attributes={
+                    **base_attrs,
+                    CacheSpanAttrs.TYPE: "read",
+                },
+            )
+        span.set_attribute(CacheSpanAttrs.CACHED, "read")
+
+    if write_cached_tokens > 0:
+        if metric_params.prompt_caching:
+            metric_params.prompt_caching.add(
+                write_cached_tokens,
+                attributes={
+                    **base_attrs,
+                    CacheSpanAttrs.TYPE: "write",
+                },
+            )
+        span.set_attribute(CacheSpanAttrs.CACHED, "write")
