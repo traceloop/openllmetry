@@ -2,6 +2,7 @@
 
 import os
 import sys
+import types
 import pytest
 from unittest.mock import MagicMock
 from opentelemetry.sdk.trace import TracerProvider
@@ -24,16 +25,20 @@ from typing import List, Dict, Union
 
 pytest_plugins = []
 
-# Mock traceloop modules before any imports
-mock_traceloop = MagicMock()
-mock_sdk = MagicMock()
-mock_tracing = MagicMock()
-mock_set_agent_name = MagicMock()
+# Mock traceloop modules before any imports using proper ModuleType
+SET_AGENT_NAME_MOCK = MagicMock()
 
-mock_tracing.set_agent_name = mock_set_agent_name
+# Create proper module mocks using types.ModuleType for better type safety
+mock_traceloop = types.ModuleType('traceloop')
+mock_sdk = types.ModuleType('traceloop.sdk')
+mock_tracing = types.ModuleType('traceloop.sdk.tracing')
+
+# Set up the module hierarchy and add our mock function
+mock_tracing.set_agent_name = SET_AGENT_NAME_MOCK
 mock_sdk.tracing = mock_tracing
 mock_traceloop.sdk = mock_sdk
 
+# Install mocks in sys.modules before any imports occur
 sys.modules['traceloop'] = mock_traceloop
 sys.modules['traceloop.sdk'] = mock_sdk
 sys.modules['traceloop.sdk.tracing'] = mock_tracing
@@ -42,8 +47,8 @@ sys.modules['traceloop.sdk.tracing'] = mock_tracing
 @pytest.fixture
 def mock_set_agent_name():
     """Provide access to the mocked set_agent_name function for test assertions."""
-    mock_set_agent_name.reset_mock()  # Reset mock between tests
-    return mock_set_agent_name
+    SET_AGENT_NAME_MOCK.reset_mock()  # Reset mock between tests
+    return SET_AGENT_NAME_MOCK
 
 
 @pytest.fixture(scope="session")
