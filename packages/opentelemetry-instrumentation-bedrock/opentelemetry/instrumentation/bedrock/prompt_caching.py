@@ -66,6 +66,9 @@ def prompt_caching_converse_handling(response, vendor, model, metric_params):
                 },
             )
         span.set_attribute(CacheSpanAttrs.CACHED, "read")
+        span.set_attribute(
+            "gen_ai.usage.cache_read_input_tokens", read_cached_tokens
+        )
 
     if write_cached_tokens > 0:
         if metric_params.prompt_caching:
@@ -77,3 +80,6 @@ def prompt_caching_converse_handling(response, vendor, model, metric_params):
                 },
             )
         span.set_attribute(CacheSpanAttrs.CACHED, "write")
+        span.set_attribute(
+            "gen_ai.usage.cache_creation_input_tokens", write_cached_tokens
+        )
