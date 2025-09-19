@@ -67,3 +67,4 @@ def test_prompt_cache_converse(test_context, brt):
     # data is stored across reads of metric data due to the cumulative behavior
     usage["cache_creation_input_tokens"] = cumulative_workaround
     assert_metric(reader, usage)
+    

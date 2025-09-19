@@ -400,7 +400,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     # last message sent
                     metadata = event.get("metadata", {})
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
-                    prompt_caching_converse_handling( 
+                    prompt_caching_converse_handling(
                         metadata, provider, model, metric_params
                     )
                     converse_usage_record(span, event["metadata"], metric_params)
