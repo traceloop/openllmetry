@@ -49,7 +49,7 @@ def prompt_caching_converse_handling(response, vendor, model, metric_params):
         "gen_ai.response.model": model,
     }
     span = trace.get_current_span()
-    if not isinstance(span, trace.Span):
+    if not isinstance(span, trace.Span) or not span.is_recording():
         return
 
     usage = response.get("usage", {})
