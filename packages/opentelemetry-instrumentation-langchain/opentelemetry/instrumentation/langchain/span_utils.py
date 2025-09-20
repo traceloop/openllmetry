@@ -34,6 +34,7 @@ class SpanHolder:
     entity_path: str
     start_time: float = field(default_factory=time.time)
     request_model: Optional[str] = None
+    first_token_time: Optional[float] = None
 
 
 def _message_type_to_role(message_type: str) -> str:
@@ -54,21 +55,131 @@ def _set_span_attribute(span: Span, name: str, value: AttributeValue):
         span.set_attribute(name, value)
 
 
-def set_request_params(span, kwargs, span_holder: SpanHolder):
-    if not span.is_recording():
-        return
+def _get_unified_unknown_model(class_name: str = None, existing_model: str = None) -> str:
+    """Get unified unknown model name to ensure consistency across all fallbacks."""
+
+    if existing_model:
+        existing_lower = existing_model.lower()
+        if existing_model.startswith("deepseek"):
+            return "deepseek-unknown"
+        elif existing_model.startswith("gpt"):
+            return "gpt-unknown"
+        elif existing_model.startswith("claude"):
+            return "claude-unknown"
+        elif existing_model.startswith("command"):
+            return "command-unknown"
+        elif ("ollama" in existing_lower or "llama" in existing_lower):
+            return "ollama-unknown"
+
+    # Fallback to class name-based inference
+    if class_name:
+        if "ChatDeepSeek" in class_name:
+            return "deepseek-unknown"
+        elif "ChatOpenAI" in class_name:
+            return "gpt-unknown"
+        elif "ChatAnthropic" in class_name:
+            return "claude-unknown"
+        elif "ChatCohere" in class_name:
+            return "command-unknown"
+        elif "ChatOllama" in class_name:
+            return "ollama-unknown"
+
+    return "unknown"
+
+
+def _extract_model_name_from_request(
+    kwargs, span_holder: SpanHolder, serialized: Optional[dict] = None, metadata: Optional[dict] = None
+) -> str:
+    """Enhanced model extraction supporting third-party LangChain integrations."""
 
     for model_tag in ("model", "model_id", "model_name"):
         if (model := kwargs.get(model_tag)) is not None:
-            span_holder.request_model = model
-            break
+            return model
         elif (
             model := (kwargs.get("invocation_params") or {}).get(model_tag)
         ) is not None:
-            span_holder.request_model = model
-            break
-    else:
-        model = "unknown"
+            return model
+
+    # Enhanced extraction for third-party models
+    # Check nested kwargs structures
+    if "kwargs" in kwargs:
+        nested_kwargs = kwargs["kwargs"]
+        for model_tag in ("model", "model_id", "model_name"):
+            if (model := nested_kwargs.get(model_tag)) is not None:
+                return model
+
+    # Try to extract from model configuration passed through kwargs
+    if "model_kwargs" in kwargs:
+        model_kwargs = kwargs["model_kwargs"]
+        for model_tag in ("model", "model_id", "model_name"):
+            if (model := model_kwargs.get(model_tag)) is not None:
+                return model
+
+    # Check association metadata which is important for ChatDeepSeek and similar integrations
+    if metadata:
+        if (model := metadata.get("ls_model_name")) is not None:
+            return model
+        # Check other potential metadata fields
+        for model_tag in ("model", "model_id", "model_name"):
+            if (model := metadata.get(model_tag)) is not None:
+                return model
+
+    # Try to get association properties from context
+    try:
+        from opentelemetry import context as context_api
+        association_properties = context_api.get_value("association_properties") or {}
+        if (model := association_properties.get("ls_model_name")) is not None:
+            return model
+    except Exception:
+        pass
+
+    # Extract from serialized information for third-party integrations
+    if serialized:
+        if "kwargs" in serialized:
+            ser_kwargs = serialized["kwargs"]
+            for model_tag in ("model", "model_id", "model_name"):
+                if (model := ser_kwargs.get(model_tag)) is not None:
+                    return model
+
+        for model_tag in ("model", "model_id", "model_name"):
+            if (model := serialized.get(model_tag)) is not None:
+                return model
+
+        if "id" in serialized and serialized["id"]:
+            class_name = serialized["id"][-1] if isinstance(serialized["id"], list) else str(serialized["id"])
+            return _infer_model_from_class_name(class_name, serialized)
+
+    return _get_unified_unknown_model()
+
+
+def _infer_model_from_class_name(class_name: str, serialized: dict) -> str:
+    """Infer model name from LangChain model class name for known third-party integrations."""
+
+    # For ChatDeepSeek, try to extract actual model from serialized kwargs
+    if "ChatDeepSeek" in class_name:
+        # Check if serialized contains the actual model name
+        if "kwargs" in serialized:
+            ser_kwargs = serialized["kwargs"]
+            # ChatDeepSeek might store model in different fields
+            for model_field in ("model", "_model", "model_name"):
+                if model_field in ser_kwargs and ser_kwargs[model_field]:
+                    return ser_kwargs[model_field]
+        return _get_unified_unknown_model(class_name)
+
+    if any(model_class in class_name for model_class in ["ChatOpenAI", "ChatAnthropic", "ChatCohere", "ChatOllama"]):
+        return _get_unified_unknown_model(class_name)
+
+    return _get_unified_unknown_model()
+
+
+def set_request_params(
+    span, kwargs, span_holder: SpanHolder, serialized: Optional[dict] = None, metadata: Optional[dict] = None
+):
+    if not span.is_recording():
+        return
+
+    model = _extract_model_name_from_request(kwargs, span_holder, serialized, metadata)
+    span_holder.request_model = model
 
     _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
@@ -118,7 +229,7 @@ def set_llm_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
-    set_request_params(span, kwargs, span_holder)
+    set_request_params(span, kwargs, span_holder, serialized)
 
     if should_send_prompts():
         for i, msg in enumerate(prompts):
@@ -141,7 +252,8 @@ def set_chat_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
-    set_request_params(span, serialized.get("kwargs", {}), span_holder)
+    metadata = kwargs.get("metadata")
+    set_request_params(span, serialized.get("kwargs", {}), span_holder, serialized, metadata)
 
     if should_send_prompts():
         for i, function in enumerate(
@@ -360,20 +472,43 @@ def set_chat_response_usage(
 
 
 def extract_model_name_from_response_metadata(response: LLMResult) -> str:
+    """Enhanced model name extraction from response metadata with third-party support."""
+
+    # Standard extraction from response metadata
     for generations in response.generations:
         for generation in generations:
             if (
                 getattr(generation, "message", None)
                 and getattr(generation.message, "response_metadata", None)
-                and (model_name := generation.message.response_metadata.get("model_name"))
             ):
+                metadata = generation.message.response_metadata
+                # Try multiple possible model name fields
+                for model_field in ("model_name", "model", "model_id"):
+                    if (model_name := metadata.get(model_field)):
+                        return model_name
+
+    # Enhanced extraction for third-party models
+    # Check if llm_output contains model information
+    if response.llm_output:
+        for model_field in ("model", "model_name", "model_id"):
+            if (model_name := response.llm_output.get(model_field)):
                 return model_name
 
+    # Check generation_info for model information
+    for generations in response.generations:
+        for generation in generations:
+            if hasattr(generation, "generation_info") and generation.generation_info:
+                for model_field in ("model", "model_name", "model_id"):
+                    if (model_name := generation.generation_info.get(model_field)):
+                        return model_name
 
-def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, Any]] = None) -> str:
+    return None
+
+
+def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, Any]] = None) -> Optional[str]:
     if metadata:
-        return metadata.get("ls_model_name") or "unknown"
-    return "unknown"
+        return metadata.get("ls_model_name")
+    return None
 
 
 def _set_chat_tool_calls(
