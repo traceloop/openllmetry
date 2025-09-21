@@ -321,9 +321,8 @@ def test_streaming_with_ttft_and_generation_time_metrics(instrument_legacy, read
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_deepseek import ChatDeepSeek
 
-    # Use ChatDeepSeek with the provided API to test our fixes
     llm = ChatDeepSeek(
-        api_key="sk-91aeb80b67c94cc99d2a20dba5c001d6",
+        api_key="",
         api_base="https://api.deepseek.com/beta",
         model="deepseek-chat",
         temperature=0.7,
