@@ -152,6 +152,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
 - ✅ [CrewAI](https://docs.crewai.com/introduction)
 - ✅ [OpenAI Agents](https://openai.github.io/openai-agents-python/)
+- ✅ [Langflow](https://docs.langflow.org/)
 
 ### Protocol
 
