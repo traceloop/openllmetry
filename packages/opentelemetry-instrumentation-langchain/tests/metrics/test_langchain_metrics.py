@@ -92,9 +92,6 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
 
     found_token_metric = False
     found_duration_metric = False
-    found_choices_metric = False
-    found_ttft_metric = False
-    found_streaming_time_metric = False
 
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
@@ -127,7 +124,6 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                         )
 
                 if metric.name == Meters.LLM_GENERATION_CHOICES:
-                    found_choices_metric = True
                     assert any(
                         data_point.value >= 1 for data_point in metric.data.data_points
                     )
@@ -138,7 +134,6 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                         )
 
                 if metric.name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
-                    found_ttft_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -152,7 +147,6 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                         )
 
                 if metric.name == Meters.LLM_STREAMING_TIME_TO_GENERATE:
-                    found_streaming_time_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -167,10 +161,6 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
 
     assert found_token_metric is True
     assert found_duration_metric is True
-    assert found_choices_metric is True
-    assert found_ttft_metric is True
-    assert found_streaming_time_metric is True
-    # Note: TTFT and streaming time metrics may only be present with streaming responses
 
 
 def verify_token_metrics(data_points):

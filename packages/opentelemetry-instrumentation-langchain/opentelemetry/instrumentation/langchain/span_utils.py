@@ -51,7 +51,7 @@ def _message_type_to_role(message_type: str) -> str:
 
 
 def _set_span_attribute(span: Span, name: str, value: AttributeValue):
-    if value is not None and value != "":
+    if value is not None and (value != "" if isinstance(value, str) else True):
         span.set_attribute(name, value)
 
 
