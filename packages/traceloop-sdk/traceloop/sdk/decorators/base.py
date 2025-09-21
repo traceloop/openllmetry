@@ -20,7 +20,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.telemetry import Telemetry
-from traceloop.sdk.tracing import get_tracer, set_workflow_name
+from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_entity_path,
@@ -145,6 +145,11 @@ def _setup_span(entity_name, tlp_span_kind, version):
         TraceloopSpanKindValues.AGENT,
     ]:
         set_workflow_name(entity_name)
+
+    if tlp_span_kind == TraceloopSpanKindValues.AGENT:
+        print(f"Setting agent name: {entity_name}")
+        set_agent_name(entity_name)
+
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
     with get_tracer() as tracer:
