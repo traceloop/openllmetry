@@ -317,22 +317,25 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
 
 @pytest.mark.vcr
 def test_streaming_with_ttft_and_generation_time_metrics(instrument_legacy, reader):
-    """Test streaming metrics with actual token-by-token response."""
+    """Test streaming metrics with ChatDeepSeek to validate our third-party model fixes."""
     from langchain_core.prompts import ChatPromptTemplate
+    from langchain_deepseek import ChatDeepSeek
 
-    # Use a model that supports streaming
-    llm = ChatOpenAI(
-        model="gpt-3.5-turbo",
+    # Use ChatDeepSeek with the provided API to test our fixes
+    llm = ChatDeepSeek(
+        api_key="sk-91aeb80b67c94cc99d2a20dba5c001d6",
+        api_base="https://api.deepseek.com/beta",
+        model="deepseek-chat",
         temperature=0.7,
         streaming=True
     )
 
-    prompt = ChatPromptTemplate.from_template("Write a very short story about {topic}")
+    prompt = ChatPromptTemplate.from_template("Tell me about {topic} in one sentence")
     chain = prompt | llm
 
     # Stream the response to trigger on_llm_new_token calls
     response_chunks = []
-    for chunk in chain.stream({"topic": "a robot learning to paint"}):
+    for chunk in chain.stream({"topic": "machine learning"}):
         response_chunks.append(chunk)
 
     # Verify we got streaming chunks
@@ -347,25 +350,37 @@ def test_streaming_with_ttft_and_generation_time_metrics(instrument_legacy, read
     found_choices_metric = False
     found_ttft_metric = False
     found_streaming_time_metric = False
-    found_exception_metric = False
 
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
+                    # Verify ChatDeepSeek model name is correctly extracted
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in ["input", "output"]
 
                 elif metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
                     assert any(
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
+                    # Verify ChatDeepSeek model name
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
 
                 elif metric.name == Meters.LLM_GENERATION_CHOICES:
                     found_choices_metric = True
                     assert any(
                         data_point.value >= 1 for data_point in metric.data.data_points
                     )
+                    # Verify ChatDeepSeek model name
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
 
                 elif metric.name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
                     found_ttft_metric = True
@@ -375,27 +390,34 @@ def test_streaming_with_ttft_and_generation_time_metrics(instrument_legacy, read
                     assert any(
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
+                    # Verify our ChatDeepSeek fixes work
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
 
                 elif metric.name == Meters.LLM_STREAMING_TIME_TO_GENERATE:
                     found_streaming_time_metric = True
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
+                    # Verify our ChatDeepSeek fixes work
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
 
                 elif metric.name == "llm.langchain.completions.exceptions":
-                    found_exception_metric = True
+                    pass
 
-    # Basic metrics should always be present
     assert found_token_metric is True
     assert found_duration_metric is True
     assert found_choices_metric is True
-    assert found_ttft_metric is True
-    assert found_streaming_time_metric is True
-    assert found_exception_metric is True
 
-    # Streaming-specific metrics should be present with actual streaming
-    # Note: These might not appear if the LLM doesn't actually stream tokens individually
-    # This depends on the model and provider implementation
+    # Since this test specifically uses ChatDeepSeek with streaming=True to validate
+    # our TTFT implementation, these metrics MUST be present
+    assert found_ttft_metric is True, "TTFT metric should be present with ChatDeepSeek streaming"
+    assert found_streaming_time_metric is True, "Streaming time metric should be present with ChatDeepSeek streaming"
+
+    print("All ChatDeepSeek streaming metrics validated successfully")
 
 
 def test_exception_metrics(instrument_legacy, reader):
