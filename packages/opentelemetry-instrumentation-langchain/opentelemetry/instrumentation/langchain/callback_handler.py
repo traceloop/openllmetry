@@ -712,12 +712,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             if completion_tokens > 0:
                 output_attrs = {**base_attrs, SpanAttributes.LLM_TOKEN_TYPE: "output"}
                 self.token_histogram.record(completion_tokens, attributes=output_attrs)
-        # Only call set_chat_response_usage if we didn't record token metrics above
-        # to avoid duplicate recording
-        if token_usage is None:
-            set_chat_response_usage(
-                span, response, self.token_histogram, True, model_name
-            )
+        # Always call set_chat_response_usage for complete usage metadata extraction
+        # The function handles duplicate recording prevention internally
+        set_chat_response_usage(
+            span, response, self.token_histogram, token_usage is None, model_name
+        )
         if should_emit_events():
             self._emit_llm_end_events(response)
         else:
