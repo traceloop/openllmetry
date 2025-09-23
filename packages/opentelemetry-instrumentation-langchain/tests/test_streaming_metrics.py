@@ -1,5 +1,5 @@
 import time
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from uuid import uuid4
 from langchain_core.outputs import LLMResult, Generation
 from opentelemetry.instrumentation.langchain.callback_handler import TraceloopCallbackHandler
@@ -37,33 +37,37 @@ class TestStreamingMetrics:
         mock_span = Mock(spec=Span)
         mock_span.attributes = {SpanAttributes.LLM_SYSTEM: "Langchain"}
 
-        # Create span holder with specific start time
-        start_time = time.time()
-        span_holder = SpanHolder(
-            span=mock_span,
-            token=None,
-            context=None,
-            children=[],
-            workflow_name="test",
-            entity_name="test",
-            entity_path="test",
-            start_time=start_time
-        )
-        self.handler.spans[run_id] = span_holder
+        # Use mock time for stable testing
+        with patch('opentelemetry.instrumentation.langchain.callback_handler.time.time') as mock_time, \
+             patch('opentelemetry.instrumentation.langchain.span_utils.time.time') as mock_span_time:
 
-        # Simulate first token arrival after a small delay
-        time.sleep(0.1)
-        self.handler.on_llm_new_token("Hello", run_id=run_id)
+            start_time = 1000.0
+            mock_time.return_value = start_time
+            mock_span_time.return_value = start_time
 
-        # Verify TTFT metric was recorded
-        self.ttft_histogram.record.assert_called_once()
-        args = self.ttft_histogram.record.call_args
-        ttft_value = args[0][0]
-        assert ttft_value > 0.05, "TTFT should be greater than 0.05 seconds"
+            span_holder = SpanHolder(
+                span=mock_span,
+                token=None,
+                context=None,
+                children=[],
+                workflow_name="test",
+                entity_name="test",
+                entity_path="test",
+                start_time=start_time
+            )
+            self.handler.spans[run_id] = span_holder
 
-        # Verify attributes
-        attributes = args[1]["attributes"]
-        assert attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+            mock_time.return_value = start_time + 0.1
+            mock_span_time.return_value = start_time + 0.1
+            self.handler.on_llm_new_token("Hello", run_id=run_id)
+
+            self.ttft_histogram.record.assert_called_once()
+            args = self.ttft_histogram.record.call_args
+            ttft_value = args[0][0]
+            assert abs(ttft_value - 0.1) < 0.001, f"TTFT should be approximately 0.1 seconds, got {ttft_value}"
+
+            attributes = args[1]["attributes"]
+            assert attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
 
     def test_ttft_metric_not_recorded_on_subsequent_tokens(self):
         """Test that TTFT metric is only recorded once."""
@@ -134,37 +138,47 @@ class TestStreamingMetrics:
         mock_span = Mock(spec=Span)
         mock_span.attributes = {SpanAttributes.LLM_SYSTEM: "Langchain"}
 
-        start_time = time.time()
-        span_holder = SpanHolder(
-            span=mock_span,
-            token=None,
-            context=None,
-            children=[],
-            workflow_name="test",
-            entity_name="test",
-            entity_path="test",
-            start_time=start_time
-        )
-        self.handler.spans[run_id] = span_holder
+        with patch('opentelemetry.instrumentation.langchain.callback_handler.time.time') as mock_time, \
+             patch('opentelemetry.instrumentation.langchain.span_utils.time.time') as mock_span_time:
 
-        # Simulate token arrival
-        time.sleep(0.05)
-        self.handler.on_llm_new_token("Hello", run_id=run_id)
+            start_time = 1000.0
+            mock_time.return_value = start_time
+            mock_span_time.return_value = start_time
 
-        # Simulate completion after more time
-        time.sleep(0.05)
-        llm_result = LLMResult(
-            generations=[[Generation(text="Hello world")]],
-            llm_output={"model_name": "test-model"}
-        )
+            span_holder = SpanHolder(
+                span=mock_span,
+                token=None,
+                context=None,
+                children=[],
+                workflow_name="test",
+                entity_name="test",
+                entity_path="test",
+                start_time=start_time
+            )
+            self.handler.spans[run_id] = span_holder
 
-        self.handler.on_llm_end(llm_result, run_id=run_id)
+            first_token_time = start_time + 0.05
+            mock_time.return_value = first_token_time
+            mock_span_time.return_value = first_token_time
+            self.handler.on_llm_new_token("Hello", run_id=run_id)
 
-        # Verify streaming time metric was recorded
-        self.streaming_time_histogram.record.assert_called_once()
-        args = self.streaming_time_histogram.record.call_args
-        streaming_time = args[0][0]
-        assert streaming_time > 0.04, "Streaming time should be greater than 0.04 seconds"
+            completion_time = first_token_time + 0.05
+            mock_time.return_value = completion_time
+            mock_span_time.return_value = completion_time
+            llm_result = LLMResult(
+                generations=[[Generation(text="Hello world")]],
+                llm_output={"model_name": "test-model"}
+            )
+
+            self.handler.on_llm_end(llm_result, run_id=run_id)
+
+            self.streaming_time_histogram.record.assert_called_once()
+            args = self.streaming_time_histogram.record.call_args
+            streaming_time = args[0][0]
+            assert abs(streaming_time - 0.05) < 0.001, (
+                f"Streaming time should be approximately 0.05 seconds, "
+                f"got {streaming_time}"
+            )
 
     def test_exception_metric_recorded_on_error(self):
         """Test that exception metric is recorded on LLM errors."""

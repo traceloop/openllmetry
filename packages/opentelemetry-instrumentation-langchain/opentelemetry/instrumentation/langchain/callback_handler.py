@@ -190,7 +190,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 association_properties.get("base_url") or
                 association_properties.get("server_address")
             )
-        except Exception:
+        except (AttributeError, KeyError, TypeError):
             pass
 
         if not server_address:

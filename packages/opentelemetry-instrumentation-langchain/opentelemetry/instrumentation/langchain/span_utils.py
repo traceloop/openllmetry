@@ -55,18 +55,20 @@ def _set_span_attribute(span: Span, name: str, value: AttributeValue):
         span.set_attribute(name, value)
 
 
-def _get_unified_unknown_model(class_name: str = None, existing_model: str = None) -> str:
+def _get_unified_unknown_model(
+    class_name: Optional[str] = None, existing_model: Optional[str] = None
+) -> str:
     """Get unified unknown model name to ensure consistency across all fallbacks."""
 
     if existing_model:
         existing_lower = existing_model.lower()
-        if existing_model.startswith("deepseek"):
+        if existing_lower.startswith("deepseek"):
             return "deepseek-unknown"
-        elif existing_model.startswith("gpt"):
+        elif existing_lower.startswith("gpt"):
             return "gpt-unknown"
-        elif existing_model.startswith("claude"):
+        elif existing_lower.startswith("claude"):
             return "claude-unknown"
-        elif existing_model.startswith("command"):
+        elif existing_lower.startswith("command"):
             return "command-unknown"
         elif ("ollama" in existing_lower or "llama" in existing_lower):
             return "ollama-unknown"
@@ -130,7 +132,7 @@ def _extract_model_name_from_request(
         association_properties = context_api.get_value("association_properties") or {}
         if (model := association_properties.get("ls_model_name")) is not None:
             return model
-    except Exception:
+    except (AttributeError, KeyError, TypeError):
         pass
 
     # Extract from serialized information for third-party integrations
@@ -253,7 +255,7 @@ def set_chat_request(
     span_holder: SpanHolder,
 ) -> None:
     metadata = kwargs.get("metadata")
-    set_request_params(span, serialized.get("kwargs", {}), span_holder, serialized, metadata)
+    set_request_params(span, kwargs, span_holder, serialized, metadata)
 
     if should_send_prompts():
         for i, function in enumerate(
@@ -471,7 +473,7 @@ def set_chat_response_usage(
                 )
 
 
-def extract_model_name_from_response_metadata(response: LLMResult) -> str:
+def extract_model_name_from_response_metadata(response: LLMResult) -> Optional[str]:
     """Enhanced model name extraction from response metadata with third-party support."""
 
     # Standard extraction from response metadata

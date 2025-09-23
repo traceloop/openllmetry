@@ -190,3 +190,14 @@ class TestModelExtraction:
 
         result = _extract_model_name_from_request(kwargs, self.span_holder, serialized, metadata)
         assert result == "deepseek-v3"  # Should use metadata, not fallback to "deepseek-chat"
+
+    def test_response_metadata_extraction_returns_none_when_no_model_found(self):
+        """Test that extract_model_name_from_response_metadata returns None when no model info is found."""
+        # Response with no model information anywhere
+        response = LLMResult(
+            generations=[[Generation(text="Response without model info")]],
+            llm_output={"other_field": "value"}  # No model-related fields
+        )
+
+        result = extract_model_name_from_response_metadata(response)
+        assert result is None, "Should return None when no model information is found"
