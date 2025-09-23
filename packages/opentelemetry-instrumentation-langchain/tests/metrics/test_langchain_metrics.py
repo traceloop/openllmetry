@@ -5,6 +5,8 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from langgraph.graph import StateGraph
 from openai import OpenAI
 
@@ -109,6 +111,42 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    for data_point in metric.data.data_points:
+                        assert (
+                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            == "openai"
+                        )
+
+                if metric.name == Meters.LLM_GENERATION_CHOICES:
+                    assert any(
+                        data_point.value >= 1 for data_point in metric.data.data_points
+                    )
+                    for data_point in metric.data.data_points:
+                        assert (
+                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            == "openai"
+                        )
+
+                if metric.name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    for data_point in metric.data.data_points:
+                        assert (
+                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            == "openai"
+                        )
+
+                if metric.name == Meters.LLM_STREAMING_TIME_TO_GENERATE:
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -265,3 +303,148 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
             == "openai"
         )
         assert data_point.value > 0
+
+
+@pytest.mark.vcr
+def test_streaming_with_ttft_and_generation_time_metrics(instrument_legacy, reader):
+    """Test streaming metrics with ChatDeepSeek to validate our third-party model fixes."""
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_deepseek import ChatDeepSeek
+
+    llm = ChatDeepSeek(
+        api_key="",
+        api_base="https://api.deepseek.com/beta",
+        model="deepseek-chat",
+        temperature=0.7,
+        streaming=True
+    )
+
+    prompt = ChatPromptTemplate.from_template("Tell me about {topic} in one sentence")
+    chain = prompt | llm
+
+    # Stream the response to trigger on_llm_new_token calls
+    response_chunks = []
+    for chunk in chain.stream({"topic": "machine learning"}):
+        response_chunks.append(chunk)
+
+    # Verify we got streaming chunks
+    assert len(response_chunks) > 1, "Should have multiple chunks for streaming"
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_token_metric = False
+    found_duration_metric = False
+    found_choices_metric = False
+    found_ttft_metric = False
+    found_streaming_time_metric = False
+
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == Meters.LLM_TOKEN_USAGE:
+                    found_token_metric = True
+                    # Verify ChatDeepSeek model name is correctly extracted
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in ["input", "output"]
+
+                elif metric.name == Meters.LLM_OPERATION_DURATION:
+                    found_duration_metric = True
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    # Verify ChatDeepSeek model name
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+
+                elif metric.name == Meters.LLM_GENERATION_CHOICES:
+                    found_choices_metric = True
+                    assert any(
+                        data_point.value >= 1 for data_point in metric.data.data_points
+                    )
+                    # Verify ChatDeepSeek model name
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+
+                elif metric.name == GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN:
+                    found_ttft_metric = True
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    assert any(
+                        data_point.sum > 0 for data_point in metric.data.data_points
+                    )
+                    # Verify our ChatDeepSeek fixes work
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+
+                elif metric.name == Meters.LLM_STREAMING_TIME_TO_GENERATE:
+                    found_streaming_time_metric = True
+                    assert any(
+                        data_point.count > 0 for data_point in metric.data.data_points
+                    )
+                    # Verify our ChatDeepSeek fixes work
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "Langchain"
+                        assert data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL] == "deepseek-chat"
+
+                elif metric.name == "llm.langchain.completions.exceptions":
+                    pass
+
+    assert found_token_metric is True
+    assert found_duration_metric is True
+    assert found_choices_metric is True
+
+    # Since this test specifically uses ChatDeepSeek with streaming=True to validate
+    # our TTFT implementation, these metrics MUST be present
+    assert found_ttft_metric is True, "TTFT metric should be present with ChatDeepSeek streaming"
+    assert found_streaming_time_metric is True, "Streaming time metric should be present with ChatDeepSeek streaming"
+
+    print("All ChatDeepSeek streaming metrics validated successfully")
+
+
+def test_exception_metrics(instrument_legacy, reader):
+    """Test that exception metrics are recorded when LLM calls fail."""
+    from unittest.mock import patch
+
+    llm = ChatOpenAI(model="gpt-3.5-turbo")
+    chain = LLMChain(
+        llm=llm,
+        prompt=PromptTemplate(
+            input_variables=["product"],
+            template="What is a good name for a company that makes {product}?",
+        )
+    )
+
+    # Mock the LLM to raise an exception
+    with patch.object(llm, '_generate', side_effect=Exception("API Error")):
+        try:
+            chain.run(product="test")
+        except Exception:
+            pass  # Expected to fail
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_exception_metric = False
+
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == "llm.langchain.completions.exceptions":
+                    found_exception_metric = True
+                    assert any(
+                        data_point.value >= 1 for data_point in metric.data.data_points
+                    )
+                    # Check that error attributes are set
+                    for data_point in metric.data.data_points:
+                        assert "error.type" in data_point.attributes or ERROR_TYPE in data_point.attributes
+
+    assert found_exception_metric is True

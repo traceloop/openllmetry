@@ -17,6 +17,7 @@ from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
 from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import (
@@ -68,6 +69,34 @@ class LangchainInstrumentor(BaseInstrumentor):
             description="Measures number of input and output tokens used",
         )
 
+        # Create streaming time to first token histogram
+        ttft_histogram = meter.create_histogram(
+            name=GenAIMetrics.GEN_AI_SERVER_TIME_TO_FIRST_TOKEN,
+            unit="s",
+            description="Time to first token in streaming responses",
+        )
+
+        # Create streaming time to generate histogram
+        streaming_time_histogram = meter.create_histogram(
+            name=Meters.LLM_STREAMING_TIME_TO_GENERATE,
+            unit="s",
+            description="Time between first token and completion in streaming responses",
+        )
+
+        # Create generation choices counter
+        choices_counter = meter.create_counter(
+            name=Meters.LLM_GENERATION_CHOICES,
+            unit="choice",
+            description="Number of choices returned by completions call",
+        )
+
+        # Create exception counter
+        exception_counter = meter.create_counter(
+            name="llm.langchain.completions.exceptions",
+            unit="time",
+            description="Number of exceptions occurred during LangChain completions",
+        )
+
         if not Config.use_legacy_attributes:
             event_logger_provider = kwargs.get("event_logger_provider")
             Config.event_logger = get_event_logger(
@@ -75,7 +104,8 @@ class LangchainInstrumentor(BaseInstrumentor):
             )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
-            tracer, duration_histogram, token_histogram
+            tracer, duration_histogram, token_histogram, ttft_histogram,
+            streaming_time_histogram, choices_counter, exception_counter
         )
         wrap_function_wrapper(
             module="langchain_core.callbacks",
