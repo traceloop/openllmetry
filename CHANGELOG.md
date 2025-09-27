@@ -1,3 +1,38 @@
+## v0.47.3 (2025-09-21)
+
+### Fix
+
+- **openai-agents**: propagate gen_ai.agent.name through an agent flow + set workflow name to fast mcp (#3388)
+
+## v0.47.2 (2025-09-17)
+
+### Fix
+
+- **mcp**: add mcp.server parent span wrapper for FastMCP tool calls (#3382)
+
+## v0.47.1 (2025-09-14)
+
+### Fix
+
+- **mcp**: better instrumentation for FastMCP (#3372)
+- **anthropic**: preserve streaming helper methods in instrumentation (#3377)
+- **cohere**: add v2 api instrumentation (#3378)
+- **mistralai**: instrumentation for version 1.9+ compatibility (#3376)
+- **sdk**: dual bearer send via httpx (#3373)
+
+## v0.47.0 (2025-09-10)
+
+### Feat
+
+- **writer**: initial implementation (#3209)
+
+### Fix
+
+- **crewai**: Update CrewAI instrumentation name (#3363)
+- **sample-app**: Update google genai package (#3358)
+- **traceloop-sdk**: include telemetry SDK attributes in tracing (#3359)
+- **sdk**: get default span processor don't work without a base URL (#3360)
+
 ## v0.46.2 (2025-08-29)
 
 ### Fix

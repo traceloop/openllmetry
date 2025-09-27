@@ -17,8 +17,8 @@ from opentelemetry.instrumentation.anthropic.span_utils import (
     set_response_attributes,
 )
 from opentelemetry.instrumentation.anthropic.streaming import (
-    abuild_from_streaming_response,
-    build_from_streaming_response,
+    AnthropicAsyncStream,
+    AnthropicStream,
     WrappedAsyncMessageStreamManager,
     WrappedMessageStreamManager,
 )
@@ -561,7 +561,7 @@ def _wrap(
     end_time = time.time()
 
     if is_streaming_response(response):
-        return build_from_streaming_response(
+        return AnthropicStream(
             span,
             response,
             instance._client,
@@ -682,7 +682,7 @@ async def _awrap(
         raise e
 
     if is_streaming_response(response):
-        return abuild_from_streaming_response(
+        return AnthropicAsyncStream(
             span,
             response,
             instance._client,

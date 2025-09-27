@@ -13,9 +13,9 @@ from opentelemetry.semconv_ai import SpanAttributes
 def test_mistral_embeddings_legacy(
     instrument_legacy, mistralai_client, span_exporter, log_exporter
 ):
-    mistralai_client.embeddings(
+    mistralai_client.embeddings.create(
         model="mistral-embed",
-        input="Tell me a joke about OpenTelemetry",
+        inputs="Tell me a joke about OpenTelemetry",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -36,7 +36,7 @@ def test_mistral_embeddings_legacy(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "3fe947e29a95441a94086e11de21bff1"
+        == "cc93a06d10244e07a4b2604c20855c61"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -49,9 +49,9 @@ def test_mistral_embeddings_legacy(
 def test_mistral_embeddings_with_events_with_content(
     instrument_with_content, mistralai_client, span_exporter, log_exporter
 ):
-    response = mistralai_client.embeddings(
+    response = mistralai_client.embeddings.create(
         model="mistral-embed",
-        input="Tell me a joke about OpenTelemetry",
+        inputs="Tell me a joke about OpenTelemetry",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -68,7 +68,7 @@ def test_mistral_embeddings_with_events_with_content(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "3fe947e29a95441a94086e11de21bff1"
+        == "e87386ab58e64d8c8c9f5b5175d7b1a9"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -92,9 +92,9 @@ def test_mistral_embeddings_with_events_with_content(
 def test_mistral_embeddings_with_events_with_no_content(
     instrument_with_no_content, mistralai_client, span_exporter, log_exporter
 ):
-    mistralai_client.embeddings(
+    mistralai_client.embeddings.create(
         model="mistral-embed",
-        input="Tell me a joke about OpenTelemetry",
+        inputs="Tell me a joke about OpenTelemetry",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -111,7 +111,7 @@ def test_mistral_embeddings_with_events_with_no_content(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "3fe947e29a95441a94086e11de21bff1"
+        == "233321a98ca941b1a412c4c2a74e6a8d"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -136,9 +136,9 @@ def test_mistral_embeddings_with_events_with_no_content(
 async def test_mistral_async_embeddings_legacy(
     instrument_legacy, mistralai_async_client, span_exporter, log_exporter
 ):
-    await mistralai_async_client.embeddings(
+    await mistralai_async_client.embeddings.create_async(
         model="mistral-embed",
-        input=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
+        inputs=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
     )
 
     spans = span_exporter.get_finished_spans()
@@ -159,7 +159,7 @@ async def test_mistral_async_embeddings_legacy(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "220426da5cd84a8391a0d65738c90dc8"
+        == "d5656d6c70804024b2e0729a2f30ad55"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -173,9 +173,9 @@ async def test_mistral_async_embeddings_legacy(
 async def test_mistral_async_embeddings_with_events_with_content(
     instrument_with_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    response = await mistralai_async_client.embeddings(
+    response = await mistralai_async_client.embeddings.create_async(
         model="mistral-embed",
-        input=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
+        inputs=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
     )
 
     spans = span_exporter.get_finished_spans()
@@ -192,7 +192,7 @@ async def test_mistral_async_embeddings_with_events_with_content(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "220426da5cd84a8391a0d65738c90dc8"
+        == "fd94466331664a4d8b2e3ff9bedd24f2"
     )
 
     logs = log_exporter.get_finished_logs()
@@ -230,9 +230,9 @@ async def test_mistral_async_embeddings_with_events_with_content(
 async def test_mistral_async_embeddings_with_events_with_no_content(
     instrument_with_no_content, mistralai_async_client, span_exporter, log_exporter
 ):
-    await mistralai_async_client.embeddings(
+    await mistralai_async_client.embeddings.create_async(
         model="mistral-embed",
-        input=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
+        inputs=["Tell me a joke about OpenTelemetry", "Tell me a joke about Traceloop"],
     )
 
     spans = span_exporter.get_finished_spans()
@@ -249,7 +249,7 @@ async def test_mistral_async_embeddings_with_events_with_no_content(
     )
     assert (
         mistral_span.attributes.get("gen_ai.response.id")
-        == "220426da5cd84a8391a0d65738c90dc8"
+        == "41c2e6bc6d4a463884a0729196c565b8"
     )
 
     logs = log_exporter.get_finished_logs()

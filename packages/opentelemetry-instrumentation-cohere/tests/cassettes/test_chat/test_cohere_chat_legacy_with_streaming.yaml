@@ -1,0 +1,299 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a joke, pirate style", "model": "command", "stream":
+      true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '79'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.6.1
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"a7cd9d01-255f-44a2-a186-834f942bf61e"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Ar"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"rr"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"r"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" mate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"y"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Sh"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"iver"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" tim"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"bers"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" here"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"themed"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joke"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" for"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"\n\nWhy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" did"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" go"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" dentist"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"?"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"\n\nA"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Because"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" he"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" wanted"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" find"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" some"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" treasure"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" AR"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"RR"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"RR"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!!!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nP"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"irates"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" love"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" loot"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"in"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" gold"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sometimes"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" forget"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" take"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" care"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" their"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" teeth"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" so"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" I"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" hope"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" appreciate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"themed"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joke"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" there"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sc"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ur"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"vy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" dog"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nIf"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" want"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" more"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" humor"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" let"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" know"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" I"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''ll"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" be"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" happy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sail"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" through"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" some"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" more"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"y"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" comedy"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"12c00d26-e3bb-48c0-8c49-262155b57d64","text":"Arrrr,
+        matey! Shiver me timbers, here''s a pirate-themed joke for ye:\n\nWhy did
+        the pirate go to the dentist?\n\nA: Because he wanted to find some treasure!
+        ARRRRR!!! \n\nPirates love lootin'' gold, and sometimes forget to take care
+        of their teeth, so I hope ye appreciate me pirate-themed joke there, ye scurvy
+        dog! \n\nIf ye want more pirate humor, let me know and I''ll be happy to sail
+        through some more pirate-y comedy!","generation_id":"a7cd9d01-255f-44a2-a186-834f942bf61e","chat_history":[{"role":"USER","message":"Tell
+        me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
+        me timbers, here''s a pirate-themed joke for ye:\n\nWhy did the pirate go
+        to the dentist?\n\nA: Because he wanted to find some treasure! ARRRRR!!! \n\nPirates
+        love lootin'' gold, and sometimes forget to take care of their teeth, so I
+        hope ye appreciate me pirate-themed joke there, ye scurvy dog! \n\nIf ye want
+        more pirate humor, let me know and I''ll be happy to sail through some more
+        pirate-y comedy!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"warnings":["model
+        ''command'' is deprecated and will be removed September 15 2025. Please consider
+        upgrading to a newer model to avoid future service disruptions"],"billed_units":{"input_tokens":7,"output_tokens":115},"tokens":{"input_tokens":69,"output_tokens":116}}},"finish_reason":"COMPLETE"}
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/stream+json
+      date:
+      - Sun, 14 Sep 2025 01:29:39 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 2a0bada75306984d0beeabdf7afde1ac
+      x-envoy-upstream-service-time:
+      - '79'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -13,6 +13,8 @@ from opentelemetry.semconv._incubating.attributes import (
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
+from traceloop.sdk.tracing import set_agent_name
+
 
 class OpenTelemetryTracingProcessor(TracingProcessor):
     """
@@ -75,6 +77,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if isinstance(span_data, AgentSpanData):
             agent_name = getattr(span_data, 'name', None) or "unknown_agent"
+            # Set agent name in OpenTelemetry context for propagation to child spans
+            set_agent_name(agent_name)
 
             handoff_parent = None
             trace_id = getattr(span, 'trace_id', None)
@@ -85,7 +89,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                "gen_ai.agent.name": agent_name,
+                GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
                 "gen_ai.system": "openai_agents"
             }
 
@@ -134,6 +138,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             if from_agent and from_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.from_agent"] = from_agent
+                handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
             if to_agent and to_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.to_agent"] = to_agent
 

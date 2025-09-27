@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.46.2"
+version = "0.47.3"
 description = "OpenTelemetry Cohere instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -36,12 +36,13 @@ pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 
 [tool.poetry.group.test.dependencies]
-cohere = "^5.3.3"
+cohere = "^5.18.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.27.0"
+pytest-asyncio = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -2840,3 +2840,87 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+async def test_anthropic_streaming_helper_methods_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    """Test that streaming helper methods like get_final_message() work with instrumentation"""
+    # Test async stream with get_final_message
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Test that get_final_message() actually works (this is the main fix verification)
+        message = await stream.get_final_message()
+        assert message is not None
+        assert hasattr(message, 'content')
+        assert len(message.content) > 0
+        # Test that the stream still has other helper methods available
+        assert hasattr(stream, 'text_stream')
+        assert hasattr(stream, 'until_done')
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
+    assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+async def test_anthropic_text_stream_helper_method_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter
+):
+    """Test that text_stream() helper method works with instrumentation"""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Test that text_stream() works
+        text_content = ""
+        async for text in stream.text_stream:
+            text_content += text
+        assert len(text_content) > 0
+    spans = span_exporter.get_finished_spans()
+    print(f"Number of spans created: {len(spans)}")
+    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
+    assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr()
+def test_anthropic_sync_streaming_helper_methods_legacy(
+    instrument_legacy, anthropic_client, span_exporter
+):
+    """Test that sync streaming helper methods work with instrumentation"""
+    # Test sync stream - this should work similarly without helper methods causing issues
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Collect all events
+        events = []
+        for event in stream:
+            events.append(event)
+        assert len(events) > 0
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "anthropic.chat"
