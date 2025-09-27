@@ -51,7 +51,9 @@ def set_input_content_attributes(span, llm_request_type, kwargs):
             for index, message in enumerate(kwargs.get("messages")):
                 message_dict = to_dict(message)
                 _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role", message_dict.get("role"))
-                _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content", message_dict.get("content"))
+                _set_span_attribute(
+                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content", message_dict.get("content")
+                )
 
         if kwargs.get("tools"):
             for index, tool in enumerate(kwargs.get("tools")):
@@ -95,7 +97,7 @@ def set_input_content_attributes(span, llm_request_type, kwargs):
         elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
             _set_span_attribute(
                 span,
-                f"{GEN_AI_PROMPT}.0.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                 "user",
             )
             inputs = kwargs.get("inputs")
@@ -106,7 +108,7 @@ def set_input_content_attributes(span, llm_request_type, kwargs):
                 ]
             _set_span_attribute(
                 span,
-                f"{GEN_AI_PROMPT}.0.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
                 dump_object(inputs),
             )
 
@@ -237,13 +239,13 @@ def set_span_response_attributes(span, response):
 
 def _set_span_chat_response(span, response):
     index = 0
-    prefix = f"{GEN_AI_COMPLETION}.{index}"
+    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
     _set_span_attribute(span, f"{prefix}.role", "assistant")
 
     response_dict = to_dict(response)
 
     if finish_reason := response_dict.get("finish_reason"):
-        _set_span_attribute(span, GEN_AI_RESPONSE_FINISH_REASONS, [finish_reason])
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [finish_reason])
 
     # Cohere API v1
     if text := response_dict.get("text"):

@@ -225,24 +225,16 @@ class AnthropicStream(ObjectProxy):
             raise
         except Exception as e:
             attributes = error_metrics_attributes(e)
-            if exception_counter:
-                exception_counter.add(1, attributes=attributes)
+            if self._exception_counter:
+                self._exception_counter.add(1, attributes=attributes)
             raise e
-        _process_response_item(item, complete_response)
+        _process_response_item(item, self._complete_response)
+        return item
 
-    metric_attributes = shared_metrics_attributes(complete_response)
-    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, complete_response.get("id"))
-    if duration_histogram:
-        duration = time.time() - start_time
-        duration_histogram.record(
-            duration,
-            attributes=metric_attributes,
-        )
-
-        # This mirrors the logic from build_from_streaming_response
+    def _handle_completion(self):
+        """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
-        set_span_attribute(self._span, GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
-
+        set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
         if self._duration_histogram:
             duration = time.time() - self._start_time
             self._duration_histogram.record(
@@ -250,48 +242,58 @@ class AnthropicStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-        # Calculate token usage
-        if Config.enrich_token_usage:
-            try:
-                if usage := self._complete_response.get("usage"):
-                    prompt_tokens = usage.get("input_tokens", 0) or 0
-                else:
-                    prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
+            # This mirrors the logic from build_from_streaming_response
+            metric_attributes = shared_metrics_attributes(self._complete_response)
+            set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
 
-                if usage := self._complete_response.get("usage"):
-                    completion_tokens = usage.get("output_tokens", 0) or 0
-                else:
-                    completion_content = ""
-                    if self._complete_response.get("events"):
-                        model_name = self._complete_response.get("model") or None
-                        for event in self._complete_response.get("events"):
-                            if event.get("text"):
-                                completion_content += event.get("text")
-
-                        if model_name and hasattr(self._instance, "count_tokens"):
-                            completion_tokens = self._instance.count_tokens(completion_content)
-
-                _set_token_usage(
-                    self._span,
-                    self._complete_response,
-                    prompt_tokens,
-                    completion_tokens,
-                    metric_attributes,
-                    self._token_histogram,
-                    self._choice_counter,
+            if self._duration_histogram:
+                duration = time.time() - self._start_time
+                self._duration_histogram.record(
+                    duration,
+                    attributes=metric_attributes,
                 )
-            except Exception as e:
-                logger.warning("Failed to set token usage, error: %s", e)
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+            # Calculate token usage
+            if Config.enrich_token_usage:
+                try:
+                    if usage := self._complete_response.get("usage"):
+                        prompt_tokens = usage.get("input_tokens", 0) or 0
+                    else:
+                        prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
 
-        if self._span.is_recording():
-            self._span.set_status(Status(StatusCode.OK))
-            self._span.end()
+                    if usage := self._complete_response.get("usage"):
+                        completion_tokens = usage.get("output_tokens", 0) or 0
+                    else:
+                        completion_content = ""
+                        if self._complete_response.get("events"):
+                            model_name = self._complete_response.get("model") or None
+                            for event in self._complete_response.get("events"):
+                                if event.get("text"):
+                                    completion_content += event.get("text")
 
-        self._instrumentation_completed = True
+                            if model_name and hasattr(self._instance, "count_tokens"):
+                                completion_tokens = self._instance.count_tokens(completion_content)
 
-    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, complete_response.get("id"))
+                    _set_token_usage(
+                        self._span,
+                        self._complete_response,
+                        prompt_tokens,
+                        completion_tokens,
+                        metric_attributes,
+                        self._token_histogram,
+                        self._choice_counter,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to set token usage, error: %s", e)
+
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+
+            if self._span.is_recording():
+                self._span.set_status(Status(StatusCode.OK))
+                self._span.end()
+
+            self._instrumentation_completed = True
+
 
 class AnthropicAsyncStream(ObjectProxy):
     """Wrapper for Anthropic async streaming responses that handles instrumentation while preserving helper methods"""
@@ -396,7 +398,7 @@ class AnthropicAsyncStream(ObjectProxy):
 
         # This mirrors the logic from abuild_from_streaming_response
         metric_attributes = shared_metrics_attributes(self._complete_response)
-        set_span_attribute(self._span, GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
+        set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
 
         if self._duration_histogram:
             duration = time.time() - self._start_time
