@@ -9,6 +9,9 @@ from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.crewai.version import __version__
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
@@ -65,7 +68,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "crewai",
+            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
         }
     ) as span:
         try:
@@ -102,22 +105,22 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
+                        GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     }
                 )
                 token_histogram.record(
                     instance._token_process.get_summary().completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: "crewai",
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: str(instance.llm.model),
+                        GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     },
                 )
 
-            set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, str(instance.llm.model))
-            set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, str(instance.llm.model))
+            set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, str(instance.llm.model))
+            set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.llm.model))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -166,8 +169,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
                 duration_histogram.record(
                     duration,
                     attributes={
-                     SpanAttributes.LLM_SYSTEM: "crewai",
-                     SpanAttributes.LLM_RESPONSE_MODEL: str(instance.model)
+                     GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+                     GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model)
                     },
                 )
 

@@ -19,8 +19,8 @@ from opentelemetry.instrumentation.anthropic.utils import (
     should_emit_events,
 )
 from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
@@ -88,21 +88,21 @@ def _set_token_usage(
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
 
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
+    set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.LLM_RESPONSE_MODEL, complete_response.get("model")
+        span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, complete_response.get("model")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -111,7 +111,7 @@ def _set_token_usage(
             input_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
             },
         )
 
@@ -120,7 +120,7 @@ def _set_token_usage(
             completion_tokens,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
             },
         )
 
@@ -224,30 +224,17 @@ class AnthropicStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            # Handle errors during streaming
-            if not self._instrumentation_completed:
-                attributes = error_metrics_attributes(e)
-                if self._exception_counter:
-                    self._exception_counter.add(1, attributes=attributes)
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
-                self._span.end()
-                self._instrumentation_completed = True
-            raise
-        else:
-            # Process the item for instrumentation
-            _process_response_item(item, self._complete_response)
-            return item
+            attributes = error_metrics_attributes(e)
+            if self._exception_counter:
+                self._exception_counter.add(1, attributes=attributes)
+            raise e
+        _process_response_item(item, self._complete_response)
+        return item
 
-    def _complete_instrumentation(self):
-        """Complete the instrumentation when stream is fully consumed"""
-        if self._instrumentation_completed:
-            return
-
-        # This mirrors the logic from build_from_streaming_response
+    def _handle_completion(self):
+        """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
-        set_span_attribute(self._span, GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
-
+        set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
         if self._duration_histogram:
             duration = time.time() - self._start_time
             self._duration_histogram.record(
@@ -255,46 +242,57 @@ class AnthropicStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-        # Calculate token usage
-        if Config.enrich_token_usage:
-            try:
-                if usage := self._complete_response.get("usage"):
-                    prompt_tokens = usage.get("input_tokens", 0) or 0
-                else:
-                    prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
+            # This mirrors the logic from build_from_streaming_response
+            metric_attributes = shared_metrics_attributes(self._complete_response)
+            set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
 
-                if usage := self._complete_response.get("usage"):
-                    completion_tokens = usage.get("output_tokens", 0) or 0
-                else:
-                    completion_content = ""
-                    if self._complete_response.get("events"):
-                        model_name = self._complete_response.get("model") or None
-                        for event in self._complete_response.get("events"):
-                            if event.get("text"):
-                                completion_content += event.get("text")
-
-                        if model_name and hasattr(self._instance, "count_tokens"):
-                            completion_tokens = self._instance.count_tokens(completion_content)
-
-                _set_token_usage(
-                    self._span,
-                    self._complete_response,
-                    prompt_tokens,
-                    completion_tokens,
-                    metric_attributes,
-                    self._token_histogram,
-                    self._choice_counter,
+            if self._duration_histogram:
+                duration = time.time() - self._start_time
+                self._duration_histogram.record(
+                    duration,
+                    attributes=metric_attributes,
                 )
-            except Exception as e:
-                logger.warning("Failed to set token usage, error: %s", e)
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+            # Calculate token usage
+            if Config.enrich_token_usage:
+                try:
+                    if usage := self._complete_response.get("usage"):
+                        prompt_tokens = usage.get("input_tokens", 0) or 0
+                    else:
+                        prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
 
-        if self._span.is_recording():
-            self._span.set_status(Status(StatusCode.OK))
-            self._span.end()
+                    if usage := self._complete_response.get("usage"):
+                        completion_tokens = usage.get("output_tokens", 0) or 0
+                    else:
+                        completion_content = ""
+                        if self._complete_response.get("events"):
+                            model_name = self._complete_response.get("model") or None
+                            for event in self._complete_response.get("events"):
+                                if event.get("text"):
+                                    completion_content += event.get("text")
 
-        self._instrumentation_completed = True
+                            if model_name and hasattr(self._instance, "count_tokens"):
+                                completion_tokens = self._instance.count_tokens(completion_content)
+
+                    _set_token_usage(
+                        self._span,
+                        self._complete_response,
+                        prompt_tokens,
+                        completion_tokens,
+                        metric_attributes,
+                        self._token_histogram,
+                        self._choice_counter,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to set token usage, error: %s", e)
+
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+
+            if self._span.is_recording():
+                self._span.set_status(Status(StatusCode.OK))
+                self._span.end()
+
+            self._instrumentation_completed = True
 
 
 class AnthropicAsyncStream(ObjectProxy):
@@ -400,7 +398,7 @@ class AnthropicAsyncStream(ObjectProxy):
 
         # This mirrors the logic from abuild_from_streaming_response
         metric_attributes = shared_metrics_attributes(self._complete_response)
-        set_span_attribute(self._span, GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
+        set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
 
         if self._duration_histogram:
             duration = time.time() - self._start_time

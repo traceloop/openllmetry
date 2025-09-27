@@ -7,6 +7,9 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
     dont_throw,
     should_send_prompts,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.instrumentation.google_generativeai.config import Config
 from opentelemetry.semconv_ai import (
     SpanAttributes,
@@ -216,21 +219,21 @@ async def set_input_attributes(span, args, kwargs, llm_model):
             # Simple string content in OpenAI format
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
-                json.dumps([{"type": "text", "text": contents}]),
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
+                contents,
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                 "user",
             )
         elif isinstance(contents, list):
-            # Process content list - could be mixed text and Part objects
             for prompt_index, content_item in enumerate(contents):
                 processed_content = await _process_content_item(content_item, span)
 
                 if processed_content:
                     _set_prompt_attributes(span, prompt_index, processed_content, content_item)
+
     elif args and len(args) > 0:
         # Handle args - process each argument
         for arg_index, argument in enumerate(args):
@@ -271,12 +274,12 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
             # Simple string content in OpenAI format
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
                 json.dumps([{"type": "text", "text": contents}]),
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.0.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                 "user",
             )
         elif isinstance(contents, list):
@@ -364,24 +367,24 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                 )
     elif "prompt" in kwargs:
         _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content",
+            span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
             json.dumps([{"type": "text", "text": kwargs["prompt"]}])
         )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+        _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
 
 
 def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, llm_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
@@ -397,28 +400,28 @@ def set_response_attributes(span, response, llm_model):
     if hasattr(response, "usage_metadata"):
         if isinstance(response.text, list):
             for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item.text)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response.text, str):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response.text
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response.text
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
     else:
         if isinstance(response, list):
             for index, item in enumerate(response):
-                prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
                 _set_span_attribute(span, f"{prefix}.content", item)
                 _set_span_attribute(span, f"{prefix}.role", "assistant")
         elif isinstance(response, str):
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.content", response
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response
             )
             _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
+                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
             )
 
 
@@ -426,7 +429,7 @@ def set_model_response_attributes(span, response, llm_model):
     if not span.is_recording():
         return
 
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, llm_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
     if hasattr(response, "usage_metadata"):
         _set_span_attribute(
@@ -436,12 +439,12 @@ def set_model_response_attributes(span, response, llm_model):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             response.usage_metadata.candidates_token_count,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             response.usage_metadata.prompt_token_count,
         )
 

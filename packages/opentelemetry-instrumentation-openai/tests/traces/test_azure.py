@@ -29,10 +29,10 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, azure_openai_clien
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -147,11 +147,11 @@ def test_chat_content_filtering(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == "FILTERED"
     )
     assert (
@@ -165,7 +165,7 @@ def test_chat_content_filtering(
     )
 
     content_filter_json = open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content_filter_results"
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content_filter_results"
     )
 
     assert len(content_filter_json) > 0
@@ -286,11 +286,11 @@ def test_prompt_content_filtering(
     open_ai_span = spans[0]
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
     )
 
     error = json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
     )
 
     assert "innererror" in error
@@ -330,11 +330,11 @@ def test_prompt_content_filtering_with_events_with_content(
     open_ai_span = spans[0]
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
     )
 
     error = json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
     )
 
     assert "innererror" in error
@@ -379,11 +379,11 @@ def test_prompt_content_filtering_with_events_with_no_content(
     open_ai_span = spans[0]
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"], str
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
     )
 
     error = json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_ERROR}"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
     )
 
     assert "innererror" in error
@@ -428,10 +428,10 @@ def test_chat_streaming(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -443,7 +443,7 @@ def test_chat_streaming(
 
     # prompt filter results
     prompt_filter_results = json.loads(
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}")
     )
     assert prompt_filter_results[0]["prompt_index"] == 0
     assert (
@@ -496,7 +496,7 @@ def test_chat_streaming_with_events_with_content(
 
     # prompt filter results
     prompt_filter_results = json.loads(
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}")
     )
     assert prompt_filter_results[0]["prompt_index"] == 0
     assert (
@@ -566,7 +566,7 @@ def test_chat_streaming_with_events_with_no_content(
 
     # prompt filter results
     prompt_filter_results = json.loads(
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}")
     )
     assert prompt_filter_results[0]["prompt_index"] == 0
     assert (
@@ -615,10 +615,10 @@ async def test_chat_async_streaming(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -626,9 +626,9 @@ async def test_chat_async_streaming(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     # Only assert token usage if API provides it (Existing cassetes of Azure OpenAI may not include usage in streaming)
-    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
 
@@ -674,9 +674,9 @@ async def test_chat_async_streaming_with_events_with_content(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     # Only assert token usage if API provides it (Existing cassetes of Azure OpenAI may not include usage in streaming)
-    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
 
@@ -740,9 +740,9 @@ async def test_chat_async_streaming_with_events_with_no_content(
     assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     # Only assert token usage if API provides it (Existing cassetes of Azure OpenAI may not include usage in streaming)
-    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS)
-    prompt_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
 

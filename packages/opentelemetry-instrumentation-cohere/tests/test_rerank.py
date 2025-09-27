@@ -38,43 +38,43 @@ def test_cohere_rerank_legacy(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.rerank"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "rerank"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "rerank-multilingual-v2.0"
     )
     assert (
         cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.role"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.{len(documents)}.role"
         )
         == "user"
     )
     assert (
         cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.{len(documents)}.content"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.{len(documents)}.content"
         )
         == query
     )
 
     for i, doc in enumerate(documents):
         assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.role")
+            cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role")
             == "system"
         )
         assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.{i}.content")
+            cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content")
             == doc
         )
 
     for idx, result in enumerate(response.results):
         assert (
-            cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role")
+            cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.role")
             == "assistant"
         )
         assert (
             cohere_span.attributes.get(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content"
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content"
             )
             == f"Doc {result.index}, Score: {result.relevance_score}"
         )
@@ -118,10 +118,10 @@ def test_cohere_rerank_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.rerank"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "rerank"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "rerank-multilingual-v2.0"
     )
 
@@ -182,10 +182,10 @@ def test_cohere_rerank_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.rerank"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "rerank"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "rerank-multilingual-v2.0"
     )
 

@@ -8,9 +8,10 @@ from importlib.metadata import version
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.anthropic.config import Config
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
-GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
 _PYDANTIC_VERSION = version("pydantic")
 
@@ -169,8 +170,8 @@ async def ashared_metrics_attributes(response):
 
     return {
         **common_attributes,
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        SpanAttributes.LLM_RESPONSE_MODEL: model,
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
 
 
@@ -206,15 +207,15 @@ def shared_metrics_attributes(response):
 
     return {
         **common_attributes,
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        SpanAttributes.LLM_RESPONSE_MODEL: model,
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
 
 
 @dont_throw
 def error_metrics_attributes(exception):
     return {
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
         "error.type": exception.__class__.__name__,
     }
 
