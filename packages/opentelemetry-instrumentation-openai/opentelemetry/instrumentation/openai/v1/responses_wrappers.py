@@ -97,6 +97,10 @@ def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputIte
 
 
 def process_input(inp: ResponseInputParam) -> ResponseInputParam:
+    """
+    Process input parameters for OpenAI Responses API.
+    Ensures list inputs have proper type annotations for each item.
+    """
     if not isinstance(inp, list):
         return inp
     return [prepare_input_param(item) for item in inp]
@@ -151,12 +155,20 @@ responses: dict[str, TracedData] = {}
 
 
 def parse_response(response: Union[LegacyAPIResponse, Response]) -> Response:
+    """
+    Parse OpenAI response objects.
+    Handles both legacy and modern response formats.
+    """
     if isinstance(response, LegacyAPIResponse):
         return response.parse()
     return response
 
 
 def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
+    """
+    Extract tool parameters from request kwargs.
+    Converts function tool definitions to proper type instances.
+    """
     tools_input = kwargs.get("tools", [])
     tools = []
 
@@ -173,6 +185,10 @@ def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
 def process_content_block(
     block: dict[str, Any],
 ) -> dict[str, Any]:
+    """
+    Process content blocks from response output.
+    Normalizes different content types to a standard format.
+    """
     # TODO: keep the original type once backend supports it
     if block.get("type") in ["text", "input_text", "output_text"]:
         return {"type": "text", "text": block.get("text")}
@@ -321,7 +337,10 @@ class ResponseStream(ObjectProxy):
             return chunk
 
     def _process_chunk(self, chunk):
-        """Process a streaming chunk and update TracedData."""
+        """
+        Process a streaming chunk and update TracedData.
+        Accumulates response data and records streaming metrics.
+        """
         if self._span and self._span.is_recording():
             self._span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
@@ -391,7 +410,10 @@ class ResponseStream(ObjectProxy):
 
     @dont_throw
     def _process_complete_response(self):
-        """Process the complete response and close the span."""
+        """
+        Process the complete streaming response.
+        Sets final span attributes, records metrics, and ends the span.
+        """
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
@@ -437,7 +459,10 @@ class ResponseStream(ObjectProxy):
 
     @dont_throw
     def _ensure_cleanup(self):
-        """Ensure proper cleanup of streaming response."""
+        """
+        Ensure proper cleanup of streaming response.
+        Thread-safe cleanup to prevent double-closing of spans.
+        """
         with self._cleanup_lock:
             if self._cleanup_completed:
                 logger.debug("ResponseStream cleanup already completed, skipping")
@@ -470,6 +495,10 @@ class ResponseStream(ObjectProxy):
 
 @dont_throw
 def set_data_attributes(traced_response: TracedData, span: Span):
+    """
+    Set OpenTelemetry span attributes from traced response data.
+    Includes model info, usage stats, prompts, and completions.
+    """
     _set_span_attribute(span, GEN_AI_SYSTEM, "openai")
     _set_span_attribute(span, GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, traced_response.response_id)
@@ -729,6 +758,10 @@ def responses_get_or_create_wrapper(
     args,
     kwargs,
 ):
+    """
+    Wrapper for OpenAI responses.create method.
+    Handles both streaming and non-streaming responses with full telemetry.
+    """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -886,6 +919,10 @@ async def async_responses_get_or_create_wrapper(
     args,
     kwargs,
 ):
+    """
+    Async wrapper for OpenAI responses.create method.
+    Handles both streaming and non-streaming async responses with full telemetry.
+    """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
 
@@ -1028,6 +1065,10 @@ async def async_responses_get_or_create_wrapper(
 @dont_throw
 @_with_tracer_wrapper
 def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+    """
+    Wrapper for OpenAI responses.cancel method.
+    Creates a span for cancelled responses and handles cleanup.
+    """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -1054,6 +1095,10 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
 async def async_responses_cancel_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
 ):
+    """
+    Async wrapper for OpenAI responses.cancel method.
+    Creates a span for cancelled async responses and handles cleanup.
+    """
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
 
