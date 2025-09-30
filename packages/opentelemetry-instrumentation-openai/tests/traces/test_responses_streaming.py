@@ -27,7 +27,7 @@ def test_issue_3395_streaming_spans(instrument_legacy, span_exporter: InMemorySp
     # Clear any existing spans
     span_exporter.clear()
 
-    # Create a streaming response - exact pattern from the issue
+    # Create a streaming response
     response = openai_client.responses.create(
         model="gpt-4o-mini",
         input=[{"role": "user", "content": "ping"}],
@@ -42,10 +42,10 @@ def test_issue_3395_streaming_spans(instrument_legacy, span_exporter: InMemorySp
     # Verify that spans were created (this was the bug - no spans were created)
     spans = span_exporter.get_finished_spans()
 
-    # MAIN ASSERTION: We should have at least one span (the responses.create span)
+    # Verify that we do have a span (the responses.create span)
     assert len(spans) > 0, "No spans were created for streaming response - issue #3395 not fixed!"
 
-    # Verify the span has the correct attributes
+    # Verify the attributes
     response_span = None
     for span in spans:
         if span.name == "openai.response":
