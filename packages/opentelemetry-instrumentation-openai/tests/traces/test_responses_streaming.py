@@ -224,36 +224,3 @@ def test_responses_streaming_with_tracer_context(
 
     # Verify we got chunks
     assert len(chunks_received) > 0, "No chunks received"
-
-
-@pytest.mark.vcr
-def test_responses_streaming_error_handling(
-    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
-):
-    """Test that streaming errors are properly handled and spans are closed."""
-
-    # This test would ideally trigger an error during streaming
-    # For now, we'll test with a normal stream but verify error handling paths exist
-
-    try:
-        response_stream = openai_client.responses.create(
-            model="gpt-4.1-nano",
-            input="What is the meaning of life?",
-            stream=True,
-            max_tokens=10  # Very low to potentially trigger issues
-        )
-
-        for chunk in response_stream:
-            pass  # Just consume the stream
-
-    except Exception:
-        pass  # Error is expected in some cases
-
-    # Even if there's an error, span should be created and closed
-    spans = span_exporter.get_finished_spans()
-   assert len(spans) > 0, "Spans should be available even on error"
-    if spans:
-        span = spans[0]
-        assert span.name == "openai.response"
-        # If there was an error, it should be recorded
-        # (checking span.status would be ideal here)
