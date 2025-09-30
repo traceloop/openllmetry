@@ -53,6 +53,8 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_SYSTEM,
 )
 from opentelemetry.trace import SpanKind, Span, Status, StatusCode, Tracer
+from opentelemetry import trace
+from opentelemetry.semconv_ai import SpanAttributes
 from typing import Any, Optional, Union
 from typing_extensions import NotRequired
 from wrapt import ObjectProxy
@@ -63,6 +65,7 @@ from opentelemetry.instrumentation.openai.shared import (
 )
 
 from opentelemetry.instrumentation.openai.utils import (
+    _with_responses_telemetry_wrapper,
     _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
@@ -193,20 +196,57 @@ class ResponseStream(ObjectProxy):
     """
     Stream wrapper for OpenAI Responses API streaming responses.
     Handles span lifecycle and data accumulation for streaming responses.
+    Aligned with ChatStream pattern for consistency.
     """
+    _span = None
+    _instance = None
+    _token_counter = None
+    _choice_counter = None
+    _duration_histogram = None
+    _streaming_time_to_first_token = None
+    _streaming_time_to_generate = None
+    _start_time = None
+    _request_kwargs = None
+    _traced_data = None
 
-    def __init__(self, response, tracer, start_time, initial_traced_data):
+    def __init__(
+        self,
+        span,
+        response,
+        traced_data,
+        instance=None,
+        token_counter=None,
+        choice_counter=None,
+        duration_histogram=None,
+        streaming_time_to_first_token=None,
+        streaming_time_to_generate=None,
+        start_time=None,
+        request_kwargs=None,
+    ):
         super().__init__(response)
-        self._tracer = tracer
+        self._span = span
+        self._instance = instance
+        self._traced_data = traced_data
+        self._token_counter = token_counter
+        self._choice_counter = choice_counter
+        self._duration_histogram = duration_histogram
+        self._streaming_time_to_first_token = streaming_time_to_first_token
+        self._streaming_time_to_generate = streaming_time_to_generate
         self._start_time = start_time
-        self._traced_data = initial_traced_data
-        self._span_created = False
+        self._request_kwargs = request_kwargs or {}
+
+        self._first_token = True
+        self._time_of_first_token = self._start_time
         self._cleanup_lock = threading.Lock()
         self._cleanup_completed = False
 
         # Store initial data in global responses dict
         if self._traced_data.response_id:
             responses[self._traced_data.response_id] = self._traced_data
+
+    def __del__(self):
+        """Cleanup when garbage collected."""
+        self._ensure_cleanup()
 
     def __enter__(self):
         return self
@@ -217,7 +257,7 @@ class ResponseStream(ObjectProxy):
 
         # Perform cleanup
         try:
-            self._ensure_cleanup(exc_type, exc_val)
+            self._ensure_cleanup()
         except Exception as cleanup_exception:
             logger.debug(
                 "Error during ResponseStream cleanup in __exit__: %s", cleanup_exception
@@ -229,15 +269,17 @@ class ResponseStream(ObjectProxy):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        result = await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
 
         # Perform cleanup
         try:
-            self._ensure_cleanup(exc_type, exc_val)
+            self._ensure_cleanup()
         except Exception as cleanup_exception:
             logger.debug(
                 "Error during ResponseStream cleanup in __aexit__: %s", cleanup_exception
             )
+
+        return result
 
     def __iter__(self):
         return self
@@ -245,13 +287,15 @@ class ResponseStream(ObjectProxy):
     def __next__(self):
         try:
             chunk = self.__wrapped__.__next__()
-        except StopIteration:
-            # Stream completed normally
-            self._ensure_cleanup()
-            raise
         except Exception as e:
-            # Stream error
-            self._ensure_cleanup(type(e), e)
+            if isinstance(e, StopIteration):
+                # Stream completed normally
+                self._process_complete_response()
+            else:
+                # Stream error - handle cleanup
+                self._ensure_cleanup()
+                if self._span and self._span.is_recording():
+                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
         else:
             self._process_chunk(chunk)
@@ -260,13 +304,15 @@ class ResponseStream(ObjectProxy):
     async def __anext__(self):
         try:
             chunk = await self.__wrapped__.__anext__()
-        except StopAsyncIteration:
-            # Stream completed normally
-            self._ensure_cleanup()
-            raise
         except Exception as e:
-            # Stream error
-            self._ensure_cleanup(type(e), e)
+            if isinstance(e, StopAsyncIteration):
+                # Stream completed normally
+                self._process_complete_response()
+            else:
+                # Stream error - handle cleanup
+                self._ensure_cleanup()
+                if self._span and self._span.is_recording():
+                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
             raise
         else:
             self._process_chunk(chunk)
@@ -274,6 +320,19 @@ class ResponseStream(ObjectProxy):
 
     def _process_chunk(self, chunk):
         """Process a streaming chunk and update TracedData."""
+        # Add span event for chunk
+        if self._span and self._span.is_recording():
+            self._span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+
+        # Record time to first token
+        if self._first_token and self._streaming_time_to_first_token:
+            self._time_of_first_token = time.time()
+            self._streaming_time_to_first_token.record(
+                self._time_of_first_token - self._start_time,
+                # attributes will be added later
+            )
+            self._first_token = False
+
         try:
             parsed_chunk = parse_response(chunk)
 
@@ -316,34 +375,44 @@ class ResponseStream(ObjectProxy):
             if self._traced_data.response_id:
                 responses[self._traced_data.response_id] = self._traced_data
 
-            # Check if response is completed
-            if hasattr(parsed_chunk, 'status') and parsed_chunk.status == 'completed':
-                self._create_and_close_span()
-
         except Exception as e:
             logger.debug("Error processing response chunk: %s", e)
 
-    def _create_and_close_span(self):
-        """Create and close span when response completes."""
-        with self._cleanup_lock:
-            if self._span_created:
-                return
+    @dont_throw
+    def _process_complete_response(self):
+        """Process the complete response and close the span."""
+        # Set final attributes on span
+        if self._span and self._span.is_recording():
+            set_data_attributes(self._traced_data, self._span)
 
-            try:
-                span = self._tracer.start_span(
-                    SPAN_NAME,
-                    kind=SpanKind.CLIENT,
-                    start_time=int(self._traced_data.start_time),
-                )
-                set_data_attributes(self._traced_data, span)
-                span.set_status(Status(StatusCode.OK))
-                span.end()
-                self._span_created = True
-                logger.debug("ResponseStream span created and closed for completed response")
-            except Exception as e:
-                logger.debug("Error creating span for streaming response: %s", e)
+        # Record metrics
+        if self._token_counter and self._traced_data.usage:
+            pass
 
-    def _ensure_cleanup(self, exc_type=None, exc_val=None):
+        if self._choice_counter:
+            pass
+
+        # Record duration metrics
+        if self._duration_histogram and self._start_time:
+            duration = time.time() - self._start_time
+            self._duration_histogram.record(duration)
+
+        # Record time to generate
+        if self._streaming_time_to_generate and self._time_of_first_token:
+            self._streaming_time_to_generate.record(
+                time.time() - self._time_of_first_token
+            )
+
+        # Set span status and end it
+        if self._span and self._span.is_recording():
+            self._span.set_status(Status(StatusCode.OK))
+            self._span.end()
+
+        self._cleanup_completed = True
+        logger.debug("ResponseStream span closed successfully")
+
+    @dont_throw
+    def _ensure_cleanup(self):
         """Ensure proper cleanup of streaming response."""
         with self._cleanup_lock:
             if self._cleanup_completed:
@@ -353,38 +422,27 @@ class ResponseStream(ObjectProxy):
             try:
                 logger.debug("Starting ResponseStream cleanup")
 
-                # If we haven't created a span yet and the response has an ID, create one now
-                if not self._span_created and self._traced_data.response_id:
-                    span = self._tracer.start_span(
-                        SPAN_NAME,
-                        kind=SpanKind.CLIENT,
-                        start_time=int(self._traced_data.start_time),
-                    )
-
-                    # Set error status if there was an exception
-                    if exc_type and exc_val:
-                        span.set_attribute(ERROR_TYPE, exc_type.__name__)
-                        span.record_exception(exc_val)
-                        span.set_status(StatusCode.ERROR, str(exc_val))
-                    else:
-                        span.set_status(Status(StatusCode.OK))
-
-                    set_data_attributes(self._traced_data, span)
-                    span.end()
-                    self._span_created = True
+                # Set span status and close it if still recording
+                if self._span and self._span.is_recording():
+                    self._span.set_status(Status(StatusCode.OK))
+                    self._span.end()
                     logger.debug("ResponseStream span closed in cleanup")
-
-                # Clean up from global dict if needed
-                if self._traced_data.response_id and self._traced_data.response_id in responses:
-                    # Keep the data in responses dict as it may be retrieved later
-                    pass
 
                 self._cleanup_completed = True
                 logger.debug("ResponseStream cleanup completed successfully")
 
             except Exception as e:
                 logger.debug("Error during ResponseStream cleanup: %s", str(e))
-                self._cleanup_completed = True
+
+                # Still try to close the span even if other cleanup failed
+                try:
+                    if self._span and self._span.is_recording():
+                        self._span.set_status(Status(StatusCode.ERROR, "Cleanup failed"))
+                        self._span.end()
+                    self._cleanup_completed = True
+                except Exception:
+                    # Final fallback - just mark as completed to prevent infinite loops
+                    self._cleanup_completed = True
 
 
 @dont_throw
@@ -634,66 +692,59 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 
 
 @dont_throw
-@_with_tracer_wrapper
-def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+@_with_responses_telemetry_wrapper
+def responses_get_or_create_wrapper(
+    tracer: Tracer,
+    token_counter,
+    choice_counter,
+    duration_histogram,
+    exception_counter,
+    streaming_time_to_first_token,
+    streaming_time_to_generate,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
-    start_time = time.time_ns()
 
-    try:
-        response = wrapped(*args, **kwargs)
+    # Create span before API call (matching chat pattern)
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+    )
+
+    # Use span as current context
+    with trace.use_span(span, end_on_exit=False):
+        try:
+            start_time = time.time()
+            response = wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
+
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes={"error.type": e.__class__.__name__})
+            if exception_counter:
+                exception_counter.add(1, attributes={"error.type": e.__class__.__name__})
+
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
         if isinstance(response, Stream):
-            # Handle streaming response
             response_id = kwargs.get("response_id")
             existing_data = {}
             if response_id and response_id in responses:
                 existing_data = responses[response_id].model_dump()
 
-            try:
-                traced_data = TracedData(
-                    start_time=existing_data.get("start_time", start_time),
-                    response_id=response_id or "",
-                    input=process_input(
-                        kwargs.get("input", existing_data.get("input", []))
-                    ),
-                    instructions=kwargs.get(
-                        "instructions", existing_data.get("instructions")
-                    ),
-                    tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
-                    output_blocks=existing_data.get("output_blocks", {}),
-                    usage=existing_data.get("usage"),
-                    output_text=kwargs.get(
-                        "output_text", existing_data.get("output_text", "")
-                    ),
-                    request_model=kwargs.get(
-                        "model", existing_data.get("request_model", "")
-                    ),
-                    response_model=existing_data.get("response_model", ""),
-                    # Reasoning attributes
-                    request_reasoning_summary=(
-                        kwargs.get("reasoning", {}).get(
-                            "summary", existing_data.get("request_reasoning_summary")
-                        )
-                    ),
-                    request_reasoning_effort=(
-                        kwargs.get("reasoning", {}).get(
-                            "effort", existing_data.get("request_reasoning_effort")
-                        )
-                    ),
-                    response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-                )
-                return ResponseStream(response, tracer, start_time, traced_data)
-            except Exception:
-                # If we can't create TracedData, return unwrapped stream
-                return response
-    except Exception as e:
-        response_id = kwargs.get("response_id")
-        existing_data = {}
-        if response_id and response_id in responses:
-            existing_data = responses[response_id].model_dump()
-        try:
             traced_data = TracedData(
-                start_time=existing_data.get("start_time", start_time),
+                start_time=time.time_ns(),  # Use nanoseconds for TracedData
                 response_id=response_id or "",
                 input=process_input(
                     kwargs.get("input", existing_data.get("input", []))
@@ -711,7 +762,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                     "model", existing_data.get("request_model", "")
                 ),
                 response_model=existing_data.get("response_model", ""),
-                # Reasoning attributes
                 request_reasoning_summary=(
                     kwargs.get("reasoning", {}).get(
                         "summary", existing_data.get("request_reasoning_summary")
@@ -724,23 +774,21 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
-        except Exception:
-            traced_data = None
 
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=(
-                start_time if traced_data is None else int(traced_data.start_time)
-            ),
-        )
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR, str(e))
-        if traced_data:
-            set_data_attributes(traced_data, span)
-        span.end()
-        raise
+            # Return wrapped stream with span already created
+            return ResponseStream(
+                span,
+                response,
+                traced_data,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
@@ -804,64 +852,59 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
 
 @dont_throw
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer,
+    token_counter,
+    choice_counter,
+    duration_histogram,
+    exception_counter,
+    streaming_time_to_first_token,
+    streaming_time_to_generate,
+    wrapped,
+    instance,
+    args,
+    kwargs,
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
-    start_time = time.time_ns()
 
-    try:
-        response = await wrapped(*args, **kwargs)
+    # Create span before API call (matching chat pattern)
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+    )
+
+    # Use span as current context
+    with trace.use_span(span, end_on_exit=False):
+        try:
+            start_time = time.time()
+            response = await wrapped(*args, **kwargs)
+            end_time = time.time()
+        except Exception as e:
+            end_time = time.time()
+            duration = end_time - start_time if "start_time" in locals() else 0
+
+            if duration > 0 and duration_histogram:
+                duration_histogram.record(duration, attributes={"error.type": e.__class__.__name__})
+            if exception_counter:
+                exception_counter.add(1, attributes={"error.type": e.__class__.__name__})
+
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+
+            raise
+
         if isinstance(response, (Stream, AsyncStream)):
-            # Handle streaming response
             response_id = kwargs.get("response_id")
             existing_data = {}
             if response_id and response_id in responses:
                 existing_data = responses[response_id].model_dump()
 
-            try:
-                traced_data = TracedData(
-                    start_time=existing_data.get("start_time", start_time),
-                    response_id=response_id or "",
-                    input=process_input(
-                        kwargs.get("input", existing_data.get("input", []))
-                    ),
-                    instructions=kwargs.get(
-                        "instructions", existing_data.get("instructions", "")
-                    ),
-                    tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
-                    output_blocks=existing_data.get("output_blocks", {}),
-                    usage=existing_data.get("usage"),
-                    output_text=kwargs.get("output_text", existing_data.get("output_text")),
-                    request_model=kwargs.get("model", existing_data.get("request_model")),
-                    response_model=existing_data.get("response_model"),
-                    # Reasoning attributes
-                    request_reasoning_summary=(
-                        kwargs.get("reasoning", {}).get(
-                            "summary", existing_data.get("request_reasoning_summary")
-                        )
-                    ),
-                    request_reasoning_effort=(
-                        kwargs.get("reasoning", {}).get(
-                            "effort", existing_data.get("request_reasoning_effort")
-                        )
-                    ),
-                    response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-                )
-                return ResponseStream(response, tracer, start_time, traced_data)
-            except Exception:
-                # If we can't create TracedData, return unwrapped stream
-                return response
-    except Exception as e:
-        response_id = kwargs.get("response_id")
-        existing_data = {}
-        if response_id and response_id in responses:
-            existing_data = responses[response_id].model_dump()
-        try:
             traced_data = TracedData(
-                start_time=existing_data.get("start_time", start_time),
+                start_time=time.time_ns(),  # Use nanoseconds for TracedData
                 response_id=response_id or "",
                 input=process_input(
                     kwargs.get("input", existing_data.get("input", []))
@@ -875,7 +918,6 @@ async def async_responses_get_or_create_wrapper(
                 output_text=kwargs.get("output_text", existing_data.get("output_text")),
                 request_model=kwargs.get("model", existing_data.get("request_model")),
                 response_model=existing_data.get("response_model"),
-                # Reasoning attributes
                 request_reasoning_summary=(
                     kwargs.get("reasoning", {}).get(
                         "summary", existing_data.get("request_reasoning_summary")
@@ -888,23 +930,21 @@ async def async_responses_get_or_create_wrapper(
                 ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
-        except Exception:
-            traced_data = None
 
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=(
-                start_time if traced_data is None else int(traced_data.start_time)
-            ),
-        )
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR, str(e))
-        if traced_data:
-            set_data_attributes(traced_data, span)
-        span.end()
-        raise
+            # Return wrapped stream with span already created
+            return ResponseStream(
+                span,
+                response,
+                traced_data,
+                instance,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                start_time,
+                kwargs,
+            )
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
@@ -1016,6 +1056,3 @@ async def async_responses_cancel_wrapper(
         set_data_attributes(existing_data, span)
         span.end()
     return response
-
-
-# TODO: build streaming responses

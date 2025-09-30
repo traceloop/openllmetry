@@ -113,6 +113,36 @@ def _with_chat_telemetry_wrapper(func):
     return _with_chat_telemetry
 
 
+def _with_responses_telemetry_wrapper(func):
+    def _with_responses_telemetry(
+        tracer,
+        token_counter,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
+        streaming_time_to_first_token,
+        streaming_time_to_generate,
+    ):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                token_counter,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_responses_telemetry
+
+
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):
         def wrapper(wrapped, instance, args, kwargs):
