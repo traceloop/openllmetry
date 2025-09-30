@@ -1,6 +1,8 @@
 import json
+import logging
 import pydantic
 import re
+import threading
 import time
 
 from openai import AsyncStream, Stream
@@ -50,9 +52,10 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_RESPONSE_MODEL,
     GEN_AI_SYSTEM,
 )
-from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
+from opentelemetry.trace import SpanKind, Span, Status, StatusCode, Tracer
 from typing import Any, Optional, Union
 from typing_extensions import NotRequired
+from wrapt import ObjectProxy
 
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
@@ -66,6 +69,8 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 
 SPAN_NAME = "openai.response"
+
+logger = logging.getLogger(__name__)
 
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
@@ -182,6 +187,204 @@ def process_content_block(
             "file_data": block.get("file_data"),
         }
     return block
+
+
+class ResponseStream(ObjectProxy):
+    """
+    Stream wrapper for OpenAI Responses API streaming responses.
+    Handles span lifecycle and data accumulation for streaming responses.
+    """
+
+    def __init__(self, response, tracer, start_time, initial_traced_data):
+        super().__init__(response)
+        self._tracer = tracer
+        self._start_time = start_time
+        self._traced_data = initial_traced_data
+        self._span_created = False
+        self._cleanup_lock = threading.Lock()
+        self._cleanup_completed = False
+
+        # Store initial data in global responses dict
+        if self._traced_data.response_id:
+            responses[self._traced_data.response_id] = self._traced_data
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Call the wrapped stream's __exit__
+        result = self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+        # Perform cleanup
+        try:
+            self._ensure_cleanup(exc_type, exc_val)
+        except Exception as cleanup_exception:
+            logger.debug(
+                "Error during ResponseStream cleanup in __exit__: %s", cleanup_exception
+            )
+
+        return result
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
+        # Perform cleanup
+        try:
+            self._ensure_cleanup(exc_type, exc_val)
+        except Exception as cleanup_exception:
+            logger.debug(
+                "Error during ResponseStream cleanup in __aexit__: %s", cleanup_exception
+            )
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            chunk = self.__wrapped__.__next__()
+        except StopIteration:
+            # Stream completed normally
+            self._ensure_cleanup()
+            raise
+        except Exception as e:
+            # Stream error
+            self._ensure_cleanup(type(e), e)
+            raise
+        else:
+            self._process_chunk(chunk)
+            return chunk
+
+    async def __anext__(self):
+        try:
+            chunk = await self.__wrapped__.__anext__()
+        except StopAsyncIteration:
+            # Stream completed normally
+            self._ensure_cleanup()
+            raise
+        except Exception as e:
+            # Stream error
+            self._ensure_cleanup(type(e), e)
+            raise
+        else:
+            self._process_chunk(chunk)
+            return chunk
+
+    def _process_chunk(self, chunk):
+        """Process a streaming chunk and update TracedData."""
+        try:
+            parsed_chunk = parse_response(chunk)
+
+            # Update response_id if it becomes available
+            if parsed_chunk.id and not self._traced_data.response_id:
+                self._traced_data.response_id = parsed_chunk.id
+                responses[parsed_chunk.id] = self._traced_data
+
+            # Update TracedData with new information from chunk
+            if hasattr(parsed_chunk, 'output'):
+                # Merge output blocks
+                new_blocks = {block.id: block for block in parsed_chunk.output}
+                if self._traced_data.output_blocks is None:
+                    self._traced_data.output_blocks = {}
+                self._traced_data.output_blocks.update(new_blocks)
+
+            if hasattr(parsed_chunk, 'usage') and parsed_chunk.usage:
+                self._traced_data.usage = parsed_chunk.usage
+
+            if hasattr(parsed_chunk, 'model') and parsed_chunk.model:
+                self._traced_data.response_model = parsed_chunk.model
+
+            # Update output_text if available
+            if hasattr(parsed_chunk, 'output_text'):
+                self._traced_data.output_text = parsed_chunk.output_text
+            else:
+                # Try to extract text from output blocks
+                try:
+                    if parsed_chunk.output and len(parsed_chunk.output) > 0:
+                        first_output = parsed_chunk.output[0]
+                        if hasattr(first_output, 'content') and first_output.content:
+                            if len(first_output.content) > 0:
+                                first_content = first_output.content[0]
+                                if hasattr(first_content, 'text'):
+                                    self._traced_data.output_text = first_content.text
+                except Exception:
+                    pass
+
+            # Update global dict with latest data
+            if self._traced_data.response_id:
+                responses[self._traced_data.response_id] = self._traced_data
+
+            # Check if response is completed
+            if hasattr(parsed_chunk, 'status') and parsed_chunk.status == 'completed':
+                self._create_and_close_span()
+
+        except Exception as e:
+            logger.debug("Error processing response chunk: %s", e)
+
+    def _create_and_close_span(self):
+        """Create and close span when response completes."""
+        with self._cleanup_lock:
+            if self._span_created:
+                return
+
+            try:
+                span = self._tracer.start_span(
+                    SPAN_NAME,
+                    kind=SpanKind.CLIENT,
+                    start_time=int(self._traced_data.start_time),
+                )
+                set_data_attributes(self._traced_data, span)
+                span.set_status(Status(StatusCode.OK))
+                span.end()
+                self._span_created = True
+                logger.debug("ResponseStream span created and closed for completed response")
+            except Exception as e:
+                logger.debug("Error creating span for streaming response: %s", e)
+
+    def _ensure_cleanup(self, exc_type=None, exc_val=None):
+        """Ensure proper cleanup of streaming response."""
+        with self._cleanup_lock:
+            if self._cleanup_completed:
+                logger.debug("ResponseStream cleanup already completed, skipping")
+                return
+
+            try:
+                logger.debug("Starting ResponseStream cleanup")
+
+                # If we haven't created a span yet and the response has an ID, create one now
+                if not self._span_created and self._traced_data.response_id:
+                    span = self._tracer.start_span(
+                        SPAN_NAME,
+                        kind=SpanKind.CLIENT,
+                        start_time=int(self._traced_data.start_time),
+                    )
+
+                    # Set error status if there was an exception
+                    if exc_type and exc_val:
+                        span.set_attribute(ERROR_TYPE, exc_type.__name__)
+                        span.record_exception(exc_val)
+                        span.set_status(StatusCode.ERROR, str(exc_val))
+                    else:
+                        span.set_status(Status(StatusCode.OK))
+
+                    set_data_attributes(self._traced_data, span)
+                    span.end()
+                    self._span_created = True
+                    logger.debug("ResponseStream span closed in cleanup")
+
+                # Clean up from global dict if needed
+                if self._traced_data.response_id and self._traced_data.response_id in responses:
+                    # Keep the data in responses dict as it may be retrieved later
+                    pass
+
+                self._cleanup_completed = True
+                logger.debug("ResponseStream cleanup completed successfully")
+
+            except Exception as e:
+                logger.debug("Error during ResponseStream cleanup: %s", str(e))
+                self._cleanup_completed = True
 
 
 @dont_throw
@@ -440,7 +643,49 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
-            return response
+            # Handle streaming response
+            response_id = kwargs.get("response_id")
+            existing_data = {}
+            if response_id and response_id in responses:
+                existing_data = responses[response_id].model_dump()
+
+            try:
+                traced_data = TracedData(
+                    start_time=existing_data.get("start_time", start_time),
+                    response_id=response_id or "",
+                    input=process_input(
+                        kwargs.get("input", existing_data.get("input", []))
+                    ),
+                    instructions=kwargs.get(
+                        "instructions", existing_data.get("instructions")
+                    ),
+                    tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
+                    output_blocks=existing_data.get("output_blocks", {}),
+                    usage=existing_data.get("usage"),
+                    output_text=kwargs.get(
+                        "output_text", existing_data.get("output_text", "")
+                    ),
+                    request_model=kwargs.get(
+                        "model", existing_data.get("request_model", "")
+                    ),
+                    response_model=existing_data.get("response_model", ""),
+                    # Reasoning attributes
+                    request_reasoning_summary=(
+                        kwargs.get("reasoning", {}).get(
+                            "summary", existing_data.get("request_reasoning_summary")
+                        )
+                    ),
+                    request_reasoning_effort=(
+                        kwargs.get("reasoning", {}).get(
+                            "effort", existing_data.get("request_reasoning_effort")
+                        )
+                    ),
+                    response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+                )
+                return ResponseStream(response, tracer, start_time, traced_data)
+            except Exception:
+                # If we can't create TracedData, return unwrapped stream
+                return response
     except Exception as e:
         response_id = kwargs.get("response_id")
         existing_data = {}
@@ -570,7 +815,45 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
-            return response
+            # Handle streaming response
+            response_id = kwargs.get("response_id")
+            existing_data = {}
+            if response_id and response_id in responses:
+                existing_data = responses[response_id].model_dump()
+
+            try:
+                traced_data = TracedData(
+                    start_time=existing_data.get("start_time", start_time),
+                    response_id=response_id or "",
+                    input=process_input(
+                        kwargs.get("input", existing_data.get("input", []))
+                    ),
+                    instructions=kwargs.get(
+                        "instructions", existing_data.get("instructions", "")
+                    ),
+                    tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
+                    output_blocks=existing_data.get("output_blocks", {}),
+                    usage=existing_data.get("usage"),
+                    output_text=kwargs.get("output_text", existing_data.get("output_text")),
+                    request_model=kwargs.get("model", existing_data.get("request_model")),
+                    response_model=existing_data.get("response_model"),
+                    # Reasoning attributes
+                    request_reasoning_summary=(
+                        kwargs.get("reasoning", {}).get(
+                            "summary", existing_data.get("request_reasoning_summary")
+                        )
+                    ),
+                    request_reasoning_effort=(
+                        kwargs.get("reasoning", {}).get(
+                            "effort", existing_data.get("request_reasoning_effort")
+                        )
+                    ),
+                    response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+                )
+                return ResponseStream(response, tracer, start_time, traced_data)
+            except Exception:
+                # If we can't create TracedData, return unwrapped stream
+                return response
     except Exception as e:
         response_id = kwargs.get("response_id")
         existing_data = {}
