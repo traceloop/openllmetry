@@ -61,6 +61,8 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _set_span_attribute,
     model_as_dict,
+    metric_shared_attributes,
+    _get_openai_base_url,
 )
 
 from opentelemetry.instrumentation.openai.utils import (
@@ -238,6 +240,7 @@ class ResponseStream(ObjectProxy):
         self._time_of_first_token = self._start_time
         self._cleanup_lock = threading.Lock()
         self._cleanup_completed = False
+        self._error_recorded = False
 
         # Store initial data in global responses dict
         if self._traced_data.response_id:
@@ -288,13 +291,13 @@ class ResponseStream(ObjectProxy):
             chunk = self.__wrapped__.__next__()
         except Exception as e:
             if isinstance(e, StopIteration):
-                # Stream completed normally
                 self._process_complete_response()
             else:
-                # Stream error - handle cleanup
-                self._ensure_cleanup()
                 if self._span and self._span.is_recording():
+                    self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                    self._error_recorded = True
+                self._ensure_cleanup()
             raise
         else:
             self._process_chunk(chunk)
@@ -305,13 +308,13 @@ class ResponseStream(ObjectProxy):
             chunk = await self.__wrapped__.__anext__()
         except Exception as e:
             if isinstance(e, StopAsyncIteration):
-                # Stream completed normally
                 self._process_complete_response()
             else:
-                # Stream error - handle cleanup
-                self._ensure_cleanup()
                 if self._span and self._span.is_recording():
+                    self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                    self._error_recorded = True
+                self._ensure_cleanup()
             raise
         else:
             self._process_chunk(chunk)
@@ -319,16 +322,14 @@ class ResponseStream(ObjectProxy):
 
     def _process_chunk(self, chunk):
         """Process a streaming chunk and update TracedData."""
-        # Add span event for chunk
         if self._span and self._span.is_recording():
             self._span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
-        # Record time to first token
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
                 self._time_of_first_token - self._start_time,
-                # attributes will be added later
+                attributes=self._shared_attributes()
             )
             self._first_token = False
 
@@ -377,34 +378,58 @@ class ResponseStream(ObjectProxy):
         except Exception as e:
             logger.debug("Error processing response chunk: %s", e)
 
+    def _shared_attributes(self):
+        """Get shared attributes for metrics."""
+        return metric_shared_attributes(
+            response_model=self._traced_data.response_model
+            or self._traced_data.request_model
+            or None,
+            operation="response",
+            server_address=_get_openai_base_url(self._instance),
+            is_streaming=True,
+        )
+
     @dont_throw
     def _process_complete_response(self):
         """Process the complete response and close the span."""
-        # Set final attributes on span
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
-        # Record metrics
         if self._token_counter and self._traced_data.usage:
-            pass
+            usage = self._traced_data.usage
+            shared_attrs = self._shared_attributes()
+            if hasattr(usage, 'input_tokens') and usage.input_tokens:
+                attributes_with_token_type = {
+                    **shared_attrs,
+                    SpanAttributes.LLM_TOKEN_TYPE: "input",
+                }
+                self._token_counter.record(usage.input_tokens, attributes=attributes_with_token_type)
+            if hasattr(usage, 'output_tokens') and usage.output_tokens:
+                attributes_with_token_type = {
+                    **shared_attrs,
+                    SpanAttributes.LLM_TOKEN_TYPE: "output",
+                }
+                self._token_counter.record(usage.output_tokens, attributes=attributes_with_token_type)
 
-        if self._choice_counter:
-            pass
+        if self._choice_counter and self._traced_data.output_blocks:
+            shared_attrs = self._shared_attributes()
+            num_blocks = len(self._traced_data.output_blocks)
+            if num_blocks > 0:
+                self._choice_counter.add(num_blocks, attributes=shared_attrs)
 
-        # Record duration metrics
         if self._duration_histogram and self._start_time:
             duration = time.time() - self._start_time
-            self._duration_histogram.record(duration)
+            self._duration_histogram.record(duration, attributes=self._shared_attributes())
 
-        # Record time to generate
         if self._streaming_time_to_generate and self._time_of_first_token:
             self._streaming_time_to_generate.record(
-                time.time() - self._time_of_first_token
+                time.time() - self._time_of_first_token,
+                attributes=self._shared_attributes()
             )
 
-        # Set span status and end it
         if self._span and self._span.is_recording():
-            self._span.set_status(Status(StatusCode.OK))
+            if not self._error_recorded:
+                self._span.set_status(Status(StatusCode.OK))
             self._span.end()
 
         self._cleanup_completed = True
@@ -421,9 +446,9 @@ class ResponseStream(ObjectProxy):
             try:
                 logger.debug("Starting ResponseStream cleanup")
 
-                # Set span status and close it if still recording
                 if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.OK))
+                    if not self._error_recorded:
+                        self._span.set_status(Status(StatusCode.OK))
                     self._span.end()
                     logger.debug("ResponseStream span closed in cleanup")
 
@@ -433,14 +458,13 @@ class ResponseStream(ObjectProxy):
             except Exception as e:
                 logger.debug("Error during ResponseStream cleanup: %s", str(e))
 
-                # Still try to close the span even if other cleanup failed
                 try:
                     if self._span and self._span.is_recording():
-                        self._span.set_status(Status(StatusCode.ERROR, "Cleanup failed"))
+                        if not self._error_recorded:
+                            self._span.set_status(Status(StatusCode.ERROR, "Cleanup failed"))
                         self._span.end()
                     self._cleanup_completed = True
                 except Exception:
-                    # Final fallback - just mark as completed to prevent infinite loops
                     self._cleanup_completed = True
 
 
@@ -708,13 +732,11 @@ def responses_get_or_create_wrapper(
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    # Create span before API call (matching chat pattern)
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
     )
 
-    # Use span as current context
     with trace.use_span(span, end_on_exit=False):
         try:
             start_time = time.time()
@@ -774,7 +796,6 @@ def responses_get_or_create_wrapper(
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
 
-            # Return wrapped stream with span already created
             return ResponseStream(
                 span,
                 response,
@@ -868,13 +889,11 @@ async def async_responses_get_or_create_wrapper(
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
 
-    # Create span before API call (matching chat pattern)
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
     )
 
-    # Use span as current context
     with trace.use_span(span, end_on_exit=False):
         try:
             start_time = time.time()
@@ -930,7 +949,6 @@ async def async_responses_get_or_create_wrapper(
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
 
-            # Return wrapped stream with span already created
             return ResponseStream(
                 span,
                 response,
