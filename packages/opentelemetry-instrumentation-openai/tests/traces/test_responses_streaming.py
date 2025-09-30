@@ -251,8 +251,7 @@ def test_responses_streaming_error_handling(
 
     # Even if there's an error, span should be created and closed
     spans = span_exporter.get_finished_spans()
-    assert len(spans) >= 0, "Spans should be available even on error"
-
+   assert len(spans) > 0, "Spans should be available even on error"
     if spans:
         span = spans[0]
         assert span.name == "openai.response"
