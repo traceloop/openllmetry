@@ -54,7 +54,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.trace import SpanKind, Span, Status, StatusCode, Tracer
 from opentelemetry import trace
-from opentelemetry.semconv_ai import SpanAttributes
 from typing import Any, Optional, Union
 from typing_extensions import NotRequired
 from wrapt import ObjectProxy
