@@ -302,6 +302,9 @@ class ResponseStream(ObjectProxy):
     def __iter__(self):
         return self
 
+    def __aiter__(self):
+        return self
+
     def __next__(self):
         try:
             chunk = self.__wrapped__.__next__()
