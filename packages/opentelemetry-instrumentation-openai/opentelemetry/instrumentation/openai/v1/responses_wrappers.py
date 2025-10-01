@@ -866,8 +866,8 @@ def responses_get_or_create_wrapper(
             input_data = process_input(
                 kwargs.get("input", existing_data.get("input", []))
             )
-            logger.debug(f"SyncResponseStream init - input_data: {input_data}")
-            logger.debug(f"SyncResponseStream init - kwargs keys: {kwargs.keys()}")
+            logger.info(f"SyncResponseStream init - input_data: {input_data}")
+            logger.info(f"SyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
                 start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
@@ -1029,8 +1029,8 @@ async def async_responses_get_or_create_wrapper(
             input_data = process_input(
                 kwargs.get("input", existing_data.get("input", []))
             )
-            logger.debug(f"AsyncResponseStream init - input_data: {input_data}")
-            logger.debug(f"AsyncResponseStream init - kwargs keys: {kwargs.keys()}")
+            logger.info(f"AsyncResponseStream init - input_data: {input_data}")
+            logger.info(f"AsyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
                 start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
