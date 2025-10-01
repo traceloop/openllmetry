@@ -430,13 +430,22 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                         logger.info(f"Got text from ResponseContentPartDoneEvent: {len(chunk.part.text)} chars")
 
             elif event_type == "ResponseOutputItemDoneEvent":
-                # Output item (message) completed - extract final text
-                if hasattr(chunk, 'item') and hasattr(chunk.item, 'content'):
-                    for content_item in chunk.item.content:
-                        if hasattr(content_item, 'text') and content_item.text:
-                            if self._traced_data.output_text is None or self._traced_data.output_text == "":
-                                self._traced_data.output_text = content_item.text
-                                logger.info(f"Got text from ResponseOutputItemDoneEvent: {len(content_item.text)} chars")
+                # Output item (message/tool_call) completed - store complete item
+                if hasattr(chunk, 'item'):
+                    if self._traced_data.output_blocks is None:
+                        self._traced_data.output_blocks = {}
+                    if hasattr(chunk.item, 'id'):
+                        # Store or update the complete item
+                        self._traced_data.output_blocks[chunk.item.id] = chunk.item
+                        logger.info(f"Completed output item: {chunk.item.id}, type: {getattr(chunk.item, 'type', 'unknown')}")
+
+                    # Also extract text if it's a message
+                    if hasattr(chunk.item, 'content'):
+                        for content_item in chunk.item.content:
+                            if hasattr(content_item, 'text') and content_item.text:
+                                if self._traced_data.output_text is None or self._traced_data.output_text == "":
+                                    self._traced_data.output_text = content_item.text
+                                    logger.info(f"Got text from ResponseOutputItemDoneEvent: {len(content_item.text)} chars")
 
             elif event_type == "ResponseDoneEvent":
                 # Stream completion event - may contain final metadata
