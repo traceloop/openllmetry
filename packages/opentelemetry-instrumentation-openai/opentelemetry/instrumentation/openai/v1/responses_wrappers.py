@@ -386,19 +386,22 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
             if hasattr(parsed_chunk, 'model') and parsed_chunk.model:
                 self._traced_data.response_model = parsed_chunk.model
 
-            # Update output_text if available
-            if hasattr(parsed_chunk, 'output_text'):
-                self._traced_data.output_text = parsed_chunk.output_text
+            # Accumulate output_text from chunks
+            if hasattr(parsed_chunk, 'output_text') and parsed_chunk.output_text:
+                if self._traced_data.output_text is None:
+                    self._traced_data.output_text = ""
+                self._traced_data.output_text += parsed_chunk.output_text
             else:
-                # Try to extract text from output blocks
+                # Try to extract and accumulate text from output blocks
                 try:
                     if parsed_chunk.output and len(parsed_chunk.output) > 0:
-                        first_output = parsed_chunk.output[0]
-                        if hasattr(first_output, 'content') and first_output.content:
-                            if len(first_output.content) > 0:
-                                first_content = first_output.content[0]
-                                if hasattr(first_content, 'text'):
-                                    self._traced_data.output_text = first_content.text
+                        for output in parsed_chunk.output:
+                            if hasattr(output, 'content') and output.content:
+                                for content_item in output.content:
+                                    if hasattr(content_item, 'text') and content_item.text:
+                                        if self._traced_data.output_text is None:
+                                            self._traced_data.output_text = ""
+                                        self._traced_data.output_text += content_item.text
                 except Exception:
                     pass
 
@@ -679,80 +682,81 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                 span, f"{GEN_AI_COMPLETION}.0.content", traced_response.output_text
             )
         tool_call_index = 0
-        for block in traced_response.output_blocks.values():
-            block_dict = model_as_dict(block)
-            if block_dict.get("type") == "message":
-                # either a refusal or handled in output_text above
-                continue
-            if block_dict.get("type") == "function_call":
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
-                    block_dict.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
-                    block_dict.get("name"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.arguments",
-                    block_dict.get("arguments"),
-                )
-                tool_call_index += 1
-            elif block_dict.get("type") == "file_search_call":
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
-                    block_dict.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
-                    "file_search_call",
-                )
-                tool_call_index += 1
-            elif block_dict.get("type") == "web_search_call":
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
-                    block_dict.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
-                    "web_search_call",
-                )
-                tool_call_index += 1
-            elif block_dict.get("type") == "computer_call":
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
-                    block_dict.get("call_id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
-                    "computer_call",
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.arguments",
-                    json.dumps(block_dict.get("action")),
-                )
-                tool_call_index += 1
-            elif block_dict.get("type") == "reasoning":
-                reasoning_summary = block_dict.get("summary")
-                if reasoning_summary is not None and reasoning_summary != []:
-                    if isinstance(reasoning_summary, (dict, list)):
-                        reasoning_value = json.dumps(reasoning_summary)
-                    else:
-                        reasoning_value = reasoning_summary
+        if traced_response.output_blocks:
+            for block in traced_response.output_blocks.values():
+                block_dict = model_as_dict(block)
+                if block_dict.get("type") == "message":
+                    # either a refusal or handled in output_text above
+                    continue
+                if block_dict.get("type") == "function_call":
                     _set_span_attribute(
-                        span, f"{GEN_AI_COMPLETION}.0.reasoning", reasoning_value
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
+                        block_dict.get("id"),
                     )
-            # TODO: handle other block types, in particular other calls
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
+                        block_dict.get("name"),
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.arguments",
+                        block_dict.get("arguments"),
+                    )
+                    tool_call_index += 1
+                elif block_dict.get("type") == "file_search_call":
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
+                        block_dict.get("id"),
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
+                        "file_search_call",
+                    )
+                    tool_call_index += 1
+                elif block_dict.get("type") == "web_search_call":
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
+                        block_dict.get("id"),
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
+                        "web_search_call",
+                    )
+                    tool_call_index += 1
+                elif block_dict.get("type") == "computer_call":
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.id",
+                        block_dict.get("call_id"),
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.name",
+                        "computer_call",
+                    )
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_COMPLETION}.0.tool_calls.{tool_call_index}.arguments",
+                        json.dumps(block_dict.get("action")),
+                    )
+                    tool_call_index += 1
+                elif block_dict.get("type") == "reasoning":
+                    reasoning_summary = block_dict.get("summary")
+                    if reasoning_summary is not None and reasoning_summary != []:
+                        if isinstance(reasoning_summary, (dict, list)):
+                            reasoning_value = json.dumps(reasoning_summary)
+                        else:
+                            reasoning_value = reasoning_summary
+                        _set_span_attribute(
+                            span, f"{GEN_AI_COMPLETION}.0.reasoning", reasoning_value
+                        )
+                # TODO: handle other block types, in particular other calls
 
 
 @dont_throw
@@ -821,9 +825,7 @@ def responses_get_or_create_wrapper(
                 tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
                 output_blocks=existing_data.get("output_blocks", {}),
                 usage=existing_data.get("usage"),
-                output_text=kwargs.get(
-                    "output_text", existing_data.get("output_text", "")
-                ),
+                output_text=existing_data.get("output_text", None),
                 request_model=kwargs.get(
                     "model", existing_data.get("request_model", "")
                 ),
@@ -982,7 +984,7 @@ async def async_responses_get_or_create_wrapper(
                 tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
                 output_blocks=existing_data.get("output_blocks", {}),
                 usage=existing_data.get("usage"),
-                output_text=kwargs.get("output_text", existing_data.get("output_text")),
+                output_text=existing_data.get("output_text", None),
                 request_model=kwargs.get("model", existing_data.get("request_model")),
                 response_model=existing_data.get("response_model"),
                 request_reasoning_summary=(
