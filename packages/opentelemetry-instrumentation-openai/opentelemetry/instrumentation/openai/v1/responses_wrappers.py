@@ -555,8 +555,8 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     Set OpenTelemetry span attributes from traced response data.
     Includes model info, usage stats, prompts, and completions.
     """
-    logger.debug(f"set_data_attributes - input: {traced_response.input}, output_text: {traced_response.output_text[:100] if traced_response.output_text else None}")
-    logger.debug(f"set_data_attributes - usage: {traced_response.usage}")
+    logger.info(f"set_data_attributes - input: {traced_response.input}, output_text: {traced_response.output_text[:100] if traced_response.output_text else None}")
+    logger.info(f"set_data_attributes - usage: {traced_response.usage}")
     _set_span_attribute(span, GEN_AI_SYSTEM, "openai")
     _set_span_attribute(span, GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, traced_response.response_id)
@@ -649,14 +649,14 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             prompt_index += 1
 
         if isinstance(traced_response.input, str):
-            logger.debug(f"Setting prompt as string: {traced_response.input[:100]}")
+            logger.info(f"Setting prompt as string: {traced_response.input[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_PROMPT}.{prompt_index}.content", traced_response.input
             )
             _set_span_attribute(span, f"{GEN_AI_PROMPT}.{prompt_index}.role", "user")
             prompt_index += 1
         elif traced_response.input:
-            logger.debug(f"Setting prompt as list with {len(traced_response.input) if traced_response.input else 0} items")
+            logger.info(f"Setting prompt as list with {len(traced_response.input) if traced_response.input else 0} items")
             for block in traced_response.input:
                 block_dict = model_as_dict(block)
                 if block_dict.get("type", "message") == "message":
@@ -721,11 +721,11 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                     prompt_index += 1
                 # TODO: handle other block types
         else:
-            logger.debug(f"Input is neither string nor list: {type(traced_response.input)}")
+            logger.info(f"Input is neither string nor list: {type(traced_response.input)}")
 
         _set_span_attribute(span, f"{GEN_AI_COMPLETION}.0.role", "assistant")
         if traced_response.output_text:
-            logger.debug(f"Setting completion content: {traced_response.output_text[:100]}")
+            logger.info(f"Setting completion content: {traced_response.output_text[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_COMPLETION}.0.content", traced_response.output_text
             )
