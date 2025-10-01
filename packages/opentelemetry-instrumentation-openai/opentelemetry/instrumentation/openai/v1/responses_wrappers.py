@@ -102,7 +102,7 @@ def process_input(inp: ResponseInputParam) -> ResponseInputParam:
     Process input parameters for OpenAI Responses API.
     Ensures list inputs have proper type annotations for each item.
     """
-    logger.debug(f"process_input called with type: {type(inp)}, value: {inp[:100] if isinstance(inp, str) else inp}")
+    logger.info(f"process_input called with type: {type(inp)}, value: {inp[:100] if isinstance(inp, str) else inp}")
     if not isinstance(inp, list):
         return inp
     return [prepare_input_param(item) for item in inp]
@@ -366,49 +366,61 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
             self._first_token = False
 
         try:
-            parsed_chunk = parse_response(chunk)
-            logger.debug(f"ResponseStream chunk - id: {getattr(parsed_chunk, 'id', None)}, has_output: {hasattr(parsed_chunk, 'output')}, has_usage: {hasattr(parsed_chunk, 'usage')}")
+            # Chunks are already event objects, not Response objects
+            event_type = type(chunk).__name__
+            logger.info(f"ResponseStream event - type: {event_type}, chunk: {chunk}")
 
-            # Update response_id if it becomes available
-            if parsed_chunk.id and not self._traced_data.response_id:
-                self._traced_data.response_id = parsed_chunk.id
-                responses[parsed_chunk.id] = self._traced_data
+            # Handle different event types
+            if event_type == "ResponseCreatedEvent":
+                # This event should have the response_id
+                if hasattr(chunk, 'response') and hasattr(chunk.response, 'id'):
+                    self._traced_data.response_id = chunk.response.id
+                    responses[chunk.response.id] = self._traced_data
+                    logger.info(f"Got response_id from ResponseCreatedEvent: {chunk.response.id}")
 
-            # Update TracedData with new information from chunk
-            if hasattr(parsed_chunk, 'output'):
-                # Merge output blocks
-                new_blocks = {block.id: block for block in parsed_chunk.output}
-                if self._traced_data.output_blocks is None:
-                    self._traced_data.output_blocks = {}
-                self._traced_data.output_blocks.update(new_blocks)
+            elif event_type == "ResponseTextDeltaEvent":
+                # This event contains text deltas
+                if hasattr(chunk, 'text_delta'):
+                    if self._traced_data.output_text is None:
+                        self._traced_data.output_text = ""
+                    self._traced_data.output_text += chunk.text_delta
+                    logger.info(f"Accumulated text delta: {len(chunk.text_delta)} chars, total: {len(self._traced_data.output_text)}")
 
-            if hasattr(parsed_chunk, 'usage') and parsed_chunk.usage:
-                self._traced_data.usage = parsed_chunk.usage
-                logger.debug(f"ResponseStream got usage data: {parsed_chunk.usage}")
+            elif event_type == "ResponseOutputItemAddedEvent":
+                # New output item added
+                if hasattr(chunk, 'output_item'):
+                    if self._traced_data.output_blocks is None:
+                        self._traced_data.output_blocks = {}
+                    if hasattr(chunk.output_item, 'id'):
+                        self._traced_data.output_blocks[chunk.output_item.id] = chunk.output_item
+                        logger.info(f"Added output item: {chunk.output_item.id}")
 
-            if hasattr(parsed_chunk, 'model') and parsed_chunk.model:
-                self._traced_data.response_model = parsed_chunk.model
+            elif event_type == "ResponseInProgressEvent":
+                # Status update - might contain usage or other metadata
+                if hasattr(chunk, 'response'):
+                    if hasattr(chunk.response, 'usage'):
+                        self._traced_data.usage = chunk.response.usage
+                        logger.info(f"Got usage from ResponseInProgressEvent: {chunk.response.usage}")
+                    if hasattr(chunk.response, 'model'):
+                        self._traced_data.response_model = chunk.response.model
 
-            # Accumulate output_text from chunks
-            if hasattr(parsed_chunk, 'output_text') and parsed_chunk.output_text:
-                if self._traced_data.output_text is None:
-                    self._traced_data.output_text = ""
-                self._traced_data.output_text += parsed_chunk.output_text
-                logger.debug(f"ResponseStream accumulated text from output_text: {len(parsed_chunk.output_text)} chars, total: {len(self._traced_data.output_text)}")
+            elif event_type == "ResponseCompletedEvent":
+                # Final event with complete response data
+                if hasattr(chunk, 'response'):
+                    if hasattr(chunk.response, 'usage'):
+                        self._traced_data.usage = chunk.response.usage
+                        logger.info(f"Got final usage from ResponseCompletedEvent: {chunk.response.usage}")
+                    if hasattr(chunk.response, 'output_text'):
+                        # Override with final complete text if available
+                        self._traced_data.output_text = chunk.response.output_text
+                        logger.info(f"Got final output_text from ResponseCompletedEvent")
+
+            elif event_type == "ResponseDoneEvent":
+                # Stream completion event - may contain final metadata
+                logger.info("Got ResponseDoneEvent indicating stream completion")
+
             else:
-                # Try to extract and accumulate text from output blocks
-                try:
-                    if parsed_chunk.output and len(parsed_chunk.output) > 0:
-                        for output in parsed_chunk.output:
-                            if hasattr(output, 'content') and output.content:
-                                for content_item in output.content:
-                                    if hasattr(content_item, 'text') and content_item.text:
-                                        if self._traced_data.output_text is None:
-                                            self._traced_data.output_text = ""
-                                        self._traced_data.output_text += content_item.text
-                                        logger.debug(f"ResponseStream accumulated text from content: {len(content_item.text)} chars, total: {len(self._traced_data.output_text)}")
-                except Exception as e:
-                    logger.debug(f"ResponseStream error extracting text: {e}")
+                logger.info(f"Unhandled event type: {event_type}")
 
             # Update global dict with latest data
             if self._traced_data.response_id:
@@ -434,7 +446,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         Process the complete streaming response.
         Sets final span attributes, records metrics, and ends the span.
         """
-        logger.debug(f"ResponseStream _process_complete_response - input: {self._traced_data.input}, output_text: {self._traced_data.output_text[:100] if self._traced_data.output_text else None}, usage: {self._traced_data.usage}")
+        logger.info(f"ResponseStream _process_complete_response - input: {self._traced_data.input}, output_text: {self._traced_data.output_text[:100] if self._traced_data.output_text else None}, usage: {self._traced_data.usage}")
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
