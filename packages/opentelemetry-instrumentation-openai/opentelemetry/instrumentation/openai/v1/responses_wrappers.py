@@ -380,11 +380,11 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
 
             elif event_type == "ResponseTextDeltaEvent":
                 # This event contains text deltas
-                if hasattr(chunk, 'text_delta'):
+                if hasattr(chunk, 'delta'):
                     if self._traced_data.output_text is None:
                         self._traced_data.output_text = ""
-                    self._traced_data.output_text += chunk.text_delta
-                    logger.info(f"Accumulated text delta: {len(chunk.text_delta)} chars, total: {len(self._traced_data.output_text)}")
+                    self._traced_data.output_text += chunk.delta
+                    logger.info(f"Accumulated text delta: {len(chunk.delta)} chars, total: {len(self._traced_data.output_text)}")
 
             elif event_type == "ResponseOutputItemAddedEvent":
                 # New output item added
@@ -414,6 +414,29 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                         # Override with final complete text if available
                         self._traced_data.output_text = chunk.response.output_text
                         logger.info(f"Got final output_text from ResponseCompletedEvent")
+
+            elif event_type == "ResponseTextDoneEvent":
+                # Text streaming completed - contains full text
+                if hasattr(chunk, 'text'):
+                    self._traced_data.output_text = chunk.text
+                    logger.info(f"Got complete text from ResponseTextDoneEvent: {len(chunk.text)} chars")
+
+            elif event_type == "ResponseContentPartDoneEvent":
+                # Content part completed
+                if hasattr(chunk, 'part') and hasattr(chunk.part, 'text'):
+                    # This contains the complete text for this content part
+                    if self._traced_data.output_text is None or self._traced_data.output_text == "":
+                        self._traced_data.output_text = chunk.part.text
+                        logger.info(f"Got text from ResponseContentPartDoneEvent: {len(chunk.part.text)} chars")
+
+            elif event_type == "ResponseOutputItemDoneEvent":
+                # Output item (message) completed - extract final text
+                if hasattr(chunk, 'item') and hasattr(chunk.item, 'content'):
+                    for content_item in chunk.item.content:
+                        if hasattr(content_item, 'text') and content_item.text:
+                            if self._traced_data.output_text is None or self._traced_data.output_text == "":
+                                self._traced_data.output_text = content_item.text
+                                logger.info(f"Got text from ResponseOutputItemDoneEvent: {len(content_item.text)} chars")
 
             elif event_type == "ResponseDoneEvent":
                 # Stream completion event - may contain final metadata
