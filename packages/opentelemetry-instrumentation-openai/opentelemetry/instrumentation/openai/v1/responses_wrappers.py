@@ -130,7 +130,7 @@ else:
 
 
 class TracedData(pydantic.BaseModel):
-    start_time: float  # time.time_ns()
+    start_time: int  # nanoseconds since Unix epoch for span creation
     response_id: str
     # actually Union[str, list[Union[ResponseInputItemParam, ResponseOutputMessageParamWithoutId]]],
     # but this only works properly in Python 3.10+ / newer pydantic
@@ -835,7 +835,7 @@ def responses_get_or_create_wrapper(
             logger.debug(f"SyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
-                start_time=time.time_ns(),  # Use nanoseconds for TracedData
+                start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
                 response_id=response_id or "",
                 input=input_data,
                 instructions=kwargs.get(
@@ -897,7 +897,7 @@ def responses_get_or_create_wrapper(
             except Exception:
                 pass
         traced_data = TracedData(
-            start_time=existing_data.get("start_time", start_time),
+            start_time=existing_data.get("start_time", int(start_time * 1e9)),
             response_id=parsed_response.id,
             input=process_input(existing_data.get("input", kwargs.get("input"))),
             instructions=existing_data.get("instructions", kwargs.get("instructions")),
@@ -929,7 +929,7 @@ def responses_get_or_create_wrapper(
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
+            start_time=traced_data.start_time,  # Already in nanoseconds
         )
         set_data_attributes(traced_data, span)
         span.end()
@@ -998,7 +998,7 @@ async def async_responses_get_or_create_wrapper(
             logger.debug(f"AsyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
-                start_time=time.time_ns(),  # Use nanoseconds for TracedData
+                start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
                 response_id=response_id or "",
                 input=input_data,
                 instructions=kwargs.get(
@@ -1059,7 +1059,7 @@ async def async_responses_get_or_create_wrapper(
                 pass
 
         traced_data = TracedData(
-            start_time=existing_data.get("start_time", start_time),
+            start_time=existing_data.get("start_time", int(start_time * 1e9)),
             response_id=parsed_response.id,
             input=process_input(existing_data.get("input", kwargs.get("input"))),
             instructions=existing_data.get("instructions", kwargs.get("instructions")),
@@ -1091,7 +1091,7 @@ async def async_responses_get_or_create_wrapper(
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
+            start_time=traced_data.start_time,  # Already in nanoseconds
         )
         set_data_attributes(traced_data, span)
         span.end()
@@ -1118,7 +1118,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
-            start_time=existing_data.start_time,
+            start_time=existing_data.start_time,  # Already in nanoseconds
             record_exception=True,
         )
         span.record_exception(Exception("Response cancelled"))
@@ -1148,7 +1148,7 @@ async def async_responses_cancel_wrapper(
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
-            start_time=existing_data.start_time,
+            start_time=existing_data.start_time,  # Already in nanoseconds
             record_exception=True,
         )
         span.record_exception(Exception("Response cancelled"))
