@@ -68,12 +68,12 @@ def test_cohere_chat_legacy(
         cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res.text
     )
-    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 58
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
-    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "440f51f4-3e47-44b6-a5d7-5ba33edcfc58"

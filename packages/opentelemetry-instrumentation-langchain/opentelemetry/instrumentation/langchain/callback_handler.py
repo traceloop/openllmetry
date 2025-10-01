@@ -625,6 +625,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         if should_emit_events():
             self._emit_llm_end_events(response)
+            # Also set span attributes for backward compatibility
+            set_chat_response(span, response)
         else:
             set_chat_response(span, response)
 

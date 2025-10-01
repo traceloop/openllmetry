@@ -171,20 +171,22 @@ def set_span_response_attributes(span, response):
     # Cohere v4
     if token_count := response_dict.get("token_count"):
         token_count_dict = to_dict(token_count)
+        input_tokens = token_count_dict.get("prompt_tokens", 0)
+        output_tokens = token_count_dict.get("response_tokens", 0)
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            token_count_dict.get("total_tokens"),
+            input_tokens + output_tokens,
         )
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            token_count_dict.get("response_tokens"),
+            output_tokens,
         )
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            token_count_dict.get("prompt_tokens"),
+            input_tokens,
         )
 
     # Cohere v5
@@ -202,12 +204,12 @@ def set_span_response_attributes(span, response):
         )
         _set_span_attribute(
             span,
-            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
             input_tokens,
         )
 

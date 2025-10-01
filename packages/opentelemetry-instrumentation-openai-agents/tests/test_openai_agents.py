@@ -138,11 +138,11 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
 
     # Test usage tokens
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_PROMPT_TOKENS] is not None
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_COMPLETION_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] is not None
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_PROMPT_TOKENS] > 0
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_COMPLETION_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
 
     # Test completions using OpenAI semantic conventions

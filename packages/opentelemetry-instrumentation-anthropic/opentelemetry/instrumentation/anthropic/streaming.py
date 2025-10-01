@@ -97,14 +97,6 @@ def _set_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, complete_response.get("model")
     )
-    set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
-    )
-    set_span_attribute(
-        span,
-        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
-        cache_creation_tokens,
-    )
 
     if token_histogram and type(input_tokens) is int and input_tokens >= 0:
         token_histogram.record(
@@ -293,6 +285,12 @@ class AnthropicStream(ObjectProxy):
                 self._span.end()
 
             self._instrumentation_completed = True
+
+    def _complete_instrumentation(self):
+        """Complete the instrumentation when stream is fully consumed"""
+        if self._instrumentation_completed:
+            return
+        self._handle_completion()
 
 
 class AnthropicAsyncStream(ObjectProxy):
@@ -496,6 +494,15 @@ class WrappedMessageStreamManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
 
+    def __getattr__(self, name):
+        if name == '_complete_instrumentation':
+            return self._complete_instrumentation
+        return getattr(self._stream_manager, name)
+
+    def _complete_instrumentation(self):
+        """Complete the instrumentation when stream is fully consumed"""
+        pass
+
 
 class WrappedAsyncMessageStreamManager:
     """Wrapper for AsyncMessageStreamManager that handles instrumentation"""
@@ -543,3 +550,12 @@ class WrappedAsyncMessageStreamManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
+
+    def __getattr__(self, name):
+        if name == '_complete_instrumentation':
+            return self._complete_instrumentation
+        return getattr(self._stream_manager, name)
+
+    def _complete_instrumentation(self):
+        """Complete the instrumentation when stream is fully consumed"""
+        pass

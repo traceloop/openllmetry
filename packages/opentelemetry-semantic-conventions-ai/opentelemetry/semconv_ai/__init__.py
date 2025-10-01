@@ -62,6 +62,14 @@ class Meters:
 
 
 class SpanAttributes:
+    # GenAI Usage Cache Attributes (missing from incubating semantic conventions)
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+
+    # LLM Cache Attributes (legacy naming - keeping for backward compatibility)
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
     LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"

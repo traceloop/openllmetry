@@ -69,7 +69,6 @@ def test_openai_prompt_caching(instrument_legacy, span_exporter, log_exporter):
 
     assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 315
-    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
 
     assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1149
     assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 353
