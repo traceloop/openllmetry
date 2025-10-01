@@ -719,6 +719,18 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                         json.dumps(call_content),
                     )
                     prompt_index += 1
+                elif block_dict.get("type") == "function_call_output":
+                    _set_span_attribute(
+                        span, f"{GEN_AI_PROMPT}.{prompt_index}.role", "tool"
+                    )
+                    output_content = block_dict.get("output", "")
+                    call_id = block_dict.get("call_id", "")
+                    _set_span_attribute(
+                        span,
+                        f"{GEN_AI_PROMPT}.{prompt_index}.content",
+                        json.dumps({"call_id": call_id, "output": output_content}),
+                    )
+                    prompt_index += 1
                 # TODO: handle other block types
         else:
             logger.info(f"Input is neither string nor list: {type(traced_response.input)}")
