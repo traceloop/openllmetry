@@ -6,6 +6,7 @@ import threading
 import time
 
 from openai import AsyncStream, Stream
+import inspect
 
 # Conditional imports for backward compatibility
 try:
@@ -209,7 +210,18 @@ def process_content_block(
     return block
 
 
-class ResponseStream(ObjectProxy):
+class ResponseStreamBase:
+    """Base class to ensure async iteration methods are visible"""
+    def __aiter__(self):
+        """Return self as the async iterator."""
+        return self
+
+    async def __anext__(self):
+        """Async iteration - must be overridden"""
+        raise NotImplementedError
+
+
+class ResponseStream(ResponseStreamBase, ObjectProxy):
     """
     Stream wrapper for OpenAI Responses API streaming responses.
     Handles span lifecycle and data accumulation for streaming responses.
@@ -300,9 +312,6 @@ class ResponseStream(ObjectProxy):
         return result
 
     def __iter__(self):
-        return self
-
-    def __aiter__(self):
         return self
 
     def __next__(self):
