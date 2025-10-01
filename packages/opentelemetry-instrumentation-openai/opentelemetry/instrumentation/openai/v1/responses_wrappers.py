@@ -102,6 +102,7 @@ def process_input(inp: ResponseInputParam) -> ResponseInputParam:
     Process input parameters for OpenAI Responses API.
     Ensures list inputs have proper type annotations for each item.
     """
+    logger.debug(f"process_input called with type: {type(inp)}, value: {inp[:100] if isinstance(inp, str) else inp}")
     if not isinstance(inp, list):
         return inp
     return [prepare_input_param(item) for item in inp]
@@ -366,6 +367,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
 
         try:
             parsed_chunk = parse_response(chunk)
+            logger.debug(f"ResponseStream chunk - id: {getattr(parsed_chunk, 'id', None)}, has_output: {hasattr(parsed_chunk, 'output')}, has_usage: {hasattr(parsed_chunk, 'usage')}")
 
             # Update response_id if it becomes available
             if parsed_chunk.id and not self._traced_data.response_id:
@@ -382,6 +384,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
 
             if hasattr(parsed_chunk, 'usage') and parsed_chunk.usage:
                 self._traced_data.usage = parsed_chunk.usage
+                logger.debug(f"ResponseStream got usage data: {parsed_chunk.usage}")
 
             if hasattr(parsed_chunk, 'model') and parsed_chunk.model:
                 self._traced_data.response_model = parsed_chunk.model
@@ -391,6 +394,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 if self._traced_data.output_text is None:
                     self._traced_data.output_text = ""
                 self._traced_data.output_text += parsed_chunk.output_text
+                logger.debug(f"ResponseStream accumulated text from output_text: {len(parsed_chunk.output_text)} chars, total: {len(self._traced_data.output_text)}")
             else:
                 # Try to extract and accumulate text from output blocks
                 try:
@@ -402,8 +406,9 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                                         if self._traced_data.output_text is None:
                                             self._traced_data.output_text = ""
                                         self._traced_data.output_text += content_item.text
-                except Exception:
-                    pass
+                                        logger.debug(f"ResponseStream accumulated text from content: {len(content_item.text)} chars, total: {len(self._traced_data.output_text)}")
+                except Exception as e:
+                    logger.debug(f"ResponseStream error extracting text: {e}")
 
             # Update global dict with latest data
             if self._traced_data.response_id:
@@ -429,6 +434,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         Process the complete streaming response.
         Sets final span attributes, records metrics, and ends the span.
         """
+        logger.debug(f"ResponseStream _process_complete_response - input: {self._traced_data.input}, output_text: {self._traced_data.output_text[:100] if self._traced_data.output_text else None}, usage: {self._traced_data.usage}")
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
@@ -514,6 +520,8 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     Set OpenTelemetry span attributes from traced response data.
     Includes model info, usage stats, prompts, and completions.
     """
+    logger.debug(f"set_data_attributes - input: {traced_response.input}, output_text: {traced_response.output_text[:100] if traced_response.output_text else None}")
+    logger.debug(f"set_data_attributes - usage: {traced_response.usage}")
     _set_span_attribute(span, GEN_AI_SYSTEM, "openai")
     _set_span_attribute(span, GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, traced_response.response_id)
@@ -606,12 +614,14 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             prompt_index += 1
 
         if isinstance(traced_response.input, str):
+            logger.debug(f"Setting prompt as string: {traced_response.input[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_PROMPT}.{prompt_index}.content", traced_response.input
             )
             _set_span_attribute(span, f"{GEN_AI_PROMPT}.{prompt_index}.role", "user")
             prompt_index += 1
-        else:
+        elif traced_response.input:
+            logger.debug(f"Setting prompt as list with {len(traced_response.input) if traced_response.input else 0} items")
             for block in traced_response.input:
                 block_dict = model_as_dict(block)
                 if block_dict.get("type", "message") == "message":
@@ -675,12 +685,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                     )
                     prompt_index += 1
                 # TODO: handle other block types
+        else:
+            logger.debug(f"Input is neither string nor list: {type(traced_response.input)}")
 
         _set_span_attribute(span, f"{GEN_AI_COMPLETION}.0.role", "assistant")
         if traced_response.output_text:
+            logger.debug(f"Setting completion content: {traced_response.output_text[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_COMPLETION}.0.content", traced_response.output_text
             )
+        else:
+            logger.debug("No output_text to set as completion content")
         tool_call_index = 0
         if traced_response.output_blocks:
             for block in traced_response.output_blocks.values():
@@ -813,12 +828,16 @@ def responses_get_or_create_wrapper(
             if response_id and response_id in responses:
                 existing_data = responses[response_id].model_dump()
 
+            input_data = process_input(
+                kwargs.get("input", existing_data.get("input", []))
+            )
+            logger.debug(f"SyncResponseStream init - input_data: {input_data}")
+            logger.debug(f"SyncResponseStream init - kwargs keys: {kwargs.keys()}")
+
             traced_data = TracedData(
                 start_time=time.time_ns(),  # Use nanoseconds for TracedData
                 response_id=response_id or "",
-                input=process_input(
-                    kwargs.get("input", existing_data.get("input", []))
-                ),
+                input=input_data,
                 instructions=kwargs.get(
                     "instructions", existing_data.get("instructions")
                 ),
@@ -972,12 +991,16 @@ async def async_responses_get_or_create_wrapper(
             if response_id and response_id in responses:
                 existing_data = responses[response_id].model_dump()
 
+            input_data = process_input(
+                kwargs.get("input", existing_data.get("input", []))
+            )
+            logger.debug(f"AsyncResponseStream init - input_data: {input_data}")
+            logger.debug(f"AsyncResponseStream init - kwargs keys: {kwargs.keys()}")
+
             traced_data = TracedData(
                 start_time=time.time_ns(),  # Use nanoseconds for TracedData
                 response_id=response_id or "",
-                input=process_input(
-                    kwargs.get("input", existing_data.get("input", []))
-                ),
+                input=input_data,
                 instructions=kwargs.get(
                     "instructions", existing_data.get("instructions", "")
                 ),
