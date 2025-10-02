@@ -1,12 +1,12 @@
 import json
 import logging
-import pydantic
 import re
 import threading
 import time
 
+import pydantic
+
 from openai import AsyncStream, Stream
-import inspect
 
 # Conditional imports for backward compatibility
 try:
@@ -38,34 +38,34 @@ except ImportError:
     ResponseOutputMessageParam = Dict[str, Any]
     RESPONSES_AVAILABLE = False
 
-from openai._legacy_response import LegacyAPIResponse
-from opentelemetry import context as context_api
+from typing import Any, Optional, Union
+
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_COMPLETION,
     GEN_AI_PROMPT,
-    GEN_AI_USAGE_INPUT_TOKENS,
-    GEN_AI_USAGE_OUTPUT_TOKENS,
-    GEN_AI_RESPONSE_ID,
     GEN_AI_REQUEST_MODEL,
+    GEN_AI_RESPONSE_ID,
     GEN_AI_RESPONSE_MODEL,
     GEN_AI_SYSTEM,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
 )
-from opentelemetry.trace import SpanKind, Span, Status, StatusCode, Tracer
-from opentelemetry import trace
-from typing import Any, Optional, Union
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import Span, SpanKind, Status, StatusCode, Tracer
 from typing_extensions import NotRequired
 from wrapt import ObjectProxy
 
+from openai._legacy_response import LegacyAPIResponse
+from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
-    _set_span_attribute,
-    model_as_dict,
-    metric_shared_attributes,
     _get_openai_base_url,
+    _set_span_attribute,
+    metric_shared_attributes,
+    model_as_dict,
 )
-
 from opentelemetry.instrumentation.openai.utils import (
     _with_responses_telemetry_wrapper,
     _with_tracer_wrapper,
@@ -269,8 +269,8 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         self._cleanup_lock = threading.Lock()
         self._cleanup_completed = False
         self._error_recorded = False
+        self._text_deltas = []
 
-        # Store initial data in global responses dict
         if self._traced_data.response_id:
             responses[self._traced_data.response_id] = self._traced_data
 
@@ -376,11 +376,8 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                     responses[chunk.response.id] = self._traced_data
 
             elif event_type == "ResponseTextDeltaEvent":
-                # This event contains text deltas
-                if hasattr(chunk, 'delta'):
-                    if self._traced_data.output_text is None:
-                        self._traced_data.output_text = ""
-                    self._traced_data.output_text += chunk.delta
+                if delta := getattr(chunk, 'delta', None):
+                    self._text_deltas.append(delta)
 
             elif event_type == "ResponseOutputItemAddedEvent":
                 # New output item added
@@ -408,32 +405,24 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                         self._traced_data.output_text = chunk.response.output_text
 
             elif event_type == "ResponseTextDoneEvent":
-                # Text streaming completed - contains full text
-                if hasattr(chunk, 'text'):
-                    self._traced_data.output_text = chunk.text
+                if text := getattr(chunk, 'text', None):
+                    self._traced_data.output_text = text
 
             elif event_type == "ResponseContentPartDoneEvent":
-                # Content part completed
-                if hasattr(chunk, 'part') and hasattr(chunk.part, 'text'):
-                    # This contains the complete text for this content part
-                    if self._traced_data.output_text is None or self._traced_data.output_text == "":
-                        self._traced_data.output_text = chunk.part.text
+                if (hasattr(chunk, 'part') and hasattr(chunk.part, 'text') and
+                        (self._traced_data.output_text is None or self._traced_data.output_text == "")):
+                    self._traced_data.output_text = chunk.part.text
 
             elif event_type == "ResponseOutputItemDoneEvent":
-                # Output item (message/tool_call) completed - store complete item
-                if hasattr(chunk, 'item'):
-                    if self._traced_data.output_blocks is None:
-                        self._traced_data.output_blocks = {}
-                    if hasattr(chunk.item, 'id'):
-                        # Store or update the complete item
-                        self._traced_data.output_blocks[chunk.item.id] = chunk.item
-
-                    # Also extract text if it's a message
-                    if hasattr(chunk.item, 'content'):
-                        for content_item in chunk.item.content:
-                            if hasattr(content_item, 'text') and content_item.text:
-                                if self._traced_data.output_text is None or self._traced_data.output_text == "":
-                                    self._traced_data.output_text = content_item.text
+                if hasattr(chunk, 'item') and self._traced_data.output_blocks is None:
+                    self._traced_data.output_blocks = {}
+                if hasattr(chunk, 'item') and hasattr(chunk.item, 'id'):
+                    self._traced_data.output_blocks[chunk.item.id] = chunk.item
+                if hasattr(chunk, 'item') and hasattr(chunk.item, 'content'):
+                    for content_item in chunk.item.content:
+                        if (hasattr(content_item, 'text') and content_item.text and
+                                (self._traced_data.output_text is None or self._traced_data.output_text == "")):
+                            self._traced_data.output_text = content_item.text
 
             # Update global dict with latest data
             if self._traced_data.response_id:
@@ -447,7 +436,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         return metric_shared_attributes(
             response_model=self._traced_data.response_model
             or self._traced_data.request_model
-            or None,
+            or "",
             operation="response",
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
@@ -459,6 +448,9 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         Process the complete streaming response.
         Sets final span attributes, records metrics, and ends the span.
         """
+        if self._text_deltas and not self._traced_data.output_text:
+            self._traced_data.output_text = "".join(self._text_deltas)
+
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
@@ -499,6 +491,9 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 self._span.set_status(Status(StatusCode.OK))
             self._span.end()
 
+        if self._traced_data.response_id and self._traced_data.response_id in responses:
+            del responses[self._traced_data.response_id]
+
         self._cleanup_completed = True
         logger.debug("ResponseStream span closed successfully")
 
@@ -521,6 +516,9 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                         self._span.set_status(Status(StatusCode.OK))
                     self._span.end()
                     logger.debug("ResponseStream span closed in cleanup")
+
+                if self._traced_data.response_id and self._traced_data.response_id in responses:
+                    del responses[self._traced_data.response_id]
 
                 self._cleanup_completed = True
                 logger.debug("ResponseStream cleanup completed successfully")
@@ -905,10 +903,7 @@ def responses_get_or_create_wrapper(
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 
@@ -918,11 +913,12 @@ def responses_get_or_create_wrapper(
         parsed_response_output_text = None
         if hasattr(parsed_response, "output_text"):
             parsed_response_output_text = parsed_response.output_text
-        else:
-            try:
-                parsed_response_output_text = parsed_response.output[0].content[0].text
-            except Exception:
-                pass
+        elif hasattr(parsed_response, "output") and len(parsed_response.output) > 0:
+            first_output = parsed_response.output[0]
+            if hasattr(first_output, "content") and len(first_output.content) > 0:
+                first_content = first_output.content[0]
+                if hasattr(first_content, "text"):
+                    parsed_response_output_text = first_content.text
         traced_data = TracedData(
             start_time=existing_data.get("start_time", int(start_time * 1e9)),
             response_id=parsed_response.id,
@@ -1064,10 +1060,7 @@ async def async_responses_get_or_create_wrapper(
     parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+    existing_data = {} if existing_data is None else existing_data.model_dump()
 
     request_tools = get_tools_from_kwargs(kwargs)
 
@@ -1077,11 +1070,12 @@ async def async_responses_get_or_create_wrapper(
         parsed_response_output_text = None
         if hasattr(parsed_response, "output_text"):
             parsed_response_output_text = parsed_response.output_text
-        else:
-            try:
-                parsed_response_output_text = parsed_response.output[0].content[0].text
-            except Exception:
-                pass
+        elif hasattr(parsed_response, "output") and len(parsed_response.output) > 0:
+            first_output = parsed_response.output[0]
+            if hasattr(first_output, "content") and len(first_output.content) > 0:
+                first_content = first_output.content[0]
+                if hasattr(first_content, "text"):
+                    parsed_response_output_text = first_content.text
 
         traced_data = TracedData(
             start_time=existing_data.get("start_time", int(start_time * 1e9)),
