@@ -102,7 +102,6 @@ def process_input(inp: ResponseInputParam) -> ResponseInputParam:
     Process input parameters for OpenAI Responses API.
     Ensures list inputs have proper type annotations for each item.
     """
-    logger.info(f"process_input called with type: {type(inp)}, value: {inp[:100] if isinstance(inp, str) else inp}")
     if not isinstance(inp, list):
         return inp
     return [prepare_input_param(item) for item in inp]
@@ -368,7 +367,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         try:
             # Chunks are already event objects, not Response objects
             event_type = type(chunk).__name__
-            logger.info(f"ResponseStream event - type: {event_type}, chunk: {chunk}")
 
             # Handle different event types
             if event_type == "ResponseCreatedEvent":
@@ -376,7 +374,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 if hasattr(chunk, 'response') and hasattr(chunk.response, 'id'):
                     self._traced_data.response_id = chunk.response.id
                     responses[chunk.response.id] = self._traced_data
-                    logger.info(f"Got response_id from ResponseCreatedEvent: {chunk.response.id}")
 
             elif event_type == "ResponseTextDeltaEvent":
                 # This event contains text deltas
@@ -384,7 +381,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                     if self._traced_data.output_text is None:
                         self._traced_data.output_text = ""
                     self._traced_data.output_text += chunk.delta
-                    logger.info(f"Accumulated text delta: {len(chunk.delta)} chars, total: {len(self._traced_data.output_text)}")
 
             elif event_type == "ResponseOutputItemAddedEvent":
                 # New output item added
@@ -393,14 +389,12 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                         self._traced_data.output_blocks = {}
                     if hasattr(chunk.output_item, 'id'):
                         self._traced_data.output_blocks[chunk.output_item.id] = chunk.output_item
-                        logger.info(f"Added output item: {chunk.output_item.id}")
 
             elif event_type == "ResponseInProgressEvent":
                 # Status update - might contain usage or other metadata
                 if hasattr(chunk, 'response'):
                     if hasattr(chunk.response, 'usage'):
                         self._traced_data.usage = chunk.response.usage
-                        logger.info(f"Got usage from ResponseInProgressEvent: {chunk.response.usage}")
                     if hasattr(chunk.response, 'model'):
                         self._traced_data.response_model = chunk.response.model
 
@@ -409,17 +403,14 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 if hasattr(chunk, 'response'):
                     if hasattr(chunk.response, 'usage'):
                         self._traced_data.usage = chunk.response.usage
-                        logger.info(f"Got final usage from ResponseCompletedEvent: {chunk.response.usage}")
                     if hasattr(chunk.response, 'output_text'):
                         # Override with final complete text if available
                         self._traced_data.output_text = chunk.response.output_text
-                        logger.info(f"Got final output_text from ResponseCompletedEvent")
 
             elif event_type == "ResponseTextDoneEvent":
                 # Text streaming completed - contains full text
                 if hasattr(chunk, 'text'):
                     self._traced_data.output_text = chunk.text
-                    logger.info(f"Got complete text from ResponseTextDoneEvent: {len(chunk.text)} chars")
 
             elif event_type == "ResponseContentPartDoneEvent":
                 # Content part completed
@@ -427,7 +418,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                     # This contains the complete text for this content part
                     if self._traced_data.output_text is None or self._traced_data.output_text == "":
                         self._traced_data.output_text = chunk.part.text
-                        logger.info(f"Got text from ResponseContentPartDoneEvent: {len(chunk.part.text)} chars")
 
             elif event_type == "ResponseOutputItemDoneEvent":
                 # Output item (message/tool_call) completed - store complete item
@@ -437,7 +427,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                     if hasattr(chunk.item, 'id'):
                         # Store or update the complete item
                         self._traced_data.output_blocks[chunk.item.id] = chunk.item
-                        logger.info(f"Completed output item: {chunk.item.id}, type: {getattr(chunk.item, 'type', 'unknown')}")
 
                     # Also extract text if it's a message
                     if hasattr(chunk.item, 'content'):
@@ -445,14 +434,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                             if hasattr(content_item, 'text') and content_item.text:
                                 if self._traced_data.output_text is None or self._traced_data.output_text == "":
                                     self._traced_data.output_text = content_item.text
-                                    logger.info(f"Got text from ResponseOutputItemDoneEvent: {len(content_item.text)} chars")
-
-            elif event_type == "ResponseDoneEvent":
-                # Stream completion event - may contain final metadata
-                logger.info("Got ResponseDoneEvent indicating stream completion")
-
-            else:
-                logger.info(f"Unhandled event type: {event_type}")
 
             # Update global dict with latest data
             if self._traced_data.response_id:
@@ -478,7 +459,6 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         Process the complete streaming response.
         Sets final span attributes, records metrics, and ends the span.
         """
-        logger.info(f"ResponseStream _process_complete_response - input: {self._traced_data.input}, output_text: {self._traced_data.output_text[:100] if self._traced_data.output_text else None}, usage: {self._traced_data.usage}")
         if self._span and self._span.is_recording():
             set_data_attributes(self._traced_data, self._span)
 
@@ -564,8 +544,6 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     Set OpenTelemetry span attributes from traced response data.
     Includes model info, usage stats, prompts, and completions.
     """
-    logger.info(f"set_data_attributes - input: {traced_response.input}, output_text: {traced_response.output_text[:100] if traced_response.output_text else None}")
-    logger.info(f"set_data_attributes - usage: {traced_response.usage}")
     _set_span_attribute(span, GEN_AI_SYSTEM, "openai")
     _set_span_attribute(span, GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GEN_AI_RESPONSE_ID, traced_response.response_id)
@@ -658,14 +636,12 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             prompt_index += 1
 
         if isinstance(traced_response.input, str):
-            logger.info(f"Setting prompt as string: {traced_response.input[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_PROMPT}.{prompt_index}.content", traced_response.input
             )
             _set_span_attribute(span, f"{GEN_AI_PROMPT}.{prompt_index}.role", "user")
             prompt_index += 1
         elif traced_response.input:
-            logger.info(f"Setting prompt as list with {len(traced_response.input) if traced_response.input else 0} items")
             for block in traced_response.input:
                 block_dict = model_as_dict(block)
                 if block_dict.get("type", "message") == "message":
@@ -741,12 +717,9 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                     )
                     prompt_index += 1
                 # TODO: handle other block types
-        else:
-            logger.info(f"Input is neither string nor list: {type(traced_response.input)}")
 
         _set_span_attribute(span, f"{GEN_AI_COMPLETION}.0.role", "assistant")
         if traced_response.output_text:
-            logger.info(f"Setting completion content: {traced_response.output_text[:100]}")
             _set_span_attribute(
                 span, f"{GEN_AI_COMPLETION}.0.content", traced_response.output_text
             )
@@ -887,8 +860,6 @@ def responses_get_or_create_wrapper(
             input_data = process_input(
                 kwargs.get("input", existing_data.get("input", []))
             )
-            logger.info(f"SyncResponseStream init - input_data: {input_data}")
-            logger.info(f"SyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
                 start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
@@ -1050,8 +1021,6 @@ async def async_responses_get_or_create_wrapper(
             input_data = process_input(
                 kwargs.get("input", existing_data.get("input", []))
             )
-            logger.info(f"AsyncResponseStream init - input_data: {input_data}")
-            logger.info(f"AsyncResponseStream init - kwargs keys: {kwargs.keys()}")
 
             traced_data = TracedData(
                 start_time=int(start_time * 1e9),  # Convert seconds to nanoseconds
