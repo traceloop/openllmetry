@@ -949,11 +949,6 @@ def responses_get_or_create_wrapper(
         return response
 
     if parsed_response.status == "completed":
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=traced_data.start_time,  # Already in nanoseconds
-        )
         set_data_attributes(traced_data, span)
         span.end()
 
@@ -1107,11 +1102,6 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     if parsed_response.status == "completed":
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=traced_data.start_time,  # Already in nanoseconds
-        )
         set_data_attributes(traced_data, span)
         span.end()
 
