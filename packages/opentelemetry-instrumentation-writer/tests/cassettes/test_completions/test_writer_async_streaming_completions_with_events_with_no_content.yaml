@@ -1,0 +1,205 @@
+interactions:
+- request:
+    body: '{"model":"palmyra-x4","prompt":"Tell me a joke about OpenTelemetry","max_tokens":340,"stop":["I
+      am"],"stream":true,"temperature":0.7,"top_p":0.9}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '145'
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/completions
+  response:
+    body:
+      string: 'data: {"value":"Sure"}
+
+
+        data: {"value":","}
+
+
+        data: {"value":" here"}
+
+
+        data: {"value":"''s"}
+
+
+        data: {"value":" a"}
+
+
+        data: {"value":" light"}
+
+
+        data: {"value":"-hearted"}
+
+
+        data: {"value":" joke"}
+
+
+        data: {"value":" about"}
+
+
+        data: {"value":" Open"}
+
+
+        data: {"value":"Te"}
+
+
+        data: {"value":"lemetry"}
+
+
+        data: {"value":":\n\n"}
+
+
+        data: {"value":"Why"}
+
+
+        data: {"value":" did"}
+
+
+        data: {"value":" the"}
+
+
+        data: {"value":" developer"}
+
+
+        data: {"value":" decide"}
+
+
+        data: {"value":" to"}
+
+
+        data: {"value":" use"}
+
+
+        data: {"value":" Open"}
+
+
+        data: {"value":"Te"}
+
+
+        data: {"value":"lemetry"}
+
+
+        data: {"value":" for"}
+
+
+        data: {"value":" his"}
+
+
+        data: {"value":" project"}
+
+
+        data: {"value":"?\n\n"}
+
+
+        data: {"value":"Because"}
+
+
+        data: {"value":" he"}
+
+
+        data: {"value":" wanted"}
+
+
+        data: {"value":" to"}
+
+
+        data: {"value":" make"}
+
+
+        data: {"value":" sure"}
+
+
+        data: {"value":" his"}
+
+
+        data: {"value":" application"}
+
+
+        data: {"value":" was"}
+
+
+        data: {"value":" fully"}
+
+
+        data: {"value":" instrument"}
+
+
+        data: {"value":"ed"}
+
+
+        data: {"value":","}
+
+
+        data: {"value":" and"}
+
+
+        data: {"value":" he"}
+
+
+        data: {"value":" didn"}
+
+
+        data: {"value":"''t"}
+
+
+        data: {"value":" want"}
+
+
+        data: {"value":" to"}
+
+
+        data: {"value":" trace"}
+
+
+        data: {"value":" back"}
+
+
+        data: {"value":" his"}
+
+
+        data: {"value":" steps"}
+
+
+        data: {"value":" to"}
+
+
+        data: {"value":" find"}
+
+
+        data: {"value":" out"}
+
+
+        data: {"value":" why"}
+
+
+        data: {"value":" it"}
+
+
+        data: {"value":" wasn"}
+
+
+        data: {"value":"''t"}
+
+
+        data: {"value":"!"}
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

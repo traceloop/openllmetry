@@ -17,8 +17,10 @@ from opentelemetry.instrumentation.anthropic.span_utils import (
     set_response_attributes,
 )
 from opentelemetry.instrumentation.anthropic.streaming import (
-    abuild_from_streaming_response,
-    build_from_streaming_response,
+    AnthropicAsyncStream,
+    AnthropicStream,
+    WrappedAsyncMessageStreamManager,
+    WrappedMessageStreamManager,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
     acount_prompt_tokens_from_request,
@@ -70,6 +72,41 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
+    # This method is on an async resource, but is meant to be called as
+    # an async context manager (async with), which we don't need to await;
+    # thus, we wrap it with a sync wrapper
+    {
+        "package": "anthropic.resources.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API methods (regular Anthropic SDK)
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
 ]
 
 WRAPPED_AMETHODS = [
@@ -85,8 +122,28 @@ WRAPPED_AMETHODS = [
         "method": "create",
         "span_name": "anthropic.chat",
     },
+    # Beta API async methods (regular Anthropic SDK)
     {
-        "package": "anthropic.resources.messages",
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    # Beta API async methods (Bedrock SDK)
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
+        "method": "create",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
         "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.chat",
@@ -96,6 +153,23 @@ WRAPPED_AMETHODS = [
 
 def is_streaming_response(response):
     return isinstance(response, Stream) or isinstance(response, AsyncStream)
+
+
+def is_stream_manager(response):
+    """Check if response is a MessageStreamManager or AsyncMessageStreamManager"""
+    try:
+        from anthropic.lib.streaming._messages import (
+            MessageStreamManager,
+            AsyncMessageStreamManager,
+        )
+
+        return isinstance(response, (MessageStreamManager, AsyncMessageStreamManager))
+    except ImportError:
+        # Check by class name as fallback
+        return (
+            response.__class__.__name__ == "MessageStreamManager"
+            or response.__class__.__name__ == "AsyncMessageStreamManager"
+        )
 
 
 @dont_throw
@@ -108,13 +182,35 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    import inspect
 
-    if usage := response.get("usage"):
-        prompt_tokens = usage.input_tokens
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
+    # If we get a coroutine, await it
+    if inspect.iscoroutine(response):
+        try:
+            response = await response
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to await coroutine response: {e}")
+            return
+
+    # Handle with_raw_response wrapped responses first
+    if response and hasattr(response, "parse") and callable(response.parse):
+        try:
+            response = response.parse()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse with_raw_response: {e}")
+            return
+
+    # Safely get usage attribute without extracting the whole object
+    usage = getattr(response, "usage", None) if response else None
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", 0)
+        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
@@ -131,18 +227,18 @@ async def _aset_token_usage(
             },
         )
 
-    if usage := response.get("usage"):
-        completion_tokens = usage.output_tokens
+    if usage:
+        completion_tokens = getattr(usage, "output_tokens", 0)
     else:
         completion_tokens = 0
         if hasattr(anthropic, "count_tokens"):
-            if response.get("completion"):
+            completion_attr = getattr(response, "completion", None)
+            content_attr = getattr(response, "content", None)
+            if completion_attr:
+                completion_tokens = await anthropic.count_tokens(completion_attr)
+            elif content_attr and len(content_attr) > 0:
                 completion_tokens = await anthropic.count_tokens(
-                    response.get("completion")
-                )
-            elif response.get("content"):
-                completion_tokens = await anthropic.count_tokens(
-                    response.get("content")[0].text
+                    content_attr[0].text
                 )
 
     if (
@@ -161,9 +257,11 @@ async def _aset_token_usage(
     total_tokens = input_tokens + completion_tokens
 
     choices = 0
-    if isinstance(response.get("content"), list):
-        choices = len(response.get("content"))
-    elif response.get("completion"):
+    content_attr = getattr(response, "content", None)
+    completion_attr = getattr(response, "completion", None)
+    if isinstance(content_attr, list):
+        choices = len(content_attr)
+    elif completion_attr:
         choices = 1
 
     if choices > 0 and choice_counter:
@@ -171,7 +269,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
@@ -201,13 +299,32 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    if not isinstance(response, dict):
-        response = response.__dict__
+    import inspect
 
-    if usage := response.get("usage"):
-        prompt_tokens = usage.input_tokens
-        cache_read_tokens = dict(usage).get("cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = dict(usage).get("cache_creation_input_tokens", 0) or 0
+    # If we get a coroutine, we cannot process it in sync context
+    if inspect.iscoroutine(response):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"_set_token_usage received coroutine {response} - token usage processing skipped")
+        return
+
+    # Handle with_raw_response wrapped responses first
+    if response and hasattr(response, "parse") and callable(response.parse):
+        try:
+            response = response.parse()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse with_raw_response: {e}")
+            return
+
+    # Safely get usage attribute without extracting the whole object
+    usage = getattr(response, "usage", None) if response else None
+
+    if usage:
+        prompt_tokens = getattr(usage, "input_tokens", 0)
+        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
+        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
@@ -224,16 +341,18 @@ def _set_token_usage(
             },
         )
 
-    if usage := response.get("usage"):
-        completion_tokens = usage.output_tokens
+    if usage:
+        completion_tokens = getattr(usage, "output_tokens", 0)
     else:
         completion_tokens = 0
         if hasattr(anthropic, "count_tokens"):
-            if response.get("completion"):
-                completion_tokens = anthropic.count_tokens(response.get("completion"))
-            elif response.get("content"):
+            completion_attr = getattr(response, "completion", None)
+            content_attr = getattr(response, "content", None)
+            if completion_attr:
+                completion_tokens = anthropic.count_tokens(completion_attr)
+            elif content_attr and len(content_attr) > 0:
                 completion_tokens = anthropic.count_tokens(
-                    response.get("content")[0].text
+                    content_attr[0].text
                 )
 
     if (
@@ -252,9 +371,11 @@ def _set_token_usage(
     total_tokens = input_tokens + completion_tokens
 
     choices = 0
-    if isinstance(response.get("content"), list):
-        choices = len(response.get("content"))
-    elif response.get("completion"):
+    content_attr = getattr(response, "content", None)
+    completion_attr = getattr(response, "completion", None)
+    if isinstance(content_attr, list):
+        choices = len(content_attr)
+    elif completion_attr:
         choices = 1
 
     if choices > 0 and choice_counter:
@@ -262,7 +383,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: response.get("stop_reason"),
+                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
@@ -363,6 +484,20 @@ async def _ahandle_input(span: Span, event_logger: Optional[EventLogger], kwargs
 
 
 @dont_throw
+async def _ahandle_response(span: Span, event_logger: Optional[EventLogger], response):
+    if should_emit_events():
+        emit_response_events(event_logger, response)
+    else:
+        if not span.is_recording():
+            return
+        from opentelemetry.instrumentation.anthropic.span_utils import (
+            aset_response_attributes,
+        )
+
+        await aset_response_attributes(span, response)
+
+
+@dont_throw
 def _handle_response(span: Span, event_logger: Optional[EventLogger], response):
     if should_emit_events():
         emit_response_events(event_logger, response)
@@ -423,7 +558,7 @@ def _wrap(
     end_time = time.time()
 
     if is_streaming_response(response):
-        return build_from_streaming_response(
+        return AnthropicStream(
             span,
             response,
             instance._client,
@@ -435,6 +570,33 @@ def _wrap(
             event_logger,
             kwargs,
         )
+    elif is_stream_manager(response):
+        if response.__class__.__name__ == "AsyncMessageStreamManager":
+            return WrappedAsyncMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
+        else:
+            return WrappedMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
     elif response:
         try:
             metric_attributes = shared_metrics_attributes(response)
@@ -517,7 +679,7 @@ async def _awrap(
         raise e
 
     if is_streaming_response(response):
-        return abuild_from_streaming_response(
+        return AnthropicAsyncStream(
             span,
             response,
             instance._client,
@@ -529,8 +691,39 @@ async def _awrap(
             event_logger,
             kwargs,
         )
+    elif is_stream_manager(response):
+        if response.__class__.__name__ == "AsyncMessageStreamManager":
+            return WrappedAsyncMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
+        else:
+            return WrappedMessageStreamManager(
+                response,
+                span,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
     elif response:
-        metric_attributes = shared_metrics_attributes(response)
+        from opentelemetry.instrumentation.anthropic.utils import (
+            ashared_metrics_attributes,
+        )
+
+        metric_attributes = await ashared_metrics_attributes(response)
 
         if duration_histogram:
             duration = time.time() - start_time
@@ -539,7 +732,7 @@ async def _awrap(
                 attributes=metric_attributes,
             )
 
-        _handle_response(span, event_logger, response)
+        await _ahandle_response(span, event_logger, response)
 
         if span.is_recording():
             await _aset_token_usage(
@@ -634,7 +827,13 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
+                logger.debug(
+                    f"Successfully wrapped {wrap_package}.{wrap_object}.{wrap_method}"
+                )
+            except Exception as e:
+                logger.debug(
+                    f"Failed to wrap {wrap_package}.{wrap_object}.{wrap_method}: {e}"
+                )
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
         for wrapped_method in WRAPPED_AMETHODS:
@@ -655,7 +854,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
                         wrapped_method,
                     ),
                 )
-            except ModuleNotFoundError:
+            except Exception:
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):

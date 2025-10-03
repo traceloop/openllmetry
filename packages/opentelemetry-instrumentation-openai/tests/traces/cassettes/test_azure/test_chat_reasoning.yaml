@@ -1,0 +1,81 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Count r''s in strawberry"}],
+      "model": "gpt-5-nano", "reasoning_effort": "low"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '120'
+      content-type:
+      - application/json
+      host:
+      - traceloop-stg.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.99.7
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.5
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/gpt-5-nano/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: '{"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"protected_material_code":{"filtered":false,"detected":false},"protected_material_text":{"filtered":false,"detected":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"finish_reason":"stop","index":0,"logprobs":null,"message":{"annotations":[],"content":"3","refusal":null,"role":"assistant"}}],"created":1755601034,"id":"chatcmpl-C6EJeKZdEaC0VeeKH3lWwJBjCTcpd","model":"gpt-5-nano-2025-08-07","object":"chat.completion","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"jailbreak":{"filtered":false,"detected":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}],"system_fingerprint":null,"usage":{"completion_tokens":203,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":192,"rejected_prediction_tokens":0},"prompt_tokens":11,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":214}}
+
+        '
+    headers:
+      Content-Length:
+      - '1204'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Aug 2025 10:57:14 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - aebd8320-f701-4e7d-801f-2955f84e3811
+      azureml-model-session:
+      - d004-20250815200304
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - gpt-5-nano
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US 2
+      x-ratelimit-limit-requests:
+      - '100'
+      x-ratelimit-limit-tokens:
+      - '100000'
+      x-ratelimit-remaining-requests:
+      - '99'
+      x-ratelimit-remaining-tokens:
+      - '99994'
+      x-request-id:
+      - 7acf5821-70fa-4fab-b202-ba3700578d08
+    status:
+      code: 200
+      message: OK
+version: 1

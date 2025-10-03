@@ -1,0 +1,118 @@
+interactions:
+- request:
+    body: '{"slug": "test-publish-dataset", "name": "Test Publish Dataset",
+      "description": "Dataset for testing publish functionality", "columns": [{"slug":
+      "name", "name": "Name", "type": "string"}, {"slug": "value", "name": "Value",
+      "type": "string"}], "rows": [{"name": "Test", "value": "123"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '298'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cme7h291r003e01059xsmfmr8","slug":"test-publish-dataset","name":"Test
+        Publish Dataset","description":"Dataset for testing publish functionality","columns":{"name":{"slug":"name","name":"Name","type":"string"},"value":{"slug":"value","name":"Value","type":"string"}},"created_at":"2025-08-11T18:54:44.559052077Z","updated_at":"2025-08-11T18:54:44.559052138Z","rows":[{"id":"cme7h291x003f0105xa3br809","row_index":1,"values":{"name":"Test","value":"123"},"created_at":"2025-08-11T18:54:44.56803782Z","updated_at":"2025-08-11T18:54:44.56803782Z"}]}'
+    headers:
+      CF-RAY:
+      - 96d9f176ec30e7b5-FRA
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '563'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 18:54:44 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - a6b3b4765aebf85d15d5f870ed6e211f
+      x-kong-upstream-latency:
+      - '17'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-publish-dataset/publish
+  response:
+    body:
+      string: '{"dataset_id":"cme7h291r003e01059xsmfmr8","version":"v1"}'
+    headers:
+      CF-RAY:
+      - 96d9f176ec30e7b5-FRA
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '59'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 18:54:45 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - a6b3b4765aebf85d15d5f870ed6e211f
+      x-kong-upstream-latency:
+      - '5'
+    status:
+      code: 200
+      message: OK
+version: 1

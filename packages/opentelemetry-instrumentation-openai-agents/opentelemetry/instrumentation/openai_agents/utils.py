@@ -1,6 +1,9 @@
+import asyncio
 import dataclasses
 import json
+import logging
 import os
+import traceback
 from opentelemetry import context as context_api
 
 
@@ -29,10 +32,41 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        if hasattr(o, "json"):
+        if hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
+        elif hasattr(o, "json"):
             return o.json()
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__
 
         return super().default(o)
+
+
+def dont_throw(func):
+    """
+    A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+    Works for both synchronous and asynchronous functions.
+    """
+    logger = logging.getLogger(func.__module__)
+
+    async def async_wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e, func, logger)
+
+    def sync_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e, func, logger)
+
+    def _handle_exception(e, func, logger):
+        logger.debug(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            func.__name__,
+            traceback.format_exc(),
+        )
+
+    return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper

@@ -1,0 +1,163 @@
+interactions:
+- request:
+    body: '{"model": "command-r7b-12-2024", "messages": [{"role": "user", "content":
+      "What is the weather and current time in Tokyo?"}], "tools": [{"type": "function",
+      "function": {"name": "get_weather", "description": "Get the current weather
+      in a given location", "parameters": {"type": "object", "properties": {"location":
+      {"type": "string", "description": "The city and state, e.g. San Francisco, CA"}},
+      "required": ["location"]}}}, {"type": "function", "function": {"name": "get_time",
+      "description": "Get the current time in a given location", "parameters": {"type":
+      "object", "properties": {"location": {"type": "string", "description": "The
+      city and state, e.g. San Francisco, CA"}}, "required": ["location"]}}}], "stream":
+      false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '727'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: '{"id":"b7391518-e53e-4486-98ea-fabffcde31c2","message":{"role":"assistant","tool_plan":"I
+        will use the get_weather and get_time tools to find the weather and current
+        time in Tokyo.","tool_calls":[{"id":"get_weather_mznfyh090g90","type":"function","function":{"name":"get_weather","arguments":"{\"location\":\"Tokyo\"}"}},{"id":"get_time_eksdqe8f9g4y","type":"function","function":{"name":"get_time","arguments":"{\"location\":\"Tokyo\"}"}}]},"finish_reason":"TOOL_CALL","usage":{"billed_units":{"input_tokens":62,"output_tokens":38},"tokens":{"input_tokens":1531,"output_tokens":89}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '584'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 03:04:15 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '7120'
+      num_tokens:
+      - '100'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 4b063f6ebf94617b855602c20dfb9f77
+      x-envoy-upstream-service-time:
+      - '582'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "command-r7b-12-2024", "messages": [{"role": "user", "content":
+      "What is the weather and current time in Tokyo?"}, {"role": "assistant", "content":
+      null, "tool_calls": [{"id": "get_weather_mznfyh090g90", "type": "function",
+      "function": {"name": "get_weather", "arguments": "{\"location\":\"Tokyo\"}"}},
+      {"id": "get_time_eksdqe8f9g4y", "type": "function", "function": {"name": "get_time",
+      "arguments": "{\"location\":\"Tokyo\"}"}}]}, {"role": "tool", "tool_call_id":
+      "get_weather_mznfyh090g90", "content": "4:20 PM"}, {"role": "tool", "tool_call_id":
+      "get_time_eksdqe8f9g4y", "content": "Sunny 20 degrees Celsius"}], "tools": [{"type":
+      "function", "function": {"name": "get_weather", "description": "Get the current
+      weather in a given location", "parameters": {"type": "object", "properties":
+      {"location": {"type": "string", "description": "The city and state, e.g. San
+      Francisco, CA"}}, "required": ["location"]}}}, {"type": "function", "function":
+      {"name": "get_time", "description": "Get the current time in a given location",
+      "parameters": {"type": "object", "properties": {"location": {"type": "string",
+      "description": "The city and state, e.g. San Francisco, CA"}}, "required": ["location"]}}}],
+      "stream": false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1227'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: '{"id":"8289d4ee-a83b-4ce2-b7e1-245d9778fcf5","message":{"role":"assistant","content":[{"type":"text","text":"The
+        weather in Tokyo is currently sunny and 20 degrees Celsius. The current time
+        is 4:20 PM."}],"citations":[{"start":34,"end":39,"text":"sunny","sources":[{"type":"tool","id":"get_time_eksdqe8f9g4y:0","tool_output":{"content":"Sunny
+        20 degrees Celsius"}}],"type":"TEXT_CONTENT"},{"start":44,"end":63,"text":"20
+        degrees Celsius.","sources":[{"type":"tool","id":"get_time_eksdqe8f9g4y:0","tool_output":{"content":"Sunny
+        20 degrees Celsius"}}],"type":"TEXT_CONTENT"},{"start":84,"end":92,"text":"4:20
+        PM.","sources":[{"type":"tool","id":"get_weather_mznfyh090g90:0","tool_output":{"content":"4:20
+        PM"}}],"type":"TEXT_CONTENT"}]},"finish_reason":"COMPLETE","usage":{"billed_units":{"input_tokens":78,"output_tokens":25},"tokens":{"input_tokens":1694,"output_tokens":57}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '877'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 03:04:15 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '7791'
+      num_tokens:
+      - '103'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 55736c33493297302f3e7a5baf0b265c
+      x-envoy-upstream-service-time:
+      - '393'
+    status:
+      code: 200
+      message: OK
+version: 1

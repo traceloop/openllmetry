@@ -1,0 +1,49 @@
+interactions:
+  - request:
+      body: '{"messages": [{"role": "user", "content": [{"text": "what is the capital
+      of Italy?"}]}, {"role": "user", "content": [{"text": "what is the capital of
+      Japan?"}]}], "guardrailConfig": {"guardrailIdentifier": "5zwrmdlsra2e", "guardrailVersion":
+      "DRAFT", "trace": "enabled"}}'
+      headers:
+        Content-Length:
+          - '271'
+        Content-Type:
+          - !!binary |
+            YXBwbGljYXRpb24vanNvbg==
+        User-Agent:
+          - !!binary |
+            Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuNi4wIG1k
+            L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+            LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+        X-Amz-Date:
+          - !!binary |
+            MjAyNTA4MTlUMDgwNDI2Wg==
+        amz-sdk-invocation-id:
+          - !!binary |
+            NzZlZWIzN2QtOTU0Yy00MmVhLWI4MGUtNWFkNmY2ZmM3YTg5
+        amz-sdk-request:
+          - !!binary |
+            YXR0ZW1wdD0x
+      method: POST
+      uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/converse
+    response:
+      body:
+        string: '{"metrics":{"latencyMs":1562},"output":{"message":{"content":[{"text":"\nThe
+        capital of {ADDRESS} is {ADDRESS}, and the capital of {ADDRESS} is {ADDRESS}."}],"role":"assistant"}},"stopReason":"guardrail_intervened","trace":{"guardrail":{"actionReason":"No
+        action.\nGuardrail masked.","inputAssessment":{"5zwrmdlsra2e":{"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":58,"total":58}},"guardrailProcessingLatency":262,"usage":{"automatedReasoningPolicies":0,"automatedReasoningPolicyUnits":0,"contentPolicyImageUnits":0,"contentPolicyUnits":1,"contextualGroundingPolicyUnits":0,"sensitiveInformationPolicyFreeUnits":0,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}}}},"modelOutput":["{\"inputTextTokenCount\":17,\"results\":[{\"tokenCount\":17,\"outputText\":\"\\nThe
+        capital of Italy is Rome, and the capital of Japan is Tokyo.\",\"completionReason\":\"FINISH\"}]}"],"outputAssessments":{"5zwrmdlsra2e":[{"invocationMetrics":{"guardrailCoverage":{"textCharacters":{"guarded":65,"total":65}},"guardrailProcessingLatency":250,"usage":{"automatedReasoningPolicies":0,"automatedReasoningPolicyUnits":0,"contentPolicyImageUnits":0,"contentPolicyUnits":1,"contextualGroundingPolicyUnits":0,"sensitiveInformationPolicyFreeUnits":1,"sensitiveInformationPolicyUnits":1,"topicPolicyUnits":1,"wordPolicyUnits":1}},"sensitiveInformationPolicy":{"piiEntities":[{"action":"ANONYMIZED","detected":true,"match":"Italy","type":"ADDRESS"},{"action":"ANONYMIZED","detected":true,"match":"Rome","type":"ADDRESS"},{"action":"ANONYMIZED","detected":true,"match":"Japan","type":"ADDRESS"},{"action":"ANONYMIZED","detected":true,"match":"Tokyo","type":"ADDRESS"}]}}]}}},"usage":{"inputTokens":17,"outputTokens":17,"totalTokens":34}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - '1760'
+        Content-Type:
+          - application/json
+        Date:
+          - Tue, 19 Aug 2025 08:04:28 GMT
+        x-amzn-RequestId:
+          - 61fd75b2-bd4a-48ea-95cf-d84d111be9ca
+      status:
+        code: 200
+        message: OK
+version: 1

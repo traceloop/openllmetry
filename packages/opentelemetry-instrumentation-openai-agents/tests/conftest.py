@@ -1,7 +1,10 @@
 """Unit tests configuration module."""
 
 import os
+import sys
+import types
 import pytest
+from unittest.mock import MagicMock
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
@@ -22,6 +25,31 @@ from typing import List, Dict, Union
 
 pytest_plugins = []
 
+# Mock traceloop modules before any imports using proper ModuleType
+SET_AGENT_NAME_MOCK = MagicMock()
+
+# Create proper module mocks using types.ModuleType for better type safety
+mock_traceloop = types.ModuleType('traceloop')
+mock_sdk = types.ModuleType('traceloop.sdk')
+mock_tracing = types.ModuleType('traceloop.sdk.tracing')
+
+# Set up the module hierarchy and add our mock function
+mock_tracing.set_agent_name = SET_AGENT_NAME_MOCK
+mock_sdk.tracing = mock_tracing
+mock_traceloop.sdk = mock_sdk
+
+# Install mocks in sys.modules before any imports occur
+sys.modules['traceloop'] = mock_traceloop
+sys.modules['traceloop.sdk'] = mock_sdk
+sys.modules['traceloop.sdk.tracing'] = mock_tracing
+
+
+@pytest.fixture
+def mock_set_agent_name():
+    """Provide access to the mocked set_agent_name function for test assertions."""
+    SET_AGENT_NAME_MOCK.reset_mock()  # Reset mock between tests
+    return SET_AGENT_NAME_MOCK
+
 
 @pytest.fixture(scope="session")
 def exporter():
@@ -41,18 +69,14 @@ def exporter():
 def environment():
     if not os.environ.get("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = "api-key"
+    # Disable OpenAI Agents SDK built-in tracing to prevent API calls
+    # os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = "1"
 
 
 @pytest.fixture(autouse=True)
 def clear_exporter(exporter):
     exporter.clear()
-    from opentelemetry.instrumentation.openai_agents import (
-        _root_span_storage,
-        _instrumented_tools,
-    )
-
-    _root_span_storage.clear()
-    _instrumented_tools.clear()
+    # Hook-based approach: cleanup handled automatically
 
 
 @pytest.fixture(scope="session")

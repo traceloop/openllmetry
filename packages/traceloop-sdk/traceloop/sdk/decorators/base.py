@@ -20,7 +20,7 @@ from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
 from traceloop.sdk.telemetry import Telemetry
-from traceloop.sdk.tracing import get_tracer, set_workflow_name
+from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_entity_path,
@@ -35,9 +35,20 @@ R = TypeVar("R")
 F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
 
 
-def _is_json_size_valid(json_str: str) -> bool:
-    """Check if JSON string size is less than 1MB"""
-    return len(json_str) < 1_000_000
+def _truncate_json_if_needed(json_str: str) -> str:
+    """
+    Truncate JSON string if it exceeds OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT;
+    truncation may yield an invalid JSON string, which is expected for logging purposes.
+    """
+    limit_str = os.getenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT")
+    if limit_str:
+        try:
+            limit = int(limit_str)
+            if limit > 0 and len(json_str) > limit:
+                return json_str[:limit]
+        except ValueError:
+            pass
+    return json_str
 
 
 # Async Decorators - Deprecated
@@ -134,6 +145,11 @@ def _setup_span(entity_name, tlp_span_kind, version):
         TraceloopSpanKindValues.AGENT,
     ]:
         set_workflow_name(entity_name)
+
+    if tlp_span_kind == TraceloopSpanKindValues.AGENT:
+        print(f"Setting agent name: {entity_name}")
+        set_agent_name(entity_name)
+
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
     with get_tracer() as tracer:
@@ -163,11 +179,11 @@ def _handle_span_input(span, args, kwargs, cls=None):
             json_input = json.dumps(
                 {"args": args, "kwargs": kwargs}, **({"cls": cls} if cls else {})
             )
-            if _is_json_size_valid(json_input):
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                    json_input,
-                )
+            truncated_json = _truncate_json_if_needed(json_input)
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                truncated_json,
+            )
     except TypeError as e:
         Telemetry().log_exception(e)
 
@@ -177,11 +193,11 @@ def _handle_span_output(span, res, cls=None):
     try:
         if _should_send_prompts():
             json_output = json.dumps(res, **({"cls": cls} if cls else {}))
-            if _is_json_size_valid(json_output):
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                    json_output,
-                )
+            truncated_json = _truncate_json_if_needed(json_output)
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                truncated_json,
+            )
     except TypeError as e:
         Telemetry().log_exception(e)
 

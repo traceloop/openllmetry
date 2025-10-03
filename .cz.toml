@@ -4,7 +4,7 @@ tag_format = "v$version"
 version_scheme = "pep440"
 major_version_zero = true
 update_changelog_on_bump = true
-version = "0.43.1"
+version = "0.47.3"
 version_files = [
     "packages/opentelemetry-instrumentation-mcp/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp/version.py",
@@ -62,6 +62,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-weaviate/opentelemetry/instrumentation/weaviate/version.py",
     "packages/opentelemetry-instrumentation-llamaindex/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-llamaindex/opentelemetry/instrumentation/llamaindex/version.py",
+    "packages/opentelemetry-instrumentation-writer/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-writer/opentelemetry/instrumentation/writer/version.py",
     "packages/traceloop-sdk/pyproject.toml:^version",
     "packages/traceloop-sdk/traceloop/sdk/version.py",
 ]

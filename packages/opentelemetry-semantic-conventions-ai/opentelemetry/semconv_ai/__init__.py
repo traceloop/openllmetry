@@ -3,14 +3,42 @@ from enum import Enum
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
+class GenAISystem(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    These values match the actual strings used in span attributes (LLM_SYSTEM)
+    throughout the instrumentation packages.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "Anthropic"
+    COHERE = "Cohere"
+    MISTRALAI = "MistralAI"
+    OLLAMA = "Ollama"
+    GROQ = "Groq"
+    ALEPH_ALPHA = "AlephAlpha"
+    REPLICATE = "Replicate"
+    TOGETHER_AI = "TogetherAI"
+    WATSONX = "Watsonx"
+    HUGGINGFACE = "HuggingFace"
+    FIREWORKS = "Fireworks"
+
+    AZURE = "Azure"
+    AWS = "AWS"
+    GOOGLE = "Google"
+    OPENROUTER = "OpenRouter"
+
+    LANGCHAIN = "Langchain"
+    CREWAI = "crewai"
+
+
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.chat_completions.streaming_time_to_generate"
-    )
+    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
@@ -48,11 +76,15 @@ class SpanAttributes:
     LLM_COMPLETIONS = "gen_ai.completion"
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
     LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    LLM_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"

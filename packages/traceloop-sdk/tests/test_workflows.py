@@ -49,7 +49,7 @@ def test_simple_workflow(exporter, openai_client):
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
-    assert open_ai_span.attributes.get("traceloop.prompt.version") == 5
+    assert open_ai_span.attributes.get("traceloop.prompt.version") == "5"
 
     workflow_span = next(span for span in spans if span.name == "pirate_joke_generator.workflow")
     task_span = next(span for span in spans if span.name == "something_creator.task")
@@ -95,7 +95,7 @@ async def test_simple_aworkflow(exporter, async_openai_client):
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
-    assert open_ai_span.attributes.get("traceloop.prompt.version") == 5
+    assert open_ai_span.attributes.get("traceloop.prompt.version") == "5"
 
     workflow_span = next(span for span in spans if span.name == "pirate_joke_generator.workflow")
     task_span = next(span for span in spans if span.name == "something_creator.task")

@@ -1,0 +1,115 @@
+interactions:
+- request:
+    body: '{"max_tokens":1024,"messages":[{"role":"user","content":"What is the weather
+      and current time in San Francisco?"},{"role":"assistant","content":[{"type":"text","text":"I''ll
+      help you get the weather and current time in San Francisco."},{"id":"call_1","type":"tool_use","name":"get_weather","input":{"location":"San
+      Francisco, CA"}}]},{"role":"user","content":[{"type":"tool_result","content":"Sunny
+      and 65 degrees Fahrenheit","tool_use_id":"call_1"}]}],"model":"claude-3-5-haiku-20241022","tools":[{"name":"get_weather","description":"Get
+      the current weather in a given location","input_schema":{"type":"object","properties":{"location":{"type":"string","description":"The
+      city and state, e.g. San Francisco, CA"},"unit":{"type":"string","enum":["celsius","fahrenheit"],"description":"The
+      unit of temperature, either ''celsius'' or ''fahrenheit''"}},"required":["location"]}},{"name":"get_time","description":"Get
+      the current time in a given time zone","input_schema":{"type":"object","properties":{"timezone":{"type":"string","description":"The
+      IANA time zone name, e.g. America/Los_Angeles"}},"required":["timezone"]}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, zstd
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1117'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.57.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.57.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.13.5
+      x-stainless-timeout:
+      - '600'
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2RQS0vEMBD+L3NOsVu7uuTWxfWwD2HZk4iEkAxtaJrUZCJq6X+XVPawePzme83M
+        BEYDhyG2olyd908dni++7i7hq6XjuNs/9w0woO8RswpjlC0Cg+BtHsgYTSTpCBgMXqMFDsrKpLG4
+        L9ZFJ02fiqqs6lVZVcBAeUfoCPjbdM0k761IMYcum2ScRLk6rA/daafb6qReHnXTb+vXujPAwMkh
+        +1okQWZYfG5MBHyCjH+8y3QzYDBK3h19FI1r0WKEeX5nEMmPIqCM3t22L0TEj4ROIXCXrGWQlnv5
+        9NchyPfoIvD1w4aBkqpDoQJKMt6JW0V55QNK/Z/ziW7yNgwihk+jUJDBABzyW7UMGub5FwAA//8D
+        ALuiEKakAQAA
+    headers:
+      CF-RAY:
+      - 9665173afb72342f-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 28 Jul 2025 14:33:18 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-07-28T14:33:17Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-07-28T14:33:18Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-07-28T14:33:17Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-07-28T14:33:17Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_011CRZaepSK9Jc89WTRSudjf
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1
