@@ -852,7 +852,11 @@ def responses_parse_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),
-            output_text=existing_data.get("output_text", parsed_response_output_text),
+            output_text=(
+                parsed_response_output_text
+                if parsed_response_output_text is not None
+                else existing_data.get("output_text")
+            ),
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
@@ -994,7 +998,11 @@ async def async_responses_parse_wrapper(
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),
-            output_text=existing_data.get("output_text", parsed_response_output_text),
+            output_text=(
+                parsed_response_output_text
+                if parsed_response_output_text is not None
+                else existing_data.get("output_text")
+            ),
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
