@@ -1,118 +1,119 @@
 interactions:
-- request:
-    body: '{"input": "Extract person info: Sarah, 28", "model": "gpt-5-nano", "reasoning":
-      {"effort": "low", "summary": null}, "text": {"format": {"type": "json_schema",
-      "strict": true, "name": "Person", "schema": {"description": "Simple structured
-      output for basic tests.", "properties": {"name": {"title": "Name", "type": "string"},
-      "age": {"title": "Age", "type": "integer"}}, "required": ["name", "age"], "title":
-      "Person", "type": "object", "additionalProperties": false}}}}'
-    headers:
-      accept:
-      - application/json
-      accept-encoding:
-      - gzip, deflate
-      connection:
-      - keep-alive
-      content-length:
-      - '468'
-      content-type:
-      - application/json
-      host:
-      - api.openai.com
-      user-agent:
-      - OpenAI/Python 1.99.7
-      x-stainless-arch:
-      - arm64
-      x-stainless-async:
-      - 'false'
-      x-stainless-lang:
-      - python
-      x-stainless-os:
-      - MacOS
-      x-stainless-package-version:
-      - 1.99.7
-      x-stainless-read-timeout:
-      - '600'
-      x-stainless-retry-count:
-      - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - 3.9.5
-    method: POST
-    uri: https://api.openai.com/v1/responses
-  response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAA3xV0Y6jOgx971egPLcrSqEwfdsfuFppH7crZBLDZCYk3MTM3WrUf79KaCF0ZvYN
-        fGLn2Md23jdJwqRgp4RZdEOdpg0XPC8xLdPyWOVpeqwwLQ5YiuaQVvunw9O+yo8C8gx4AaIo2NaH
-        MM0LcrqHMdrhZOcWgVDU4LF9WTwVhyxNy4A5Ahqd9+GmHxQSismpAf7aWTNqz6sF5XAyS6Wk7tgp
-        ed8kSZKwAS5ovb/AN1RmQMs2SXINh9Fa4zE9KhUMUt9vqQUSSOXWqCM7cpJGr+w9/KnNSMNINZlX
-        /AiSMarmoNbheiNQeWbdQLtip0GbXZZmxS6tdml5K1kIy07Jr5DNlNOihvtai6rat9xrUUGKeZ41
-        ZYWAKKbyhSB0GXBSA5zRvmoz5Ma+B3vxF/8Otuv2MwK9675m8JRhWXkGTdtm+yYtxbHIRMXzjwx6
-        dA46jO7/QvYAcqMJ9VKVmNgq7F0U/EOzdzgAWhuCu5C/fq9AZbrBmuYTJAQ6Jez9zDT0eGanM/sJ
-        Fp7PbHtm0HlLVl3Z7HO9fc1hmDUqUAPnpCPQNB32B8MhNoAFpVCtm4bsOPX3YPFNmtHV9xGqgxJz
-        Uw3W9APVHPgz1q94ibFF53k6sG2NDTkp89+tRpH43nWeFgct0qWWAjXJVuJqchzaN8mxJnmfthZG
-        NZWdOTIW4ywI+wEt0BjM+2/pzRrKe6PWGtvD8h/J+uKMrh1/xh6WphDouJWD1zTiFSCvlff7gdYZ
-        HTXZFOIUNc9DGPZT+u5LprkfLYpk6qmkNTZpwEmeEDpy36L+8hoMaEmiW8VemMQ2n5ekqSn+8fD2
-        Abwl7ch65SLwum7p7m+Rv3dfBpaasJu24mPbru5gFv8dpUWxmrt7Uh+4zP/RCC18HqSIZ3Z6JCIE
-        hJBeD1A/4sKGnb95oBnKFN4Y32vx5mJvaBvjJF2mhSPk2C8vwTRsz0byaTpHMmwGlk3AyAx1tB/S
-        2TjEfWxHzeHeQkI6aNT92RpdLBSTevVqHA/bj/boKZpHIcy3WBzTVaqPj1GVfQZ8FndeERGnfBWb
-        DIFa0H1ezEUc3Xon9EgggMKEXTfX/wEAAP//AwDuYeLERwgAAA==
-    headers:
-      CF-RAY:
-      - 989004088eaebeba-LHR
-      Connection:
-      - keep-alive
-      Content-Encoding:
-      - gzip
-      Content-Type:
-      - application/json
-      Date:
-      - Fri, 03 Oct 2025 22:53:29 GMT
-      Server:
-      - cloudflare
-      Set-Cookie:
-      - __cf_bm=pSokbizD.TDL7bCkrMVPH1B.tumNkuptj6cEXJKm5Og-1759532009-1.0.1.1-erqJf_UWytQq.MA3ZlebbaVQ493V2xXSUAN5My8fMrtEln7pyE09VmC528YzU4INy6mFvnqcvR5X0Xm6Dm857.6.CL0paQtwspVYoyWPTrE;
-        path=/; expires=Fri, 03-Oct-25 23:23:29 GMT; domain=.api.openai.com; HttpOnly;
-        Secure; SameSite=None
-      - _cfuvid=KXX1TI5Fo8QLHVxdSwjeSmtYB8slNwsfiXaow0SrA7c-1759532009530-0.0.1.1-604800000;
-        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
-      Transfer-Encoding:
-      - chunked
-      X-Content-Type-Options:
-      - nosniff
-      alt-svc:
-      - h3=":443"; ma=86400
-      cf-cache-status:
-      - DYNAMIC
-      openai-organization:
-      - user-l9ivovw6kdi7d531dypyujdl
-      openai-processing-ms:
-      - '1619'
-      openai-project:
-      - proj_KlxktvWIpK3vlpWWDlY4fJud
-      openai-version:
-      - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
-      x-envoy-upstream-service-time:
-      - '1622'
-      x-ratelimit-limit-requests:
-      - '5000'
-      x-ratelimit-limit-tokens:
-      - '4000000'
-      x-ratelimit-remaining-requests:
-      - '4999'
-      x-ratelimit-remaining-tokens:
-      - '3999720'
-      x-ratelimit-reset-requests:
-      - 12ms
-      x-ratelimit-reset-tokens:
-      - 4ms
-      x-request-id:
-      - req_a6b039cec417363232b12e6156e8de61
-    status:
-      code: 200
-      message: OK
+  - request:
+      body:
+        '{"input": "Extract person info: Sarah, 28", "model": "gpt-5-nano", "reasoning":
+        {"effort": "low", "summary": null}, "text": {"format": {"type": "json_schema",
+        "strict": true, "name": "Person", "schema": {"description": "Simple structured
+        output for basic tests.", "properties": {"name": {"title": "Name", "type": "string"},
+        "age": {"title": "Age", "type": "integer"}}, "required": ["name", "age"], "title":
+        "Person", "type": "object", "additionalProperties": false}}}}'
+      headers:
+        accept:
+          - application/json
+        accept-encoding:
+          - gzip, deflate
+        connection:
+          - keep-alive
+        content-length:
+          - "468"
+        content-type:
+          - application/json
+        host:
+          - api.openai.com
+        user-agent:
+          - OpenAI/Python 1.99.7
+        x-stainless-arch:
+          - arm64
+        x-stainless-async:
+          - "false"
+        x-stainless-lang:
+          - python
+        x-stainless-os:
+          - MacOS
+        x-stainless-package-version:
+          - 1.99.7
+        x-stainless-read-timeout:
+          - "600"
+        x-stainless-retry-count:
+          - "0"
+        x-stainless-runtime:
+          - CPython
+        x-stainless-runtime-version:
+          - 3.9.5
+      method: POST
+      uri: https://api.openai.com/v1/responses
+    response:
+      body:
+        string: !!binary |
+          H4sIAAAAAAAAA3xV0Y6jOgx971egPLcrSqEwfdsfuFppH7crZBLDZCYk3MTM3WrUf79KaCF0ZvYN
+          fGLn2Md23jdJwqRgp4RZdEOdpg0XPC8xLdPyWOVpeqwwLQ5YiuaQVvunw9O+yo8C8gx4AaIo2NaH
+          MM0LcrqHMdrhZOcWgVDU4LF9WTwVhyxNy4A5Ahqd9+GmHxQSismpAf7aWTNqz6sF5XAyS6Wk7tgp
+          ed8kSZKwAS5ovb/AN1RmQMs2SXINh9Fa4zE9KhUMUt9vqQUSSOXWqCM7cpJGr+w9/KnNSMNINZlX
+          /AiSMarmoNbheiNQeWbdQLtip0GbXZZmxS6tdml5K1kIy07Jr5DNlNOihvtai6rat9xrUUGKeZ41
+          ZYWAKKbyhSB0GXBSA5zRvmoz5Ma+B3vxF/8Otuv2MwK9675m8JRhWXkGTdtm+yYtxbHIRMXzjwx6
+          dA46jO7/QvYAcqMJ9VKVmNgq7F0U/EOzdzgAWhuCu5C/fq9AZbrBmuYTJAQ6Jez9zDT0eGanM/sJ
+          Fp7PbHtm0HlLVl3Z7HO9fc1hmDUqUAPnpCPQNB32B8MhNoAFpVCtm4bsOPX3YPFNmtHV9xGqgxJz
+          Uw3W9APVHPgz1q94ibFF53k6sG2NDTkp89+tRpH43nWeFgct0qWWAjXJVuJqchzaN8mxJnmfthZG
+          NZWdOTIW4ywI+wEt0BjM+2/pzRrKe6PWGtvD8h/J+uKMrh1/xh6WphDouJWD1zTiFSCvlff7gdYZ
+          HTXZFOIUNc9DGPZT+u5LprkfLYpk6qmkNTZpwEmeEDpy36L+8hoMaEmiW8VemMQ2n5ekqSn+8fD2
+          Abwl7ch65SLwum7p7m+Rv3dfBpaasJu24mPbru5gFv8dpUWxmrt7Uh+4zP/RCC18HqSIZ3Z6JCIE
+          hJBeD1A/4sKGnb95oBnKFN4Y32vx5mJvaBvjJF2mhSPk2C8vwTRsz0byaTpHMmwGlk3AyAx1tB/S
+          2TjEfWxHzeHeQkI6aNT92RpdLBSTevVqHA/bj/boKZpHIcy3WBzTVaqPj1GVfQZ8FndeERGnfBWb
+          DIFa0H1ezEUc3Xon9EgggMKEXTfX/wEAAP//AwDuYeLERwgAAA==
+      headers:
+        CF-RAY:
+          - 989004088eaebeba-LHR
+        Connection:
+          - keep-alive
+        Content-Encoding:
+          - gzip
+        Content-Type:
+          - application/json
+        Date:
+          - Fri, 03 Oct 2025 22:53:29 GMT
+        Server:
+          - cloudflare
+        Set-Cookie:
+          - __cf_bm=REDACTED;
+            path=/; expires=Fri, 03-Oct-25 23:23:29 GMT; domain=.api.openai.com; HttpOnly;
+            Secure; SameSite=None
+          - _cfuvid=REDACTED;
+            path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+        Transfer-Encoding:
+          - chunked
+        X-Content-Type-Options:
+          - nosniff
+        alt-svc:
+          - h3=":443"; ma=86400
+        cf-cache-status:
+          - DYNAMIC
+        openai-organization:
+          - user-REDACTED
+        openai-processing-ms:
+          - "1619"
+        openai-project:
+          - proj_REDACTED
+        openai-version:
+          - "2020-10-01"
+        strict-transport-security:
+          - max-age=31536000; includeSubDomains; preload
+        x-envoy-upstream-service-time:
+          - "1622"
+        x-ratelimit-limit-requests:
+          - "5000"
+        x-ratelimit-limit-tokens:
+          - "4000000"
+        x-ratelimit-remaining-requests:
+          - "4999"
+        x-ratelimit-remaining-tokens:
+          - "3999720"
+        x-ratelimit-reset-requests:
+          - 12ms
+        x-ratelimit-reset-tokens:
+          - 4ms
+        x-request-id:
+          - req_a6b039cec417363232b12e6156e8de61
+      status:
+        code: 200
+        message: OK
 version: 1
