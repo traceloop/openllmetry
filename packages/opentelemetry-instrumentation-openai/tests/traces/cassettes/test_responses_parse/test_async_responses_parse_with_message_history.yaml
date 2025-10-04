@@ -1,0 +1,119 @@
+interactions:
+- request:
+    body: '{"input": [{"role": "system", "content": "Extract person data from text."},
+      {"role": "user", "content": "Parse this: Emily Jones, age 31"}], "model": "gpt-4.1-nano",
+      "text": {"format": {"type": "json_schema", "strict": true, "name": "Person",
+      "schema": {"description": "Simple structured output for basic tests.", "properties":
+      {"name": {"title": "Name", "type": "string"}, "age": {"title": "Age", "type":
+      "integer"}}, "required": ["name", "age"], "title": "Person", "type": "object",
+      "additionalProperties": false}}}}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '518'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.99.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//fFXBbts4EL37Kwie40CW7cT2rYde9rAo0GO9EEbkSGFDkSo5DGoE/vcF
+        KUuinKY3ex75NDPvzfB9xRhXkp8Yd+j7qoBtsd/KAo/bI4hmXxRPByz2W6zlbn84bI67GhpoyhKO
+        ZbkrD/WRP0QKW/9EQSONNR6HuHAIhLKCiG2e98f9tiw2m4R5Ago+3hG26zUSyuFSDeK1dTaYmFcD
+        2uMQVlor0/ITe18xxhjv4YIu3pf4htr26PiKsWs6jM7ZiJmgdQooM36lkkigtF+inlwQpKxZxDv4
+        XdlAfaCK7Ct+BMlaXQnQS7rOStQxs7an9e5xszZg7Losyv262K03u1vTEjE/sR+pnqGqSY/Ot5/L
+        IbZP9SBHcyxF0xye6vr5UBfbxJxY6NJj4kHvocUZ+KzvCRTWEJo5qTyxBe3YFfxN0+10AIyxBGMn
+        f/y3ALVte2frPyCJ6MT4+5kb6PDMT2f+tVP6wv6xBv2ZP5w5tDG+3Vz5dPN6+zWRcWd1ShC8V57A
+        0HA4HkyHeA8OtEa91I5cGGzWO3xTNvhqdHKV9Ji07Z3teqoEiBesXvGSYw7BW7MwKTaNdZQdigqE
+        rgM33pw866FBulRKoiHVKFz416N7UwIrUqPnGwh66D33ZB3mRRB2PTqgkMKbx+IWTT2+ZdZY18H8
+        P9P2p7em8uIFO5idIdELp/oo7KIaxpJg8d43dN6azGkDxSlz0B0N/66iBdkwfcGhZIOxWGMdq8Er
+        wQg9+cfMZFGCHh0p9AvuOZM8FutSNHji3wg/3IG3oj25KFwGXpe+bv/G/KX9lFgZwnbYTfeuXXyD
+        O/wVlEO5GL6xqA+5TP+zOZrzuZMiH9xhVWcISKmiHqC/5Y1Nm3d1l2ZqU9r00WurDONv6GrrFV2G
+        rSNV6OZ9PMzai1ViGM5Alk/AvA442b7KlkQxBfvcxy4YAaOFpPJQ6/HxCD4Xiiuz2N3PTw8f49mD
+        MI1CGm85XywWpd4/CcOLdg/8iXfaEJ9RkyXQM3h4nloY/HIjdEgggdJ8XVfX/wEAAP//AwA4FiW2
+        ywcAAA==
+    headers:
+      CF-RAY:
+      - 989004214c06e90f-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 03 Oct 2025 22:53:32 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=WLSDk8YNL2U68Y4h6M.OE9P21yWMFTHHF5b7Hvox3Bk-1759532012-1.0.1.1-DEuU2ag8wmFeAJ8liaekcwD0aeJKWe_U.J72_KY6nxzC_r0c9VpwgdaDL5inmwHVko_aJxXfzduoTTb3nzkR6VjEY9vXYUUNIJ.y2H4Pbio;
+        path=/; expires=Fri, 03-Oct-25 23:23:32 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=jNelmvD0XOzKMgZ0F99rJPaX4vc8VE8DKb89KDoUfnc-1759532012569-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-l9ivovw6kdi7d531dypyujdl
+      openai-processing-ms:
+      - '697'
+      openai-project:
+      - proj_KlxktvWIpK3vlpWWDlY4fJud
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '708'
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '4000000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '3999905'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 1ms
+      x-request-id:
+      - req_f349a9e2422b9414c481be430fe74b67
+    status:
+      code: 200
+      message: OK
+version: 1
