@@ -19,7 +19,6 @@ from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
 
-
 _instruments = ("mcp >= 1.6.0",)
 
 
@@ -87,7 +86,6 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
-
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
                 "mcp.client.streamable_http",
@@ -211,45 +209,7 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
-    def _server_handle_request_wrapper(self, tracer):
-        """Wrapper for server-side request handling"""
-        @dont_throw
-        async def traced_method(wrapped, instance, args, kwargs):
-            # Extract request from args
-            request = None
-            if len(args) > 0:
-                request = args[0]
 
-            # Determine method name from request
-            method_name = "unknown"
-            if hasattr(request, 'method'):
-                method_name = request.method
-            elif hasattr(request, '__class__'):
-                method_name = request.__class__.__name__
-
-            # Create span for server-side request processing
-            span_name = f"server.{method_name.lower()}"
-            with tracer.start_as_current_span(span_name) as span:
-                # Set span attributes
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, method_name)
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(request)}")
-
-                try:
-                    # Execute the original handler
-                    result = await wrapped(*args, **kwargs)
-
-                    # Set output attribute
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, f"{serialize(result)}")
-                    span.set_status(Status(StatusCode.OK))
-
-                    return result
-                except Exception as e:
-                    span.set_attribute(ERROR_TYPE, type(e).__name__)
-                    span.record_exception(e)
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    raise
-
-        return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
         @dont_throw
@@ -650,14 +610,9 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
         # Create main MCP span first
         main_span_name = f"{method_name}.mcp"
         with self._tracer.start_as_current_span(main_span_name) as main_span:
-            # Set main span attributes
             main_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, method_name)
             main_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.WORKFLOW.value)
-            main_span.set_attribute("traceloop.entity.name", method_name)
-            main_span.set_attribute("traceloop.span.kind", "workflow")
-            main_span.set_attribute("traceloop.workflow.name", method_name)
 
-            # Create RequestStreamWriter as child of main span
             with self._tracer.start_as_current_span("RequestStreamWriter") as span:
                 if hasattr(item, "request_id"):
                     span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{item.request_id}")
