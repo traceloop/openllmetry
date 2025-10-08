@@ -143,51 +143,6 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
-    def _jsonrpc_response_init_wrapper(self, tracer):
-        @dont_throw
-        def traced_method(wrapped, instance, args, kwargs):
-            result_value = kwargs.get("result", None)
-            if result_value is None and len(args) > 1:
-                result_value = args[1]
-
-            if result_value is not None and isinstance(result_value, dict) and "content" in result_value:
-                with tracer.start_as_current_span("MCP_Tool_Response") as span:
-                    # Serialize the result data
-                    result_serialized = serialize(result_value)
-                    span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, f"{result_serialized}")
-
-                    # Set span status
-                    if result_value.get("isError", False):
-                        # Extract error reason from content if available
-                        error_reason = "Tool execution error"
-                        if "content" in result_value and result_value["content"]:
-                            try:
-                                if isinstance(result_value["content"], list) and len(result_value["content"]) > 0:
-                                    content_item = result_value["content"][0]
-                                    if isinstance(content_item, dict) and "text" in content_item:
-                                        error_reason = content_item["text"]
-                                    elif isinstance(content_item, str):
-                                        error_reason = content_item
-                            except (KeyError, IndexError, TypeError):
-                                pass
-                        span.set_status(Status(StatusCode.ERROR, error_reason))
-                    else:
-                        span.set_status(Status(StatusCode.OK))
-
-                    # Add request ID if available
-                    id_value = kwargs.get("id", None)
-                    if id_value is None and len(args) > 0:
-                        id_value = args[0]
-
-                    if id_value is not None:
-                        span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{id_value}")
-
-            # Call the original method
-            result = wrapped(*args, **kwargs)
-            return result
-
-        return traced_method
-
     def _base_session_init_wrapper(self, tracer):
         def traced_method(
             wrapped: Callable[..., None], instance: Any, args: Any, kwargs: Any

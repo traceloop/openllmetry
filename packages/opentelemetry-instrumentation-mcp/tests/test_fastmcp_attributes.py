@@ -62,6 +62,7 @@ async def test_fastmcp_comprehensive_attributes(span_exporter, tracer_provider) 
     # Test 2: Verify traceloop attributes
     assert tool_span.attributes.get("traceloop.span.kind") == "tool"
     assert tool_span.attributes.get("traceloop.entity.name") == "process_data"
+    assert tool_span.attributes.get("traceloop.workflow.name") == "attribute-test-server.mcp"
 
     # Test 3: Verify span status
     assert tool_span.status.status_code.name == "OK"
@@ -165,5 +166,8 @@ async def test_fastmcp_error_handling(span_exporter, tracer_provider) -> None:
         # Verify span still has correct traceloop attributes
         assert error_span.attributes.get("traceloop.span.kind") == "tool"
         assert error_span.attributes.get("traceloop.entity.name") == "failing_tool"
+
+        # Verify workflow name is set correctly even on error spans
+        assert error_span.attributes.get("traceloop.workflow.name") == "error-test-server.mcp"
 
     print("✅ Error handling validated")

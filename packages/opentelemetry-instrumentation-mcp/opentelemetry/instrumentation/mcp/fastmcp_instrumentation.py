@@ -17,6 +17,7 @@ class FastMCPInstrumentor:
 
     def __init__(self):
         self._tracer = None
+        self._server_name = None
 
     def instrument(self, tracer: Tracer):
         """Apply FastMCP-specific instrumentation."""
@@ -30,11 +31,34 @@ class FastMCPInstrumentor:
             "fastmcp.tools.tool_manager",
         )
 
+        # Instrument FastMCP __init__ to capture server name
+        register_post_import_hook(
+            lambda _: wrap_function_wrapper(
+                "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
+            ),
+            "fastmcp",
+        )
+
     def uninstrument(self):
         """Remove FastMCP-specific instrumentation."""
         # Note: wrapt doesn't provide a clean way to unwrap post-import hooks
         # This is a limitation we'll need to document
         pass
+
+    def _fastmcp_init_wrapper(self):
+        """Create wrapper for FastMCP initialization to capture server name."""
+        @dont_throw
+        def traced_method(wrapped, instance, args, kwargs):
+            # Call the original __init__ first
+            result = wrapped(*args, **kwargs)
+
+            if args and len(args) > 0:
+                self._server_name = f"{args[0]}.mcp"
+            elif 'name' in kwargs:
+                self._server_name = f"{kwargs['name']}.mcp"
+
+            return result
+        return traced_method
 
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
@@ -62,12 +86,21 @@ class FastMCPInstrumentor:
             with self._tracer.start_as_current_span("mcp.server") as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
+                if self._server_name:
+                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, self._server_name)
+
+                # Add MCP_REQUEST_ID to the parent span
+                import time
+                request_id = str(int(time.time() * 1000))  # milliseconds
+                mcp_span.set_attribute(SpanAttributes.MCP_REQUEST_ID, request_id)
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
                 with self._tracer.start_as_current_span(span_name) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+                    if self._server_name:
+                        tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, self._server_name)
 
                     if self._should_send_prompts():
                         try:
@@ -84,27 +117,47 @@ class FastMCPInstrumentor:
                     try:
                         result = await wrapped(*args, **kwargs)
 
-                        # Add output in traceloop format to tool span
-                        if self._should_send_prompts() and result:
+                        # Always add response to MCP span regardless of content tracing setting
+                        if result:
                             try:
-                                # Convert FastMCP Content objects to serializable format
-                                output_data = []
-                                for item in result:
-                                    if hasattr(item, 'text'):
-                                        output_data.append({"type": "text", "content": item.text})
-                                    elif hasattr(item, '__dict__'):
-                                        output_data.append(item.__dict__)
+                                # Handle FastMCP ToolResult object
+                                if hasattr(result, 'content') and result.content:
+                                    # Convert FastMCP Content objects to serializable format
+                                    output_data = []
+                                    for item in result.content:
+                                        if hasattr(item, 'text'):
+                                            output_data.append({"type": "text", "content": item.text})
+                                        elif hasattr(item, '__dict__'):
+                                            output_data.append(item.__dict__)
+                                        else:
+                                            output_data.append(str(item))
+
+                                    json_output = json.dumps(output_data, cls=self._get_json_encoder())
+                                    truncated_output = self._truncate_json_if_needed(json_output)
+                                else:
+                                    # Handle other result types
+                                    if hasattr(result, '__dict__'):
+                                        # Convert object to dict
+                                        result_dict = {}
+                                        for key, value in result.__dict__.items():
+                                            if not key.startswith('_'):
+                                                result_dict[key] = str(value)
+                                        json_output = json.dumps(result_dict, cls=self._get_json_encoder())
+                                        truncated_output = self._truncate_json_if_needed(json_output)
                                     else:
-                                        output_data.append(str(item))
+                                        # Fallback to string representation
+                                        truncated_output = str(result)
 
-                                json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                                truncated_output = self._truncate_json_if_needed(json_output)
-                                tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
-
-                                # Also add response to MCP span
+                                # Add response to MCP span
                                 mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
+
+                                # Also add to tool span if content tracing is enabled
+                                if self._should_send_prompts():
+                                    tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
+
                             except (TypeError, ValueError):
-                                pass  # Skip output logging if serialization fails
+                                # Fallback: add raw result as string
+                                mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, str(result))
 
                         tool_span.set_status(Status(StatusCode.OK))
                         mcp_span.set_status(Status(StatusCode.OK))
