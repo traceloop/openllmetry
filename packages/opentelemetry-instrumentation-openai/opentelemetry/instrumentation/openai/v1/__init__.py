@@ -361,6 +361,32 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "AsyncResponses.cancel",
             async_responses_cancel_wrapper(tracer),
         )
+        self._try_wrap(
+            "openai.resources.responses",
+            "Responses.parse",
+            responses_get_or_create_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.parse",
+            async_responses_get_or_create_wrapper(
+                tracer,
+                tokens_histogram,
+                chat_choice_counter,
+                duration_histogram,
+                chat_exception_counter,
+                streaming_time_to_first_token,
+                streaming_time_to_generate,
+            ),
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("openai.resources.chat.completions", "Completions.create")
@@ -386,5 +412,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.responses", "AsyncResponses.create")
             unwrap("openai.resources.responses", "AsyncResponses.retrieve")
             unwrap("openai.resources.responses", "AsyncResponses.cancel")
+            unwrap("openai.resources.responses", "Responses.parse")
+            unwrap("openai.resources.responses", "AsyncResponses.parse")
         except ImportError:
             pass

@@ -268,7 +268,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
         self._time_of_first_token = self._start_time
         self._cleanup_lock = threading.Lock()
         self._cleanup_completed = False
-        self._error_recorded = False
+        self._error_recorded = threading.Event()
         self._text_deltas = []
 
         if self._traced_data.response_id:
@@ -324,7 +324,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 if self._span and self._span.is_recording():
                     self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
-                    self._error_recorded = True
+                    self._error_recorded.set()
                 self._ensure_cleanup()
             raise
         else:
@@ -341,7 +341,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 if self._span and self._span.is_recording():
                     self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
-                    self._error_recorded = True
+                    self._error_recorded.set()
                 self._ensure_cleanup()
             raise
         else:
@@ -487,7 +487,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
             )
 
         if self._span and self._span.is_recording():
-            if not self._error_recorded:
+            if not self._error_recorded.is_set():
                 self._span.set_status(Status(StatusCode.OK))
             self._span.end()
 
@@ -512,7 +512,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
                 logger.debug("Starting ResponseStream cleanup")
 
                 if self._span and self._span.is_recording():
-                    if not self._error_recorded:
+                    if not self._error_recorded.is_set():
                         self._span.set_status(Status(StatusCode.OK))
                     self._span.end()
                     logger.debug("ResponseStream span closed in cleanup")
@@ -528,7 +528,7 @@ class ResponseStream(ResponseStreamBase, ObjectProxy):
 
                 try:
                     if self._span and self._span.is_recording():
-                        if not self._error_recorded:
+                        if not self._error_recorded.is_set():
                             self._span.set_status(Status(StatusCode.ERROR, "Cleanup failed"))
                         self._span.end()
                     self._cleanup_completed = True
