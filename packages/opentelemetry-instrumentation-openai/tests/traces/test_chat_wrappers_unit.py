@@ -77,7 +77,9 @@ async def test_set_prompts_truncates_and_hashes():
     await set_chat_prompts(span, [{"role": "user", "content": long_prompt}])
 
     preview = span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
-    digest = span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.hash"]
+    digest = span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}"
+    ]
 
     assert len(preview) == 128
     assert preview == long_prompt[:128]
@@ -90,8 +92,12 @@ def test_set_completion_prompts_hashes_each_prompt():
 
     set_completion_prompts(span, prompts)
 
-    first_hash = span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.hash"]
-    second_hash = span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.hash"]
+    first_hash = span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.0.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}"
+    ]
+    second_hash = span.attributes[
+        f"{SpanAttributes.LLM_PROMPTS}.1.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}"
+    ]
 
     assert first_hash == hashlib.sha256("foo".encode("utf-8")).hexdigest()
     assert second_hash == hashlib.sha256("bar".encode("utf-8")).hexdigest()

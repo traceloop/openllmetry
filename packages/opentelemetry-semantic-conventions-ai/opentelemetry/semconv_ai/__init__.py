@@ -94,6 +94,7 @@ class SpanAttributes:
     LLM_HEADERS = "llm.headers"
     LLM_RECEIPT_ID = "llm.receipt_id"
     LLM_REPRODUCIBLE_RUN = "llm.reproducible_run"
+    LLM_CONTENT_HASH_ATTRIBUTE = "content_hash"
     LLM_TOP_K = "llm.top_k"
     LLM_IS_STREAMING = "llm.is_streaming"
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"

@@ -172,12 +172,20 @@ def _set_prompts(span, prompt):
             preview, digest = _prompt_preview_and_hash(str(value))
             prefix = f"{SpanAttributes.LLM_PROMPTS}.{idx}"
             _set_span_attribute(span, f"{prefix}.user", preview)
-            _set_span_attribute(span, f"{prefix}.hash", digest)
+            _set_span_attribute(
+                span,
+                f"{prefix}.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}",
+                digest,
+            )
     else:
         preview, digest = _prompt_preview_and_hash(str(prompt))
         prefix = f"{SpanAttributes.LLM_PROMPTS}.0"
         _set_span_attribute(span, f"{prefix}.user", preview)
-        _set_span_attribute(span, f"{prefix}.hash", digest)
+        _set_span_attribute(
+            span,
+            f"{prefix}.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}",
+            digest,
+        )
 
 
 @dont_throw

@@ -159,7 +159,12 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     scrubbed_headers = _scrub_headers(kwargs.get("headers"))
     extra_headers = _scrub_headers(kwargs.get("extra_headers"))
-    headers_payload = extra_headers or scrubbed_headers
+    headers_payload = {}
+    if scrubbed_headers:
+        headers_payload.update(scrubbed_headers)
+    if extra_headers:
+        headers_payload.update(extra_headers)
+
     if headers_payload:
         _set_span_attribute(
             span,

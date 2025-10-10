@@ -480,7 +480,11 @@ async def _set_prompts(span, messages):
 
             preview, digest = _prompt_preview_and_hash(serialized_content)
             _set_span_attribute(span, f"{prefix}.content", preview)
-            _set_span_attribute(span, f"{prefix}.hash", digest)
+            _set_span_attribute(
+                span,
+                f"{prefix}.{SpanAttributes.LLM_CONTENT_HASH_ATTRIBUTE}",
+                digest,
+            )
         if msg.get("tool_call_id"):
             _set_span_attribute(
                 span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
