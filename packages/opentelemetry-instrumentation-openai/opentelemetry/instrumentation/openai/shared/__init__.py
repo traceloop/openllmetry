@@ -26,6 +26,30 @@ _PYDANTIC_VERSION = version("pydantic")
 
 logger = logging.getLogger(__name__)
 
+SENSITIVE_HEADER_KEYS = {"authorization", "proxy-authorization"}
+
+
+def _scrub_headers(headers):
+    if not headers:
+        return None
+
+    try:
+        items = headers.items()
+    except AttributeError:
+        return None
+
+    cleaned = {}
+    for key, value in items:
+        if key is None:
+            continue
+        lowered = key.lower()
+        if lowered in SENSITIVE_HEADER_KEYS:
+            cleaned[key] = "<redacted>"
+        else:
+            cleaned[key] = value
+
+    return cleaned if cleaned else None
+
 
 def _set_span_attribute(span, name, value):
     if value is None or value == "":
@@ -132,12 +156,23 @@ def _set_request_attributes(span, kwargs, instance=None):
         span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
-    _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
-    # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
-    if kwargs.get("extra_headers") is not None:
+
+    scrubbed_headers = _scrub_headers(kwargs.get("headers"))
+    extra_headers = _scrub_headers(kwargs.get("extra_headers"))
+    headers_payload = {}
+    if scrubbed_headers:
+        headers_payload.update(scrubbed_headers)
+    if extra_headers:
+        headers_payload.update(extra_headers)
+
+    if headers_payload:
         _set_span_attribute(
-            span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
+            span,
+            SpanAttributes.LLM_HEADERS,
+            json.dumps(headers_payload, sort_keys=True),
         )
+    if kwargs.get("seed") is not None:
+        _set_span_attribute(span, SpanAttributes.LLM_REPRODUCIBLE_RUN, True)
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
@@ -203,7 +238,9 @@ def _set_response_attributes(span, response):
     if response_model:
         response_model = _extract_model_name_from_provider_format(response_model)
     _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response_model)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.get("id"))
+    response_id = response.get("id")
+    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response_id)
+    _set_span_attribute(span, SpanAttributes.LLM_RECEIPT_ID, response_id)
 
     _set_span_attribute(
         span,

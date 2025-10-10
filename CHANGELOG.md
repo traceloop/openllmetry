@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fix
+
+- **openai**: use monotonic timing for streaming spans, redact headers, add prompt hash + receipt attributes
+
 ## v0.47.3 (2025-09-21)
 
 ### Fix
