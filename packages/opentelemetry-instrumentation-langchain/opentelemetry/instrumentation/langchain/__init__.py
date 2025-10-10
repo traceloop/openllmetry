@@ -229,24 +229,16 @@ class _OpenAITracingWrapper:
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
-            # Use .get() instead of direct access to handle run_ids from other systems
             span_holder = self._callback_manager.spans.get(run_id)
             
-            # Only inject headers if we have a span (i.e., OTEL created this run_id)
             if span_holder:
                 extra_headers = kwargs.get("extra_headers", {})
-                
-                # Inject tracing context into the extra headers
                 ctx = set_span_in_context(span_holder.span)
                 TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-                
-                # Update kwargs to include the modified headers
                 kwargs["extra_headers"] = extra_headers
             else:
-                # This run_id was created by another system (LangSmith, etc.)
                 logger.debug(
-                    "OpenTelemetry doesn't have a span for run_id %s. "
-                    "This is likely from LangSmith or another tracing system. Skipping header injection.",
+                    "No span found for run_id %s, skipping header injection",
                     run_id
                 )
 
