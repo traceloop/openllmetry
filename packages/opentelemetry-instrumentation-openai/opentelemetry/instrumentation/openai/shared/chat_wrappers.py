@@ -1,8 +1,9 @@
 import copy
+import hashlib
 import json
 import logging
 import threading
-import time
+from time import perf_counter
 from functools import singledispatch
 from typing import List, Optional, Union
 
@@ -61,6 +62,19 @@ LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 logger = logging.getLogger(__name__)
 
 
+PROMPT_PREVIEW_LIMIT = 128
+
+
+def _monotonic_now() -> float:
+    return perf_counter()
+
+
+def _prompt_preview_and_hash(content: str) -> tuple[str, str]:
+    encoded = content.encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    return content[:PROMPT_PREVIEW_LIMIT], digest
+
+
 @_with_chat_telemetry_wrapper
 def chat_wrapper(
     tracer: Tracer,
@@ -91,11 +105,11 @@ def chat_wrapper(
     with trace.use_span(span, end_on_exit=False):
         run_async(_handle_request(span, kwargs, instance))
         try:
-            start_time = time.time()
+            start_time = _monotonic_now()
             response = wrapped(*args, **kwargs)
-            end_time = time.time()
+            end_time = _monotonic_now()
         except Exception as e:  # pylint: disable=broad-except
-            end_time = time.time()
+            end_time = _monotonic_now()
             duration = end_time - start_time if "start_time" in locals() else 0
 
             attributes = {
@@ -190,11 +204,11 @@ async def achat_wrapper(
         await _handle_request(span, kwargs, instance)
 
         try:
-            start_time = time.time()
+            start_time = _monotonic_now()
             response = await wrapped(*args, **kwargs)
-            end_time = time.time()
+            end_time = _monotonic_now()
         except Exception as e:  # pylint: disable=broad-except
-            end_time = time.time()
+            end_time = _monotonic_now()
             duration = end_time - start_time if "start_time" in locals() else 0
 
             common_attributes = Config.get_common_metrics_attributes()
@@ -448,7 +462,7 @@ async def _set_prompts(span, messages):
         if msg.get("content"):
             content = copy.deepcopy(msg.get("content"))
             if isinstance(content, list):
-                content = [
+                processed_content = [
                     (
                         await _process_image_item(
                             item, span.context.trace_id, span.context.span_id, i, j
@@ -458,9 +472,15 @@ async def _set_prompts(span, messages):
                     )
                     for j, item in enumerate(content)
                 ]
+                serialized_content = json.dumps(processed_content)
+            elif isinstance(content, dict):
+                serialized_content = json.dumps(content)
+            else:
+                serialized_content = str(content)
 
-                content = json.dumps(content)
-            _set_span_attribute(span, f"{prefix}.content", content)
+            preview, digest = _prompt_preview_and_hash(serialized_content)
+            _set_span_attribute(span, f"{prefix}.content", preview)
+            _set_span_attribute(span, f"{prefix}.hash", digest)
         if msg.get("tool_call_id"):
             _set_span_attribute(
                 span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
@@ -510,11 +530,11 @@ def _set_completions(span, choices):
             _set_span_attribute(span, f"{prefix}.role", "assistant")
             _set_span_attribute(span, f"{prefix}.content", "FILTERED")
 
-            return
+            continue
 
         message = choice.get("message")
         if not message:
-            return
+            continue
 
         _set_span_attribute(span, f"{prefix}.role", message.get("role"))
 
@@ -714,7 +734,7 @@ class ChatStream(ObjectProxy):
             name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
         if self._first_token and self._streaming_time_to_first_token:
-            self._time_of_first_token = time.time()
+            self._time_of_first_token = _monotonic_now()
             self._streaming_time_to_first_token.record(
                 self._time_of_first_token - self._start_time,
                 attributes=self._shared_attributes(),
@@ -753,7 +773,7 @@ class ChatStream(ObjectProxy):
 
         # duration metrics
         if self._start_time and isinstance(self._start_time, (float, int)):
-            duration = time.time() - self._start_time
+            duration = _monotonic_now() - self._start_time
         else:
             duration = None
         if duration and isinstance(duration, (float, int)) and self._duration_histogram:
@@ -762,7 +782,7 @@ class ChatStream(ObjectProxy):
             )
         if self._streaming_time_to_generate and self._time_of_first_token:
             self._streaming_time_to_generate.record(
-                time.time() - self._time_of_first_token,
+                _monotonic_now() - self._time_of_first_token,
                 attributes=self._shared_attributes(),
             )
 
@@ -822,7 +842,7 @@ class ChatStream(ObjectProxy):
         """Record metrics based on available partial data"""
         # Always record duration if we have start time
         if self._start_time and isinstance(self._start_time, (float, int)) and self._duration_histogram:
-            duration = time.time() - self._start_time
+            duration = _monotonic_now() - self._start_time
             self._duration_histogram.record(
                 duration, attributes=self._shared_attributes()
             )
@@ -877,7 +897,7 @@ def _build_from_streaming_response(
         item_to_yield = item
 
         if first_token and streaming_time_to_first_token:
-            time_of_first_token = time.time()
+            time_of_first_token = _monotonic_now()
             streaming_time_to_first_token.record(
                 time_of_first_token - start_time)
             first_token = False
@@ -904,13 +924,13 @@ def _build_from_streaming_response(
 
     # duration metrics
     if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
+        duration = _monotonic_now() - start_time
     else:
         duration = None
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
     if streaming_time_to_generate and time_of_first_token:
-        streaming_time_to_generate.record(time.time() - time_of_first_token)
+        streaming_time_to_generate.record(_monotonic_now() - time_of_first_token)
 
     _set_response_attributes(span, complete_response)
     if should_emit_events():
@@ -948,7 +968,7 @@ async def _abuild_from_streaming_response(
         item_to_yield = item
 
         if first_token and streaming_time_to_first_token:
-            time_of_first_token = time.time()
+            time_of_first_token = _monotonic_now()
             streaming_time_to_first_token.record(
                 time_of_first_token - start_time)
             first_token = False
@@ -975,13 +995,13 @@ async def _abuild_from_streaming_response(
 
     # duration metrics
     if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
+        duration = _monotonic_now() - start_time
     else:
         duration = None
     if duration and isinstance(duration, (float, int)) and duration_histogram:
         duration_histogram.record(duration, attributes=shared_attributes)
     if streaming_time_to_generate and time_of_first_token:
-        streaming_time_to_generate.record(time.time() - time_of_first_token)
+        streaming_time_to_generate.record(_monotonic_now() - time_of_first_token)
 
     _set_response_attributes(span, complete_response)
     if should_emit_events():
@@ -1125,8 +1145,12 @@ def _accumulate_stream_items(item, complete_response):
     if is_openai_v1():
         item = model_as_dict(item)
 
-    complete_response["model"] = item.get("model")
-    complete_response["id"] = item.get("id")
+    model = item.get("model")
+    if model:
+        complete_response["model"] = model
+    response_id = item.get("id")
+    if response_id:
+        complete_response["id"] = response_id
 
     # capture usage information from the last stream chunks
     if item.get("usage"):
@@ -1157,7 +1181,15 @@ def _accumulate_stream_items(item, complete_response):
         delta = choice.get("delta")
 
         if delta and delta.get("content"):
-            complete_choice["message"]["content"] += delta.get("content")
+            chunk = delta.get("content")
+            if isinstance(chunk, list):
+                chunk_text = "".join(
+                    part.get("text", "") if isinstance(part, dict) else str(part)
+                    for part in chunk
+                )
+            else:
+                chunk_text = chunk
+            complete_choice["message"]["content"] += chunk_text
 
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")

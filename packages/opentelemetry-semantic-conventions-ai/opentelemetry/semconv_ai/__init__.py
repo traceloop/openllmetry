@@ -92,6 +92,8 @@ class SpanAttributes:
     LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"
     LLM_USER = "llm.user"
     LLM_HEADERS = "llm.headers"
+    LLM_RECEIPT_ID = "llm.receipt_id"
+    LLM_REPRODUCIBLE_RUN = "llm.reproducible_run"
     LLM_TOP_K = "llm.top_k"
     LLM_IS_STREAMING = "llm.is_streaming"
     LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"

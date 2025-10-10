@@ -1,3 +1,4 @@
+import hashlib
 import logging
 
 from opentelemetry import context as context_api
@@ -40,6 +41,14 @@ SPAN_NAME = "openai.completion"
 LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
 
 logger = logging.getLogger(__name__)
+
+PROMPT_PREVIEW_LIMIT = 128
+
+
+def _prompt_preview_and_hash(content: str) -> tuple[str, str]:
+    encoded = content.encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    return content[:PROMPT_PREVIEW_LIMIT], digest
 
 
 @_with_tracer_wrapper
@@ -158,11 +167,17 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.user",
-        prompt[0] if isinstance(prompt, list) else prompt,
-    )
+    if isinstance(prompt, list):
+        for idx, value in enumerate(prompt):
+            preview, digest = _prompt_preview_and_hash(str(value))
+            prefix = f"{SpanAttributes.LLM_PROMPTS}.{idx}"
+            _set_span_attribute(span, f"{prefix}.user", preview)
+            _set_span_attribute(span, f"{prefix}.hash", digest)
+    else:
+        preview, digest = _prompt_preview_and_hash(str(prompt))
+        prefix = f"{SpanAttributes.LLM_PROMPTS}.0"
+        _set_span_attribute(span, f"{prefix}.user", preview)
+        _set_span_attribute(span, f"{prefix}.hash", digest)
 
 
 @dont_throw
@@ -254,8 +269,12 @@ def _accumulate_streaming_response(complete_response, item):
     if is_openai_v1():
         item = model_as_dict(item)
 
-    complete_response["model"] = item.get("model")
-    complete_response["id"] = item.get("id")
+    model = item.get("model")
+    if model:
+        complete_response["model"] = model
+    response_id = item.get("id")
+    if response_id:
+        complete_response["id"] = response_id
 
     # capture usage information from the stream chunks
     if item.get("usage"):
