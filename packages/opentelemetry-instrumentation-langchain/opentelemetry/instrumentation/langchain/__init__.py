@@ -226,19 +226,32 @@ class _OpenAITracingWrapper:
         args,
         kwargs,
     ) -> None:
+        """
+        Inject tracing headers for the current run into OpenAI request kwargs and suppress language-model instrumentation while calling the wrapped function.
+        
+        If kwargs contains a `run_manager`, this looks up a span for `run_manager.run_id` from the callback manager; if a span is found, tracing headers are injected into `kwargs["extra_headers"]`. If no span is found, a debug message is logged and no headers are injected. The function also sets the context key SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY to True as a best-effort fallback; failures to set the context are ignored. Finally, the original wrapped callable is invoked with the (possibly modified) args and kwargs.
+        
+        Parameters:
+            kwargs (dict): May contain `run_manager` (used to find a span via `run_manager.run_id`) and `extra_headers` (a dict that will be updated with injected tracing headers if a span is present).
+        
+        Returns:
+            The value returned by calling the original `wrapped` callable with the provided args and kwargs.
+        """
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
-            span_holder = self._callback_manager.spans[run_id]
-
-            extra_headers = kwargs.get("extra_headers", {})
-
-            # Inject tracing context into the extra headers
-            ctx = set_span_in_context(span_holder.span)
-            TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-
-            # Update kwargs to include the modified headers
-            kwargs["extra_headers"] = extra_headers
+            span_holder = self._callback_manager.spans.get(run_id)
+            
+            if span_holder:
+                extra_headers = kwargs.get("extra_headers", {})
+                ctx = set_span_in_context(span_holder.span)
+                TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+                kwargs["extra_headers"] = extra_headers
+            else:
+                logger.debug(
+                    "No span found for run_id %s, skipping header injection",
+                    run_id
+                )
 
         # In legacy chains like LLMChain, suppressing model instrumentations
         # within create_llm_span doesn't work, so this should helps as a fallback
