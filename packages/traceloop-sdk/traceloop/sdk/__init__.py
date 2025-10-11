@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Union
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
-from opentelemetry.sdk.trace.sampling import Sampler
+from opentelemetry.sdk.trace.sampling import Sampler, TraceIdRatioBased
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.metrics.export import MetricExporter
 from opentelemetry.sdk._logs.export import LogExporter
@@ -62,6 +62,7 @@ class Traceloop:
         processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
         propagator: TextMapPropagator = None,
         sampler: Optional[Sampler] = None,
+        sampling_rate: Optional[float] = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
         resource_attributes: dict = {},
@@ -135,6 +136,19 @@ class Traceloop:
             }
 
         print(Fore.RESET)
+
+        if sampling_rate is not None and sampler is not None:
+            raise ValueError(
+                "Cannot specify both 'sampler' and 'sampling_rate'. "
+                "Please use only one of these parameters."
+            )
+
+        if sampling_rate is not None:
+            if not 0.0 <= sampling_rate <= 1.0:
+                raise ValueError(
+                    f"sampling_rate must be between 0.0 and 1.0, got {sampling_rate}"
+                )
+            sampler = TraceIdRatioBased(sampling_rate)
 
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
