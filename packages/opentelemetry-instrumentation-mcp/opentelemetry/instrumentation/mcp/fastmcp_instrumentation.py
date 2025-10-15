@@ -60,7 +60,6 @@ class FastMCPInstrumentor:
             return result
         return traced_method
 
-
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
         @dont_throw

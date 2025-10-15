@@ -1,3 +1,9 @@
+## v0.47.3 (2025-09-21)
+
+### Fix
+
+- **openai-agents**: propagate gen_ai.agent.name through an agent flow + set workflow name to fast mcp (#3388)
+
 ## v0.47.2 (2025-09-17)
 
 ### Fix

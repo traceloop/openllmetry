@@ -35,6 +35,7 @@ from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
 from typing import Callable, Dict, List, Optional, Set, Union
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_AGENT_NAME
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -260,6 +261,10 @@ def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
 
+def set_agent_name(agent_name: str) -> None:
+    attach(set_value("agent_name", agent_name))
+
+
 def set_entity_path(entity_path: str) -> None:
     attach(set_value("entity_path", entity_path))
 
@@ -314,6 +319,10 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     workflow_name = get_value("workflow_name")
     if workflow_name is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
+
+    agent_name = get_value("agent_name")
+    if agent_name is not None:
+        span.set_attribute(GEN_AI_AGENT_NAME, str(agent_name))
 
     entity_path = get_value("entity_path")
     if entity_path is not None:
