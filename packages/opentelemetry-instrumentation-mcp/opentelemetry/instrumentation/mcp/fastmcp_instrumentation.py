@@ -116,9 +116,22 @@ class FastMCPInstrumentor:
                         # Always add response to MCP span regardless of content tracing setting
                         if result:
                             try:
-                                # Handle FastMCP ToolResult object
-                                if hasattr(result, 'content') and result.content:
-                                    # Convert FastMCP Content objects to serializable format
+                                # Handle different result types
+                                if isinstance(result, list):
+                                    # FastMCP returns list of Content objects directly
+                                    output_data = []
+                                    for item in result:
+                                        if hasattr(item, 'text'):
+                                            output_data.append({"type": "text", "content": item.text})
+                                        elif hasattr(item, '__dict__'):
+                                            output_data.append(item.__dict__)
+                                        else:
+                                            output_data.append(str(item))
+                                    
+                                    json_output = json.dumps(output_data, cls=self._get_json_encoder())
+                                    truncated_output = self._truncate_json_if_needed(json_output)
+                                elif hasattr(result, 'content') and result.content:
+                                    # Handle FastMCP ToolResult object with .content attribute
                                     output_data = []
                                     for item in result.content:
                                         if hasattr(item, 'text'):

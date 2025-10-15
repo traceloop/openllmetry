@@ -23,8 +23,8 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
 
         # Test tool calling
         result = await client.call_tool("add_numbers", {"a": 5, "b": 3})
-        assert len(result.content) == 1
-        assert result.content[0].text == "8"
+        assert len(result) == 1
+        assert result[0].text == "8"
 
         # Test resource listing
         resources_res = await client.list_resources()
