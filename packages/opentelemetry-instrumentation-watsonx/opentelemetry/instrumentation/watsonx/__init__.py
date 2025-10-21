@@ -442,6 +442,26 @@ def _metric_shared_attributes(response_model: str, is_streaming: bool = False):
     }
 
 
+def _set_prompt_attributes(span, args=None, kwargs=None):
+    args = args or ()
+    kwargs = kwargs or {}
+    prompt_value = kwargs.get("prompt")
+    if not prompt_value and args:
+        first_arg = args[0]
+        if isinstance(first_arg, (str, list)):
+            prompt_value = first_arg
+
+    if not prompt_value:
+        return
+
+    if isinstance(prompt_value, list):
+        prompt_text = " ".join(str(p).strip() for p in prompt_value)
+    else:
+        prompt_text = str(prompt_value).strip()
+
+    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}", prompt_text)
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -480,6 +500,7 @@ def _handle_input(span, event_logger, name, instance, response_counter, args, kw
 
     if "generate" in name:
         set_model_input_attributes(span, instance)
+        _set_prompt_attributes(span, args=args, kwargs=kwargs)
 
     if should_emit_events() and event_logger:
         _emit_input_events(args, kwargs, event_logger)
