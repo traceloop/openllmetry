@@ -459,7 +459,7 @@ def _set_prompt_attributes(span, args=None, kwargs=None):
     else:
         prompt_text = str(prompt_value).strip()
 
-    _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}", prompt_text)
+    _set_span_attribute(span, SpanAttributes.LLM_PROMPTS, prompt_text)
 
 
 def _with_tracer_wrapper(func):
