@@ -500,7 +500,7 @@ def _handle_input(span, event_logger, name, instance, response_counter, args, kw
 
     if "generate" in name:
         set_model_input_attributes(span, instance)
-        _set_prompt_attributes(span, args=args, kwargs=kwargs)
+        if should_send_prompts(): _set_prompt_attributes(span, args=args, kwargs=kwargs)
 
     if should_emit_events() and event_logger:
         _emit_input_events(args, kwargs, event_logger)
