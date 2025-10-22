@@ -62,7 +62,6 @@ class FastMCPInstrumentor:
 
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
-        # @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
@@ -152,7 +151,7 @@ class FastMCPInstrumentor:
                 mcp_span.set_status(Status(StatusCode.OK))
             except Exception:
                 pass
-            
+
             return result
 
                    
