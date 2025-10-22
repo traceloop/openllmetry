@@ -79,7 +79,6 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
         f"Expected at least 1 resources/read.mcp span, found {len(resource_read_spans)}"
     )
 
-
     for i, span in enumerate(tool_call_spans):
         # Verify span metadata
         assert span.attributes.get('traceloop.span.kind') == 'tool', (
