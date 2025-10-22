@@ -123,7 +123,7 @@ def is_metrics_enabled() -> bool:
 
 
 def _set_input_attributes(span, instance, args=None, kwargs=None):
-    if not should_send_prompts():
+    if not span.is_recording():
         return
 
     args = args or ()
