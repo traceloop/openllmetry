@@ -122,7 +122,7 @@ def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
-def _set_input_attributes(span, instance, args=None, kwargs=None):
+def _set_input_attributes(span, args=None, kwargs=None):
     if not span.is_recording():
         return
 
@@ -490,7 +490,7 @@ def _handle_input(span, event_logger, name, instance, response_counter, args, kw
     if "generate" in name:
         set_model_input_attributes(span, instance)
         if should_send_prompts():
-            _set_input_attributes(span, instance, args=args, kwargs=kwargs)
+            _set_input_attributes(span, args=args, kwargs=kwargs)
 
     if should_emit_events() and event_logger:
         _emit_input_events(args, kwargs, event_logger)
