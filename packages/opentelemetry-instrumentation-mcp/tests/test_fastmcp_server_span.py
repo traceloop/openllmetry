@@ -14,8 +14,8 @@ async def test_fastmcp_server_mcp_parent_span(span_exporter, tracer_provider) ->
     async with Client(server) as client:
         # Test tool calling
         result = await client.call_tool("test_tool", {"x": 5})
-        assert len(result) == 1
-        assert result[0].text == "10"
+        assert len(result.content) == 1
+        assert result.content[0].text == "10"
 
     # Get the finished spans
     spans = span_exporter.get_finished_spans()
