@@ -230,7 +230,7 @@ class _OpenAITracingWrapper:
         if run_manager:
             run_id = run_manager.run_id
             span_holder = self._callback_manager.spans.get(run_id)
-            
+
             if span_holder:
                 extra_headers = kwargs.get("extra_headers", {})
                 ctx = set_span_in_context(span_holder.span)
