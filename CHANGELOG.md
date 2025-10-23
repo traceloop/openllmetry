@@ -1,3 +1,9 @@
+## v0.47.4 (2025-10-22)
+
+### Fix
+
+- **fastmcp**: Remote MCP instrumentation (#3419)
+
 ## v0.47.3 (2025-09-21)
 
 ### Fix
