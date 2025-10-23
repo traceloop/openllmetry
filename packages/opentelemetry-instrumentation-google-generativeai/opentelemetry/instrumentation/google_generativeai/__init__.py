@@ -90,7 +90,7 @@ def _build_from_streaming_response(
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, complete_response, llm_model)
-    set_model_response_attributes(span, last_chunk if last_chunk else response, llm_model)
+    set_model_response_attributes(span, last_chunk or response, llm_model)
     span.end()
 
 
