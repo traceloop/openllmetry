@@ -48,6 +48,18 @@ WRAPPED_METHODS = [
         "method": "generate_content",
         "span_name": "gemini.generate_content",
     },
+    {
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content_stream",
+        "span_name": "gemini.generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels",
+        "method": "generate_content_stream",
+        "span_name": "gemini.generate_content",
+    },
 ]
 
 
@@ -66,8 +78,10 @@ def _build_from_streaming_response(
     event_logger,
 ):
     complete_response = ""
+    last_chunk = None
     for item in response:
         item_to_yield = item
+        last_chunk = item
         complete_response += str(item.text)
 
         yield item_to_yield
@@ -76,7 +90,7 @@ def _build_from_streaming_response(
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, complete_response, llm_model)
-    set_model_response_attributes(span, response, llm_model)
+    set_model_response_attributes(span, last_chunk if last_chunk else response, llm_model)
     span.end()
 
 
@@ -84,8 +98,10 @@ async def _abuild_from_streaming_response(
     span, response: GenerateContentResponse, llm_model, event_logger
 ):
     complete_response = ""
+    last_chunk = None
     async for item in response:
         item_to_yield = item
+        last_chunk = item
         complete_response += str(item.text)
 
         yield item_to_yield
@@ -94,7 +110,7 @@ async def _abuild_from_streaming_response(
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, complete_response, llm_model)
-    set_model_response_attributes(span, response, llm_model)
+    set_model_response_attributes(span, last_chunk if last_chunk else response, llm_model)
     span.end()
 
 
