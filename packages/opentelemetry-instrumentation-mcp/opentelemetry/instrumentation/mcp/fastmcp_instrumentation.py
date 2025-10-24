@@ -62,7 +62,6 @@ class FastMCPInstrumentor:
 
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
-        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
@@ -111,6 +110,10 @@ class FastMCPInstrumentor:
 
                     try:
                         result = await wrapped(*args, **kwargs)
+                    except Exception as e:
+                        tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
+                        tool_span.record_exception(e)
+                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
 
                         # Always add response to MCP span regardless of content tracing setting
                         if result:
@@ -130,17 +133,9 @@ class FastMCPInstrumentor:
 
                         tool_span.set_status(Status(StatusCode.OK))
                         mcp_span.set_status(Status(StatusCode.OK))
-                        return result
-
-                    except Exception as e:
-                        tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        tool_span.record_exception(e)
-                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
-
-                        mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        mcp_span.record_exception(e)
-                        mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
-                        raise
+                    except Exception:
+                        pass
+                    return result
 
         return traced_method
 
