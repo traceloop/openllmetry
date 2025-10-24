@@ -85,7 +85,17 @@ def serialize_mcp_result(result, json_encoder_cls=None, truncate_func=None):
         return str(obj)
 
     try:
-        serialized = _serialize_object(result)
+        # Handle FastMCP result types - prioritize extracting content
+        # If result is a list, serialize it directly
+        if isinstance(result, list):
+            serialized = _serialize_object(result)
+        # If result has .content attribute, extract and serialize just the content
+        elif hasattr(result, 'content') and result.content:
+            serialized = _serialize_object(result.content)
+        else:
+            # For other objects, serialize the whole thing
+            serialized = _serialize_object(result)
+
         json_output = json.dumps(serialized, cls=json_encoder_cls)
         return truncate_func(json_output) if truncate_func else json_output
     except (TypeError, ValueError):
