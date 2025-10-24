@@ -9,7 +9,7 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw
+from .utils import dont_throw, serialize_mcp_result
 
 
 class FastMCPInstrumentor:
@@ -114,58 +114,19 @@ class FastMCPInstrumentor:
 
                         # Always add response to MCP span regardless of content tracing setting
                         if result:
-                            try:
-                                # Handle different result types
-                                if isinstance(result, list):
-                                    # FastMCP returns list of Content objects directly
-                                    output_data = []
-                                    for item in result:
-                                        if hasattr(item, 'text'):
-                                            output_data.append({"type": "text", "content": item.text})
-                                        elif hasattr(item, '__dict__'):
-                                            output_data.append(item.__dict__)
-                                        else:
-                                            output_data.append(str(item))
-                                    
-                                    json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                                    truncated_output = self._truncate_json_if_needed(json_output)
-                                elif hasattr(result, 'content') and result.content:
-                                    # Handle FastMCP ToolResult object with .content attribute
-                                    output_data = []
-                                    for item in result.content:
-                                        if hasattr(item, 'text'):
-                                            output_data.append({"type": "text", "content": item.text})
-                                        elif hasattr(item, '__dict__'):
-                                            output_data.append(item.__dict__)
-                                        else:
-                                            output_data.append(str(item))
+                            truncated_output = serialize_mcp_result(
+                                result,
+                                json_encoder_cls=self._get_json_encoder(),
+                                truncate_func=self._truncate_json_if_needed
+                            )
 
-                                    json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                                    truncated_output = self._truncate_json_if_needed(json_output)
-                                else:
-                                    # Handle other result types
-                                    if hasattr(result, '__dict__'):
-                                        # Convert object to dict
-                                        result_dict = {}
-                                        for key, value in result.__dict__.items():
-                                            if not key.startswith('_'):
-                                                result_dict[key] = str(value)
-                                        json_output = json.dumps(result_dict, cls=self._get_json_encoder())
-                                        truncated_output = self._truncate_json_if_needed(json_output)
-                                    else:
-                                        # Fallback to string representation
-                                        truncated_output = str(result)
-                                
+                            if truncated_output:
                                 # Add response to MCP span
                                 mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
-                                
+
                                 # Also add to tool span if content tracing is enabled
                                 if self._should_send_prompts():
                                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
-                                    
-                            except (TypeError, ValueError):
-                                # Fallback: add raw result as string
-                                mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, str(result))
 
                         tool_span.set_status(Status(StatusCode.OK))
                         mcp_span.set_status(Status(StatusCode.OK))
