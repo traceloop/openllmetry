@@ -281,6 +281,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                                 role = 'assistant'
                                 # Create tool_calls structure matching OpenAI SDK format
                                 tool_calls = [{
+                                    'id': msg.get('id', ''),
                                     'name': msg.get('name', ''),
                                     'arguments': msg.get('arguments', '')
                                 }]

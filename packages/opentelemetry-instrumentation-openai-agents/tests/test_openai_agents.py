@@ -515,6 +515,14 @@ def test_tool_call_and_result_attributes(exporter):
                 assert second_response_span.attributes[tool_call_name_key] == "get_city_info", (
                     f"Expected tool name 'get_city_info', got '{second_response_span.attributes[tool_call_name_key]}'"
                 )
+                # Verify tool call ID exists
+                tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.id"
+                assert tool_call_id_key in second_response_span.attributes, (
+                    f"Tool call ID not found at {tool_call_id_key}"
+                )
+                tool_call_id = second_response_span.attributes[tool_call_id_key]
+                assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+
                 # Verify arguments exist and contain city name
                 tool_call_args_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.arguments"
                 assert tool_call_args_key in second_response_span.attributes, (
