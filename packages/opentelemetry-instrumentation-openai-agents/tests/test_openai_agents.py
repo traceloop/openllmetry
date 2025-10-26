@@ -464,7 +464,12 @@ def test_tool_call_and_result_attributes(exporter):
     async def get_city_info(city_name: str) -> str:
         """Get detailed information about a city."""
         # Return structured data to verify it appears in tool result content
-        return f"City: {city_name}, Population: 9000000, Country: United Kingdom, Description: Capital city with rich history"
+        return (
+            f"City: {city_name}, "
+            "Population: 9000000, "
+            "Country: United Kingdom, "
+            "Description: Capital city with rich history"
+        )
 
     # Create agent with the tool
     city_info_agent = Agent(
@@ -482,7 +487,9 @@ def test_tool_call_and_result_attributes(exporter):
 
     # Find response spans - there should be at least 2 (before and after tool call)
     response_spans = [s for s in spans if s.name == "openai.response"]
-    assert len(response_spans) >= 2, f"Expected at least 2 response spans (before and after tool), got {len(response_spans)}"
+    assert len(response_spans) >= 2, (
+        f"Expected at least 2 response spans (before and after tool), got {len(response_spans)}"
+    )
 
     # Tool calls and results appear in the second response span (as part of conversation history)
     second_response_span = response_spans[1]

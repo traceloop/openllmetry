@@ -247,7 +247,17 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         else:
                             # Convert object to dict
                             msg = {}
-                            for attr in ['role', 'content', 'tool_call_id', 'tool_calls', 'type', 'name', 'arguments', 'call_id', 'output']:
+                            for attr in [
+                                "role",
+                                "content",
+                                "tool_call_id",
+                                "tool_calls",
+                                "type",
+                                "name",
+                                "arguments",
+                                "call_id",
+                                "output",
+                            ]:
                                 if hasattr(message, attr):
                                     msg[attr] = getattr(message, attr)
 
