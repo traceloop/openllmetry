@@ -1,3 +1,10 @@
+## v0.47.5 (2025-10-24)
+
+### Fix
+
+- **google-genai**: make streaming responses work (again) (#3421)
+- **langchain**: changed dictionary access from spans[run_id] to spans.get(run_id) (#3403)
+
 ## v0.47.4 (2025-10-22)
 
 ### Fix
