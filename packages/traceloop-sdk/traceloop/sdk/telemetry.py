@@ -14,13 +14,36 @@ class Telemetry:
     UNKNOWN_ANON_ID = "UNKNOWN"
 
     _posthog: Posthog = None
+    _global_telemetry_enabled: bool = None
+
+    @classmethod
+    def set_global_telemetry_enabled(cls, enabled: bool) -> None:
+        """Set the global telemetry enabled flag from Traceloop.init()"""
+        cls._global_telemetry_enabled = enabled
 
     def __new__(cls) -> "Telemetry":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(Telemetry, cls).__new__(cls)
-            obj._telemetry_enabled = (
+
+            # Check telemetry setting in this order of precedence:
+            # 1. Global setting from Traceloop.init() if set
+            # 2. Environment variable TRACELOOP_TELEMETRY
+            # 3. Default to True
+            if cls._global_telemetry_enabled is not None:
+                # Use the setting from Traceloop.init()
+                telemetry_from_init = cls._global_telemetry_enabled
+            else:
+                # Fall back to environment variable logic
+                telemetry_from_init = True
+
+            env_telemetry = (
                 os.getenv("TRACELOOP_TELEMETRY") or "true"
-            ).lower() == "true" and "pytest" not in sys.modules
+            ).lower() == "true"
+
+            # Both the init parameter and env var must be True, and not in pytest
+            obj._telemetry_enabled = (
+                telemetry_from_init and env_telemetry and "pytest" not in sys.modules
+            )
 
             if obj._telemetry_enabled:
                 try:
