@@ -1110,7 +1110,7 @@ def test_titan_converse_with_caching(test_context, brt):
     assert attributes_write[SpanAttributes.LLM_REQUEST_MODEL] == "titan-text-express-v1"
     assert attributes_write[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert attributes_write[CacheSpanAttrs.CACHED] == "write"
-    assert attributes_write["gen_ai.usage.cache_creation_input_tokens"] == usage_write["cache_creation_input_tokens"]
+    assert attributes_write[SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS] == usage_write["cache_creation_input_tokens"]
 
     # Assertions for the second span (cache read)
     span_read = spans[1]
@@ -1119,7 +1119,7 @@ def test_titan_converse_with_caching(test_context, brt):
     assert attributes_read[SpanAttributes.LLM_REQUEST_MODEL] == "titan-text-express-v1"
     assert attributes_read[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert attributes_read[CacheSpanAttrs.CACHED] == "read"
-    assert attributes_read["gen_ai.usage.cache_read_input_tokens"] == usage_read["cache_read_input_tokens"]
+    assert attributes_read[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == usage_read["cache_read_input_tokens"]
 
     # Assert metrics (we need to combine usage for cumulative assertion)
     cumulative_usage = {
