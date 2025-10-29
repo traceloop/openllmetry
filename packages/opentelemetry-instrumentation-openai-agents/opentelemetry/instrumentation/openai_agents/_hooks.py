@@ -239,19 +239,111 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 input_data = getattr(span_data, 'input', [])
                 if input_data:
                     for i, message in enumerate(input_data):
-                        if hasattr(message, 'role') and hasattr(message, 'content'):
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.role)
-                            content = message.content
+                        prefix = f"{SpanAttributes.LLM_PROMPTS}.{i}"
+
+                        # Convert message to dict for unified handling
+                        if isinstance(message, dict):
+                            msg = message
+                        else:
+                            # Convert object to dict
+                            msg = {}
+                            for attr in [
+                                "role",
+                                "content",
+                                "tool_call_id",
+                                "tool_calls",
+                                "type",
+                                "name",
+                                "arguments",
+                                "call_id",
+                                "output",
+                            ]:
+                                if hasattr(message, attr):
+                                    msg[attr] = getattr(message, attr)
+
+                        # Determine message format and extract data
+                        role = None
+                        content = None
+                        tool_call_id = None
+                        tool_calls = None
+
+                        if 'role' in msg:
+                            # Standard OpenAI chat format
+                            role = msg['role']
+                            content = msg.get('content')
+                            tool_call_id = msg.get('tool_call_id')
+                            tool_calls = msg.get('tool_calls')
+                        elif 'type' in msg:
+                            # OpenAI Agents SDK format
+                            msg_type = msg['type']
+                            if msg_type == 'function_call':
+                                # Tool calls are assistant messages
+                                role = 'assistant'
+                                # Create tool_calls structure matching OpenAI SDK format
+                                tool_calls = [{
+                                    'id': msg.get('id', ''),
+                                    'name': msg.get('name', ''),
+                                    'arguments': msg.get('arguments', '')
+                                }]
+                            elif msg_type == 'function_call_output':
+                                # Tool outputs are tool messages
+                                role = 'tool'
+                                content = msg.get('output')
+                                tool_call_id = msg.get('call_id')
+
+                        # Set role attribute
+                        if role:
+                            otel_span.set_attribute(f"{prefix}.role", role)
+
+                        # Set content attribute
+                        if content is not None:
                             if not isinstance(content, str):
                                 content = json.dumps(content)
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
-                        elif isinstance(message, dict):
-                            if 'role' in message and 'content' in message:
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message['role'])
-                                content = message['content']
-                                if isinstance(content, dict):
-                                    content = json.dumps(content)
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
+                            otel_span.set_attribute(f"{prefix}.content", content)
+
+                        # Set tool_call_id for tool result messages
+                        if tool_call_id:
+                            otel_span.set_attribute(f"{prefix}.tool_call_id", tool_call_id)
+
+                        # Set tool_calls for assistant messages with tool calls
+                        if tool_calls:
+                            for j, tool_call in enumerate(tool_calls):
+                                # Convert to dict if needed
+                                if not isinstance(tool_call, dict):
+                                    tc_dict = {}
+                                    if hasattr(tool_call, 'id'):
+                                        tc_dict['id'] = tool_call.id
+                                    if hasattr(tool_call, 'function'):
+                                        func = tool_call.function
+                                        if hasattr(func, 'name'):
+                                            tc_dict['name'] = func.name
+                                        if hasattr(func, 'arguments'):
+                                            tc_dict['arguments'] = func.arguments
+                                    elif hasattr(tool_call, 'name'):
+                                        tc_dict['name'] = tool_call.name
+                                    if hasattr(tool_call, 'arguments'):
+                                        tc_dict['arguments'] = tool_call.arguments
+                                    tool_call = tc_dict
+
+                                # Extract function details if nested (standard OpenAI format)
+                                if 'function' in tool_call:
+                                    function = tool_call['function']
+                                    tool_call = {
+                                        'id': tool_call.get('id'),
+                                        'name': function.get('name'),
+                                        'arguments': function.get('arguments')
+                                    }
+
+                                # Set tool call attributes
+                                if tool_call.get('id'):
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.id", tool_call['id'])
+                                if tool_call.get('name'):
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.name", tool_call['name'])
+                                if tool_call.get('arguments'):
+                                    args = tool_call['arguments']
+                                    if not isinstance(args, str):
+                                        args = json.dumps(args)
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.arguments", args)
 
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, 'response', None)
