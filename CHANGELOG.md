@@ -1,3 +1,22 @@
+## v0.47.5 (2025-10-24)
+
+### Fix
+
+- **google-genai**: make streaming responses work (again) (#3421)
+- **langchain**: changed dictionary access from spans[run_id] to spans.get(run_id) (#3403)
+
+## v0.47.4 (2025-10-22)
+
+### Fix
+
+- **fastmcp**: Remote MCP instrumentation (#3419)
+
+## v0.47.3 (2025-09-21)
+
+### Fix
+
+- **openai-agents**: propagate gen_ai.agent.name through an agent flow + set workflow name to fast mcp (#3388)
+
 ## v0.47.2 (2025-09-17)
 
 ### Fix

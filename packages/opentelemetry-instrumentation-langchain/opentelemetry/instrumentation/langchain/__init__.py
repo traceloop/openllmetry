@@ -229,16 +229,18 @@ class _OpenAITracingWrapper:
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
-            span_holder = self._callback_manager.spans[run_id]
+            span_holder = self._callback_manager.spans.get(run_id)
 
-            extra_headers = kwargs.get("extra_headers", {})
-
-            # Inject tracing context into the extra headers
-            ctx = set_span_in_context(span_holder.span)
-            TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-
-            # Update kwargs to include the modified headers
-            kwargs["extra_headers"] = extra_headers
+            if span_holder:
+                extra_headers = kwargs.get("extra_headers", {})
+                ctx = set_span_in_context(span_holder.span)
+                TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+                kwargs["extra_headers"] = extra_headers
+            else:
+                logger.debug(
+                    "No span found for run_id %s, skipping header injection",
+                    run_id
+                )
 
         # In legacy chains like LLMChain, suppressing model instrumentations
         # within create_llm_span doesn't work, so this should helps as a fallback
