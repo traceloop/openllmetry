@@ -22,7 +22,10 @@ from opentelemetry.instrumentation.bedrock.guardrail import (
     guardrail_converse,
     guardrail_handling,
 )
-from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_handling
+from opentelemetry.instrumentation.bedrock.prompt_caching import (
+    prompt_caching_converse_handling,
+    prompt_caching_handling,
+)
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
@@ -354,6 +357,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     guardrail_converse(span, response, provider, model, metric_params)
+    prompt_caching_converse_handling(response, provider, model, metric_params)
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
 
@@ -394,7 +398,11 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
                     # last message sent
+                    metadata = event.get("metadata", {})
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
+                    prompt_caching_converse_handling(
+                        metadata, provider, model, metric_params
+                    )
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
