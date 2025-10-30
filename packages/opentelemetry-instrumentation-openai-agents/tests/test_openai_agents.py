@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
-from agents import Runner, Agent
+from agents import Runner, Agent, function_tool
 from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import (
     SpanAttributes,
@@ -454,3 +454,105 @@ def test_agent_name_propagation_to_agent_spans(exporter, test_agent):
     assert agent_span.attributes[GEN_AI_AGENT_NAME] == "testAgent", (
         f"Expected agent name 'testAgent', got '{agent_span.attributes[GEN_AI_AGENT_NAME]}'"
     )
+
+
+@pytest.mark.vcr
+def test_tool_call_and_result_attributes(exporter):
+    """Test that tool calls and tool results are properly recorded in span attributes."""
+
+    @function_tool
+    async def get_city_info(city_name: str) -> str:
+        """Get detailed information about a city."""
+        # Return structured data to verify it appears in tool result content
+        return (
+            f"City: {city_name}, "
+            "Population: 9000000, "
+            "Country: United Kingdom, "
+            "Description: Capital city with rich history"
+        )
+
+    # Create agent with the tool
+    city_info_agent = Agent(
+        name="CityInfoAgent",
+        instructions="You help users get information about cities using the get_city_info tool.",
+        model="gpt-4o",
+        tools=[get_city_info],
+    )
+
+    # Run query that will trigger the tool call
+    query = "Tell me about London"
+    Runner.run_sync(city_info_agent, query)
+
+    spans = exporter.get_finished_spans()
+
+    # Find response spans - there should be at least 2 (before and after tool call)
+    response_spans = [s for s in spans if s.name == "openai.response"]
+    assert len(response_spans) >= 2, (
+        f"Expected at least 2 response spans (before and after tool), got {len(response_spans)}"
+    )
+
+    # Tool calls and results appear in the second response span (as part of conversation history)
+    second_response_span = response_spans[1]
+
+    # The tool call and result appear in the SECOND response span as part of conversation history
+    # Find the assistant message with tool call
+    tool_call_found = False
+    tool_result_found = False
+
+    for i in range(20):  # Check conversation history
+        role_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.role"
+        if role_key not in second_response_span.attributes:
+            continue
+
+        role = second_response_span.attributes[role_key]
+
+        if role == "assistant" and not tool_call_found:
+            # Check if this assistant message has tool_calls
+            tool_call_name_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.name"
+            if tool_call_name_key in second_response_span.attributes:
+                tool_call_found = True
+                # Verify tool call attributes
+                assert second_response_span.attributes[tool_call_name_key] == "get_city_info", (
+                    f"Expected tool name 'get_city_info', got '{second_response_span.attributes[tool_call_name_key]}'"
+                )
+                # Verify tool call ID exists
+                tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.id"
+                assert tool_call_id_key in second_response_span.attributes, (
+                    f"Tool call ID not found at {tool_call_id_key}"
+                )
+                tool_call_id = second_response_span.attributes[tool_call_id_key]
+                assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+
+                # Verify arguments exist and contain city name
+                tool_call_args_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.arguments"
+                assert tool_call_args_key in second_response_span.attributes, (
+                    f"Tool call arguments not found at {tool_call_args_key}"
+                )
+                arguments = second_response_span.attributes[tool_call_args_key]
+                assert "London" in arguments or "london" in arguments.lower(), (
+                    f"Expected 'London' in arguments, got: {arguments}"
+                )
+
+        elif role == "tool" and not tool_result_found:
+            tool_result_found = True
+            # Verify tool result attributes
+            content_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.content"
+            tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id"
+
+            assert content_key in second_response_span.attributes, (
+                f"Tool result content not found at {content_key}"
+            )
+            content = second_response_span.attributes[content_key]
+            assert len(content) > 0, "Tool result content should not be empty"
+            assert "London" in content or "9000000" in content or "United Kingdom" in content, (
+                f"Expected tool result to contain city info, got: {content}"
+            )
+
+            assert tool_call_id_key in second_response_span.attributes, (
+                f"Tool call ID not found at {tool_call_id_key}"
+            )
+            tool_call_id = second_response_span.attributes[tool_call_id_key]
+            assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+
+    assert tool_call_found, "No assistant message with tool_calls found in second response span"
+    assert tool_result_found, "No tool message found in second response span"

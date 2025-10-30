@@ -125,25 +125,34 @@ def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
-def _set_input_attributes(span, instance, kwargs):
+def _set_input_attributes(span, args=None, kwargs=None):
     if not span.is_recording():
         return
 
-    if should_send_prompts() and kwargs is not None and len(kwargs) > 0:
-        prompt = kwargs.get("prompt")
-        if isinstance(prompt, list):
-            for index, input in enumerate(prompt):
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.user",
-                    input,
-                )
-        else:
+    args = args or ()
+    kwargs = kwargs or {}
+    prompt = kwargs.get("prompt")
+    if not prompt and args:
+        first_arg = args[0]
+        if isinstance(first_arg, (str, list)):
+            prompt = first_arg
+
+    if not prompt:
+        return
+
+    if isinstance(prompt, list):
+        for index, input_text in enumerate(prompt):
             _set_span_attribute(
                 span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
-                prompt,
+                f"{SpanAttributes.GEN_AI_PROMPT}.{index}.user",
+                str(input_text).strip(),
             )
+    else:
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            str(prompt).strip(),
+        )
 
 
 def set_model_input_attributes(span, instance):
@@ -483,11 +492,11 @@ def _handle_input(span, event_logger, name, instance, response_counter, args, kw
 
     if "generate" in name:
         set_model_input_attributes(span, instance)
+        if should_send_prompts():
+            _set_input_attributes(span, args=args, kwargs=kwargs)
 
     if should_emit_events() and event_logger:
         _emit_input_events(args, kwargs, event_logger)
-    elif "generate" in name:
-        _set_input_attributes(span, instance, kwargs)
 
 
 @dont_throw
