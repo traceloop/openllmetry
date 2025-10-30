@@ -1,7 +1,10 @@
 import sys
 
 import pytest
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import Meters
 
 
 @pytest.mark.skipif(
@@ -31,7 +34,7 @@ def test_generate_metrics(metrics_test_context_legacy, watson_ai_model, log_expo
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -52,7 +55,7 @@ def test_generate_metrics(metrics_test_context_legacy, watson_ai_model, log_expo
                     )
 
                 assert (
-                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
                     == "watsonx"
                 )
 
@@ -100,7 +103,7 @@ def test_generate_stream_metrics(
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -121,7 +124,7 @@ def test_generate_stream_metrics(
                     )
 
                 assert (
-                    metric.data.data_points[0].attributes[SpanAttributes.LLM_SYSTEM]
+                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
                     == "watsonx"
                 )
 

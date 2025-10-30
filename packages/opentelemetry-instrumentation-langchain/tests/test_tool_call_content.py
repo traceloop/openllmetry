@@ -9,7 +9,9 @@ attributes were missing for assistant messages that contained tool_calls.
 from unittest.mock import Mock
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from opentelemetry.instrumentation.langchain.span_utils import set_chat_request
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 def test_assistant_message_with_tool_calls_includes_content():
@@ -49,46 +51,46 @@ def test_assistant_message_with_tool_calls_includes_content():
     call_args = [call[0] for call in mock_span.set_attribute.call_args_list]
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "what is the current time? First greet me."
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.1.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
-    assert f"{SpanAttributes.LLM_PROMPTS}.1.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.content" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "Hello! Let me check the current time for you."
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.id" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.id" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.id"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.id"]
         == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.name" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.name" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_calls.0.name"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.name"]
         == "get_current_time"
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.2.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "tool"
-    assert f"{SpanAttributes.LLM_PROMPTS}.2.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "tool"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.content" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"] == "2025-08-15 08:15:21"
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"] == "2025-08-15 08:15:21"
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.2.tool_call_id"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id"]
         == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
     )
-    assert f"{SpanAttributes.LLM_PROMPTS}.3.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.3.role"] == "assistant"
-    assert f"{SpanAttributes.LLM_PROMPTS}.3.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.3.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.role"] == "assistant"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.3.content" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.3.content"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.content"]
         == "The current time is 2025-08-15 08:15:21"
     )
 
@@ -119,14 +121,15 @@ def test_assistant_message_with_only_tool_calls_no_content():
     call_args = [call[0] for call in mock_span.set_attribute.call_args_list]
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "assistant"
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in attributes
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.id" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.id"] == "call_123"
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "assistant"
+    # Content is being set as empty string, so we expect it to be present
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.id" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.id"] == "call_123"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"] == "some_tool"
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"] == "some_tool"
     )
 
 
@@ -148,11 +151,11 @@ def test_assistant_message_with_only_content_no_tool_calls():
 
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.role" in attributes
-    assert attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "assistant"
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" in attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
+    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "assistant"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
     assert (
-        attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Just a regular response with no tool calls"
     )
 

@@ -57,15 +57,15 @@ def test_cohere_chat_legacy(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res.text
     )
     assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
@@ -524,9 +524,9 @@ def test_cohere_chat_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -553,9 +553,9 @@ def test_cohere_chat_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
