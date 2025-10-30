@@ -977,6 +977,92 @@ def test_prompt_cache(instrument_legacy, brt, span_exporter, log_exporter):
     assert spans[1].attributes.get(CacheSpanAttrs.CACHED) == "read"
 
 
+@pytest.mark.vcr
+def test_anthropic_converse_stream_with_tool_use(
+    instrument_legacy, brt, span_exporter, log_exporter
+):
+    """Test converse_stream with tool use to validate handling of non-text contentBlockDelta events."""
+    messages = [
+        {
+            "role": "user",
+            "content": [{"text": "What is the weather in Barcelona?"}],
+        }
+    ]
+
+    tools = [
+        {
+            "toolSpec": {
+                "name": "get_weather",
+                "description": "Get the current weather for a location",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city name",
+                            }
+                        },
+                        "required": ["location"],
+                    }
+                },
+            }
+        }
+    ]
+
+    tool_config = {"tools": tools}
+    inf_params = {"maxTokens": 300, "temperature": 0.5}
+
+    response = brt.converse_stream(
+        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+        messages=messages,
+        toolConfig=tool_config,
+        inferenceConfig=inf_params,
+    )
+
+    stream = response.get("stream")
+    content = ""
+    tool_use_found = False
+
+    for event in stream:
+        # Test should handle contentBlockDelta events without text field
+        if "contentBlockDelta" in event:
+            delta = event["contentBlockDelta"].get("delta", {})
+            # Only append if text exists (validates the fix)
+            if "text" in delta:
+                content += delta["text"]
+            # Check if we got a toolUse delta
+            if "toolUse" in delta:
+                tool_use_found = True
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "bedrock.converse"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes.get("gen_ai.request.model")
+        == "claude-3-sonnet-20240229-v1:0"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes.get("gen_ai.system") == "AWS"
+
+    # Assert on request type
+    assert bedrock_span.attributes.get("llm.request.type") == "chat"
+
+    # tool use should have been triggered
+    # (This test validates that non-text deltas don't crash the instrumentation)
+    assert tool_use_found is True
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
     assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
     assert (
