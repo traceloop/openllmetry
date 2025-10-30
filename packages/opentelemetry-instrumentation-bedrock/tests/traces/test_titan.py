@@ -1074,8 +1074,7 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
 
 
 @pytest.mark.vcr
-def test_titan_converse_with_caching(test_context, brt):
-    span_exporter, _, reader = test_context
+def test_titan_converse_with_caching(instrument_legacy, brt, span_exporter, reader):
 
     # --- 1. First call (will write to cache) ---
     response_write = brt.converse(

@@ -1,0 +1,47 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": [{"text": "Hello, this is a test
+      prompt for caching."}]}], "inferenceConfig": {"maxTokens": 50}, "additionalModelRequestFields":
+      {"cacheControl": {"type": "ephemeral"}}}'
+    headers:
+      Content-Length:
+      - '211'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xNDUgbWQvQm90b2NvcmUjMS4zNC4xNDUgdWEvMi4wIG9zL3dpbmRvd3MjMTAg
+        bWQvYXJjaCNhbWQ2NCBsYW5nL3B5dGhvbiMzLjExLjggbWQvcHlpbXBsI0NQeXRob24gY2ZnL3Jl
+        dHJ5LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzQuMTQ1
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTEwMzBUMTY1MTI4Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZTFmM2VjZTMtM2VlMC00ZGZiLWE2MWEtYjBiYmU4M2U2NDFm
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/converse
+  response:
+    body:
+      string: '{"message":"The security token included in the request is invalid."}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '68'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 30 Oct 2025 16:51:30 GMT
+      x-amzn-ErrorType:
+      - UnrecognizedClientException:http://internal.amazon.com/coral/com.amazon.coral.service/
+      x-amzn-RequestId:
+      - f0fdf86b-d85a-4f16-8713-1b9b5fccbe25
+    status:
+      code: 403
+      message: Forbidden
+version: 1
