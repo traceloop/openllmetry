@@ -392,7 +392,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
                 nonlocal role
-                if "contentBlockDelta" in event:
+                if "contentBlockDelta" in event and "text" in event["contentBlockDelta"].get("delta", {}):
                     response_msg.append(event["contentBlockDelta"]["delta"]["text"])
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]

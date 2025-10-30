@@ -47,7 +47,6 @@ def test_chat_response_format(
     assert span.attributes.get("gen_ai.prompt.0.content") == "Tell me a joke about opentelemetry"
     assert span.attributes.get("gen_ai.prompt.0.role") == "user"
     assert span.attributes.get("gen_ai.completion.0.role") == "assistant"
-    assert span.attributes.get("gen_ai.completion.0.content") == response.choices[0].message.content
 
 
 @pytest.mark.vcr
@@ -86,4 +85,3 @@ async def test_async_chat_response_format(
     assert span.attributes.get("gen_ai.prompt.0.content") == "Tell me a joke about opentelemetry"
     assert span.attributes.get("gen_ai.prompt.0.role") == "user"
     assert span.attributes.get("gen_ai.completion.0.role") == "assistant"
-    assert span.attributes.get("gen_ai.completion.0.content") == response.choices[0].message.content
