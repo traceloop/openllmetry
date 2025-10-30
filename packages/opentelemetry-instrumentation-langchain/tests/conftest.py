@@ -26,7 +26,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-pytest_plugins = []
+pytest_plugins = ["pytest_recording"]
 
 
 @pytest.fixture(scope="session", name="span_exporter")
