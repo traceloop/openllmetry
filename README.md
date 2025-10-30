@@ -58,15 +58,6 @@ It's built and maintained by Traceloop under the Apache 2.0 license.
 The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
 If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
 
-### How does `openllmetry` work under the hood?
-
-Check out this interactive walkthrough of the `openllmetry` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=openllmetry&owner=traceloop&branch=main&OnboardingTutorial=true).
-
-To refine existing dataflow simulation or create new ones, follow the quick tutorial [here](https://docs.code-canvas.com/updating-diagram).
-
-<img width="1916" alt="CodeCanvas Screenshot" src="https://codecanvas-media-public.s3.amazonaws.com/images/codecanvas-readme-screenshot.png" />
-
-
 ## 🚀 Getting Started
 
 The easiest way to get started is to use our SDK.
@@ -187,6 +178,14 @@ Not sure where to get started? You can:
 
 - [Book a free pairing session with one of our teammates](mailto:nir@traceloop.com?subject=Pairing%20session&body=I'd%20like%20to%20do%20a%20pairing%20session!)!
 - Join our <a href="https://traceloop.com/slack">Slack</a>, and ask us any questions there.
+
+
+### How does `openllmetry` work under the hood?
+
+Check out this interactive walkthrough of the `openllmetry` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=openllmetry&owner=traceloop&branch=main&OnboardingTutorial=true).
+
+<img width="1652" height="704" alt="image" src="https://github.com/user-attachments/assets/c52f8c25-d923-427a-85cc-dfee470e8b83" />
+
 
 ## 💚 Community & Support
 
