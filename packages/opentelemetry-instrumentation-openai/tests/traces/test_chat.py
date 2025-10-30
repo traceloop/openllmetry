@@ -35,11 +35,11 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -196,24 +196,24 @@ def test_chat_tool_calls(instrument_legacy, span_exporter, log_exporter, openai_
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
         ]
         == '{"location": "San Francisco"}'
     )
 
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
     )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
@@ -261,7 +261,7 @@ def test_chat_tool_calls_with_events_with_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
 
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
@@ -340,7 +340,7 @@ def test_chat_tool_calls_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
@@ -414,24 +414,24 @@ def test_chat_pydantic_based_tool_calls(
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes[
-            f"{SpanAttributes.LLM_PROMPTS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
         ]
         == '{"location": "San Francisco"}'
     )
 
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == "The weather in San Francisco is 70 degrees and sunny."
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.tool_call_id"] == "1"
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
     )
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
@@ -487,7 +487,7 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -573,7 +573,7 @@ def test_chat_pydantic_based_tool_calls_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in open_ai_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -624,11 +624,11 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
@@ -640,13 +640,9 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
     assert len(events) > 0
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     # When OpenAI API provides token usage, check that the sum of completion and prompt tokens equals total tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -692,13 +688,9 @@ def test_chat_streaming_with_events_with_content(
     assert len(events) == chunk_count
 
     # check token usage attributes for stream
-    completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
@@ -763,13 +755,9 @@ def test_chat_streaming_with_events_with_no_content(
     assert len(events) == chunk_count
 
     # check token usage attributes for stream (optional, depends on API support)
-    completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -812,11 +800,10 @@ async def test_chat_async_streaming(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -828,12 +815,10 @@ async def test_chat_async_streaming(
 
     # check token usage attributes for stream
     completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -880,12 +865,10 @@ async def test_chat_async_streaming_with_events_with_content(
 
     # check token usage attributes for stream
     completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -949,12 +932,10 @@ async def test_chat_async_streaming_with_events_with_no_content(
 
     # check token usage attributes for stream
     completion_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
-    prompt_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -1391,41 +1372,41 @@ def test_chat_history_message_dict(span_exporter, openai_client):
     first_span = spans[0]
     assert first_span.name == "openai.chat"
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == first_user_message["content"]
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]
         == first_user_message["role"]
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == first_response.choices[0].message.content
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
     )
 
     second_span = spans[1]
     assert second_span.name == "openai.chat"
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == first_user_message["content"]
     )
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == second_response.choices[0].message.content
     )
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == first_response.choices[0].message.content
     )
-    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
+    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
         == second_user_message["content"]
     )
-    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
 
 
 @pytest.mark.vcr
@@ -1458,41 +1439,41 @@ def test_chat_history_message_pydantic(span_exporter, openai_client):
     first_span = spans[0]
     assert first_span.name == "openai.chat"
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == first_user_message["content"]
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]
         == first_user_message["role"]
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == first_response.choices[0].message.content
     )
     assert (
-        first_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] == "assistant"
+        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
     )
 
     second_span = spans[1]
     assert second_span.name == "openai.chat"
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == first_user_message["content"]
     )
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == second_response.choices[0].message.content
     )
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
         == first_response.choices[0].message.content
     )
-    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "assistant"
+    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
     assert (
-        second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"]
+        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
         == second_user_message["content"]
     )
-    assert second_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
 
 
 @pytest.mark.vcr
@@ -1535,7 +1516,7 @@ def test_chat_exception(instrument_legacy, span_exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
@@ -1575,7 +1556,7 @@ async def test_chat_async_exception(instrument_legacy, span_exporter, async_open
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
@@ -1635,9 +1616,9 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
         SpanAttributes.LLM_REQUEST_TYPE) == "chat"
 
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_PROMPTS}.0.content") == "Tell me a joke about opentelemetry"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
     assert open_ai_span.attributes.get(
-        f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
 
     # Verify duration metric was recorded even without consuming the stream
     metrics_data = reader.get_metrics_data()

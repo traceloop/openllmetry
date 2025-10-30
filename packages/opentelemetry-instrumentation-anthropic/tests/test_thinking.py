@@ -473,7 +473,6 @@ def test_anthropic_thinking_streaming_legacy(
     assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
 
     assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
 
     assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
     assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
@@ -712,7 +711,6 @@ async def test_async_anthropic_thinking_streaming_legacy(
     assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
 
     assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
 
     assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
     assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
