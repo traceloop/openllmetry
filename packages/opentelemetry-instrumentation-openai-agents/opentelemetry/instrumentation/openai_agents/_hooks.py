@@ -7,7 +7,9 @@ from collections import OrderedDict
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, get_current_span, set_span_in_context
 from opentelemetry import context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_COMPLETION, GEN_AI_AGENT_NAME
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes
+)
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
@@ -87,7 +89,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                GEN_AI_AGENT_NAME: agent_name,
+                GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
                 "gen_ai.system": "openai_agents"
             }
 
@@ -136,7 +138,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             if from_agent and from_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.from_agent"] = from_agent
-                handoff_attributes[GEN_AI_AGENT_NAME] = from_agent
+                handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
             if to_agent and to_agent != 'unknown':
                 handoff_attributes["gen_ai.handoff.to_agent"] = to_agent
 
@@ -158,16 +160,16 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 "gen_ai.tool.name": tool_name,
                 "gen_ai.system": "openai_agents",
-                f"{GEN_AI_COMPLETION}.tool.name": tool_name,
-                f"{GEN_AI_COMPLETION}.tool.type": "FunctionTool",
-                f"{GEN_AI_COMPLETION}.tool.strict_json_schema": True
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "FunctionTool",
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
                 desc = span_data.description
                 if desc and not desc.startswith("Represents a Function Span"):
-                    tool_attributes[f"{GEN_AI_COMPLETION}.tool.description"] = desc
+                    tool_attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"] = desc
 
             otel_span = self.tracer.start_span(
                 f"{tool_name}.tool",
@@ -239,19 +241,111 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 input_data = getattr(span_data, 'input', [])
                 if input_data:
                     for i, message in enumerate(input_data):
-                        if hasattr(message, 'role') and hasattr(message, 'content'):
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message.role)
-                            content = message.content
+                        prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{i}"
+
+                        # Convert message to dict for unified handling
+                        if isinstance(message, dict):
+                            msg = message
+                        else:
+                            # Convert object to dict
+                            msg = {}
+                            for attr in [
+                                "role",
+                                "content",
+                                "tool_call_id",
+                                "tool_calls",
+                                "type",
+                                "name",
+                                "arguments",
+                                "call_id",
+                                "output",
+                            ]:
+                                if hasattr(message, attr):
+                                    msg[attr] = getattr(message, attr)
+
+                        # Determine message format and extract data
+                        role = None
+                        content = None
+                        tool_call_id = None
+                        tool_calls = None
+
+                        if 'role' in msg:
+                            # Standard OpenAI chat format
+                            role = msg['role']
+                            content = msg.get('content')
+                            tool_call_id = msg.get('tool_call_id')
+                            tool_calls = msg.get('tool_calls')
+                        elif 'type' in msg:
+                            # OpenAI Agents SDK format
+                            msg_type = msg['type']
+                            if msg_type == 'function_call':
+                                # Tool calls are assistant messages
+                                role = 'assistant'
+                                # Create tool_calls structure matching OpenAI SDK format
+                                tool_calls = [{
+                                    'id': msg.get('id', ''),
+                                    'name': msg.get('name', ''),
+                                    'arguments': msg.get('arguments', '')
+                                }]
+                            elif msg_type == 'function_call_output':
+                                # Tool outputs are tool messages
+                                role = 'tool'
+                                content = msg.get('output')
+                                tool_call_id = msg.get('call_id')
+
+                        # Set role attribute
+                        if role:
+                            otel_span.set_attribute(f"{prefix}.role", role)
+
+                        # Set content attribute
+                        if content is not None:
                             if not isinstance(content, str):
                                 content = json.dumps(content)
-                            otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
-                        elif isinstance(message, dict):
-                            if 'role' in message and 'content' in message:
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.role", message['role'])
-                                content = message['content']
-                                if isinstance(content, dict):
-                                    content = json.dumps(content)
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{i}.content", content)
+                            otel_span.set_attribute(f"{prefix}.content", content)
+
+                        # Set tool_call_id for tool result messages
+                        if tool_call_id:
+                            otel_span.set_attribute(f"{prefix}.tool_call_id", tool_call_id)
+
+                        # Set tool_calls for assistant messages with tool calls
+                        if tool_calls:
+                            for j, tool_call in enumerate(tool_calls):
+                                # Convert to dict if needed
+                                if not isinstance(tool_call, dict):
+                                    tc_dict = {}
+                                    if hasattr(tool_call, 'id'):
+                                        tc_dict['id'] = tool_call.id
+                                    if hasattr(tool_call, 'function'):
+                                        func = tool_call.function
+                                        if hasattr(func, 'name'):
+                                            tc_dict['name'] = func.name
+                                        if hasattr(func, 'arguments'):
+                                            tc_dict['arguments'] = func.arguments
+                                    elif hasattr(tool_call, 'name'):
+                                        tc_dict['name'] = tool_call.name
+                                    if hasattr(tool_call, 'arguments'):
+                                        tc_dict['arguments'] = tool_call.arguments
+                                    tool_call = tc_dict
+
+                                # Extract function details if nested (standard OpenAI format)
+                                if 'function' in tool_call:
+                                    function = tool_call['function']
+                                    tool_call = {
+                                        'id': tool_call.get('id'),
+                                        'name': function.get('name'),
+                                        'arguments': function.get('arguments')
+                                    }
+
+                                # Set tool call attributes
+                                if tool_call.get('id'):
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.id", tool_call['id'])
+                                if tool_call.get('name'):
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.name", tool_call['name'])
+                                if tool_call.get('arguments'):
+                                    args = tool_call['arguments']
+                                    if not isinstance(args, str):
+                                        args = json.dumps(args)
+                                    otel_span.set_attribute(f"{prefix}.tool_calls.{j}.arguments", args)
 
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, 'response', None)
@@ -287,15 +381,15 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     if hasattr(response, 'temperature') and response.temperature is not None:
                         model_settings['temperature'] = response.temperature
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, response.temperature)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, response.temperature)
 
                     if hasattr(response, 'max_output_tokens') and response.max_output_tokens is not None:
                         model_settings['max_tokens'] = response.max_output_tokens
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, response.max_output_tokens)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, response.max_output_tokens)
 
                     if hasattr(response, 'top_p') and response.top_p is not None:
                         model_settings['top_p'] = response.top_p
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, response.top_p)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TOP_P, response.top_p)
 
                     if hasattr(response, 'model') and response.model:
                         model_settings['model'] = response.model
@@ -314,9 +408,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                                 if content_text:
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", content_text)
+                                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", content_text)
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", getattr(
                                             output, 'role', 'assistant'))
 
                             elif hasattr(output, 'name'):
@@ -326,41 +420,41 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                                 tool_call_id = getattr(output, 'call_id', f"call_{i}")
 
                                 # Set completion with tool call following OpenAI format
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant")
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant")
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", "tool_calls")
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason", "tool_calls")
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.name", tool_name)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.name", tool_name)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.arguments", arguments)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.arguments", arguments)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.id", tool_call_id)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.id", tool_call_id)
 
                             elif hasattr(output, 'text'):
                                 # Direct text content
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", output.text)
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", output.text)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", getattr(
                                         output, 'role', 'assistant'))
 
                             # Add finish reason if available (for non-tool-call cases)
                             if hasattr(response, 'finish_reason') and not hasattr(output, 'name'):
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", response.finish_reason)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason", response.finish_reason)
 
                     # Extract usage data and add directly to response span
                     if hasattr(response, 'usage') and response.usage:
                         usage = response.usage
                         # Try both naming conventions: input_tokens/output_tokens and prompt_tokens/completion_tokens
                         if hasattr(usage, 'input_tokens') and usage.input_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.input_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
                         elif hasattr(usage, 'prompt_tokens') and usage.prompt_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
 
                         if hasattr(usage, 'output_tokens') and usage.output_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.output_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
                         elif hasattr(usage, 'completion_tokens') and usage.completion_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
 
                         if hasattr(usage, 'total_tokens') and usage.total_tokens is not None:
                             otel_span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
@@ -396,15 +490,15 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     if hasattr(response, 'temperature') and response.temperature is not None:
                         model_settings['temperature'] = response.temperature
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, response.temperature)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, response.temperature)
 
                     if hasattr(response, 'max_output_tokens') and response.max_output_tokens is not None:
                         model_settings['max_tokens'] = response.max_output_tokens
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, response.max_output_tokens)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, response.max_output_tokens)
 
                     if hasattr(response, 'top_p') and response.top_p is not None:
                         model_settings['top_p'] = response.top_p
-                        otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, response.top_p)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TOP_P, response.top_p)
 
                     if hasattr(response, 'model') and response.model:
                         model_settings['model'] = response.model
@@ -423,9 +517,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                                 if content_text:
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", content_text)
+                                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", content_text)
                                     otel_span.set_attribute(
-                                        f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", getattr(
                                             output, 'role', 'assistant'))
 
                             elif hasattr(output, 'name'):
@@ -435,41 +529,41 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                                 tool_call_id = getattr(output, 'call_id', f"call_{i}")
 
                                 # Set completion with tool call following OpenAI format
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", "assistant")
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant")
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", "tool_calls")
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason", "tool_calls")
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.name", tool_name)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.name", tool_name)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.arguments", arguments)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.arguments", arguments)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.tool_calls.0.id", tool_call_id)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.id", tool_call_id)
 
                             elif hasattr(output, 'text'):
                                 # Direct text content
-                                otel_span.set_attribute(f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content", output.text)
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", output.text)
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.role", getattr(
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", getattr(
                                         output, 'role', 'assistant'))
 
                             # Add finish reason if available (for non-tool-call cases)
                             if hasattr(response, 'finish_reason') and not hasattr(output, 'name'):
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_COMPLETIONS}.{i}.finish_reason", response.finish_reason)
+                                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason", response.finish_reason)
 
                     # Extract usage data and add directly to response span
                     if hasattr(response, 'usage') and response.usage:
                         usage = response.usage
                         # Try both naming conventions: input_tokens/output_tokens and prompt_tokens/completion_tokens
                         if hasattr(usage, 'input_tokens') and usage.input_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.input_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
                         elif hasattr(usage, 'prompt_tokens') and usage.prompt_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
 
                         if hasattr(usage, 'output_tokens') and usage.output_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.output_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
                         elif hasattr(usage, 'completion_tokens') and usage.completion_tokens is not None:
-                            otel_span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
 
                         if hasattr(usage, 'total_tokens') and usage.total_tokens is not None:
                             otel_span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens)
@@ -486,11 +580,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if hasattr(self, '_last_model_settings') and self._last_model_settings:
                     for key, value in self._last_model_settings.items():
                         if key == 'temperature':
-                            otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, value)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, value)
                         elif key == 'max_tokens':
-                            otel_span.set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, value)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, value)
                         elif key == 'top_p':
-                            otel_span.set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, value)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TOP_P, value)
                         elif key == 'model':
                             otel_span.set_attribute("gen_ai.request.model", value)
                         elif key == 'frequency_penalty':

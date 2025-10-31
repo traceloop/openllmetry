@@ -3,15 +3,15 @@ from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
-from agents import Runner, Agent
+from agents import Runner, Agent, function_tool
 from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
     Meters,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 
 
@@ -111,8 +111,8 @@ def test_agent_spans(exporter, test_agent):
         agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
     )
-    assert agent_span.attributes["gen_ai.agent.name"] == "testAgent"
-    assert agent_span.attributes["gen_ai.system"] == "openai_agents"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai_agents"
     assert agent_span.status.status_code == StatusCode.OK
 
     # Agent span should NOT contain LLM parameters
@@ -134,21 +134,21 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes["gen_ai.system"] == "openai"
 
     # Test prompts using OpenAI semantic conventions
-    assert response_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert response_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "What is AI?"
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
 
     # Test usage tokens
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] is not None
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] > 0
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
 
     # Test completions using OpenAI semantic conventions
-    assert response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] is not None
-    assert len(response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]) > 0
-    assert response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] is not None
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] is not None
+    assert len(response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]) > 0
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] is not None
 
     # Test model settings are in the response span
     assert response_span.attributes["gen_ai.request.temperature"] == 0.3
@@ -197,17 +197,17 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "get_weather"
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"] == "get_weather"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
 
     # Tool description is optional - only test if present
-    if f"{GEN_AI_COMPLETION}.tool.description" in tool_span.attributes:
+    if f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description" in tool_span.attributes:
         assert (
-            tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.description"]
+            tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"]
             == "Gets the current weather for a specified city."
         )
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK
@@ -297,7 +297,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -454,3 +454,105 @@ def test_agent_name_propagation_to_agent_spans(exporter, test_agent):
     assert agent_span.attributes[GEN_AI_AGENT_NAME] == "testAgent", (
         f"Expected agent name 'testAgent', got '{agent_span.attributes[GEN_AI_AGENT_NAME]}'"
     )
+
+
+@pytest.mark.vcr
+def test_tool_call_and_result_attributes(exporter):
+    """Test that tool calls and tool results are properly recorded in span attributes."""
+
+    @function_tool
+    async def get_city_info(city_name: str) -> str:
+        """Get detailed information about a city."""
+        # Return structured data to verify it appears in tool result content
+        return (
+            f"City: {city_name}, "
+            "Population: 9000000, "
+            "Country: United Kingdom, "
+            "Description: Capital city with rich history"
+        )
+
+    # Create agent with the tool
+    city_info_agent = Agent(
+        name="CityInfoAgent",
+        instructions="You help users get information about cities using the get_city_info tool.",
+        model="gpt-4o",
+        tools=[get_city_info],
+    )
+
+    # Run query that will trigger the tool call
+    query = "Tell me about London"
+    Runner.run_sync(city_info_agent, query)
+
+    spans = exporter.get_finished_spans()
+
+    # Find response spans - there should be at least 2 (before and after tool call)
+    response_spans = [s for s in spans if s.name == "openai.response"]
+    assert len(response_spans) >= 2, (
+        f"Expected at least 2 response spans (before and after tool), got {len(response_spans)}"
+    )
+
+    # Tool calls and results appear in the second response span (as part of conversation history)
+    second_response_span = response_spans[1]
+
+    # The tool call and result appear in the SECOND response span as part of conversation history
+    # Find the assistant message with tool call
+    tool_call_found = False
+    tool_result_found = False
+
+    for i in range(20):  # Check conversation history
+        role_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.role"
+        if role_key not in second_response_span.attributes:
+            continue
+
+        role = second_response_span.attributes[role_key]
+
+        if role == "assistant" and not tool_call_found:
+            # Check if this assistant message has tool_calls
+            tool_call_name_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.name"
+            if tool_call_name_key in second_response_span.attributes:
+                tool_call_found = True
+                # Verify tool call attributes
+                assert second_response_span.attributes[tool_call_name_key] == "get_city_info", (
+                    f"Expected tool name 'get_city_info', got '{second_response_span.attributes[tool_call_name_key]}'"
+                )
+                # Verify tool call ID exists
+                tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.id"
+                assert tool_call_id_key in second_response_span.attributes, (
+                    f"Tool call ID not found at {tool_call_id_key}"
+                )
+                tool_call_id = second_response_span.attributes[tool_call_id_key]
+                assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+
+                # Verify arguments exist and contain city name
+                tool_call_args_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.arguments"
+                assert tool_call_args_key in second_response_span.attributes, (
+                    f"Tool call arguments not found at {tool_call_args_key}"
+                )
+                arguments = second_response_span.attributes[tool_call_args_key]
+                assert "London" in arguments or "london" in arguments.lower(), (
+                    f"Expected 'London' in arguments, got: {arguments}"
+                )
+
+        elif role == "tool" and not tool_result_found:
+            tool_result_found = True
+            # Verify tool result attributes
+            content_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.content"
+            tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id"
+
+            assert content_key in second_response_span.attributes, (
+                f"Tool result content not found at {content_key}"
+            )
+            content = second_response_span.attributes[content_key]
+            assert len(content) > 0, "Tool result content should not be empty"
+            assert "London" in content or "9000000" in content or "United Kingdom" in content, (
+                f"Expected tool result to contain city info, got: {content}"
+            )
+
+            assert tool_call_id_key in second_response_span.attributes, (
+                f"Tool call ID not found at {tool_call_id_key}"
+            )
+            tool_call_id = second_response_span.attributes[tool_call_id_key]
+            assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+
+    assert tool_call_found, "No assistant message with tool_calls found in second response span"
+    assert tool_result_found, "No tool message found in second response span"
