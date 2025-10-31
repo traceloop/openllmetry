@@ -30,8 +30,10 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
 from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     async_responses_cancel_wrapper,
     async_responses_get_or_create_wrapper,
+    async_responses_parse_wrapper,
     responses_cancel_wrapper,
     responses_get_or_create_wrapper,
+    responses_parse_wrapper,
 )
 
 from opentelemetry.instrumentation.openai.version import __version__
@@ -311,6 +313,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
         self._try_wrap(
             "openai.resources.responses",
+            "Responses.parse",
+            responses_parse_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
             "Responses.cancel",
             responses_cancel_wrapper(tracer),
         )
@@ -323,6 +330,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "openai.resources.responses",
             "AsyncResponses.retrieve",
             async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.parse",
+            async_responses_parse_wrapper(tracer),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -350,9 +362,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.beta.threads.messages", "Messages.list")
             unwrap("openai.resources.responses", "Responses.create")
             unwrap("openai.resources.responses", "Responses.retrieve")
+            unwrap("openai.resources.responses", "Responses.parse")
             unwrap("openai.resources.responses", "Responses.cancel")
             unwrap("openai.resources.responses", "AsyncResponses.create")
             unwrap("openai.resources.responses", "AsyncResponses.retrieve")
+            unwrap("openai.resources.responses", "AsyncResponses.parse")
             unwrap("openai.resources.responses", "AsyncResponses.cancel")
         except ImportError:
             pass
