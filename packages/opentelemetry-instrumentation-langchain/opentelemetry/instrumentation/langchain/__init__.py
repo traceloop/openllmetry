@@ -37,10 +37,24 @@ class LangchainInstrumentor(BaseInstrumentor):
         exception_logger=None,
         disable_trace_context_propagation=False,
         use_legacy_attributes: bool = True,
+        metadata_key_prefix: Optional[str] = None
     ):
+        """Create a Langchain instrumentor instance.
+        
+        Args:
+            exception_logger: A callable that takes an Exception as input. This will be
+                used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
+            disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
+            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            metadata_key_prefix: Prefix for metadata keys added to spans. If None, defaults to
+                `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
+                Useful for using with other backends.
+        """
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
+        if metadata_key_prefix:
+            Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:

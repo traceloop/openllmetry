@@ -290,7 +290,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             for key, value in sanitized_metadata.items():
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}",
+                    f"{Config.metadata_key_prefix}.{key}",
                     value,
                 )
 
