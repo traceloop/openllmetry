@@ -226,6 +226,7 @@ def exporters_with_multiple_span_processors():
 @pytest.fixture
 def exporter_with_trace_content_override():
     # Clear singleton if existed
+    _trace_wrapper_instance = None
     if hasattr(TracerWrapper, "instance"):
         _trace_wrapper_instance = TracerWrapper.instance
         del TracerWrapper.instance
