@@ -1112,18 +1112,19 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
 @pytest.mark.vcr
 def test_anthropic_converse_with_caching(instrument_legacy, brt, span_exporter, reader):
     response_write = brt.converse(
-    modelId="anthropic.claude-3-haiku-20240307-v1:0",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"text": "Hello, this is a test prompt for caching."},
-                {"cachePoint": {"type": "ephemeral"}},  # <-- Correct method
-            ],
-        }
-    ],
-    inferenceConfig={"maxTokens": 50},
-)
+        modelId="anthropic.claude-3-haiku-20240307-v1:0",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"text": "Hello, this is a test prompt for caching."},
+                    {"cachePoint": {"type": "default"}},
+                ],
+            }
+        ],
+        inferenceConfig={"maxTokens": 50},
+    )
+
     usage_write = response_write["usage"]
     assert usage_write["cache_read_input_tokens"] == 0
     assert usage_write["cache_creation_input_tokens"] > 0
