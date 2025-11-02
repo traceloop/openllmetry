@@ -1112,11 +1112,18 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
 @pytest.mark.vcr
 def test_anthropic_converse_with_caching(instrument_legacy, brt, span_exporter, reader):
     response_write = brt.converse(
-        modelId="anthropic.claude-3-haiku-20240307-v1:0",
-        messages=[{"role": "user", "content": [{"text": "Hello, this is a test prompt for caching."}]}],
-        inferenceConfig={"maxTokens": 50},
-        additionalModelRequestFields={"cacheControl": {"type": "ephemeral"}},
-    )
+    modelId="anthropic.claude-3-haiku-20240307-v1:0",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"text": "Hello, this is a test prompt for caching."},
+                {"cachePoint": {"type": "ephemeral"}},  # <-- Correct method
+            ],
+        }
+    ],
+    inferenceConfig={"maxTokens": 50},
+)
     usage_write = response_write["usage"]
     assert usage_write["cache_read_input_tokens"] == 0
     assert usage_write["cache_creation_input_tokens"] > 0
@@ -1137,14 +1144,14 @@ def test_anthropic_converse_with_caching(instrument_legacy, brt, span_exporter, 
     span_write = spans[0]
     assert span_write.name == "bedrock.converse"
     attributes_write = span_write.attributes
-    assert attributes_write[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
+    assert attributes_write[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
     assert attributes_write[CacheSpanAttrs.CACHED] == "write"
     assert attributes_write["gen_ai.usage.cache_creation_input_tokens"] == usage_write["cache_creation_input_tokens"]
 
     span_read = spans[1]
     assert span_read.name == "bedrock.converse"
     attributes_read = span_read.attributes
-    assert attributes_read[SpanAttributes.LLM_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
+    assert attributes_read[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
     assert attributes_read[CacheSpanAttrs.CACHED] == "read"
     assert attributes_read["gen_ai.usage.cache_read_input_tokens"] == usage_read["cache_read_input_tokens"]
 
