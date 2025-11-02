@@ -1131,9 +1131,16 @@ def test_anthropic_converse_with_caching(instrument_legacy, brt, span_exporter, 
 
     response_read = brt.converse(
         modelId="anthropic.claude-3-haiku-20240307-v1:0",
-        messages=[{"role": "user", "content": [{"text": "Hello, this is a test prompt for caching."}]}],
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"text": "Hello, this is a test prompt for caching."},
+                    {"cachePoint": {"type": "default"}},
+                ],
+            }
+        ],
         inferenceConfig={"maxTokens": 50},
-        additionalModelRequestFields={"cacheControl": {"type": "ephemeral"}},
     )
     usage_read = response_read["usage"]
     assert usage_read["cache_read_input_tokens"] > 0
