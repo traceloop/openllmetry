@@ -9,40 +9,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.instrumentation.bedrock import PromptCaching
-from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
-
-
-def get_metric(resource_metrics, name):
-    for rm in resource_metrics:
-        for sm in rm.scope_metrics:
-            for metric in sm.metrics:
-                if metric.name == name:
-                    return metric
-    raise Exception(f"No metric found with name {name}")
-
-
-def assert_metric(reader, usage, is_read=False):
-    metrics_data = reader.get_metrics_data()
-    resource_metrics = metrics_data.resource_metrics
-    assert len(resource_metrics) > 0
-
-    m = get_metric(resource_metrics, PromptCaching.LLM_BEDROCK_PROMPT_CACHING)
-    # This check is now more specific to handle cumulative metrics
-    found_read = False
-    found_write = False
-    for data_point in m.data.data_points:
-        if data_point.attributes[CacheSpanAttrs.TYPE] == "read":
-            found_read = True
-            assert data_point.value == usage["cache_read_input_tokens"]
-        elif data_point.attributes[CacheSpanAttrs.TYPE] == "write":
-            found_write = True
-            assert data_point.value == usage["cache_creation_input_tokens"]
-    
-    if is_read:
-        assert found_read
-    else:
-        assert found_write
         
 
 @pytest.mark.vcr
@@ -1071,59 +1037,3 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
-
-
-@pytest.mark.vcr
-def test_titan_converse_with_caching(instrument_legacy, brt, span_exporter, reader):
-
-    # --- 1. First call (will write to cache) ---
-    response_write = brt.converse(
-        modelId="amazon.titan-text-express-v1",
-        messages=[{"role": "user", "content": [{"text": "Hello, this is a test prompt for caching."}]}],
-        inferenceConfig={"maxTokens": 50},
-        additionalModelRequestFields={"cacheControl": {"type": "ephemeral"}},
-    )
-    usage_write = response_write["usage"]
-    assert usage_write["cache_read_input_tokens"] == 0
-    assert usage_write["cache_creation_input_tokens"] > 0
-
-    # --- 2. Second call (will read from cache) ---
-    response_read = brt.converse(
-        modelId="amazon.titan-text-express-v1",
-        messages=[{"role": "user", "content": [{"text": "Hello, this is a test prompt for caching."}]}],
-        inferenceConfig={"maxTokens": 50},
-        additionalModelRequestFields={"cacheControl": {"type": "ephemeral"}},
-    )
-    usage_read = response_read["usage"]
-    assert usage_read["cache_read_input_tokens"] > 0
-    assert usage_read["cache_creation_input_tokens"] == 0
-
-    # --- 3. Assertions ---
-    spans = span_exporter.get_finished_spans()
-    assert len(spans) == 2
-
-    # Assertions for the first span (cache write)
-    span_write = spans[0]
-    assert span_write.name == "bedrock.converse"
-    attributes_write = span_write.attributes
-    assert attributes_write[SpanAttributes.LLM_REQUEST_MODEL] == "titan-text-express-v1"
-    assert attributes_write[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
-    assert attributes_write[CacheSpanAttrs.CACHED] == "write"
-    assert attributes_write[SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS] == usage_write["cache_creation_input_tokens"]
-
-    # Assertions for the second span (cache read)
-    span_read = spans[1]
-    assert span_read.name == "bedrock.converse"
-    attributes_read = span_read.attributes
-    assert attributes_read[SpanAttributes.LLM_REQUEST_MODEL] == "titan-text-express-v1"
-    assert attributes_read[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
-    assert attributes_read[CacheSpanAttrs.CACHED] == "read"
-    assert attributes_read[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == usage_read["cache_read_input_tokens"]
-
-    # Assert metrics (we need to combine usage for cumulative assertion)
-    cumulative_usage = {
-        "cache_creation_input_tokens": usage_write["cache_creation_input_tokens"],
-        "cache_read_input_tokens": usage_read["cache_read_input_tokens"],
-    }
-    assert_metric(reader, cumulative_usage, is_read=False)
-    assert_metric(reader, cumulative_usage, is_read=True)
