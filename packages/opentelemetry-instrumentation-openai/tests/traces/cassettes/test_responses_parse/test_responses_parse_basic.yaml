@@ -1,0 +1,118 @@
+interactions:
+  - request:
+      body:
+        '{"input": "Jane, 54 years old", "model": "gpt-4.1-nano", "text": {"format":
+        {"type": "json_schema", "strict": true, "name": "Person", "schema": {"description":
+        "Simple structured output for basic tests.", "properties": {"name": {"title":
+        "Name", "type": "string"}, "age": {"title": "Age", "type": "integer"}}, "required":
+        ["name", "age"], "title": "Person", "type": "object", "additionalProperties":
+        false}}}}'
+      headers:
+        accept:
+          - application/json
+        accept-encoding:
+          - gzip, deflate
+        connection:
+          - keep-alive
+        content-length:
+          - "409"
+        content-type:
+          - application/json
+        host:
+          - api.openai.com
+        user-agent:
+          - OpenAI/Python 1.99.7
+        x-stainless-arch:
+          - arm64
+        x-stainless-async:
+          - "false"
+        x-stainless-lang:
+          - python
+        x-stainless-os:
+          - MacOS
+        x-stainless-package-version:
+          - 1.99.7
+        x-stainless-read-timeout:
+          - "600"
+        x-stainless-retry-count:
+          - "0"
+        x-stainless-runtime:
+          - CPython
+        x-stainless-runtime-version:
+          - 3.9.5
+      method: POST
+      uri: https://api.openai.com/v1/responses
+    response:
+      body:
+        string: !!binary |
+          H4sIAAAAAAAAA3xVy46jOhDd5yssrzstCCGv3Wzv4mqku5yMUAUXtKeNzbXLrYla+feRTQCT7p4d
+          1Kk61ONU8b5ijEvBT4xbdH2ViW2e54dts88ODeAhy3YHzMoC80YU20N+LC/Ffre5lJDvD8Vxeyn4
+          U6Awl19Y00hjtMPBXlsEQlFBwPJ9eSyLTZZtIuYIyLsQU5uuV0gohqAL1K+tNV6HvBpQDgezVErq
+          lp/Y+4oxxngPV7QhXuAbKtOj5SvGbtEZrTUB016paJB6/EolkEAqt0QdWV+TNHph7+B3ZTz1nioy
+          r/gRJGNUVYNa0nVGoAqZtT2tt8/5WoM26022KdfZdp1v702LxPzEfsR6hqqmeXSu/XocmxLKOozj
+          mGXNcYflTkBZZNhE5shC1x4jDzoHLc7AV32PYG00oZ6TShNb0I5dwd80RUcH0NoQjJ388XMBKtP2
+          1lw+QSLRifH3M9fQ4Zmfzvwf0HjmT2cObTCU2xufQm73p4mFW6NiZuCcdASaBufgGJ14DxaUQrUc
+          Glk/6Ku3+CaNd9Uo4SoOYhpqb03XU1VD/YLVK15TzCI4oxfqxKYxlhKn0HrfdWDHyEmsDhqkayUF
+          apKNxIVwHdo3WWNFchR7A14NTeeOjMW0CMKuRwvkozl/zu7W2Nx7Zo2xHczvyVB/OaMrV79gB7Mk
+          BLrayj5MdFENY3FSIe47Wmd0IrGB4pRI54GG/yeD9tiwdt6iYIOiWGMsu4CTNSN05J4TdYUR9GhJ
+          oltwz5mktlCXpEET/wb46QG8F+3IhsEl4G0p6PZvzN/aL4mlJmyHo/So2sU3uMX/vbQoFls3FvUh
+          l+k9WaA5n4dRpBs73OgEASFkmAeo72lj48ldPaQZ2xRPfNDaKsH4G9qLcZKuw7kR0nfzIR527cXI
+          elhOT4ZPwHwHOJm+Sq5DNhn7VMfW6xpGCQnp4KLGv4Z36aC41IujvSuePtqTP8G0CnG9xRyYLUp9
+          /Bfk2WfAZ7zThfiKmgyBmsF9MbXQu+VF6JBAAMX9uq1ufwAAAP//AwDCUO03xAcAAA==
+      headers:
+        CF-RAY:
+          - 989003e3ef167775-LHR
+        Connection:
+          - keep-alive
+        Content-Encoding:
+          - gzip
+        Content-Type:
+          - application/json
+        Date:
+          - Fri, 03 Oct 2025 22:53:22 GMT
+        Server:
+          - cloudflare
+        Set-Cookie:
+          - __cf_bm=REDACTED;
+            path=/; expires=Fri, 03-Oct-25 23:23:22 GMT; domain=.api.openai.com; HttpOnly;
+            Secure; SameSite=None
+          - _cfuvid=REDACTED;
+            path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+        Transfer-Encoding:
+          - chunked
+        X-Content-Type-Options:
+          - nosniff
+        alt-svc:
+          - h3=":443"; ma=86400
+        cf-cache-status:
+          - DYNAMIC
+        openai-organization:
+          - user-REDACTED
+        openai-processing-ms:
+          - "597"
+        openai-project:
+          - proj_REDACTED
+        openai-version:
+          - "2020-10-01"
+        strict-transport-security:
+          - max-age=31536000; includeSubDomains; preload
+        x-envoy-upstream-service-time:
+          - "600"
+        x-ratelimit-limit-requests:
+          - "5000"
+        x-ratelimit-limit-tokens:
+          - "4000000"
+        x-ratelimit-remaining-requests:
+          - "4999"
+        x-ratelimit-remaining-tokens:
+          - "3999918"
+        x-ratelimit-reset-requests:
+          - 12ms
+        x-ratelimit-reset-tokens:
+          - 1ms
+        x-request-id:
+          - req_9e775516b46738362252ab68b2337ee7
+      status:
+        code: 200
+        message: OK
+version: 1
