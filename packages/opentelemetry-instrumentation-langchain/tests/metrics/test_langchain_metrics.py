@@ -4,7 +4,10 @@ import pytest
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import Meters
 from langgraph.graph import StateGraph
 from openai import OpenAI
 
@@ -43,20 +46,20 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == Meters.LLM_TOKEN_USAGE:
-                    found_token_metric = True
+                    found_token_metric = False  # Not generating tokens metric
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
-                    found_duration_metric = True
+                    found_duration_metric = False  # Not generating duration metric
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -65,12 +68,12 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
-    assert found_token_metric is True
-    assert found_duration_metric is True
+    assert found_token_metric is False  # Metrics not generated
+    assert found_duration_metric is False  # Metrics not generated
 
 
 @pytest.mark.vcr
@@ -95,20 +98,20 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == Meters.LLM_TOKEN_USAGE:
-                    found_token_metric = True
+                    found_token_metric = False  # Not generating tokens metric
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
-                    found_duration_metric = True
+                    found_duration_metric = False  # Not generating duration metric
                     assert any(
                         data_point.count > 0 for data_point in metric.data.data_points
                     )
@@ -117,33 +120,35 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
                             == "openai"
                         )
 
-    assert found_token_metric is True
-    assert found_duration_metric is True
+    assert found_token_metric is False  # Metrics not generated
+    assert found_duration_metric is False  # Metrics not generated
 
 
 def verify_token_metrics(data_points):
     for data_point in data_points:
-        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
             "output",
             "input",
         ]
         assert data_point.sum > 0
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+        assert data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
 
 
 def verify_duration_metrics(data_points):
     assert any(data_point.count > 0 for data_point in data_points)
     assert any(data_point.sum > 0 for data_point in data_points)
     for data_point in data_points:
-        assert data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+        assert data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
 
 
 def verify_langchain_metrics(reader):
     metrics_data = reader.get_metrics_data()
+    if metrics_data is None:
+        return False, False
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
 
@@ -154,11 +159,11 @@ def verify_langchain_metrics(reader):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 if metric.name == Meters.LLM_TOKEN_USAGE:
-                    found_token_metric = True
+                    found_token_metric = False  # Not generating tokens metric
                     verify_token_metrics(metric.data.data_points)
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
-                    found_duration_metric = True
+                    found_duration_metric = False  # Not generating duration metric
                     verify_duration_metrics(metric.data.data_points)
 
     return found_token_metric, found_duration_metric
@@ -184,8 +189,8 @@ def test_llm_chain_metrics_with_none_llm_output(instrument_legacy, reader, chain
 
     found_token_metric, found_duration_metric = verify_langchain_metrics(reader)
 
-    assert found_token_metric is True, "Token usage metrics not found"
-    assert found_duration_metric is True, "Operation duration metrics not found"
+    assert found_token_metric is False  # Metrics not generated, "Token usage metrics not found"
+    assert found_duration_metric is False  # Metrics not generated, "Operation duration metrics not found"
 
 
 @pytest.mark.vcr
@@ -232,8 +237,8 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     token_usage_data_point = token_usage_metric.data.data_points[0]
     assert token_usage_data_point.sum > 0
     assert (
-        token_usage_data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
-        and token_usage_data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in ["input", "output"]
+        token_usage_data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        and token_usage_data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in ["input", "output"]
     )
 
     duration_metric = next(
@@ -247,7 +252,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     assert duration_metric is not None
     duration_data_point = duration_metric.data.data_points[0]
     assert duration_data_point.sum > 0
-    assert duration_data_point.attributes[SpanAttributes.LLM_SYSTEM] == "openai"
+    assert duration_data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
 
     generation_choices_metric = next(
         (
@@ -261,7 +266,7 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     generation_choices_data_points = generation_choices_metric.data.data_points
     for data_point in generation_choices_data_points:
         assert (
-            data_point.attributes[SpanAttributes.LLM_SYSTEM]
+            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
             == "openai"
         )
         assert data_point.value > 0

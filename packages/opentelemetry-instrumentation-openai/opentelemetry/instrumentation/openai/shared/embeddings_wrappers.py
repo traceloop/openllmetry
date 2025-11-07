@@ -32,6 +32,9 @@ from opentelemetry.instrumentation.openai.utils import (
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -248,7 +251,7 @@ def _set_embeddings_metrics(
                     continue
                 attributes_with_token_type = {
                     **shared_attributes,
-                    SpanAttributes.LLM_TOKEN_TYPE: _token_type(name),
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: _token_type(name),
                 }
                 token_counter.record(val, attributes=attributes_with_token_type)
 
@@ -270,11 +273,11 @@ def _set_prompts(span, prompt):
 
     if isinstance(prompt, list):
         for i, p in enumerate(prompt):
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.{i}.content", p)
+            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", p)
     else:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.content",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
             prompt,
         )
 

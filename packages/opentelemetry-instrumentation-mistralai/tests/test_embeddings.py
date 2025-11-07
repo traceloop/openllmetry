@@ -21,17 +21,17 @@ def test_mistral_embeddings_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
@@ -57,13 +57,13 @@ def test_mistral_embeddings_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
@@ -100,13 +100,13 @@ def test_mistral_embeddings_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
@@ -144,17 +144,17 @@ async def test_mistral_async_embeddings_legacy(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
     )
     assert (
@@ -181,13 +181,13 @@ async def test_mistral_async_embeddings_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
@@ -238,13 +238,13 @@ async def test_mistral_async_embeddings_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
     assert mistral_span.name == "mistralai.embeddings"
-    assert mistral_span.attributes.get(f"{SpanAttributes.LLM_SYSTEM}") == "MistralAI"
+    assert mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_SYSTEM}") == "MistralAI"
     assert (
         mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_TYPE}") == "embedding"
     )
     assert not mistral_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert (
-        mistral_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_MODEL}")
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}")
         == "mistral-embed"
     )
     assert (
