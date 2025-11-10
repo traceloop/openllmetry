@@ -215,9 +215,10 @@ def test_responses_streaming(
     instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):
     """Test for streaming responses.create() - reproduces customer issue"""
+    input_text = "Tell me a three sentence bedtime story about a unicorn."
     stream = openai_client.responses.create(
         model="gpt-4.1-nano",
-        input="Tell me a three sentence bedtime story about a unicorn.",
+        input=input_text,
         stream=True,
     )
 
@@ -238,7 +239,12 @@ def test_responses_streaming(
     assert span.name == "openai.response"
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
 
 
 @pytest.mark.vcr

@@ -192,11 +192,20 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
         )
         if usage.input_tokens_details:
-            _set_span_attribute(
-                span,
-                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
-                usage.input_tokens_details.cached_tokens,
-            )
+            # Check if the attribute exists (it may not in older semconv versions)
+            if hasattr(GenAIAttributes, 'GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS'):
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                    usage.input_tokens_details.cached_tokens,
+                )
+            # Fallback to older attribute name if it exists
+            elif hasattr(GenAIAttributes, 'GEN_AI_USAGE_INPUT_TOKENS_CACHED'):
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS_CACHED,
+                    usage.input_tokens_details.cached_tokens,
+                )
 
         # Usage - count of reasoning tokens
         reasoning_tokens = None
@@ -782,18 +791,18 @@ class ResponseStream(ObjectProxy):
         self._traced_data = traced_data or TracedData(
             start_time=start_time,
             response_id="",
-            input=process_input(request_kwargs.get("input", [])),
-            instructions=request_kwargs.get("instructions"),
-            tools=get_tools_from_kwargs(request_kwargs),
+            input=process_input(self._request_kwargs.get("input", [])),
+            instructions=self._request_kwargs.get("instructions"),
+            tools=get_tools_from_kwargs(self._request_kwargs),
             output_blocks={},
             usage=None,
             output_text="",
-            request_model=request_kwargs.get("model", ""),
+            request_model=self._request_kwargs.get("model", ""),
             response_model="",
-            request_reasoning_summary=request_kwargs.get("reasoning", {}).get(
+            request_reasoning_summary=self._request_kwargs.get("reasoning", {}).get(
                 "summary"
             ),
-            request_reasoning_effort=request_kwargs.get("reasoning", {}).get("effort"),
+            request_reasoning_effort=self._request_kwargs.get("reasoning", {}).get("effort"),
             response_reasoning_effort=None,
         )
 
