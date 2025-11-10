@@ -202,3 +202,72 @@ def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemo
     # import json
     # parsed_reasoning = json.loads(reasoning_attr)
     # assert isinstance(parsed_reasoning, (dict, list))  # Could be dict or list depending on response structure
+
+
+@pytest.mark.vcr
+def test_responses_streaming(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+    """Test for streaming responses.create() - reproduces customer issue"""
+    stream = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input="Tell me a three sentence bedtime story about a unicorn.",
+        stream=True,
+    )
+
+    # Consume the stream
+    full_text = ""
+    for item in stream:
+        # Debug: print the structure of the item
+        # print(f"Item type: {type(item)}, Item: {item}")
+        # The response API streaming events have a different structure
+        # They have type="response.output_text.delta" with a "delta" field
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+        # Also handle if there's a delta attribute with text
+        elif hasattr(item, "delta") and item.delta:
+            if hasattr(item.delta, "text") and item.delta.text:
+                full_text += item.delta.text
+
+    # Check that spans were created
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async(instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client):
+    """Test for async streaming responses.create() - reproduces customer issue"""
+    stream = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input="Tell me a three sentence bedtime story about a unicorn.",
+        stream=True,
+    )
+
+    # Consume the stream
+    full_text = ""
+    async for item in stream:
+        # The response API streaming events have a different structure
+        # They have type="response.output_text.delta" with a "delta" field
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+        # Also handle if there's a delta attribute with text
+        elif hasattr(item, "delta") and item.delta:
+            if hasattr(item.delta, "text") and item.delta.text:
+                full_text += item.delta.text
+
+    # Check that spans were created
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
