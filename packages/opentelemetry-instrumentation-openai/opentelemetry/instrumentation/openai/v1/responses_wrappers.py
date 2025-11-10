@@ -815,15 +815,41 @@ class ResponseStream(ObjectProxy):
 
     def __enter__(self):
         """Context manager entry"""
+        if hasattr(self.__wrapped__, "__enter__"):
+            self.__wrapped__.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit"""
-        if exc_type is not None:
-            self._handle_exception(exc_val)
-        else:
-            self._process_complete_response()
-        return False
+        suppress = False
+        try:
+            if exc_type is not None:
+                self._handle_exception(exc_val)
+            else:
+                self._process_complete_response()
+        finally:
+            if hasattr(self.__wrapped__, "__exit__"):
+                suppress = bool(self.__wrapped__.__exit__(exc_type, exc_val, exc_tb))
+        return suppress
+
+    async def __aenter__(self):
+        """Async context manager entry"""
+        if hasattr(self.__wrapped__, "__aenter__"):
+            await self.__wrapped__.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit"""
+        suppress = False
+        try:
+            if exc_type is not None:
+                self._handle_exception(exc_val)
+            else:
+                self._process_complete_response()
+        finally:
+            if hasattr(self.__wrapped__, "__aexit__"):
+                suppress = bool(await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb))
+        return suppress
 
     def __iter__(self):
         """Synchronous iterator"""

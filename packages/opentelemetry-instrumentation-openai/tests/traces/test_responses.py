@@ -1,6 +1,6 @@
 import pytest
 
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
@@ -307,3 +307,60 @@ def test_responses_streaming_with_content(
     assert span.attributes["gen_ai.prompt.0.role"] == "user"
     assert span.attributes["gen_ai.completion.0.role"] == "assistant"
     assert span.attributes["gen_ai.completion.0.content"] == full_text
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_context_manager(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test streaming responses using context manager (with statement)"""
+    input_text = "Count to 5"
+    full_text = ""
+
+    with openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    ) as stream:
+        for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async_with_context_manager(
+    instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client: AsyncOpenAI
+):
+    """Test async streaming responses using context manager (async with statement)"""
+    input_text = "Count to 5"
+    full_text = ""
+
+    stream = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    async with stream:
+        async for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
