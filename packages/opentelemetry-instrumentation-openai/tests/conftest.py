@@ -172,6 +172,16 @@ def instrument_with_content(
 
 
 @pytest.fixture(scope="function")
+def instrument_legacy_with_content(instrument_legacy):
+    """Fixture that enables content tracing while keeping legacy attributes mode"""
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
+
+    yield instrument_legacy
+
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
+
+
+@pytest.fixture(scope="function")
 def instrument_with_no_content(
     instrument_legacy, reader, tracer_provider, event_logger_provider, meter_provider
 ):

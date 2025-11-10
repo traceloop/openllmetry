@@ -217,31 +217,33 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                 else getattr(tokens_details, "reasoning_tokens", None)
             )
 
+        # Only set reasoning tokens if the attribute exists
+        if hasattr(SpanAttributes, 'LLM_USAGE_REASONING_TOKENS'):
+            _set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_REASONING_TOKENS,
+                reasoning_tokens or 0,
+            )
+
+    # Reasoning attributes - only set if they exist in SpanAttributes
+    if hasattr(SpanAttributes, 'LLM_REQUEST_REASONING_SUMMARY'):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_REASONING_TOKENS,
-            reasoning_tokens or 0,
+            f"{SpanAttributes.LLM_REQUEST_REASONING_SUMMARY}",
+            traced_response.request_reasoning_summary or (),
         )
-
-    # Reasoning attributes
-    # Request - reasoning summary
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_REQUEST_REASONING_SUMMARY}",
-        traced_response.request_reasoning_summary or (),
-    )
-    # Request - reasoning effort
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_REQUEST_REASONING_EFFORT}",
-        traced_response.request_reasoning_effort or (),
-    )
-    # Response - reasoning effort
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_RESPONSE_REASONING_EFFORT}",
-        traced_response.response_reasoning_effort or (),
-    )
+    if hasattr(SpanAttributes, 'LLM_REQUEST_REASONING_EFFORT'):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_REQUEST_REASONING_EFFORT}",
+            traced_response.request_reasoning_effort or (),
+        )
+    if hasattr(SpanAttributes, 'LLM_RESPONSE_REASONING_EFFORT'):
+        _set_span_attribute(
+            span,
+            f"{SpanAttributes.LLM_RESPONSE_REASONING_EFFORT}",
+            traced_response.response_reasoning_effort or (),
+        )
 
     if should_send_prompts():
         prompt_index = 0

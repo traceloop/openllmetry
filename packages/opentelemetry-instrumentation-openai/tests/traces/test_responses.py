@@ -197,17 +197,17 @@ def test_responses_reasoning_dict_issue(
     span = spans[0]
 
     # Verify the reasoning attributes are properly set without causing warnings
-    # assert span.attributes["gen_ai.request.reasoning_effort"] == "medium"
-    # assert span.attributes["gen_ai.request.reasoning_summary"] == "auto"
-    # This should not cause an "Invalid type dict" warning and should contain serialized reasoning
-    assert "gen_ai.completion.0.reasoning" not in span.attributes
+    # The main goal of this test is to ensure that when the API returns reasoning data
+    # as a dict/list, it gets properly serialized as JSON without causing "Invalid type" warnings
+
     # The reasoning should be serialized as JSON since it contains complex data
-    # reasoning_attr = span.attributes["gen_ai.completion.0.reasoning"]
-    # assert isinstance(reasoning_attr, str)
+    reasoning_attr = span.attributes["gen_ai.completion.0.reasoning"]
+    assert isinstance(reasoning_attr, str), "Reasoning should be serialized as a string"
+
     # Should be valid JSON containing reasoning summary data
-    # import json
-    # parsed_reasoning = json.loads(reasoning_attr)
-    # assert isinstance(parsed_reasoning, (dict, list))  # Could be dict or list depending on response structure
+    import json
+    parsed_reasoning = json.loads(reasoning_attr)
+    assert isinstance(parsed_reasoning, (dict, list)), "Reasoning should be a dict or list structure"
 
 
 @pytest.mark.vcr
@@ -241,10 +241,6 @@ def test_responses_streaming(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
 
 
 @pytest.mark.vcr
@@ -276,3 +272,38 @@ async def test_responses_streaming_async(
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_content(
+    instrument_legacy_with_content, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test streaming with content tracing - verifies prompts and completions are captured"""
+    input_text = "What is 2+2?"
+    stream = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    # Consume the stream
+    full_text = ""
+    for item in stream:
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+
+    # With content tracing enabled, verify prompts and completions are captured
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
