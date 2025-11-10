@@ -435,14 +435,12 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
-            # Create a span for the streaming response
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
 
-            # Wrap the stream with ResponseStream to capture telemetry
             return ResponseStream(
                 span=span,
                 response=response,
@@ -799,11 +797,9 @@ class ResponseStream(ObjectProxy):
             response_reasoning_effort=None,
         )
 
-        # Accumulated response data
         self._complete_response_data = None
         self._output_text = ""
 
-        # Cleanup state tracking to prevent duplicate operations
         self._cleanup_completed = False
         self._cleanup_lock = threading.Lock()
 
@@ -862,22 +858,17 @@ class ResponseStream(ObjectProxy):
 
     def _process_chunk(self, chunk):
         """Process a streaming chunk"""
-        # Handle response events based on type
         if hasattr(chunk, "type"):
-            # Handle text delta events
             if chunk.type == "response.output_text.delta":
                 if hasattr(chunk, "delta") and chunk.delta:
                     self._output_text += chunk.delta
-            # Handle completion event
             elif chunk.type == "response.completed" and hasattr(chunk, "response"):
                 self._complete_response_data = chunk.response
 
-        # Fallback: Extract text delta from chunk if it has a delta attribute with text
         if hasattr(chunk, "delta"):
             if hasattr(chunk.delta, "text") and chunk.delta.text:
                 self._output_text += chunk.delta.text
 
-        # Store the complete response when we get it
         if hasattr(chunk, "response") and chunk.response:
             self._complete_response_data = chunk.response
 
@@ -892,32 +883,26 @@ class ResponseStream(ObjectProxy):
                 if self._complete_response_data:
                     parsed_response = parse_response(self._complete_response_data)
 
-                    # Update traced data with response information
                     self._traced_data.response_id = parsed_response.id
                     self._traced_data.response_model = parsed_response.model
                     self._traced_data.output_text = self._output_text
 
-                    # Update usage if available
                     if parsed_response.usage:
                         self._traced_data.usage = parsed_response.usage
 
-                    # Update output blocks
                     if parsed_response.output:
                         self._traced_data.output_blocks = {
                             block.id: block for block in parsed_response.output
                         }
 
-                    # Store in global responses dict
                     responses[parsed_response.id] = self._traced_data
 
-                # Set span attributes
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)
                 self._span.end()
                 self._cleanup_completed = True
 
             except Exception as e:
-                # Log the error but don't fail
                 if self._span and self._span.is_recording():
                     self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                     self._span.set_status(StatusCode.ERROR, str(e))
@@ -947,7 +932,6 @@ class ResponseStream(ObjectProxy):
                 return
 
             try:
-                # Set whatever data we have so far
                 if self._span and self._span.is_recording():
                     set_data_attributes(self._traced_data, self._span)
                     self._span.set_status(StatusCode.OK)
@@ -956,5 +940,4 @@ class ResponseStream(ObjectProxy):
                 self._cleanup_completed = True
 
             except Exception:
-                # Final fallback - just mark as completed
                 self._cleanup_completed = True

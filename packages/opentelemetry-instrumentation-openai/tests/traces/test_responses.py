@@ -1,4 +1,3 @@
-
 import pytest
 
 from openai import OpenAI
@@ -7,7 +6,9 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 
 @pytest.mark.vcr
-def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     _ = openai_client.responses.create(
         model="gpt-4.1-nano",
         input="What is the capital of France?",
@@ -26,7 +27,9 @@ def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, opena
 
 
 @pytest.mark.vcr
-def test_responses_with_input_history(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses_with_input_history(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     user_message = "Come up with an adjective in English. Respond with just one word."
     first_response = openai_client.responses.create(
         model="gpt-4.1-nano",
@@ -79,7 +82,9 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
 
 
 @pytest.mark.vcr
-def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses_tool_calls(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     tools = [
         {
             "type": "function",
@@ -90,11 +95,11 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
                 "properties": {
                     "location": {
                         "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA"
+                        "description": "The city and state, e.g. San Francisco, CA",
                     }
                 },
-                "required": ["location"]
-            }
+                "required": ["location"],
+            },
         }
     ]
     openai_client.responses.create(
@@ -103,11 +108,11 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
             {
                 "type": "message",
                 "role": "user",
-                "content": "What's the weather in London?"
+                "content": "What's the weather in London?",
             }
         ],
         tools=tools,
-        tool_choice="auto"
+        tool_choice="auto",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -145,16 +150,17 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
 
 
 @pytest.mark.vcr
-@pytest.mark.skipif(not is_reasoning_supported(),
-                    reason="Reasoning is not supported in older OpenAI library versions")
-def test_responses_reasoning(instrument_legacy, span_exporter: InMemorySpanExporter,
-                             openai_client: OpenAI):
+@pytest.mark.skipif(
+    not is_reasoning_supported(),
+    reason="Reasoning is not supported in older OpenAI library versions",
+)
+def test_responses_reasoning(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     openai_client.responses.create(
         model="gpt-5-nano",
         input="Count r's in strawberry",
-        reasoning={
-            "effort": "low", "summary": None
-        },
+        reasoning={"effort": "low", "summary": None},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -172,18 +178,18 @@ def test_responses_reasoning(instrument_legacy, span_exporter: InMemorySpanExpor
 
 
 @pytest.mark.vcr
-@pytest.mark.skipif(not is_reasoning_supported(),
-                    reason="Reasoning is not supported in older OpenAI library versions")
-def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemorySpanExporter,
-                                        openai_client: OpenAI):
+@pytest.mark.skipif(
+    not is_reasoning_supported(),
+    reason="Reasoning is not supported in older OpenAI library versions",
+)
+def test_responses_reasoning_dict_issue(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     """Test for issue #3350 - reasoning dict causing invalid type warning"""
     openai_client.responses.create(
         model="gpt-5-nano",
         input="Explain why the sky is blue",
-        reasoning={
-            "effort": "medium",
-            "summary": "auto"
-        },
+        reasoning={"effort": "medium", "summary": "auto"},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -205,7 +211,9 @@ def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemo
 
 
 @pytest.mark.vcr
-def test_responses_streaming(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses_streaming(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     """Test for streaming responses.create() - reproduces customer issue"""
     stream = openai_client.responses.create(
         model="gpt-4.1-nano",
@@ -216,19 +224,13 @@ def test_responses_streaming(instrument_legacy, span_exporter: InMemorySpanExpor
     # Consume the stream
     full_text = ""
     for item in stream:
-        # Debug: print the structure of the item
-        # print(f"Item type: {type(item)}, Item: {item}")
-        # The response API streaming events have a different structure
-        # They have type="response.output_text.delta" with a "delta" field
         if hasattr(item, "type") and item.type == "response.output_text.delta":
             if hasattr(item, "delta") and item.delta:
                 full_text += item.delta
-        # Also handle if there's a delta attribute with text
         elif hasattr(item, "delta") and item.delta:
             if hasattr(item.delta, "text") and item.delta.text:
                 full_text += item.delta.text
 
-    # Check that spans were created
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
 
@@ -241,7 +243,9 @@ def test_responses_streaming(instrument_legacy, span_exporter: InMemorySpanExpor
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_responses_streaming_async(instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client):
+async def test_responses_streaming_async(
+    instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client
+):
     """Test for async streaming responses.create() - reproduces customer issue"""
     stream = await async_openai_client.responses.create(
         model="gpt-4.1-nano",
@@ -249,20 +253,15 @@ async def test_responses_streaming_async(instrument_legacy, span_exporter: InMem
         stream=True,
     )
 
-    # Consume the stream
     full_text = ""
     async for item in stream:
-        # The response API streaming events have a different structure
-        # They have type="response.output_text.delta" with a "delta" field
         if hasattr(item, "type") and item.type == "response.output_text.delta":
             if hasattr(item, "delta") and item.delta:
                 full_text += item.delta
-        # Also handle if there's a delta attribute with text
         elif hasattr(item, "delta") and item.delta:
             if hasattr(item.delta, "text") and item.delta.text:
                 full_text += item.delta.text
 
-    # Check that spans were created
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
 
