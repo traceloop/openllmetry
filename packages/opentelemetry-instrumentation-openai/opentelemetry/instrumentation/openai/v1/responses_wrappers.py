@@ -192,14 +192,12 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
         )
         if usage.input_tokens_details:
-            # Check if the attribute exists (it may not in older semconv versions)
             if hasattr(GenAIAttributes, 'GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS'):
                 _set_span_attribute(
                     span,
                     GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                     usage.input_tokens_details.cached_tokens,
                 )
-            # Fallback to older attribute name if it exists
             elif hasattr(GenAIAttributes, 'GEN_AI_USAGE_INPUT_TOKENS_CACHED'):
                 _set_span_attribute(
                     span,
@@ -207,9 +205,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                     usage.input_tokens_details.cached_tokens,
                 )
 
-        # Usage - count of reasoning tokens
         reasoning_tokens = None
-        # Support both dict-style and object-style `usage`
         tokens_details = (
             usage.get("output_tokens_details") if isinstance(usage, dict)
             else getattr(usage, "output_tokens_details", None)
@@ -586,14 +582,12 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
-            # Create a span for the streaming response
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
 
-            # Wrap the stream with ResponseStream to capture telemetry
             return ResponseStream(
                 span=span,
                 response=response,
