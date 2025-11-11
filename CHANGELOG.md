@@ -1,3 +1,16 @@
+## v0.48.0 (2025-11-11)
+
+### Feat
+
+- **instrumentation**: updated GenAI attributes to use OTel's (#3138)
+
+### Fix
+
+- **openai**: add streaming support for responses.create() api (#3437)
+- **bedrock**: handle non-text contentBlockDelta events in converse_stream (#3404)
+- **openai-agents**: span attribute handling for tool calls and results (#3422)
+- **watson**: collect prompt content and set as span attribute (#3417)
+
 ## v0.47.5 (2025-10-24)
 
 ### Fix
