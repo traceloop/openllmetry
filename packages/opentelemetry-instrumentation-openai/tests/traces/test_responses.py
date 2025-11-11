@@ -279,7 +279,7 @@ async def test_responses_streaming_async(
 
 @pytest.mark.vcr
 def test_responses_streaming_with_content(
-    span_exporter: InMemorySpanExporter, openai_client: OpenAI
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):
     """Test streaming with content tracing - verifies prompts and completions are captured"""
     input_text = "What is 2+2?"
@@ -304,8 +304,6 @@ def test_responses_streaming_with_content(
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
-
-    # With content tracing enabled, verify prompts and completions are captured
     assert span.attributes["gen_ai.prompt.0.content"] == input_text
     assert span.attributes["gen_ai.prompt.0.role"] == "user"
     assert span.attributes["gen_ai.completion.0.role"] == "assistant"
@@ -337,6 +335,10 @@ def test_responses_streaming_with_context_manager(
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
 
 
 @pytest.mark.vcr
@@ -369,3 +371,7 @@ async def test_responses_streaming_async_with_context_manager(
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
