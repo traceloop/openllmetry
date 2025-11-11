@@ -252,9 +252,10 @@ async def test_responses_streaming_async(
     instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client
 ):
     """Test for async streaming responses.create() - reproduces customer issue"""
+    input_text = "Tell me a three sentence bedtime story about a unicorn."
     stream = await async_openai_client.responses.create(
         model="gpt-4.1-nano",
-        input="Tell me a three sentence bedtime story about a unicorn.",
+        input=input_text,
         stream=True,
     )
 
@@ -275,6 +276,10 @@ async def test_responses_streaming_async(
     assert span.attributes["gen_ai.system"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
 
 
 @pytest.mark.vcr
