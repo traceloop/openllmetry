@@ -244,6 +244,10 @@ def test_responses_streaming(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
 
 
 @pytest.mark.vcr
