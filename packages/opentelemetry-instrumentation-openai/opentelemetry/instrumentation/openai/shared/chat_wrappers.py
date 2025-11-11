@@ -288,14 +288,6 @@ async def _handle_request(span, kwargs, instance):
     if Config.enable_trace_context_propagation:
         propagate_trace_context(span, kwargs)
 
-    # Reasoning request attributes
-    reasoning_effort = kwargs.get("reasoning_effort")
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_REQUEST_REASONING_EFFORT,
-        reasoning_effort or ()
-    )
-
 
 @dont_throw
 def _handle_response(
@@ -326,28 +318,6 @@ def _handle_response(
 
     # span attributes
     _set_response_attributes(span, response_dict)
-
-    # Reasoning usage attributes
-    usage = response_dict.get("usage")
-    reasoning_tokens = None
-    if usage:
-        # Support both dict-style and object-style `usage`
-        tokens_details = (
-            usage.get("completion_tokens_details") if isinstance(usage, dict)
-            else getattr(usage, "completion_tokens_details", None)
-        )
-
-        if tokens_details:
-            reasoning_tokens = (
-                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
-                else getattr(tokens_details, "reasoning_tokens", None)
-            )
-
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_REASONING_TOKENS,
-        reasoning_tokens or 0,
-    )
 
     if should_emit_events():
         if response.choices is not None:

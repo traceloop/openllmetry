@@ -127,11 +127,6 @@ class TracedData(pydantic.BaseModel):
     request_model: Optional[str] = pydantic.Field(default=None)
     response_model: Optional[str] = pydantic.Field(default=None)
 
-    # Reasoning attributes
-    request_reasoning_summary: Optional[str] = pydantic.Field(default=None)
-    request_reasoning_effort: Optional[str] = pydantic.Field(default=None)
-    response_reasoning_effort: Optional[str] = pydantic.Field(default=None)
-
 
 responses: dict[str, TracedData] = {}
 
@@ -192,58 +187,11 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
         )
         if usage.input_tokens_details:
-            if hasattr(GenAIAttributes, 'GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS'):
-                _set_span_attribute(
-                    span,
-                    GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
-                    usage.input_tokens_details.cached_tokens,
-                )
-            elif hasattr(GenAIAttributes, 'GEN_AI_USAGE_INPUT_TOKENS_CACHED'):
-                _set_span_attribute(
-                    span,
-                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS_CACHED,
-                    usage.input_tokens_details.cached_tokens,
-                )
-
-        reasoning_tokens = None
-        tokens_details = (
-            usage.get("output_tokens_details") if isinstance(usage, dict)
-            else getattr(usage, "output_tokens_details", None)
-        )
-
-        if tokens_details:
-            reasoning_tokens = (
-                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
-                else getattr(tokens_details, "reasoning_tokens", None)
-            )
-
-        # Only set reasoning tokens if the attribute exists
-        if hasattr(SpanAttributes, 'LLM_USAGE_REASONING_TOKENS'):
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_REASONING_TOKENS,
-                reasoning_tokens or 0,
+                SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+                usage.input_tokens_details.cached_tokens,
             )
-
-    # Reasoning attributes - only set if they exist in SpanAttributes
-    if hasattr(SpanAttributes, 'LLM_REQUEST_REASONING_SUMMARY'):
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_REASONING_SUMMARY}",
-            traced_response.request_reasoning_summary or (),
-        )
-    if hasattr(SpanAttributes, 'LLM_REQUEST_REASONING_EFFORT'):
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_REASONING_EFFORT}",
-            traced_response.request_reasoning_effort or (),
-        )
-    if hasattr(SpanAttributes, 'LLM_RESPONSE_REASONING_EFFORT'):
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_RESPONSE_REASONING_EFFORT}",
-            traced_response.response_reasoning_effort or (),
-        )
 
     if should_send_prompts():
         prompt_index = 0
@@ -480,18 +428,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                     "model", existing_data.get("request_model", "")
                 ),
                 response_model=existing_data.get("response_model", ""),
-                # Reasoning attributes
-                request_reasoning_summary=(
-                    kwargs.get("reasoning", {}).get(
-                        "summary", existing_data.get("request_reasoning_summary")
-                    )
-                ),
-                request_reasoning_effort=(
-                    kwargs.get("reasoning", {}).get(
-                        "effort", existing_data.get("request_reasoning_effort")
-                    )
-                ),
-                response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
         except Exception:
             traced_data = None
@@ -543,18 +479,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             output_text=existing_data.get("output_text", parsed_response_output_text),
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
-            # Reasoning attributes
-            request_reasoning_summary=(
-                kwargs.get("reasoning", {}).get(
-                    "summary", existing_data.get("request_reasoning_summary")
-                )
-            ),
-            request_reasoning_effort=(
-                kwargs.get("reasoning", {}).get(
-                    "effort", existing_data.get("request_reasoning_effort")
-                )
-            ),
-            response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
@@ -618,18 +542,6 @@ async def async_responses_get_or_create_wrapper(
                 output_text=kwargs.get("output_text", existing_data.get("output_text")),
                 request_model=kwargs.get("model", existing_data.get("request_model")),
                 response_model=existing_data.get("response_model"),
-                # Reasoning attributes
-                request_reasoning_summary=(
-                    kwargs.get("reasoning", {}).get(
-                        "summary", existing_data.get("request_reasoning_summary")
-                    )
-                ),
-                request_reasoning_effort=(
-                    kwargs.get("reasoning", {}).get(
-                        "effort", existing_data.get("request_reasoning_effort")
-                    )
-                ),
-                response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
             )
         except Exception:
             traced_data = None
@@ -682,18 +594,6 @@ async def async_responses_get_or_create_wrapper(
             output_text=existing_data.get("output_text", parsed_response_output_text),
             request_model=existing_data.get("request_model", kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
-            # Reasoning attributes
-            request_reasoning_summary=(
-                kwargs.get("reasoning", {}).get(
-                    "summary", existing_data.get("request_reasoning_summary")
-                )
-            ),
-            request_reasoning_effort=(
-                kwargs.get("reasoning", {}).get(
-                    "effort", existing_data.get("request_reasoning_effort")
-                )
-            ),
-            response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
@@ -795,11 +695,6 @@ class ResponseStream(ObjectProxy):
             output_text="",
             request_model=self._request_kwargs.get("model", ""),
             response_model="",
-            request_reasoning_summary=self._request_kwargs.get("reasoning", {}).get(
-                "summary"
-            ),
-            request_reasoning_effort=self._request_kwargs.get("reasoning", {}).get("effort"),
-            response_reasoning_effort=None,
         )
 
         self._complete_response_data = None

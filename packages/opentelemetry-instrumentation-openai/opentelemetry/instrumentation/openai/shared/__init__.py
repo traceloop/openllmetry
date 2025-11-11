@@ -232,7 +232,7 @@ def _set_response_attributes(span, response):
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
         span,
-        GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+        SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
         prompt_tokens_details.get("cached_tokens", 0),
     )
     return
