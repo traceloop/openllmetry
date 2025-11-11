@@ -206,8 +206,11 @@ def test_responses_reasoning_dict_issue(
 
     # Should be valid JSON containing reasoning summary data
     import json
+
     parsed_reasoning = json.loads(reasoning_attr)
-    assert isinstance(parsed_reasoning, (dict, list)), "Reasoning should be a dict or list structure"
+    assert isinstance(
+        parsed_reasoning, (dict, list)
+    ), "Reasoning should be a dict or list structure"
 
 
 @pytest.mark.vcr
@@ -276,7 +279,7 @@ async def test_responses_streaming_async(
 
 @pytest.mark.vcr
 def test_responses_streaming_with_content(
-    instrument_legacy_with_content, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+    span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):
     """Test streaming with content tracing - verifies prompts and completions are captured"""
     input_text = "What is 2+2?"
@@ -339,7 +342,9 @@ def test_responses_streaming_with_context_manager(
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_responses_streaming_async_with_context_manager(
-    instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client: AsyncOpenAI
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
 ):
     """Test async streaming responses using context manager (async with statement)"""
     input_text = "Count to 5"
