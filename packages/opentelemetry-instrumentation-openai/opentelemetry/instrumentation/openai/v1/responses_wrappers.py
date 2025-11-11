@@ -838,6 +838,20 @@ class ResponseStream(ObjectProxy):
                 suppress = bool(await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb))
         return suppress
 
+    def close(self):
+        try:
+            self._ensure_cleanup()
+        finally:
+            if hasattr(self.__wrapped__, "close"):
+                return self.__wrapped__.close()
+
+    async def aclose(self):
+        try:
+            self._ensure_cleanup()
+        finally:
+            if hasattr(self.__wrapped__, "aclose"):
+                return await self.__wrapped__.aclose()
+
     def __iter__(self):
         """Synchronous iterator"""
         return self
