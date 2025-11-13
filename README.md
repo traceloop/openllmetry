@@ -180,6 +180,14 @@ Not sure where to get started? You can:
 - [Book a free pairing session with one of our teammates](mailto:nir@traceloop.com?subject=Pairing%20session&body=I'd%20like%20to%20do%20a%20pairing%20session!)!
 - Join our <a href="https://traceloop.com/slack">Slack</a>, and ask us any questions there.
 
+
+### How does `openllmetry` work under the hood?
+
+Check out this interactive walkthrough of the `openllmetry` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=openllmetry&owner=traceloop&branch=main&OnboardingTutorial=true).
+
+<img width="1652" height="704" alt="image" src="https://github.com/user-attachments/assets/c52f8c25-d923-427a-85cc-dfee470e8b83" />
+
+
 ## 💚 Community & Support
 
 - [Slack](https://traceloop.com/slack) (For live discussion with the community and the Traceloop team)
