@@ -1,13 +1,14 @@
-
 import pytest
 
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
 @pytest.mark.vcr
-def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     _ = openai_client.responses.create(
         model="gpt-4.1-nano",
         input="What is the capital of France?",
@@ -26,7 +27,9 @@ def test_responses(instrument_legacy, span_exporter: InMemorySpanExporter, opena
 
 
 @pytest.mark.vcr
-def test_responses_with_input_history(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses_with_input_history(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     user_message = "Come up with an adjective in English. Respond with just one word."
     first_response = openai_client.responses.create(
         model="gpt-4.1-nano",
@@ -79,7 +82,9 @@ def test_responses_with_input_history(instrument_legacy, span_exporter: InMemory
 
 
 @pytest.mark.vcr
-def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI):
+def test_responses_tool_calls(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     tools = [
         {
             "type": "function",
@@ -90,11 +95,11 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
                 "properties": {
                     "location": {
                         "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA"
+                        "description": "The city and state, e.g. San Francisco, CA",
                     }
                 },
-                "required": ["location"]
-            }
+                "required": ["location"],
+            },
         }
     ]
     openai_client.responses.create(
@@ -103,11 +108,11 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
             {
                 "type": "message",
                 "role": "user",
-                "content": "What's the weather in London?"
+                "content": "What's the weather in London?",
             }
         ],
         tools=tools,
-        tool_choice="auto"
+        tool_choice="auto",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -145,16 +150,17 @@ def test_responses_tool_calls(instrument_legacy, span_exporter: InMemorySpanExpo
 
 
 @pytest.mark.vcr
-@pytest.mark.skipif(not is_reasoning_supported(),
-                    reason="Reasoning is not supported in older OpenAI library versions")
-def test_responses_reasoning(instrument_legacy, span_exporter: InMemorySpanExporter,
-                             openai_client: OpenAI):
+@pytest.mark.skipif(
+    not is_reasoning_supported(),
+    reason="Reasoning is not supported in older OpenAI library versions",
+)
+def test_responses_reasoning(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     openai_client.responses.create(
         model="gpt-5-nano",
         input="Count r's in strawberry",
-        reasoning={
-            "effort": "low", "summary": None
-        },
+        reasoning={"effort": "low", "summary": None},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -172,18 +178,18 @@ def test_responses_reasoning(instrument_legacy, span_exporter: InMemorySpanExpor
 
 
 @pytest.mark.vcr
-@pytest.mark.skipif(not is_reasoning_supported(),
-                    reason="Reasoning is not supported in older OpenAI library versions")
-def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemorySpanExporter,
-                                        openai_client: OpenAI):
+@pytest.mark.skipif(
+    not is_reasoning_supported(),
+    reason="Reasoning is not supported in older OpenAI library versions",
+)
+def test_responses_reasoning_dict_issue(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
     """Test for issue #3350 - reasoning dict causing invalid type warning"""
     openai_client.responses.create(
         model="gpt-5-nano",
         input="Explain why the sky is blue",
-        reasoning={
-            "effort": "medium",
-            "summary": "auto"
-        },
+        reasoning={"effort": "medium", "summary": "auto"},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -191,14 +197,190 @@ def test_responses_reasoning_dict_issue(instrument_legacy, span_exporter: InMemo
     span = spans[0]
 
     # Verify the reasoning attributes are properly set without causing warnings
-    # assert span.attributes["gen_ai.request.reasoning_effort"] == "medium"
-    # assert span.attributes["gen_ai.request.reasoning_summary"] == "auto"
-    # This should not cause an "Invalid type dict" warning and should contain serialized reasoning
-    assert "gen_ai.completion.0.reasoning" not in span.attributes
+    # The main goal of this test is to ensure that when the API returns reasoning data
+    # as a dict/list, it gets properly serialized as JSON without causing "Invalid type" warnings
+
     # The reasoning should be serialized as JSON since it contains complex data
-    # reasoning_attr = span.attributes["gen_ai.completion.0.reasoning"]
-    # assert isinstance(reasoning_attr, str)
+    reasoning_attr = span.attributes["gen_ai.completion.0.reasoning"]
+    assert isinstance(reasoning_attr, str), "Reasoning should be serialized as a string"
+
     # Should be valid JSON containing reasoning summary data
-    # import json
-    # parsed_reasoning = json.loads(reasoning_attr)
-    # assert isinstance(parsed_reasoning, (dict, list))  # Could be dict or list depending on response structure
+    import json
+
+    parsed_reasoning = json.loads(reasoning_attr)
+    assert isinstance(
+        parsed_reasoning, (dict, list)
+    ), "Reasoning should be a dict or list structure"
+
+
+@pytest.mark.vcr
+def test_responses_streaming(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test for streaming responses.create() - reproduces customer issue"""
+    input_text = "Tell me a three sentence bedtime story about a unicorn."
+    stream = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    # Consume the stream
+    full_text = ""
+    for item in stream:
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+        elif hasattr(item, "delta") and item.delta:
+            if hasattr(item.delta, "text") and item.delta.text:
+                full_text += item.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
+    assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async(
+    instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client
+):
+    """Test for async streaming responses.create() - reproduces customer issue"""
+    input_text = "Tell me a three sentence bedtime story about a unicorn."
+    stream = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    full_text = ""
+    async for item in stream:
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+        elif hasattr(item, "delta") and item.delta:
+            if hasattr(item.delta, "text") and item.delta.text:
+                full_text += item.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span but got {len(spans)}"
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_content(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test streaming with content tracing - verifies prompts and completions are captured"""
+    input_text = "What is 2+2?"
+    stream = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    # Consume the stream
+    full_text = ""
+    for item in stream:
+        if hasattr(item, "type") and item.type == "response.output_text.delta":
+            if hasattr(item, "delta") and item.delta:
+                full_text += item.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_context_manager(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test streaming responses using context manager (with statement)"""
+    input_text = "Count to 5"
+    full_text = ""
+
+    with openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    ) as stream:
+        for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async_with_context_manager(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+):
+    """Test async streaming responses using context manager (async with statement)"""
+    input_text = "Count to 5"
+    full_text = ""
+
+    stream = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=input_text,
+        stream=True,
+    )
+
+    async with stream:
+        async for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert full_text != "", "Should have received streaming content"
+    assert span.attributes["gen_ai.prompt.0.content"] == input_text
+    assert span.attributes["gen_ai.prompt.0.role"] == "user"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.0.content"] == full_text

@@ -1,0 +1,591 @@
+interactions:
+- request:
+    body: '{"input":"Tell me a three sentence bedtime story about a unicorn.","model":"gpt-4.1-nano","stream":true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '104'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.97.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.97.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.16
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_06d9044b13184730006911ea372f048190aabddea38a3fc299","object":"response","created_at":1762781751,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4.1-nano-2025-04-14","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_06d9044b13184730006911ea372f048190aabddea38a3fc299","object":"response","created_at":1762781751,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4.1-nano-2025-04-14","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","type":"message","status":"in_progress","content":[],"role":"assistant"}}
+
+
+        event: response.content_part.added
+
+        data: {"type":"response.content_part.added","sequence_number":3,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""}}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"Once","logprobs":[],"obfuscation":"Rj88U0hLZ9YI"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":5,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        upon","logprobs":[],"obfuscation":"30N5oGrHdBg"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":6,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        a","logprobs":[],"obfuscation":"1GKZ9Wrmor6HvA"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":7,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        time","logprobs":[],"obfuscation":"I1n9Kt37NsX"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":8,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"dTaQFO01iAC78Ln"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":9,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        in","logprobs":[],"obfuscation":"GezdIeWJ40wX5"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":10,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        a","logprobs":[],"obfuscation":"82dO8OBkJTz0sx"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":11,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        magical","logprobs":[],"obfuscation":"uoMisUcW"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":12,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        forest","logprobs":[],"obfuscation":"mJMDEvGry"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":13,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"7me5JgT8SyeuYld"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":14,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        there","logprobs":[],"obfuscation":"ZxhJRz2ON0"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":15,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        was","logprobs":[],"obfuscation":"V7ZqdFtW35Wk"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":16,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        a","logprobs":[],"obfuscation":"bCj3hDo9oSxYWX"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":17,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        gentle","logprobs":[],"obfuscation":"ejZPZtvBu"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":18,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        unicorn","logprobs":[],"obfuscation":"fniYUCTE"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":19,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        named","logprobs":[],"obfuscation":"QxfG7TD9an"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":20,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        Luna","logprobs":[],"obfuscation":"G71JY5MQSys"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":21,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        who","logprobs":[],"obfuscation":"3ENhjJFN5CSt"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":22,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        loved","logprobs":[],"obfuscation":"X3kbJkGeJ6"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":23,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        to","logprobs":[],"obfuscation":"qKKpXvFV9NiFe"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":24,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        bring","logprobs":[],"obfuscation":"flDsrGj8oy"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":25,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        spark","logprobs":[],"obfuscation":"JrLkndfEjJ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":26,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"les","logprobs":[],"obfuscation":"UAHQStfyLKIgQ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":27,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        of","logprobs":[],"obfuscation":"8Upv81ntdbpgI"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":28,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        happiness","logprobs":[],"obfuscation":"T7EWh3"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":29,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        wherever","logprobs":[],"obfuscation":"MONXaDx"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":30,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        she","logprobs":[],"obfuscation":"Gl1L0lSu6f0Q"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":31,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        went","logprobs":[],"obfuscation":"uBZhppkimEx"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":32,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":".","logprobs":[],"obfuscation":"S7RqBBbIycLkaaP"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":33,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        One","logprobs":[],"obfuscation":"IQJlB8npiQxN"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":34,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        evening","logprobs":[],"obfuscation":"oqjdhL8L"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":35,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"BoUyMYutGwgFO0q"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":36,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        she","logprobs":[],"obfuscation":"dU27do5TGCDq"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":37,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        discovered","logprobs":[],"obfuscation":"3jukg"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":38,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        a","logprobs":[],"obfuscation":"2EPe1gsRVkrbOx"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":39,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        lonely","logprobs":[],"obfuscation":"69gzxV9JG"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":40,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        star","logprobs":[],"obfuscation":"0gD3wbn7v77"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":41,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        fallen","logprobs":[],"obfuscation":"5UVGVyGib"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":42,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        from","logprobs":[],"obfuscation":"u0pNcSUq5um"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":43,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        the","logprobs":[],"obfuscation":"OOA2TOPyMUVY"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":44,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        sky","logprobs":[],"obfuscation":"sHaJi8eWaiin"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":45,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        and","logprobs":[],"obfuscation":"DJthqHqkQiei"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":46,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        gently","logprobs":[],"obfuscation":"Crys85cAH"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":47,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        guided","logprobs":[],"obfuscation":"Nh9QtKvNH"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":48,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        it","logprobs":[],"obfuscation":"iQsq5JRYodQq5"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":49,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        back","logprobs":[],"obfuscation":"0M7TWaOnXp9"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":50,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        home","logprobs":[],"obfuscation":"xK6Me1sEqJm"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":51,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        with","logprobs":[],"obfuscation":"xC7hZx3bIiu"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":52,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        her","logprobs":[],"obfuscation":"n5t5wlNJ8FuQ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":53,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        shimmering","logprobs":[],"obfuscation":"yQQbn"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":54,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        horn","logprobs":[],"obfuscation":"6YeMZUr8tN1"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":55,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":".","logprobs":[],"obfuscation":"SW3Ko985lnI1ySf"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":56,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        As","logprobs":[],"obfuscation":"WdoUUv0JfkZjt"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":57,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        Luna","logprobs":[],"obfuscation":"QQJ8pPWioEO"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":58,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        returned","logprobs":[],"obfuscation":"7eDkrBY"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":59,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        to","logprobs":[],"obfuscation":"8tJQLyVdOH2Mf"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":60,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        her","logprobs":[],"obfuscation":"AVZ6uXpvSDwq"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":61,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        cozy","logprobs":[],"obfuscation":"zwtf1B0UA55"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":62,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        meadow","logprobs":[],"obfuscation":"0eJa5WDqm"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":63,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"gE3KGRcBYPKuzoZ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":64,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        she","logprobs":[],"obfuscation":"Uk7Zq89qCPEE"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":65,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        knew","logprobs":[],"obfuscation":"s4EpZEaVU1E"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":66,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        that","logprobs":[],"obfuscation":"NxdzZFJXAkd"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":67,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        kindness","logprobs":[],"obfuscation":"mYXVnKn"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":68,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        and","logprobs":[],"obfuscation":"ZRqj1ICwoXCE"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":69,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        courage","logprobs":[],"obfuscation":"HwTttTEG"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":70,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        could","logprobs":[],"obfuscation":"LmCBocrrii"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":71,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        make","logprobs":[],"obfuscation":"ndlbS2GfqoS"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":72,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        even","logprobs":[],"obfuscation":"2qoMvbUdqNb"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":73,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        the","logprobs":[],"obfuscation":"Q5PaKNnCeQv6"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":74,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        darkest","logprobs":[],"obfuscation":"z10ID2PJ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":75,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        night","logprobs":[],"obfuscation":"SGfZaC2hah"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":76,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        sparkle","logprobs":[],"obfuscation":"qk7bfXtV"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":77,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        with","logprobs":[],"obfuscation":"vL2okv6oisj"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":78,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":"
+        wonder","logprobs":[],"obfuscation":"diPbSP0F6"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":79,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"delta":".","logprobs":[],"obfuscation":"FifrXq3zcNGZLEB"}
+
+
+        event: response.output_text.done
+
+        data: {"type":"response.output_text.done","sequence_number":80,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"text":"Once
+        upon a time, in a magical forest, there was a gentle unicorn named Luna who
+        loved to bring sparkles of happiness wherever she went. One evening, she discovered
+        a lonely star fallen from the sky and gently guided it back home with her
+        shimmering horn. As Luna returned to her cozy meadow, she knew that kindness
+        and courage could make even the darkest night sparkle with wonder.","logprobs":[]}
+
+
+        event: response.content_part.done
+
+        data: {"type":"response.content_part.done","sequence_number":81,"item_id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":"Once
+        upon a time, in a magical forest, there was a gentle unicorn named Luna who
+        loved to bring sparkles of happiness wherever she went. One evening, she discovered
+        a lonely star fallen from the sky and gently guided it back home with her
+        shimmering horn. As Luna returned to her cozy meadow, she knew that kindness
+        and courage could make even the darkest night sparkle with wonder."}}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":82,"output_index":0,"item":{"id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"Once
+        upon a time, in a magical forest, there was a gentle unicorn named Luna who
+        loved to bring sparkles of happiness wherever she went. One evening, she discovered
+        a lonely star fallen from the sky and gently guided it back home with her
+        shimmering horn. As Luna returned to her cozy meadow, she knew that kindness
+        and courage could make even the darkest night sparkle with wonder."}],"role":"assistant"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":83,"response":{"id":"resp_06d9044b13184730006911ea372f048190aabddea38a3fc299","object":"response","created_at":1762781751,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4.1-nano-2025-04-14","output":[{"id":"msg_06d9044b13184730006911ea38edf48190ac5ce95742dede19","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"Once
+        upon a time, in a magical forest, there was a gentle unicorn named Luna who
+        loved to bring sparkles of happiness wherever she went. One evening, she discovered
+        a lonely star fallen from the sky and gently guided it back home with her
+        shimmering horn. As Luna returned to her cozy meadow, she knew that kindness
+        and courage could make even the darkest night sparkle with wonder."}],"role":"assistant"}],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":18,"input_tokens_details":{"cached_tokens":0},"output_tokens":77,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":95},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 99c5ef754ae7c222-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Mon, 10 Nov 2025 13:35:51 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=5_pOd0XU1akbVTKq80Cn78_ORQ_CjRF4L2vpJjW45X8-1762781751-1.0.1.1-obir0TPbkwmdK5jlLsOpPB4kR8uL2WW.PN6aybNCuYgOvxS..V84zVBWv7_XGZCDc4LAimbC2L7o2lSrHNaGkkG0Mo6a13atTYCzExRQs1Q;
+        path=/; expires=Mon, 10-Nov-25 14:05:51 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=W9rFmLvYsxeMYYraCxoYhOxkDlhrSmwPT_ULGDccY4E-1762781751310-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '64'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '76'
+      x-request-id:
+      - req_0c2d367f76df4e5fb864de35759f06dc
+    status:
+      code: 200
+      message: OK
+version: 1
