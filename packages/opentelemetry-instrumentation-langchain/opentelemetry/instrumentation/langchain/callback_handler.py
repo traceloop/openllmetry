@@ -753,7 +753,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
-        span.set_status(Status(StatusCode.ERROR))
+        span.set_status(Status(StatusCode.ERROR), str(error))
         span.record_exception(error)
         self._end_span(span, run_id)
 
