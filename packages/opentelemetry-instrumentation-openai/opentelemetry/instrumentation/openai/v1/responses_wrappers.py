@@ -144,6 +144,10 @@ def parse_response(response: Union[LegacyAPIResponse, Response]) -> Response:
 
 def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
     tools_input = kwargs.get("tools", [])
+    # Handle case where tools key exists but value is None
+    # (e.g., when wrappers like openai-guardrails pass tools=None)
+    if tools_input is None:
+        tools_input = []
     tools = []
 
     for tool in tools_input:
