@@ -64,6 +64,7 @@ class Traceloop:
         sampler: Optional[Sampler] = None,
         traceloop_sync_enabled: bool = False,
         should_enrich_metrics: bool = True,
+        trace_content: bool = True,
         resource_attributes: dict = {},
         instruments: Optional[Set[Instruments]] = None,
         block_instruments: Optional[Set[Instruments]] = None,
@@ -94,7 +95,7 @@ class Traceloop:
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
-        enable_content_tracing = is_content_tracing_enabled()
+        enable_content_tracing = trace_content or is_content_tracing_enabled()
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
