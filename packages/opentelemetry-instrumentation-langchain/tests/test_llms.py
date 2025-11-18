@@ -193,7 +193,7 @@ def test_custom_llm_with_events_with_content(
 
     # Validate user message Event
     # With the custom llm, LangChain is emitting only one "on_llm_start" callback,
-    # because of this, both the systm instruction and the user message are in the same event
+    # because of this, both the system instruction and the user message are in the same event
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
