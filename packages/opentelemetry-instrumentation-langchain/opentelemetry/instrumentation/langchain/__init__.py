@@ -83,6 +83,13 @@ class LangchainInstrumentor(BaseInstrumentor):
             wrapper=_BaseCallbackManagerInitWrapper(traceloopCallbackHandler),
         )
 
+        # Wrap CallbackManager.configure to ensure our handler is included
+        wrap_function_wrapper(
+            module="langchain_core.callbacks.manager",
+            name="CallbackManager.configure",
+            wrapper=_CallbackManagerConfigureWrapper(traceloopCallbackHandler),
+        )
+
         if not self.disable_trace_context_propagation:
             self._wrap_openai_functions_for_tracing(traceloopCallbackHandler)
 
@@ -168,6 +175,7 @@ class LangchainInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
+        unwrap("langchain_core.callbacks.manager", "CallbackManager.configure")
         if not self.disable_trace_context_propagation:
             if is_package_available("langchain_community"):
                 unwrap("langchain_community.llms.openai", "BaseOpenAI._generate")
@@ -206,6 +214,30 @@ class _BaseCallbackManagerInitWrapper:
             # we need a way to determine the type of CallbackManager being wrapped.
             self._callback_handler._callback_manager = instance
             instance.add_handler(self._callback_handler, True)
+
+
+class _CallbackManagerConfigureWrapper:
+    def __init__(self, callback_handler: "TraceloopCallbackHandler"):
+        self._callback_handler = callback_handler
+
+    def __call__(
+        self,
+        wrapped,
+        instance,
+        args,
+        kwargs,
+    ):
+        result = wrapped(*args, **kwargs)
+
+        if result and hasattr(result, 'add_handler'):
+            for handler in result.inheritable_handlers:
+                if isinstance(handler, type(self._callback_handler)):
+                    break
+            else:
+                self._callback_handler._callback_manager = result
+                result.add_handler(self._callback_handler, True)
+
+        return result
 
 
 # This class wraps a function call to inject tracing information (trace headers) into

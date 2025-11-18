@@ -287,4 +287,8 @@ class TraceloopSpanKindValues(Enum):
     TASK = "task"
     AGENT = "agent"
     TOOL = "tool"
+    EMBEDDING = "embedding"
+    RETRIEVER = "retriever"
+    RERANKER = "reranker"
+    GENERATION = "generation"
     UNKNOWN = "unknown"
