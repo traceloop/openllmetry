@@ -240,7 +240,7 @@ class Experiment:
             experiment_slug=experiment_slug,
             related_ref=merged_related_ref,
             experiment_metadata=experiment_metadata,
-            aux=github_context,
+            aux=aux,
             stop_on_error=stop_on_error,
             wait_for_results=wait_for_results,
         )
