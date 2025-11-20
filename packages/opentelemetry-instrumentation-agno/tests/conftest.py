@@ -66,4 +66,14 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization", "x-api-key"]}
+    return {
+        "filter_headers": [
+            "authorization",
+            "x-api-key",
+            "cookie",
+            "set-cookie",
+            "x-request-id",
+            "x-openai-organization",
+        ],
+        "filter_post_data_parameters": ["api_key"],
+    }

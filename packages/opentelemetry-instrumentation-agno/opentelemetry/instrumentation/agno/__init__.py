@@ -104,13 +104,17 @@ class AgnoInstrumentor(BaseInstrumentor):
 
 
 class _AgentRunWrapper:
+    """Wrapper for Agent.run() method to capture synchronous agent execution."""
+
     def __init__(self, tracer, duration_histogram, token_histogram):
+        """Initialize the wrapper with OpenTelemetry instrumentation objects."""
         self._tracer = tracer
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
     @dont_throw
     def __call__(self, wrapped, instance, args, kwargs):
+        """Wrap the Agent.run() call with tracing instrumentation."""
         if context_api.get_value(
             context_api._SUPPRESS_INSTRUMENTATION_KEY
         ) or context_api.get_value("suppress_agno_instrumentation"):
@@ -191,13 +195,17 @@ class _AgentRunWrapper:
 
 
 class _AgentARunWrapper:
+    """Wrapper for Agent.arun() method to capture asynchronous agent execution."""
+
     def __init__(self, tracer, duration_histogram, token_histogram):
+        """Initialize the wrapper with OpenTelemetry instrumentation objects."""
         self._tracer = tracer
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
     @dont_throw
     async def __call__(self, wrapped, instance, args, kwargs):
+        """Wrap the Agent.arun() call with tracing instrumentation."""
         if context_api.get_value(
             context_api._SUPPRESS_INSTRUMENTATION_KEY
         ) or context_api.get_value("suppress_agno_instrumentation"):
@@ -278,13 +286,17 @@ class _AgentARunWrapper:
 
 
 class _TeamRunWrapper:
+    """Wrapper for Team.run() method to capture synchronous team execution."""
+
     def __init__(self, tracer, duration_histogram, token_histogram):
+        """Initialize the wrapper with OpenTelemetry instrumentation objects."""
         self._tracer = tracer
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
     @dont_throw
     def __call__(self, wrapped, instance, args, kwargs):
+        """Wrap the Team.run() call with tracing instrumentation."""
         if context_api.get_value(
             context_api._SUPPRESS_INSTRUMENTATION_KEY
         ) or context_api.get_value("suppress_agno_instrumentation"):
@@ -344,13 +356,17 @@ class _TeamRunWrapper:
 
 
 class _TeamARunWrapper:
+    """Wrapper for Team.arun() method to capture asynchronous team execution."""
+
     def __init__(self, tracer, duration_histogram, token_histogram):
+        """Initialize the wrapper with OpenTelemetry instrumentation objects."""
         self._tracer = tracer
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
     @dont_throw
     async def __call__(self, wrapped, instance, args, kwargs):
+        """Wrap the Team.arun() call with tracing instrumentation."""
         if context_api.get_value(
             context_api._SUPPRESS_INSTRUMENTATION_KEY
         ) or context_api.get_value("suppress_agno_instrumentation"):
