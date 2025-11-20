@@ -10,6 +10,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp/version.py",
     "packages/opentelemetry-instrumentation-groq/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-groq/opentelemetry/instrumentation/groq/version.py",
+    "packages/opentelemetry-instrumentation-agno/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-agno/opentelemetry/instrumentation/agno/version.py",
     "packages/opentelemetry-instrumentation-alephalpha/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-alephalpha/opentelemetry/instrumentation/alephalpha/version.py",
     "packages/opentelemetry-instrumentation-anthropic/pyproject.toml:^version",
