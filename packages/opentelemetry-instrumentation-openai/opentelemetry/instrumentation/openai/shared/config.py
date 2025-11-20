@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 
 
 class Config:
@@ -12,4 +12,4 @@ class Config:
     )
     enable_trace_context_propagation: bool = True
     use_legacy_attributes = True
-    event_logger: Optional[EventLogger] = None
+    event_logger: Optional[Logger] = None

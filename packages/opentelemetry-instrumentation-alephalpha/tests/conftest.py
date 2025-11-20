@@ -8,7 +8,6 @@ from opentelemetry.instrumentation.alephalpha import (
     TRACELOOP_TRACE_CONTENT,
     AlephAlphaInstrumentor,
 )
-from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
@@ -40,18 +39,16 @@ def fixture_log_exporter():
     yield exporter
 
 
-@pytest.fixture(scope="function", name="event_logger_provider")
-def fixture_event_logger_provider(log_exporter):
+@pytest.fixture(scope="function", name="logger_provider")
+def fixture_logger_provider(log_exporter):
     provider = LoggerProvider()
     provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
-    event_logger_provider = EventLoggerProvider(provider)
-
-    return event_logger_provider
+    return provider
 
 
 @pytest.fixture
 def aleph_alpha_client():
-    return Client(token=os.environ.get("AA_TOKEN"))
+    return Client(token=os.environ.get("AA_TOKEN"), host="https://api.aleph-alpha.com")
 
 
 @pytest.fixture(scope="function")
@@ -67,13 +64,13 @@ def instrument_legacy(tracer_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(tracer_provider, event_logger_provider):
+def instrument_with_content(tracer_provider, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = AlephAlphaInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
-        event_logger_provider=event_logger_provider,
+        logger_provider=logger_provider,
     )
 
     yield instrumentor
@@ -83,13 +80,13 @@ def instrument_with_content(tracer_provider, event_logger_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(tracer_provider, event_logger_provider):
+def instrument_with_no_content(tracer_provider, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = AlephAlphaInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
-        event_logger_provider=event_logger_provider,
+        logger_provider=logger_provider,
     )
 
     yield instrumentor

@@ -8,7 +8,7 @@ from importlib.metadata import version
 from packaging import version as pkg_version
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.openai.shared.config import Config
 
 import openai
@@ -186,5 +186,5 @@ def should_emit_events() -> bool:
     and if the event logger is not None.
     """
     return not Config.use_legacy_attributes and isinstance(
-        Config.event_logger, EventLogger
+        Config.event_logger, Logger
     )
