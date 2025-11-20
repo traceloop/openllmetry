@@ -1,0 +1,255 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Add 5 and 7"}],"model":"gpt-4o-mini","tools":[{"type":"function","function":{"name":"add_numbers","description":"Add
+      two numbers together.","parameters":{"type":"object","properties":{"a":{"type":"number"},"b":{"type":"number"}},"required":["a","b"]}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '293'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFPfb5swEH7nr7DuOUyQQpLyuFTttKqbqqlPS4Uc+wC3xvZsUzWK8r9P
+        QAIk7aTxgKz77rv77tc+IAQEh4wAq6hntZHhmr+L+4e5u7vFp0dcJcvk6a26/RZ/X/NdCbOWobcv
+        yPyJ9YXp2kj0QqseZhapxzZqvFxcLZLoarHqgFpzlC2tND5MdFgLJcJ5NE/CaBnGqyO70oKhg4z8
+        DgghZN/9W52K4ztkJJqdLDU6R0uEbHAiBKyWrQWoc8J5qjzMRpBp5VG10lUj5QTwWsucUSnHxP23
+        n7zHZlEp8/sY0xt8qIoo+vPzx8uvx5voa1Jdryf5+tA70wkqGsWGJk3wwZ5dJCMEFK37YjjPVVNv
+        0boLOiFAbdnUqHwrHfYboBvI0tkGthvIlgc4cz8En72fJ52wWDSOyo8tokppT1ulXY+ej8hhGIfU
+        pbF66y6oUAglXJVbpK6rctrs4CSkkwDN2TzBWF0bn3v9il3SdN4HhXHlRjBeHUGvPZWjfXlcmPNo
+        OUdPRTfuYcMYZRXykTluGm240BMgmFT+UcxnsfvqhSr/J/wIMIbGI8+NRS7YecGjm8X2IP/lNvS4
+        EwwO7ZtgmHuBtp0Gx4I2sj8TcDvnsc4LoUq0xoruVqAwebqIaLHANL2G4BD8BQAA//8DAJOB8qo5
+        BAAA
+    headers:
+      CF-RAY:
+      - 9a17d1cdab1be301-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:06:09 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Wh8Ac5U6ZEw72ON4jbZEOJqZ9WkJTFCAKAEwUyR4N68-1763640369-1.0.1.1-3YSJ_CBJ8sWt2XEVYWv5A.U77NbsFXnNYN38MOj8lP1yXtTcUx6vLfidGRjhrf8XP.fE3oDKZHO6HPYjteBuhoI336xZrjEusr2DhV0qCOM;
+        path=/; expires=Thu, 20-Nov-25 12:36:09 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=nakmM3eQtmndbq9Rae3_ciMAnqDkIBL6qctEvxTaX2Q-1763640369348-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '617'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '630'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999995'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_46911973d1e4464a9cede812ec1fccbb
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Add 5 and 7"},{"role":"assistant","tool_calls":[{"id":"call_K1e5DeMhf00qONjSQD0B4h9C","function":{"arguments":"{\"a\":5,\"b\":7}","name":"add_numbers"},"type":"function"}],"content":""},{"role":"tool","content":"12","tool_call_id":"call_K1e5DeMhf00qONjSQD0B4h9C"}],"model":"gpt-4o-mini","tools":[{"type":"function","function":{"name":"add_numbers","description":"Add
+      two numbers together.","parameters":{"type":"object","properties":{"a":{"type":"number"},"b":{"type":"number"}},"required":["a","b"]}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '543'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=Wh8Ac5U6ZEw72ON4jbZEOJqZ9WkJTFCAKAEwUyR4N68-1763640369-1.0.1.1-3YSJ_CBJ8sWt2XEVYWv5A.U77NbsFXnNYN38MOj8lP1yXtTcUx6vLfidGRjhrf8XP.fE3oDKZHO6HPYjteBuhoI336xZrjEusr2DhV0qCOM;
+        _cfuvid=nakmM3eQtmndbq9Rae3_ciMAnqDkIBL6qctEvxTaX2Q-1763640369348-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFLLbtswELzrKxY8W4HkhxT72CCXoIcW7alFINDkStqEL5BU4SLwvxeU
+        HEtJU6AXHXZ2RjPDfckAGEl2ACZ6HoV2Kr+TJ/p8CqRv+Y+vz0/qiP39p3K4q798eyC2Sgx7fEIR
+        X1k3wmqnMJI1Eyw88ohJtayrTbUtNtV+BLSVqBKtczHf2lyToXxdrLd5Uefl7YXdWxIY2AF+ZgAA
+        L+M3+TQST+wAxep1ojEE3iE7XJcAmLcqTRgPgULkJrLVDAprIprR+vceIQwabAs74EZCDRSgXN8s
+        9z22Q+DJsxmUWgDcGBt5yjw6fbwg56s3ZTvn7TG8o7KWDIW+8ciDNclHiNaxET1nAI9jB8ObWMx5
+        q11son3G8Xf1fpJjc/MzWG4uYLSRq3m+X68+UGskRk4qLDpkgose5cycC+eDJLsAskXmv818pD3l
+        JtP9j/wMCIEuomycR0nibeB5zWO6y3+tXTseDbOA/hcJbCKhT+8gseWDmq6Fhd8hom5aMh1652k6
+        mdY1u6rgbYW73Z5l5+wPAAAA//8DAPW7xyBAAwAA
+    headers:
+      CF-RAY:
+      - 9a17d1d4994ee301-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:06:10 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '547'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '560'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999990'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_989af43d7fd84042b0d455bb44839dfc
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"8ab02053-cb30-4093-beac-6157a2eb223c","run_id":"0a596501-8add-4020-be32-3a0e8a3f188c","data":{"agent_id":"toolagent","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"has_tools":true,"has_memory":false,"has_culture":false,"has_reasoning":false,"has_knowledge":false,"has_input_schema":false,"has_output_schema":false,"has_team":false},"sdk_version":"2.2.13","type":"agent"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '471'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: 0a596501-8add-4020-be32-3a0e8a3f188c","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:06:10 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+version: 1
