@@ -1,7 +1,6 @@
 import os
 from openai import OpenAI
 from pydantic import BaseModel
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from traceloop.sdk import Traceloop
 from dotenv import load_dotenv
 
