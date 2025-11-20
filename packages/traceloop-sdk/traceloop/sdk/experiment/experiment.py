@@ -207,7 +207,17 @@ class Experiment:
 
         Returns:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
+
+        Raises:
+            RuntimeError: If not running in GitHub Actions environment
         """
+
+        # Check if running in GitHub Actions
+        if not os.getenv("GITHUB_ACTIONS"):
+            raise RuntimeError(
+                "run_in_github() can only be used in GitHub Actions CI/CD environment. "
+                "To run experiments locally, use the run() method instead."
+            )
 
          # Construct PR URL from repository and PR number
         repository = os.getenv("GITHUB_REPOSITORY")
