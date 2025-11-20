@@ -13,6 +13,10 @@ from traceloop.sdk.experiment.model import (
     CreateTaskResponse,
     EvaluatorDetails,
     TaskResponse,
+    RunInGithubRequest,
+    RunInGithubResponse,
+    TaskResult,
+    GithubContext,
 )
 import httpx
 
@@ -181,7 +185,61 @@ class Experiment:
 
         return results, errors
 
-    async def run_in_github (
+    async def _execute_tasks(
+        self,
+        rows: List[Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        stop_on_error: bool = False,
+    ) -> List[TaskResult]:
+        """Execute tasks locally with concurrency control
+
+        Args:
+            rows: List of dataset rows to process
+            task: Function to run on each row
+            stop_on_error: Whether to stop on first error
+
+        Returns:
+            List of TaskResult objects with inputs, outputs, and errors
+        """
+        task_results: List[TaskResult] = []
+
+        async def run_single_row(row) -> TaskResult:
+            try:
+                task_output = await task(row)
+                return TaskResult(
+                    task_input=row,
+                    task_output=task_output,
+                )
+            except Exception as e:
+                if stop_on_error:
+                    raise e
+                return TaskResult(
+                    task_input=row,
+                    error=str(e),
+                )
+
+        # Execute tasks with concurrency control
+        semaphore = asyncio.Semaphore(50)
+
+        async def run_with_semaphore(row) -> TaskResult:
+            async with semaphore:
+                return await run_single_row(row)
+
+        tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
+
+        for completed_task in asyncio.as_completed(tasks):
+            try:
+                result = await completed_task
+                task_results.append(result)
+                if result.error and stop_on_error:
+                    break
+            except Exception as e:
+                if stop_on_error:
+                    raise e
+
+        return task_results
+
+    async def run_in_github(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
@@ -191,25 +249,31 @@ class Experiment:
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
         stop_on_error: bool = False,
-        wait_for_results: bool = True,
-    ) -> Tuple[List[TaskResponse], List[str]]:
-        """Run an experiment with the given task and evaluators
+    ) -> RunInGithubResponse:
+        """Execute tasks locally and submit results to backend for GitHub CI/CD
+
+        This method:
+        1. Fetches the dataset
+        2. Executes all tasks locally
+        3. Sends task results to backend
+        4. Backend runs evaluators and posts PR comment
 
         Args:
-            dataset_slug: Slug of the dataset to use
             task: Function to run on each dataset row
-            evaluators: List of evaluator slugs to run
+            dataset_slug: Slug of the dataset to use
+            dataset_version: Version of the dataset
+            evaluators: List of evaluator slugs or (slug, version) tuples to run
             experiment_slug: Slug for this experiment run
-            related_ref: Related reference for this experiment run
-            aux: Auxiliary information for this experiment run
+            related_ref: Additional reference information for this experiment run
+            aux: Auxiliary metadata for this experiment run
             stop_on_error: Whether to stop on first error (default: False)
-            wait_for_results: Whether to wait for async tasks to complete (default: True)
 
         Returns:
-            Tuple of (results, errors). Returns ([], []) if wait_for_results is False
+            RunInGithubResponse with experiment_id, run_id, and status
 
         Raises:
             RuntimeError: If not running in GitHub Actions environment
+            Exception: If the API request fails
         """
 
         # Check if running in GitHub Actions
@@ -219,7 +283,19 @@ class Experiment:
                 "To run experiments locally, use the run() method instead."
             )
 
-         # Construct PR URL from repository and PR number
+        if not experiment_slug:
+            experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
+
+        # Fetch dataset rows
+        rows = []
+        if dataset_slug and dataset_version:
+            jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
+            rows = self._parse_jsonl_to_rows(jsonl_data)
+
+        # Execute all tasks locally
+        task_results = await self._execute_tasks(rows, task, stop_on_error)
+
+        # Construct GitHub context
         repository = os.getenv("GITHUB_REPOSITORY")
         server_url = os.getenv("GITHUB_SERVER_URL", "https://github.com")
 
@@ -230,32 +306,53 @@ class Experiment:
             pr_number = github_ref.split("/")[2]
         pr_url = f"{server_url}/{repository}/pull/{pr_number}" if pr_number and repository else None
 
-        github_context = {
-            "github_pr_url": pr_url,
-            "github_repository": repository,
-            "github_commit_hash": os.getenv("GITHUB_SHA", ""),
-            "github_actor": os.getenv("GITHUB_ACTOR", ""),
-        }
+       
+        github_context = GithubContext(
+            github_pr_url=pr_url,
+            github_commit_hash=os.getenv("GITHUB_SHA", ""),
+            github_actor=os.getenv("GITHUB_ACTOR", ""),
+        )
+
+        # Merge user-provided related_ref with github_context
         merged_related_ref = {**github_context, **(related_ref or {})}
 
         experiment_metadata = {
             "created_from": "github",
         }
 
-        results, errors = await self.run(
-            task=task,
+        # Extract evaluator slugs
+        evaluator_slugs = None
+        if evaluators:
+            evaluator_slugs = [
+                slug if isinstance(slug, str) else slug[0]
+                for slug in evaluators
+            ]
+
+        # Prepare request payload
+        request_body = RunInGithubRequest(
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
-            evaluators=evaluators,
-            experiment_slug=experiment_slug,
-            related_ref=merged_related_ref,
+            evaluator_slugs=evaluator_slugs,
+            task_results=task_results,
+            github_context=github_context,
             experiment_metadata=experiment_metadata,
+            related_ref=merged_related_ref,
             aux=aux,
             stop_on_error=stop_on_error,
-            wait_for_results=wait_for_results,
         )
 
-        return results, errors
+        # Send bulk request to backend
+        response = self._http_client.post(
+            f"/experiments/{experiment_slug}/run-in-github",
+            request_body.model_dump(mode="json", exclude_none=True),
+        )
+
+        if response is None:
+            raise Exception(
+                f"Failed to submit experiment '{experiment_slug}' for GitHub execution"
+            )
+
+        return RunInGithubResponse(**response)
 
 
     def _init_experiment(

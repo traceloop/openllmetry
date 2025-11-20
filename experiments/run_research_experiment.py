@@ -1,5 +1,10 @@
 """
 Example experiment script for CI/CD using run_in_github
+
+This script:
+1. Executes tasks locally on the dataset
+2. Sends task results to the backend
+3. Backend runs evaluators and posts PR comment with results
 """
 
 import asyncio
@@ -51,35 +56,30 @@ async def research_task(row):
 
 async def main():
     """Run experiment in GitHub context"""
-    print("🚀 Starting research experiment in GitHub CI/CD...")
+    print("🚀 Running research experiment in GitHub CI/CD...")
 
-    # Run experiment using run_in_github which automatically captures GitHub context
-    results, errors = await client.experiment.run_in_github(
+    # Execute tasks locally and send results to backend
+    response = await client.experiment.run_in_github(
+        task=research_task,
         dataset_slug="research-questions",
         dataset_version="v1",
-        task=research_task,
         evaluators=["accuracy", "relevance"],
         experiment_slug="research-exp",
         stop_on_error=False,
-        wait_for_results=True,
     )
 
-    # Print results
-    print(f"\n✅ Experiment completed!")
-    print(f"Total results: {len(results)}")
+    # Print response
+    print("\n✅ Experiment completed and submitted!")
+    print(f"Experiment ID: {response.experiment_id}")
+    print(f"Experiment Slug: {response.experiment_slug}")
+    print(f"Run ID: {response.run_id}")
+    print(f"Status: {response.status}")
 
-    if results:
-        print(f"\nSample result:")
-        print(f"  Task output: {results[0].task_result}")
-        print(f"  Evaluations: {results[0].evaluations}")
+    if response.message:
+        print(f"Message: {response.message}")
 
-    if errors:
-        print(f"\n⚠️ Errors encountered: {len(errors)}")
-        for error in errors[:5]:  # Show first 5 errors
-            print(f"  - {error}")
-        exit(1)
-
-    print("\n🎉 All tasks completed successfully!")
+    print("\n📝 The backend will run evaluators and post results to your PR.")
+    print("   Check your GitHub PR for the results comment.")
 
 
 if __name__ == "__main__":
