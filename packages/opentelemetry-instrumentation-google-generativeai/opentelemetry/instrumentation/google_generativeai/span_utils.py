@@ -392,6 +392,27 @@ def set_model_request_attributes(span, kwargs, llm_model):
         span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
 
+    generation_config = kwargs.get("generation_config")
+    if generation_config and hasattr(generation_config, "response_schema"):
+        try:
+            _set_span_attribute(
+                span,
+                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                json.dumps(generation_config.response_schema),
+            )
+        except Exception:
+            pass
+
+    if "response_schema" in kwargs:
+        try:
+            _set_span_attribute(
+                span,
+                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                json.dumps(kwargs.get("response_schema")),
+            )
+        except Exception:
+            pass
+
 
 @dont_throw
 def set_response_attributes(span, response, llm_model):
