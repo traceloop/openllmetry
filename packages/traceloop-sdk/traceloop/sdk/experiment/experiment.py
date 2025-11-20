@@ -1,6 +1,7 @@
 import cuid
 import asyncio
 import json
+import os
 from typing import Any, List, Callable, Optional, Tuple, Dict
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
@@ -36,6 +37,7 @@ class Experiment:
         dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
+        experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
         aux: Optional[Dict[str, str]] = None,
         stop_on_error: bool = False,
@@ -48,6 +50,7 @@ class Experiment:
             task: Function to run on each dataset row
             evaluators: List of evaluator slugs to run
             experiment_slug: Slug for this experiment run
+            experiment_metadata: Metadata for this experiment (an experiment holds all the experinent runs)
             related_ref: Related reference for this experiment run
             aux: Auxiliary information for this experiment run
             stop_on_error: Whether to stop on first error (default: False)
@@ -82,6 +85,7 @@ class Experiment:
             evaluator_slugs=[slug for slug, _ in evaluator_details]
             if evaluator_details
             else None,
+            experiment_metadata=experiment_metadata,
             experiment_run_metadata=experiment_run_metadata,
         )
 
@@ -176,6 +180,73 @@ class Experiment:
                     break
 
         return results, errors
+
+    async def run_in_github (
+        self,
+        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        dataset_slug: Optional[str] = None,
+        dataset_version: Optional[str] = None,
+        evaluators: Optional[List[EvaluatorDetails]] = None,
+        experiment_slug: Optional[str] = None,
+        related_ref: Optional[Dict[str, str]] = None,
+        aux: Optional[Dict[str, str]] = None,
+        stop_on_error: bool = False,
+        wait_for_results: bool = True,
+    ) -> Tuple[List[TaskResponse], List[str]]:
+        """Run an experiment with the given task and evaluators
+
+        Args:
+            dataset_slug: Slug of the dataset to use
+            task: Function to run on each dataset row
+            evaluators: List of evaluator slugs to run
+            experiment_slug: Slug for this experiment run
+            related_ref: Related reference for this experiment run
+            aux: Auxiliary information for this experiment run
+            stop_on_error: Whether to stop on first error (default: False)
+            wait_for_results: Whether to wait for async tasks to complete (default: True)
+
+        Returns:
+            Tuple of (results, errors). Returns ([], []) if wait_for_results is False
+        """
+
+         # Construct PR URL from repository and PR number
+        repository = os.getenv("GITHUB_REPOSITORY")
+        server_url = os.getenv("GITHUB_SERVER_URL", "https://github.com")
+
+        # Extract PR number from GITHUB_REF (format: "refs/pull/123/merge")
+        github_ref = os.getenv("GITHUB_REF", "")
+        pr_number = None
+        if github_ref.startswith("refs/pull/"):
+            pr_number = github_ref.split("/")[2]
+        pr_url = f"{server_url}/{repository}/pull/{pr_number}" if pr_number and repository else None
+
+        github_context = {
+            "github_pr_url": pr_url,
+            "github_repository": repository,
+            "github_commit_hash": os.getenv("GITHUB_SHA", ""),
+            "github_actor": os.getenv("GITHUB_ACTOR", ""),
+        }
+        merged_related_ref = {**github_context, **(related_ref or {})}
+
+        experiment_metadata = {
+            "created_from": "github",
+        }
+
+        results, errors = await self.run(
+            task=task,
+            dataset_slug=dataset_slug,
+            dataset_version=dataset_version,
+            evaluators=evaluators,
+            experiment_slug=experiment_slug,
+            related_ref=merged_related_ref,
+            experiment_metadata=experiment_metadata,
+            aux=github_context,
+            stop_on_error=stop_on_error,
+            wait_for_results=wait_for_results,
+        )
+
+        return results, errors
+
 
     def _init_experiment(
         self,
