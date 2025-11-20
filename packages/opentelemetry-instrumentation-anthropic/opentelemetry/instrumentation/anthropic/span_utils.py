@@ -167,6 +167,15 @@ async def aset_input_attributes(span, kwargs):
                         span, f"{prefix}.input_schema", json.dumps(input_schema)
                     )
 
+        output_format = kwargs.get("output_format")
+        if output_format and isinstance(output_format, dict):
+            if output_format.get("type") == "json_schema" and output_format.get("schema"):
+                set_span_attribute(
+                    span,
+                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    json.dumps(output_format.get("schema")),
+                )
+
 
 async def _aset_span_completions(span, response):
     if not should_send_prompts():
