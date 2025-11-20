@@ -1,0 +1,29 @@
+{
+  "name": "opentelemetry-instrumentation-agno",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-agno",
+  "targets": {
+    "lock": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "poetry lock --no-update",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "poetry run pytest",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "poetry run flake8 --exclude=.venv,dist,*.pyc",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    }
+  }
+}
