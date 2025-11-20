@@ -3,7 +3,6 @@
 import os
 
 import pytest
-from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 from opentelemetry.instrumentation.langchain.config import Config
@@ -97,8 +96,8 @@ def instrument_with_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = get_logger(
-        __name__, __version__, logger_provider=logger_provider
+    Config.event_logger = logger_provider.get_logger(
+        __name__, __version__
     )
     instrumentor = instrument_legacy
 
@@ -114,8 +113,8 @@ def instrument_with_no_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = get_logger(
-        __name__, __version__, logger_provider=logger_provider
+    Config.event_logger = logger_provider.get_logger(
+        __name__, __version__
     )
     instrumentor = instrument_legacy
 

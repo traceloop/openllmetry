@@ -32,7 +32,7 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "gemini"}
 """The attributes to be used for the event."""
 
 
-def emit_message_events(args, kwargs, event_logger: Union[Logger]):
+def emit_message_events(args, kwargs, event_logger: Logger):
     contents = []
 
     # Get all prompts (Gemini accepts multiple prompts at once)
@@ -55,7 +55,7 @@ def emit_message_events(args, kwargs, event_logger: Union[Logger]):
 
 
 def emit_choice_events(
-    response: GenerateContentResponse, event_logger: Union[Logger]
+    response: GenerateContentResponse, event_logger: Logger
 ):
     for index, candidate in enumerate(response.candidates):
         emit_event(
@@ -72,7 +72,7 @@ def emit_choice_events(
 
 
 def emit_event(
-    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[Logger]
+    event: Union[MessageEvent, ChoiceEvent], event_logger: Logger
 ) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
@@ -91,7 +91,7 @@ def emit_event(
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent, event_logger: Union[Logger]) -> None:
+def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
@@ -124,7 +124,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Union[Logger]) -> Non
     event_logger.emit(log_record)
 
 
-def _emit_choice_event(event: ChoiceEvent, event_logger: Union[Logger]) -> None:
+def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available

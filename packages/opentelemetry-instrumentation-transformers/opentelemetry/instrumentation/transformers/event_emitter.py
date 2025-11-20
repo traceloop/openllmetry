@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Union
 
-from opentelemetry._logs import LogRecord
+from opentelemetry.sdk._logs._internal import LogRecord
 from opentelemetry.instrumentation.transformers.event_models import (
     CompletionEvent,
     PromptEvent,
