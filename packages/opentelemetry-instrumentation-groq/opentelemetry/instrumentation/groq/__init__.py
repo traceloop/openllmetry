@@ -423,7 +423,7 @@ class GroqInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            logger_provider= kwargs.get("logger_provider")
+            logger_provider = kwargs.get("logger_provider")
             event_logger = get_logger(
                 __name__, __version__, logger_provider=logger_provider
             )

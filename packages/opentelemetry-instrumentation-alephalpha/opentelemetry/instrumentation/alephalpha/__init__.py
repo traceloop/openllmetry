@@ -197,7 +197,7 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if should_emit_events():
-            logger_provider= kwargs.get("logger_provider")
+            logger_provider = kwargs.get("logger_provider")
             event_logger = get_logger(
                 __name__,
                 __version__,

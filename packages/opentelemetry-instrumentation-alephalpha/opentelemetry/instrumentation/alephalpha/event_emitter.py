@@ -117,6 +117,6 @@ def _emit_completion_event(event: CompletionEvent, event_logger) -> None:
         body=body,
         attributes=EVENT_ATTRIBUTES,
         event_name="gen_ai.choice"
-    
+
     )
     event_logger.emit(log_record)

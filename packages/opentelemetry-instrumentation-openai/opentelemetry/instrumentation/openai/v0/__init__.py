@@ -1,6 +1,6 @@
 from typing import Collection
 
-from opentelemetry._logs import Logger, get_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     achat_wrapper,

@@ -3,7 +3,7 @@
 import os
 
 import pytest
-from opentelemetry._logs import Logger, get_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 from opentelemetry.instrumentation.cohere import CohereInstrumentor
 from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor

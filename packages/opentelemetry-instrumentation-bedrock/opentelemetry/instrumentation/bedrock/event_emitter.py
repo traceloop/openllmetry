@@ -297,6 +297,6 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: Optional[Logger]) -> No
         body=body,
         attributes=EVENT_ATTRIBUTES,
         event_name="gen_ai.choice"
-    
+
     )
     event_logger.emit(log_record)

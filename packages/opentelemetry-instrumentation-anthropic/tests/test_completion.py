@@ -2,9 +2,6 @@ import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 

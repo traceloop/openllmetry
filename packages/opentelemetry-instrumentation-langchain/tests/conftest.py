@@ -3,7 +3,7 @@
 import os
 
 import pytest
-from opentelemetry._logs import Logger, get_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 from opentelemetry.instrumentation.langchain.config import Config

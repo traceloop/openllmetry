@@ -6,7 +6,7 @@ from typing import Collection
 from opentelemetry import context as context_api
 
 
-from opentelemetry._logs import Logger, get_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
@@ -69,7 +69,7 @@ class LangchainInstrumentor(BaseInstrumentor):
         )
 
         if not Config.use_legacy_attributes:
-            logger_provider= kwargs.get("logger_provider")
+            logger_provider = kwargs.get("logger_provider")
             Config.event_logger = get_logger(
                 __name__, __version__, logger_provider=logger_provider
             )

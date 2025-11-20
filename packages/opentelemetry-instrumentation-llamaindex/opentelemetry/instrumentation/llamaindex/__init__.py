@@ -4,7 +4,7 @@ import logging
 from importlib.metadata import version as import_version
 from typing import Collection
 
-from opentelemetry._logs import Logger, get_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.llamaindex.base_agent_instrumentor import (
     BaseAgentInstrumentor,
@@ -76,7 +76,7 @@ class LlamaIndexInstrumentor(BaseInstrumentor):
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
         if not Config.use_legacy_attributes:
-            logger_provider= kwargs.get("logger_provider")
+            logger_provider = kwargs.get("logger_provider")
             Config.event_logger = get_logger(
                 __name__, __version__, logger_provider=logger_provider
             )
