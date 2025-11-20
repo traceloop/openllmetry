@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/bedrock"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.55b0"
-opentelemetry-semantic-conventions = ">=0.55b0"
+opentelemetry-api = "^1.38.0"
+opentelemetry-instrumentation = ">=0.59b0"
+opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
 anthropic = ">=0.17.0"
 tokenizers = ">=0.13.0"
@@ -41,7 +41,7 @@ vcrpy = "^6.0.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.27.0"
+opentelemetry-sdk = "^1.38.0"
 
 [build-system]
 requires = ["poetry-core"]

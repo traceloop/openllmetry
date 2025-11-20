@@ -3,14 +3,13 @@
 import os
 
 import pytest
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.instrumentation.langchain.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
@@ -48,13 +47,11 @@ def fixture_log_exporter():
     yield exporter
 
 
-@pytest.fixture(scope="function", name="event_logger_provider")
-def fixture_event_logger_provider(log_exporter):
+@pytest.fixture(scope="function", name="logger_provider")
+def fixture_logger_provider(log_exporter):
     provider = LoggerProvider()
     provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
-    event_logger_provider = EventLoggerProvider(provider)
-
-    return event_logger_provider
+    return provider
 
 
 @pytest.fixture(scope="session", name="reader")
@@ -96,12 +93,12 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(instrument_legacy, event_logger_provider):
+def instrument_with_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = get_event_logger(
-        __name__, __version__, event_logger_provider=event_logger_provider
+    Config.event_logger = get_logger(
+        __name__, __version__, logger_provider=logger_provider
     )
     instrumentor = instrument_legacy
 
@@ -113,12 +110,12 @@ def instrument_with_content(instrument_legacy, event_logger_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(instrument_legacy, event_logger_provider):
+def instrument_with_no_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = get_event_logger(
-        __name__, __version__, event_logger_provider=event_logger_provider
+    Config.event_logger = get_logger(
+        __name__, __version__, logger_provider=logger_provider
     )
     instrumentor = instrument_legacy
 

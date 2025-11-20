@@ -2,7 +2,7 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Union
 
-from opentelemetry._events import Event, EventLogger
+from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.instrumentation.cohere.event_models import ChoiceEvent, MessageEvent
 from opentelemetry.instrumentation.cohere.utils import (
     should_emit_events,
@@ -68,7 +68,7 @@ def emit_response_events(event_logger, llm_request_type: str, response):
 
 
 def emit_event(
-    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[EventLogger, None]
+    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[Logger, None]
 ) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
@@ -87,7 +87,7 @@ def emit_event(
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
+def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
@@ -111,10 +111,15 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name=name
+    )
+    event_logger.emit(log_record)
 
 
-def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
+def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
@@ -130,9 +135,13 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(
-        Event(name="gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name="gen_ai.choice"
+    
     )
+    event_logger.emit(log_record)
 
 
 def _parse_response_event(index: int, llm_request_type: str, response) -> ChoiceEvent:

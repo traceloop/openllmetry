@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Union
 
-from opentelemetry._events import Event
+from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.alephalpha.event_models import (
     CompletionEvent,
     PromptEvent,
@@ -79,7 +79,12 @@ def _emit_prompt_event(event: PromptEvent, event_logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name=name
+    )
+    event_logger.emit(log_record)
 
 
 def _emit_completion_event(event: CompletionEvent, event_logger) -> None:
@@ -108,6 +113,10 @@ def _emit_completion_event(event: CompletionEvent, event_logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(
-        Event(name="gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name="gen_ai.choice"
+    
     )
+    event_logger.emit(log_record)

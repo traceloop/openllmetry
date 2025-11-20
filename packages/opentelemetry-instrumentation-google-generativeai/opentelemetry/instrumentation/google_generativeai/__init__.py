@@ -6,7 +6,7 @@ from typing import Collection
 
 from google.genai.types import GenerateContentResponse
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
 from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_choice_events,
@@ -287,9 +287,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider= kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in self._wrapped_methods():

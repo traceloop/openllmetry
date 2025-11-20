@@ -5,7 +5,7 @@ import os
 from typing import Collection, List, Optional, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.alephalpha.config import Config
 from opentelemetry.instrumentation.alephalpha.event_emitter import emit_event
 from opentelemetry.instrumentation.alephalpha.event_models import (
@@ -38,7 +38,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("aleph_alpha_client >= 7.1.0, <8",)
+_instruments = ("aleph_alpha_client >= 7.1.0",)
 
 WRAPPED_METHODS = [
     {
@@ -69,7 +69,7 @@ def _set_span_attribute(span, name, value):
 
 @dont_throw
 def _handle_message_event(
-    event: PromptEvent, span: Span, event_logger: Optional[EventLogger], kwargs
+    event: PromptEvent, span: Span, event_logger: Optional[Logger], kwargs
 ):
     if span.is_recording():
         _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
@@ -141,7 +141,7 @@ def _parse_completion_event(response) -> List[CompletionEvent]:
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -197,11 +197,11 @@ class AlephAlphaInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if should_emit_events():
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            logger_provider= kwargs.get("logger_provider")
+            event_logger = get_logger(
                 __name__,
                 __version__,
-                event_logger_provider=event_logger_provider,
+                logger_provider=logger_provider,
             )
 
         for wrapped_method in WRAPPED_METHODS:

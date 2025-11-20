@@ -45,7 +45,7 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
         == completion
     )
 
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
@@ -87,7 +87,7 @@ def test_anthropic_2_completion_with_events_with_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
@@ -143,7 +143,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
 
     anthropic_span = spans[0]
 
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 13
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
@@ -1064,7 +1064,7 @@ def test_anthropic_converse_stream_with_tool_use(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value

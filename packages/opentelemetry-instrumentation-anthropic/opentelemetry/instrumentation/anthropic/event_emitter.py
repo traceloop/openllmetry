@@ -3,7 +3,7 @@ from enum import Enum
 import json
 from typing import Optional, Union
 
-from opentelemetry._events import Event, EventLogger
+from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.instrumentation.anthropic.event_models import (
     ChoiceEvent,
     MessageEvent,
@@ -34,7 +34,7 @@ EVENT_ATTRIBUTES = {
 """The attributes to be used for the event."""
 
 
-def emit_input_events(event_logger: Optional[EventLogger], kwargs):
+def emit_input_events(event_logger: Optional[Logger], kwargs):
     if kwargs.get("prompt") is not None:
         emit_event(
             MessageEvent(content=kwargs.get("prompt"), role="user"), event_logger
@@ -57,7 +57,7 @@ def emit_input_events(event_logger: Optional[EventLogger], kwargs):
         )
 
 
-def emit_response_events(event_logger: Optional[EventLogger], response):
+def emit_response_events(event_logger: Optional[Logger], response):
     if not isinstance(response, dict):
         response = dict(response)
 
@@ -125,7 +125,7 @@ def emit_response_events(event_logger: Optional[EventLogger], response):
 
 
 def emit_streaming_response_events(
-    event_logger: Optional[EventLogger], complete_response: dict
+    event_logger: Optional[Logger], complete_response: dict
 ):
     for message in complete_response.get("events", []):
         # Parse tool calls
@@ -165,7 +165,7 @@ def emit_streaming_response_events(
 
 
 def emit_event(
-    event: Union[MessageEvent, ChoiceEvent], event_logger: EventLogger
+    event: Union[MessageEvent, ChoiceEvent], event_logger: Logger
 ) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
@@ -184,7 +184,7 @@ def emit_event(
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
+def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
     body = asdict(event)
 
     if event.role in VALID_MESSAGE_ROLES:
@@ -208,10 +208,15 @@ def _emit_message_event(event: MessageEvent, event_logger: EventLogger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name=name
+    )
+    event_logger.emit(log_record)
 
 
-def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
+def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
     body = asdict(event)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
@@ -227,6 +232,10 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: EventLogger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(
-        Event(name="gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name="gen_ai.choice"
+    
     )
+    event_logger.emit(log_record)

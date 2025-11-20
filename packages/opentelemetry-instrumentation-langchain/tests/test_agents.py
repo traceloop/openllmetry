@@ -249,7 +249,7 @@ def assert_message_in_logs(
     logs: Tuple[LogData], event_name: str, expected_content: dict
 ):
     assert any(
-        log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+        log.log_record.event_name == event_name
         for log in logs
     )
     assert any(dict(log.log_record.body) == expected_content for log in logs)
