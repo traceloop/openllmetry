@@ -1,3 +1,4 @@
+import re
 import cuid
 import asyncio
 import json
@@ -185,60 +186,6 @@ class Experiment:
 
         return results, errors
 
-    async def _execute_tasks(
-        self,
-        rows: List[Dict[str, Any]],
-        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
-        stop_on_error: bool = False,
-    ) -> List[TaskResult]:
-        """Execute tasks locally with concurrency control
-
-        Args:
-            rows: List of dataset rows to process
-            task: Function to run on each row
-            stop_on_error: Whether to stop on first error
-
-        Returns:
-            List of TaskResult objects with inputs, outputs, and errors
-        """
-        task_results: List[TaskResult] = []
-
-        async def run_single_row(row) -> TaskResult:
-            try:
-                task_output = await task(row)
-                return TaskResult(
-                    task_input=row,
-                    task_output=task_output,
-                )
-            except Exception as e:
-                if stop_on_error:
-                    raise e
-                return TaskResult(
-                    task_input=row,
-                    error=str(e),
-                )
-
-        # Execute tasks with concurrency control
-        semaphore = asyncio.Semaphore(50)
-
-        async def run_with_semaphore(row) -> TaskResult:
-            async with semaphore:
-                return await run_single_row(row)
-
-        tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
-
-        for completed_task in asyncio.as_completed(tasks):
-            try:
-                result = await completed_task
-                task_results.append(result)
-                if result.error and stop_on_error:
-                    break
-            except Exception as e:
-                if stop_on_error:
-                    raise e
-
-        return task_results
-
     async def run_in_github(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
@@ -247,8 +194,6 @@ class Experiment:
         evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
         related_ref: Optional[Dict[str, str]] = None,
-        aux: Optional[Dict[str, str]] = None,
-        stop_on_error: bool = False,
     ) -> RunInGithubResponse:
         """Execute tasks locally and submit results to backend for GitHub CI/CD
 
@@ -265,8 +210,6 @@ class Experiment:
             evaluators: List of evaluator slugs or (slug, version) tuples to run
             experiment_slug: Slug for this experiment run
             related_ref: Additional reference information for this experiment run
-            aux: Auxiliary metadata for this experiment run
-            stop_on_error: Whether to stop on first error (default: False)
 
         Returns:
             RunInGithubResponse with experiment_id, run_id, and status
@@ -293,7 +236,7 @@ class Experiment:
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
         # Execute all tasks locally
-        task_results = await self._execute_tasks(rows, task, stop_on_error)
+        task_results = await self._execute_tasks(rows, task)
 
         # Construct GitHub context
         repository = os.getenv("GITHUB_REPOSITORY")
@@ -308,13 +251,10 @@ class Experiment:
 
        
         github_context = GithubContext(
-            github_pr_url=pr_url,
-            github_commit_hash=os.getenv("GITHUB_SHA", ""),
-            github_actor=os.getenv("GITHUB_ACTOR", ""),
+            pr_url=pr_url,
+            commit_hash=os.getenv("GITHUB_SHA", ""),
+            actor=os.getenv("GITHUB_ACTOR", ""),
         )
-
-        # Merge user-provided related_ref with github_context
-        merged_related_ref = {**github_context, **(related_ref or {})}
 
         experiment_metadata = {
             "created_from": "github",
@@ -336,12 +276,9 @@ class Experiment:
             task_results=task_results,
             github_context=github_context,
             experiment_metadata=experiment_metadata,
-            related_ref=merged_related_ref,
-            aux=aux,
-            stop_on_error=stop_on_error,
+            experiment_run_metadata=related_ref,
         )
 
-        # Send bulk request to backend
         response = self._http_client.post(
             f"/experiments/{experiment_slug}/run-in-github",
             request_body.model_dump(mode="json", exclude_none=True),
@@ -349,7 +286,7 @@ class Experiment:
 
         if response is None:
             raise Exception(
-                f"Failed to submit experiment '{experiment_slug}' for GitHub execution"
+                f"Failed to submit experiment '{experiment_slug}' for GitHub execution. "
             )
 
         return RunInGithubResponse(**response)
@@ -417,3 +354,55 @@ class Experiment:
                     continue
 
         return rows
+    
+    async def _execute_tasks(
+        self,
+        rows: List[Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+    ) -> List[TaskResult]:
+        """Execute tasks locally with concurrency control
+
+        Args:
+            rows: List of dataset rows to process
+            task: Function to run on each row
+            stop_on_error: Whether to stop on first error
+
+        Returns:
+            List of TaskResult objects with inputs, outputs, and errors
+        """
+        task_results: List[TaskResult] = []
+
+        async def run_single_row(row) -> TaskResult:
+            try:
+                task_output = await task(row)
+                return TaskResult(
+                    task_input=row,
+                    task_output=task_output,
+                )
+            except Exception as e:
+                return TaskResult(
+                    task_input=row,
+                    error=str(e),
+                )
+
+        # Execute tasks with concurrency control
+        semaphore = asyncio.Semaphore(50)
+
+        async def run_with_semaphore(row: Dict[str, Any]) -> TaskResult:
+            async with semaphore:
+                return await run_single_row(row)
+
+        tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
+
+        for completed_task in asyncio.as_completed(tasks):
+            try:
+                result = await completed_task
+                task_results.append(result)
+            except Exception as e:
+                task_results.append(TaskResult(
+                    task_input=completed_task.task_input,
+                    error=str(e),
+                ))
+                continue
+
+        return task_results

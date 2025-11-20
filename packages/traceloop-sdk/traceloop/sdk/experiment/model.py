@@ -79,9 +79,9 @@ class TaskResult(BaseModel):
 class GithubContext(BaseModel):
     """Model for GitHub context"""
 
-    github_pr_url: Optional[str] = None
-    github_commit_hash: Optional[str] = None
-    github_actor: Optional[str] = None
+    pr_url: Optional[str] = None
+    commit_hash: Optional[str] = None
+    actor: Optional[str] = None
 
 class RunInGithubRequest(BaseModel):
     """Model for bulk GitHub experiment execution request"""
@@ -90,11 +90,9 @@ class RunInGithubRequest(BaseModel):
     dataset_version: Optional[str] = None
     evaluator_slugs: Optional[List[str]] = None
     task_results: List[TaskResult]
-    github_context: Dict[str, Any]
+    github_context: GithubContext
     experiment_metadata: Optional[Dict[str, Any]] = None
-    related_ref: Optional[Dict[str, Any]] = None
-    aux: Optional[Dict[str, Any]] = None
-    stop_on_error: bool = False
+    experiment_run_metadata: Optional[Dict[str, Any]] = None
 
 
 class RunInGithubResponse(BaseModel):
@@ -103,5 +101,3 @@ class RunInGithubResponse(BaseModel):
     experiment_id: str
     experiment_slug: str
     run_id: str
-    status: str
-    message: Optional[str] = None
