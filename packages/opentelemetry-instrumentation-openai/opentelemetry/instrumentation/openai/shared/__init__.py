@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
+    openai_attributes as OpenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.propagation import set_span_in_context
@@ -141,6 +142,9 @@ def _set_request_attributes(span, kwargs, instance=None):
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
+    _set_span_attribute(
+        span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, kwargs.get("service_tier")
+    )
     if response_format := kwargs.get("response_format"):
         # backward-compatible check for
         # openai.types.shared_params.response_format_json_schema.ResponseFormatJSONSchema
@@ -209,6 +213,11 @@ def _set_response_attributes(span, response):
         span,
         SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
         response.get("system_fingerprint"),
+    )
+    _set_span_attribute(
+        span,
+        OpenAIAttributes.OPENAI_RESPONSE_SERVICE_TIER,
+        response.get("service_tier"),
     )
     _log_prompt_filter(span, response)
     usage = response.get("usage")
