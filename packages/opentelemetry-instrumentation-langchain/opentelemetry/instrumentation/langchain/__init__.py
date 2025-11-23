@@ -16,7 +16,7 @@ from opentelemetry.instrumentation.langchain.utils import is_package_available
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, SpanAttributes
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import (
@@ -37,10 +37,23 @@ class LangchainInstrumentor(BaseInstrumentor):
         exception_logger=None,
         disable_trace_context_propagation=False,
         use_legacy_attributes: bool = True,
+        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES
     ):
+        """Create a Langchain instrumentor instance.
+
+        Args:
+            exception_logger: A callable that takes an Exception as input. This will be
+                used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
+            disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
+            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            metadata_key_prefix: Prefix for metadata keys added to spans. Defaults to
+                `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
+                Useful for using with other backends.
+        """
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
+        Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
