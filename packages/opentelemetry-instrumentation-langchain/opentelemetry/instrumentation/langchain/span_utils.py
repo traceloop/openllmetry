@@ -346,7 +346,7 @@ def set_chat_response_usage(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
         if record_token_usage:
