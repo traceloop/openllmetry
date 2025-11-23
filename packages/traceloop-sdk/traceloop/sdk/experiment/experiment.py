@@ -270,6 +270,7 @@ class Experiment:
 
         # Prepare request payload
         request_body = RunInGithubRequest(
+            experiment_slug=experiment_slug,
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
             evaluator_slugs=evaluator_slugs,
@@ -280,7 +281,7 @@ class Experiment:
         )
 
         response = self._http_client.post(
-            f"/experiments/{experiment_slug}/run-in-github",
+            "/experiments/run-in-github",
             request_body.model_dump(mode="json", exclude_none=True),
         )
 
@@ -376,12 +377,12 @@ class Experiment:
             try:
                 task_output = await task(row)
                 return TaskResult(
-                    task_input=row,
-                    task_output=task_output,
+                    input=row,
+                    output=task_output,
                 )
             except Exception as e:
                 return TaskResult(
-                    task_input=row,
+                    input=row,
                     error=str(e),
                 )
 
@@ -400,7 +401,7 @@ class Experiment:
                 task_results.append(result)
             except Exception as e:
                 task_results.append(TaskResult(
-                    task_input=completed_task.task_input,
+                    input=completed_task.task_input,
                     error=str(e),
                 ))
                 continue

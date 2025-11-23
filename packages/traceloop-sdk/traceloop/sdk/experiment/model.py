@@ -71,8 +71,8 @@ class CreateTaskResponse(BaseModel):
 class TaskResult(BaseModel):
     """Model for a single task result"""
 
-    task_input: Dict[str, Any]
-    task_output: Optional[Dict[str, Any]] = None
+    input: Dict[str, Any]
+    output: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
 
@@ -86,6 +86,7 @@ class GithubContext(BaseModel):
 class RunInGithubRequest(BaseModel):
     """Model for bulk GitHub experiment execution request"""
 
+    experiment_slug: str
     dataset_slug: Optional[str] = None
     dataset_version: Optional[str] = None
     evaluator_slugs: Optional[List[str]] = None
