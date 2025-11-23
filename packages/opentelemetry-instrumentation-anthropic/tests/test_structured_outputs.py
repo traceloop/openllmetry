@@ -8,11 +8,6 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 from .utils import verify_metrics
 
-# NOTE: These tests require anthropic SDK >= 0.50.0 which supports structured outputs
-# The feature was announced in November 2025 but the SDK version installed (0.49.0)
-# does not yet support the output_format parameter.
-# Tests are kept here for when the SDK is updated.
-
 
 JOKE_SCHEMA = {
     "type": "object",
@@ -40,7 +35,6 @@ OUTPUT_FORMAT = {
 }
 
 
-@pytest.mark.skip(reason="Requires anthropic SDK >= 0.50.0 with structured outputs support")
 @pytest.mark.skip(reason="Requires anthropic SDK >= 0.50.0 with structured outputs support")
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_legacy(
@@ -103,7 +97,6 @@ def test_anthropic_structured_outputs_legacy(
     )
 
 
-@pytest.mark.skip(reason="Requires anthropic SDK >= 0.50.0 with structured outputs support")
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_with_events_with_content(
     instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
@@ -150,7 +143,6 @@ def test_anthropic_structured_outputs_with_events_with_content(
     assert len(logs) == 2
 
 
-@pytest.mark.skip(reason="Requires anthropic SDK >= 0.50.0 with structured outputs support")
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_with_events_with_no_content(
     instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
