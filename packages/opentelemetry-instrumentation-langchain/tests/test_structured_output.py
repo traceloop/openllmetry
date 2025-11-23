@@ -56,7 +56,7 @@ def test_structured_output_with_events_with_content(
     assert expected_spans.issubset(span_names)
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 1
+    assert len(logs) == 2
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": query_text})
@@ -64,12 +64,12 @@ def test_structured_output_with_events_with_content(
     assert _result != ""
 
     # Validate AI choice Event
-    # choice_event = {
-    #     "index": 0,
-    #     "finish_reason": "stop",
-    #     "message": {"content": _result.model_dump_json()},
-    # }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": _result.model_dump_json()},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -88,18 +88,18 @@ def test_structured_output_with_events_with_no_content(
     assert expected_spans.issubset(span_names)
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 1
+    assert len(logs) == 2
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    # choice_event = {
-    #     "index": 0,
-    #     "finish_reason": "stop",
-    #     "message": {},
-    # }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):

@@ -206,7 +206,7 @@ def test_custom_llm_with_events_with_content(
         "finish_reason": "unknown",
         "message": {"content": response},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.vcr
@@ -250,7 +250,7 @@ def test_custom_llm_with_events_with_no_content(
         "finish_reason": "unknown",
         "message": {},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.vcr
@@ -338,7 +338,7 @@ def test_openai_with_events_with_content(
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(
@@ -354,7 +354,7 @@ def test_openai_with_events_with_content(
         "finish_reason": "stop",
         "message": {"content": response.content},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -389,7 +389,7 @@ def test_openai_with_events_with_no_content(
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -403,7 +403,7 @@ def test_openai_with_events_with_no_content(
         "finish_reason": "stop",
         "message": {},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -536,7 +536,7 @@ def test_openai_functions_with_events_with_content(
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(
@@ -564,7 +564,7 @@ def test_openai_functions_with_events_with_content(
             }
         ],
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -609,7 +609,7 @@ def test_openai_functions_with_events_with_no_content(
     assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -624,7 +624,7 @@ def test_openai_functions_with_events_with_no_content(
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -745,7 +745,7 @@ def test_anthropic_with_events_with_content(
     )
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(
@@ -763,7 +763,7 @@ def test_anthropic_with_events_with_content(
         "finish_reason": "unknown",
         "message": {"content": response.content},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -801,7 +801,7 @@ def test_anthropic_with_events_with_no_content(
     )
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -815,7 +815,7 @@ def test_anthropic_with_events_with_no_content(
         "finish_reason": "unknown",
         "message": {},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -943,7 +943,7 @@ def test_bedrock_with_events_with_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(
@@ -961,7 +961,7 @@ def test_bedrock_with_events_with_content(
         "finish_reason": "unknown",
         "message": {"content": response.content},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 @pytest.mark.vcr
@@ -1005,7 +1005,7 @@ def test_bedrock_with_events_with_no_content(
     assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 2
+    assert len(logs) == 3
 
     # Validate system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -1019,7 +1019,7 @@ def test_bedrock_with_events_with_no_content(
         "finish_reason": "unknown",
         "message": {},
     }
-    # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
 
 
 # from: https://stackoverflow.com/a/41599695/2749989
@@ -1110,7 +1110,7 @@ def test_trace_propagation_with_events_with_content(
     logs = log_exporter.get_finished_logs()
 
     if issubclass(LLM, ChatOpenAI):
-        assert len(logs) == 2
+        assert len(logs) == 3
 
         # Validate system message Event
         assert_message_in_logs(
@@ -1132,7 +1132,7 @@ def test_trace_propagation_with_events_with_content(
             "finish_reason": "length",
             "message": {"content": response.content},
         }
-        # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
     else:
         assert len(logs) == 2
 
@@ -1155,7 +1155,7 @@ def test_trace_propagation_with_events_with_content(
             "finish_reason": "length",
             "message": {"content": response},
         }
-        # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.vcr
@@ -1186,7 +1186,7 @@ def test_trace_propagation_with_events_with_no_content(
 
     logs = log_exporter.get_finished_logs()
     if issubclass(LLM, ChatOpenAI):
-        assert len(logs) == 2
+        assert len(logs) == 3
 
         # Validate system message Event
         assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -1200,7 +1200,7 @@ def test_trace_propagation_with_events_with_no_content(
             "finish_reason": "length",
             "message": {},
         }
-        # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
     else:
         assert len(logs) == 2
 
@@ -1217,7 +1217,7 @@ def test_trace_propagation_with_events_with_no_content(
             "finish_reason": "length",
             "message": {},
         }
-        # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.vcr
@@ -1305,7 +1305,7 @@ def test_trace_propagation_stream_with_events_with_content(
         "finish_reason": "length",
         "message": {"content": "".join(chunks)},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.vcr
@@ -1354,7 +1354,7 @@ def test_trace_propagation_stream_with_events_with_no_content(
         "finish_reason": "length",
         "message": {},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.asyncio
@@ -1419,7 +1419,7 @@ async def test_trace_propagation_async_with_events_with_content(
 
     logs = log_exporter.get_finished_logs()
     if issubclass(LLM, ChatOpenAI):
-        assert len(logs) == 2
+        assert len(logs) == 3
 
         # Validate system message Event
         assert_message_in_logs(
@@ -1443,7 +1443,7 @@ async def test_trace_propagation_async_with_events_with_content(
                 "content": response.content,
             },
         }
-        # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
     else:
         assert len(logs) == 2
 
@@ -1466,7 +1466,7 @@ async def test_trace_propagation_async_with_events_with_content(
             "finish_reason": "length",
             "message": {"content": response},
         }
-        # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.asyncio
@@ -1498,7 +1498,7 @@ async def test_trace_propagation_async_with_events_with_no_content(
 
     logs = log_exporter.get_finished_logs()
     if issubclass(LLM, ChatOpenAI):
-        assert len(logs) == 2
+        assert len(logs) == 3
 
         # Validate system message Event
         assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -1512,7 +1512,7 @@ async def test_trace_propagation_async_with_events_with_no_content(
             "finish_reason": "length",
             "message": {},
         }
-        # assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
+        assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
     else:
         assert len(logs) == 2
 
@@ -1529,7 +1529,7 @@ async def test_trace_propagation_async_with_events_with_no_content(
             "finish_reason": "length",
             "message": {},
         }
-        # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+        assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.asyncio
@@ -1621,7 +1621,7 @@ async def test_trace_propagation_stream_async_with_events_with_content(
         "finish_reason": "length",
         "message": {"content": "".join(chunks)},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 @pytest.mark.asyncio
@@ -1671,7 +1671,7 @@ async def test_trace_propagation_stream_async_with_events_with_no_content(
         "finish_reason": "length",
         "message": {},
     }
-    # assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
