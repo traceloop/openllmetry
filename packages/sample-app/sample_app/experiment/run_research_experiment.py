@@ -65,7 +65,6 @@ async def main():
         dataset_version="v1",
         evaluators=["accuracy", "relevance"],
         experiment_slug="research-exp",
-        stop_on_error=False,
     )
 
     # Print response
