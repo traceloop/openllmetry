@@ -4,6 +4,10 @@ from agno.models.openai import OpenAIChat
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 Traceloop.init(app_name="agno_example")
 
 
@@ -22,7 +26,10 @@ def run_agent():
         ),
         tools=[get_weather],
         description="An agent that helps with weather information",
-        instructions=["Be helpful and concise", "Always use the weather tool when asked"],
+        instructions=[
+            "Be helpful and concise",
+            "Always use the weather tool when asked",
+        ],
     )
 
     print("Running agent with tool call...")

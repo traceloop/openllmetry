@@ -5,6 +5,7 @@ from agno.team import Team
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
+
 Traceloop.init(app_name="agno_team_example")
 
 

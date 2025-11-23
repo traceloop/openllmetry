@@ -4,12 +4,15 @@ from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.team import Team
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 Traceloop.init(app_name="agno_discussion_team")
 
 
-@workflow(name="agno_discussion_team_example")
 def run_discussion_team():
     """
     A multi-agent discussion team where different experts discuss
@@ -24,12 +27,14 @@ def run_discussion_team():
             api_key=os.environ.get("OPENAI_API_KEY"),
         ),
         add_name_to_context=True,
-        instructions=dedent("""
+        instructions=dedent(
+            """
         You are a technical expert focused on implementation details.
         Analyze topics from a technical feasibility perspective.
         Discuss technical challenges, solutions, and best practices.
         Keep responses concise and focused.
-        """),
+        """
+        ),
     )
 
     business_expert = Agent(
@@ -40,12 +45,14 @@ def run_discussion_team():
             api_key=os.environ.get("OPENAI_API_KEY"),
         ),
         add_name_to_context=True,
-        instructions=dedent("""
+        instructions=dedent(
+            """
         You are a business expert focused on practical value.
         Analyze topics from a business impact and ROI perspective.
         Discuss market implications, costs, and business benefits.
         Keep responses concise and focused.
-        """),
+        """
+        ),
     )
 
     user_experience_expert = Agent(
@@ -56,12 +63,14 @@ def run_discussion_team():
             api_key=os.environ.get("OPENAI_API_KEY"),
         ),
         add_name_to_context=True,
-        instructions=dedent("""
+        instructions=dedent(
+            """
         You are a user experience expert focused on usability.
         Analyze topics from an end-user perspective.
         Discuss user needs, pain points, and user satisfaction.
         Keep responses concise and focused.
-        """),
+        """
+        ),
     )
 
     discussion_team = Team(
