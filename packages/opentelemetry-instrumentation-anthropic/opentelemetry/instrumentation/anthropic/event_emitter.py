@@ -3,7 +3,8 @@ from enum import Enum
 import json
 from typing import Optional, Union
 
-from opentelemetry._logs import Logger, LogRecord
+from opentelemetry._events import Event
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.anthropic.event_models import (
     ChoiceEvent,
     MessageEvent,
@@ -208,12 +209,12 @@ def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
+    event = Event(
+        name=name,
         body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name=name
+        attributes=EVENT_ATTRIBUTES
     )
-    event_logger.emit(log_record)
+    event_logger.emit(event)
 
 
 def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
@@ -232,10 +233,9 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
+    event = Event(
+        name="gen_ai.choice",
         body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name="gen_ai.choice"
-
+        attributes=EVENT_ATTRIBUTES
     )
-    event_logger.emit(log_record)
+    event_logger.emit(event)
