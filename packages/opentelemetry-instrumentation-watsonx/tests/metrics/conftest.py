@@ -6,7 +6,6 @@ import pytest
 from opentelemetry import metrics
 from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 from opentelemetry.instrumentation.watsonx.utils import TRACELOOP_TRACE_CONTENT
-from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
@@ -46,17 +45,15 @@ def fixture_log_exporter():
     yield exporter
 
 
-@pytest.fixture(scope="function", name="event_logger_provider")
-def fixture_event_logger_provider(log_exporter):
+@pytest.fixture(scope="function", name="logger_provider")
+def fixture_logger_provider(log_exporter):
     provider = LoggerProvider()
     provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
-    event_logger_provider = EventLoggerProvider(provider)
-
-    return event_logger_provider
+    return provider
 
 
 @pytest.fixture(scope="function")
-def metrics_test_context_with_content(event_logger_provider):
+def metrics_test_context_with_content(logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     resource = Resource.create()
@@ -71,7 +68,7 @@ def metrics_test_context_with_content(event_logger_provider):
 
         # to avoid lint error
         del ModelInference
-        WatsonxInstrumentor().instrument(event_logger_provider=event_logger_provider)
+        WatsonxInstrumentor().instrument(logger_provider=logger_provider)
     except ImportError:
         print(
             "no supported ibm_watsonx_ai package found, Watsonx instrumentation skipped."
@@ -83,7 +80,7 @@ def metrics_test_context_with_content(event_logger_provider):
 
 
 @pytest.fixture(scope="function")
-def metrics_test_context_with_no_content(event_logger_provider):
+def metrics_test_context_with_no_content(logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     resource = Resource.create()
@@ -98,7 +95,7 @@ def metrics_test_context_with_no_content(event_logger_provider):
 
         # to avoid lint error
         del ModelInference
-        WatsonxInstrumentor().instrument(event_logger_provider=event_logger_provider)
+        WatsonxInstrumentor().instrument(logger_provider=logger_provider)
     except ImportError:
         print(
             "no supported ibm_watsonx_ai package found, Watsonx instrumentation skipped."

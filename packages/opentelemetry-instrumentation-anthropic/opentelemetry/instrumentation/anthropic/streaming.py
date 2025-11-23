@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Optional
 
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_streaming_response_events,
@@ -151,7 +151,7 @@ class AnthropicStream(ObjectProxy):
         choice_counter: Counter = None,
         duration_histogram: Histogram = None,
         exception_counter: Counter = None,
-        event_logger: Optional[EventLogger] = None,
+        event_logger: Optional[Logger] = None,
         kwargs: dict = {},
     ):
         super().__init__(response)
@@ -306,7 +306,7 @@ class AnthropicAsyncStream(ObjectProxy):
         choice_counter: Counter = None,
         duration_histogram: Histogram = None,
         exception_counter: Counter = None,
-        event_logger: Optional[EventLogger] = None,
+        event_logger: Optional[Logger] = None,
         kwargs: dict = {},
     ):
         super().__init__(response)

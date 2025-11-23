@@ -7,7 +7,7 @@ import os
 import traceback
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -83,7 +83,7 @@ def should_emit_events() -> bool:
     and if the event logger is not None.
     """
     return not Config.use_legacy_attributes and isinstance(
-        Config.event_logger, EventLogger
+        Config.event_logger, Logger
     )
 
 

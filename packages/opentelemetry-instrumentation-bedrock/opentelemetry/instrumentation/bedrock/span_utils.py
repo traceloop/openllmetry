@@ -101,11 +101,11 @@ def set_model_span_attributes(
     elif model_vendor == "anthropic":
         if "prompt" in request_body:
             _set_anthropic_completion_span_attributes(
-                span, request_body, response_body, metric_params
+                span, request_body, response_body, headers, metric_params
             )
         elif "messages" in request_body:
             _set_anthropic_messages_span_attributes(
-                span, request_body, response_body, metric_params
+                span, request_body, response_body, headers, metric_params
             )
     elif model_vendor == "ai21":
         _set_ai21_span_attributes(span, request_body, response_body, metric_params)
@@ -192,7 +192,7 @@ def _set_generations_span_attributes(span, response_body):
 
 
 def _set_anthropic_completion_span_attributes(
-    span, request_body, response_body, metric_params
+    span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
@@ -227,6 +227,16 @@ def _set_anthropic_completion_span_attributes(
             response_body.get("invocation_metrics").get("outputTokenCount"),
             metric_params,
         )
+    elif headers and headers.get("x-amzn-bedrock-input-token-count") is not None:
+        # For Anthropic V2 models (claude-v2), token counts are in HTTP headers
+        input_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
+        output_tokens = int(headers.get("x-amzn-bedrock-output-token-count", 0))
+        _record_usage_to_span(
+            span,
+            input_tokens,
+            output_tokens,
+            metric_params,
+        )
     elif Config.enrich_token_usage:
         _record_usage_to_span(
             span,
@@ -255,7 +265,7 @@ def _set_anthropic_response_span_attributes(span, response_body):
 
 
 def _set_anthropic_messages_span_attributes(
-    span, request_body, response_body, metric_params
+    span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
         span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
@@ -287,6 +297,11 @@ def _set_anthropic_messages_span_attributes(
         completion_tokens = response_body.get("invocation_metrics").get(
             "outputTokenCount"
         )
+        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
+    elif headers and headers.get("x-amzn-bedrock-input-token-count") is not None:
+        # For Anthropic V2 models (claude-v2), token counts are in HTTP headers
+        prompt_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
+        completion_tokens = int(headers.get("x-amzn-bedrock-output-token-count", 0))
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif Config.enrich_token_usage:
         messages = [message.get("content") for message in request_body.get("messages")]
