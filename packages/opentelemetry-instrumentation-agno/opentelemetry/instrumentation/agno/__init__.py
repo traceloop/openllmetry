@@ -5,6 +5,10 @@ from typing import Collection
 from importlib.metadata import version as package_version, PackageNotFoundError
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.agno._tool_wrappers import (
+    _FunctionCallExecuteWrapper,
+    _FunctionCallAExecuteWrapper,
+)
 from opentelemetry.instrumentation.agno.config import Config
 from opentelemetry.instrumentation.agno.utils import (
     dont_throw,
@@ -93,12 +97,33 @@ class AgnoInstrumentor(BaseInstrumentor):
         except Exception as e:
             logger.debug(f"Could not instrument Team: {e}")
 
+        # Wrap FunctionCall methods for tool execution
+        try:
+            wrap_function_wrapper(
+                module="agno.tools",
+                name="FunctionCall.execute",
+                wrapper=_FunctionCallExecuteWrapper(tracer, duration_histogram, token_histogram),
+            )
+
+            wrap_function_wrapper(
+                module="agno.tools",
+                name="FunctionCall.aexecute",
+                wrapper=_FunctionCallAExecuteWrapper(tracer, duration_histogram, token_histogram),
+            )
+        except Exception as e:
+            logger.debug(f"Could not instrument FunctionCall: {e}")
+
     def _uninstrument(self, **kwargs):
         unwrap("agno.agent", "Agent.run")
         unwrap("agno.agent", "Agent.arun")
         try:
             unwrap("agno.team", "Team.run")
             unwrap("agno.team", "Team.arun")
+        except Exception:
+            pass
+        try:
+            unwrap("agno.tools", "FunctionCall.execute")
+            unwrap("agno.tools", "FunctionCall.aexecute")
         except Exception:
             pass
 
@@ -120,7 +145,7 @@ class _AgentRunWrapper:
         ) or context_api.get_value("suppress_agno_instrumentation"):
             return wrapped(*args, **kwargs)
 
-        span_name = f"agno.agent.{getattr(instance, 'name', 'unknown')}"
+        span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
 
         with self._tracer.start_as_current_span(
             span_name,
@@ -142,9 +167,7 @@ class _AgentRunWrapper:
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                        input_message)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
 
                 import time
                 start_time = time.time()
@@ -154,9 +177,8 @@ class _AgentRunWrapper:
                 duration = time.time() - start_time
 
                 if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                        str(result.content))
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                       str(result.content))
 
                 if hasattr(result, 'run_id'):
                     span.set_attribute("agno.run.id", result.run_id)
@@ -211,7 +233,7 @@ class _AgentARunWrapper:
         ) or context_api.get_value("suppress_agno_instrumentation"):
             return await wrapped(*args, **kwargs)
 
-        span_name = f"agno.agent.{getattr(instance, 'name', 'unknown')}"
+        span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
 
         with self._tracer.start_as_current_span(
             span_name,
@@ -233,9 +255,7 @@ class _AgentARunWrapper:
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                        input_message)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
 
                 import time
                 start_time = time.time()
@@ -245,9 +265,8 @@ class _AgentARunWrapper:
                 duration = time.time() - start_time
 
                 if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                        str(result.content))
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                       str(result.content))
 
                 if hasattr(result, 'run_id'):
                     span.set_attribute("agno.run.id", result.run_id)
@@ -302,7 +321,7 @@ class _TeamRunWrapper:
         ) or context_api.get_value("suppress_agno_instrumentation"):
             return wrapped(*args, **kwargs)
 
-        span_name = f"agno.team.{getattr(instance, 'name', 'unknown')}"
+        span_name = f"{getattr(instance, 'name', 'unknown')}.team"
 
         with self._tracer.start_as_current_span(
             span_name,
@@ -318,9 +337,7 @@ class _TeamRunWrapper:
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                        input_message)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
 
                 import time
                 start_time = time.time()
@@ -330,9 +347,8 @@ class _TeamRunWrapper:
                 duration = time.time() - start_time
 
                 if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                        str(result.content))
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                       str(result.content))
 
                 if hasattr(result, 'run_id'):
                     span.set_attribute("agno.run.id", result.run_id)
@@ -372,7 +388,7 @@ class _TeamARunWrapper:
         ) or context_api.get_value("suppress_agno_instrumentation"):
             return await wrapped(*args, **kwargs)
 
-        span_name = f"agno.team.{getattr(instance, 'name', 'unknown')}"
+        span_name = f"{getattr(instance, 'name', 'unknown')}.team"
 
         with self._tracer.start_as_current_span(
             span_name,
@@ -388,9 +404,7 @@ class _TeamARunWrapper:
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                        input_message)
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
 
                 import time
                 start_time = time.time()
@@ -400,9 +414,8 @@ class _TeamARunWrapper:
                 duration = time.time() - start_time
 
                 if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                        str(result.content))
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                       str(result.content))
 
                 if hasattr(result, 'run_id'):
                     span.set_attribute("agno.run.id", result.run_id)

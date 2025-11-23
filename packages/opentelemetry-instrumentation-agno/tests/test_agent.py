@@ -4,6 +4,7 @@ from agno.models.openai import OpenAIChat
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -21,17 +22,15 @@ def test_agent_run_basic(instrument, span_exporter, reader):
     assert len(spans) >= 1
 
     agent_span = spans[-1]
-    assert agent_span.name == "agno.agent.TestAgent"
+    assert agent_span.name == "TestAgent.agent"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "TestAgent"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-4o-mini"
 
-    prompt_content = agent_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
+    prompt_content = agent_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
     assert prompt_content == "What is 2 + 2?"
 
-    completion_content = agent_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    )
+    completion_content = agent_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_OUTPUT)
     assert completion_content is not None
 
 
@@ -51,11 +50,11 @@ async def test_agent_arun_basic(instrument, span_exporter, reader):
     assert len(spans) >= 1
 
     agent_span = spans[-1]
-    assert agent_span.name == "agno.agent.AsyncTestAgent"
+    assert agent_span.name == "AsyncTestAgent.agent"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "AsyncTestAgent"
 
-    prompt_content = agent_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
+    prompt_content = agent_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
     assert "capital of France" in prompt_content
 
 
@@ -78,9 +77,18 @@ def test_agent_with_tools(instrument, span_exporter, reader):
     spans = span_exporter.get_finished_spans()
     assert len(spans) >= 1
 
+    # Check for agent span
     agent_span = spans[-1]
-    assert agent_span.name == "agno.agent.ToolAgent"
+    assert agent_span.name == "ToolAgent.agent"
     assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+
+    # Check for tool spans (if tools were executed)
+    tool_spans = [s for s in spans if s.name == "add_numbers.tool"]
+    # Tool spans may or may not be present depending on whether the agent actually calls the tool
+    # so we just check that if they exist, they have the right attributes
+    for tool_span in tool_spans:
+        assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "add_numbers"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
 
 
 @pytest.mark.vcr

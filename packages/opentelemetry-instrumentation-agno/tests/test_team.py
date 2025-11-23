@@ -49,7 +49,7 @@ def test_team_discussion(instrument, span_exporter, reader):
     assert len(spans) >= 1
 
     team_span = spans[-1]
-    assert "agno.team" in team_span.name or "DiscussionTeam" in team_span.name
+    assert team_span.name == "DiscussionTeam.team"
     assert team_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
 
 
@@ -80,4 +80,5 @@ def test_team_basic(instrument, span_exporter, reader):
     assert len(spans) >= 1
 
     team_span = spans[-1]
+    assert team_span.name == "BasicTeam.team"
     assert team_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
