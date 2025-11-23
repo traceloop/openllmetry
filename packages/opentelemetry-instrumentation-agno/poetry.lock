@@ -878,7 +878,7 @@ wrapt = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.48.1"
+version = "0.48.2"
 description = "OpenTelemetry OpenAI instrumentation"
 optional = false
 python-versions = ">=3.9,<4"
@@ -887,9 +887,9 @@ files = []
 develop = true
 
 [package.dependencies]
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
+opentelemetry-api = "^1.38.0"
+opentelemetry-instrumentation = ">=0.59b0"
+opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [package.extras]
@@ -2073,4 +2073,4 @@ instruments = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4"
-content-hash = "2a118d79a94420455397576663cde7807d1909a8f950682b4a60956ddf05d64a"
+content-hash = "ec72403fd18f66bcf09e4edb33561b1d83a28f89e30d63dc493179e137cf714e"

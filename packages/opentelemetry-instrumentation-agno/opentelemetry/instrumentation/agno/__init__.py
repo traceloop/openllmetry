@@ -28,7 +28,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("agno >= 2.2.2",)
+_instruments = ("agno >= 2.0.0",)
 
 
 def _get_agno_version():
@@ -102,13 +102,17 @@ class AgnoInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 module="agno.tools",
                 name="FunctionCall.execute",
-                wrapper=_FunctionCallExecuteWrapper(tracer, duration_histogram, token_histogram),
+                wrapper=_FunctionCallExecuteWrapper(
+                    tracer, duration_histogram, token_histogram
+                ),
             )
 
             wrap_function_wrapper(
                 module="agno.tools",
                 name="FunctionCall.aexecute",
-                wrapper=_FunctionCallAExecuteWrapper(tracer, duration_histogram, token_histogram),
+                wrapper=_FunctionCallAExecuteWrapper(
+                    tracer, duration_histogram, token_histogram
+                ),
             )
         except Exception as e:
             logger.debug(f"Could not instrument FunctionCall: {e}")
@@ -153,50 +157,58 @@ class _AgentRunWrapper:
         ) as span:
             try:
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
-                                   TraceloopSpanKindValues.AGENT.value)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND,
+                    TraceloopSpanKindValues.AGENT.value,
+                )
 
-                if hasattr(instance, 'name'):
+                if hasattr(instance, "name"):
                     span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, instance.name)
 
-                if hasattr(instance, 'model') and instance.model:
-                    model_name = getattr(instance.model, 'id',
-                                         getattr(instance.model, 'name', 'unknown'))
-                    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL,
-                                       model_name)
+                if hasattr(instance, "model") and instance.model:
+                    model_name = getattr(
+                        instance.model, "id", getattr(instance.model, "name", "unknown")
+                    )
+                    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name)
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
+                    )
 
                 import time
+
                 start_time = time.time()
 
                 result = wrapped(*args, **kwargs)
 
                 duration = time.time() - start_time
 
-                if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                       str(result.content))
+                if hasattr(result, "content") and should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result.content)
+                    )
 
-                if hasattr(result, 'run_id'):
+                if hasattr(result, "run_id"):
                     span.set_attribute("agno.run.id", result.run_id)
 
-                if hasattr(result, 'metrics'):
+                if hasattr(result, "metrics"):
                     metrics = result.metrics
-                    if hasattr(metrics, 'input_tokens'):
+                    if hasattr(metrics, "input_tokens"):
                         span.set_attribute(
                             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                            metrics.input_tokens)
-                    if hasattr(metrics, 'output_tokens'):
+                            metrics.input_tokens,
+                        )
+                    if hasattr(metrics, "output_tokens"):
                         span.set_attribute(
                             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                            metrics.output_tokens)
-                    if hasattr(metrics, 'total_tokens'):
+                            metrics.output_tokens,
+                        )
+                    if hasattr(metrics, "total_tokens"):
                         span.set_attribute(
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                            metrics.total_tokens)
+                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS, metrics.total_tokens
+                        )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -205,7 +217,7 @@ class _AgentRunWrapper:
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: "agno",
                         SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                    }
+                    },
                 )
 
                 return result
@@ -241,50 +253,58 @@ class _AgentARunWrapper:
         ) as span:
             try:
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
-                                   TraceloopSpanKindValues.AGENT.value)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND,
+                    TraceloopSpanKindValues.AGENT.value,
+                )
 
-                if hasattr(instance, 'name'):
+                if hasattr(instance, "name"):
                     span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, instance.name)
 
-                if hasattr(instance, 'model') and instance.model:
-                    model_name = getattr(instance.model, 'id',
-                                         getattr(instance.model, 'name', 'unknown'))
-                    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL,
-                                       model_name)
+                if hasattr(instance, "model") and instance.model:
+                    model_name = getattr(
+                        instance.model, "id", getattr(instance.model, "name", "unknown")
+                    )
+                    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name)
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
+                    )
 
                 import time
+
                 start_time = time.time()
 
                 result = await wrapped(*args, **kwargs)
 
                 duration = time.time() - start_time
 
-                if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                       str(result.content))
+                if hasattr(result, "content") and should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result.content)
+                    )
 
-                if hasattr(result, 'run_id'):
+                if hasattr(result, "run_id"):
                     span.set_attribute("agno.run.id", result.run_id)
 
-                if hasattr(result, 'metrics'):
+                if hasattr(result, "metrics"):
                     metrics = result.metrics
-                    if hasattr(metrics, 'input_tokens'):
+                    if hasattr(metrics, "input_tokens"):
                         span.set_attribute(
                             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                            metrics.input_tokens)
-                    if hasattr(metrics, 'output_tokens'):
+                            metrics.input_tokens,
+                        )
+                    if hasattr(metrics, "output_tokens"):
                         span.set_attribute(
                             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                            metrics.output_tokens)
-                    if hasattr(metrics, 'total_tokens'):
+                            metrics.output_tokens,
+                        )
+                    if hasattr(metrics, "total_tokens"):
                         span.set_attribute(
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                            metrics.total_tokens)
+                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS, metrics.total_tokens
+                        )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -293,7 +313,7 @@ class _AgentARunWrapper:
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: "agno",
                         SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                    }
+                    },
                 )
 
                 return result
@@ -329,28 +349,34 @@ class _TeamRunWrapper:
         ) as span:
             try:
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
-                                   TraceloopSpanKindValues.WORKFLOW.value)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND,
+                    TraceloopSpanKindValues.WORKFLOW.value,
+                )
 
-                if hasattr(instance, 'name'):
+                if hasattr(instance, "name"):
                     span.set_attribute("agno.team.name", instance.name)
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
+                    )
 
                 import time
+
                 start_time = time.time()
 
                 result = wrapped(*args, **kwargs)
 
                 duration = time.time() - start_time
 
-                if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                       str(result.content))
+                if hasattr(result, "content") and should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result.content)
+                    )
 
-                if hasattr(result, 'run_id'):
+                if hasattr(result, "run_id"):
                     span.set_attribute("agno.run.id", result.run_id)
 
                 span.set_status(Status(StatusCode.OK))
@@ -360,7 +386,7 @@ class _TeamRunWrapper:
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: "agno",
                         SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                    }
+                    },
                 )
 
                 return result
@@ -396,28 +422,34 @@ class _TeamARunWrapper:
         ) as span:
             try:
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
-                                   TraceloopSpanKindValues.WORKFLOW.value)
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND,
+                    TraceloopSpanKindValues.WORKFLOW.value,
+                )
 
-                if hasattr(instance, 'name'):
+                if hasattr(instance, "name"):
                     span.set_attribute("agno.team.name", instance.name)
 
                 if args and should_send_prompts():
                     input_message = str(args[0])
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message)
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
+                    )
 
                 import time
+
                 start_time = time.time()
 
                 result = await wrapped(*args, **kwargs)
 
                 duration = time.time() - start_time
 
-                if hasattr(result, 'content') and should_send_prompts():
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                                       str(result.content))
+                if hasattr(result, "content") and should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result.content)
+                    )
 
-                if hasattr(result, 'run_id'):
+                if hasattr(result, "run_id"):
                     span.set_attribute("agno.run.id", result.run_id)
 
                 span.set_status(Status(StatusCode.OK))
@@ -427,7 +459,7 @@ class _TeamARunWrapper:
                     attributes={
                         GenAIAttributes.GEN_AI_SYSTEM: "agno",
                         SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                    }
+                    },
                 )
 
                 return result
