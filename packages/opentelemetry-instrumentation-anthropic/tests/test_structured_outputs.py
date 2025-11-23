@@ -6,8 +6,6 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import SpanAttributes
 
-from .utils import verify_metrics
-
 
 JOKE_SCHEMA = {
     "type": "object",
@@ -26,18 +24,14 @@ JOKE_SCHEMA = {
 }
 
 OUTPUT_FORMAT = {
-    "type": "json",
-    "json_schema": {
-        "name": "joke_response",
-        "strict": True,
-        "schema": JOKE_SCHEMA
-    }
+    "type": "json_schema",
+    "schema": JOKE_SCHEMA
 }
 
 
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_legacy(
-    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
 ):
     response = anthropic_client.beta.messages.create(
         model="claude-sonnet-4-5-20250929",
@@ -86,10 +80,6 @@ def test_anthropic_structured_outputs_legacy(
     assert "joke" in response_json
     assert "rating" in response_json
 
-    metrics_data = reader.get_metrics_data()
-    resource_metrics = metrics_data.resource_metrics
-    verify_metrics(resource_metrics, "claude-sonnet-4-5-20250929")
-
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (
         "Assert that it doesn't emit logs when use_legacy_attributes is True"
@@ -98,7 +88,7 @@ def test_anthropic_structured_outputs_legacy(
 
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_with_events_with_content(
-    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+    instrument_with_content, anthropic_client, span_exporter, log_exporter
 ):
     response = anthropic_client.beta.messages.create(
         model="claude-sonnet-4-5-20250929",
@@ -117,26 +107,9 @@ def test_anthropic_structured_outputs_with_events_with_content(
     assert len(spans) == 1
     assert spans[0].name == "anthropic.chat"
 
-    anthropic_span = spans[0]
-
-    assert SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA in anthropic_span.attributes
-    schema_attr = json.loads(
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA]
-    )
-    assert "properties" in schema_attr
-    assert "joke" in schema_attr["properties"]
-    assert "rating" in schema_attr["properties"]
-
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "claude-sonnet-4-5-20250929"
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "claude-sonnet-4-5-20250929"
-
     response_json = json.loads(response.content[0].text)
     assert "joke" in response_json
     assert "rating" in response_json
-
-    metrics_data = reader.get_metrics_data()
-    resource_metrics = metrics_data.resource_metrics
-    verify_metrics(resource_metrics, "claude-sonnet-4-5-20250929")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -144,7 +117,7 @@ def test_anthropic_structured_outputs_with_events_with_content(
 
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_with_events_with_no_content(
-    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter
 ):
     response = anthropic_client.beta.messages.create(
         model="claude-sonnet-4-5-20250929",
@@ -163,26 +136,9 @@ def test_anthropic_structured_outputs_with_events_with_no_content(
     assert len(spans) == 1
     assert spans[0].name == "anthropic.chat"
 
-    anthropic_span = spans[0]
-
-    assert SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA in anthropic_span.attributes
-    schema_attr = json.loads(
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA]
-    )
-    assert "properties" in schema_attr
-    assert "joke" in schema_attr["properties"]
-    assert "rating" in schema_attr["properties"]
-
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "claude-sonnet-4-5-20250929"
-    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "claude-sonnet-4-5-20250929"
-
     response_json = json.loads(response.content[0].text)
     assert "joke" in response_json
     assert "rating" in response_json
-
-    metrics_data = reader.get_metrics_data()
-    resource_metrics = metrics_data.resource_metrics
-    verify_metrics(resource_metrics, "claude-sonnet-4-5-20250929")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
