@@ -1,3 +1,9 @@
+## v0.49.0 (2025-11-23)
+
+### Feat
+
+- **agno**: add instrumentation for agno framework (#3452)
+
 ## v0.48.2 (2025-11-23)
 
 ### Fix
