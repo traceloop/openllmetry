@@ -30,6 +30,23 @@ def test_responses(
 
 
 @pytest.mark.vcr
+def test_responses_with_service_tier(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    _ = openai_client.responses.create(
+        model="gpt-5",
+        input="Say hello",
+        service_tier="priority",
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["openai.request.service_tier"] == "priority"
+    assert span.attributes["openai.response.service_tier"] == "priority"
+
+
+@pytest.mark.vcr
 def test_responses_with_input_history(
     instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):

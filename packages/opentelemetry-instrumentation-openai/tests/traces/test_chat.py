@@ -1497,6 +1497,27 @@ def test_chat_reasoning(instrument_legacy, span_exporter,
     assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
 
 
+@pytest.mark.vcr
+def test_chat_with_service_tier(instrument_legacy, span_exporter, openai_client):
+    openai_client.chat.completions.create(
+        model="gpt-5",
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello"
+            }
+        ],
+        service_tier="priority",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+    span = spans[-1]
+
+    assert span.attributes["openai.request.service_tier"] == "priority"
+    assert span.attributes["openai.response.service_tier"] == "priority"
+
+
 def test_chat_exception(instrument_legacy, span_exporter, openai_client):
     openai_client.api_key = "invalid"
     with pytest.raises(Exception):
