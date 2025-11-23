@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.48.1"
+version = "0.48.2"
 description = "OpenTelemetry Milvus instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/milvus"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-instrumentation = ">=0.50b0"
+opentelemetry-api = "^1.38.0"
+opentelemetry-semantic-conventions = ">=0.59b0"
+opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
@@ -40,7 +40,7 @@ pymilvus = "^2.4.1"
 pymilvus = "^2.4.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-opentelemetry-sdk = "^1.27.0"
+opentelemetry-sdk = "^1.38.0"
 
 [build-system]
 requires = ["poetry-core"]

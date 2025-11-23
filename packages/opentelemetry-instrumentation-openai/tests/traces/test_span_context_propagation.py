@@ -3,9 +3,6 @@
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
@@ -54,7 +51,7 @@ def test_span_context_propagation_with_mock_client(
             assert_event_has_span_context(user_event, span.context.trace_id, span.context.span_id)
 
             # Verify it's the expected event type
-            assert user_event.log_record.attributes.get(EventAttributes.EVENT_NAME) == "gen_ai.user.message"
+            assert user_event.log_record.event_name == "gen_ai.user.message"
         else:
             pytest.skip("No events generated - may be due to test configuration")
     else:

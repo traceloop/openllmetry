@@ -5,7 +5,7 @@ import logging
 from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.mistralai.config import Config
 from opentelemetry.instrumentation.mistralai.event_emitter import emit_event
@@ -497,9 +497,9 @@ class MistralAiInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:

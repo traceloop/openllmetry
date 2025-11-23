@@ -7,7 +7,7 @@ import types
 from typing import Collection, Optional, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -555,7 +555,7 @@ def _wrap(
     response_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     wrapped,
     instance,
     args,
@@ -697,9 +697,9 @@ class WatsonxInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_methods in WATSON_MODULES:

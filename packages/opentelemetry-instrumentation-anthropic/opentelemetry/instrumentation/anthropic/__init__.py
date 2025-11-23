@@ -6,7 +6,7 @@ import time
 from typing import Callable, Collection, Optional
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_input_events,
@@ -283,11 +283,11 @@ async def _aset_token_usage(
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -397,11 +397,11 @@ def _set_token_usage(
     set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
         span,
-        GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
 
@@ -467,7 +467,7 @@ def _create_metrics(meter: Meter):
 
 
 @dont_throw
-def _handle_input(span: Span, event_logger: Optional[EventLogger], kwargs):
+def _handle_input(span: Span, event_logger: Optional[Logger], kwargs):
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
@@ -477,7 +477,7 @@ def _handle_input(span: Span, event_logger: Optional[EventLogger], kwargs):
 
 
 @dont_throw
-async def _ahandle_input(span: Span, event_logger: Optional[EventLogger], kwargs):
+async def _ahandle_input(span: Span, event_logger: Optional[Logger], kwargs):
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
@@ -487,7 +487,7 @@ async def _ahandle_input(span: Span, event_logger: Optional[EventLogger], kwargs
 
 
 @dont_throw
-async def _ahandle_response(span: Span, event_logger: Optional[EventLogger], response):
+async def _ahandle_response(span: Span, event_logger: Optional[Logger], response):
     if should_emit_events():
         emit_response_events(event_logger, response)
     else:
@@ -501,7 +501,7 @@ async def _ahandle_response(span: Span, event_logger: Optional[EventLogger], res
 
 
 @dont_throw
-def _handle_response(span: Span, event_logger: Optional[EventLogger], response):
+def _handle_response(span: Span, event_logger: Optional[Logger], response):
     if should_emit_events():
         emit_response_events(event_logger, response)
     else:
@@ -517,7 +517,7 @@ def _wrap(
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    event_logger: Optional[EventLogger],
+    event_logger: Optional[Logger],
     to_wrap,
     wrapped,
     instance,
@@ -641,7 +641,7 @@ async def _awrap(
     choice_counter: Counter,
     duration_histogram: Histogram,
     exception_counter: Counter,
-    event_logger: Optional[EventLogger],
+    event_logger: Optional[Logger],
     to_wrap,
     wrapped,
     instance,
@@ -806,9 +806,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:
