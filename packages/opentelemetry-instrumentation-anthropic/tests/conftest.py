@@ -155,4 +155,10 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["x-api-key"]}
+    return {
+        "filter_headers": [
+            "x-api-key",
+            "anthropic-organization-id",
+            "request-id",
+        ]
+    }

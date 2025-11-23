@@ -47,62 +47,34 @@ interactions:
     uri: https://api.anthropic.com/v1/messages?beta=true
   response:
     body:
-      string: !!binary |
-        H4sIAAAAAAAAA3SRQY/TMBCF/8owZ7dqoxZYX1ZCggNIcEFCQFDk2o/EW8cO9qRLqPLfUaqtYEF7
-        Gmm+92aeZs7cJ4fAmm0wo8OqpBghq91qv6o21X5zU92wYu9Yc1/aZrPdurh7J7/efsaX17s2lcP7
-        u/T8DSuWacCiQimmBSvOKSwNU4ovYqKwYpuiIArrr+erXvBzIZei+VzzXTqiZk01f+omct6RdCCH
-        E0IakOmQYY40DnTvpaMPA+JHBPSQPN3SK1gzFiyWiSLg4KikHlQGY7Fer+kwymMT3ZtCJmQYN5Fk
-        Y48+toQT8kTFxzZczJHS92Wqz5QRjPgUS+eHZzUrqjkb8bFdUr+Yef6muEgamgxTUmTNiK6RMUd+
-        AAU/RkQL1nEMQfF4uZg+s4/DKI2kI2JhXVWVYmtsh8ZmXHY2jxWbK1/SP8Wu3mUBhg49sgnNvv9f
-        /4duu3/prDiN8ndr91JxQT55i0Y8Mmte/uxMdjzPvwEAAP//AwBUTNo5WgIAAA==
+      string: '{"type":"error","error":{"type":"api_error","message":"Internal server
+        error"},"request_id":"req_011CVQuoGU1xeC7NMufKoeUy"}'
     headers:
       CF-RAY:
-      - 9a30f7d1cfdb7d9e-TLV
+      - 9a310ed00ec27d9e-TLV
       Connection:
       - keep-alive
-      Content-Encoding:
-      - gzip
+      Content-Length:
+      - '123'
       Content-Type:
       - application/json
       Date:
-      - Sun, 23 Nov 2025 13:21:12 GMT
+      - Sun, 23 Nov 2025 13:36:56 GMT
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       X-Robots-Tag:
       - none
-      anthropic-organization-id:
-      - 617d109c-a187-4902-889d-689223d134aa
-      anthropic-ratelimit-input-tokens-limit:
-      - '2000000'
-      anthropic-ratelimit-input-tokens-remaining:
-      - '2000000'
-      anthropic-ratelimit-input-tokens-reset:
-      - '2025-11-23T13:21:11Z'
-      anthropic-ratelimit-output-tokens-limit:
-      - '400000'
-      anthropic-ratelimit-output-tokens-remaining:
-      - '400000'
-      anthropic-ratelimit-output-tokens-reset:
-      - '2025-11-23T13:21:12Z'
-      anthropic-ratelimit-tokens-limit:
-      - '2400000'
-      anthropic-ratelimit-tokens-remaining:
-      - '2400000'
-      anthropic-ratelimit-tokens-reset:
-      - '2025-11-23T13:21:11Z'
       cf-cache-status:
       - DYNAMIC
       request-id:
-      - req_011CVQtbqszdJeNPUoVMEFqc
-      retry-after:
-      - '49'
+      - req_011CVQuoGU1xeC7NMufKoeUy
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '3238'
+      - '5266'
+      x-should-retry:
+      - 'false'
     status:
-      code: 200
-      message: OK
+      code: 500
+      message: Internal Server Error
 version: 1
