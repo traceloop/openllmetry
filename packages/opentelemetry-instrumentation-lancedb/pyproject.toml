@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-lancedb"
-version = "0.48.0"
+version = "0.48.1"
 description = "OpenTelemetry Lancedb instrumentation"
 authors = [
   "Gal Kleinman <gal@traceloop.com>",
@@ -24,9 +24,9 @@ include = "opentelemetry/instrumentation/lancedb"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
+opentelemetry-api = "^1.38.0"
+opentelemetry-instrumentation = ">=0.59b0"
+opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
@@ -41,7 +41,7 @@ pytest-sugar = "1.0.0"
 vcrpy = "^6.0.1"
 pytest-recording = "^0.13.1"
 pytest-asyncio = "^0.23.7"
-opentelemetry-sdk = "^1.27.0"
+opentelemetry-sdk = "^1.38.0"
 lancedb = "^0.9.0"
 numpy = "^1.26.4"
 pandas = "^2.2.2"

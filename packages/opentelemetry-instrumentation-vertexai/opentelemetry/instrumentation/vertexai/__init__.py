@@ -5,7 +5,7 @@ import types
 from typing import Collection
 
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.instrumentation.vertexai.config import Config
@@ -337,11 +337,11 @@ class VertexAIInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if should_emit_events():
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
                 __name__,
                 __version__,
-                event_logger_provider=event_logger_provider,
+                logger_provider=logger_provider,
             )
 
         for wrapped_method in WRAPPED_METHODS:

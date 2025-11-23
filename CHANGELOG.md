@@ -1,3 +1,10 @@
+## v0.48.1 (2025-11-17)
+
+### Fix
+
+- **openai**: safe handle None tools value in responses api (#3447)
+- **mcp**: move exporter dependency to dev and test environment (#3445)
+
 ## v0.48.0 (2025-11-11)
 
 ### Feat

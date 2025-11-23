@@ -5,7 +5,7 @@ import os
 import time
 from typing import Collection, Union
 
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (_SUPPRESS_INSTRUMENTATION_KEY,
                                                  unwrap)
@@ -336,7 +336,7 @@ def _wrap(
     duration_histogram: Histogram,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -437,7 +437,7 @@ async def _awrap(
     duration_histogram: Histogram,
     streaming_time_to_first_token: Histogram,
     streaming_time_to_generate: Histogram,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -603,9 +603,9 @@ class WriterInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:
