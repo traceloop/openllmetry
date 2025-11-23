@@ -35,7 +35,6 @@ OUTPUT_FORMAT = {
 }
 
 
-@pytest.mark.skip(reason="Requires anthropic SDK >= 0.50.0 with structured outputs support")
 @pytest.mark.vcr
 def test_anthropic_structured_outputs_legacy(
     instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
