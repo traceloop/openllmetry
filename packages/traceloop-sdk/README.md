@@ -15,113 +15,182 @@ def create_joke():
     return completion.choices[0].message.content
 ```
 
-## Working with File Cells in Datasets
+## Working with Attachments in Datasets
 
-Datasets now support file columns that can store images, videos, audio files, and documents. You can either upload files to internal storage (S3) or link to external URLs.
+Datasets now support file attachments through a declarative API inspired by Braintrust. You can upload files to internal storage (S3) or link to external URLs using the new Attachment classes.
 
 ### File Types Supported
 
-- `IMAGE` - Images (PNG, JPEG, GIF, etc.)
-- `VIDEO` - Video files (MP4, AVI, etc.) or video URLs (YouTube, Vimeo)
-- `AUDIO` - Audio files (MP3, WAV, etc.) or audio URLs (Spotify, SoundCloud)
-- `FILE` - General files (PDF, TXT, DOC, etc.)
+- `FileCellType.IMAGE` - Images (PNG, JPEG, GIF, etc.)
+- `FileCellType.VIDEO` - Video files (MP4, AVI, etc.) or video URLs (YouTube, Vimeo)
+- `FileCellType.AUDIO` - Audio files (MP3, WAV, etc.) or audio URLs (Spotify, SoundCloud)
+- `FileCellType.FILE` - General files (PDF, TXT, DOC, etc.)
 
-### Upload a file to internal storage (S3):
+### Creating Datasets with Initial Attachments
+
+You can now create datasets with attachments directly in the row values:
 
 ```python
 from traceloop.sdk import Traceloop
-from traceloop.sdk.dataset.model import FileCellType
+from traceloop.sdk.dataset import Attachment, ExternalAttachment, FileCellType
+from traceloop.sdk.dataset.model import CreateDatasetRequest, ColumnDefinition, ColumnType
 
 Traceloop.init(api_key="your-api-key")
+datasets = Traceloop.get_datasets()
 
-# Get dataset and row
+# Create dataset request with attachments in row values
+dataset_request = CreateDatasetRequest(
+    slug="product-catalog",
+    name="Product Catalog with Media",
+    description="Products with images and videos",
+    columns=[
+        ColumnDefinition(slug="name", name="Product Name", type=ColumnType.STRING),
+        ColumnDefinition(slug="price", name="Price", type=ColumnType.NUMBER),
+        ColumnDefinition(slug="image", name="Product Image", type=ColumnType.FILE),
+        ColumnDefinition(slug="video", name="Demo Video", type=ColumnType.FILE),
+        ColumnDefinition(slug="manual", name="User Manual", type=ColumnType.FILE),
+    ],
+    rows=[
+        {
+            "name": "Smart Watch Pro",
+            "price": 299.99,
+            "image": Attachment(
+                file_path="/path/to/watch.jpg",
+                file_type=FileCellType.IMAGE,
+                metadata={"alt_text": "Smart Watch Pro"}
+            ),
+            "video": ExternalAttachment(
+                url="https://www.youtube.com/watch?v=demo123",
+                file_type=FileCellType.VIDEO,
+                metadata={"duration": "2:30"}
+            ),
+            "manual": Attachment(
+                file_path="/path/to/manual.pdf",
+                file_type=FileCellType.FILE
+            ),
+        },
+        {
+            "name": "Wireless Earbuds",
+            "price": 149.99,
+            "image": Attachment(
+                data=image_bytes,  # From memory
+                filename="earbuds.png",
+                content_type="image/png",
+                file_type=FileCellType.IMAGE
+            ),
+            "video": ExternalAttachment(
+                url="https://vimeo.com/demo456",
+                file_type=FileCellType.VIDEO
+            ),
+            "manual": None,  # No manual for this product
+        },
+    ]
+)
+
+# Create the dataset - attachments are automatically processed
+dataset = datasets.create(dataset_request)
+print(f"Created dataset: {dataset.slug}")
+
+# The dataset is created with all attachments processed
+for row in dataset.rows:
+    print(f"Product: {row.values['name']}")
+    if row.values.get('image'):
+        print(f"  Image: {row.values['image']['status']}")  # 'success' or 'failed'
+    if row.values.get('video'):
+        print(f"  Video URL: {row.values['video']['url']}")
+```
+
+### Adding Attachments to Existing Datasets
+
+For existing datasets, you can upload attachments to specific cells:
+
+```python
+from traceloop.sdk import Traceloop
+from traceloop.sdk.dataset import Attachment, ExternalAttachment, FileCellType
+
+Traceloop.init(api_key="your-api-key")
 datasets = Traceloop.get_datasets()
 dataset = datasets.get_by_slug("my-dataset")
 row = dataset.rows[0]
 
-# Upload an image file
-row.set_file_cell(
-    column_slug="screenshot",
-    file_path="/path/to/image.png",
-    file_type=FileCellType.IMAGE,
+# Upload a file attachment
+attachment = Attachment(
+    file_path="/path/to/document.pdf",
+    file_type=FileCellType.FILE,
+    metadata={"version": "1.0", "pages": 10}
+)
+ref = attachment.upload(datasets._http, dataset.slug, row.id, "document")
+
+# Link an external URL
+external = ExternalAttachment(
+    url="https://docs.google.com/document/d/abc123",
+    file_type=FileCellType.FILE,
+    metadata={"source": "Google Docs"}
+)
+ref = external.attach(datasets._http, dataset.slug, row.id, "specifications")
+```
+
+### Working with In-Memory Data
+
+You can create attachments from bytes data without saving to disk:
+
+```python
+# Generate or fetch data
+image_data = generate_chart()  # Returns bytes
+pdf_data = generate_report()   # Returns bytes
+
+# Create attachments from memory
+image_attachment = Attachment(
+    data=image_data,
+    filename="chart.png",
     content_type="image/png",
-    metadata={"description": "Product screenshot"}
-)
-
-# Upload with a thumbnail
-row.set_file_cell(
-    column_slug="product_image",
-    file_path="/path/to/large_image.jpg",
     file_type=FileCellType.IMAGE,
-    content_type="image/jpeg",
-    with_thumbnail=True,
-    thumbnail_path="/path/to/thumbnail.jpg"
+    metadata={"chart_type": "bar", "date": "2024-01-15"}
 )
 
-# Upload an audio file
-row.set_file_cell(
-    column_slug="podcast",
-    file_path="/path/to/episode.mp3",
-    file_type=FileCellType.AUDIO,
-    content_type="audio/mpeg",
-    metadata={"episode": "001", "duration": "45:00"}
-)
-
-# Upload a PDF document
-row.set_file_cell(
-    column_slug="manual",
-    file_path="/path/to/manual.pdf",
+pdf_attachment = Attachment(
+    data=pdf_data,
+    filename="report.pdf",
+    content_type="application/pdf",
     file_type=FileCellType.FILE,
-    content_type="application/pdf"
+    metadata={"report_type": "quarterly", "q": "Q4-2023"}
 )
+
+# Use in dataset creation
+dataset_request = CreateDatasetRequest(
+    slug="reports",
+    name="Generated Reports",
+    columns=[
+        ColumnDefinition(slug="title", name="Title", type=ColumnType.STRING),
+        ColumnDefinition(slug="chart", name="Chart", type=ColumnType.FILE),
+        ColumnDefinition(slug="report", name="Report", type=ColumnType.FILE),
+    ],
+    rows=[{
+        "title": "Q4 2023 Results",
+        "chart": image_attachment,
+        "report": pdf_attachment,
+    }]
+)
+
+dataset = datasets.create(dataset_request)
 ```
 
-### Link to external URLs:
+### Attachment Validation
+
+The Attachment class includes validation to ensure proper usage:
 
 ```python
-# Link to a YouTube video
-row.set_file_cell(
-    column_slug="demo_video",
-    url="https://www.youtube.com/watch?v=abc123",
-    file_type=FileCellType.VIDEO,
-    metadata={"title": "Product Demo", "duration": "5:30"}
-)
-
-# Link to a Spotify track
-row.set_file_cell(
-    column_slug="theme_song",
-    url="https://open.spotify.com/track/example",
-    file_type=FileCellType.AUDIO,
-    metadata={"artist": "Artist Name", "album": "Album Name"}
-)
-
-# Link to a Google Docs document
-row.set_file_cell(
-    column_slug="specifications",
-    url="https://docs.google.com/document/d/example",
-    file_type=FileCellType.FILE,
-    metadata={"source": "Google Docs", "last_updated": "2024-01-15"}
-)
-```
-
-### Error Handling
-
-The `set_file_cell` method includes validation to ensure proper usage:
-
-```python
-# This will raise ValueError - can't provide both file_path and url
-row.set_file_cell(
-    column_slug="file",
+# This will raise ValueError - can't provide both file_path and data
+attachment = Attachment(
     file_path="/path/to/file.txt",
-    url="https://example.com/file.txt"  # Error!
+    data=b"test data"  # Error!
 )
 
-# This will raise ValueError - must provide either file_path or url
-row.set_file_cell(column_slug="file")  # Error!
+# This will raise ValueError - must provide either file_path or data
+attachment = Attachment()  # Error!
 
-# This will raise FileNotFoundError if the file doesn't exist
-row.set_file_cell(
-    column_slug="file",
-    file_path="/nonexistent/file.txt"  # Error!
+# This will raise FileNotFoundError when uploading if file doesn't exist
+attachment = Attachment(
+    file_path="/nonexistent/file.txt"  # Error during upload!
 )
 ```
