@@ -35,10 +35,10 @@ def test_user_feedback_initialization(mock_http):
     assert feedback._app_name == "test-app"
 
 
-def test_create_basic_feedback(user_feedback, mock_http):
+def test_create_basic_feedback(user_feedback: UserFeedback, mock_http: Mock):
     """Test creating basic user feedback"""
     user_feedback.create(
-        annotation_task="task_123", entity_id="instance_456", tags={"sentiment": "positive"}
+        annotation_task="task_123", entity_instance_id="instance_456", tags={"sentiment": "positive"}
     )
 
     mock_http.post.assert_called_once_with(
@@ -56,11 +56,11 @@ def test_create_basic_feedback(user_feedback, mock_http):
     )
 
 
-def test_create_feedback_complex_tags(user_feedback, mock_http):
+def test_create_feedback_complex_tags(user_feedback: UserFeedback, mock_http: Mock):
     """Test creating user feedback with complex tags"""
     tags = {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]}
 
-    user_feedback.create(annotation_task="task_123", entity_id="instance_456", tags=tags)
+    user_feedback.create(annotation_task="task_123", entity_instance_id="instance_456", tags=tags)
 
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
@@ -77,13 +77,13 @@ def test_create_feedback_complex_tags(user_feedback, mock_http):
     )
 
 
-def test_create_feedback_parameter_validation(user_feedback):
+def test_create_feedback_parameter_validation(user_feedback: UserFeedback):
     """Test parameter validation for feedback creation"""
     with pytest.raises(ValueError, match="annotation_task is required"):
-        user_feedback.create(annotation_task="", entity_id="instance_456", tags={"sentiment": "positive"})
+        user_feedback.create(annotation_task="", entity_instance_id="instance_456", tags={"sentiment": "positive"})
 
-    with pytest.raises(ValueError, match="entity_id is required"):
-        user_feedback.create(annotation_task="task_123", entity_id="", tags={"sentiment": "positive"})
+    with pytest.raises(ValueError, match="entity_instance_id is required"):
+        user_feedback.create(annotation_task="task_123", entity_instance_id="", tags={"sentiment": "positive"})
 
     with pytest.raises(ValueError, match="tags cannot be empty"):
-        user_feedback.create(annotation_task="task_123", entity_id="instance_456", tags={})
+        user_feedback.create(annotation_task="task_123", entity_instance_id="instance_456", tags={})

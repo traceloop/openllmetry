@@ -50,6 +50,14 @@
         "outputFile": "reports/packages/traceloop-sdk/pylint.txt"
       }
     },
+    "type-check": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [],
+      "options": {
+        "command": "poetry run mypy",
+        "cwd": "packages/traceloop-sdk"
+      }
+    },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [

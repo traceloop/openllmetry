@@ -21,7 +21,7 @@ class BaseAnnotation:
     def create(
         self,
         annotation_task: str,
-        entity_id: str,
+        entity_instance_id: str,
         tags: Dict[str, Any],
     ) -> None:
         """Create an user feedback annotation for a specific task.
@@ -51,15 +51,15 @@ class BaseAnnotation:
 
         if not annotation_task:
             raise ValueError("annotation_task is required")
-        if not entity_id:
-            raise ValueError("entity_id is required")
+        if not entity_instance_id:
+            raise ValueError("entity_instance_id is required")
         if not tags:
             raise ValueError("tags cannot be empty")
 
         self._http.post(
             f"annotation-tasks/{annotation_task}/annotations",
             {
-                "entity_instance_id": entity_id,
+                "entity_instance_id": entity_instance_id,
                 "tags": tags,
                 "source": "sdk",
                 "flow": self._flow,
