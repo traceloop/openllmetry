@@ -757,7 +757,7 @@ async def test_astream_with_events_with_content(
     assert len(chunks) == 144
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 1
+    assert len(logs) == 2
 
     # Validate user message Event
     assert_message_in_logs(
@@ -802,7 +802,7 @@ async def test_astream_with_events_with_no_content(
     assert len(chunks) == 144
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 1
+    assert len(logs) == 2
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
