@@ -239,6 +239,15 @@ class Experiment:
         # Construct GitHub context
         repository = os.getenv("GITHUB_REPOSITORY")
         server_url = os.getenv("GITHUB_SERVER_URL", "https://github.com")
+        github_event_name = os.getenv("GITHUB_EVENT_NAME", "")
+
+        # Verify this is running in a pull request context
+        if github_event_name != "pull_request":
+            raise RuntimeError(
+                f"run_in_github() can only be used in pull_request workflow. "
+                f"Current event: {github_event_name}. "
+                "To run experiments locally, use the run() method instead."
+            )
 
         # Extract PR number from GITHUB_REF (format: "refs/pull/123/merge")
         github_ref = os.getenv("GITHUB_REF", "")
@@ -400,13 +409,7 @@ class Experiment:
         tasks = [asyncio.create_task(run_with_semaphore(row)) for row in rows]
 
         for completed_task in asyncio.as_completed(tasks):
-            try:
-                result = await completed_task
-                task_results.append(result)
-            except Exception as e:
-                task_results.append(TaskResult(
-                    error=str(e),
-                ))
-                continue
+            result = await completed_task
+            task_results.append(result)
 
         return task_results
