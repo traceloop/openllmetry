@@ -221,6 +221,7 @@ def test_create_dataset_with_mixed_attachments(datasets):
     os.unlink(test_file.name)
 
 
+@pytest.mark.vcr
 def test_create_dataset_with_in_memory_attachment(datasets):
     """Test creating dataset with Attachment from in-memory data."""
 
@@ -259,6 +260,7 @@ def test_create_dataset_with_in_memory_attachment(datasets):
     assert row.values["image"]["status"] == "success"
 
 
+@pytest.mark.vcr
 def test_create_dataset_without_attachments(datasets):
     """Test that create() method works normally for datasets without attachments."""
 
