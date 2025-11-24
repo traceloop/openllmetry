@@ -286,8 +286,6 @@ class Datasets:
             return request
 
         # Create a deep copy of rows to avoid modifying the original
-        import copy
-
         clean_rows = []
         for row in request.rows:
             clean_row = {}
