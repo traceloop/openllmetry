@@ -1,0 +1,238 @@
+interactions:
+- request:
+    body: '{"slug": "test-external-url", "name": "Test External URL", "description":
+      null, "columns": [{"slug": "video", "name": "Video", "type": "file"}], "rows":
+      [{"video": null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '171'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidcdrtw001e01r5dpaj14lb","slug":"test-external-url","name":"Test
+        External URL","columns":{"video":{"slug":"video","name":"Video","type":"file"}},"total_columns":1,"created_at":"2025-11-24T16:09:10.436228861Z","updated_at":"2025-11-24T16:09:10.436228917Z","rows":[{"id":"cmidcdru1001f01r5bp36hc4b","row_index":1,"values":{"video":null},"created_at":"2025-11-24T16:09:10.444214426Z","updated_at":"2025-11-24T16:09:10.444214426Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3a2b4fbb610bed-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '438'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 16:09:10 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - e131c210c0b70c752cee1766f974b23c
+      x-kong-upstream-latency:
+      - '15'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"type": "video", "url": "https://www.youtube.com/watch?v=example", "metadata":
+      {}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '83'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-external-url/rows/cmidcdru1001f01r5bp36hc4b/cells/video/external-url
+  response:
+    body:
+      string: '{"storage":"external","success":true,"url":"https://www.youtube.com/watch?v=example"}'
+    headers:
+      CF-RAY:
+      - 9a3a2b50fd425591-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 16:09:10 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - 4a52065fe7935b3d41c5da7c9f3ccd34
+      x-kong-upstream-latency:
+      - '12'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"slug": "test-external-url", "name": "Test External URL", "description":
+      null, "columns": [{"slug": "video", "name": "Video", "type": "file"}], "rows":
+      [{"video": null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '171'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidceiv1001g01r5oyxixw05","slug":"test-external-url","name":"Test
+        External URL","columns":{"video":{"slug":"video","name":"Video","type":"file"}},"total_columns":1,"created_at":"2025-11-24T16:09:45.469472315Z","updated_at":"2025-11-24T16:09:45.469472405Z","rows":[{"id":"cmidceiv6001h01r5odn89gid","row_index":1,"values":{"video":null},"created_at":"2025-11-24T16:09:45.477132645Z","updated_at":"2025-11-24T16:09:45.477132645Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3a2c2aa8b758a1-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '438'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 16:09:45 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - 8b75804253bc6604d195677ca4ad196a
+      x-kong-upstream-latency:
+      - '13'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"type": "video", "url": "https://www.youtube.com/watch?v=example", "metadata":
+      {}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '83'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-external-url/rows/cmidceiv6001h01r5odn89gid/cells/video/external-url
+  response:
+    body:
+      string: '{"storage":"external","success":true,"url":"https://www.youtube.com/watch?v=example"}'
+    headers:
+      CF-RAY:
+      - 9a3a2c2beea1997f-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 16:09:45 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 347c686e553aca5cbdd1ff50c33cc648
+      x-kong-upstream-latency:
+      - '14'
+    status:
+      code: 200
+      message: OK
+version: 1
