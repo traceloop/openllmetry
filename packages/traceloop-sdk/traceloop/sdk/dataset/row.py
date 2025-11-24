@@ -1,3 +1,4 @@
+import requests
 from typing import Dict, Any, Optional, TYPE_CHECKING
 import os
 
@@ -91,13 +92,14 @@ class Row(BaseDatasetEntity):
         content_type: Optional[str] = None,
     ) -> bool:
         """Upload file to presigned S3 URL (private method)."""
-        import requests
-
         with open(file_path, "rb") as f:
             headers = {}
             if content_type:
                 headers["Content-Type"] = content_type
-            response = requests.put(upload_url, data=f, headers=headers)
+            try:
+                response = requests.put(upload_url, data=f, headers=headers)
+            except requests.RequestException:
+                return False
             return response.status_code in [200, 201, 204]
 
     def _confirm_file_upload(
