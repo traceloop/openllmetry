@@ -1,3 +1,10 @@
+## v0.49.1 (2025-11-24)
+
+### Fix
+
+- **langchain**: allow configuration of metadata key prefix (#3367)
+- **openai**: record service_tier attribute (#3458)
+
 ## v0.49.0 (2025-11-23)
 
 ### Feat
