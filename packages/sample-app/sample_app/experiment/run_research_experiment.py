@@ -48,7 +48,7 @@ async def research_task(row):
     return {
         "completion": answer,
         "question": query,
-        "sentenece": answer
+        "sentence": answer
     }
 
 

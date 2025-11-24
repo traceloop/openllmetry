@@ -54,7 +54,7 @@ class Experiment:
             task: Function to run on each dataset row
             evaluators: List of evaluator slugs to run
             experiment_slug: Slug for this experiment run
-            experiment_metadata: Metadata for this experiment (an experiment holds all the experinent runs)
+            experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Related reference for this experiment run
             aux: Auxiliary information for this experiment run
             stop_on_error: Whether to stop on first error (default: False)
@@ -242,17 +242,17 @@ class Experiment:
 
         # Extract PR number from GITHUB_REF (format: "refs/pull/123/merge")
         github_ref = os.getenv("GITHUB_REF", "")
+        pr_number = None
+        if github_ref.startswith("refs/pull/"):
+            pr_number = github_ref.split("/")[2]
 
-        if not repository or not github_ref:
+        if not repository or not github_ref or not pr_number:
             raise RuntimeError(
                 "GITHUB_REPOSITORY and GITHUB_REF must be set in the environment. "
                 "To run experiments locally, use the run() method instead."
             )
 
-        pr_number = None
-        if github_ref.startswith("refs/pull/"):
-            pr_number = github_ref.split("/")[2]
-        pr_url = f"{server_url}/{repository}/pull/{pr_number}" if pr_number and repository else None
+        pr_url = f"{server_url}/{repository}/pull/{pr_number}"
 
         github_context = GithubContext(
             repository=repository,
@@ -405,7 +405,6 @@ class Experiment:
                 task_results.append(result)
             except Exception as e:
                 task_results.append(TaskResult(
-                    input=completed_task.task_input,
                     error=str(e),
                 ))
                 continue
