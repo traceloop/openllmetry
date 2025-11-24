@@ -33,8 +33,7 @@ class HTTPClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            status_code = e.response.status_code if hasattr(e, 'response') and e.response is not None else 'Unknown'
-            print(Fore.RED + f"Error making request to {path} (HTTP {status_code}): {str(e)}" + Fore.RESET)
+            print(Fore.RED + f"Error making request to {path}: {str(e)}" + Fore.RESET)
             return None
 
     def get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Any:

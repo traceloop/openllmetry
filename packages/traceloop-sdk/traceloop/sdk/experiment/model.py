@@ -79,9 +79,10 @@ class TaskResult(BaseModel):
 class GithubContext(BaseModel):
     """Model for GitHub context"""
 
-    pr_url: Optional[str] = None
-    commit_hash: Optional[str] = None
-    actor: Optional[str] = None
+    repository: str
+    pr_url: str
+    commit_hash: str
+    actor: str
 
 class RunInGithubRequest(BaseModel):
     """Model for bulk GitHub experiment execution request"""

@@ -42,15 +42,13 @@ async def generate_research_response(question: str) -> str:
 
 async def research_task(row):
     """Task function that processes each dataset row"""
-    question = row.get("question", "")
-    answer = await generate_research_response(question)
-
-    print(f"Question: {question}")
-    print(f"Answer: {answer[:100]}...")
+    query = row.get("query", "")
+    answer = await generate_research_response(query)
 
     return {
         "completion": answer,
-        "question": question,
+        "question": query,
+        "sentenece": answer
     }
 
 
@@ -61,21 +59,16 @@ async def main():
     # Execute tasks locally and send results to backend
     response = await client.experiment.run_in_github(
         task=research_task,
-        dataset_slug="research-questions",
-        dataset_version="v1",
-        evaluators=["accuracy", "relevance"],
+        dataset_slug="research-queries",
+        dataset_version="v2",
+        evaluators=["research-relevancy", "categories", "research-facts-counter"],
         experiment_slug="research-exp",
     )
 
     # Print response
     print("\n✅ Experiment completed and submitted!")
-    print(f"Experiment ID: {response.experiment_id}")
     print(f"Experiment Slug: {response.experiment_slug}")
     print(f"Run ID: {response.run_id}")
-    print(f"Status: {response.status}")
-
-    if response.message:
-        print(f"Message: {response.message}")
 
     print("\n📝 The backend will run evaluators and post results to your PR.")
     print("   Check your GitHub PR for the results comment.")

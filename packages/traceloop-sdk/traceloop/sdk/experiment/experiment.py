@@ -235,7 +235,6 @@ class Experiment:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
-        # Execute all tasks locally
         task_results = await self._execute_tasks(rows, task)
 
         # Construct GitHub context
@@ -244,6 +243,13 @@ class Experiment:
 
         # Extract PR number from GITHUB_REF (format: "refs/pull/123/merge")
         github_ref = os.getenv("GITHUB_REF", "")
+
+        if not repository or not github_ref:
+            raise RuntimeError(
+                "GITHUB_REPOSITORY and GITHUB_REF must be set in the environment. "
+                "To run experiments locally, use the run() method instead."
+            )
+
         pr_number = None
         if github_ref.startswith("refs/pull/"):
             pr_number = github_ref.split("/")[2]
@@ -251,6 +257,7 @@ class Experiment:
 
        
         github_context = GithubContext(
+            repository=repository,
             pr_url=pr_url,
             commit_hash=os.getenv("GITHUB_SHA", ""),
             actor=os.getenv("GITHUB_ACTOR", ""),
