@@ -54,7 +54,7 @@
       "executor": "@nxlv/python:run-commands",
       "outputs": [],
       "options": {
-        "command": "poetry run mypy",
+        "command": "poetry run mypy traceloop/sdk",
         "cwd": "packages/traceloop-sdk"
       }
     },

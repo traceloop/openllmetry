@@ -8,7 +8,6 @@ class UserFeedback(BaseAnnotation):
     def __init__(self, http: HTTPClient, app_name: str):
         super().__init__(http, app_name, "user_feedback")
 
-
     def create(
         self,
         annotation_task: str,

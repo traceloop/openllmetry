@@ -7,8 +7,6 @@ from typing import (
     Callable,
     Any,
     cast,
-    ParamSpec,
-    Awaitable,
 )
 import inspect
 import warnings
@@ -29,10 +27,7 @@ from traceloop.sdk.tracing.tracing import (
 from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
-P = ParamSpec("P")
-
-R = TypeVar("R")
-F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
+F = TypeVar("F")
 
 
 def _truncate_json_if_needed(json_str: str) -> str:

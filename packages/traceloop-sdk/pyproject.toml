@@ -83,6 +83,7 @@ pytest-sugar = "1.0.0"
 mypy = "^1.18.2"
 types-requests = "^2.31.0"
 types-colorama = "^0.4.15"
+pandas-stubs = "*"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.31.1"
@@ -114,16 +115,7 @@ namespace_packages = true
 explicit_package_bases = true
 plugins = ["pydantic.mypy"]
 
-# Target specific folders for strict type checking
-files = [
-    "traceloop/sdk/annotation",
-    "traceloop/sdk/client",
-    "traceloop/sdk/dataset",
-    "traceloop/sdk/evaluator",
-    "traceloop/sdk/experiment",
-]
-
-# Exclude other folders (blacklist approach - new folders will be checked by default)
+# Blacklist approach - all folders checked except those excluded below
 exclude = [
     "traceloop/sdk/decorators",
     "traceloop/sdk/prompts",

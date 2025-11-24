@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Callable, Any, ParamSpec, Awaitable
+from typing import Optional, TypeVar, Callable
 import warnings
 
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
@@ -8,9 +8,7 @@ from traceloop.sdk.decorators.base import (
     entity_method,
 )
 
-P = ParamSpec("P")
-R = TypeVar("R")
-F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
+F = TypeVar("F")
 
 
 def task(

@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 import logging
 import sys
+from typing import Optional, Any
 from posthog import Posthog
 from traceloop.sdk.version import __version__
 
@@ -13,7 +14,9 @@ class Telemetry:
     ANON_ID_PATH = str(Path.home() / ".cache" / "traceloop" / "telemetry_anon_id")
     UNKNOWN_ANON_ID = "UNKNOWN"
 
-    _posthog: Posthog = None
+    _posthog: Optional[Posthog] = None
+    _telemetry_enabled: bool
+    _curr_anon_id: Optional[str]
 
     def __new__(cls) -> "Telemetry":
         if not hasattr(cls, "instance"):
@@ -65,30 +68,31 @@ class Telemetry:
 
     def capture(self, event: str, event_properties: dict = {}) -> None:
         try:  # don't fail if telemetry fails
-            if self._telemetry_enabled:
+            if self._telemetry_enabled and self._posthog is not None:
                 self._posthog.capture(
                     self._anon_id(), event, {**self._context(), **event_properties}
                 )
         except Exception:
             pass
 
-    def log_exception(self, exception: Exception):
+    def log_exception(self, exception: Exception) -> Any:
         try:  # don't fail if telemetry fails
-            return self._posthog.capture(
-                self._anon_id(),
-                "exception",
-                {
-                    **self._context(),
-                    "exception": str(exception),
-                },
-            )
+            if self._posthog is not None:
+                return self._posthog.capture(
+                    self._anon_id(),
+                    "exception",
+                    {
+                        **self._context(),
+                        "exception": str(exception),
+                    },
+                )
         except Exception:
             pass
 
-    def feature_enabled(self, key: str):
+    def feature_enabled(self, key: str) -> bool | None:
         try:  # don't fail if telemetry fails
-            if self._telemetry_enabled:
-                return self._posthog.feature_enabled(key, self._anon_id())
+            if self._telemetry_enabled and self._posthog is not None:
+                return self._posthog.feature_enabled(key, self._anon_id())  # type: ignore[no-any-return]
         except Exception:
             pass
         return False
