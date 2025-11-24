@@ -1,6 +1,6 @@
 import csv
-from typing import List, Optional, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     import pandas as pd
@@ -10,17 +10,17 @@ except ImportError:
     PANDAS_AVAILABLE = False
 
 
+from traceloop.sdk.client.http import HTTPClient
+from traceloop.sdk.dataset.attachment import Attachment, ExternalAttachment
+from traceloop.sdk.dataset.dataset import Dataset
 from traceloop.sdk.dataset.model import (
     ColumnDefinition,
-    ValuesMap,
+    ColumnType,
     CreateDatasetRequest,
     CreateDatasetResponse,
-    ColumnType,
     DatasetMetadata,
+    ValuesMap,
 )
-from traceloop.sdk.dataset.dataset import Dataset
-from traceloop.sdk.dataset.attachment import Attachment, ExternalAttachment
-from traceloop.sdk.client.http import HTTPClient
 
 
 class Datasets:
@@ -251,7 +251,9 @@ class Datasets:
 
         return slug
 
-    def _extract_attachments(self, request: CreateDatasetRequest) -> Dict[int, Dict[str, Any]]:
+    def _extract_attachments(
+        self, request: CreateDatasetRequest
+    ) -> Dict[int, Dict[str, Any]]:
         """
         Extract attachment objects from row values.
 
@@ -285,6 +287,7 @@ class Datasets:
 
         # Create a deep copy of rows to avoid modifying the original
         import copy
+
         clean_rows = []
         for row in request.rows:
             clean_row = {}
@@ -301,7 +304,7 @@ class Datasets:
             name=request.name,
             description=request.description,
             columns=request.columns,
-            rows=clean_rows
+            rows=clean_rows,
         )
 
     def _process_attachments(
@@ -316,7 +319,9 @@ class Datasets:
         """
         for row_idx, row_attachments in attachments.items():
             if row_idx >= len(dataset.rows):
-                print(f"Warning: Row index {row_idx} out of range, skipping attachments")
+                print(
+                    f"Warning: Row index {row_idx} out of range, skipping attachments"
+                )
                 continue
 
             row = dataset.rows[row_idx]
@@ -343,10 +348,12 @@ class Datasets:
                         "metadata": ref.metadata,
                     }
                 except Exception as e:
-                    print(f"Warning: Failed to process attachment for row {row_idx}, column {col_slug}: {e}")
+                    print(
+                        f"Warning: Failed to process attachment for row {row_idx}, column {col_slug}: {e}"
+                    )
                     # Mark as failed in row values
                     row.values[col_slug] = {
                         "type": "file",
                         "status": "failed",
-                        "error": str(e)
+                        "error": str(e),
                     }
