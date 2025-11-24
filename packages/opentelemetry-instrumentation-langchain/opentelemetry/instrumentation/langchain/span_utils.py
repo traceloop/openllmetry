@@ -211,11 +211,6 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
     for generations in response.generations:
         for generation in generations:
             prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
-            _set_span_attribute(
-                span,
-                f"{prefix}.role",
-                _message_type_to_role(generation.type),
-            )
 
             # Try to get content from various sources
             content = None
@@ -244,6 +239,11 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
 
             # Handle tool calls and function calls
             if hasattr(generation, "message") and generation.message:
+                _set_span_attribute(
+                    span,
+                    f"{prefix}.role",
+                    _message_type_to_role(generation.message.type),
+                )
                 # Handle legacy function_call format (single function call)
                 if generation.message.additional_kwargs.get("function_call"):
                     _set_span_attribute(
@@ -268,12 +268,8 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                     else generation.message.additional_kwargs.get("tool_calls")
                 )
                 if tool_calls and isinstance(tool_calls, list):
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.role",
-                        "assistant",
-                    )
                     _set_chat_tool_calls(span, prefix, tool_calls)
+
             i += 1
 
 
