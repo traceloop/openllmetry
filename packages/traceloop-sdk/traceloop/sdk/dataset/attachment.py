@@ -8,7 +8,6 @@ import mimetypes
 import requests
 from typing import Optional, Dict, Any, Union, BinaryIO
 from pathlib import Path
-from datetime import datetime
 
 from traceloop.sdk.client.http import HTTPClient
 from .model import (
@@ -87,7 +86,9 @@ class Attachment:
         if content_type:
             self.content_type = content_type
         elif file_path:
-            self.content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            self.content_type = (
+                mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            )
         else:
             self.content_type = "application/octet-stream"
 
@@ -168,8 +169,7 @@ class Attachment:
         success = self._upload_to_s3(upload_response.upload_url)
         if not success:
             self._confirm_upload(
-                http_client, dataset_slug, row_id, column_slug,
-                status="failed"
+                http_client, dataset_slug, row_id, column_slug, status="failed"
             )
             raise Exception(f"Failed to upload file to S3: {self.filename}")
 
@@ -182,8 +182,12 @@ class Attachment:
         final_metadata["size_bytes"] = self._get_file_size()
 
         self._confirm_upload(
-            http_client, dataset_slug, row_id, column_slug,
-            status="success", metadata=final_metadata
+            http_client,
+            dataset_slug,
+            row_id,
+            column_slug,
+            status="success",
+            metadata=final_metadata,
         )
 
         # Return reference to uploaded file

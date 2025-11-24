@@ -3,7 +3,7 @@
 import pytest
 import tempfile
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from traceloop.sdk.dataset import (
     Attachment,
     ExternalAttachment,
