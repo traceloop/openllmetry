@@ -1,15 +1,20 @@
 """Tests for creating datasets with initial attachments."""
 
-import pytest
-import tempfile
 import os
+import tempfile
 from unittest.mock import patch
+
+import pytest
 from traceloop.sdk.dataset import (
     Attachment,
     ExternalAttachment,
     FileCellType,
 )
-from traceloop.sdk.dataset.model import CreateDatasetRequest, ColumnDefinition, ColumnType
+from traceloop.sdk.dataset.model import (
+    ColumnDefinition,
+    ColumnType,
+    CreateDatasetRequest,
+)
 
 
 @pytest.mark.vcr
@@ -34,24 +39,23 @@ def test_create_dataset_with_external_attachments(datasets):
                 "video": ExternalAttachment(
                     url="https://www.youtube.com/watch?v=demo1",
                     file_type=FileCellType.VIDEO,
-                    metadata={"title": "Widget Pro Demo", "duration": "3:45"}
+                    metadata={"title": "Widget Pro Demo", "duration": "3:45"},
                 ),
                 "manual": ExternalAttachment(
                     url="https://docs.google.com/document/d/widget-manual",
                     file_type=FileCellType.FILE,
-                    metadata={"pages": 25}
+                    metadata={"pages": 25},
                 ),
             },
             {
                 "name": "Gadget Plus",
                 "price": 149.99,
                 "video": ExternalAttachment(
-                    url="https://vimeo.com/demo2",
-                    file_type=FileCellType.VIDEO
+                    url="https://vimeo.com/demo2", file_type=FileCellType.VIDEO
                 ),
                 "manual": None,  # No manual for this product
             },
-        ]
+        ],
     )
 
     # Create the dataset
@@ -117,15 +121,15 @@ def test_create_dataset_with_file_attachments_mocked(datasets):
                 "image": Attachment(
                     file_path=test_image.name,
                     file_type=FileCellType.IMAGE,
-                    metadata={"alt_text": "Product A image"}
+                    metadata={"alt_text": "Product A image"},
                 ),
                 "manual": Attachment(
                     file_path=test_pdf.name,
                     file_type=FileCellType.FILE,
-                    metadata={"version": "1.0"}
+                    metadata={"version": "1.0"},
                 ),
             }
-        ]
+        ],
     )
 
     # Mock the S3 upload to succeed
@@ -179,23 +183,20 @@ def test_create_dataset_with_mixed_attachments(datasets):
             {
                 "id": "001",
                 "file": Attachment(
-                    file_path=test_file.name,
-                    file_type=FileCellType.FILE
+                    file_path=test_file.name, file_type=FileCellType.FILE
                 ),
                 "video": ExternalAttachment(
-                    url="https://youtube.com/watch?v=test",
-                    file_type=FileCellType.VIDEO
+                    url="https://youtube.com/watch?v=test", file_type=FileCellType.VIDEO
                 ),
             },
             {
                 "id": "002",
                 "file": None,  # No file for this row
                 "video": ExternalAttachment(
-                    url="https://vimeo.com/test",
-                    file_type=FileCellType.VIDEO
+                    url="https://vimeo.com/test", file_type=FileCellType.VIDEO
                 ),
             },
-        ]
+        ],
     )
 
     # Mock S3 upload
@@ -240,10 +241,10 @@ def test_create_dataset_with_in_memory_attachment(datasets):
                     data=image_data,
                     filename="test.jpg",
                     content_type="image/jpeg",
-                    file_type=FileCellType.IMAGE
+                    file_type=FileCellType.IMAGE,
                 ),
             }
-        ]
+        ],
     )
 
     # Mock S3 upload
@@ -271,7 +272,7 @@ def test_create_dataset_without_attachments(datasets):
         rows=[
             {"id": "A", "value": 100},
             {"id": "B", "value": 200},
-        ]
+        ],
     )
 
     dataset = datasets.create(dataset_request)
