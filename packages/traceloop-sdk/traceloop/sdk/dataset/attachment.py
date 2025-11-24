@@ -3,20 +3,21 @@ Attachment classes for handling file uploads and downloads in datasets.
 Simplified implementation inspired by Braintrust's attachment pattern.
 """
 
-import os
 import mimetypes
-import requests
-from typing import Optional, Dict, Any
+import os
 from pathlib import Path
+from typing import Any, Dict, Optional
 
+import requests
 from traceloop.sdk.client.http import HTTPClient
+
 from .model import (
+    ExternalURLRequest,
     FileCellType,
     FileStorageType,
+    UploadStatusRequest,
     UploadURLRequest,
     UploadURLResponse,
-    UploadStatusRequest,
-    ExternalURLRequest,
 )
 
 
@@ -63,7 +64,9 @@ class Attachment:
         if content_type:
             self.content_type = content_type
         elif file_path:
-            self.content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            self.content_type = (
+                mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            )
         else:
             self.content_type = "application/octet-stream"
 
@@ -135,7 +138,11 @@ class Attachment:
             raise Exception(f"Failed to upload {self.filename}")
 
         # Upload thumbnail if provided
-        if self.with_thumbnail and upload_response.thumbnail_upload_url and self.thumbnail_path:
+        if (
+            self.with_thumbnail
+            and upload_response.thumbnail_upload_url
+            and self.thumbnail_path
+        ):
             with open(self.thumbnail_path, "rb") as f:
                 requests.put(upload_response.thumbnail_upload_url, data=f.read())
 
@@ -161,9 +168,7 @@ class Attachment:
         try:
             file_data = self._get_file_data()
             response = requests.put(
-                upload_url,
-                data=file_data,
-                headers={"Content-Type": self.content_type}
+                upload_url, data=file_data, headers={"Content-Type": self.content_type}
             )
             return response.status_code in [200, 201, 204]
         except Exception:
