@@ -84,6 +84,7 @@ class GithubContext(BaseModel):
     commit_hash: str
     actor: str
 
+
 class RunInGithubRequest(BaseModel):
     """Model for bulk GitHub experiment execution request"""
 

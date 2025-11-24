@@ -1,4 +1,3 @@
-import re
 import cuid
 import asyncio
 import json
@@ -255,7 +254,6 @@ class Experiment:
             pr_number = github_ref.split("/")[2]
         pr_url = f"{server_url}/{repository}/pull/{pr_number}" if pr_number and repository else None
 
-       
         github_context = GithubContext(
             repository=repository,
             pr_url=pr_url,
@@ -298,7 +296,6 @@ class Experiment:
             )
 
         return RunInGithubResponse(**response)
-
 
     def _init_experiment(
         self,
@@ -362,7 +359,7 @@ class Experiment:
                     continue
 
         return rows
-    
+
     async def _execute_tasks(
         self,
         rows: List[Dict[str, Any]],
