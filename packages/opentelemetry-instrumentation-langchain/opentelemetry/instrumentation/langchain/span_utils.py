@@ -284,6 +284,18 @@ def set_chat_response_usage(
     record_token_usage: bool,
     model_name: str
 ) -> None:
+    """
+    Aggregate token usage from an LLM response, record it on the provided span, and optionally record token counts to a histogram.
+    
+    This function sums input, output, total, and cache-read token counts from response.generations' usage metadata (looking for keys such as "input_tokens"/"prompt_tokens", "output_tokens"/"completion_tokens", and "input_token_details.cache_read"). If any of these counts are greater than zero, the corresponding span attributes are set. If record_token_usage is True, input and output token counts are also recorded in token_histogram with attributes identifying the vendor and response model. Any errors encountered while parsing usage metadata are ignored and do not stop span attribute recording.
+    
+    Parameters:
+        span (Span): The span on which to set usage attributes.
+        response (LLMResult): The LLM response whose generations contain usage metadata.
+        token_histogram (Histogram): Histogram to record token counts when record_token_usage is True.
+        record_token_usage (bool): If True, record input/output token counts to token_histogram.
+        model_name (str): The model name to attach to histogram records as the response model.
+    """
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0

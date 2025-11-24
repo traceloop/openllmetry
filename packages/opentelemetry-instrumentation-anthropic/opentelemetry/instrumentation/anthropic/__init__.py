@@ -185,6 +185,20 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """
+    Record token usage and choice counts from an Anthropic response into the provided span and optional metric instruments.
+    
+    This function will await coroutine responses and call parse() on wrapped responses when present. It extracts input (prompt + cache read + cache creation) and output token counts from response. If usage data is absent, it falls back to counting prompt or completion tokens via the provided Anthropic client. When metric instruments are provided, it records input/output token values to token_histogram and increments choice_counter with the number of choices. It then sets span attributes for input tokens, output tokens, total tokens, and cache-related input tokens.
+    
+    Parameters:
+        span: The tracing span to annotate with token and choice attributes.
+        anthropic: Anthropic client or compatible object used to count tokens when usage metadata is not available.
+        request: The original request object used to compute prompt token counts when needed.
+        response: The response object, which may be a coroutine, a with_raw_response wrapper exposing parse(), or a concrete response containing usage/content/completion attributes.
+        metric_attributes (dict): Additional attributes to attach to metric recordings.
+        token_histogram (Histogram): Optional histogram instrument to record token counts.
+        choice_counter (Counter): Optional counter instrument to record the number of generation choices.
+    """
     import inspect
 
     # If we get a coroutine, await it
@@ -302,6 +316,20 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """
+    Record token usage metrics and set related span attributes for an Anthropic response.
+    
+    Extracts input and output token counts from the response when available (or computes them from the request/response using the provided Anthropic client), records input/output token values to token_histogram with metric_attributes, increments choice_counter with the number of generated choices, and sets span attributes for input, output, total, and cache-related token counts. If the response is a coroutine or cannot be parsed, token processing is skipped.
+    
+    Parameters:
+        span: The tracing span on which to set token-related attributes.
+        anthropic: Anthropic client/SDK instance used to compute token counts when response usage data is not present.
+        request: The original request object used to compute prompt/input tokens if needed.
+        response: The response object (or a wrapper with a parse() method); coroutine responses are ignored.
+        metric_attributes (dict): Additional attributes to attach to recorded metrics.
+        token_histogram (Histogram | None): Histogram instrument for recording token counts; if None, metrics are not recorded.
+        choice_counter (Counter | None): Counter instrument for recording number of generated choices; if None, choice counts are not recorded.
+    """
     import inspect
 
     # If we get a coroutine, we cannot process it in sync context
