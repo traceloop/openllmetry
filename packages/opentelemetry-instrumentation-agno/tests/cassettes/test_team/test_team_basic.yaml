@@ -1,0 +1,172 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"developer","content":"You are the leader of a team
+      and sub-teams of AI Agents.\nYour task is to coordinate the team to complete
+      the user''s request.\n\nHere are the members in your team:\n<team_members>\n
+      - Agent 1:\n   - ID: agent1\n   - Name: Agent1\n - Agent 2:\n   - ID: agent2\n   -
+      Name: Agent2\n</team_members>\n\n<how_to_respond>\n- Your role is to delegate
+      tasks to members in your team with the highest likelihood of completing the
+      user''s request.\n- Carefully analyze the tools available to the members and
+      their roles before delegating tasks.\n- You cannot use a member tool directly.
+      You can only delegate tasks to members.\n- When you delegate a task to another
+      member, make sure to include:\n  - member_id (str): The ID of the member to
+      delegate the task to. Use only the ID of the member, not the ID of the team
+      followed by the ID of the member.\n  - task (str): A clear description of the
+      task. Determine the best way to describe the task to the member.\n- You can
+      delegate tasks to multiple members at once.\n- You must always analyze the responses
+      from members before responding to the user.\n- After analyzing the responses
+      from the members, if you feel the task has been completed, you can stop and
+      respond to the user.\n- If you are NOT satisfied with the responses from the
+      members, you should re-assign the task to a different member.\n- For simple
+      greetings, thanks, or questions about the team itself, you should respond directly.\n-
+      For all work requests, tasks, or questions requiring expertise, route to appropriate
+      team members.\n</how_to_respond>"},{"role":"user","content":"What is 1 + 1?"}],"model":"gpt-4o-mini","tools":[{"type":"function","function":{"name":"delegate_task_to_member","description":"Use
+      this function to delegate a task to the selected team member.\nYou must provide
+      a clear and concise description of the task the member should achieve AND the
+      expected output.","parameters":{"type":"object","properties":{"member_id":{"type":"string","description":"(str)
+      The ID of the member to delegate the task to. Use only the ID of the member,
+      not the ID of the team followed by the ID of the member."},"task":{"type":"string","description":"(str)
+      A clear and concise description of the task the member should achieve."}},"required":["member_id","task"],"additionalProperties":false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2349'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jJJBb9swDIXv/hUCr4sLJ3HcJtdi7aU7dNehMBSJdpTJkirSw4oi/32Q
+        ncZu1wG76KCPj3qP4msmBBgNOwHqIFl1wea3+uXrHvdHeih6/vYYm+/3/d0jh8Ic6RYWSeH3R1T8
+        prpSvgsW2Xg3YhVRMqauy+tqXZWrdbUdQOc12iRrA+elzzvjTL4qVmVeXOfLm7P64I1Cgp34kQkh
+        xOtwJp9O42/YiWLxdtMhkWwRdpciISB6m25AEhli6RgWE1TeMbrB+lJ8EUuBz720JFZX86qITU8y
+        OXW9tTMgnfMsU9LB39OZnC6OrG9D9Hv6IIXGOEOHOqIk79LrxD7AQE+ZEE9D8v5dGAjRd4Fr9j9x
+        eK68Kcd+MA18otszY8/SzkTb9eKTdrVGlsbSbHSgpDqgnqTTnGWvjZ+BbBb6bzOf9R6DG9f+T/sJ
+        KIWBUdchojbqfeCpLGJax3+VXYY8GAbC+MsorNlgTB+hsZG9HZcE6IUYu7oxrsUYohk3pQn1pipk
+        U+Fms4XslP0BAAD//wMAExb70DcDAAA=
+    headers:
+      CF-RAY:
+      - 9a1802a92bb2c22c-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:30 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=qfaDZQv2phcDvwqvX6GyFcJ1sWvZAe4nYKZxzyMzNL0-1763642370-1.0.1.1-8p3Uw61_AlP9ro7r5nUpB4jNtnwcj_TnTaLiYlMdtnaKmvbvL__k_6jblj5Mf23PYilFukjJc07lEKEpX3qmQ1hnxyBgHDM9OsAZCOIbjDY;
+        path=/; expires=Thu, 20-Nov-25 13:09:30 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=HCYwDFbEfKYFULXMBTKw2uh21fyJxKSyl54MA21Np.k-1763642370106-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '443'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '459'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999610'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b3462d2c73ff460fbcf83537f7bbfb4b
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"216f3598-abde-4bf1-9dde-8a351d78aede","run_id":"054eb675-44a7-4e38-a7a5-60d430f4fca2","data":{"team_id":"basicteam","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"member_count":2,"has_knowledge":false,"has_tools":false},"sdk_version":"2.2.13","type":"team"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '358'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: 054eb675-44a7-4e38-a7a5-60d430f4fca2","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:30 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+version: 1

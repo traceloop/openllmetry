@@ -1,0 +1,147 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"developer","content":"A simple test agent"},{"role":"user","content":"What
+      is 2 + 2?"}],"model":"gpt-4o-mini"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '132'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jJJBb9swDIXv/hUCr4sLx4nTNLd2GDDsVKDHoTBUiXaUyqIq0WuLIv99
+        kJ3G7tYBu/jAj496j+ZbJgQYDTsBai9Zdd7mX/WLuf7ubENVvNFY3dzd4vPTj+Lx8A0PsEgKejig
+        4nfVhaLOW2RDbsQqoGRMU5eXm9VmXayq7QA60miTrPWcrynvjDN5WZTrvLjMl9uTek9GYYSd+JkJ
+        IcTb8E0+ncYX2Ili8V7pMEbZIuzOTUJAIJsqIGM0kaVjWExQkWN0g/VSfBGlwKde2ijWF/OugE0f
+        ZXLqemtnQDpHLFPSwd/9iRzPjiy1PtBD/EMKjXEm7uuAMpJLr0cmDwM9ZkLcD8n7D2HAB+o810yP
+        ODxXrsZxMO17gtsTY2Jpp/JqufhkWK2RpbFxtjhQUu1RT8ppy7LXhmYgm0X+28tns8fYxrX/M34C
+        SqFn1LUPqI36mHdqC5iO8V9t5xUPhiFi+GUU1mwwpN+gsZG9HU8E4mtk7OrGuBaDD2a8k8bX1aaQ
+        zQar6gqyY/YbAAD//wMAl7wyUzUDAAA=
+    headers:
+      CF-RAY:
+      - 9a17d18c5a8bed42-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:05:58 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=j1HmyBbmOo_vbqZNBbzZ3YT3rhrsFkgJ9oQuviJq6ec-1763640358-1.0.1.1-7J4DSSib19X13jK70GwaQlYf_aXs.MciMb2ityRo6Xd4o.p0MTU1HBAJJ4CyyHjTl483JuWEIEBFiOpqJrhrgInMMO3f4rIj30FDVB0SntA;
+        path=/; expires=Thu, 20-Nov-25 12:35:58 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=b3Ibgiaod9sVeSM84TmRwkxMXvNX_z8qpiHCpV2IaBc-1763640358812-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '368'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '471'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999990'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_3c4257e04e00489ebf04c0c229286d89
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"c4b3dbc5-a39e-466b-9d52-84e1c3ef6fa1","run_id":"bbe01911-2e87-4695-b5de-726489543051","data":{"agent_id":"testagent","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"has_tools":true,"has_memory":false,"has_culture":false,"has_reasoning":false,"has_knowledge":false,"has_input_schema":false,"has_output_schema":false,"has_team":false},"sdk_version":"2.2.13","type":"agent"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '471'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: bbe01911-2e87-4695-b5de-726489543051","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:05:59 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+version: 1

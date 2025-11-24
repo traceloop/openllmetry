@@ -1,3 +1,17 @@
+## v0.49.0 (2025-11-23)
+
+### Feat
+
+- **agno**: add instrumentation for agno framework (#3452)
+
+## v0.48.2 (2025-11-23)
+
+### Fix
+
+- add structured outputs schema logging for Anthropic and Gemini (#3454)
+- **openai**: use SpanAttributes instead of GenAIAttributes for cache token attributes (#3442)
+- migrate from events api to log records for otel 1.37.0+ compatibility (#3453)
+
 ## v0.48.1 (2025-11-17)
 
 ### Fix

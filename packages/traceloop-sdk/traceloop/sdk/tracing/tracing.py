@@ -35,7 +35,9 @@ from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
 from typing import Callable, Dict, List, Optional, Set, Union
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_AGENT_NAME
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_AGENT_NAME,
+)
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -87,7 +89,9 @@ class TracerWrapper(object):
 
             obj.__image_uploader = image_uploader
             obj.__resource = Resource.create(TracerWrapper.resource_attributes)
-            obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
+            obj.__tracer_provider = init_tracer_provider(
+                resource=obj.__resource, sampler=sampler
+            )
 
             # Handle multiple processors case
             if processor is not None and isinstance(processor, list):
@@ -95,7 +99,9 @@ class TracerWrapper(object):
                 for proc in processor:
                     original_on_start = proc.on_start
 
-                    def chained_on_start(span, parent_context=None, orig=original_on_start):
+                    def chained_on_start(
+                        span, parent_context=None, orig=original_on_start
+                    ):
                         if orig:
                             orig(span, parent_context)
                         obj._span_processor_on_start(span, parent_context)
@@ -105,7 +111,9 @@ class TracerWrapper(object):
 
                     obj.__tracer_provider.add_span_processor(proc)
 
-                Telemetry().capture("tracer:init", {"processor": "multiple", "count": len(processor)})
+                Telemetry().capture(
+                    "tracer:init", {"processor": "multiple", "count": len(processor)}
+                )
 
             # Handle single processor case (backward compatibility)
             elif processor is not None:
@@ -142,8 +150,7 @@ class TracerWrapper(object):
                     )
 
                 obj.__spans_processor = get_default_span_processor(
-                    disable_batch=disable_batch,
-                    exporter=exporter
+                    disable_batch=disable_batch, exporter=exporter
                 )
 
                 if span_postprocess_callback:
@@ -155,6 +162,7 @@ class TracerWrapper(object):
                         span_postprocess_callback(span)
                         # Then call the original to ensure normal processing
                         original_on_end(span)
+
                     obj.__spans_processor.on_end = wrapped_on_end
 
                 obj.__spans_processor.on_start = obj._span_processor_on_start
@@ -231,9 +239,9 @@ class TracerWrapper(object):
         cls.__disabled = disabled
 
     def flush(self):
-        if hasattr(self, '_TracerWrapper__spans_processor'):
+        if hasattr(self, "_TracerWrapper__spans_processor"):
             self.__spans_processor.force_flush()
-        elif hasattr(self, '_TracerWrapper__spans_processors'):
+        elif hasattr(self, "_TracerWrapper__spans_processors"):
             for processor in self.__spans_processors:
                 processor.force_flush()
 
@@ -368,7 +376,9 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
             )
 
         prompt_template_variables = get_value("prompt_template_variables")
-        if prompt_template_variables is not None and isinstance(prompt_template_variables, dict):
+        if prompt_template_variables is not None and isinstance(
+            prompt_template_variables, dict
+        ):
             for key, value in prompt_template_variables.items():
                 span.set_attribute(
                     f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
@@ -380,7 +390,7 @@ def get_default_span_processor(
     disable_batch: bool = False,
     api_endpoint: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
-    exporter: Optional[SpanExporter] = None
+    exporter: Optional[SpanExporter] = None,
 ) -> SpanProcessor:
     """
     Creates and returns the default Traceloop span processor.
@@ -409,7 +419,9 @@ def get_default_span_processor(
     return processor
 
 
-def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) -> TracerProvider:
+def init_tracer_provider(
+    resource: Resource, sampler: Optional[Sampler] = None
+) -> TracerProvider:
     provider: TracerProvider = None
     default_provider: TracerProvider = get_tracer_provider()
 
@@ -438,16 +450,17 @@ def init_instrumentations(
 ):
     block_instruments = block_instruments or set()
     # explictly test for None since empty set is a False value
-    instruments = instruments if instruments is not None else set(
-        Instruments
-    )
+    instruments = instruments if instruments is not None else set(Instruments)
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
 
     instrument_set = False
     for instrument in instruments:
-        if instrument == Instruments.ALEPHALPHA:
+        if instrument == Instruments.AGNO:
+            if init_agno_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.ALEPHALPHA:
             if init_alephalpha_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.ANTHROPIC:
@@ -468,7 +481,9 @@ def init_instrumentations(
             if init_crewai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-            if init_google_generativeai_instrumentor(should_enrich_metrics, base64_image_uploader):
+            if init_google_generativeai_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
                 instrument_set = True
         elif instrument == Instruments.GROQ:
             if init_groq_instrumentor():
@@ -537,9 +552,7 @@ def init_instrumentations(
             if init_urllib3_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.VERTEXAI:
-            if init_vertexai_instrumentor(
-                should_enrich_metrics, base64_image_uploader
-            ):
+            if init_vertexai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
             if init_watsonx_instrumentor():
@@ -572,7 +585,8 @@ def init_instrumentations(
 
 
 def init_openai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
         if is_package_installed("openai"):
@@ -596,7 +610,8 @@ def init_openai_instrumentor(
 
 
 def init_anthropic_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
         if is_package_installed("anthropic"):
@@ -656,7 +671,9 @@ def init_pinecone_instrumentor():
 
 def init_qdrant_instrumentor():
     try:
-        if is_package_installed("qdrant_client") or is_package_installed("qdrant-client"):
+        if is_package_installed("qdrant_client") or is_package_installed(
+            "qdrant-client"
+        ):
             Telemetry().capture("instrumentation:qdrant:init")
             from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
@@ -691,10 +708,13 @@ def init_chroma_instrumentor():
 
 
 def init_google_generativeai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
-        if is_package_installed("google-generativeai") or is_package_installed("google-genai"):
+        if is_package_installed("google-generativeai") or is_package_installed(
+            "google-genai"
+        ):
             Telemetry().capture("instrumentation:gemini:init")
             from opentelemetry.instrumentation.google_generativeai import (
                 GoogleGenerativeAiInstrumentor,
@@ -954,7 +974,8 @@ def init_replicate_instrumentor():
 
 
 def init_vertexai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
         if is_package_installed("google-cloud-aiplatform"):
@@ -1026,6 +1047,24 @@ def init_writer_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Writer instrumentor: {e}")
+        Telemetry().log_exception(e)
+    return False
+
+
+def init_agno_instrumentor():
+    try:
+        if is_package_installed("agno"):
+            Telemetry().capture("instrumentation:agno:init")
+            from opentelemetry.instrumentation.agno import AgnoInstrumentor
+
+            instrumentor = AgnoInstrumentor(
+                exception_logger=lambda e: Telemetry().log_exception(e),
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Agno instrumentor: {e}")
         Telemetry().log_exception(e)
     return False
 

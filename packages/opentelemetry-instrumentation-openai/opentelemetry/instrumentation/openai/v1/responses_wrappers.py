@@ -42,6 +42,7 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
+    openai_attributes as OpenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -132,6 +133,10 @@ class TracedData(pydantic.BaseModel):
     request_reasoning_effort: Optional[str] = pydantic.Field(default=None)
     response_reasoning_effort: Optional[str] = pydantic.Field(default=None)
 
+    # OpenAI service tier
+    request_service_tier: Optional[str] = pydantic.Field(default=None)
+    response_service_tier: Optional[str] = pydantic.Field(default=None)
+
 
 responses: dict[str, TracedData] = {}
 
@@ -189,6 +194,8 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, traced_response.request_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, traced_response.response_id)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, traced_response.response_model)
+    _set_span_attribute(span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, traced_response.request_service_tier)
+    _set_span_attribute(span, OpenAIAttributes.OPENAI_RESPONSE_SERVICE_TIER, traced_response.response_service_tier)
     if usage := traced_response.usage:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
@@ -483,6 +490,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                     )
                 ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+                request_service_tier=kwargs.get("service_tier"),
+                response_service_tier=existing_data.get("response_service_tier"),
             )
         except Exception:
             traced_data = None
@@ -546,6 +555,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 )
             ),
             response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+            request_service_tier=existing_data.get("request_service_tier", kwargs.get("service_tier")),
+            response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
@@ -621,6 +632,8 @@ async def async_responses_get_or_create_wrapper(
                     )
                 ),
                 response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+                request_service_tier=kwargs.get("service_tier"),
+                response_service_tier=existing_data.get("response_service_tier"),
             )
         except Exception:
             traced_data = None
@@ -685,6 +698,8 @@ async def async_responses_get_or_create_wrapper(
                 )
             ),
             response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
+            request_service_tier=existing_data.get("request_service_tier", kwargs.get("service_tier")),
+            response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
@@ -791,6 +806,8 @@ class ResponseStream(ObjectProxy):
             ),
             request_reasoning_effort=self._request_kwargs.get("reasoning", {}).get("effort"),
             response_reasoning_effort=None,
+            request_service_tier=self._request_kwargs.get("service_tier"),
+            response_service_tier=None,
         )
 
         self._complete_response_data = None

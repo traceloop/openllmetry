@@ -8,9 +8,6 @@ from openai.types.chat.chat_completion_message_tool_call import (
 )
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -1325,8 +1322,8 @@ async def test_chat_async_context_propagation_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(
-        EventAttributes.EVENT_NAME) == event_name
+    # In OpenTelemetry 1.37.0+, event_name is a field on LogRecord, not in attributes
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
@@ -1498,6 +1495,27 @@ def test_chat_reasoning(instrument_legacy, span_exporter,
 
     assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
     assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
+
+
+@pytest.mark.vcr
+def test_chat_with_service_tier(instrument_legacy, span_exporter, openai_client):
+    openai_client.chat.completions.create(
+        model="gpt-5",
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello"
+            }
+        ],
+        service_tier="priority",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+    span = spans[-1]
+
+    assert span.attributes["openai.request.service_tier"] == "priority"
+    assert span.attributes["openai.response.service_tier"] == "priority"
 
 
 def test_chat_exception(instrument_legacy, span_exporter, openai_client):
