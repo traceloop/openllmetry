@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.49.1"
+version = "0.49.2"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
     "Gal Kleinman <gal@traceloop.com>",
@@ -71,7 +71,6 @@ tenacity = ">=8.2.3, <10.0"
 pydantic = ">=1"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
-posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
 cuid = "^0.4"
 
@@ -80,6 +79,10 @@ autopep8 = "^2.2.0"
 flake8 = "7.0.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
+mypy = "^1.18.2"
+types-requests = "^2.31.0"
+types-colorama = "^0.4.15"
+pandas-stubs = "*"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.31.1"
@@ -94,6 +97,44 @@ pandas = ">=1.0.0"
 
 [tool.poetry.extras]
 datasets = ["pandas"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+check_untyped_defs = true
+strict_equality = true
+namespace_packages = true
+explicit_package_bases = true
+plugins = ["pydantic.mypy"]
+
+# Blacklist approach - all folders checked except those excluded below
+exclude = [
+    "traceloop/sdk/decorators",
+    "traceloop/sdk/prompts",
+    "traceloop/sdk/tracing",
+    "traceloop/sdk/utils",
+    "traceloop/sdk/__init__.py",
+    "tests/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "cuid.*",
+    "posthog.*",
+]
+ignore_missing_imports = true
+
+[pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [build-system]
 requires = ["poetry-core"]

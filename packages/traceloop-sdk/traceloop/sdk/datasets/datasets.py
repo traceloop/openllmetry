@@ -1,5 +1,6 @@
 import csv
 import logging
+from typing import List, Optional, cast
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -129,6 +130,10 @@ class Datasets:
 
             reader = csv.DictReader(csvfile, delimiter=delimiter)
 
+            # TODO: Handle None case for fieldnames more gracefully
+            if reader.fieldnames is None:
+                raise ValueError("CSV file has no headers")
+
             for field_name in reader.fieldnames:
                 columns_definition.append(
                     ColumnDefinition(
@@ -186,8 +191,9 @@ class Datasets:
                 )
             )
 
+        # TODO: Pandas returns Hashable keys, should ensure they're strings
         rows = [
-            {self._slugify(k): v for k, v in row.items()}
+            {self._slugify(str(k)): v for k, v in row.items()}
             for row in df.to_dict(orient="records")
         ]
 
@@ -208,14 +214,14 @@ class Datasets:
         result = self._http.get(f"datasets/{slug}/versions/{version}")
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
-        return result
+        return cast(str, result)
 
     def get_version_jsonl(self, slug: str, version: str) -> str:
         """Get a specific version of a dataset as a JSONL string"""
         result = self._http.get(f"datasets/{slug}/versions/{version}/jsonl")
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
-        return result
+        return cast(str, result)
 
     def _create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""

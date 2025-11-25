@@ -86,7 +86,7 @@ class Dataset(BaseDatasetEntity):
         self.columns.append(column)
         return column
 
-    def _create_columns(self, raw_columns: Dict[str, ColumnDefinition]):
+    def _create_columns(self, raw_columns: Dict[str, ColumnDefinition]) -> None:
         """Create Column objects from API response which includes column IDs"""
         for column_slug, column_def in raw_columns.items():
             column = Column(
@@ -98,7 +98,7 @@ class Dataset(BaseDatasetEntity):
             )
             self.columns.append(column)
 
-    def _create_rows(self, raw_rows: List[RowObject]):
+    def _create_rows(self, raw_rows: List[RowObject]) -> None:
         for _, row_obj in enumerate(raw_rows):
             row = Row(
                 http=self._http,

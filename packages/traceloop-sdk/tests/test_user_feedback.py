@@ -35,7 +35,7 @@ def test_user_feedback_initialization(mock_http):
     assert feedback._app_name == "test-app"
 
 
-def test_create_basic_feedback(user_feedback, mock_http):
+def test_create_basic_feedback(user_feedback: UserFeedback, mock_http: Mock):
     """Test creating basic user feedback"""
     user_feedback.create(
         annotation_task="task_123", entity_id="instance_456", tags={"sentiment": "positive"}
@@ -56,7 +56,7 @@ def test_create_basic_feedback(user_feedback, mock_http):
     )
 
 
-def test_create_feedback_complex_tags(user_feedback, mock_http):
+def test_create_feedback_complex_tags(user_feedback: UserFeedback, mock_http: Mock):
     """Test creating user feedback with complex tags"""
     tags = {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]}
 
@@ -77,7 +77,7 @@ def test_create_feedback_complex_tags(user_feedback, mock_http):
     )
 
 
-def test_create_feedback_parameter_validation(user_feedback):
+def test_create_feedback_parameter_validation(user_feedback: UserFeedback):
     """Test parameter validation for feedback creation"""
     with pytest.raises(ValueError, match="annotation_task is required"):
         user_feedback.create(annotation_task="", entity_id="instance_456", tags={"sentiment": "positive"})

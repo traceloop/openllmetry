@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Dict
+from typing import Dict, Optional, Any
 
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
     OTLPMetricExporter as GRPCExporter,
@@ -20,14 +20,14 @@ from opentelemetry import metrics
 
 
 class MetricsWrapper(object):
-    resource_attributes: dict = {}
-    endpoint: str = None
+    resource_attributes: Dict[Any, Any] = {}
+    endpoint: Optional[str] = None
     # if it needs headers?
     headers: Dict[str, str] = {}
-    __metrics_exporter: MetricExporter = None
-    __metrics_provider: MeterProvider = None
+    __metrics_exporter: Optional[MetricExporter] = None
+    __metrics_provider: Optional[MeterProvider] = None
 
-    def __new__(cls, exporter: MetricExporter = None) -> "MetricsWrapper":
+    def __new__(cls, exporter: Optional[MetricExporter] = None) -> "MetricsWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(MetricsWrapper, cls).__new__(cls)
             if not MetricsWrapper.endpoint:
@@ -66,7 +66,7 @@ def init_metrics_exporter(endpoint: str, headers: Dict[str, str]) -> MetricExpor
 
 
 def init_metrics_provider(
-    exporter: MetricExporter, resource_attributes: dict = None
+    exporter: MetricExporter, resource_attributes: Optional[Dict[Any, Any]] = None
 ) -> MeterProvider:
     resource = (
         Resource.create(resource_attributes)

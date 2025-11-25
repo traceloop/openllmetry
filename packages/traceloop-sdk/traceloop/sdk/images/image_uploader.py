@@ -6,22 +6,26 @@ import requests
 
 
 class ImageUploader:
-    def __init__(self, base_url, api_key):
+    def __init__(self, base_url: str, api_key: str) -> None:
         self.base_url = base_url
         self.api_key = api_key
         self.logger = logging.getLogger(__name__)
 
-    def upload_base64_image(self, trace_id, span_id, image_name, image_file):
-        asyncio.run(self.aupload_image_file(trace_id, span_id, image_name, image_file))
+    def upload_base64_image(
+        self, trace_id: str, span_id: str, image_name: str, image_file: str
+    ) -> None:
+        asyncio.run(self.aupload_base64_image(trace_id, span_id, image_name, image_file))
 
-    async def aupload_base64_image(self, trace_id, span_id, image_name, image_file):
+    async def aupload_base64_image(
+        self, trace_id: str, span_id: str, image_name: str, image_file: str
+    ) -> str:
         url = self._get_image_url(trace_id, span_id, image_name)
 
         await self._async_upload(url, image_file)
 
         return url
 
-    def _get_image_url(self, trace_id, span_id, image_name):
+    def _get_image_url(self, trace_id: str, span_id: str, image_name: str) -> str:
         response = requests.post(
             f"{self.base_url}/v2/traces/{trace_id}/spans/{span_id}/images",
             json={
@@ -33,9 +37,9 @@ class ImageUploader:
             },
         )
 
-        return response.json()["url"]
+        return response.json()["url"]  # type: ignore[no-any-return]
 
-    async def _async_upload(self, url, base64_image):
+    async def _async_upload(self, url: str, base64_image: str) -> None:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",

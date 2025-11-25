@@ -14,7 +14,7 @@ class HTTPClient:
         self.api_key = api_key
         self.version = version
 
-    def _headers(self):
+    def _headers(self) -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {self.api_key}",
             "X-Traceloop-SDK-Version": self.version,
