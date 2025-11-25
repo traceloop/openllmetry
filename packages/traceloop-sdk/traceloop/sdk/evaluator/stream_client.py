@@ -52,13 +52,13 @@ class SSEClient:
         except Exception as e:
             raise Exception(f"Unexpected error in SSE stream: {e}")
 
-    async def _handle_sse_response(self, response) -> ExecutionResponse:
+    async def _handle_sse_response(self, response: httpx.Response) -> ExecutionResponse:
         """Handle SSE response: check status and parse result"""
         if response.status_code != 200:
             error_text = await response.aread()
-            raise Exception(
-                f"Failed to stream results: {response.status_code}, body: {error_text}"
-            )
+            # TODO: Fix bytes formatting - should decode error_text or use !r
+            error_msg = f"Failed to stream results: {response.status_code}, body: {error_text}"  # type: ignore[str-bytes-safe]  # noqa: E501
+            raise Exception(error_msg)
 
         response_text = await response.aread()
         return self._parse_sse_result(response_text.decode())

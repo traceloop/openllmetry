@@ -6,7 +6,7 @@ import typing
 import requests
 
 from threading import Thread, Event
-from typing import Dict
+from typing import Dict, Any
 from tenacity import (
     RetryError,
     retry,
@@ -51,7 +51,7 @@ class Fetcher:
             ),
         )
 
-    def run(self):
+    def run(self) -> None:
         refresh_data(
             self._base_url,
             self._api_key,
@@ -61,10 +61,10 @@ class Fetcher:
         self._exit_monitor.start()
         self._poller_thread.start()
 
-    def post(self, api: str, body: Dict[str, str]):
+    def post(self, api: str, body: Dict[str, str]) -> None:
         post_url(f"{self._base_url}/v1/traceloop/{api}", self._api_key, body)
 
-    def api_post(self, api: str, body: Dict[str, typing.Any]):
+    def api_post(self, api: str, body: Dict[str, typing.Any]) -> None:
         try:
             post_url(f"{self._base_url}/v2/{api}", self._api_key, body)
         except Exception as e:
@@ -83,7 +83,7 @@ class RetryIfServerError(retry_if_exception):
         super().__init__(lambda e: check_http_error(e))
 
 
-def check_http_error(e):
+def check_http_error(e: BaseException) -> bool:
     return isinstance(e, requests.exceptions.HTTPError) and (
         500 <= e.response.status_code < 600
     )
@@ -94,7 +94,7 @@ def check_http_error(e):
     stop=stop_after_attempt(MAX_RETRIES),
     retry=RetryIfServerError(),
 )
-def fetch_url(url: str, api_key: str):
+def fetch_url(url: str, api_key: str) -> Any:
     response = requests.get(
         url,
         headers={
@@ -114,7 +114,7 @@ def fetch_url(url: str, api_key: str):
         return response.json()
 
 
-def post_url(url: str, api_key: str, body: Dict[str, typing.Any]):
+def post_url(url: str, api_key: str, body: Dict[str, typing.Any]) -> None:
     response = requests.post(
         url,
         headers={
@@ -135,7 +135,7 @@ def thread_func(
     api_key: str,
     stop_polling_event: Event,
     seconds_interval: float = 5.0,
-):
+) -> None:
     while not stop_polling_event.is_set():
         try:
             refresh_data(base_url, api_key, prompt_registry, content_allow_list)
@@ -151,7 +151,7 @@ def refresh_data(
     api_key: str,
     prompt_registry: PromptRegistry,
     content_allow_list: ContentAllowList,
-):
+) -> None:
     response = fetch_url(f"{base_url}/v1/traceloop/prompts", api_key)
     prompt_registry.load(response)
 
@@ -159,7 +159,7 @@ def refresh_data(
     content_allow_list.load(response)
 
 
-def monitor_exit(exit_event: Event):
+def monitor_exit(exit_event: Event) -> None:
     main_thread = threading.main_thread()
     main_thread.join()
     exit_event.set()
