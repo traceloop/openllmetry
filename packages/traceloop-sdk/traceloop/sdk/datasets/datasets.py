@@ -12,9 +12,9 @@ except ImportError:
 
 
 from traceloop.sdk.client.http import HTTPClient
-from traceloop.sdk.dataset.attachment import Attachment, ExternalAttachment
-from traceloop.sdk.dataset.dataset import Dataset
-from traceloop.sdk.dataset.model import (
+from traceloop.sdk.datasets.attachment import Attachment, ExternalAttachment
+from traceloop.sdk.datasets.dataset import Dataset
+from traceloop.sdk.datasets.model import (
     ColumnDefinition,
     ColumnType,
     CreateDatasetRequest,

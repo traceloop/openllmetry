@@ -7,7 +7,7 @@ import tempfile
 from typing import Optional
 from datetime import datetime
 from traceloop.sdk import Traceloop
-from traceloop.sdk.dataset import Dataset, ColumnType, Column, Row
+from traceloop.sdk.datasets import Dataset, ColumnType, Column, Row
 import pandas as pd
 import openai
 

@@ -5,12 +5,12 @@ import tempfile
 from unittest.mock import patch
 
 import pytest
-from traceloop.sdk.dataset import (
+from traceloop.sdk.datasets import (
     Attachment,
     ExternalAttachment,
     FileCellType,
 )
-from traceloop.sdk.dataset.model import (
+from traceloop.sdk.datasets.model import (
     ColumnDefinition,
     ColumnType,
     CreateDatasetRequest,

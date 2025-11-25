@@ -1,6 +1,6 @@
 import pytest
-from traceloop.sdk.dataset.dataset import Dataset
-from traceloop.sdk.dataset.model import DatasetMetadata
+from traceloop.sdk.datasets.dataset import Dataset
+from traceloop.sdk.datasets.model import DatasetMetadata
 
 
 @pytest.mark.vcr

@@ -13,17 +13,17 @@ import os
 import tempfile
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.dataset import (
+from traceloop.sdk.datasets import (
     Attachment,
+    Datasets,
     ExternalAttachment,
     FileCellType,
 )
-from traceloop.sdk.dataset.model import (
+from traceloop.sdk.datasets.model import (
     ColumnDefinition,
     ColumnType,
     CreateDatasetRequest,
 )
-from traceloop.sdk.datasets import Datasets
 
 
 def example_external_attachments():
