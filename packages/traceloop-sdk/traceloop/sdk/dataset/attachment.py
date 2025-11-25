@@ -138,13 +138,16 @@ class Attachment:
             raise Exception(f"Failed to upload {self.filename}")
 
         # Upload thumbnail if provided
-        if (
-            self.with_thumbnail
-            and upload_response.thumbnail_upload_url
-            and self.thumbnail_path
-        ):
-            with open(self.thumbnail_path, "rb") as f:
-                requests.put(upload_response.thumbnail_upload_url, data=f.read())
+        if self.with_thumbnail and upload_response.thumbnail_upload_url:
+            if self.thumbnail_data is not None:
+                thumb_bytes = self.thumbnail_data
+            elif self.thumbnail_path:
+                with open(self.thumbnail_path, "rb") as f:
+                    thumb_bytes = f.read()
+            else:
+                thumb_bytes = None
+            if thumb_bytes is not None:
+                requests.put(upload_response.thumbnail_upload_url, data=thumb_bytes)
 
         # Confirm upload
         metadata = self.metadata.copy()
