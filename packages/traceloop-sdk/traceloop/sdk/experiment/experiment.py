@@ -2,7 +2,7 @@ import cuid
 import asyncio
 import json
 import os
-from typing import Any, List, Callable, Optional, Tuple, Dict
+from typing import Any, List, Callable, Optional, Tuple, Dict, Awaitable, Union
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.evaluator.evaluator import Evaluator
@@ -36,7 +36,7 @@ class Experiment:
 
     async def run(
         self,
-        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorDetails]] = None,
@@ -52,7 +52,7 @@ class Experiment:
         Otherwise, will run the experiment locally.
 
         Args:
-            task: Function to run on each dataset row
+            task: Async function to run on each dataset row
             dataset_slug: Slug of the dataset to use
             dataset_version: Version of the dataset to use
             evaluators: List of evaluator slugs to run
@@ -87,11 +87,10 @@ class Experiment:
                 stop_on_error=stop_on_error,
                 wait_for_results=wait_for_results,
             )
-        
-    
+
     async def _run_locally(
         self,
-        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorDetails]] = None,
@@ -106,7 +105,7 @@ class Experiment:
 
         Args:
             dataset_slug: Slug of the dataset to use
-            task: Function to run on each dataset row
+            task: Async function to run on each dataset row
             evaluators: List of evaluator slugs to run
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
@@ -160,17 +159,15 @@ class Experiment:
 
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResponse:
             try:
-                # TODO: Fix type annotation - task should return Awaitable, not dict
-                task_result = await task(row)  # type: ignore[misc]
-                # TODO: Fix type - task_input should accept Optional[Dict]
+                task_result = await task(row)
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,
-                    task_input=row,  # type: ignore[arg-type]
+                    task_input=row,
                     task_output=task_result,
                 ).id
 
-                eval_results = {}
+                eval_results: Dict[str, Union[Dict[str, Any], str]] = {}
                 if evaluator_details:
                     for evaluator_slug, evaluator_version in evaluator_details:
                         try:
@@ -197,13 +194,11 @@ class Experiment:
                                     input=task_result,
                                 )
 
-                                # TODO: Fix type - eval_results should accept Union[Dict, str]
                                 msg = f"Triggered execution of {evaluator_slug}"
-                                eval_results[evaluator_slug] = msg  # type: ignore[assignment]
+                                eval_results[evaluator_slug] = msg
 
                         except Exception as e:
-                            # TODO: Fix type - eval_results should accept Union[Dict, str]
-                            eval_results[evaluator_slug] = f"Error: {str(e)}"  # type: ignore[assignment]
+                            eval_results[evaluator_slug] = f"Error: {str(e)}"
 
                 return TaskResponse(
                     task_result=task_result,
@@ -245,7 +240,7 @@ class Experiment:
 
     async def _run_in_github(
         self,
-        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorDetails]] = None,
@@ -262,7 +257,7 @@ class Experiment:
         4. Backend runs evaluators and posts PR comment
 
         Args:
-            task: Function to run on each dataset row
+            task: Async function to run on each dataset row
             dataset_slug: Slug of the dataset to use
             dataset_version: Version of the dataset
             evaluators: List of evaluator slugs or (slug, version) tuples to run
@@ -398,7 +393,7 @@ class Experiment:
         self,
         experiment_slug: str,
         experiment_run_id: str,
-        task_input: Dict[str, Any],
+        task_input: Optional[Dict[str, Any]],
         task_output: Dict[str, Any],
     ) -> CreateTaskResponse:
         body = CreateTaskRequest(
@@ -433,7 +428,7 @@ class Experiment:
     async def _execute_tasks(
         self,
         rows: List[Dict[str, Any]],
-        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
     ) -> List[TaskResult]:
         """Execute tasks locally with concurrency control
 
@@ -447,7 +442,7 @@ class Experiment:
         """
         task_results: List[TaskResult] = []
 
-        async def run_single_row(row) -> TaskResult:
+        async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResult:
             try:
                 task_output = await task(row)
                 return TaskResult(
