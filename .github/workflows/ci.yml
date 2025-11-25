@@ -74,6 +74,7 @@ jobs:
         run: npm cache clean --force || true
       - run: npx nx affected -t install --with dev
       - run: npx nx affected -t lint --parallel=3
+      - run: npx nx affected -t type-check --parallel=3
 
   build-packages:
     name: Build Packages

@@ -29,7 +29,7 @@ class BaseAnnotation:
         Args:
             annotation_task (str): The ID/slug of the annotation task to report to.
                 Can be found at app.traceloop.com/annotation_tasks/:annotation_task_id
-            entity_id (str): The ID of the specific entity instance being annotated, should be reported
+            entity_id (str): The ID of the specific entity being annotated, should be reported
                 in the association properties
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
@@ -39,7 +39,7 @@ class BaseAnnotation:
             client = Client(api_key="your-key")
             client.annotation.create(
                 annotation_task="task_123",
-                entity_id="instance_456",
+                entity_id="456",
                 tags={
                     "sentiment": "positive",
                     "relevance": 0.95,
