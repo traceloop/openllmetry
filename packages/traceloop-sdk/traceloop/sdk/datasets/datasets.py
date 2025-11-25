@@ -268,7 +268,7 @@ class Datasets:
         Returns:
             Dictionary mapping row index to column slug to attachment object
         """
-        attachments = {}
+        attachments: Dict[int, Dict[str, Any]] = {}
         if request.rows:
             for row_idx, row in enumerate(request.rows):
                 for col_slug, value in row.items():
@@ -296,7 +296,7 @@ class Datasets:
         # Create a deep copy of rows to avoid modifying the original
         clean_rows = []
         for row in request.rows:
-            clean_row = {}
+            clean_row: Dict[str, Any] = {}
             for col_slug, value in row.items():
                 if isinstance(value, (Attachment, ExternalAttachment)):
                     clean_row[col_slug] = None
@@ -323,6 +323,9 @@ class Datasets:
             dataset: The created dataset
             attachments: Dictionary mapping row index to column slug to attachment object
         """
+        if not dataset.rows:
+            return
+
         for row_idx, row_attachments in attachments.items():
             if row_idx >= len(dataset.rows):
                 logger.warning(

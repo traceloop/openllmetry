@@ -249,7 +249,7 @@ class AttachmentReference:
         self.metadata = metadata or {}
         self.http_client = http_client
         self.dataset_slug = dataset_slug
-        self._cached_data = None
+        self._cached_data: Optional[bytes] = None
 
     @property
     def data(self) -> bytes:
@@ -265,13 +265,13 @@ class AttachmentReference:
 
     def download(self, file_path: Optional[str] = None) -> Optional[bytes]:
         """Download the attachment."""
-        data = self.data
+        file_data = self.data
         if file_path:
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "wb") as f:
-                f.write(data)
+                f.write(file_data)
             return None
-        return data
+        return file_data
 
     def get_url(self) -> Optional[str]:
         """Get download URL for the attachment."""
