@@ -89,7 +89,7 @@ class Attachment:
 
     def _get_file_data(self) -> bytes:
         """Get file data as bytes."""
-        if self.data:
+        if self.data is not None:
             return self.data
         elif self.file_path:
             if not os.path.exists(self.file_path):
@@ -100,7 +100,7 @@ class Attachment:
 
     def _get_file_size(self) -> int:
         """Get file size in bytes."""
-        if self.data:
+        if self.data is not None:
             return len(self.data)
         elif self.file_path and os.path.exists(self.file_path):
             return os.path.getsize(self.file_path)
