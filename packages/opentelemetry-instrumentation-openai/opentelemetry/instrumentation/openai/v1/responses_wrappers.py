@@ -206,10 +206,8 @@ def prepare_kwargs_for_shared_attributes(kwargs):
 
 
 def set_data_attributes(traced_response: TracedData, span: Span):
-    # Response-specific attributes (request attributes are set by _set_request_attributes)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, traced_response.response_id)
 
-    # Extract model name from provider format (e.g., 'openai/gpt-4' -> 'gpt-4')
     response_model = _extract_model_name_from_provider_format(traced_response.response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
 
@@ -463,7 +461,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
-            # Set request attributes using shared logic
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 
             return ResponseStream(
@@ -523,7 +520,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -590,7 +586,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
@@ -615,7 +610,6 @@ async def async_responses_get_or_create_wrapper(
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
-            # Set request attributes using shared logic
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 
             return ResponseStream(
@@ -671,7 +665,6 @@ async def async_responses_get_or_create_wrapper(
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -739,7 +732,6 @@ async def async_responses_get_or_create_wrapper(
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
@@ -765,7 +757,6 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
             start_time=existing_data.start_time,
             record_exception=True,
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
@@ -793,7 +784,6 @@ async def async_responses_cancel_wrapper(
             start_time=existing_data.start_time,
             record_exception=True,
         )
-        # Set request attributes using shared logic
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
