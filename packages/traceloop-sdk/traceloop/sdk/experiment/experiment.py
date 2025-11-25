@@ -73,6 +73,7 @@ class Experiment:
                 evaluators=evaluators,
                 experiment_slug=experiment_slug,
                 related_ref=related_ref,
+                aux=aux,
             )
         else:
             return await self._run_locally(
@@ -247,6 +248,7 @@ class Experiment:
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
+        aux: Optional[Dict[str, str]] = None,
     ) -> RunInGithubResponse:
         """Execute tasks locally and submit results to backend for GitHub CI/CD
 
@@ -264,6 +266,7 @@ class Experiment:
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Additional reference information for this experiment run
+            aux: Auxiliary information for this experiment run
 
         Returns:
             RunInGithubResponse with experiment_id, run_id, and status
@@ -330,6 +333,12 @@ class Experiment:
             created_from="github"
         )
 
+        experiment_run_metadata = {
+            key: value
+            for key, value in [("related_ref", related_ref), ("aux", aux)]
+            if value is not None
+        }
+
         # Extract evaluator slugs
         evaluator_slugs = None
         if evaluators:
@@ -347,7 +356,7 @@ class Experiment:
             task_results=task_results,
             github_context=github_context,
             experiment_metadata=experiment_metadata,
-            experiment_run_metadata=related_ref,
+            experiment_run_metadata=experiment_run_metadata,
         )
 
         response = self._http_client.post(
