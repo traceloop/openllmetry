@@ -46,7 +46,7 @@ class Experiment:
         aux: Optional[Dict[str, str]] = None,
         stop_on_error: bool = False,
         wait_for_results: bool = True,
-    ) -> Tuple[List[TaskResponse], List[str]]:
+    ) -> Tuple[List[TaskResponse], List[str]] | RunInGithubResponse:
         """Run an experiment with the given task and evaluators
         If running in GitHub Actions, will run the experiment in GitHub context.
         Otherwise, will run the experiment locally.
@@ -58,7 +58,10 @@ class Experiment:
             evaluators: List of evaluator slugs to run
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
-
+            related_ref: Related reference for this experiment run
+            aux: Auxiliary information for this experiment run
+            stop_on_error: Whether to stop on first error (default: False)
+            wait_for_results: Whether to wait for async tasks to complete (default: True)
         Returns:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
@@ -247,6 +250,7 @@ class Experiment:
         dataset_version: Optional[str] = None,
         evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
+        experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
     ) -> RunInGithubResponse:
         """Execute tasks locally and submit results to backend for GitHub CI/CD
@@ -263,6 +267,7 @@ class Experiment:
             dataset_version: Version of the dataset
             evaluators: List of evaluator slugs or (slug, version) tuples to run
             experiment_slug: Slug for this experiment run
+            experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Additional reference information for this experiment run
 
         Returns:
@@ -325,9 +330,10 @@ class Experiment:
             actor=os.getenv("GITHUB_ACTOR", ""),
         )
 
-        experiment_metadata = {
-            "created_from": "github",
-        }
+        experiment_metadata = dict(
+            experiment_metadata or {},
+            created_from="github"
+        )
 
         # Extract evaluator slugs
         evaluator_slugs = None

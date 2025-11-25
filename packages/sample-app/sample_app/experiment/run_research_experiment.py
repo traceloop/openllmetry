@@ -11,6 +11,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
+from traceloop.sdk.experiment.model import RunInGithubResponse
 
 # Initialize Traceloop client
 client = Traceloop.init(
@@ -67,8 +68,12 @@ async def main():
 
     # Print response
     print("\n✅ Experiment completed and submitted!")
-    print(f"Experiment Slug: {response.experiment_slug}")
-    print(f"Run ID: {response.run_id}")
+
+    if isinstance(response, RunInGithubResponse):
+        print(f"Experiment Slug: {response.experiment_slug}")
+        print(f"Run ID: {response.run_id}")
+    else:
+        print(f"Results: {response}")
 
     print("\n📝 The backend will run evaluators and post results to your PR.")
     print("   Check your GitHub PR for the results comment.")
