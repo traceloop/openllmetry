@@ -11,7 +11,7 @@ class UserFeedback(BaseAnnotation):
     def create(
         self,
         annotation_task: str,
-        entity_instance_id: str,
+        entity_id: str,
         tags: Dict[str, Any],
     ) -> None:
         """Create an annotation for a specific task.
@@ -19,7 +19,7 @@ class UserFeedback(BaseAnnotation):
         Args:
             annotation_task (str): The ID/slug of the annotation task to report to.
                 Can be found at app.traceloop.com/annotation_tasks/:annotation_task_id
-            entity_instance_id (str): The ID of the specific entity instance being annotated, should be reported
+            entity_id (str): The ID of the specific entity being annotated, should be reported
                 in the association properties
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
@@ -29,7 +29,7 @@ class UserFeedback(BaseAnnotation):
             client = Client(api_key="your-key")
             client.annotation.create(
                 annotation_task="task_123",
-                entity_instance_id="instance_456",
+                entity_id="instance_456",
                 tags={
                     "sentiment": "positive",
                     "relevance": 0.95,
@@ -39,4 +39,4 @@ class UserFeedback(BaseAnnotation):
             ```
         """
 
-        return BaseAnnotation.create(self, annotation_task, entity_instance_id, tags)
+        return BaseAnnotation.create(self, annotation_task, entity_id, tags)

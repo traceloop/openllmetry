@@ -21,7 +21,7 @@ class BaseAnnotation:
     def create(
         self,
         annotation_task: str,
-        entity_instance_id: str,
+        entity_id: str,
         tags: Dict[str, Any],
     ) -> None:
         """Create an user feedback annotation for a specific task.
@@ -29,7 +29,7 @@ class BaseAnnotation:
         Args:
             annotation_task (str): The ID/slug of the annotation task to report to.
                 Can be found at app.traceloop.com/annotation_tasks/:annotation_task_id
-            entity_id (str): The ID of the specific entity instance being annotated, should be reported
+            entity_id (str): The ID of the specific entity being annotated, should be reported
                 in the association properties
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
@@ -39,7 +39,7 @@ class BaseAnnotation:
             client = Client(api_key="your-key")
             client.annotation.create(
                 annotation_task="task_123",
-                entity_id="instance_456",
+                entity_id="456",
                 tags={
                     "sentiment": "positive",
                     "relevance": 0.95,
@@ -51,15 +51,15 @@ class BaseAnnotation:
 
         if not annotation_task:
             raise ValueError("annotation_task is required")
-        if not entity_instance_id:
-            raise ValueError("entity_instance_id is required")
+        if not entity_id:
+            raise ValueError("entity_id is required")
         if not tags:
             raise ValueError("tags cannot be empty")
 
         self._http.post(
             f"annotation-tasks/{annotation_task}/annotations",
             {
-                "entity_instance_id": entity_instance_id,
+                "entity_instance_id": entity_id,
                 "tags": tags,
                 "source": "sdk",
                 "flow": self._flow,

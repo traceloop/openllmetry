@@ -2,8 +2,8 @@ import json
 from functools import wraps
 import os
 from typing import (
-    Optional,
     TypeVar,
+    Optional,
     Callable,
     Any,
     cast,
@@ -27,7 +27,7 @@ from traceloop.sdk.tracing.tracing import (
 from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
-F = TypeVar("F")
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def _truncate_json_if_needed(json_str: str) -> str:
