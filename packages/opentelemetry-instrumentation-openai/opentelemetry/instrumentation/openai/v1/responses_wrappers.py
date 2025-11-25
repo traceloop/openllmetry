@@ -51,6 +51,8 @@ from typing import Any, Optional, Union
 from typing_extensions import NotRequired
 
 from opentelemetry.instrumentation.openai.shared import (
+    _extract_model_name_from_provider_format,
+    _set_request_attributes,
     _set_span_attribute,
     model_as_dict,
 )
@@ -189,12 +191,28 @@ def process_content_block(
 
 
 @dont_throw
+def prepare_kwargs_for_shared_attributes(kwargs):
+    """
+    Prepare kwargs for the shared _set_request_attributes function.
+    Maps responses API specific parameters to the common format.
+    """
+    prepared_kwargs = kwargs.copy()
+
+    # Map max_output_tokens to max_tokens for the shared function
+    if "max_output_tokens" in kwargs:
+        prepared_kwargs["max_tokens"] = kwargs["max_output_tokens"]
+
+    return prepared_kwargs
+
+
 def set_data_attributes(traced_response: TracedData, span: Span):
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, "openai")
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, traced_response.request_model)
+    # Response-specific attributes (request attributes are set by _set_request_attributes)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, traced_response.response_id)
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, traced_response.response_model)
-    _set_span_attribute(span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, traced_response.request_service_tier)
+
+    # Extract model name from provider format (e.g., 'openai/gpt-4' -> 'gpt-4')
+    response_model = _extract_model_name_from_provider_format(traced_response.response_model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+
     _set_span_attribute(span, OpenAIAttributes.OPENAI_RESPONSE_SERVICE_TIER, traced_response.response_service_tier)
     if usage := traced_response.usage:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
@@ -445,6 +463,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
+            # Set request attributes using shared logic
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 
             return ResponseStream(
                 span=span,
@@ -503,6 +523,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
@@ -568,6 +590,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
 
@@ -591,6 +615,8 @@ async def async_responses_get_or_create_wrapper(
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
             )
+            # Set request attributes using shared logic
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 
             return ResponseStream(
                 span=span,
@@ -645,6 +671,8 @@ async def async_responses_get_or_create_wrapper(
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
@@ -711,6 +739,8 @@ async def async_responses_get_or_create_wrapper(
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
 
@@ -735,6 +765,8 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
             start_time=existing_data.start_time,
             record_exception=True,
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
@@ -761,6 +793,8 @@ async def async_responses_cancel_wrapper(
             start_time=existing_data.start_time,
             record_exception=True,
         )
+        # Set request attributes using shared logic
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()

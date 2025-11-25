@@ -30,6 +30,31 @@ def test_responses(
 
 
 @pytest.mark.vcr
+def test_responses_with_request_params(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Test that request parameters like temperature, max_tokens, top_p are captured"""
+    _ = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        temperature=0.7,
+        max_output_tokens=100,
+        top_p=0.9,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+
+    # Check that request parameters are captured
+    assert span.attributes["gen_ai.request.temperature"] == 0.7
+    assert span.attributes["gen_ai.request.max_tokens"] == 100
+    assert span.attributes["gen_ai.request.top_p"] == 0.9
+
+
+@pytest.mark.vcr
 def test_responses_with_service_tier(
     instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):
