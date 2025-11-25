@@ -444,7 +444,6 @@ class Experiment:
         Args:
             rows: List of dataset rows to process
             task: Function to run on each row
-            stop_on_error: Whether to stop on first error
 
         Returns:
             List of TaskResult objects with inputs, outputs, and errors
