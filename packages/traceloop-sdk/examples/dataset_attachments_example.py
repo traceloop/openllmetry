@@ -11,8 +11,8 @@ This example shows:
 
 import os
 import tempfile
+
 from traceloop.sdk import Traceloop
-from traceloop.sdk.datasets import Datasets
 from traceloop.sdk.dataset import (
     Attachment,
     ExternalAttachment,
@@ -23,6 +23,7 @@ from traceloop.sdk.dataset.model import (
     ColumnType,
     CreateDatasetRequest,
 )
+from traceloop.sdk.datasets import Datasets
 
 
 def example_external_attachments():
@@ -184,8 +185,6 @@ def example_file_uploads():
 
 def example_in_memory_attachments():
     """Example: Creating a dataset with in-memory data attachments."""
-    print("\n=== Example 3: In-Memory Data Attachments ===")
-
     datasets = Datasets()
 
     # Generate some in-memory data
@@ -236,7 +235,7 @@ def example_in_memory_attachments():
 
     dataset = datasets.create(dataset_request)
     print(f"Created dataset: {dataset.slug}")
-    print(f"Attachments uploaded from memory")
+    print("Attachments uploaded from memory")
 
 
 def example_mixed_attachments():
