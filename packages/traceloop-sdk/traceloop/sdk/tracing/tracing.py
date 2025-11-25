@@ -904,7 +904,7 @@ def init_vertexai_instrumentor(
 def init_watsonx_instrumentor():
     try:
         if is_package_installed("ibm-watsonx-ai") or is_package_installed(
-            "ibm_watson_machine_learning"
+            "ibm-watson-machine-learning"
         ):
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
@@ -1032,6 +1032,7 @@ def init_groq_instrumentor():
 def init_crewai_instrumentor():
     try:
         if is_package_installed("crewai"):
+            os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
             from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
 
             instrumentor = CrewAIInstrumentor()
