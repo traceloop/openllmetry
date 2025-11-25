@@ -57,7 +57,7 @@ async def main():
     print("🚀 Running research experiment in GitHub CI/CD...")
 
     # Execute tasks locally and send results to backend
-    response = await client.experiment.run_in_github(
+    response = await client.experiment.run(
         task=research_task,
         dataset_slug="research-queries",
         dataset_version="v2",

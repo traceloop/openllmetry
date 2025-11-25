@@ -48,6 +48,58 @@ class Experiment:
         wait_for_results: bool = True,
     ) -> Tuple[List[TaskResponse], List[str]]:
         """Run an experiment with the given task and evaluators
+        If running in GitHub Actions, will run the experiment in GitHub context.
+        Otherwise, will run the experiment locally.
+
+        Args:
+            task: Function to run on each dataset row
+            dataset_slug: Slug of the dataset to use
+            dataset_version: Version of the dataset to use
+            evaluators: List of evaluator slugs to run
+            experiment_slug: Slug for this experiment run
+            experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
+
+        Returns:
+            Tuple of (results, errors). Returns ([], []) if wait_for_results is False
+        """
+        if os.getenv("GITHUB_ACTIONS"):
+            return await self._run_in_github(
+                task=task,
+                dataset_slug=dataset_slug,
+                dataset_version=dataset_version,
+                evaluators=evaluators,
+                experiment_slug=experiment_slug,
+                related_ref=related_ref,
+            )
+        else:
+            return await self._run_locally(
+                task=task,
+                dataset_slug=dataset_slug,
+                dataset_version=dataset_version,
+                evaluators=evaluators,
+                experiment_slug=experiment_slug,
+                experiment_metadata=experiment_metadata,
+                related_ref=related_ref,
+                aux=aux,
+                stop_on_error=stop_on_error,
+                wait_for_results=wait_for_results,
+            )
+        
+    
+    async def _run_locally(
+        self,
+        task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
+        dataset_slug: Optional[str] = None,
+        dataset_version: Optional[str] = None,
+        evaluators: Optional[List[EvaluatorDetails]] = None,
+        experiment_slug: Optional[str] = None,
+        experiment_metadata: Optional[Dict[str, Any]] = None,
+        related_ref: Optional[Dict[str, str]] = None,
+        aux: Optional[Dict[str, str]] = None,
+        stop_on_error: bool = False,
+        wait_for_results: bool = True,
+    ) -> Tuple[List[TaskResponse], List[str]]:
+        """Run an experiment with the given task and evaluators
 
         Args:
             dataset_slug: Slug of the dataset to use
@@ -185,7 +237,7 @@ class Experiment:
 
         return results, errors
 
-    async def run_in_github(
+    async def _run_in_github(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Dict[str, Any]],
         dataset_slug: Optional[str] = None,
