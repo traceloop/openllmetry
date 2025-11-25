@@ -161,9 +161,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ## 🔎 Telemetry
 
-The SDK provided with OpenLLMetry (not the instrumentations) contains a telemetry feature that collects **anonymous** usage information.
-
-You can opt out of telemetry by setting the `TRACELOOP_TELEMETRY` environment variable to `FALSE`, or passing `telemetry_enabled=False` to the `Traceloop.init()` function.
+We no longer log or collect any telemetry in the SDK or in the instrumentations. Make sure to bump to v0.49.2 and above.
 
 ### Why we collect telemetry
 

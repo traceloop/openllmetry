@@ -17,7 +17,6 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
-from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
@@ -179,8 +178,8 @@ def _handle_span_input(span, args, kwargs, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 truncated_json,
             )
-    except TypeError as e:
-        Telemetry().log_exception(e)
+    except TypeError:
+        pass
 
 
 def _handle_span_output(span, res, cls=None):
@@ -193,8 +192,8 @@ def _handle_span_output(span, res, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 truncated_json,
             )
-    except TypeError as e:
-        Telemetry().log_exception(e)
+    except TypeError:
+        pass
 
 
 def _cleanup_span(span, ctx_token):

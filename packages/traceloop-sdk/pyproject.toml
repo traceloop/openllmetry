@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.49.1"
+version = "0.49.2"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
     "Gal Kleinman <gal@traceloop.com>",
@@ -71,7 +71,6 @@ tenacity = ">=8.2.3, <10.0"
 pydantic = ">=1"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
-posthog = ">3.0.2, <4"
 aiohttp = "^3.11.11"
 cuid = "^0.4"
 
