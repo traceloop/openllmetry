@@ -117,43 +117,45 @@ See [our docs](https://traceloop.com/docs/openllmetry/integrations/exporting) fo
 
 OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
 
-- ✅ [OpenAI / Azure OpenAI](https://openai.com/)
-- ✅ [Anthropic](https://www.anthropic.com/)
-- ✅ [Cohere](https://cohere.com/)
-- ✅ [Ollama](https://ollama.com/)
-- ✅ [Mistral AI](https://mistral.ai/)
-- ✅ [HuggingFace](https://huggingface.co/)
-- ✅ [Bedrock (AWS)](https://aws.amazon.com/bedrock/)
-- ✅ [SageMaker (AWS)](https://aws.amazon.com/sagemaker/)
-- ✅ [Replicate](https://replicate.com/)
-- ✅ [Vertex AI (GCP)](https://cloud.google.com/vertex-ai)
-- ✅ [Google Generative AI (Gemini)](https://ai.google/)
-- ✅ [IBM Watsonx AI](https://www.ibm.com/watsonx)
-- ✅ [Together AI](https://together.xyz/)
 - ✅ [Aleph Alpha](https://www.aleph-alpha.com/)
+- ✅ [Anthropic](https://www.anthropic.com/)
+- ✅ [Bedrock (AWS)](https://aws.amazon.com/bedrock/)
+- ✅ [Cohere](https://cohere.com/)
+- ✅ [Google Generative AI (Gemini)](https://ai.google/)
 - ✅ [Groq](https://groq.com/)
+- ✅ [HuggingFace](https://huggingface.co/)
+- ✅ [IBM Watsonx AI](https://www.ibm.com/watsonx)
+- ✅ [Mistral AI](https://mistral.ai/)
+- ✅ [Ollama](https://ollama.com/)
+- ✅ [OpenAI / Azure OpenAI](https://openai.com/)
+- ✅ [Replicate](https://replicate.com/)
+- ✅ [SageMaker (AWS)](https://aws.amazon.com/sagemaker/)
+- ✅ [Together AI](https://together.xyz/)
+- ✅ [Vertex AI (GCP)](https://cloud.google.com/vertex-ai)
 - ✅ [WRITER](https://writer.com/)
 
 ### Vector DBs
 
 - ✅ [Chroma](https://www.trychroma.com/)
+- ✅ [LanceDB](https://lancedb.com/)
+- ✅ [Marqo](https://marqo.ai/)
+- ✅ [Milvus](https://milvus.io/)
 - ✅ [Pinecone](https://www.pinecone.io/)
 - ✅ [Qdrant](https://qdrant.tech/)
 - ✅ [Weaviate](https://weaviate.io/)
-- ✅ [Milvus](https://milvus.io/)
-- ✅ [Marqo](https://marqo.ai/)
-- ✅ [LanceDB](https://lancedb.com/)
 
 ### Frameworks
 
-- ✅ [LangChain](https://python.langchain.com/docs/introduction/)
-- ✅ [LangGraph](https://langchain-ai.github.io/langgraph/concepts/why-langgraph/)
-- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
-- ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
-- ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
+- ✅ [Agno](https://github.com/agno-agi/agno)
+- ✅ [AWS Strands](https://strandsagents.com/) (built-in OTEL support)
 - ✅ [CrewAI](https://docs.crewai.com/introduction)
-- ✅ [OpenAI Agents](https://openai.github.io/openai-agents-python/)
+- ✅ [Haystack](https://haystack.deepset.ai/integrations/traceloop)
+- ✅ [LangChain](https://python.langchain.com/docs/introduction/)
 - ✅ [Langflow](https://docs.langflow.org/)
+- ✅ [LangGraph](https://langchain-ai.github.io/langgraph/concepts/why-langgraph/)
+- ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
+- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
+- ✅ [OpenAI Agents](https://openai.github.io/openai-agents-python/)
 
 ### Protocol
 
