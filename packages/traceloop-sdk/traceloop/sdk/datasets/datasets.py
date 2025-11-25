@@ -1,4 +1,5 @@
 import csv
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -21,6 +22,8 @@ from traceloop.sdk.dataset.model import (
     DatasetMetadata,
     ValuesMap,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Datasets:
@@ -317,7 +320,7 @@ class Datasets:
         """
         for row_idx, row_attachments in attachments.items():
             if row_idx >= len(dataset.rows):
-                print(
+                logger.warning(
                     f"Warning: Row index {row_idx} out of range, skipping attachments"
                 )
                 continue
@@ -346,7 +349,7 @@ class Datasets:
                         "metadata": ref.metadata,
                     }
                 except Exception as e:
-                    print(
+                    logger.warning(
                         f"Warning: Failed to process attachment for row {row_idx}, column {col_slug}: {e}"
                     )
                     # Mark as failed in row values
