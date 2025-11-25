@@ -16,7 +16,6 @@ from opentelemetry.util.re import parse_env_headers
 from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.logging.logging import LoggerWrapper
-from traceloop.sdk.telemetry import Telemetry
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.config import (
     is_content_tracing_enabled,
@@ -78,13 +77,6 @@ class Traceloop:
                 + Fore.RESET
             )
             return
-
-        telemetry_enabled = (
-            telemetry_enabled
-            and (os.getenv("TRACELOOP_TELEMETRY") or "true").lower() == "true"
-        )
-        if telemetry_enabled:
-            Telemetry()
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
