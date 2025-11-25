@@ -1032,6 +1032,7 @@ def init_groq_instrumentor():
 def init_crewai_instrumentor():
     try:
         if is_package_installed("crewai"):
+            os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
             from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
 
             instrumentor = CrewAIInstrumentor()
