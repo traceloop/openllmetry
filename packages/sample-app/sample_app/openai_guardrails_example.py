@@ -11,15 +11,21 @@ ensuring complete observability of the request flow.
 
 import os
 import json
+import asyncio
 from pathlib import Path
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from traceloop.sdk import Traceloop
 
 # Initialize Traceloop FIRST - before importing guardrails
-Traceloop.init(app_name="openai-guardrails-example", exporter=ConsoleSpanExporter())
+Traceloop.init(
+    app_name="openai-guardrails-example",
+    api_endpoint="https://api.traceloop.com",
+    disable_batch=True,
+    exporter=ConsoleSpanExporter()
+)
 
 try:
-    from guardrails import GuardrailsOpenAI, GuardrailTripwireTriggered
+    from guardrails import GuardrailsAsyncOpenAI, GuardrailTripwireTriggered
 except ImportError:
     print("=" * 80)
     print("ERROR: openai-guardrails-python not installed")
@@ -52,83 +58,63 @@ def create_sample_config():
     return config_path
 
 
-def main():
+async def reproduce_issue():
+    """Reproduce the broken trace issue with streaming responses."""
     print("=" * 80)
-    print("OpenAI Guardrails with OpenLLMetry Tracing")
+    print("OpenAI Guardrails with OpenLLMetry Tracing - Streaming Test")
     print("=" * 80)
 
     # Create guardrails configuration
     config_path = create_sample_config()
     print(f"\n[Setup] Created guardrails config: {config_path}")
 
-    # Create GuardrailsOpenAI client
-    # This wraps the standard OpenAI client with guardrails validation
-    client = GuardrailsOpenAI(api_key=os.getenv("OPENAI_API_KEY"), config=config_path)
-    print("[Setup] Created GuardrailsOpenAI client\n")
+    # Initialize GuardrailsAsyncOpenAI (wraps AsyncOpenAI)
+    client = GuardrailsAsyncOpenAI(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        config=config_path
+    )
+    print("[Setup] Created GuardrailsAsyncOpenAI client\n")
 
-    # Example 1: Chat Completions with Guardrails
-    print("\n--- Example 1: Chat Completions ---")
+    # Call responses.create() with streaming
+    print("\n--- Streaming Responses API ---")
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "What is the capital of France?"},
-            ],
-            temperature=2,
+        stream = await client.responses.create(
+            model="gpt-4o",
+            input="Hello, how are you?",
+            stream=True
         )
 
-        # With guardrails, the response structure might be different
-        if hasattr(response, "llm_response"):
-            # Guardrails wrapper format
-            print(f"Response: {response.llm_response.choices[0].message.content}")
-        else:
-            # Standard OpenAI format
-            print(f"Response: {response.choices[0].message.content}")
+        print("Streaming chunks:")
+        async for chunk in stream:
+            # Extract delta from the chunk
+            if hasattr(chunk, 'llm_response') and hasattr(chunk.llm_response, 'delta'):
+                print(chunk.llm_response.delta, end='', flush=True)
+            elif hasattr(chunk, 'delta'):
+                print(chunk.delta, end='', flush=True)
+        print()  # New line after streaming
 
     except GuardrailTripwireTriggered as e:
         print(f"[Guardrails] Safety check triggered: {e}")
     except Exception as e:
         print(f"[Error] {type(e).__name__}: {e}")
-
-    # Example 2: Responses API with Guardrails
-    print("\n--- Example 2: Responses API ---")
-    try:
-        response = client.responses.create(
-            model="gpt-4.1-nano",
-            input="Explain quantum computing in one sentence.",
-            temperature=2,
-        )
-
-        # Access the output
-        if hasattr(response, "llm_response"):
-            output = response.llm_response.output_text
-        else:
-            output = (
-                response.output[0].content[0].text if response.output else "No output"
-            )
-
-        print(f"Response: {output}")
-
-    except GuardrailTripwireTriggered as e:
-        print(f"[Guardrails] Safety check triggered: {e}")
-    except Exception as e:
-        print(f"[Error] {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
 
     print("\n" + "=" * 80)
-    print("Tracing Complete!")
+    print("Check console output above for spans")
     print("=" * 80)
-    print("\nCheck your Traceloop dashboard to see:")
-    print("  - Complete trace hierarchy maintained across guardrails wrapper")
-    print("  - All spans properly nested under the same trace")
-    print("  - Request/response details captured with guardrails validation")
-    print("\nNote: The fix ensures trace context is maintained even when")
-    print("      guardrails makes internal OpenAI API calls.")
+    print("\nLook for multiple trace IDs - this indicates broken traces!")
+    print("All spans should share the same trace_id for proper aggregation.")
 
     # Cleanup
     if config_path.exists():
         config_path.unlink()
         print(f"\n[Cleanup] Removed {config_path}")
+
+
+def main():
+    """Main entry point."""
+    asyncio.run(reproduce_issue())
 
 
 if __name__ == "__main__":

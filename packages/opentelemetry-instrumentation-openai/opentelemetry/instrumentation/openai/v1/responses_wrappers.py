@@ -462,10 +462,13 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
+            # Capture current trace context to maintain trace continuity
+            ctx = context_api.get_current()
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
+                context=ctx,
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 
@@ -622,10 +625,13 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
+            # Capture current trace context to maintain trace continuity
+            ctx = context_api.get_current()
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
+                context=ctx,
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
 

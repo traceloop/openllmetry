@@ -585,3 +585,148 @@ def test_responses_trace_context_propagation_unit():
     assert openai_spans[0].parent.span_id == parent_spans[0].context.span_id, (
         "openai.response span should be a child of parent-span"
     )
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider,
+    openai_client: OpenAI,
+):
+    """Integration test for trace context propagation with sync streaming responses.
+
+    This test simulates what openai-guardrails does: wrapping OpenAI calls
+    with a parent span. It verifies that:
+    1. The streaming response span maintains the parent trace context
+    2. All spans share the same trace_id
+    3. The response span is properly nested as a child of the parent span
+
+    This prevents regressions of the issue where streaming responses would
+    create separate traces instead of maintaining trace continuity.
+    """
+    # Get tracer from the provider used by the test fixtures
+    tracer = tracer_provider.get_tracer(__name__)
+
+    # Create a parent span (simulating what guardrails wrapper does)
+    with tracer.start_as_current_span("guardrails-wrapper") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_span_id = parent_span.get_span_context().span_id
+
+        # Make a sync streaming responses.create() call
+        # This should create a child span under the parent
+        stream = openai_client.responses.create(
+            model="gpt-4o",
+            input="Count to 3",
+            stream=True,
+        )
+
+        full_text = ""
+        for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    # Verify span hierarchy
+    spans = span_exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "guardrails-wrapper"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1, "Should have exactly one parent span"
+    assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
+
+    parent = parent_spans[0]
+    openai_span = openai_spans[0]
+
+    # Verify the openai.response span has the same trace_id as the parent
+    assert openai_span.context.trace_id == parent_trace_id, (
+        f"OpenAI span trace_id ({hex(openai_span.context.trace_id)}) "
+        f"should match parent trace_id ({hex(parent_trace_id)}). "
+        "If they differ, trace context is not being propagated correctly."
+    )
+
+    # Verify the openai.response span is a child of the parent span
+    assert openai_span.parent is not None, "OpenAI span should have a parent"
+    assert openai_span.parent.span_id == parent_span_id, (
+        f"OpenAI span parent_id ({hex(openai_span.parent.span_id)}) "
+        f"should match parent span_id ({hex(parent_span_id)}). "
+        "The span should be properly nested under the parent."
+    )
+
+    # Verify streaming worked correctly
+    assert full_text != "", "Should have received streaming content"
+    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
+    assert openai_span.attributes["llm.is_streaming"] is True
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async_with_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider,
+    async_openai_client: AsyncOpenAI,
+):
+    """Integration test for trace context propagation with async streaming responses.
+
+    This test simulates what openai-guardrails does: wrapping OpenAI calls
+    with a parent span. It verifies that:
+    1. The streaming response span maintains the parent trace context
+    2. All spans share the same trace_id
+    3. The response span is properly nested as a child of the parent span
+
+    This prevents regressions of the issue where streaming responses would
+    create separate traces instead of maintaining trace continuity.
+    """
+    # Get tracer from the provider used by the test fixtures
+    tracer = tracer_provider.get_tracer(__name__)
+
+    # Create a parent span (simulating what guardrails wrapper does)
+    with tracer.start_as_current_span("guardrails-wrapper") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_span_id = parent_span.get_span_context().span_id
+
+        # Make an async streaming responses.create() call
+        # This should create a child span under the parent
+        stream = await async_openai_client.responses.create(
+            model="gpt-4o",
+            input="Count to 3",
+            stream=True,
+        )
+
+        full_text = ""
+        async for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    # Verify span hierarchy
+    spans = span_exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "guardrails-wrapper"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1, "Should have exactly one parent span"
+    assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
+
+    parent = parent_spans[0]
+    openai_span = openai_spans[0]
+
+    # Verify the openai.response span has the same trace_id as the parent
+    assert openai_span.context.trace_id == parent_trace_id, (
+        f"OpenAI span trace_id ({hex(openai_span.context.trace_id)}) "
+        f"should match parent trace_id ({hex(parent_trace_id)}). "
+        "If they differ, trace context is not being propagated correctly."
+    )
+
+    # Verify the openai.response span is a child of the parent span
+    assert openai_span.parent is not None, "OpenAI span should have a parent"
+    assert openai_span.parent.span_id == parent_span_id, (
+        f"OpenAI span parent_id ({hex(openai_span.parent.span_id)}) "
+        f"should match parent span_id ({hex(parent_span_id)}). "
+        "The span should be properly nested under the parent."
+    )
+
+    # Verify streaming worked correctly
+    assert full_text != "", "Should have received streaming content"
+    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
+    assert openai_span.attributes["llm.is_streaming"] is True
