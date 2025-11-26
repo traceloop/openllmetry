@@ -505,3 +505,83 @@ def test_response_stream_init_with_none_tools():
     assert stream._traced_data is not None
     # Tools should be an empty list, not None
     assert stream._traced_data.tools == [] or stream._traced_data.tools is None
+
+
+def test_responses_trace_context_propagation_unit():
+    """Unit test for trace context propagation in responses API.
+
+    This test verifies that when TracedData is created with a trace context,
+    and later a span is created from that TracedData, the span uses the correct
+    trace context that was captured at creation time.
+
+    This is critical for guardrails and other wrappers that make multiple calls
+    across different execution contexts.
+
+    Note: This is a unit test that simulates what guardrails does. For integration
+    testing with the actual openai-guardrails library, see the sample app at:
+    packages/sample-app/sample_app/openai_guardrails_example.py
+    """
+    from unittest.mock import MagicMock, Mock
+    from opentelemetry import trace, context
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import TracedData
+    from openai.types.responses import Response, ResponseOutputItem, ResponseUsage
+    import time
+
+    # Set up tracing
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)
+    tracer = trace.get_tracer(__name__)
+
+    # Create a parent span and capture its trace context
+    with tracer.start_as_current_span("parent-span") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_context = context.get_current()
+
+        # Create TracedData with the current trace context (simulating responses.create)
+        traced_data = TracedData(
+            start_time=time.time_ns(),
+            response_id="test-response-id",
+            input="What is 2+2?",
+            instructions=None,
+            tools=None,
+            output_blocks={},
+            usage=None,
+            output_text="4",
+            request_model="gpt-4.1-nano",
+            response_model="gpt-4.1-nano-2025-04-14",
+            trace_context=parent_context,
+        )
+
+    # Now we're outside the parent span context
+    # Simulate creating a span with the stored trace context (like responses.retrieve does)
+    ctx = traced_data.trace_context
+    span = tracer.start_span(
+        "openai.response",
+        context=ctx,
+        start_time=traced_data.start_time,
+    )
+    span.end()
+
+    # Verify the span has the correct trace context
+    spans = exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "parent-span"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1
+    assert len(openai_spans) == 1
+
+    # The openai.response span should have the same trace_id as the parent
+    assert openai_spans[0].context.trace_id == parent_trace_id, (
+        f"openai.response span trace_id ({openai_spans[0].context.trace_id}) "
+        f"should match parent trace_id ({parent_trace_id})"
+    )
+
+    # The openai.response span should be a child of the parent span
+    assert openai_spans[0].parent.span_id == parent_spans[0].context.span_id, (
+        "openai.response span should be a child of parent-span"
+    )

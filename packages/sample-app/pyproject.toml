@@ -22,7 +22,7 @@ readme = "README.md"
 include = "sample_app"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.11,<3.13"
 openai = "^1.52.2"
 requests = "^2.32.3"
 # pinecone-datasets = "^0.7.0"
@@ -56,9 +56,10 @@ llama-index-llms-openai = "^0.4.0"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
-openai-agents = "^0.2.7"
+openai-agents = "^0.3.3"
 fastmcp = "^2.12.3"
 agno = ">=2.2.2"
+openai-guardrails = "^0.1.7"
 
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
