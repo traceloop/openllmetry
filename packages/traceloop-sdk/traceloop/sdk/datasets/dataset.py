@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict
 from pydantic import Field
 
-from traceloop.sdk.dataset.model import (
+from traceloop.sdk.datasets.model import (
     ColumnDefinition,
     ValuesMap,
     CreateDatasetResponse,
