@@ -9,7 +9,7 @@ try:
 except ImportError:
     PANDAS_AVAILABLE = False
 
-from traceloop.sdk.dataset.dataset import Dataset
+from traceloop.sdk.datasets.dataset import Dataset
 from .test_constants import TestConstants
 
 
