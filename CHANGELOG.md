@@ -1,3 +1,14 @@
+## v0.49.3 (2025-11-26)
+
+### Fix
+
+- **openai**: recognize NOT_GIVEN and Omit (#3473)
+- **dataset**: add support for file cells in datasets with upload and external URL linking capabilities (#3462)
+- **openai**: report request attributes in responses API instrumentation (#3471)
+- **sdk**: crewai tracing provider conflict (#3470)
+- **sdk**: watsonx warning on initialization (#3469)
+- **traceloop-sdk**: add type-checking support with mypy (#3463)
+
 ## v0.49.2 (2025-11-25)
 
 ### Fix
