@@ -167,7 +167,11 @@ async def aset_input_attributes(span, kwargs):
                         span, f"{prefix}.input_schema", json.dumps(input_schema)
                     )
 
+        # Check for output_format in kwargs or extra_body
         output_format = kwargs.get("output_format")
+        if not output_format and kwargs.get("extra_body"):
+            output_format = kwargs.get("extra_body").get("output_format")
+
         if output_format and isinstance(output_format, dict):
             if output_format.get("type") == "json_schema":
                 schema = output_format.get("schema")

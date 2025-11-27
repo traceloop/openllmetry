@@ -23,11 +23,13 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/llamaindex"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+protobuf = "^5.29.5"
+starlette = "^0.47.2"
 inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -35,7 +37,7 @@ autopep8 = "^2.2.0"
 flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
-vcrpy = "^6.0.1"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest-recording = "^0.13.1"
 pytest-asyncio = "^0.23.7"
 chromadb = "^0.5.23"

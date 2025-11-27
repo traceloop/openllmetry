@@ -24,11 +24,14 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/vertexai"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+urllib3 = "^2.5.0"
+requests = "^2.32.4"
+protobuf = "^5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -39,8 +42,9 @@ pytest-sugar = "1.0.0"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest-recording = "^0.13.1"
+pytest-asyncio = "^0.23.7"
 opentelemetry-sdk = "^1.38.0"
 google-cloud-aiplatform = "^1.54.0"
 
@@ -53,3 +57,6 @@ instruments = ["google-cloud-aiplatform"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 google_cloud_aiplatform = "opentelemetry.instrumentation.vertexai:VertexAIInstrumentor"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

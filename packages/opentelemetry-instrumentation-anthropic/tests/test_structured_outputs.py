@@ -43,7 +43,7 @@ def test_anthropic_structured_outputs_legacy(
                 "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
             }
         ],
-        output_format=OUTPUT_FORMAT
+        extra_body={"output_format": OUTPUT_FORMAT}
     )
 
     spans = span_exporter.get_finished_spans()
@@ -100,7 +100,7 @@ def test_anthropic_structured_outputs_with_events_with_content(
                 "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
             }
         ],
-        output_format=OUTPUT_FORMAT
+        extra_body={"output_format": OUTPUT_FORMAT}
     )
 
     spans = span_exporter.get_finished_spans()
@@ -129,7 +129,7 @@ def test_anthropic_structured_outputs_with_events_with_no_content(
                 "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
             }
         ],
-        output_format=OUTPUT_FORMAT
+        extra_body={"output_format": OUTPUT_FORMAT}
     )
 
     spans = span_exporter.get_finished_spans()

@@ -50,7 +50,7 @@ def test_replicate_image_generation_with_events_with_content(
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": response[0]},
+        "message": {"content": str(response[0])},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
