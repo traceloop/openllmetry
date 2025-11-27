@@ -1,3 +1,10 @@
+## v0.49.5 (2025-11-27)
+
+### Fix
+
+- **openai**: responses instrumentation broken traces for async streaming (#3475)
+- **mcp**: remove faulty logic of trying to deduce HTTP errors (#3477)
+
 ## v0.49.4 (2025-11-27)
 
 ### Fix
