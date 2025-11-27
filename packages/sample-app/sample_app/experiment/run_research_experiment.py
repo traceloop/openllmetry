@@ -63,7 +63,7 @@ async def main():
         dataset_slug="research-queries",
         dataset_version="v2",
         evaluators=["research-relevancy", "categories", "research-facts-counter"],
-        experiment_slug="research-exp",
+        experiment_slug="research-exp-ci-cd",
     )
 
     # Print response
