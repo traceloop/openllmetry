@@ -13,7 +13,6 @@ import os
 import json
 import asyncio
 from pathlib import Path
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 

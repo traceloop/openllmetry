@@ -521,14 +521,12 @@ def test_responses_trace_context_propagation_unit():
     testing with the actual openai-guardrails library, see the sample app at:
     packages/sample-app/sample_app/openai_guardrails_example.py
     """
-    from unittest.mock import MagicMock, Mock
     from opentelemetry import trace, context
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
         InMemorySpanExporter,
     )
     from opentelemetry.instrumentation.openai.v1.responses_wrappers import TracedData
-    from openai.types.responses import Response, ResponseOutputItem, ResponseUsage
     import time
 
     # Set up tracing
@@ -637,7 +635,6 @@ def test_responses_streaming_with_parent_span(
     assert len(parent_spans) == 1, "Should have exactly one parent span"
     assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
 
-    parent = parent_spans[0]
     openai_span = openai_spans[0]
 
     # Verify the openai.response span has the same trace_id as the parent
@@ -710,7 +707,6 @@ async def test_responses_streaming_async_with_parent_span(
     assert len(parent_spans) == 1, "Should have exactly one parent span"
     assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
 
-    parent = parent_spans[0]
     openai_span = openai_spans[0]
 
     # Verify the openai.response span has the same trace_id as the parent
