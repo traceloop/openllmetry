@@ -1,3 +1,9 @@
+## v0.49.4 (2025-11-27)
+
+### Fix
+
+- **exp**: Add run in github experiment  (#3459)
+
 ## v0.49.3 (2025-11-26)
 
 ### Fix
