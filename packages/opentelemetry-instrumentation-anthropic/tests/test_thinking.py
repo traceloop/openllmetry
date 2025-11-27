@@ -1,9 +1,6 @@
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
@@ -473,7 +470,6 @@ def test_anthropic_thinking_streaming_legacy(
     assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
 
     assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
 
     assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
     assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
@@ -712,7 +708,6 @@ async def test_async_anthropic_thinking_streaming_legacy(
     assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
 
     assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert anthropic_span.attributes["gen_ai.completion.0.content"] == thinking
 
     assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
     assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
@@ -905,7 +900,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value

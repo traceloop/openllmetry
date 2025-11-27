@@ -1,3 +1,61 @@
+## v0.49.3 (2025-11-26)
+
+### Fix
+
+- **openai**: recognize NOT_GIVEN and Omit (#3473)
+- **dataset**: add support for file cells in datasets with upload and external URL linking capabilities (#3462)
+- **openai**: report request attributes in responses API instrumentation (#3471)
+- **sdk**: crewai tracing provider conflict (#3470)
+- **sdk**: watsonx warning on initialization (#3469)
+- **traceloop-sdk**: add type-checking support with mypy (#3463)
+
+## v0.49.2 (2025-11-25)
+
+### Fix
+
+- **sdk**: remove posthog (#3466)
+
+## v0.49.1 (2025-11-24)
+
+### Fix
+
+- **langchain**: allow configuration of metadata key prefix (#3367)
+- **openai**: record service_tier attribute (#3458)
+
+## v0.49.0 (2025-11-23)
+
+### Feat
+
+- **agno**: add instrumentation for agno framework (#3452)
+
+## v0.48.2 (2025-11-23)
+
+### Fix
+
+- add structured outputs schema logging for Anthropic and Gemini (#3454)
+- **openai**: use SpanAttributes instead of GenAIAttributes for cache token attributes (#3442)
+- migrate from events api to log records for otel 1.37.0+ compatibility (#3453)
+
+## v0.48.1 (2025-11-17)
+
+### Fix
+
+- **openai**: safe handle None tools value in responses api (#3447)
+- **mcp**: move exporter dependency to dev and test environment (#3445)
+
+## v0.48.0 (2025-11-11)
+
+### Feat
+
+- **instrumentation**: updated GenAI attributes to use OTel's (#3138)
+
+### Fix
+
+- **openai**: add streaming support for responses.create() api (#3437)
+- **bedrock**: handle non-text contentBlockDelta events in converse_stream (#3404)
+- **openai-agents**: span attribute handling for tool calls and results (#3422)
+- **watson**: collect prompt content and set as span attribute (#3417)
+
 ## v0.47.5 (2025-10-24)
 
 ### Fix

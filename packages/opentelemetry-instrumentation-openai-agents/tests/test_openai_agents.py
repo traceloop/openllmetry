@@ -10,8 +10,8 @@ from opentelemetry.semconv_ai import (
     TraceloopSpanKindValues,
     Meters,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_COMPLETION,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 
 
@@ -111,8 +111,8 @@ def test_agent_spans(exporter, test_agent):
         agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
         == TraceloopSpanKindValues.AGENT.value
     )
-    assert agent_span.attributes["gen_ai.agent.name"] == "testAgent"
-    assert agent_span.attributes["gen_ai.system"] == "openai_agents"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai_agents"
     assert agent_span.status.status_code == StatusCode.OK
 
     # Agent span should NOT contain LLM parameters
@@ -134,21 +134,21 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes["gen_ai.system"] == "openai"
 
     # Test prompts using OpenAI semantic conventions
-    assert response_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
-    assert response_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "What is AI?"
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
 
     # Test usage tokens
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] is not None
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] is not None
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] > 0
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
 
     # Test completions using OpenAI semantic conventions
-    assert response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] is not None
-    assert len(response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]) > 0
-    assert response_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"] is not None
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] is not None
+    assert len(response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]) > 0
+    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] is not None
 
     # Test model settings are in the response span
     assert response_span.attributes["gen_ai.request.temperature"] == 0.3
@@ -197,17 +197,17 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.name"] == "get_weather"
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"] == "get_weather"
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
 
     # Tool description is optional - only test if present
-    if f"{GEN_AI_COMPLETION}.tool.description" in tool_span.attributes:
+    if f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description" in tool_span.attributes:
         assert (
-            tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.description"]
+            tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"]
             == "Gets the current weather for a specified city."
         )
 
-    assert tool_span.attributes[f"{GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
+    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK
@@ -297,7 +297,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]

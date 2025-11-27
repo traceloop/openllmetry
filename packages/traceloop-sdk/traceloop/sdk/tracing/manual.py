@@ -1,4 +1,7 @@
 from contextlib import contextmanager
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry import context
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import Span, set_span_in_context
@@ -28,31 +31,31 @@ class LLMSpan:
         pass
 
     def report_request(self, model: str, messages: list[LLMMessage]):
-        self._span.set_attribute(SpanAttributes.LLM_REQUEST_MODEL, model)
+        self._span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
         for idx, message in enumerate(messages):
             self._span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.role", message.role
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", message.role
             )
             self._span.set_attribute(
-                f"{SpanAttributes.LLM_PROMPTS}.{idx}.content", message.content
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
             )
 
     def report_response(self, model: str, completions: list[str]):
-        self._span.set_attribute(SpanAttributes.LLM_RESPONSE_MODEL, model)
+        self._span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, model)
         for idx, completion in enumerate(completions):
             self._span.set_attribute(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.role", "assistant"
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.role", "assistant"
             )
             self._span.set_attribute(
-                f"{SpanAttributes.LLM_COMPLETIONS}.{idx}.content", completion
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content", completion
             )
 
     def report_usage(self, usage: LLMUsage):
         self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS, usage.prompt_tokens
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens
         )
         self._span.set_attribute(
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, usage.completion_tokens
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens
         )
         self._span.set_attribute(
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
@@ -73,7 +76,7 @@ class LLMSpan:
 def track_llm_call(vendor: str, type: str):
     with get_tracer() as tracer:
         span = tracer.start_span(name=f"{vendor}.{type}")
-        span.set_attribute(SpanAttributes.LLM_SYSTEM, vendor)
+        span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, vendor)
         span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, type)
         ctx = set_span_in_context(span)
         token = context.attach(ctx)

@@ -15,12 +15,14 @@ from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     should_send_prompts,
 )
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.metrics import Histogram
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace.span import Span
-from opentelemetry.util.types import AttributeValue
 
 
 @dataclass
@@ -49,9 +51,12 @@ def _message_type_to_role(message_type: str) -> str:
         return "unknown"
 
 
-def _set_span_attribute(span: Span, name: str, value: AttributeValue):
-    if value is not None and value != "":
-        span.set_attribute(name, value)
+def _set_span_attribute(span: Span, key: str, value: Any) -> None:
+    if value is not None:
+        if value != "":
+            span.set_attribute(key, value)
+        else:
+            span.set_attribute(key, "")
 
 
 def set_request_params(span, kwargs, span_holder: SpanHolder):
@@ -70,9 +75,9 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     else:
         model = "unknown"
 
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model)
 
     if "invocation_params" in kwargs:
         params = (
@@ -83,13 +88,13 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_REQUEST_MAX_TOKENS,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         params.get("max_tokens") or params.get("max_new_tokens"),
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, params.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, params.get("temperature")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, params.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
 
     tools = kwargs.get("invocation_params", {}).get("tools", [])
     for i, tool in enumerate(tools):
@@ -124,12 +129,12 @@ def set_llm_request(
         for i, msg in enumerate(prompts):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role",
                 "user",
             )
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
                 msg,
             )
 
@@ -162,7 +167,7 @@ def set_chat_request(
             for msg in message:
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role",
                     _message_type_to_role(msg.type),
                 )
                 tool_calls = (
@@ -173,7 +178,7 @@ def set_chat_request(
 
                 if tool_calls:
                     _set_chat_tool_calls(
-                        span, f"{SpanAttributes.LLM_PROMPTS}.{i}", tool_calls
+                        span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}", tool_calls
                     )
 
                 # Always set content if it exists, regardless of tool_calls presence
@@ -184,14 +189,14 @@ def set_chat_request(
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
                     content,
                 )
 
                 if msg.type == "tool" and hasattr(msg, "tool_call_id"):
                     _set_span_attribute(
                         span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id",
+                        f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.tool_call_id",
                         msg.tool_call_id,
                     )
 
@@ -205,41 +210,41 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
     i = 0
     for generations in response.generations:
         for generation in generations:
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{i}"
-            if hasattr(generation, "text") and generation.text != "":
+            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
+            _set_span_attribute(
+                span,
+                f"{prefix}.role",
+                _message_type_to_role(generation.type),
+            )
+
+            # Try to get content from various sources
+            content = None
+            if hasattr(generation, "text") and generation.text:
+                content = generation.text
+            elif hasattr(generation, "message") and generation.message and generation.message.content:
+                if isinstance(generation.message.content, str):
+                    content = generation.message.content
+                else:
+                    content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
+
+            if content:
                 _set_span_attribute(
                     span,
                     f"{prefix}.content",
-                    generation.text,
+                    content,
                 )
-                _set_span_attribute(span, f"{prefix}.role", "assistant")
-            else:
+
+            # Set finish reason if available
+            if generation.generation_info and generation.generation_info.get("finish_reason"):
                 _set_span_attribute(
                     span,
-                    f"{prefix}.role",
-                    _message_type_to_role(generation.type),
+                    f"{prefix}.finish_reason",
+                    generation.generation_info.get("finish_reason"),
                 )
-                if generation.message.content is str:
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.content",
-                        generation.message.content,
-                    )
-                else:
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.content",
-                        json.dumps(
-                            generation.message.content, cls=CallbackFilteredJSONEncoder
-                        ),
-                    )
-                if generation.generation_info.get("finish_reason"):
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.finish_reason",
-                        generation.generation_info.get("finish_reason"),
-                    )
 
+            # Handle tool calls and function calls
+            if hasattr(generation, "message") and generation.message:
+                # Handle legacy function_call format (single function call)
                 if generation.message.additional_kwargs.get("function_call"):
                     _set_span_attribute(
                         span,
@@ -256,7 +261,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                         ),
                     )
 
-            if hasattr(generation, "message"):
+                # Handle new tool_calls format (multiple tool calls)
                 tool_calls = (
                     generation.message.tool_calls
                     if hasattr(generation.message, "tool_calls")
@@ -284,30 +289,39 @@ def set_chat_response_usage(
     total_tokens = 0
     cache_read_tokens = 0
 
-    for generations in response.generations:
-        for generation in generations:
-            if (
-                hasattr(generation, "message")
-                and hasattr(generation.message, "usage_metadata")
-                and generation.message.usage_metadata is not None
-            ):
-                input_tokens += (
-                    generation.message.usage_metadata.get("input_tokens")
-                    or generation.message.usage_metadata.get("prompt_tokens")
-                    or 0
-                )
-                output_tokens += (
-                    generation.message.usage_metadata.get("output_tokens")
-                    or generation.message.usage_metadata.get("completion_tokens")
-                    or 0
-                )
-                total_tokens = input_tokens + output_tokens
+    # Early return if no generations to avoid potential issues
+    if not response.generations:
+        return
 
-                if generation.message.usage_metadata.get("input_token_details"):
-                    input_token_details = generation.message.usage_metadata.get(
-                        "input_token_details", {}
+    try:
+        for generations in response.generations:
+            for generation in generations:
+                if (
+                    hasattr(generation, "message")
+                    and hasattr(generation.message, "usage_metadata")
+                    and generation.message.usage_metadata is not None
+                ):
+                    input_tokens += (
+                        generation.message.usage_metadata.get("input_tokens")
+                        or generation.message.usage_metadata.get("prompt_tokens")
+                        or 0
                     )
-                    cache_read_tokens += input_token_details.get("cache_read", 0)
+                    output_tokens += (
+                        generation.message.usage_metadata.get("output_tokens")
+                        or generation.message.usage_metadata.get("completion_tokens")
+                        or 0
+                    )
+                    total_tokens = input_tokens + output_tokens
+
+                    if generation.message.usage_metadata.get("input_token_details"):
+                        input_token_details = generation.message.usage_metadata.get(
+                            "input_token_details", {}
+                        )
+                        cache_read_tokens += input_token_details.get("cache_read", 0)
+    except Exception as e:
+        # If there's any issue processing usage metadata, continue without it
+        print(f"DEBUG: Error processing usage metadata: {e}")
+        pass
 
     if (
         input_tokens > 0
@@ -317,12 +331,12 @@ def set_chat_response_usage(
     ):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
@@ -336,15 +350,15 @@ def set_chat_response_usage(
             cache_read_tokens,
         )
         if record_token_usage:
-            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
 
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
                 )
 
@@ -352,9 +366,9 @@ def set_chat_response_usage(
                 token_histogram.record(
                     output_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name,
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
                 )
 

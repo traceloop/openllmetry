@@ -1,5 +1,7 @@
-from opentelemetry.semconv_ai import SpanAttributes
 from enum import Enum
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.instrumentation.bedrock.span_utils import set_guardrail_attributes
 
 
@@ -37,7 +39,7 @@ def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
                 input_latency,
                 attributes={
                     **attrs,
-                    SpanAttributes.LLM_TOKEN_TYPE: t.value,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
                 },
             )
         if "guardrailCoverage" in guardrail["invocationMetrics"]:
@@ -47,7 +49,7 @@ def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
                 char_guarded,
                 attributes={
                     **attrs,
-                    SpanAttributes.LLM_TOKEN_TYPE: t.value,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
                 },
             )
 
@@ -153,8 +155,8 @@ def handle_words(t: Type, guardrail, attrs, metric_params):
 def guardrail_converse(span, response, vendor, model, metric_params):
     attrs = {
         "gen_ai.vendor": vendor,
-        SpanAttributes.LLM_RESPONSE_MODEL: model,
-        SpanAttributes.LLM_SYSTEM: "bedrock",
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+        GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
     }
     input_filters = None
     output_filters = []
@@ -182,8 +184,8 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
     if "amazon-bedrock-guardrailAction" in response_body:
         attrs = {
             "gen_ai.vendor": vendor,
-            SpanAttributes.LLM_RESPONSE_MODEL: model,
-            SpanAttributes.LLM_SYSTEM: "bedrock",
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+            GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
         }
         if "amazon-bedrock-trace" in response_body:
             bedrock_trace = response_body["amazon-bedrock-trace"]

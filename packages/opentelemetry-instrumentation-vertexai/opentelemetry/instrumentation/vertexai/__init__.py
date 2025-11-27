@@ -5,7 +5,7 @@ import types
 from typing import Collection
 
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.instrumentation.vertexai.config import Config
@@ -22,6 +22,9 @@ from opentelemetry.instrumentation.vertexai.span_utils import (
 )
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.vertexai.version import __version__
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -235,7 +238,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Google",
+            GenAIAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -284,7 +287,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Google",
+            GenAIAttributes.GEN_AI_SYSTEM: "Google",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -334,11 +337,11 @@ class VertexAIInstrumentor(BaseInstrumentor):
         event_logger = None
 
         if should_emit_events():
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
                 __name__,
                 __version__,
-                event_logger_provider=event_logger_provider,
+                logger_provider=logger_provider,
             )
 
         for wrapped_method in WRAPPED_METHODS:

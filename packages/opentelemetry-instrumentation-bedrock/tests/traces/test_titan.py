@@ -3,9 +3,6 @@ import json
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -43,12 +40,12 @@ def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -59,21 +56,21 @@ def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
         "scale generative AI applications with base models (FMs)'."
     )
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == expected_prompt
     )
 
     # Assert on response
     generated_text = response_body["results"][0]["outputText"]
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == generated_text
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -118,20 +115,20 @@ def test_titan_completion_with_events_with_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -190,20 +187,20 @@ def test_titan_completion_with_events_with_no_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -266,12 +263,12 @@ def test_titan_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
@@ -282,21 +279,21 @@ def test_titan_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter
         "scale generative AI applications with base models (FMs)'."
     )
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == expected_prompt
     )
 
     # Assert on response
     completion_text = "".join(generated_text)
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == completion_text
     )
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -351,20 +348,20 @@ def test_titan_invoke_stream_with_events_with_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -436,20 +433,20 @@ def test_titan_invoke_stream_with_events_with_no_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
 
     # Assert on other request parameters
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 200
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
@@ -516,27 +513,27 @@ def test_titan_converse(instrument_legacy, brt, span_exporter, log_exporter):
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
     ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
     generated_text = response["output"]["message"]["content"]
     for i in range(0, len(generated_text)):
         assert (
-            bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{i}.content"]
+            bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content"]
             == generated_text[i]["text"]
         )
 
@@ -594,12 +591,12 @@ def test_titan_converse_with_events_with_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -671,12 +668,12 @@ def test_titan_converse_with_events_with_no_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -766,38 +763,38 @@ def test_titan_converse_stream(instrument_legacy, brt, span_exporter, log_export
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     assert bedrock_span.attributes[
-        f"{SpanAttributes.LLM_PROMPTS}.0.content"
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
     ] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
         == content
     )
     assert (
-        bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.role"]
+        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"]
         == response_role
     )
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (
@@ -878,22 +875,22 @@ def test_titan_converse_stream_with_events_with_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (
@@ -986,22 +983,22 @@ def test_titan_converse_stream_with_events_with_no_content(
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
 
     # Assert on request type
     assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
 
     # Assert on usage data
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == inputTokens
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == outputTokens
     )
     assert (
@@ -1026,7 +1023,7 @@ def test_titan_converse_stream_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value

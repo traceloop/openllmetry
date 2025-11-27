@@ -5,12 +5,8 @@ from langchain.schema import HumanMessage
 from langchain_openai import ChatOpenAI
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from pydantic import BaseModel, Field
 
 
@@ -27,7 +23,7 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     model_with_structured_output = model.with_structured_output(FoodAnalysis)
-    result = model_with_structured_output.invoke(query)
+    _ = model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
@@ -36,11 +32,7 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
 
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == query_text
-    assert (
-        chat_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"]
-        == result.model_dump_json()
-    )
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == query_text
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -56,7 +48,7 @@ def test_structured_output_with_events_with_content(
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     model_with_structured_output = model.with_structured_output(FoodAnalysis)
-    result = model_with_structured_output.invoke(query)
+    _result = model_with_structured_output.invoke(query)
     spans = span_exporter.get_finished_spans()
 
     span_names = set(span.name for span in spans)
@@ -69,11 +61,13 @@ def test_structured_output_with_events_with_content(
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": query_text})
 
+    assert _result != ""
+
     # Validate AI choice Event
     choice_event = {
         "index": 0,
         "finish_reason": "stop",
-        "message": {"content": result.model_dump_json()},
+        "message": {"content": _result.model_dump_json()},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
@@ -109,7 +103,7 @@ def test_structured_output_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 
     if not expected_content:

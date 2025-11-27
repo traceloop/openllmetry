@@ -11,9 +11,6 @@ from langchain_core.utils.function_calling import (
 from langchain_openai import ChatOpenAI
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -201,7 +198,7 @@ def test_simple_lcel_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "function_call",
         "message": {"content": ""},
@@ -217,7 +214,7 @@ def test_simple_lcel_with_events_with_content(
             }
         ],
     }
-    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[2], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -281,13 +278,13 @@ def test_simple_lcel_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "function_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
-    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[2], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -394,13 +391,15 @@ async def test_async_lcel_with_events_with_content(
         {"content": prompt_template.format(product="colorful socks")},
     )
 
+    assert response != ""
+
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": response},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -448,12 +447,12 @@ async def test_async_lcel_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -520,12 +519,12 @@ def test_invoke_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": response},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -560,12 +559,12 @@ def test_invoke_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -639,12 +638,12 @@ def test_stream_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": "".join(chunks)},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -683,12 +682,12 @@ def test_stream_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -757,12 +756,12 @@ async def test_async_invoke_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": response},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -798,12 +797,12 @@ async def test_async_invoke_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -921,7 +920,7 @@ def test_lcel_with_datetime_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "function_call",
         "message": {"content": ""},
@@ -930,14 +929,14 @@ def test_lcel_with_datetime_with_events_with_content(
                 "id": "",
                 "function": {
                     "name": "Joke",
-                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by itself?","punchline":"Because it was '
-                    'two tired!"}',
+                    "arguments": '{"setup":"Why couldn\'t the bicycle stand up by '
+                    'itself?","punchline":"Because it was two tired!"}',
                 },
                 "type": "function",
             }
         ],
     }
-    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[2], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -993,17 +992,17 @@ def test_lcel_with_datetime_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "function_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
-    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[2], "gen_ai.choice", _choice_event)
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 
     if not expected_content:

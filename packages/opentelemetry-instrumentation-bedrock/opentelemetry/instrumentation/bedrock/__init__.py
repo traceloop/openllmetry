@@ -8,7 +8,7 @@ from functools import partial, wraps
 from typing import Collection
 
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.event_emitter import (
     emit_choice_events,
@@ -388,7 +388,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
                 nonlocal role
-                if "contentBlockDelta" in event:
+                if "contentBlockDelta" in event and "text" in event["contentBlockDelta"].get("delta", {}):
                     response_msg.append(event["contentBlockDelta"]["delta"]["text"])
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]
@@ -629,9 +629,9 @@ class BedrockInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:

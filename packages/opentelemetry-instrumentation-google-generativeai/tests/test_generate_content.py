@@ -1,8 +1,5 @@
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes  # noqa: F401
@@ -24,32 +21,32 @@ def test_gemini_generate_content_legacy(
 
     # gemini_span = spans[0]
     # assert (
-    #     gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    #     gemini_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     #     == "The opposite of hot is\n"
     # )
-    # assert gemini_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+    # assert gemini_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
     # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    #     gemini_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     #     == "cold\n"
     # )
     # assert (
-    #     gemini_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+    #     gemini_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
     #     == "assistant"
     # )
 
-    # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
+    # assert gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-    #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+    #     + gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 
@@ -75,19 +72,19 @@ def test_gemini_generate_content_with_events_with_content(
 
     # gemini_span = spans[0]
 
-    # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
+    # assert gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-    #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+    #     + gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 
@@ -123,19 +120,19 @@ def test_gemini_generate_content_with_events_with_no_content(
 
     # gemini_span = spans[0]
 
-    # assert gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == 5
+    # assert gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 5
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
-    #     + gemini_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+    #     + gemini_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
     #     == gemini_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
     # )
 
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
     # assert (
-    #     gemini_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+    #     gemini_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
     #     == "models/gemini-1.5-flash"
     # )
 
@@ -155,7 +152,7 @@ def test_gemini_generate_content_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "gemini"
 
     if not expected_content:

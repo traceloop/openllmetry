@@ -3,9 +3,6 @@ import json
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -43,16 +40,16 @@ def test_ai21_j2_completion_string_content(
     assert all(span.name == "bedrock.completion" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
-        == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
@@ -96,16 +93,16 @@ def test_ai21_j2_completion_string_content_with_events_with_content(
     assert all(span.name == "bedrock.completion" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
-        == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
@@ -155,16 +152,16 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
     assert all(span.name == "bedrock.completion" for span in spans)
 
     meta_span = spans[0]
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
-    assert meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS] == len(
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == len(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
         meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
-        == meta_span.attributes[SpanAttributes.LLM_USAGE_PROMPT_TOKENS]
-        + meta_span.attributes[SpanAttributes.LLM_USAGE_COMPLETION_TOKENS]
+        == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
@@ -187,7 +184,7 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
