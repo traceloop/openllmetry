@@ -3,9 +3,57 @@ import pydantic
 import re
 import threading
 import time
+from typing import Any, Optional, Union
 
 from openai import AsyncStream, Stream
+from openai._legacy_response import LegacyAPIResponse
+from opentelemetry import context as context_api
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+    openai_attributes as OpenAIAttributes,
+)
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
+from typing_extensions import NotRequired
 from wrapt import ObjectProxy
+
+from opentelemetry.instrumentation.openai.shared import (
+    _extract_model_name_from_provider_format,
+    _set_request_attributes,
+    _set_span_attribute,
+    model_as_dict,
+)
+from opentelemetry.instrumentation.openai.utils import (
+    _with_tracer_wrapper,
+    dont_throw,
+    should_send_prompts,
+)
+
+
+def _get_openai_sentinel_types() -> tuple:
+    """Dynamically discover OpenAI sentinel types available in this SDK version.
+
+    OpenAI SDK uses sentinel objects (NOT_GIVEN, Omit) for unset optional parameters.
+    These types may not exist in older SDK versions, so we discover them at runtime.
+    """
+    sentinel_types = []
+    try:
+        from openai import NotGiven
+        sentinel_types.append(NotGiven)
+    except ImportError:
+        pass
+    try:
+        from openai import Omit
+        sentinel_types.append(Omit)
+    except ImportError:
+        pass
+    return tuple(sentinel_types)
+
+
+# Tuple of OpenAI sentinel types for isinstance() checks (empty if none available)
+_OPENAI_SENTINEL_TYPES: tuple = _get_openai_sentinel_types()
 
 # Conditional imports for backward compatibility
 try:
@@ -24,7 +72,7 @@ try:
     RESPONSES_AVAILABLE = True
 except ImportError:
     # Fallback types for older OpenAI SDK versions
-    from typing import Any, Dict, List, Union
+    from typing import Dict, List
 
     # Create basic fallback types
     FunctionToolParam = Dict[str, Any]
@@ -37,33 +85,25 @@ except ImportError:
     ResponseOutputMessageParam = Dict[str, Any]
     RESPONSES_AVAILABLE = False
 
-from openai._legacy_response import LegacyAPIResponse
-from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-    openai_attributes as OpenAIAttributes,
-)
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.trace import SpanKind, Span, StatusCode, Tracer
-from typing import Any, Optional, Union
-from typing_extensions import NotRequired
-
-from opentelemetry.instrumentation.openai.shared import (
-    _extract_model_name_from_provider_format,
-    _set_request_attributes,
-    _set_span_attribute,
-    model_as_dict,
-)
-
-from opentelemetry.instrumentation.openai.utils import (
-    _with_tracer_wrapper,
-    dont_throw,
-    should_send_prompts,
-)
-
 SPAN_NAME = "openai.response"
+
+
+def _sanitize_sentinel_values(kwargs: dict) -> dict:
+    """Remove OpenAI sentinel values (NOT_GIVEN, Omit) from kwargs.
+
+    OpenAI SDK uses sentinel objects for unset optional parameters.
+    These don't have dict methods like .get(), causing errors when
+    code chains calls like kwargs.get("reasoning", {}).get("summary").
+
+    This removes sentinel values so the default (e.g., {}) is used instead
+    when calling .get() on the sanitized dict.
+
+    If no sentinel types are available (older SDK), returns kwargs unchanged.
+    """
+    if not _OPENAI_SENTINEL_TYPES:
+        return kwargs
+    return {k: v for k, v in kwargs.items()
+            if not isinstance(v, _OPENAI_SENTINEL_TYPES)}
 
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
@@ -459,6 +499,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
 
+    # Remove OpenAI sentinel values (NOT_GIVEN, Omit) to allow chained .get() calls
+    non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
+
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
@@ -470,17 +513,17 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time=start_time,
                 context=ctx,
             )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
             return ResponseStream(
                 span=span,
                 response=response,
                 start_time=start_time,
-                request_kwargs=kwargs,
+                request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
     except Exception as e:
-        response_id = kwargs.get("response_id")
+        response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
         if response_id and response_id in responses:
             existing_data = responses[response_id].model_dump()
@@ -489,34 +532,34 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time=existing_data.get("start_time", start_time),
                 response_id=response_id or "",
                 input=process_input(
-                    kwargs.get("input", existing_data.get("input", []))
+                    non_sentinel_kwargs.get("input", existing_data.get("input", []))
                 ),
-                instructions=kwargs.get(
+                instructions=non_sentinel_kwargs.get(
                     "instructions", existing_data.get("instructions")
                 ),
-                tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
+                tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
                 output_blocks=existing_data.get("output_blocks", {}),
                 usage=existing_data.get("usage"),
-                output_text=kwargs.get(
+                output_text=non_sentinel_kwargs.get(
                     "output_text", existing_data.get("output_text", "")
                 ),
-                request_model=kwargs.get(
+                request_model=non_sentinel_kwargs.get(
                     "model", existing_data.get("request_model", "")
                 ),
                 response_model=existing_data.get("response_model", ""),
                 # Reasoning attributes
                 request_reasoning_summary=(
-                    kwargs.get("reasoning", {}).get(
+                    non_sentinel_kwargs.get("reasoning", {}).get(
                         "summary", existing_data.get("request_reasoning_summary")
                     )
                 ),
                 request_reasoning_effort=(
-                    kwargs.get("reasoning", {}).get(
+                    non_sentinel_kwargs.get("reasoning", {}).get(
                         "effort", existing_data.get("request_reasoning_effort")
                     )
                 ),
-                response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-                request_service_tier=kwargs.get("service_tier"),
+                response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+                request_service_tier=non_sentinel_kwargs.get("service_tier"),
                 response_service_tier=existing_data.get("response_service_tier"),
                 # Capture trace context to maintain continuity
                 trace_context=existing_data.get("trace_context", context_api.get_current()),
@@ -535,7 +578,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             ),
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
@@ -551,7 +594,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     else:
         existing_data = existing_data.model_dump()
 
-    request_tools = get_tools_from_kwargs(kwargs)
+    request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
     merged_tools = existing_data.get("tools", []) + request_tools
 
@@ -567,28 +610,28 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         traced_data = TracedData(
             start_time=existing_data.get("start_time", start_time),
             response_id=parsed_response.id,
-            input=process_input(existing_data.get("input", kwargs.get("input"))),
-            instructions=existing_data.get("instructions", kwargs.get("instructions")),
+            input=process_input(existing_data.get("input", non_sentinel_kwargs.get("input"))),
+            instructions=existing_data.get("instructions", non_sentinel_kwargs.get("instructions")),
             tools=merged_tools if merged_tools else None,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),
             output_text=existing_data.get("output_text", parsed_response_output_text),
-            request_model=existing_data.get("request_model", kwargs.get("model")),
+            request_model=existing_data.get("request_model", non_sentinel_kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
             request_reasoning_summary=(
-                kwargs.get("reasoning", {}).get(
+                non_sentinel_kwargs.get("reasoning", {}).get(
                     "summary", existing_data.get("request_reasoning_summary")
                 )
             ),
             request_reasoning_effort=(
-                kwargs.get("reasoning", {}).get(
+                non_sentinel_kwargs.get("reasoning", {}).get(
                     "effort", existing_data.get("request_reasoning_effort")
                 )
             ),
-            response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-            request_service_tier=existing_data.get("request_service_tier", kwargs.get("service_tier")),
+            response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+            request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
@@ -606,7 +649,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             start_time=int(traced_data.start_time),
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
 
@@ -622,6 +665,9 @@ async def async_responses_get_or_create_wrapper(
         return await wrapped(*args, **kwargs)
     start_time = time.time_ns()
 
+    # Remove OpenAI sentinel values (NOT_GIVEN, Omit) to allow chained .get() calls
+    non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
+
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
@@ -633,17 +679,17 @@ async def async_responses_get_or_create_wrapper(
                 start_time=start_time,
                 context=ctx,
             )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
             return ResponseStream(
                 span=span,
                 response=response,
                 start_time=start_time,
-                request_kwargs=kwargs,
+                request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
     except Exception as e:
-        response_id = kwargs.get("response_id")
+        response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
         if response_id and response_id in responses:
             existing_data = responses[response_id].model_dump()
@@ -652,30 +698,30 @@ async def async_responses_get_or_create_wrapper(
                 start_time=existing_data.get("start_time", start_time),
                 response_id=response_id or "",
                 input=process_input(
-                    kwargs.get("input", existing_data.get("input", []))
+                    non_sentinel_kwargs.get("input", existing_data.get("input", []))
                 ),
-                instructions=kwargs.get(
+                instructions=non_sentinel_kwargs.get(
                     "instructions", existing_data.get("instructions", "")
                 ),
-                tools=get_tools_from_kwargs(kwargs) or existing_data.get("tools", []),
+                tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
                 output_blocks=existing_data.get("output_blocks", {}),
                 usage=existing_data.get("usage"),
-                output_text=kwargs.get("output_text", existing_data.get("output_text")),
-                request_model=kwargs.get("model", existing_data.get("request_model")),
+                output_text=non_sentinel_kwargs.get("output_text", existing_data.get("output_text")),
+                request_model=non_sentinel_kwargs.get("model", existing_data.get("request_model")),
                 response_model=existing_data.get("response_model"),
                 # Reasoning attributes
                 request_reasoning_summary=(
-                    kwargs.get("reasoning", {}).get(
+                    non_sentinel_kwargs.get("reasoning", {}).get(
                         "summary", existing_data.get("request_reasoning_summary")
                     )
                 ),
                 request_reasoning_effort=(
-                    kwargs.get("reasoning", {}).get(
+                    non_sentinel_kwargs.get("reasoning", {}).get(
                         "effort", existing_data.get("request_reasoning_effort")
                     )
                 ),
-                response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-                request_service_tier=kwargs.get("service_tier"),
+                response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+                request_service_tier=non_sentinel_kwargs.get("service_tier"),
                 response_service_tier=existing_data.get("response_service_tier"),
                 # Capture trace context to maintain continuity
                 trace_context=existing_data.get("trace_context", context_api.get_current()),
@@ -694,7 +740,7 @@ async def async_responses_get_or_create_wrapper(
             ),
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
@@ -710,7 +756,7 @@ async def async_responses_get_or_create_wrapper(
     else:
         existing_data = existing_data.model_dump()
 
-    request_tools = get_tools_from_kwargs(kwargs)
+    request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
     merged_tools = existing_data.get("tools", []) + request_tools
 
@@ -727,28 +773,28 @@ async def async_responses_get_or_create_wrapper(
         traced_data = TracedData(
             start_time=existing_data.get("start_time", start_time),
             response_id=parsed_response.id,
-            input=process_input(existing_data.get("input", kwargs.get("input"))),
-            instructions=existing_data.get("instructions", kwargs.get("instructions")),
+            input=process_input(existing_data.get("input", non_sentinel_kwargs.get("input"))),
+            instructions=existing_data.get("instructions", non_sentinel_kwargs.get("instructions")),
             tools=merged_tools if merged_tools else None,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),
             output_text=existing_data.get("output_text", parsed_response_output_text),
-            request_model=existing_data.get("request_model", kwargs.get("model")),
+            request_model=existing_data.get("request_model", non_sentinel_kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
             # Reasoning attributes
             request_reasoning_summary=(
-                kwargs.get("reasoning", {}).get(
+                non_sentinel_kwargs.get("reasoning", {}).get(
                     "summary", existing_data.get("request_reasoning_summary")
                 )
             ),
             request_reasoning_effort=(
-                kwargs.get("reasoning", {}).get(
+                non_sentinel_kwargs.get("reasoning", {}).get(
                     "effort", existing_data.get("request_reasoning_effort")
                 )
             ),
-            response_reasoning_effort=kwargs.get("reasoning", {}).get("effort"),
-            request_service_tier=existing_data.get("request_service_tier", kwargs.get("service_tier")),
+            response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+            request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
@@ -766,7 +812,7 @@ async def async_responses_get_or_create_wrapper(
             start_time=int(traced_data.start_time),
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
 
@@ -778,6 +824,8 @@ async def async_responses_get_or_create_wrapper(
 def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
+
+    non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     response = wrapped(*args, **kwargs)
     if isinstance(response, Stream):
@@ -794,7 +842,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
             record_exception=True,
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
@@ -808,6 +856,8 @@ async def async_responses_cancel_wrapper(
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
+
+    non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     response = await wrapped(*args, **kwargs)
     if isinstance(response, (Stream, AsyncStream)):
@@ -824,7 +874,7 @@ async def async_responses_cancel_wrapper(
             record_exception=True,
             context=ctx,
         )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(kwargs), instance)
+        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
@@ -852,7 +902,8 @@ class ResponseStream(ObjectProxy):
         super().__init__(response)
         self._span = span
         self._start_time = start_time
-        self._request_kwargs = request_kwargs or {}
+        # Filter sentinel values (defensive, in case called directly without prior filtering)
+        self._request_kwargs = _sanitize_sentinel_values(request_kwargs or {})
         self._tracer = tracer
         self._traced_data = traced_data or TracedData(
             start_time=start_time,
@@ -868,7 +919,9 @@ class ResponseStream(ObjectProxy):
             request_reasoning_summary=self._request_kwargs.get("reasoning", {}).get(
                 "summary"
             ),
-            request_reasoning_effort=self._request_kwargs.get("reasoning", {}).get("effort"),
+            request_reasoning_effort=self._request_kwargs.get("reasoning", {}).get(
+                "effort"
+            ),
             response_reasoning_effort=None,
             request_service_tier=self._request_kwargs.get("service_tier"),
             response_service_tier=None,

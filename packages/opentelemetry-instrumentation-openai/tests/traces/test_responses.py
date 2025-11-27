@@ -524,7 +524,9 @@ def test_responses_trace_context_propagation_unit():
     from unittest.mock import MagicMock, Mock
     from opentelemetry import trace, context
     from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
     from opentelemetry.instrumentation.openai.v1.responses_wrappers import TracedData
     from openai.types.responses import Response, ResponseOutputItem, ResponseUsage
     import time
@@ -533,6 +535,7 @@ def test_responses_trace_context_propagation_unit():
     provider = TracerProvider()
     exporter = InMemorySpanExporter()
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
     tracer = trace.get_tracer(__name__)
@@ -582,9 +585,9 @@ def test_responses_trace_context_propagation_unit():
     )
 
     # The openai.response span should be a child of the parent span
-    assert openai_spans[0].parent.span_id == parent_spans[0].context.span_id, (
-        "openai.response span should be a child of parent-span"
-    )
+    assert (
+        openai_spans[0].parent.span_id == parent_spans[0].context.span_id
+    ), "openai.response span should be a child of parent-span"
 
 
 @pytest.mark.vcr
@@ -730,3 +733,92 @@ async def test_responses_streaming_async_with_parent_span(
     assert openai_span.attributes["gen_ai.system"] == "openai"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
     assert openai_span.attributes["llm.is_streaming"] is True
+
+
+def test_response_stream_init_with_not_given_reasoning():
+    """Test ResponseStream initialization when reasoning=NOT_GIVEN sentinel.
+
+    This reproduces issue #3472 - OpenAI SDK uses NOT_GIVEN/Omit sentinels for
+    unset optional parameters. When code chains .get() calls like
+    kwargs.get("reasoning", {}).get(...), it fails because the sentinel exists
+    as the key value (not the default {}) but lacks a .get() method.
+    """
+    from unittest.mock import MagicMock
+
+    try:
+        from openai._types import NOT_GIVEN
+    except ImportError:
+        pytest.skip("NOT_GIVEN sentinel not available in this OpenAI SDK version")
+
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        ResponseStream,
+    )
+
+    mock_response = MagicMock()
+    mock_span = MagicMock()
+    mock_tracer = MagicMock()
+
+    # Simulate kwargs where reasoning is set to NOT_GIVEN sentinel
+    # This is what happens when client.responses.create() is called without
+    # explicitly setting the reasoning parameter
+    request_kwargs_with_not_given = {
+        "model": "gpt-4",
+        "input": "test",
+        "reasoning": NOT_GIVEN,  # This causes AttributeError: 'NotGiven' has no 'get'
+        "stream": True,
+    }
+
+    # This should not raise AttributeError
+    stream = ResponseStream(
+        span=mock_span,
+        response=mock_response,
+        start_time=1234567890,
+        request_kwargs=request_kwargs_with_not_given,
+        tracer=mock_tracer,
+    )
+
+    assert stream is not None
+    assert stream._traced_data is not None
+    # Reasoning summary should be None when NOT_GIVEN sentinel is passed
+    assert stream._traced_data.request_reasoning_summary is None
+
+
+def test_response_stream_init_with_omit_reasoning():
+    """Test ResponseStream initialization when reasoning=Omit() instance.
+
+    This is a variant of issue #3472 testing the Omit sentinel class.
+    """
+    from unittest.mock import MagicMock
+
+    try:
+        from openai._types import Omit
+    except ImportError:
+        pytest.skip("Omit sentinel not available in this OpenAI SDK version")
+
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        ResponseStream,
+    )
+
+    mock_response = MagicMock()
+    mock_span = MagicMock()
+    mock_tracer = MagicMock()
+
+    request_kwargs_with_omit = {
+        "model": "gpt-4",
+        "input": "test",
+        "reasoning": Omit(),  # Another sentinel type that lacks .get()
+        "stream": True,
+    }
+
+    # This should not raise AttributeError
+    stream = ResponseStream(
+        span=mock_span,
+        response=mock_response,
+        start_time=1234567890,
+        request_kwargs=request_kwargs_with_omit,
+        tracer=mock_tracer,
+    )
+
+    assert stream is not None
+    assert stream._traced_data is not None
+    assert stream._traced_data.request_reasoning_summary is None
