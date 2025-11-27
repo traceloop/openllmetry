@@ -1,10 +1,8 @@
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, cast, Union
+from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
 import json
 import logging
-import re
-from http import HTTPStatus
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -18,7 +16,9 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
-from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
+from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
+    FastMCPInstrumentor,
+)
 
 _instruments = ("mcp >= 1.6.0",)
 
@@ -42,13 +42,17 @@ class McpInstrumentor(BaseInstrumentor):
         # Instrument FastMCP Client to create a session-level span
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "fastmcp.client", "Client.__aenter__", self._fastmcp_client_enter_wrapper(tracer)
+                "fastmcp.client",
+                "Client.__aenter__",
+                self._fastmcp_client_enter_wrapper(tracer),
             ),
             "fastmcp.client",
         )
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "fastmcp.client", "Client.__aexit__", self._fastmcp_client_exit_wrapper(tracer)
+                "fastmcp.client",
+                "Client.__aexit__",
+                self._fastmcp_client_exit_wrapper(tracer),
             ),
             "fastmcp.client",
         )
@@ -121,9 +125,9 @@ class McpInstrumentor(BaseInstrumentor):
         ) -> AsyncGenerator[
             Union[
                 Tuple[InstrumentedStreamReader, InstrumentedStreamWriter],
-                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter, Any]
+                Tuple[InstrumentedStreamReader, InstrumentedStreamWriter, Any],
             ],
-            None
+            None,
         ]:
             async with wrapped(*args, **kwargs) as result:
                 try:
@@ -136,12 +140,18 @@ class McpInstrumentor(BaseInstrumentor):
                         read_stream, write_stream, get_session_id_callback = result
                         yield InstrumentedStreamReader(
                             read_stream, tracer
-                        ), InstrumentedStreamWriter(write_stream, tracer), get_session_id_callback
+                        ), InstrumentedStreamWriter(
+                            write_stream, tracer
+                        ), get_session_id_callback
                     except Exception as e:
-                        logging.warning(f"mcp instrumentation _transport_wrapper exception: {e}")
+                        logging.warning(
+                            f"mcp instrumentation _transport_wrapper exception: {e}"
+                        )
                         yield result
                 except Exception as e:
-                    logging.warning(f"mcp instrumentation transport_wrapper exception: {e}")
+                    logging.warning(
+                        f"mcp instrumentation transport_wrapper exception: {e}"
+                    )
                     yield result
 
         return traced_method
@@ -190,24 +200,31 @@ class McpInstrumentor(BaseInstrumentor):
 
             # Create different span types based on method
             if method == "tools/call":
-                return await self._handle_tool_call(tracer, method, params, args, kwargs, wrapped)
+                return await self._handle_tool_call(
+                    tracer, method, params, args, kwargs, wrapped
+                )
             else:
-                return await self._handle_mcp_method(tracer, method, args, kwargs, wrapped)
+                return await self._handle_mcp_method(
+                    tracer, method, args, kwargs, wrapped
+                )
 
         return traced_method
 
     def _fastmcp_client_enter_wrapper(self, tracer):
         """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
+
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             # Start a root span for the MCP client session and make it current
             span_context_manager = tracer.start_as_current_span("mcp.client.session")
             span = span_context_manager.__enter__()
             span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session")
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
+            )
 
             # Store the span context manager on the instance to properly exit it later
-            setattr(instance, '_tracing_session_context_manager', span_context_manager)
+            setattr(instance, "_tracing_session_context_manager", span_context_manager)
 
             try:
                 # Call the original method
@@ -218,10 +235,12 @@ class McpInstrumentor(BaseInstrumentor):
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
+
         return traced_method
 
     def _fastmcp_client_exit_wrapper(self, tracer):
         """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
+
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             try:
@@ -229,17 +248,22 @@ class McpInstrumentor(BaseInstrumentor):
                 result = await wrapped(*args, **kwargs)
 
                 # End the session span context manager
-                context_manager = getattr(instance, '_tracing_session_context_manager', None)
+                context_manager = getattr(
+                    instance, "_tracing_session_context_manager", None
+                )
                 if context_manager:
                     context_manager.__exit__(None, None, None)
 
                 return result
             except Exception as e:
                 # End the session span context manager with exception info
-                context_manager = getattr(instance, '_tracing_session_context_manager', None)
+                context_manager = getattr(
+                    instance, "_tracing_session_context_manager", None
+                )
                 if context_manager:
                     context_manager.__exit__(type(e), e, e.__traceback__)
                 raise
+
         return traced_method
 
     async def _handle_tool_call(self, tracer, method, params, args, kwargs, wrapped):
@@ -260,26 +284,40 @@ class McpInstrumentor(BaseInstrumentor):
 
         with tracer.start_as_current_span(span_name) as span:
             # Set tool-specific attributes
-            span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
+            )
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
             # Add input
             clean_input = self._extract_clean_input(method, params)
             if clean_input:
                 try:
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input))
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
+                    )
                 except (TypeError, ValueError):
-                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input))
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
+                    )
 
-            return await self._execute_and_handle_result(span, method, args, kwargs, wrapped, clean_output=True)
+            return await self._execute_and_handle_result(
+                span, method, args, kwargs, wrapped, clean_output=True
+            )
 
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
         with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}")
-            return await self._execute_and_handle_result(span, method, args, kwargs, wrapped, clean_output=False)
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+            )
+            return await self._execute_and_handle_result(
+                span, method, args, kwargs, wrapped, clean_output=False
+            )
 
-    async def _execute_and_handle_result(self, span, method, args, kwargs, wrapped, clean_output=False):
+    async def _execute_and_handle_result(
+        self, span, method, args, kwargs, wrapped, clean_output=False
+    ):
         """Execute the wrapped function and handle the result"""
         try:
             result = await wrapped(*args, **kwargs)
@@ -288,18 +326,25 @@ class McpInstrumentor(BaseInstrumentor):
                 clean_output_data = self._extract_clean_output(method, result)
                 if clean_output_data:
                     try:
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, json.dumps(clean_output_data))
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                            json.dumps(clean_output_data),
+                        )
                     except (TypeError, ValueError):
-                        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(clean_output_data))
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                            str(clean_output_data),
+                        )
             else:
-                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result))
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+                )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 if len(result.content) > 0:
-                    span.set_status(Status(StatusCode.ERROR, f"{result.content[0].text}"))
-                    error_type = get_error_type(result.content[0].text)
-                    if error_type is not None:
-                        span.set_attribute(ERROR_TYPE, error_type)
+                    span.set_status(
+                        Status(StatusCode.ERROR, f"{result.content[0].text}")
+                    )
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
@@ -337,7 +382,7 @@ class McpInstrumentor(BaseInstrumentor):
                     # Remove internal fields starting with _ and non-serializable objects
                     clean_params = {}
                     for k, v in params.__dict__.items():
-                        if not k.startswith('_'):
+                        if not k.startswith("_"):
                             try:
                                 # Test if the value is JSON serializable
                                 json.dumps(v)
@@ -390,26 +435,16 @@ class McpInstrumentor(BaseInstrumentor):
             else:
                 # For other methods, try to serialize result cleanly
                 if hasattr(result, "__dict__"):
-                    clean_result = {k: v for k, v in result.__dict__.items() if not k.startswith('_')}
+                    clean_result = {
+                        k: v
+                        for k, v in result.__dict__.items()
+                        if not k.startswith("_")
+                    }
                     return clean_result
                 else:
                     return {"result": str(result)}
         except Exception:
             return {}
-
-
-def get_error_type(error_message):
-    if not isinstance(error_message, str):
-        return None
-    match = re.search(r"\b(4\d{2}|5\d{2})\b", error_message)
-    if match:
-        num = int(match.group())
-        if 400 <= num <= 599:
-            return HTTPStatus(num).name
-        else:
-            return None
-    else:
-        return None
 
 
 def serialize(request, depth=0, max_depth=4):
@@ -473,11 +508,11 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
         async for item in self.__wrapped__:
             # Handle different item types based on what's available
             request = None
-            if hasattr(item, 'message') and hasattr(item.message, 'root'):
+            if hasattr(item, "message") and hasattr(item.message, "root"):
                 request = item.message.root
             elif type(item) is JSONRPCMessage:
                 request = cast(JSONRPCMessage, item).root
-            elif hasattr(item, 'root'):
+            elif hasattr(item, "root"):
                 request = item.root
             else:
                 yield item
@@ -518,11 +553,11 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
         # Handle different item types based on what's available
         request = None
-        if hasattr(item, 'message') and hasattr(item.message, 'root'):
+        if hasattr(item, "message") and hasattr(item.message, "root"):
             request = item.message.root
         elif type(item) is JSONRPCMessage:
             request = cast(JSONRPCMessage, item).root
-        elif hasattr(item, 'root'):
+        elif hasattr(item, "root"):
             request = item.root
         else:
             return await self.__wrapped__.send(item)
@@ -540,11 +575,6 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                                 f"{request.result['content'][0]['text']}",
                             )
                         )
-                        error_type = get_error_type(
-                            request.result["content"][0]["text"]
-                        )
-                        if error_type is not None:
-                            span.set_attribute(ERROR_TYPE, error_type)
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
