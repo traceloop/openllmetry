@@ -48,8 +48,6 @@ class Experiment:
         wait_for_results: bool = True,
     ) -> Tuple[List[TaskResponse], List[str]] | RunInGithubResponse:
         """Run an experiment with the given task and evaluators
-        If running in GitHub Actions, will run the experiment in GitHub context.
-        Otherwise, will run the experiment locally.
 
         Args:
             task: Async function to run on each dataset row
