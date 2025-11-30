@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from openai import OpenAI
 from traceloop.sdk.decorators import workflow
 
@@ -6,6 +7,51 @@ from traceloop.sdk.decorators import workflow
 @pytest.fixture
 def openai_client():
     return OpenAI()
+
+
+class TestInitSpansExporter:
+    """Tests for init_spans_exporter with different URL schemes."""
+
+    @pytest.mark.parametrize("endpoint", [
+        "http://localhost:4318",
+        "https://localhost:4318",
+        "HTTP://localhost:4318",
+    ])
+    def test_http_schemes(self, endpoint):
+        from traceloop.sdk.tracing.tracing import init_spans_exporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        assert isinstance(init_spans_exporter(endpoint, {}), OTLPSpanExporter)
+
+    @pytest.mark.parametrize("endpoint,expected_endpoint", [
+        ("http://localhost:4318", "http://localhost:4318/v1/traces"),
+        ("http://localhost:4318/", "http://localhost:4318/v1/traces"), 
+        ("http://localhost:4318/v1/traces", "http://localhost:4318/v1/traces"), 
+        ("https://api.example.com", "https://api.example.com/v1/traces"),
+        ("  http://localhost:4318  ", "http://localhost:4318/v1/traces"), 
+    ])
+    def test_http_endpoint_construction(self, endpoint, expected_endpoint):
+        from traceloop.sdk.tracing.tracing import init_spans_exporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+        with patch.object(OTLPSpanExporter, "__init__", return_value=None) as mock:
+            init_spans_exporter(endpoint, {})
+            mock.assert_called_once_with(endpoint=expected_endpoint, headers={})
+
+    @pytest.mark.parametrize("endpoint,expected_endpoint,insecure", [
+        ("grpc://localhost:4317", "localhost:4317", True),
+        ("GRPC://host:4317", "host:4317", True),
+        ("grpcs://localhost:4317", "localhost:4317", False),
+        ("GRPCS://host:4317", "host:4317", False),
+        ("  grpc://localhost:4317  ", "localhost:4317", True),  # whitespace stripped
+        ("localhost:4317", "localhost:4317", True),  # no scheme = insecure gRPC
+    ])
+    def test_grpc_schemes(self, endpoint, expected_endpoint, insecure):
+        from traceloop.sdk.tracing.tracing import init_spans_exporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+
+        with patch.object(OTLPSpanExporter, "__init__", return_value=None) as mock:
+            init_spans_exporter(endpoint, {})
+            mock.assert_called_once_with(endpoint=expected_endpoint, headers={}, insecure=insecure)
 
 
 @pytest.mark.vcr
