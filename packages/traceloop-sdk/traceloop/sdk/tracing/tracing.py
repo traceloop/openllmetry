@@ -242,6 +242,10 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
         )
 
 
+def set_conversation_id(conversation_id: str) -> None:
+    set_association_properties({"conversation_id": conversation_id})
+
+
 def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
