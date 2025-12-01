@@ -117,3 +117,131 @@ def test_agent_metrics(instrument, span_exporter, reader):
                         assert len(metric.data.data_points) > 0
                         for dp in metric.data.data_points:
                             assert dp.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+
+
+@pytest.mark.vcr
+def test_agent_run_streaming(instrument, span_exporter, reader):
+    """Test agent.run() with streaming enabled."""
+    agent = Agent(
+        name="StreamAgent",
+        model=OpenAIChat(id="gpt-4o-mini"),
+        description="A streaming test agent",
+    )
+
+    events = []
+    for event in agent.run("What is 10 + 5?", stream=True):
+        events.append(event)
+
+    assert len(events) > 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+
+    agent_span = spans[-1]
+    assert agent_span.name == "StreamAgent.agent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "StreamAgent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-4o-mini"
+
+    prompt_content = agent_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
+    assert "10 + 5" in prompt_content
+
+
+@pytest.mark.vcr
+def test_agent_run_streaming_with_tools(instrument, span_exporter, reader):
+    """Test agent.run() with streaming and tool usage."""
+
+    def multiply(a: int, b: int) -> int:
+        """Multiply two numbers."""
+        return a * b
+
+    agent = Agent(
+        name="SyncStreamToolAgent",
+        model=OpenAIChat(id="gpt-4o-mini"),
+        tools=[multiply],
+        description="A sync streaming agent with tools",
+    )
+
+    events = []
+    for event in agent.run("What is 6 times 7?", stream=True):
+        events.append(event)
+
+    assert len(events) > 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+
+    agent_span = [s for s in spans if "agent" in s.name][-1]
+    assert agent_span.name == "SyncStreamToolAgent.agent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "SyncStreamToolAgent"
+
+    tool_spans = [s for s in spans if s.name == "multiply.tool"]
+    for tool_span in tool_spans:
+        assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "multiply"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_agent_arun_streaming(instrument, span_exporter, reader):
+    """Test agent.arun() with streaming enabled."""
+    agent = Agent(
+        name="AsyncStreamAgent",
+        model=OpenAIChat(id="gpt-4o-mini"),
+        description="An async streaming test agent",
+    )
+
+    events = []
+    async for event in agent.arun("What is 10 + 5?", stream=True):
+        events.append(event)
+
+    assert len(events) > 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+
+    agent_span = spans[-1]
+    assert agent_span.name == "AsyncStreamAgent.agent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "AsyncStreamAgent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-4o-mini"
+
+    prompt_content = agent_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
+    assert "10 + 5" in prompt_content
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_agent_arun_streaming_with_tools(instrument, span_exporter, reader):
+    """Test agent.arun() with streaming and tool usage."""
+
+    def multiply(a: int, b: int) -> int:
+        """Multiply two numbers."""
+        return a * b
+
+    agent = Agent(
+        name="StreamToolAgent",
+        model=OpenAIChat(id="gpt-4o-mini"),
+        tools=[multiply],
+        description="A streaming agent with tools",
+    )
+
+    events = []
+    async for event in agent.arun("What is 6 times 7?", stream=True):
+        events.append(event)
+
+    assert len(events) > 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) >= 1
+
+    agent_span = [s for s in spans if "agent" in s.name][-1]
+    assert agent_span.name == "StreamToolAgent.agent"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
+    assert agent_span.attributes.get(GenAIAttributes.GEN_AI_AGENT_NAME) == "StreamToolAgent"
+
+    tool_spans = [s for s in spans if s.name == "multiply.tool"]
+    for tool_span in tool_spans:
+        assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "multiply"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
