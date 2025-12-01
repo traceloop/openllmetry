@@ -1,3 +1,9 @@
+## v0.49.6 (2025-12-01)
+
+### Fix
+
+- **agno**: add streaming support for Agent.run() and Agent.arun() (#3483)
+
 ## v0.49.5 (2025-11-27)
 
 ### Fix
