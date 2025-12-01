@@ -121,11 +121,11 @@ def execute_function(function_name: str, args: dict) -> str:
 
 
 @workflow("chatbot_conversation")
-def process_message(chat_id: str, user_message: str, conversation_history: list) -> tuple[str, list]:
+def process_message(conversation_id: str, user_message: str, conversation_history: list) -> tuple[str, list]:
     """Process a single message with tool support and chat_id association."""
 
-    # Set chat_id as an association property
-    Traceloop.set_association_properties({"chat_id": chat_id})
+    # Set a conversation_id to identify the conversation
+    Traceloop.set_conversation_id(conversation_id)
 
     # Add user message to conversation history
     conversation_history.append({

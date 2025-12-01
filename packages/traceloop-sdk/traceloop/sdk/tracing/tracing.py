@@ -243,7 +243,7 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
 
 
 def set_conversation_id(conversation_id: str) -> None:
-    set_association_properties({"conversation_id": conversation_id})
+    attach(set_value("conversation_id", conversation_id))
 
 
 def set_workflow_name(workflow_name: str) -> None:
@@ -316,6 +316,10 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     entity_path = get_value("entity_path")
     if entity_path is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, str(entity_path))
+
+    conversation_id = get_value("conversation_id")
+    if conversation_id is not None:
+        span.set_attribute("conversation_id", str(conversation_id))
 
     association_properties = get_value("association_properties")
     if association_properties is not None and isinstance(association_properties, dict):

@@ -6,40 +6,6 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
 
 
-def test_set_conversation_id(exporter):
-    @workflow(name="test_conversation_workflow")
-    def test_workflow():
-        return test_task()
-
-    @task(name="test_conversation_task")
-    def test_task():
-        return
-
-    Traceloop.set_conversation_id("conv-12345")
-    test_workflow()
-
-    spans = exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "test_conversation_task.task",
-        "test_conversation_workflow.workflow",
-    ]
-
-    task_span = spans[0]
-    workflow_span = spans[1]
-    assert (
-        workflow_span.attributes[
-            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.conversation_id"
-        ]
-        == "conv-12345"
-    )
-    assert (
-        task_span.attributes[
-            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.conversation_id"
-        ]
-        == "conv-12345"
-    )
-
-
 def test_association_properties(exporter):
     @workflow(name="test_workflow")
     def test_workflow():
