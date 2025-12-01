@@ -243,7 +243,13 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
 
 
 def set_conversation_id(conversation_id: str) -> None:
+    """Set the conversation_id directly on spans without the association properties prefix."""
     attach(set_value("conversation_id", conversation_id))
+
+    # Also set it directly on the current span
+    span = trace.get_current_span()
+    if span and span.is_recording():
+        span.set_attribute("conversation_id", conversation_id)
 
 
 def set_workflow_name(workflow_name: str) -> None:
