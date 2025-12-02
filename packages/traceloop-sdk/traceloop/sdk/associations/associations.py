@@ -39,10 +39,9 @@ class Associations:
             ])
         """
         # Store all associations in context
-        current_associations = get_value("associations") or {}
+        current_associations: dict[str, str] = get_value("associations") or {}  # type: ignore
         for prop, value in associations:
-            if isinstance(prop, AssociationProperty):
-                current_associations[prop.value] = value
+            current_associations[prop.value] = value
 
         attach(set_value("associations", current_associations))
 
@@ -50,5 +49,4 @@ class Associations:
         span = trace.get_current_span()
         if span and span.is_recording():
             for prop, value in associations:
-                prop_name = prop.value if isinstance(prop, AssociationProperty) else str(prop)
-                span.set_attribute(prop_name, value)
+                span.set_attribute(prop.value, value)
