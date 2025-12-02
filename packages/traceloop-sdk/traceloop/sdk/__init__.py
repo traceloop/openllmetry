@@ -29,6 +29,8 @@ from traceloop.sdk.tracing.tracing import (
     set_association_properties,
     set_external_prompt_tracing_context,
 )
+from traceloop.sdk.tracing import associations
+from traceloop.sdk.tracing.associations import AssociationProperty
 from typing import Dict
 from traceloop.sdk.client.client import Client
 
@@ -201,6 +203,8 @@ class Traceloop:
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
+    # Associations namespace
+    associations = associations
 
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)
