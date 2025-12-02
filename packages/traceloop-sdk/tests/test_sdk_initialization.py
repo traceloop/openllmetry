@@ -24,10 +24,10 @@ class TestInitSpansExporter:
 
     @pytest.mark.parametrize("endpoint,expected_endpoint", [
         ("http://localhost:4318", "http://localhost:4318/v1/traces"),
-        ("http://localhost:4318/", "http://localhost:4318/v1/traces"), 
-        ("http://localhost:4318/v1/traces", "http://localhost:4318/v1/traces"), 
+        ("http://localhost:4318/", "http://localhost:4318/v1/traces"),
+        ("http://localhost:4318/v1/traces", "http://localhost:4318/v1/traces"),
         ("https://api.example.com", "https://api.example.com/v1/traces"),
-        ("  http://localhost:4318  ", "http://localhost:4318/v1/traces"), 
+        ("  http://localhost:4318  ", "http://localhost:4318/v1/traces"),
     ])
     def test_http_endpoint_construction(self, endpoint, expected_endpoint):
         from traceloop.sdk.tracing.tracing import init_spans_exporter
