@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 import google.genai as genai
 from google.genai import types
-from traceloop.sdk import Traceloop
+from traceloop.sdk import Traceloop, AssociationProperty
 from traceloop.sdk.decorators import workflow
 
 # Initialize Traceloop for observability
@@ -124,8 +124,8 @@ def execute_function(function_name: str, args: dict) -> str:
 def process_message(conversation_id: str, user_message: str, conversation_history: list) -> tuple[str, list]:
     """Process a single message with tool support and chat_id association."""
 
-    # Set a conversation_id to identify the conversation
-    Traceloop.set_conversation_id(conversation_id)
+    # Set a conversation_id to identify the conversation using the associations API
+    Traceloop.associations.set([(AssociationProperty.CONVERSATION_ID, conversation_id)])
 
     # Add user message to conversation history
     conversation_history.append({

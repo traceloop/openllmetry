@@ -27,7 +27,6 @@ from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_association_properties,
-    set_conversation_id,
     set_external_prompt_tracing_context,
 )
 from typing import Dict
@@ -202,9 +201,6 @@ class Traceloop:
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
 
-    @staticmethod
-    def set_conversation_id(conversation_id: str) -> None:
-        set_conversation_id(conversation_id)
 
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)

@@ -242,16 +242,6 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
         )
 
 
-def set_conversation_id(conversation_id: str) -> None:
-    """Set the conversation_id directly on spans without the association properties prefix."""
-    attach(set_value("conversation_id", conversation_id))
-
-    # Also set it directly on the current span
-    span = trace.get_current_span()
-    if span and span.is_recording():
-        span.set_attribute("conversation_id", conversation_id)
-
-
 def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
 
@@ -323,9 +313,11 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     if entity_path is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, str(entity_path))
 
-    conversation_id = get_value("conversation_id")
-    if conversation_id is not None:
-        span.set_attribute("conversation_id", str(conversation_id))
+    # Handle associations API
+    associations = get_value("associations")
+    if associations is not None and isinstance(associations, dict):
+        for key, value in associations.items():
+            span.set_attribute(key, str(value))
 
     association_properties = get_value("association_properties")
     if association_properties is not None and isinstance(association_properties, dict):
