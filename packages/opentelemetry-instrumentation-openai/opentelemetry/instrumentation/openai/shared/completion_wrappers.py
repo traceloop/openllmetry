@@ -72,7 +72,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
             span.end()
             raise
 
-        if is_streaming_response(response):
+        if is_streaming_response(response, kwargs):
             # span will be closed after the generator is done
             return _build_from_streaming_response(span, kwargs, response)
         else:
@@ -108,7 +108,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
             span.end()
             raise
 
-        if is_streaming_response(response):
+        if is_streaming_response(response, kwargs):
             # span will be closed after the generator is done
             return _abuild_from_streaming_response(span, kwargs, response)
         else:

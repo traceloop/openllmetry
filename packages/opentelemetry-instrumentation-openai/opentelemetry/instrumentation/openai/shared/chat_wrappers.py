@@ -11,6 +11,7 @@ import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
+    _is_legacy_api_response,
     _set_client_attributes,
     _set_functions_attributes,
     _set_request_attributes,
@@ -117,12 +118,24 @@ def chat_wrapper(
 
             raise
 
-        if is_streaming_response(response):
+        if is_streaming_response(response, kwargs):
             # span will be closed after the generator is done
             if is_openai_v1():
-                return ChatStream(
+                # Handle LegacyAPIResponse by parsing it first, without mutating original
+                actual_response = response
+                parsed_successfully = False
+                if _is_legacy_api_response(response) and kwargs.get('stream'):
+                    try:
+                        actual_response = response.parse()
+                        parsed_successfully = True
+                    except Exception as e:
+                        logger.warning(f"Failed to parse LegacyAPIResponse: {e}")
+                        # Fall back to original response
+                        actual_response = response
+                
+                stream = ChatStream(
                     span,
-                    response,
+                    actual_response,
                     instance,
                     token_counter,
                     choice_counter,
@@ -132,6 +145,9 @@ def chat_wrapper(
                     start_time,
                     kwargs,
                 )
+                if parsed_successfully:
+                    stream._response_was_parsed = True
+                return stream
             else:
                 return _build_from_streaming_response(
                     span,
@@ -218,12 +234,24 @@ async def achat_wrapper(
 
             raise
 
-        if is_streaming_response(response):
+        if is_streaming_response(response, kwargs):
             # span will be closed after the generator is done
             if is_openai_v1():
-                return ChatStream(
+                # Handle LegacyAPIResponse by parsing it first, without mutating original
+                actual_response = response
+                parsed_successfully = False
+                if _is_legacy_api_response(response) and kwargs.get('stream'):
+                    try:
+                        actual_response = response.parse()
+                        parsed_successfully = True
+                    except Exception as e:
+                        logger.warning(f"Failed to parse LegacyAPIResponse: {e}")
+                        # Fall back to original response
+                        actual_response = response
+                
+                stream = ChatStream(
                     span,
-                    response,
+                    actual_response,
                     instance,
                     token_counter,
                     choice_counter,
@@ -233,6 +261,9 @@ async def achat_wrapper(
                     start_time,
                     kwargs,
                 )
+                if parsed_successfully:
+                    stream._response_was_parsed = True
+                return stream
             else:
                 return _abuild_from_streaming_response(
                     span,
@@ -309,7 +340,7 @@ def _handle_response(
     is_streaming: bool = False,
 ):
     if is_openai_v1():
-        response_dict = model_as_dict(response)
+        response_dict = model_as_dict(response, is_streaming)
     else:
         response_dict = response
 
@@ -643,9 +674,61 @@ class ChatStream(ObjectProxy):
         self._cleanup_completed = False
         self._cleanup_lock = threading.Lock()
 
+    def parse(self):
+        """Handle LegacyAPIResponse.parse() calls from LiteLLM"""
+        if hasattr(self.__wrapped__, 'parse'):
+            # Parse the response to get the actual stream
+            parsed_stream = self.__wrapped__.parse()
+            
+            # Create new ChatStream but inherit our current response accumulation
+            new_chat_stream = ChatStream(
+                self._span,
+                parsed_stream,
+                self._instance,
+                self._token_counter,
+                self._choice_counter,
+                self._duration_histogram,
+                self._streaming_time_to_first_token,
+                self._streaming_time_to_generate,
+                self._start_time,
+                self._request_kwargs,
+            )
+            
+            # Transfer any accumulated response data to the new stream
+            new_chat_stream._complete_response = self._complete_response.copy()
+            
+            # Mark this stream as no longer responsible for span completion
+            # since the new stream will handle it
+            self._cleanup_completed = True
+            
+            return new_chat_stream
+        else:
+            return self
+
+    def close(self):
+        """Close the stream and ensure cleanup"""
+        self._ensure_cleanup()
+        if hasattr(self.__wrapped__, 'close'):
+            return self.__wrapped__.close()
+    
+    async def aclose(self):
+        """Close the async stream and ensure cleanup"""
+        self._ensure_cleanup()
+        if hasattr(self.__wrapped__, 'close'):
+            return await self.__wrapped__.close()
+
     def __del__(self):
         """Cleanup when object is garbage collected"""
         if hasattr(self, '_cleanup_completed') and not self._cleanup_completed:
+            # If we have accumulated completion data, make sure it gets set on the span
+            if (hasattr(self, '_complete_response') and 
+                (self._complete_response.get('usage') or self._complete_response.get('choices')) and 
+                self._span and self._span.is_recording()):
+                _set_response_attributes(self._span, self._complete_response)
+                if should_send_prompts():
+                    _set_completions(self._span, self._complete_response.get("choices"))
+                self._span.set_status(Status(StatusCode.OK))
+            
             self._ensure_cleanup()
 
     def __enter__(self):
@@ -672,7 +755,23 @@ class ChatStream(ObjectProxy):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        cleanup_exception = None
+        try:
+            self._ensure_cleanup()
+        except Exception as e:
+            cleanup_exception = e
+            # Don't re-raise to avoid masking original exception
+
+        result = False
+        if hasattr(self.__wrapped__, "__aexit__"):
+            result = await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
+        if cleanup_exception:
+            # Log cleanup exception but don't affect context manager behavior
+            logger.debug(
+                "Error during ChatStream cleanup in __aexit__: %s", cleanup_exception)
+
+        return result
 
     def __iter__(self):
         return self
@@ -725,6 +824,7 @@ class ChatStream(ObjectProxy):
             self._first_token = False
 
         _accumulate_stream_items(item, self._complete_response)
+        
 
     def _shared_attributes(self):
         return metric_shared_attributes(
@@ -823,6 +923,8 @@ class ChatStream(ObjectProxy):
     @dont_throw
     def _record_partial_metrics(self):
         """Record metrics based on available partial data"""
+        # Debug logging
+        
         # Always record duration if we have start time
         if self._start_time and isinstance(self._start_time, (float, int)) and self._duration_histogram:
             duration = time.time() - self._start_time
@@ -833,6 +935,16 @@ class ChatStream(ObjectProxy):
         # Record basic span attributes even without complete response
         if self._span and self._span.is_recording():
             _set_response_attributes(self._span, self._complete_response)
+            
+            # Also set completion attributes for any accumulated choices
+            if should_send_prompts():
+                _set_completions(self._span, self._complete_response.get("choices"))
+            
+            # For LegacyAPIResponse that was successfully parsed, set status to OK
+            if getattr(self, '_response_was_parsed', False):
+                self._span.set_status(Status(StatusCode.OK))
+                # Set a basic finish reason since we know the response completed
+                self._span.set_attribute("gen_ai.response.finish_reason", "stop")
 
         # Record partial token metrics if we have any data
         if self._complete_response.get("choices") or self._request_kwargs:
