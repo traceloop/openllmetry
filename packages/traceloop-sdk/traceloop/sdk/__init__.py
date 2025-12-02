@@ -34,6 +34,8 @@ from traceloop.sdk.tracing.associations import AssociationProperty
 from typing import Dict
 from traceloop.sdk.client.client import Client
 
+__all__ = ["Traceloop", "Client", "Instruments", "associations", "AssociationProperty"]
+
 
 class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
@@ -202,9 +204,6 @@ class Traceloop:
     @staticmethod
     def set_association_properties(properties: dict) -> None:
         set_association_properties(properties)
-
-    # Associations namespace
-    associations = associations
 
     def set_prompt(template: str, variables: dict, version: int):
         set_external_prompt_tracing_context(template, variables, version)

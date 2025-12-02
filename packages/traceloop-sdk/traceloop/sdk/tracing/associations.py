@@ -11,7 +11,6 @@ class AssociationProperty(str, Enum):
     CUSTOMER_ID = "customer_id"
     USER_ID = "user_id"
     SESSION_ID = "session_id"
-    THREAD_ID = "thread_id"
 
 
 # Type alias for a single association

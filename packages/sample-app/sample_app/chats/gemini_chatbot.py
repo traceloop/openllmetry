@@ -7,7 +7,7 @@ from traceloop.sdk import Traceloop, AssociationProperty
 from traceloop.sdk.decorators import workflow
 
 # Initialize Traceloop for observability
-Traceloop.init(app_name="gemini_chatbot")
+traceloop = Traceloop.init(app_name="gemini_chatbot")
 
 # Initialize Gemini client
 client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
@@ -125,7 +125,7 @@ def process_message(conversation_id: str, user_message: str, conversation_histor
     """Process a single message with tool support and chat_id association."""
 
     # Set a conversation_id to identify the conversation using the associations API
-    Traceloop.associations.set([(AssociationProperty.CONVERSATION_ID, conversation_id)])
+    traceloop.associations.set([(AssociationProperty.CONVERSATION_ID, conversation_id)])
 
     # Add user message to conversation history
     conversation_history.append({
