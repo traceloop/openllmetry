@@ -9,7 +9,7 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw
+from .utils import dont_throw, serialize_mcp_result
 
 
 class FastMCPInstrumentor:
@@ -110,6 +110,27 @@ class FastMCPInstrumentor:
 
                     try:
                         result = await wrapped(*args, **kwargs)
+
+                        # Always add response to MCP span regardless of content tracing setting
+                        if result:
+                            truncated_output = serialize_mcp_result(
+                                result,
+                                json_encoder_cls=self._get_json_encoder(),
+                                truncate_func=self._truncate_json_if_needed
+                            )
+
+                            if truncated_output:
+                                # Add response to MCP span
+                                mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
+
+                                # Also add to tool span if content tracing is enabled
+                                if self._should_send_prompts():
+                                    tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
+
+                        tool_span.set_status(Status(StatusCode.OK))
+                        mcp_span.set_status(Status(StatusCode.OK))
+                        return result
+
                     except Exception as e:
                         tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
                         tool_span.record_exception(e)
@@ -119,37 +140,6 @@ class FastMCPInstrumentor:
                         mcp_span.record_exception(e)
                         mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
                         raise
-
-                    try:
-                        # Add output in traceloop format to tool span
-                        if self._should_send_prompts() and result:
-                            try:
-                                # Convert FastMCP Content objects to serializable format
-                                # Note: result.content for fastmcp 2.12.2+, fallback to result for older versions
-                                output_data = []
-                                result_items = result.content if hasattr(result, 'content') else result
-                                for item in result_items:
-                                    if hasattr(item, 'text'):
-                                        output_data.append({"type": "text", "content": item.text})
-                                    elif hasattr(item, '__dict__'):
-                                        output_data.append(item.__dict__)
-                                    else:
-                                        output_data.append(str(item))
-
-                                json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                                truncated_output = self._truncate_json_if_needed(json_output)
-                                tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
-
-                                # Also add response to MCP span
-                                mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
-                            except (TypeError, ValueError):
-                                pass  # Skip output logging if serialization fails
-
-                        tool_span.set_status(Status(StatusCode.OK))
-                        mcp_span.set_status(Status(StatusCode.OK))
-                    except Exception:
-                        pass
-                    return result
 
         return traced_method
 
