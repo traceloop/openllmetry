@@ -31,6 +31,7 @@ node_modules
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+.yarn/
 testem.log
 /typings
 
