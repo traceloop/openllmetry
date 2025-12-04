@@ -45,7 +45,7 @@ async def quality_task(row):
     question = row.get("question", "This is a demo question")
     context = row.get("context", "This is a demo context")
     # Generate response
-    completion = await generate_response(question)
+    completion = await generate_response(question, context)
 
     # Return data for evaluation
     return {

@@ -182,8 +182,7 @@ class EvaluatorMadeByTraceloop:
         return EvaluatorDetails(slug="char-count-ratio", version=None, config=config)
 
     @staticmethod
-    def word_count(
-        ) -> EvaluatorDetails:
+    def word_count() -> EvaluatorDetails:
         """
         Word count evaluator - counts the number of words in text.
 
@@ -234,8 +233,7 @@ class EvaluatorMadeByTraceloop:
         return EvaluatorDetails(slug="faithfulness", version=None, config=config)
 
     @staticmethod
-    def profanity_detector(
-        ) -> EvaluatorDetails:
+    def profanity_detector() -> EvaluatorDetails:
         """
         Profanity detector evaluator - flags inappropriate language.
 
