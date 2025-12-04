@@ -128,7 +128,7 @@ class Experiment:
         }
 
         # Convert evaluators to tuples of (slug, version, config)
-        evaluator_details = None
+        evaluator_details: Optional[List[Tuple[str, Optional[str], Optional[Dict[str, Any]]]]] = None
         if evaluators:
             evaluator_details = []
             for evaluator in evaluators:

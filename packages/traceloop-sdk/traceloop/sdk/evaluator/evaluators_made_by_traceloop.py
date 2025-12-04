@@ -270,7 +270,8 @@ class EvaluatorMadeByTraceloop:
         Returns:
             EvaluatorDetails configured for secrets detection
         """
-        return EvaluatorDetails(slug="secrets-detector", version=None, config=None)
+        config: Dict[str, Any] = {}
+        return EvaluatorDetails(slug="secrets-detector", version=None, config=config)
 
     @staticmethod
     def sql_validator(
