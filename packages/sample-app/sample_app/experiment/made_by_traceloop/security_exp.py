@@ -82,7 +82,7 @@ async def run_security_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="medical-q",
+        dataset_slug="security", # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=security_task,
         evaluators=evaluators,

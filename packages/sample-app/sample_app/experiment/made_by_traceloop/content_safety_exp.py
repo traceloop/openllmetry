@@ -4,7 +4,7 @@ Content Safety Evaluators Experiment
 This example demonstrates Traceloop's content safety evaluators:
 - Profanity Detection: Flags inappropriate language
 - Toxicity Detection: Identifies toxic or harmful content
-- (Note: Sexism Detection is planned but not yet implemented)
+- Sexism Detection: Identifies sexist language or bias
 
 These evaluators help ensure AI-generated content is safe,
 appropriate, and adheres to community guidelines.
@@ -87,7 +87,7 @@ async def run_content_safety_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="medical-q",
+        dataset_slug="content-safety", # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=content_safety_task,
         evaluators=evaluators,
