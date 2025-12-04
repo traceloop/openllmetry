@@ -21,23 +21,17 @@ class EvaluatorMadeByTraceloop:
     @staticmethod
     def pii_detector(
         probability_threshold: float = 0.5,
-        description: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         PII (Personally Identifiable Information) detector evaluator.
 
         Args:
             probability_threshold: Minimum probability threshold for detecting PII (0.0-1.0)
-            version: Optional evaluator version
-            description: Optional description for this evaluator instance
 
         Returns:
             EvaluatorDetails configured for PII detection
         """
         config: Dict[str, Any] = {"probability_threshold": probability_threshold}
-        if description:
-            config["description"] = description
-
         return EvaluatorDetails(slug="pii-detector", version=None, config=config)
 
     @staticmethod

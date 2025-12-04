@@ -1,0 +1,169 @@
+"""
+Quality Evaluators Experiment
+
+This example demonstrates Traceloop's quality evaluators:
+- Answer Relevancy: Verifies responses address the query
+- Faithfulness: Detects hallucinations and verifies facts
+
+These evaluators help ensure your AI applications provide accurate,
+relevant, and faithful responses.
+"""
+
+import asyncio
+import os
+from openai import AsyncOpenAI
+from traceloop.sdk import Traceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+
+# Initialize Traceloop
+client = Traceloop.init()
+
+
+async def generate_response(prompt: str, context: str = None) -> str:
+    """Generate a response using OpenAI"""
+    openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    messages = [{"role": "user", "content": prompt}]
+    if context:
+        messages.insert(0, {"role": "system", "content": f"Context: {context}"})
+
+    response = await openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.7,
+        max_tokens=200,
+    )
+
+    return response.choices[0].message.content
+
+
+async def quality_task(row):
+    """
+    Task function that processes questions with context.
+    Returns data that will be evaluated for quality and faithfulness.
+    """
+    question = row.get("question", "")
+    context = row.get("context", "")
+
+    # Generate response
+    completion = await generate_response(question, context)
+
+    # Return data for evaluation
+    return {
+        "question": question,
+        "answer": completion,
+        "completion": completion,
+        "context": context,
+    }
+
+
+async def run_quality_experiment():
+    """
+    Run experiment with quality evaluators.
+
+    This experiment will evaluate responses for:
+    1. Answer Relevancy - Does the answer address the question?
+    2. Faithfulness - Is the answer faithful to the provided context?
+    """
+
+    print("\n" + "="*80)
+    print("QUALITY EVALUATORS EXPERIMENT")
+    print("="*80 + "\n")
+
+    print("This experiment will test two critical quality evaluators:\n")
+    print("1. Answer Relevancy - Verifies the response addresses the query")
+    print("2. Faithfulness - Detects hallucinations and verifies factual accuracy")
+    print("\n" + "-"*80 + "\n")
+
+    # Configure quality evaluators
+    evaluators = [
+        EvaluatorMadeByTraceloop.answer_relevancy(
+            description="Check if the answer is relevant to the question"
+        ),
+        EvaluatorMadeByTraceloop.faithfulness(
+            description="Verify the answer is faithful to the context"
+        ),
+    ]
+
+    print("Running experiment with evaluators:")
+    for evaluator in evaluators:
+        print(f"  - {evaluator.slug}")
+
+    print("\n" + "-"*80 + "\n")
+
+    # Run the experiment
+    results, errors = await client.experiment.run(
+        dataset_slug="qa-dataset",
+        dataset_version="v1",
+        task=quality_task,
+        evaluators=evaluators,
+        experiment_slug="quality-evaluators-exp",
+        stop_on_error=False,
+        wait_for_results=True,
+    )
+
+    # Print results
+    print("\n" + "="*80)
+    print("RESULTS")
+    print("="*80 + "\n")
+
+    if results:
+        print(f"Successfully evaluated {len(results)} tasks\n")
+
+        # Analyze quality findings
+        quality_issues = {
+            "not_relevant": 0,
+            "not_faithful": 0,
+        }
+
+        for i, result in enumerate(results, 1):
+            print(f"Task {i}:")
+            if result.task_result:
+                question = result.task_result.get("question", "N/A")
+                print(f"  Question: {question[:60]}{'...' if len(question) > 60 else ''}")
+
+            if result.evaluations:
+                for eval_name, eval_result in result.evaluations.items():
+                    print(f"  {eval_name}: {eval_result}")
+
+                    # Track quality issues
+                    if "relevancy" in eval_name.lower() and isinstance(eval_result, dict):
+                        if not eval_result.get("is_relevant"):
+                            quality_issues["not_relevant"] += 1
+                    elif "faithful" in eval_name.lower() and isinstance(eval_result, dict):
+                        if not eval_result.get("is_faithful"):
+                            quality_issues["not_faithful"] += 1
+            print()
+
+        # Quality summary
+        print("\n" + "="*80)
+        print("QUALITY SUMMARY")
+        print("="*80 + "\n")
+        print(f"Irrelevant answers: {quality_issues['not_relevant']} task(s)")
+        print(f"Unfaithful answers: {quality_issues['not_faithful']} task(s)")
+
+        total_issues = sum(quality_issues.values())
+        if total_issues == 0:
+            print("\nAll responses are relevant and faithful!")
+        else:
+            print(f"\nTotal quality issues found: {total_issues}")
+            print("Review the results above to improve your prompts/context.")
+    else:
+        print("No results to display (possibly running in fire-and-forget mode)")
+
+    if errors:
+        print(f"\nEncountered {len(errors)} errors:")
+        for error in errors[:5]:
+            print(f"  - {error}")
+    else:
+        print("\nNo errors encountered")
+
+    print("\n" + "="*80)
+    print("Quality experiment completed!")
+    print("="*80 + "\n")
+
+if __name__ == "__main__":
+    print("\nQuality Evaluators Experiment\n")
+
+    asyncio.run(run_quality_experiment())
+
