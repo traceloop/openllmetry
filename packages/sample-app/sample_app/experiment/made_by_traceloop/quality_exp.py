@@ -92,7 +92,7 @@ async def run_quality_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="quality", # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="quality",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=quality_task,
         evaluators=evaluators,
@@ -109,4 +109,3 @@ if __name__ == "__main__":
     print("\nQuality Evaluators Experiment\n")
 
     asyncio.run(run_quality_experiment())
-

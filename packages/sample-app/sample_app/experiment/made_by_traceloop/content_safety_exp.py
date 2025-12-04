@@ -87,7 +87,7 @@ async def run_content_safety_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="content-safety", # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="content-safety",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=content_safety_task,
         evaluators=evaluators,
@@ -103,6 +103,5 @@ async def run_content_safety_experiment():
 
 if __name__ == "__main__":
     print("\nContent Safety Evaluators Experiment\n")
-
 
     asyncio.run(run_content_safety_experiment())

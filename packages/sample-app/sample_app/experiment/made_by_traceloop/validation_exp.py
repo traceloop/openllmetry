@@ -121,18 +121,11 @@ async def run_validation_experiment():
         ),
     ]
 
-    print("Running experiment with validation evaluators:")
-    for evaluator in evaluators:
-        config_str = ", ".join(f"{k}={v}" for k, v in evaluator.config.items() if k != "description" and len(str(v)) < 50)
-        print(f"  - {evaluator.slug}")
-        if config_str:
-            print(f"    Config: {config_str}")
-
     print("\n" + "-"*80 + "\n")
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="validation", # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="validation",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=validation_task,
         evaluators=evaluators,
@@ -144,7 +137,6 @@ async def run_validation_experiment():
     print("\n" + "="*80)
     print("Validation experiment completed!")
     print("="*80 + "\n")
-
 
 
 async def run_validation_examples():
@@ -203,4 +195,3 @@ if __name__ == "__main__":
     print("\nValidation Evaluators Experiment\n")
 
     asyncio.run(run_validation_experiment())
-

@@ -82,7 +82,7 @@ async def run_security_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="security", # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="security",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=security_task,
         evaluators=evaluators,
@@ -98,7 +98,6 @@ async def run_security_experiment():
 
 if __name__ == "__main__":
     print("\nSecurity Evaluators Experiment\n")
-
 
     # To run with actual dataset, uncomment:
     asyncio.run(run_security_experiment())
