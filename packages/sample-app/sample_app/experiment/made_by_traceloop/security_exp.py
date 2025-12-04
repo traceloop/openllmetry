@@ -91,67 +91,6 @@ async def run_security_experiment():
         wait_for_results=True,
     )
 
-    # Print results
-    print("\n" + "="*80)
-    print("RESULTS")
-    print("="*80 + "\n")
-
-    if results:
-        print(f"Successfully evaluated {len(results)} tasks\n")
-
-        # Analyze security findings
-        security_issues = {
-            "pii_detected": 0,
-            "secrets_detected": 0,
-            "prompt_injection_detected": 0,
-        }
-
-        for i, result in enumerate(results, 1):
-            print(f"Task {i}:")
-            if result.task_result:
-                query = result.task_result.get("query", "N/A")
-                print(f"  Query: {query[:60]}{'...' if len(query) > 60 else ''}")
-
-            if result.evaluations:
-                for eval_name, eval_result in result.evaluations.items():
-                    print(f"  {eval_name}: {eval_result}")
-
-                    # Track security issues
-                    if "pii" in eval_name.lower() and isinstance(eval_result, dict):
-                        if eval_result.get("has_pii"):
-                            security_issues["pii_detected"] += 1
-                    elif "secret" in eval_name.lower() and isinstance(eval_result, dict):
-                        if eval_result.get("has_secret"):
-                            security_issues["secrets_detected"] += 1
-                    elif "prompt" in eval_name.lower() and isinstance(eval_result, dict):
-                        if eval_result.get("is_injection"):
-                            security_issues["prompt_injection_detected"] += 1
-            print()
-
-        # Security summary
-        print("\n" + "="*80)
-        print("SECURITY SUMMARY")
-        print("="*80 + "\n")
-        print(f"PII detected: {security_issues['pii_detected']} task(s)")
-        print(f"Secrets detected: {security_issues['secrets_detected']} task(s)")
-        print(f"Prompt injection detected: {security_issues['prompt_injection_detected']} task(s)")
-
-        total_issues = sum(security_issues.values())
-        if total_issues == 0:
-            print("\nNo security issues detected! Your responses are secure.")
-        else:
-            print(f"\nTotal security issues found: {total_issues}")
-            print("Review the results above and consider improving your prompts/filters.")
-    else:
-        print("No results to display (possibly running in fire-and-forget mode)")
-
-    if errors:
-        print(f"\nEncountered {len(errors)} errors:")
-        for error in errors[:5]:
-            print(f"  - {error}")
-    else:
-        print("\nNo errors encountered")
-
     print("\n" + "="*80)
     print("Security experiment completed!")
     print("="*80 + "\n")

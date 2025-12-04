@@ -101,62 +101,6 @@ async def run_quality_experiment():
         wait_for_results=True,
     )
 
-    # Print results
-    print("\n" + "="*80)
-    print("RESULTS")
-    print("="*80 + "\n")
-
-    if results:
-        print(f"Successfully evaluated {len(results)} tasks\n")
-
-        # Analyze quality findings
-        quality_issues = {
-            "not_relevant": 0,
-            "not_faithful": 0,
-        }
-
-        for i, result in enumerate(results, 1):
-            print(f"Task {i}:")
-            if result.task_result:
-                question = result.task_result.get("question", "N/A")
-                print(f"  Question: {question[:60]}{'...' if len(question) > 60 else ''}")
-
-            if result.evaluations:
-                for eval_name, eval_result in result.evaluations.items():
-                    print(f"  {eval_name}: {eval_result}")
-
-                    # Track quality issues
-                    if "relevancy" in eval_name.lower() and isinstance(eval_result, dict):
-                        if not eval_result.get("is_relevant"):
-                            quality_issues["not_relevant"] += 1
-                    elif "faithful" in eval_name.lower() and isinstance(eval_result, dict):
-                        if not eval_result.get("is_faithful"):
-                            quality_issues["not_faithful"] += 1
-            print()
-
-        # Quality summary
-        print("\n" + "="*80)
-        print("QUALITY SUMMARY")
-        print("="*80 + "\n")
-        print(f"Irrelevant answers: {quality_issues['not_relevant']} task(s)")
-        print(f"Unfaithful answers: {quality_issues['not_faithful']} task(s)")
-
-        total_issues = sum(quality_issues.values())
-        if total_issues == 0:
-            print("\nAll responses are relevant and faithful!")
-        else:
-            print(f"\nTotal quality issues found: {total_issues}")
-            print("Review the results above to improve your prompts/context.")
-    else:
-        print("No results to display (possibly running in fire-and-forget mode)")
-
-    if errors:
-        print(f"\nEncountered {len(errors)} errors:")
-        for error in errors[:5]:
-            print(f"  - {error}")
-    else:
-        print("\nNo errors encountered")
-
     print("\n" + "="*80)
     print("Quality experiment completed!")
     print("="*80 + "\n")
