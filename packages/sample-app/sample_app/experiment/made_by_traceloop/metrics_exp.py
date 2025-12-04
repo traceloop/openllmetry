@@ -77,18 +77,10 @@ async def run_metrics_experiment():
 
     # Configure metrics evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.char_count(
-            description="Count total characters in response"
-        ),
-        EvaluatorMadeByTraceloop.word_count(
-            description="Count total words in response"
-        ),
-        EvaluatorMadeByTraceloop.char_count_ratio(
-            description="Compare response length to reference"
-        ),
-        EvaluatorMadeByTraceloop.word_count_ratio(
-            description="Compare response verbosity to reference"
-        ),
+        EvaluatorMadeByTraceloop.char_count(),
+        EvaluatorMadeByTraceloop.word_count(),
+        EvaluatorMadeByTraceloop.char_count_ratio(),
+        EvaluatorMadeByTraceloop.word_count_ratio(),
     ]
 
     print("Running experiment with metrics evaluators:")
