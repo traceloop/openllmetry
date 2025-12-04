@@ -65,7 +65,6 @@ class Experiment:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
         if os.getenv("GITHUB_ACTIONS"):
-            print("Running experiment in GitHub CI/CD")
             return await self._run_in_github(
                 task=task,
                 dataset_slug=dataset_slug,
@@ -76,7 +75,6 @@ class Experiment:
                 aux=aux,
             )
         else:
-            print("Running experiment locally")
             return await self._run_locally(
                 task=task,
                 dataset_slug=dataset_slug,
