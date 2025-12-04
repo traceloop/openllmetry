@@ -241,3 +241,276 @@ class EvaluatorMadeByTraceloop:
             config["description"] = description
 
         return EvaluatorDetails(slug="placeholder-regex", version=version, config=config)
+
+    @staticmethod
+    def char_count(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Character count evaluator - counts the number of characters in text.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for character counting
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="char-count", version=version, config=config)
+
+    @staticmethod
+    def char_count_ratio(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Character count ratio evaluator - measures the ratio of characters between two texts.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for character count ratio calculation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="char-count-ratio", version=version, config=config)
+
+    @staticmethod
+    def word_count(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Word count evaluator - counts the number of words in text.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for word counting
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="word-count", version=version, config=config)
+
+    @staticmethod
+    def word_count_ratio(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Word count ratio evaluator - measures the ratio of words between two texts.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for word count ratio calculation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="word-count-ratio", version=version, config=config)
+
+    @staticmethod
+    def answer_relevancy(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Answer relevancy evaluator - verifies responses address the query.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for answer relevancy evaluation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="answer-relevancy", version=version, config=config)
+
+    @staticmethod
+    def faithfulness(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Faithfulness evaluator - detects hallucinations and verifies facts.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for faithfulness evaluation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="faithfulness", version=version, config=config)
+
+    @staticmethod
+    def profanity_detector(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Profanity detector evaluator - flags inappropriate language.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for profanity detection
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="profanity-detector", version=version, config=config)
+
+    @staticmethod
+    def secrets_detector(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Secrets detector evaluator - monitors for credential and key leaks.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for secrets detection
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="secrets-detector", version=version, config=config)
+
+    @staticmethod
+    def sql_validator(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        SQL validator evaluator - validates SQL queries.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for SQL validation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="sql-validator", version=version, config=config)
+
+    @staticmethod
+    def semantic_similarity(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Semantic similarity evaluator - measures semantic similarity between texts.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for semantic similarity evaluation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="semantic-similarity", version=version, config=config)
+
+    @staticmethod
+    def agent_goal_accuracy(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Agent goal accuracy evaluator - validates agent goal achievement.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for agent goal accuracy evaluation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="agent-goal-accuracy", version=version, config=config)
+
+    @staticmethod
+    def topic_adherence(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Topic adherence evaluator - validates topic adherence.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for topic adherence evaluation
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="topic-adherence", version=version, config=config)
+
+    @staticmethod
+    def perplexity(
+        version: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> EvaluatorDetails:
+        """
+        Perplexity evaluator - measures text perplexity from logprobs.
+
+        Args:
+            version: Optional evaluator version
+            description: Optional description for this evaluator instance
+
+        Returns:
+            EvaluatorDetails configured for perplexity measurement
+        """
+        config: Dict[str, Any] = {}
+        if description:
+            config["description"] = description
+
+        return EvaluatorDetails(slug="perplexity", version=version, config=config)
