@@ -11,13 +11,14 @@ from traceloop.sdk.experiment.model import (
     ExperimentInitResponse,
     CreateTaskRequest,
     CreateTaskResponse,
-    EvaluatorDetails,
+    EvaluatorSpec,
     TaskResponse,
     RunInGithubRequest,
     RunInGithubResponse,
     TaskResult,
     GithubContext,
 )
+from traceloop.sdk.evaluator.config import EvaluatorDetails
 import httpx
 
 
@@ -39,7 +40,7 @@ class Experiment:
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
+        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -64,6 +65,7 @@ class Experiment:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
         if os.getenv("GITHUB_ACTIONS"):
+            print("Running experiment in GitHub CI/CD")
             return await self._run_in_github(
                 task=task,
                 dataset_slug=dataset_slug,
@@ -74,6 +76,7 @@ class Experiment:
                 aux=aux,
             )
         else:
+            print("Running experiment locally")
             return await self._run_locally(
                 task=task,
                 dataset_slug=dataset_slug,
@@ -92,7 +95,7 @@ class Experiment:
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
+        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -126,20 +129,23 @@ class Experiment:
             if value is not None
         }
 
-        evaluator_details = (
-            [
-                (evaluator, None) if isinstance(evaluator, str) else evaluator
-                for evaluator in evaluators
-            ]
-            if evaluators
-            else None
-        )
+        # Convert evaluators to tuples of (slug, version, config)
+        evaluator_details = None
+        if evaluators:
+            evaluator_details = []
+            for evaluator in evaluators:
+                if isinstance(evaluator, str):
+                    # Simple string slug
+                    evaluator_details.append((evaluator, None, None))
+                elif isinstance(evaluator, EvaluatorDetails):
+                    # EvaluatorDetails object with config
+                    evaluator_details.append((evaluator.slug, evaluator.version, evaluator.config))
 
         experiment = self._init_experiment(
             experiment_slug,
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
-            evaluator_slugs=[slug for slug, _ in evaluator_details]
+            evaluator_slugs=[slug for slug, _, _ in evaluator_details]
             if evaluator_details
             else None,
             experiment_metadata=experiment_metadata,
@@ -168,13 +174,14 @@ class Experiment:
 
                 eval_results: Dict[str, Union[Dict[str, Any], str]] = {}
                 if evaluator_details:
-                    for evaluator_slug, evaluator_version in evaluator_details:
+                    for evaluator_slug, evaluator_version, evaluator_config in evaluator_details:
                         try:
                             if wait_for_results:
                                 eval_result = (
                                     await self._evaluator.run_experiment_evaluator(
                                         evaluator_slug=evaluator_slug,
                                         evaluator_version=evaluator_version,
+                                        evaluator_config=evaluator_config,
                                         task_id=task_id,
                                         experiment_id=experiment.experiment.id,
                                         experiment_run_id=run_id,
@@ -187,6 +194,7 @@ class Experiment:
                                 await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
                                     evaluator_version=evaluator_version,
+                                    evaluator_config=evaluator_config,
                                     task_id=task_id,
                                     experiment_id=experiment.experiment.id,
                                     experiment_run_id=run_id,
@@ -242,7 +250,7 @@ class Experiment:
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
+        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -340,10 +348,12 @@ class Experiment:
         # Extract evaluator slugs
         evaluator_slugs = None
         if evaluators:
-            evaluator_slugs = [
-                slug if isinstance(slug, str) else slug[0]
-                for slug in evaluators
-            ]
+            evaluator_slugs = []
+            for evaluator in evaluators:
+                if isinstance(evaluator, str):
+                    evaluator_slugs.append(evaluator)
+                elif isinstance(evaluator, EvaluatorDetails):
+                    evaluator_slugs.append(evaluator.slug)
 
         # Prepare request payload
         request_body = RunInGithubRequest(

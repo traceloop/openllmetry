@@ -8,6 +8,7 @@ import os
 from openai import AsyncOpenAI
 from medical_prompts import refuse_medical_advice_prompt, provide_medical_info_prompt
 from traceloop.sdk import Traceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 client = Traceloop.init()
 
@@ -34,7 +35,7 @@ async def medical_task_refuse_advice(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"text": answer, "context": prompt_text, "question": user_description}
 
 
 async def medical_task_provide_info(row):
@@ -43,11 +44,18 @@ async def medical_task_provide_info(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"text": answer, "prompt": prompt_text}
 
 
 async def run_experiment_example():
-    """Example using the new run_experiment API to compare two different prompt approaches"""
+    """
+    Example using the new run_experiment API to compare two different prompt approaches.
+
+    This example demonstrates:
+    1. Using custom evaluators (simple string format)
+    2. Using predefined Traceloop evaluators with configuration
+    3. Mixing both types in the same experiment
+    """
 
     print(
         "\033[95m🔬 Running experiment with clinical guidance prompt (refuses medical advice)...\033[0m"
@@ -56,8 +64,12 @@ async def run_experiment_example():
         dataset_slug="medical-q",
         dataset_version="v1",
         task=medical_task_refuse_advice,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
+        evaluators=[
+            "char-count",  # Custom evaluator (simple string)
+            EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7),  # Predefined with config
+            EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.6),  # Another predefined evaluator
+        ],
+        experiment_slug="made-by-traceloop-check",
         stop_on_error=False,
     )
 
@@ -68,18 +80,18 @@ async def run_experiment_example():
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
     )
-    results_2, errors_2 = await client.experiment.run(
-        dataset_slug="medical-q",
-        dataset_version="v1",
-        task=medical_task_provide_info,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
-        stop_on_error=False,
-    )
+    # results_2, errors_2 = await client.experiment.run(
+    #     dataset_slug="medical-q",
+    #     dataset_version="v1",
+    #     task=medical_task_provide_info,
+    #     evaluators=["char-count"],
+    #     experiment_slug="made_by_traceloop_check",
+    #     stop_on_error=False,
+    # )
 
-    print(f"Medical Provide Info Results: {results_2}")
-    if errors_2:
-        print(f"Medical Provide Info Errors: {errors_2}")
+    # print(f"Medical Provide Info Results: {results_2}")
+    # if errors_2:
+    #     print(f"Medical Provide Info Errors: {errors_2}")
 
     print(
         "\n\033[92m✅ Both experiments completed! Compare the results to see "
