@@ -21,7 +21,6 @@ class EvaluatorMadeByTraceloop:
     @staticmethod
     def pii_detector(
         probability_threshold: float = 0.5,
-        version: Optional[str] = None,
         description: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
@@ -39,7 +38,7 @@ class EvaluatorMadeByTraceloop:
         if description:
             config["description"] = description
 
-        return EvaluatorDetails(slug="pii-detector", version=version, config=config)
+        return EvaluatorDetails(slug="pii-detector", version=None, config=config)
 
     @staticmethod
     def toxicity_detector(
@@ -67,25 +66,18 @@ class EvaluatorMadeByTraceloop:
     @staticmethod
     def prompt_injection(
         threshold: float = 0.5,
-        version: Optional[str] = None,
-        description: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Prompt injection detector evaluator.
 
         Args:
             threshold: Minimum threshold for detecting prompt injection attempts (0.0-1.0)
-            version: Optional evaluator version
-            description: Optional description for this evaluator instance
 
         Returns:
             EvaluatorDetails configured for prompt injection detection
         """
         config: Dict[str, Any] = {"threshold": threshold}
-        if description:
-            config["description"] = description
-
-        return EvaluatorDetails(slug="prompt-injection", version=version, config=config)
+        return EvaluatorDetails(slug="prompt-injection", version=None, config=config)
 
     @staticmethod
     def regex_validator(
@@ -391,24 +383,14 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def secrets_detector(
-        version: Optional[str] = None,
-        description: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Secrets detector evaluator - monitors for credential and key leaks.
 
-        Args:
-            version: Optional evaluator version
-            description: Optional description for this evaluator instance
-
         Returns:
             EvaluatorDetails configured for secrets detection
         """
-        config: Dict[str, Any] = {}
-        if description:
-            config["description"] = description
-
-        return EvaluatorDetails(slug="secrets-detector", version=version, config=config)
+        return EvaluatorDetails(slug="secrets-detector", version=None, config=None)
 
     @staticmethod
     def sql_validator(
