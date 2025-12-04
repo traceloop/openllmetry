@@ -37,21 +37,19 @@ class EvaluatorMadeByTraceloop:
     @staticmethod
     def toxicity_detector(
         threshold: float = 0.5,
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Toxicity detector evaluator.
 
         Args:
             threshold: Minimum toxicity threshold for flagging content (0.0-1.0)
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for toxicity detection
         """
         config: Dict[str, Any] = {"threshold": threshold}
 
-        return EvaluatorDetails(slug="toxicity-detector", version=version, config=config)
+        return EvaluatorDetails(slug="toxicity-detector", version=None, config=config)
 
     @staticmethod
     def prompt_injection(
@@ -76,7 +74,6 @@ class EvaluatorMadeByTraceloop:
         case_sensitive: bool = True,
         dot_include_nl: bool = False,
         multi_line: bool = False,
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Regular expression validator evaluator.
@@ -87,7 +84,6 @@ class EvaluatorMadeByTraceloop:
             case_sensitive: Whether the regex matching should be case-sensitive
             dot_include_nl: Whether the dot (.) should match newline characters
             multi_line: Whether to enable multi-line mode (^ and $ match line boundaries)
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for regex validation
@@ -100,13 +96,12 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="regex-validator", version=version, config=config)
+        return EvaluatorDetails(slug="regex-validator", version=None, config=config)
 
     @staticmethod
     def json_validator(
         enable_schema_validation: bool = False,
         schema_string: Optional[str] = None,
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         JSON validator evaluator.
@@ -114,7 +109,6 @@ class EvaluatorMadeByTraceloop:
         Args:
             enable_schema_validation: Whether to validate against a JSON schema
             schema_string: JSON schema string to validate against (required if enable_schema_validation is True)
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for JSON validation
@@ -125,7 +119,7 @@ class EvaluatorMadeByTraceloop:
         if schema_string:
             config["schema_string"] = schema_string
 
-        return EvaluatorDetails(slug="json-validator", version=version, config=config)
+        return EvaluatorDetails(slug="json-validator", version=None, config=config)
 
     @staticmethod
     def placeholder_regex(
@@ -135,7 +129,6 @@ class EvaluatorMadeByTraceloop:
         case_sensitive: bool = True,
         dot_include_nl: bool = False,
         multi_line: bool = False,
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Placeholder regex evaluator - validates that placeholders match a regex pattern.
@@ -147,7 +140,6 @@ class EvaluatorMadeByTraceloop:
             case_sensitive: Whether the regex matching should be case-sensitive
             dot_include_nl: Whether the dot (.) should match newline characters
             multi_line: Whether to enable multi-line mode (^ and $ match line boundaries)
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for placeholder regex validation
@@ -161,126 +153,115 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="placeholder-regex", version=version, config=config)
+        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config)
 
     @staticmethod
     def char_count(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Character count evaluator - counts the number of characters in text.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for character counting
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count", version=version, config=config)
+        return EvaluatorDetails(slug="char-count", version=None, config=config)
 
     @staticmethod
     def char_count_ratio(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Character count ratio evaluator - measures the ratio of characters between two texts.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for character count ratio calculation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count-ratio", version=version, config=config)
+        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config)
 
     @staticmethod
     def word_count(
-        version: Optional[str] = None,
-    ) -> EvaluatorDetails:
+        ) -> EvaluatorDetails:
         """
         Word count evaluator - counts the number of words in text.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for word counting
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count", version=version, config=config)
+        return EvaluatorDetails(slug="word-count", version=None, config=config)
 
     @staticmethod
     def word_count_ratio(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Word count ratio evaluator - measures the ratio of words between two texts.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for word count ratio calculation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count-ratio", version=version, config=config)
+        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config)
 
     @staticmethod
     def answer_relevancy(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Answer relevancy evaluator - verifies responses address the query.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for answer relevancy evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="answer-relevancy", version=version, config=config)
+        return EvaluatorDetails(slug="answer-relevancy", version=None, config=config)
 
     @staticmethod
     def faithfulness(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Faithfulness evaluator - detects hallucinations and verifies facts.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for faithfulness evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="faithfulness", version=version, config=config)
+        return EvaluatorDetails(slug="faithfulness", version=None, config=config)
 
     @staticmethod
     def profanity_detector(
-        version: Optional[str] = None,
-    ) -> EvaluatorDetails:
+        ) -> EvaluatorDetails:
         """
         Profanity detector evaluator - flags inappropriate language.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for profanity detection
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="profanity-detector", version=version, config=config)
+        return EvaluatorDetails(slug="profanity-detector", version=None, config=config)
+
+    @staticmethod
+    def sexism_detector(
+        threshold: float = 0.5,
+    ) -> EvaluatorDetails:
+        """
+        Sexism detector evaluator - detects sexist language and bias.
+
+        Args:
+            threshold: Minimum threshold for detecting sexism (0.0-1.0)
+
+        Returns:
+            EvaluatorDetails configured for sexism detection
+        """
+        config: Dict[str, Any] = {"threshold": threshold}
+
+        return EvaluatorDetails(slug="sexism-detector", version=None, config=config)
 
     @staticmethod
     def secrets_detector(
@@ -295,85 +276,65 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def sql_validator(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         SQL validator evaluator - validates SQL queries.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for SQL validation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="sql-validator", version=version, config=config)
+        return EvaluatorDetails(slug="sql-validator", version=None, config=config)
 
     @staticmethod
     def semantic_similarity(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Semantic similarity evaluator - measures semantic similarity between texts.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for semantic similarity evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="semantic-similarity", version=version, config=config)
+        return EvaluatorDetails(slug="semantic-similarity", version=None, config=config)
 
     @staticmethod
     def agent_goal_accuracy(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Agent goal accuracy evaluator - validates agent goal achievement.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for agent goal accuracy evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="agent-goal-accuracy", version=version, config=config)
+        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config)
 
     @staticmethod
     def topic_adherence(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Topic adherence evaluator - validates topic adherence.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for topic adherence evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="topic-adherence", version=version, config=config)
+        return EvaluatorDetails(slug="topic-adherence", version=None, config=config)
 
     @staticmethod
     def perplexity(
-        version: Optional[str] = None,
     ) -> EvaluatorDetails:
         """
         Perplexity evaluator - measures text perplexity from logprobs.
-
-        Args:
-            version: Optional evaluator version
 
         Returns:
             EvaluatorDetails configured for perplexity measurement
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="perplexity", version=version, config=config)
+        return EvaluatorDetails(slug="perplexity", version=None, config=config)

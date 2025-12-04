@@ -15,7 +15,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import Predefined
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -56,9 +56,9 @@ async def validation_task(row):
     Task function that generates structured outputs for validation.
     Returns different types of structured data based on the task type.
     """
-    prompt = row.get("prompt", "")
+    prompt = row.get("question", "")
     task_type = row.get("task_type", "json")  # json, sql, regex, text
-    placeholder_value = row.get("placeholder_value", "")
+    placeholder_value = row.get("placeholder_value", "This is a demo placeholder value")
 
     # Generate the appropriate output
     output = await generate_structured_output(prompt, task_type)
@@ -104,17 +104,17 @@ async def run_validation_experiment():
     }'''
 
     evaluators = [
-        Predefined.json_validator(
+        EvaluatorMadeByTraceloop.json_validator(
             enable_schema_validation=True,
             schema_string=json_schema
         ),
-        Predefined.sql_validator(),
-        Predefined.regex_validator(
+        EvaluatorMadeByTraceloop.sql_validator(),
+        EvaluatorMadeByTraceloop.regex_validator(
             regex=r"^\d{3}-\d{2}-\d{4}$",  # SSN format
             should_match=True,
             case_sensitive=True
         ),
-        Predefined.placeholder_regex(
+        EvaluatorMadeByTraceloop.placeholder_regex(
             regex=r"^user_.*",
             placeholder_name="username",
             should_match=True
@@ -132,7 +132,7 @@ async def run_validation_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="validation-dataset",
+        dataset_slug="medical-q",
         dataset_version="v1",
         task=validation_task,
         evaluators=evaluators,
