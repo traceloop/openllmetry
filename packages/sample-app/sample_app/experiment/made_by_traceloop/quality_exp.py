@@ -42,11 +42,10 @@ async def quality_task(row):
     Task function that processes questions with context.
     Returns data that will be evaluated for quality and faithfulness.
     """
-    question = row.get("question", "")
-    context = row.get("context", "")
-
+    question = row.get("question", "This is a demo question")
+    context = row.get("context", "This is a demo context")
     # Generate response
-    completion = await generate_response(question, context)
+    completion = await generate_response(question)
 
     # Return data for evaluation
     return {
@@ -93,7 +92,7 @@ async def run_quality_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="qa-dataset",
+        dataset_slug="medical-q",
         dataset_version="v1",
         task=quality_task,
         evaluators=evaluators,

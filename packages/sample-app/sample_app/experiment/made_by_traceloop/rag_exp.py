@@ -73,7 +73,7 @@ async def rag_task(row):
     3. Returns data for RAG evaluation
     """
     question = row.get("question", "")
-    reference = row.get("reference", "")  # Expected/ideal answer
+    reference = row.get("reference_answer", "This is a demo reference answer")  # Expected/ideal answer
 
     # Step 1: Retrieve context
     context = await retrieve_context(question)
@@ -84,9 +84,7 @@ async def rag_task(row):
     # Return data for RAG evaluation
     return {
         "question": question,
-        "answer": completion,
         "completion": completion,
-        "context": context,
         "reference": reference,
     }
 
@@ -113,12 +111,6 @@ async def run_rag_experiment():
 
     # Configure RAG evaluators
     evaluators = [
-        Predefined.answer_relevancy(
-            description="Verify the answer is relevant to the question"
-        ),
-        Predefined.faithfulness(
-            description="Ensure the answer is faithful to the retrieved context"
-        ),
         Predefined.agent_goal_accuracy(
             description="Compare response quality against reference answer"
         ),
@@ -132,7 +124,7 @@ async def run_rag_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="rag-qa-dataset",
+        dataset_slug="medical-q",
         dataset_version="v1",
         task=rag_task,
         evaluators=evaluators,
@@ -222,59 +214,7 @@ async def run_rag_experiment():
     print("="*80 + "\n")
 
 
-async def run_rag_demo():
-    """
-    Demo showing RAG evaluator requirements and example use case.
-    """
-
-    print("\n" + "="*80)
-    print("RAG EVALUATORS DEMO")
-    print("="*80 + "\n")
-
-    print("RAG evaluators require the following fields:\n")
-    print("Required for all RAG evaluators:")
-    print("  - question: The user's question")
-    print("  - completion: The generated answer")
-    print("  - context: The retrieved context/documents")
-    print("  - reference: The ideal/expected answer (for goal accuracy)\n")
-
-    print("Example RAG workflow:")
-    print("  1. User asks: 'What is Python?'")
-    print("  2. System retrieves context from knowledge base")
-    print("  3. LLM generates answer based on context")
-    print("  4. Evaluators check: relevancy, faithfulness, accuracy")
-
-    print("\n" + "-"*80 + "\n")
-
-    evaluators = [
-        Predefined.answer_relevancy(),
-        Predefined.faithfulness(),
-        Predefined.agent_goal_accuracy(),
-    ]
-
-    print("RAG evaluators configured:")
-    for evaluator in evaluators:
-        print(f"  - {evaluator.slug}")
-
-    print("\n" + "="*80)
-    print("\nTo run with real RAG data:")
-    print("1. Create a dataset with: question, reference fields")
-    print("2. Implement your RAG pipeline in the task function")
-    print("3. Use run_rag_experiment() instead of demo")
-    print("="*80 + "\n")
-
-
 if __name__ == "__main__":
     print("\nRAG Evaluators Experiment\n")
 
-    # Choose which demo to run
-    print("Choose a mode:")
-    print("1. Run with dataset (requires 'rag-qa-dataset')")
-    print("2. Run demo (shows requirements)\n")
-
-    # For now, run the demo version
-    print("Running demo mode...\n")
-    asyncio.run(run_rag_demo())
-
-    # To run with actual dataset, uncomment:
-    # asyncio.run(run_rag_experiment())
+    asyncio.run(run_rag_experiment())
