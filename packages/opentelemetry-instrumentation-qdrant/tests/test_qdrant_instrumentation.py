@@ -77,7 +77,11 @@ def test_qdrant_upload_collection(exporter, qdrant):
 
 
 def search(qdrant: QdrantClient):
-    qdrant.search(COLLECTION_NAME, query_vector=[0.1] * EMBEDDING_DIM, limit=1)
+    qdrant.query_points(
+        collection_name=COLLECTION_NAME,
+        query=[0.1] * EMBEDDING_DIM,
+        limit=1
+    )
 
 
 def test_qdrant_searchs(exporter, qdrant):
@@ -85,7 +89,7 @@ def test_qdrant_searchs(exporter, qdrant):
     search(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.search")
+    span = next(span for span in spans if span.name == "qdrant.query_points")
 
     assert (
         span.attributes.get(SpanAttributes.QDRANT_SEARCH_COLLECTION_NAME)
@@ -95,13 +99,13 @@ def test_qdrant_searchs(exporter, qdrant):
 
 
 def search_batch(qdrant: QdrantClient):
-    qdrant.search_batch(
-        COLLECTION_NAME,
+    qdrant.query_batch_points(
+        collection_name=COLLECTION_NAME,
         requests=[
-            models.SearchRequest(vector=[0.1] * EMBEDDING_DIM, limit=10),
-            models.SearchRequest(vector=[0.2] * EMBEDDING_DIM, limit=5),
-            models.SearchRequest(vector=[0.42] * EMBEDDING_DIM, limit=2),
-            models.SearchRequest(vector=[0.21] * EMBEDDING_DIM, limit=1),
+            models.QueryRequest(query=[0.1] * EMBEDDING_DIM, limit=10),
+            models.QueryRequest(query=[0.2] * EMBEDDING_DIM, limit=5),
+            models.QueryRequest(query=[0.42] * EMBEDDING_DIM, limit=2),
+            models.QueryRequest(query=[0.21] * EMBEDDING_DIM, limit=1),
         ],
     )
 
@@ -111,7 +115,7 @@ def test_qdrant_search(exporter, qdrant):
     search_batch(qdrant)
 
     spans = exporter.get_finished_spans()
-    span = next(span for span in spans if span.name == "qdrant.search_batch")
+    span = next(span for span in spans if span.name == "qdrant.query_batch_points")
 
     assert (
         span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_COLLECTION_NAME)
