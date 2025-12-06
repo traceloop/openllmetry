@@ -3,9 +3,6 @@ import json
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -27,20 +24,20 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert (
-        imported_model_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        imported_model_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == prompt
     )
     assert data is not None
@@ -69,17 +66,17 @@ def test_imported_model_completion_with_events_with_content(
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert data is not None
 
@@ -117,17 +114,17 @@ def test_imported_model_completion_with_events_with_no_content(
     imported_model_span = spans[0]
 
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
         imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     )
-    assert imported_model_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_MAX_TOKENS] == 100
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TEMPERATURE] == 0.5
-    assert imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TOP_P] == 2
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     assert data is not None
 
@@ -148,7 +145,7 @@ def test_imported_model_completion_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value

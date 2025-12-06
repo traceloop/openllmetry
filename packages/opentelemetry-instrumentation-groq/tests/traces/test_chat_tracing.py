@@ -1,9 +1,6 @@
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -23,13 +20,13 @@ def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert groq_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -58,8 +55,8 @@ def test_chat_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -105,8 +102,8 @@ def test_chat_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -146,13 +143,13 @@ async def test_async_chat_legacy(
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
-    assert groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert groq_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -182,8 +179,8 @@ async def test_async_chat_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -231,8 +228,8 @@ async def test_async_chat_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
     assert (
         groq_span.attributes.get("gen_ai.response.id")
@@ -277,16 +274,16 @@ def test_chat_streaming_legacy(
     ]
     groq_span = spans[0]
     assert (
-        groq_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        groq_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        groq_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        groq_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == content
     )
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 73
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 
     logs = log_exporter.get_finished_logs()
@@ -317,8 +314,8 @@ def test_chat_streaming_with_events_with_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 73
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 
     logs = log_exporter.get_finished_logs()
@@ -367,8 +364,8 @@ def test_chat_streaming_with_events_with_no_content(
     ]
     groq_span = spans[0]
     assert groq_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 18
-    assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 73
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
+    assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 91
 
     logs = log_exporter.get_finished_logs()
@@ -388,7 +385,7 @@ def test_chat_streaming_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.GROQ.value

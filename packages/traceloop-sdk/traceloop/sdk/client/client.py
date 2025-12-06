@@ -63,4 +63,5 @@ class Client:
         self.user_feedback = UserFeedback(self._http, self.app_name)
         self.datasets = Datasets(self._http)
         experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
-        self.experiment = Experiment(self._http, self._async_http, experiment_slug)
+        # TODO: Fix type - Experiment constructor should accept Optional[str]
+        self.experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]

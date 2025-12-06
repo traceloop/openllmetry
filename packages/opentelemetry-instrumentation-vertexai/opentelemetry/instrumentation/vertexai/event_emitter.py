@@ -2,7 +2,7 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Union
 
-from opentelemetry._events import Event
+from opentelemetry._logs import LogRecord
 from opentelemetry.instrumentation.vertexai.event_models import (
     ChoiceEvent,
     MessageEvent,
@@ -140,7 +140,12 @@ def _emit_message_event(event: MessageEvent, event_logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(Event(name=name, body=body, attributes=EVENT_ATTRIBUTES))
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name=name
+    )
+    event_logger.emit(log_record)
 
 
 def _emit_choice_event(event: ChoiceEvent, event_logger) -> None:
@@ -159,6 +164,10 @@ def _emit_choice_event(event: ChoiceEvent, event_logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    event_logger.emit(
-        Event(name="gen_ai.choice", body=body, attributes=EVENT_ATTRIBUTES)
+    log_record = LogRecord(
+        body=body,
+        attributes=EVENT_ATTRIBUTES,
+        event_name="gen_ai.choice"
+
     )
+    event_logger.emit(log_record)

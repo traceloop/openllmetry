@@ -6,7 +6,7 @@ from typing import Collection
 from opentelemetry import context as context_api
 
 
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
@@ -16,7 +16,7 @@ from opentelemetry.instrumentation.langchain.utils import is_package_available
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, SpanAttributes
 from opentelemetry.trace import get_tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import (
@@ -37,10 +37,23 @@ class LangchainInstrumentor(BaseInstrumentor):
         exception_logger=None,
         disable_trace_context_propagation=False,
         use_legacy_attributes: bool = True,
+        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES
     ):
+        """Create a Langchain instrumentor instance.
+
+        Args:
+            exception_logger: A callable that takes an Exception as input. This will be
+                used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
+            disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
+            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            metadata_key_prefix: Prefix for metadata keys added to spans. Defaults to
+                `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
+                Useful for using with other backends.
+        """
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
+        Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -69,9 +82,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         )
 
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            Config.event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            Config.event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
@@ -229,16 +242,18 @@ class _OpenAITracingWrapper:
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
-            span_holder = self._callback_manager.spans[run_id]
+            span_holder = self._callback_manager.spans.get(run_id)
 
-            extra_headers = kwargs.get("extra_headers", {})
-
-            # Inject tracing context into the extra headers
-            ctx = set_span_in_context(span_holder.span)
-            TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-
-            # Update kwargs to include the modified headers
-            kwargs["extra_headers"] = extra_headers
+            if span_holder:
+                extra_headers = kwargs.get("extra_headers", {})
+                ctx = set_span_in_context(span_holder.span)
+                TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+                kwargs["extra_headers"] = extra_headers
+            else:
+                logger.debug(
+                    "No span found for run_id %s, skipping header injection",
+                    run_id
+                )
 
         # In legacy chains like LLMChain, suppressing model instrumentations
         # within create_llm_span doesn't work, so this should helps as a fallback

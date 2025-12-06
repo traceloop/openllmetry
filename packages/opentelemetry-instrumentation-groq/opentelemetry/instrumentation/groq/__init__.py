@@ -6,7 +6,7 @@ import time
 from typing import Callable, Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.instrumentation.groq.event_emitter import (
     emit_choice_events,
@@ -30,6 +30,9 @@ from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -224,7 +227,7 @@ def _wrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -242,7 +245,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Groq",
+            GenAIAttributes.GEN_AI_SYSTEM: "groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -306,7 +309,7 @@ async def _awrap(
     token_histogram: Histogram,
     choice_counter: Counter,
     duration_histogram: Histogram,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -324,7 +327,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Groq",
+            GenAIAttributes.GEN_AI_SYSTEM: "groq",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -420,9 +423,9 @@ class GroqInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapped_method in WRAPPED_METHODS:

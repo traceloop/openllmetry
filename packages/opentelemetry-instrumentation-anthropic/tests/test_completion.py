@@ -2,12 +2,8 @@ import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 from .utils import verify_metrics
 
@@ -34,10 +30,10 @@ def test_anthropic_completion_legacy(
 
     anthropic_span = spans[0]
     assert (
-        anthropic_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.user"]
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
         == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     )
-    assert anthropic_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "compl_01EjfrPvPEsRDRUKD6VoBxtK"
@@ -145,7 +141,7 @@ def test_anthropic_completion_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value

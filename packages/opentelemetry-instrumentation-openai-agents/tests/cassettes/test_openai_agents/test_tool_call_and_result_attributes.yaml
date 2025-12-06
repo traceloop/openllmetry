@@ -1,0 +1,526 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"content":"Tell me about London","role":"user"}],"instructions":"You
+      help users get information about cities using the get_city_info tool.","model":"gpt-4o","stream":false,"tools":[{"name":"get_city_info","parameters":{"properties":{"city_name":{"title":"City
+      Name","type":"string"}},"required":["city_name"],"title":"get_city_info_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Get
+      detailed information about a city."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '497'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.9
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4RVTW8jNwy9+1cIOifBjL/tawvsoYuiRS/dNosBR+LY2mgkrUQZ6wb+74U09nw4
+        Cfbm8JGcp8dH5nXGGFeS7xn3GFxVwK6USyjrxWa12DaiKNbbRsoF1PNyI7blbrUrm2YOuMXNfL3Z
+        LVf8IbWw9TcUdGtjTcAuLjwCoawgYeVmXS7Xq/lql7FAQDGkGmFbp5FQdkU1iJeDt9EkXg3ogF1Y
+        aa3Mge/Z64wxxriDM/pUL/GE2jr0fMbYJSej9zZhJmqdA8rcvlJJJFA6TNFAPgpS1mRGX2xkR9SO
+        xYA+sAMSU6axvoWUwqC2kZhQpDCwGJQ5MDpiSquEonOVchlZq5+6F7Xwo7KRXKSK7AuaybcTmHIr
+        AXrKqrUSdaJzcPS4tI/zYr58LLaPxfqqem7J9+zfLEgnSz/QRnw8TiEK2Y1zu64Xu0W9WS5XUKy6
+        ceYmdHaY20STdcn0Bvij6WUQ/CG2aCjjr888i2KgxWe+f+afrZHWPPPLUJB6Vx3t/POEnxf//P1X
+        +efx1+///fYlLF7qVu1wPlSkblmaseY8o5cZY1+zQA48aI16qi/52DnKeTwpG0N1M21Hodffeds6
+        qgSII1YveB5jHiFYM/EjNo31NEpKMsW2BX+r7O0ZoMHEWaIh1SicWDWgPymBFambvRuImvh1a6zH
+        8SMIW4ceKOZw+VRcoz9oYNY5t/97NN2c16l2ZXxCX9ugKHHmLUoV22GtOh2PVolcDZEs74Hw1on3
+        JhrmJzEIr1wO7hn/hMS6vUT5zqpBWrbz08/G38Np8C0S+jB6dDdRhz6t7SSeHHiz6B2QHqFI54/9
+        oujMfk85D3cZ12cG8skRI/DS/74MNdzj96g8yl6wNyT66NdRWU9k8uoK/CHwcdqVzfUojxCQUiVV
+        Qf8xFiLf2NkdzfyYfNOT1e4Wi6yrtD04b+vUoOiDbuxBH42A24SlClDr242PAQ6D1FyZyW3czB/e
+        xkd3+3W4G+KIcigsJla+P7nl5j3gvb79dn/UmiyBHsDtrl+R9B9jcsSRQAJBan+ZXf4HAAD//wMA
+        mzKpbnIHAAA=
+    headers:
+      CF-RAY:
+      - 9948628a8b03340a-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 26 Oct 2025 07:54:21 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=RREP34Iu5hH.GhZIQdxiuH_FUnzEcojB4cV9MMbAWRs-1761465261-1.0.1.1-SKi0cid9LWX959Ouxha9FGsRDClWezkw5YWT0jF1QqVLNLaIR6Ws2IxTvDK2Hybg1WtNJdupP0XfF2pa9TmzwdYfOaQLy.ylpyG4iXGDODI;
+        path=/; expires=Sun, 26-Oct-25 08:24:21 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=7jhQFi.SP1KNZzuzNPhCZ9nqM4wPYh1hnvtEQszUXVA-1761465261015-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1863'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '1868'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999711'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_5ed69a437c8b4cbcad032a22cc51a0b7
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data":[{"object":"trace","id":"trace_1b9cc6269f8041efbb685fb644225e16","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_29ec9d7ceb464492ab9256e1","trace_id":"trace_1b9cc6269f8041efbb685fb644225e16","parent_id":"span_20a513d1b9204b9aba536b1c","started_at":"2025-10-26T07:54:17.605928+00:00","ended_at":"2025-10-26T07:54:20.927191+00:00","span_data":{"type":"response","response_id":"resp_0a91d4a1b37538fc0068fdd3ab217c819591ff2ae8e7267945"},"error":null},{"object":"trace.span","id":"span_d57a7b9067894588b3a65c5e","trace_id":"trace_1b9cc6269f8041efbb685fb644225e16","parent_id":"span_20a513d1b9204b9aba536b1c","started_at":"2025-10-26T07:54:20.927681+00:00","ended_at":"2025-10-26T07:54:20.927968+00:00","span_data":{"type":"function","name":"get_city_info","input":"{\"city_name\":\"London\"}","output":"City:
+      London, Population: 9000000, Country: United Kingdom, Description: Capital city
+      with rich history","mcp_data":null},"error":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '995'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 994862a55a91b628-ATL
+      Connection:
+      - keep-alive
+      Date:
+      - Sun, 26 Oct 2025 07:54:23 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=CkhVG_YP5IZODaWpJ26rpYKwuh7bs9mtEshoC25rRUo-1761465263-1.0.1.1-XmK8iJ9tYlSzwWpn3zuKLjUdBD6f6XXnoIZg.c1U6CCJux5xIfygNwkksJJyMHeYLj9ncsMCRh5Ok3RwKAwTjtpGZliZx5LMdYm7LURGrtY;
+        path=/; expires=Sun, 26-Oct-25 08:24:23 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=4e89asovcQEvULOc2kNqoDScfh4qH5scnf7s5qbi_j0-1761465263161-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '168'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '172'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_31c3220885a9bae5a17cb86ef5e726bc
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"content":"Tell me about London","role":"user"},{"arguments":"{\"city_name\":\"London\"}","call_id":"call_veL3ZXS1QhDqzKYs3kbmi9e2","name":"get_city_info","type":"function_call","id":"fc_0a91d4a1b37538fc0068fdd3acc0dc8195986b393b7445a055","status":"completed"},{"call_id":"call_veL3ZXS1QhDqzKYs3kbmi9e2","output":"City:
+      London, Population: 9000000, Country: United Kingdom, Description: Capital city
+      with rich history","type":"function_call_output"}],"instructions":"You help
+      users get information about cities using the get_city_info tool.","model":"gpt-4o","stream":false,"tools":[{"name":"get_city_info","parameters":{"properties":{"city_name":{"title":"City
+      Name","type":"string"}},"required":["city_name"],"title":"get_city_info_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Get
+      detailed information about a city."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '899'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=RREP34Iu5hH.GhZIQdxiuH_FUnzEcojB4cV9MMbAWRs-1761465261-1.0.1.1-SKi0cid9LWX959Ouxha9FGsRDClWezkw5YWT0jF1QqVLNLaIR6Ws2IxTvDK2Hybg1WtNJdupP0XfF2pa9TmzwdYfOaQLy.ylpyG4iXGDODI;
+        _cfuvid=7jhQFi.SP1KNZzuzNPhCZ9nqM4wPYh1hnvtEQszUXVA-1761465261015-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.9
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RVTW/jNhC951cMdHYC2fFXct1DUbQoeumhWBTCmBzJbCgOSw6zayzy3wtSlixl
+        k5s9bziaj/dmftwBVEZXz1AFir6p8Wmtt7g+PR52j8dW1fX+2Gr9iFodTuq4ftrhoX3ab4540vV6
+        h5qqVQ7Bp39JyRiGXbzaVSAU0g1mbH3Yr7f73Wa/LlgUlBTzG8W9tySkh0cnVC9d4ORyXi3aSIPZ
+        WGtcVz3DjzsAgMrjhUJ+r+mVLHsK1R3AW3GmEDhjLllbDMaNX2k0CRobl2iUkJQYdiWjvznBmayH
+        FClE6EjAuJZDj9kF8MRJQBkxFCFF4zqQM2W3Rhm5NNkXhNk+DBX1+L3hJD5JI/xCbvHtDGbfRqFd
+        ZtWzJpvT6bzcb/l+U2+29/Xxvt5fu15CVs/wtTRkaMs00D52n8+zrXeHOs/zuNltnzZ7PG73Oo+1
+        RC5R5OKpxKEYsaMb8NngCqjYCblbUvPEFmHHftB3mV4XB3SOBcdRfP1nAVrufODTB0gJ9AzV7+w0
+        OzCxjEShN4I2z+oC3BbbX84IafjNuE5zv4JvRs6A4NknO8yXW0DvA383PQrZCzxBn9nH7gF+lRw7
+        kONvjjS0HMBIhGDUGc4mCofLClSykgJaOFMwgh2tAJ0GbV4pRJp96qGaani7/prKqgLb0iqM0URB
+        J4NzdixOlceA1pJd8kdCGhTjA70aTrEZRdkUZkz88oF7L41CdabmhS5zLBBGdgu9UdtykJlT5kLq
+        ewzjy0l+EVvKOtDkxLSGFlKMFF6NokbMKN8Wkx1YUOUG0rwIod5TQEnFvH6or9Yy7WtmgzKn/zOW
+        Fb+ha9eMXymcOBq5DNzWJvW3tTH08cxGDY1PwtUExJ+VNn6mTa4sj5sONEUVjC/GZ6h+IYFh75D+
+        YJVgIejD7bnDvgRerJQbnAffk1CIs6KHiXoKeS0t7FmXOcg16hzIRRgZePYli+SP7LN653EtM0rI
+        jJiBbzf63t5Ugf5LJpBebIFFEpN1JuJbIouqGwxdrOZu4wYZjs4MQa1N7iraP+eNKDfk7l2apZhy
+        szLV3glL2DezVVNPRj/nYEhO4ThhbSKe7HjDUlmZE0GNW+z+9Wa9+hmYHaaJYEWb+vayXnD5/U15
+        3H8EfBR3kvdnoYUF7Szj3WESSb6JizNFghoFc/y3u7f/AQAA//8DANsmY01UCAAA
+    headers:
+      CF-RAY:
+      - 9948629acf56340a-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 26 Oct 2025 07:54:23 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1692'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '1698'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999662'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c5651fc8646342c5ba4d39728749566d
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"content":"Tell me about London","role":"user"}],"instructions":"You
+      help users get information about cities using the get_city_info tool.","model":"gpt-4o","stream":false,"tools":[{"name":"get_city_info","parameters":{"properties":{"city_name":{"title":"City
+      Name","type":"string"}},"required":["city_name"],"title":"get_city_info_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Get
+      detailed information about a city."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '497'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.9
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA4RVTW/jNhC9+1cQPCeBZCu27GN72EuxWGAP3W6zEEbkSOaGEllymK4R+L8XpGx9
+        OAl6k+fNDN+8+fDrijGuJD8w7tDbKnss9nVWFmuZldtmXWfZtmwklsUj5k1Z5vvNvq6zLK93j9vN
+        vpEN8LuYwtQ/UdA1jek9DnbhEAhlBRHLd9u82GWPmyJhnoCCjzHCdFYjoRyCahDPrTOhj7wa0B4H
+        s9Ja9S0/sNcVY4xxCyd0MV7iC2pj0fEVY+fkjM6ZiPVB62RQ/fWVSiKB0n6JenJBkDJ9YvSXCeyI
+        2rLg0XnWIjHVN8Z1EF0Y1CYQE4oUeha86ltGR4xulVB0qqIvI2P0w1BRB78qE8gGqsg8Y794O4LR
+        txKgl6w6I1FHOq2l+8Lcr7N1cZ+V99n2onpKyQ/s7yTIIMvY0EZ83M7dZl+L2M4SM5EXebbZbKAu
+        iiYlTknoZDGlCX3SJdGb4I+6l0Bwbeiwp4S/PvEkSg8dPvHDE//D9NL0T/w8BcTc1UA7fX7/t/hK
+        9jcDf37TP7/bT1/NBr/l7eyJmC1JM9ecJ/S8YuxHEsiCA61RL/UlF4aJsg5flAm+ug7tQGHU3zrT
+        WaoEiCNWz3iaYw7Bm34xj9g0xtHMKcoUug7cNXIcTw8NRs4Se1KNwsWoenQvSmBF6jreDQRN/LI1
+        xuG8CMLOogMKyZw/ZBfrL5qYDZM7/p51N/kNql0Yv6CrjVcUOfMOpQrdtFaDjkejRIqGQIaPgH87
+        ibdDNPVPohdO2WQ8MP4JiQ17ifKdVYO4bKeH/2v/CMfGd0jo/KzooaMWXVzbhT1O4HVEb4BYhCKd
+        Hvtd0Yl9jj53Nx6XMj25OBEz8Dx+n6cY7vCfoBzKUbA3JEbrj1nYSGRRdQWu9XzudmFzOcozBKRU
+        UVXQX+ZCpBu7uqGZikk3PY7azWKRsZU2rXWmjgmy0WjnM+hCL+DaYak81Pp644OHdpKaq35xG3fr
+        u7f22d1+ne6GOKKcArPFKN+e3Hz3HvBe3nG7P0pNhkBPYLkfVyT+YyyOOBJIIIjpz6vzfwAAAP//
+        AwB2ZJRfcgcAAA==
+    headers:
+      CF-RAY:
+      - 9948e354593fc36e-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 26 Oct 2025 09:22:15 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=2jEgl8B43WfP50jXTiDlUW7ZB6.eWa7.7JWg.CQBx6c-1761470535-1.0.1.1-wpsMkrjniUeQKQjYHPtrh3ZLjyAoa6DSaqBFHlGt_9wfnPvsVUANF1lDI3OmR7UqFB9LKWeSLHnVRXHqx7bGYk0t423PL21b20hqxXDcWbE;
+        path=/; expires=Sun, 26-Oct-25 09:52:15 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=yUxvVd6T4mK3odedwPZMinZMNVptbjqY0F6XvpH7psU-1761470535522-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1645'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '1651'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999711'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_995739e840784c57bb18a9d91154bda3
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"content":"Tell me about London","role":"user"},{"arguments":"{\"city_name\":\"London\"}","call_id":"call_Zw4StpBoaWXljZpGSo3eX1gd","name":"get_city_info","type":"function_call","id":"fc_0549b0842d086f2b0068fde84739bc81938e0c1410333ab44f","status":"completed"},{"call_id":"call_Zw4StpBoaWXljZpGSo3eX1gd","output":"City:
+      London, Population: 9000000, Country: United Kingdom, Description: Capital city
+      with rich history","type":"function_call_output"}],"instructions":"You help
+      users get information about cities using the get_city_info tool.","model":"gpt-4o","stream":false,"tools":[{"name":"get_city_info","parameters":{"properties":{"city_name":{"title":"City
+      Name","type":"string"}},"required":["city_name"],"title":"get_city_info_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Get
+      detailed information about a city."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '899'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=2jEgl8B43WfP50jXTiDlUW7ZB6.eWa7.7JWg.CQBx6c-1761470535-1.0.1.1-wpsMkrjniUeQKQjYHPtrh3ZLjyAoa6DSaqBFHlGt_9wfnPvsVUANF1lDI3OmR7UqFB9LKWeSLHnVRXHqx7bGYk0t423PL21b20hqxXDcWbE;
+        _cfuvid=yUxvVd6T4mK3odedwPZMinZMNVptbjqY0F6XvpH7psU-1761470535522-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.9
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3RVTY/jNgy9z68gfOklM3A+NpPkuoeiaFH00kOxKAxaohN1ZFGVqHSCxfz3QnLi
+        2LMzt4SPovnxHvn9AaAyujpAFSj6pv6y2bf1brPS9W7brdq63u46TbvNs253arfcr1tSz7tnQmrb
+        fae3+2qRQ3D7Dym5hWEXabCrQCikG8zY8nm73DzXX9bbgkVBSTG/Udx7S0J6eNSiejkGTi7n1aGN
+        NJiNtcYdqwN8fwAAqDxeKOT3ms5k2VOoHgDeijOFwBlzydpiMO72lUaToLFxjkYJSYlhVzL6ixOc
+        yHpIkUKEIwkY13HoMbsAtpwElBFDEVI07ghyouzWKCOXJvuCMNunoaIeXxtO4pM0wi/kZt/OYPZt
+        FNp5Vj1rsjmdo5fHDT+u6tXmsd491ttr10vI6gDfSkOGtowD7ePx83nu1Lqr8zz3m/12u93otd6q
+        3WqtSuQSRS6eShyKEY90Bz4bXAEVOyF3T2qa2CzsrR/0KuPr4oDOseBtFN/+noGWjz5w+wFSAh2g
+        +o2dZrcoA1HojaDNk7oAd8X2pzNCGn417qi5X8AJIyB49skOw+UO0PvAr6ZHIXuBPfSZeuzAE3tL
+        T/CL/JQfnU0b0An0JIE9WxPhxfF/DjoOYCRCMOoEJxOFw2UBRrEzCiw63WN4iQtAp0ElKymgBW3O
+        FKKRy1M11vV2/TWWWgW2pX0Yo4mCTgbn7FicKo8BrSU755SENKjIBzobTrG5CbUpbBk55wP3XhqF
+        6kTNC12mWCCM7GYapK7jIBOnzI/U9xhuL0dJRuwoa0OTE9MZmskzUjgbRY2Ym6Q7THZgRpX7R9Mi
+        hHpPASUV8/KpvloLA66ZDWod/0+YV/yGrl0zPlNoObd+4Ls2qb+vkqGPJzZqaHwSrkYg/qi+22e6
+        5MpCuWtDU1TB+GI8QPUzCQy7iPQH6wULbZ/uzx32JfBszdzhPPiehEKcFD1M1FPIq2pmz1rNQa5R
+        p0AuwsjAs69ZOr9nn8U7j2uZUUJmxAR8u9P3/qYK9G8ygfRsM8ySGK0TYd8TmVXdYDjGaup22yrD
+        IZogqLXJXUX7x7QR5a48vEuzFFPuWKbaO2EJ+2ayfurR6KccDMkpvE1Ym4itvd21VNboSFDjZvdg
+        uVoufgQmx2okWNGmvr+sZ1x+f2fW+4+Aj+KO8v4stLCgnWS8rUeR5Ds5O10kqFEwx397ePsfAAD/
+        /wMAj1HUmmgIAAA=
+    headers:
+      CF-RAY:
+      - 9948e3605c8dc36e-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 26 Oct 2025 09:22:17 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1785'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '1795'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999662'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b34832fa512440749aa9b86158505bc7
+    status:
+      code: 200
+      message: OK
+version: 1

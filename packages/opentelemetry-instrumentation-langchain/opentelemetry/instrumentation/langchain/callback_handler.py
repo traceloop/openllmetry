@@ -27,6 +27,7 @@ from langchain_core.outputs import (
     LLMResult,
 )
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.instrumentation.langchain.event_emitter import emit_event
 from opentelemetry.instrumentation.langchain.event_models import (
     ChoiceEvent,
@@ -55,8 +56,8 @@ from opentelemetry.instrumentation.langchain.utils import (
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Histogram
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GEN_AI_RESPONSE_ID,
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
@@ -290,7 +291,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             for key, value in sanitized_metadata.items():
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}",
+                    f"{Config.metadata_key_prefix}.{key}",
                     value,
                 )
 
@@ -356,7 +357,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _extract_class_name_from_serialized(serialized)
         )
 
-        _set_span_attribute(span, SpanAttributes.LLM_SYSTEM, vendor)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
 
         # we already have an LLM span by this point,
@@ -552,16 +553,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             ) or response.llm_output.get("model_id")
             if model_name is not None:
                 _set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL, model_name or "unknown"
+                    span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name or "unknown"
                 )
 
                 if self.spans[run_id].request_model is None:
                     _set_span_attribute(
-                        span, SpanAttributes.LLM_REQUEST_MODEL, model_name
+                        span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name
                     )
             id = response.llm_output.get("id")
             if id is not None and id != "":
-                _set_span_attribute(span, GEN_AI_RESPONSE_ID, id)
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, id)
         if model_name is None:
             model_name = extract_model_name_from_response_metadata(response)
         if model_name is None and hasattr(context_api, "get_value"):
@@ -590,24 +591,24 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens
+                span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
+                span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
                 span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
             )
 
             # Record token usage metrics
-            vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "input",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
 
@@ -615,9 +616,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        SpanAttributes.LLM_SYSTEM: vendor,
-                        SpanAttributes.LLM_TOKEN_TYPE: "output",
-                        SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
         set_chat_response_usage(
@@ -625,17 +626,19 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         if should_emit_events():
             self._emit_llm_end_events(response)
+            # Also set span attributes for backward compatibility
+            set_chat_response(span, response)
         else:
             set_chat_response(span, response)
 
         # Record duration before ending span
         duration = time.time() - self.spans[run_id].start_time
-        vendor = span.attributes.get(SpanAttributes.LLM_SYSTEM, "Langchain")
+        vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
         self.duration_histogram.record(
             duration,
             attributes={
-                SpanAttributes.LLM_SYSTEM: vendor,
-                SpanAttributes.LLM_RESPONSE_MODEL: model_name or "unknown",
+                GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
             },
         )
 
@@ -750,7 +753,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
-        span.set_status(Status(StatusCode.ERROR))
+        span.set_status(Status(StatusCode.ERROR), str(error))
         span.record_exception(error)
         self._end_span(span, run_id)
 

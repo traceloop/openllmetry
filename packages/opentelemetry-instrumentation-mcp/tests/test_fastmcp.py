@@ -23,8 +23,8 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
 
         # Test tool calling
         result = await client.call_tool("add_numbers", {"a": 5, "b": 3})
-        assert len(result) == 1
-        assert result[0].text == "8"
+        assert len(result.content) == 1
+        assert result.content[0].text == "8"
 
         # Test resource listing
         resources_res = await client.list_resources()
@@ -79,7 +79,6 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
         f"Expected at least 1 resources/read.mcp span, found {len(resource_read_spans)}"
     )
 
-    # Verify both tool call spans have correct attributes and actual values
     for i, span in enumerate(tool_call_spans):
         # Verify span metadata
         assert span.attributes.get('traceloop.span.kind') == 'tool', (
@@ -121,3 +120,29 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
     assert len(request_writer_spans) == 0, (
         f"RequestStreamWriter spans should be removed, found {len(request_writer_spans)}"
     )
+
+    # Verify TRACELOOP_WORKFLOW_NAME is set correctly on server spans
+    mcp_server_spans = [span for span in spans if span.name == 'mcp.server']
+    assert len(mcp_server_spans) >= 1, (
+        f"Expected at least 1 mcp.server span, found {len(mcp_server_spans)}"
+    )
+
+    for server_span in mcp_server_spans:
+        workflow_name = server_span.attributes.get('traceloop.workflow.name')
+        assert workflow_name == 'test-server.mcp', (
+            f"Expected workflow name 'test-server.mcp', got '{workflow_name}'"
+        )
+
+    # Verify TRACELOOP_WORKFLOW_NAME is also set on tool spans
+    server_tool_spans = [span for span in spans if span.name == 'add_numbers.tool'
+                         and span.attributes.get('traceloop.span.kind') == 'tool'
+                         and 'traceloop.workflow.name' in span.attributes]
+    assert len(server_tool_spans) >= 1, (
+        f"Expected at least 1 server-side tool span with workflow name, found {len(server_tool_spans)}"
+    )
+
+    for tool_span in server_tool_spans:
+        workflow_name = tool_span.attributes.get('traceloop.workflow.name')
+        assert workflow_name == 'test-server.mcp', (
+            f"Expected workflow name 'test-server.mcp' on tool span, got '{workflow_name}'"
+        )

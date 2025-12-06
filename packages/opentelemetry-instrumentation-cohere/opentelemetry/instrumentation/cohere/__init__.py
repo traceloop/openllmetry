@@ -4,7 +4,7 @@ import logging
 from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger, get_event_logger
+from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.cohere.config import Config
 from opentelemetry.instrumentation.cohere.event_emitter import (
     emit_input_event,
@@ -28,6 +28,9 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
@@ -203,7 +206,7 @@ def _handle_response_content(span, event_logger, llm_request_type, response):
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -252,7 +255,7 @@ def _wrap(
 @_with_tracer_wrapper
 async def _awrap(
     tracer: Tracer,
-    event_logger: Union[EventLogger, None],
+    event_logger: Union[Logger, None],
     to_wrap,
     wrapped,
     instance,
@@ -271,7 +274,7 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Cohere",
+            GenAIAttributes.GEN_AI_SYSTEM: "Cohere",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
@@ -310,9 +313,9 @@ class CohereInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
         for wrapped_method in WRAPPED_METHODS:
             wrap_module = wrapped_method.get("module")

@@ -1,9 +1,6 @@
 import pytest
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -65,7 +62,7 @@ def test_open_ai_function_calls(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
@@ -77,7 +74,7 @@ def test_open_ai_function_calls(
         == "Get the current weather in a given location"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
@@ -244,7 +241,7 @@ def test_open_ai_function_calls_tools(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "What's the weather like in Boston?"
     )
     assert (
@@ -256,11 +253,11 @@ def test_open_ai_function_calls_tools(
         == "Get the current weather"
     )
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
         str,
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
         == "get_current_weather"
     )
     assert (
@@ -396,7 +393,7 @@ async def test_open_ai_function_calls_tools_streaming(
     open_ai_span = spans[0]
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
         str,
     )
     assert (
@@ -404,18 +401,18 @@ async def test_open_ai_function_calls_tools_streaming(
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
         == "tool_calls"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
         )
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
         )
         == '{"location":"San Francisco, CA"}'
     )
@@ -567,40 +564,40 @@ def test_open_ai_function_calls_tools_parallel(
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
         == "tool_calls"
     )
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
         str,
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
         )
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
         )
         == '{"location": "San Francisco"}'
     )
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id"],
         str,
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name"
         )
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"
         )
         == '{"location": "Boston"}'
     )
@@ -761,40 +758,40 @@ async def test_open_ai_function_calls_tools_streaming_parallel(
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.finish_reason")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
         == "tool_calls"
     )
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
         str,
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
         )
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
         )
         == '{"location": "San Francisco"}'
     )
 
     assert isinstance(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id"],
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id"],
         str,
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name"
         )
         == "get_current_weather"
     )
     assert (
         open_ai_span.attributes.get(
-            f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"
         )
         == '{"location": "Boston"}'
     )
@@ -940,7 +937,7 @@ async def test_open_ai_function_calls_tools_streaming_parallel_with_events_with_
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value

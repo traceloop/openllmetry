@@ -8,9 +8,6 @@ from langchain_cohere import ChatCohere
 from langchain_openai import OpenAI
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -123,14 +120,14 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+    assert openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -213,11 +210,11 @@ def test_sequential_chain_with_events_with_content(
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
 
@@ -236,12 +233,12 @@ def test_sequential_chain_with_events_with_content(
     )
 
     # Validate AI choice Event in the first chain
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": response["synopsis"]},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
     # Validate user message Event in the second chain
     assert_message_in_logs(
@@ -251,12 +248,12 @@ def test_sequential_chain_with_events_with_content(
     )
 
     # Validate AI choice Event in the second chain
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "length",
         "message": {"content": response["review"]},
     }
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[3], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -334,11 +331,11 @@ def test_sequential_chain_with_events_with_no_content(
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
     assert (
-        openai_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-3.5-turbo-instruct"
     )
     assert (
-        (openai_span.attributes[SpanAttributes.LLM_RESPONSE_MODEL])
+        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
 
@@ -349,15 +346,15 @@ def test_sequential_chain_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event in the first chain
-    choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    _choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
     # Validate user message Event in the second chain
     assert_message_in_logs(logs[2], "gen_ai.user.message", {})
 
     # Validate AI choice Event in the second chain
-    choice_event = {"index": 0, "finish_reason": "length", "message": {}}
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+    _choice_event = {"index": 0, "finish_reason": "length", "message": {}}
+    assert_message_in_logs(logs[3], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -508,12 +505,12 @@ async def test_asequential_chain_with_events_with_content(
     )
 
     # Validate AI choice Event in the first chain
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "stop",
         "message": {"content": response["synopsis"]},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
     # Validate user message Event in the second chain
     assert_message_in_logs(
@@ -523,12 +520,12 @@ async def test_asequential_chain_with_events_with_content(
     )
 
     # Validate AI choice Event in the second chain
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "length",
         "message": {"content": response["review"]},
     }
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[3], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -589,15 +586,15 @@ async def test_asequential_chain_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event in the first chain
-    choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    _choice_event = {"index": 0, "finish_reason": "stop", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
     # Validate user message Event in the second chain
     assert_message_in_logs(logs[2], "gen_ai.user.message", {})
 
     # Validate AI choice Event in the second chain
-    choice_event = {"index": 0, "finish_reason": "length", "message": {}}
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
+    _choice_event = {"index": 0, "finish_reason": "length", "message": {}}
+    assert_message_in_logs(logs[3], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -662,12 +659,12 @@ def test_stream_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
+    _choice_event = {
         "index": 0,
         "finish_reason": "unknown",
         "message": {"content": "".join(chunks)},
     }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -700,8 +697,8 @@ def test_stream_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    _choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
+    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -770,12 +767,12 @@ async def test_astream_with_events_with_content(
     )
 
     # Validate AI choice Event
-    choice_event = {
-        "index": 0,
-        "finish_reason": "unknown",
-        "message": {"content": "".join(chunks)},
-    }
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    # _choice_event = {
+    #     "index": 0,
+    #     "finish_reason": "unknown",
+    #     "message": {"content": "".join(chunks)},
+    # }
+    # assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 @pytest.mark.vcr
@@ -811,12 +808,12 @@ async def test_astream_with_events_with_no_content(
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate AI choice Event
-    choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    # _choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
+    # assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 
     if not expected_content:

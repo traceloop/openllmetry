@@ -2,13 +2,11 @@ import json
 from functools import wraps
 import os
 from typing import (
-    Optional,
     TypeVar,
+    Optional,
     Callable,
     Any,
     cast,
-    ParamSpec,
-    Awaitable,
 )
 import inspect
 import warnings
@@ -19,8 +17,7 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 
-from traceloop.sdk.telemetry import Telemetry
-from traceloop.sdk.tracing import get_tracer, set_workflow_name
+from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_entity_path,
@@ -29,10 +26,7 @@ from traceloop.sdk.tracing.tracing import (
 from traceloop.sdk.utils import camel_to_snake
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
-P = ParamSpec("P")
-
-R = TypeVar("R")
-F = TypeVar("F", bound=Callable[P, R | Awaitable[R]])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def _truncate_json_if_needed(json_str: str) -> str:
@@ -145,6 +139,11 @@ def _setup_span(entity_name, tlp_span_kind, version):
         TraceloopSpanKindValues.AGENT,
     ]:
         set_workflow_name(entity_name)
+
+    if tlp_span_kind == TraceloopSpanKindValues.AGENT:
+        print(f"Setting agent name: {entity_name}")
+        set_agent_name(entity_name)
+
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
     with get_tracer() as tracer:
@@ -179,8 +178,8 @@ def _handle_span_input(span, args, kwargs, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 truncated_json,
             )
-    except TypeError as e:
-        Telemetry().log_exception(e)
+    except TypeError:
+        pass
 
 
 def _handle_span_output(span, res, cls=None):
@@ -193,8 +192,8 @@ def _handle_span_output(span, res, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 truncated_json,
             )
-    except TypeError as e:
-        Telemetry().log_exception(e)
+    except TypeError:
+        pass
 
 
 def _cleanup_span(span, ctx_token):

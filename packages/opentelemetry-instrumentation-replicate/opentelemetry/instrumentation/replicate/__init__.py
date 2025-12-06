@@ -5,7 +5,7 @@ import types
 from typing import Collection
 
 from opentelemetry import context as context_api
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.replicate.config import Config
 from opentelemetry.instrumentation.replicate.event_emitter import (
@@ -23,6 +23,9 @@ from opentelemetry.instrumentation.replicate.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
+)
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind, get_tracer
@@ -123,7 +126,7 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "Replicate",
+            GenAIAttributes.GEN_AI_SYSTEM: "Replicate",
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -159,9 +162,9 @@ class ReplicateInstrumentor(BaseInstrumentor):
 
         event_logger = None
         if not Config.use_legacy_attributes:
-            event_logger_provider = kwargs.get("event_logger_provider")
-            event_logger = get_event_logger(
-                __name__, __version__, event_logger_provider=event_logger_provider
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
             )
 
         for wrapper_method in WRAPPED_METHODS:
