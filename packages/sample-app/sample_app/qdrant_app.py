@@ -1,7 +1,6 @@
 # pip install qdrant-client sentence-transformers
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
-import numpy as np
 
 from traceloop.sdk import Traceloop
 Traceloop.init(app_name="qdrant_instrumentation_app")
@@ -40,8 +39,7 @@ resp = client.query_points(
     collection_name=collection_name,
     query=q_vec,
     with_payload=True,
-    limit=3,   
+    limit=3,
 )
-
 for p in resp.points:
     print(f"id={p.id} score={p.score:.4f} payload={p.payload}")

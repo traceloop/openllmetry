@@ -78,7 +78,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _set_collection_name_attribute(span, method, args, kwargs):
-    # Map query_points to search and query_batch_points to search_batch for backward compatibility
     attribute_method = method
     if method == "query_points":
         attribute_method = "search"
