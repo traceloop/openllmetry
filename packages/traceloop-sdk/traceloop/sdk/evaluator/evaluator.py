@@ -1,6 +1,5 @@
 import httpx
-import inspect
-from typing import Dict, Optional, Any, List, Callable, get_type_hints, get_origin, get_args
+from typing import Dict, Optional, Any, List
 
 from .model import (
     InputExtractor,

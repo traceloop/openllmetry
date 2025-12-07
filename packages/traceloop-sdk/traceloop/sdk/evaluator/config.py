@@ -13,7 +13,7 @@ class EvaluatorDetails(BaseModel):
         required_input_fields: Optional list of required fields to the evaluator input. These fields must be present in the task output.
 
     Example:
-        >>> EvaluatorDetails(slug="pii-detector", config={"probability_threshold": 0.8}, required_fields=["text"])
+        >>> EvaluatorDetails(slug="pii-detector", config={"probability_threshold": 0.8}, required_input_fields=["text"])
         >>> EvaluatorDetails(slug="my-custom-evaluator", version="v2")
     """
     slug: str

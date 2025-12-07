@@ -10,7 +10,7 @@ class EvaluatorMadeByTraceloop:
     with type hints and documentation for their configuration options.
 
     Example:
-        >>> from traceloop.sdk.evaluator import Predefined
+        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
         >>>
         >>> evaluators = [
         ...     EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
@@ -65,7 +65,7 @@ class EvaluatorMadeByTraceloop:
         Prompt injection detector evaluator.
 
         Required task output fields:
-            - text: The text to check for prompt injection attempts
+            - prompt: The prompt to check for prompt injection attempts
 
         Args:
             threshold: Minimum threshold for detecting prompt injection attempts (0.0-1.0)
@@ -196,8 +196,8 @@ class EvaluatorMadeByTraceloop:
         Character count ratio evaluator - measures the ratio of characters between two texts.
 
         Required task output fields:
-            - completion: The completion text
-            - question: The input question text
+            - numerator_text: The numerator text for ratio calculation
+            - denominator_text: The denominator text for ratio calculation
 
         Returns:
             EvaluatorDetails configured for character count ratio calculation
@@ -212,7 +212,7 @@ class EvaluatorMadeByTraceloop:
         Word count evaluator - counts the number of words in text.
 
         Required task output fields:
-            - completion: The text to count words in
+            - text: The text to count words in
 
         Returns:
             EvaluatorDetails configured for word counting
@@ -228,8 +228,8 @@ class EvaluatorMadeByTraceloop:
         Word count ratio evaluator - measures the ratio of words between two texts.
 
         Required task output fields:
-            - completion: The completion text
-            - question: The input question text
+           - numerator_text: The numerator text for ratio calculation
++          - denominator_text: The denominator text for ratio calculation
 
         Returns:
             EvaluatorDetails configured for word count ratio calculation
@@ -263,7 +263,7 @@ class EvaluatorMadeByTraceloop:
 
         Required task output fields:
             - question: The input question
-            - answer: The answer to evaluate for faithfulness
+            - completion: The completion to evaluate for faithfulness
             - context: The context to verify against
 
         Returns:
