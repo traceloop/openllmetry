@@ -149,6 +149,7 @@ class EvaluatorMadeByTraceloop:
         Placeholder regex evaluator - validates that placeholders match a regex pattern.
 
         Required task output fields:
+            - text: The text to validate against the regex pattern
             - placeholder_value: The value of the placeholder to validate
 
         Args:

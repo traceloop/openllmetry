@@ -38,9 +38,9 @@ class Experiment:
     async def run(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: List[EvaluatorSpec] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -52,9 +52,9 @@ class Experiment:
 
         Args:
             task: Async function to run on each dataset row
+            evaluators: List of evaluator slugs or EvaluatorDetails objects to run
             dataset_slug: Slug of the dataset to use
             dataset_version: Version of the dataset to use
-            evaluators: List of evaluator slugs or EvaluatorDetails objects to run
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Related reference for this experiment run
@@ -77,9 +77,9 @@ class Experiment:
         else:
             return await self._run_locally(
                 task=task,
+                evaluators=evaluators,
                 dataset_slug=dataset_slug,
                 dataset_version=dataset_version,
-                evaluators=evaluators,
                 experiment_slug=experiment_slug,
                 experiment_metadata=experiment_metadata,
                 related_ref=related_ref,
@@ -91,9 +91,9 @@ class Experiment:
     async def _run_locally(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -258,9 +258,9 @@ class Experiment:
     async def _run_in_github(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorSpec]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
