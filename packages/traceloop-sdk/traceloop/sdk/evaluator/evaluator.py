@@ -190,11 +190,6 @@ def validate_task_output(
 
         error_lines.append(f"\nTask output contains: {list(task_output.keys())}")
 
-        # Group missing fields by evaluator name
-        error_lines.append("\nMissing fields by evaluator:")
-        for slug, fields in missing_fields_by_evaluator.items():
-            error_lines.append(f"  - {slug}: {sorted(fields)}")
-
         error_lines.append("\nHint: Update your task function to return a dictionary with the required fields.")
 
         raise ValueError("\n".join(error_lines))

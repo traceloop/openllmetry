@@ -220,6 +220,8 @@ class Experiment:
                 )
             except Exception as e:
                 error_msg = f"Error processing row: {str(e)}"
+                # Print error to console so user can see it
+                print(f"\033[91m❌ Task execution failed: {str(e)}\033[0m")
                 if stop_on_error:
                     raise e
                 return TaskResponse(error=error_msg)
