@@ -98,6 +98,9 @@ pandas = ">=1.0.0"
 [tool.poetry.extras]
 datasets = ["pandas"]
 
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
