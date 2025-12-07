@@ -180,7 +180,7 @@ class EvaluatorMadeByTraceloop:
         Character count evaluator - counts the number of characters in text.
 
         Required task output fields:
-            - completion: The text to count characters in
+            - text: The text to count characters in
 
         Returns:
             EvaluatorDetails configured for character counting

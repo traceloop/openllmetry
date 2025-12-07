@@ -59,9 +59,10 @@ class Evaluator:
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
         if response.status_code != 200:
+            error_detail = _extract_error_from_response(response)
             raise Exception(
-                f"Failed to execute evaluator {evaluator_slug}: "
-                f"{response.status_code} – {response.text}"
+                f"Failed to execute evaluator '{evaluator_slug}': "
+                f"{response.status_code} - {error_detail}"
             )
         result_data = response.json()
         return ExecuteEvaluatorResponse(**result_data)
@@ -163,7 +164,7 @@ def validate_task_output(
         return
 
     # Collect all validation errors
-    missing_fields_by_evaluator: Dict[str, List[str]] = {}
+    missing_fields_by_evaluator: Dict[str, set[str]] = {}
 
     for evaluator in evaluators:
         if not evaluator.required_input_fields:
@@ -175,105 +176,54 @@ def validate_task_output(
         ]
 
         if missing_fields:
-            missing_fields_by_evaluator[evaluator.slug] = missing_fields
+            # Add to existing set or create new set
+            if evaluator.slug not in missing_fields_by_evaluator:
+                missing_fields_by_evaluator[evaluator.slug] = set()
+            missing_fields_by_evaluator[evaluator.slug].update(missing_fields)
 
     # If there are any missing fields, raise a detailed error
     if missing_fields_by_evaluator:
         error_lines = ["Task output missing required fields for evaluators:"]
 
         for slug, fields in missing_fields_by_evaluator.items():
-            error_lines.append(f"  - {slug} requires: {fields}")
+            error_lines.append(f"  - {slug} requires: {sorted(fields)}")
 
         error_lines.append(f"\nTask output contains: {list(task_output.keys())}")
 
-        # Calculate all unique missing fields
-        all_missing = set()
-        for fields in missing_fields_by_evaluator.values():
-            all_missing.update(fields)
-        error_lines.append(f"Missing: {sorted(all_missing)}")
+        # Group missing fields by evaluator name
+        error_lines.append("\nMissing fields by evaluator:")
+        for slug, fields in missing_fields_by_evaluator.items():
+            error_lines.append(f"  - {slug}: {sorted(fields)}")
 
         error_lines.append("\nHint: Update your task function to return a dictionary with the required fields.")
 
         raise ValueError("\n".join(error_lines))
 
 
-def validate_task_function_schema(
-    task_function: Callable,
-    evaluators: List[EvaluatorDetails],
-) -> None:
+def _extract_error_from_response(response: httpx.Response) -> str:
     """
-    Validate task function's return type annotation against evaluator requirements.
+    Extract error message from HTTP response.
 
-    This performs early validation by inspecting the function's type hints before
-    executing any tasks. Shows helpful warnings about expected schema.
+    Tries to parse JSON and extract common error fields (error, message, msg).
+    Falls back to response.text if JSON parsing fails.
 
     Args:
-        task_function: The task function to validate
-        evaluators: List of EvaluatorDetails to validate against
+        response: The HTTP response object
+
+    Returns:
+        Extracted error message string
     """
-    if not evaluators:
-        return
-
-    # Collect all required fields from evaluators
-    all_required_fields = set()
-    requirements_by_evaluator = []
-
-    for evaluator in evaluators:
-        if evaluator.required_input_fields:
-            all_required_fields.update(evaluator.required_input_fields)
-            requirements_by_evaluator.append(
-                f"  - {evaluator.slug}: {evaluator.required_input_fields}"
-            )
-
-    if not all_required_fields:
-        return
-
-    # Try to inspect return type hints
+    error_detail = response.text
     try:
-        hints = get_type_hints(task_function)
+        error_json = response.json()
+        if isinstance(error_json, dict):
+            if 'error' in error_json:
+                error_detail = error_json['error']
+            elif 'message' in error_json:
+                error_detail = error_json['message']
+            elif 'msg' in error_json:
+                error_detail = error_json['msg']
+    except Exception:
+        pass  # Use response.text as fallback
 
-        if 'return' in hints:
-            return_type = hints['return']
-
-            # Check if it's a TypedDict (which has __annotations__)
-            if hasattr(return_type, '__annotations__'):
-                annotated_keys = set(return_type.__annotations__.keys())
-
-                # Validate TypedDict keys against required fields
-                missing_fields_by_evaluator: Dict[str, List[str]] = {}
-
-                for evaluator in evaluators:
-                    if not evaluator.required_input_fields:
-                        continue
-
-                    missing_fields = [
-                        field for field in evaluator.required_input_fields
-                        if field not in annotated_keys
-                    ]
-
-                    if missing_fields:
-                        missing_fields_by_evaluator[evaluator.slug] = missing_fields
-
-                # If there are missing fields, raise error
-                if missing_fields_by_evaluator:
-                    error_lines = ["Task function return type missing required fields:"]
-
-                    for slug, fields in missing_fields_by_evaluator.items():
-                        error_lines.append(f"  - {slug} requires: {fields}")
-
-                    error_lines.append(f"\nTask return type defines: {sorted(annotated_keys)}")
-
-                    all_missing = set()
-                    for fields in missing_fields_by_evaluator.values():
-                        all_missing.update(fields)
-                    error_lines.append(f"Missing: {sorted(all_missing)}")
-
-                    error_lines.append("\nHint: Update your task function's return type to include all required fields.")
-
-                    raise ValueError("\n".join(error_lines))
-                else:
-                    # TypedDict has all required fields - validation will pass
-                    return
-
-    except Exception as e:
-        raise ValueError(f"Error validating task function schema: {e}")
+    return error_detail

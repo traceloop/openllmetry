@@ -5,7 +5,7 @@ import os
 from typing import Any, List, Callable, Optional, Tuple, Dict, Awaitable, Union
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
-from traceloop.sdk.evaluator.evaluator import Evaluator, validate_task_function_schema, validate_task_output
+from traceloop.sdk.evaluator.evaluator import Evaluator, validate_task_output
 from traceloop.sdk.experiment.model import (
     InitExperimentRequest,
     ExperimentInitResponse,
@@ -64,15 +64,6 @@ class Experiment:
         Returns:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
-        # Early validation: Check task function schema against evaluator requirements
-        evaluators_to_validate = []
-        for evaluator in evaluators:
-            if isinstance(evaluator, EvaluatorDetails):
-                evaluators_to_validate.append(evaluator)
-
-        if evaluators_to_validate:
-            validate_task_function_schema(task, evaluators_to_validate)
-
         if os.getenv("GITHUB_ACTIONS"):
             return await self._run_in_github(
                 task=task,
@@ -169,9 +160,15 @@ class Experiment:
         results: List[TaskResponse] = []
         errors: List[str] = []
 
+        evaluators_to_validate = [evaluator for evaluator in evaluators if isinstance(evaluator, EvaluatorDetails)]
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResponse:
             try:
                 task_result = await task(row)
+
+                # Validate task output with EvaluatorDetails with required_input_fields from evaluators list
+                if evaluators_to_validate:
+                    validate_task_output(task_result, evaluators_to_validate)
+
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,
