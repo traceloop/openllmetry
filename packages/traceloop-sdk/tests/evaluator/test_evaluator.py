@@ -117,7 +117,7 @@ class TestValidateTaskOutput:
         error_message = str(exc_info.value)
         # Should only mention the failing evaluator
         assert "relevance-checker requires:" in error_message
-        assert "pii-detector" not in error_message or "pii-detector requires:" not in error_message
+        assert "pii-detector requires:" not in error_message
 
     def test_validate_task_output_empty_task_output(self):
         """Test validation with empty task output"""
