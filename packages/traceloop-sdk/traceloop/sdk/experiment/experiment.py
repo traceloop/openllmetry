@@ -307,7 +307,7 @@ class Experiment:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
-        task_results = await self._execute_tasks(rows, task)
+        task_results = await self._execute_tasks(rows, task, evaluators)
 
         # Construct GitHub context
         repository = os.getenv("GITHUB_REPOSITORY")
@@ -455,26 +455,47 @@ class Experiment:
         self,
         rows: List[Dict[str, Any]],
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: Optional[List[EvaluatorSpec]] = None,
     ) -> List[TaskResult]:
         """Execute tasks locally with concurrency control
 
         Args:
             rows: List of dataset rows to process
             task: Function to run on each row
+            evaluators: List of evaluators to validate task output against
 
         Returns:
             List of TaskResult objects with inputs, outputs, and errors
         """
         task_results: List[TaskResult] = []
 
+        # Extract EvaluatorDetails from evaluators list
+        evaluators_to_validate = []
+        if evaluators:
+            for evaluator in evaluators:
+                if isinstance(evaluator, EvaluatorDetails):
+                    evaluators_to_validate.append(evaluator)
+
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResult:
             try:
                 task_output = await task(row)
+
+                # Validate task output schema on first execution
+                if evaluators_to_validate:
+                    try:
+                        validate_task_output(task_output, evaluators_to_validate)
+                    except ValueError as validation_error:
+                        print(f"\033[91m❌ Task validation failed: {str(validation_error)}\033[0m")
+                        raise ValueError(str(validation_error))
+
                 return TaskResult(
                     input=row,
                     output=task_output,
                 )
             except Exception as e:
+                if isinstance(e, ValueError):
+                    raise e
+                print(f"\033[91m❌ Task execution error: {str(e)}\033[0m")
                 return TaskResult(
                     input=row,
                     error=str(e),
