@@ -25,6 +25,9 @@ class EvaluatorMadeByTraceloop:
         """
         PII (Personally Identifiable Information) detector evaluator.
 
+        Required task output fields:
+            - text: The text to check for PII
+
         Args:
             probability_threshold: Minimum probability threshold for detecting PII (0.0-1.0)
 
@@ -32,7 +35,7 @@ class EvaluatorMadeByTraceloop:
             EvaluatorDetails configured for PII detection
         """
         config: Dict[str, Any] = {"probability_threshold": probability_threshold}
-        return EvaluatorDetails(slug="pii-detector", version=None, config=config)
+        return EvaluatorDetails(slug="pii-detector", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def toxicity_detector(
@@ -40,6 +43,9 @@ class EvaluatorMadeByTraceloop:
     ) -> EvaluatorDetails:
         """
         Toxicity detector evaluator.
+
+        Required task output fields:
+            - text: The text to check for toxicity
 
         Args:
             threshold: Minimum toxicity threshold for flagging content (0.0-1.0)
@@ -49,7 +55,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {"threshold": threshold}
 
-        return EvaluatorDetails(slug="toxicity-detector", version=None, config=config)
+        return EvaluatorDetails(slug="toxicity-detector", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def prompt_injection(
@@ -58,6 +64,9 @@ class EvaluatorMadeByTraceloop:
         """
         Prompt injection detector evaluator.
 
+        Required task output fields:
+            - text: The text to check for prompt injection attempts
+
         Args:
             threshold: Minimum threshold for detecting prompt injection attempts (0.0-1.0)
 
@@ -65,7 +74,7 @@ class EvaluatorMadeByTraceloop:
             EvaluatorDetails configured for prompt injection detection
         """
         config: Dict[str, Any] = {"threshold": threshold}
-        return EvaluatorDetails(slug="prompt-injection", version=None, config=config)
+        return EvaluatorDetails(slug="prompt-injection", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def regex_validator(
@@ -77,6 +86,9 @@ class EvaluatorMadeByTraceloop:
     ) -> EvaluatorDetails:
         """
         Regular expression validator evaluator.
+
+        Required task output fields:
+            - text: The text to validate against the regex pattern
 
         Args:
             regex: The regular expression pattern to match against
@@ -96,7 +108,7 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="regex-validator", version=None, config=config)
+        return EvaluatorDetails(slug="regex-validator", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def json_validator(
@@ -105,6 +117,9 @@ class EvaluatorMadeByTraceloop:
     ) -> EvaluatorDetails:
         """
         JSON validator evaluator.
+
+        Required task output fields:
+            - text: The JSON text to validate
 
         Args:
             enable_schema_validation: Whether to validate against a JSON schema
@@ -119,7 +134,7 @@ class EvaluatorMadeByTraceloop:
         if schema_string:
             config["schema_string"] = schema_string
 
-        return EvaluatorDetails(slug="json-validator", version=None, config=config)
+        return EvaluatorDetails(slug="json-validator", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def placeholder_regex(
@@ -132,6 +147,9 @@ class EvaluatorMadeByTraceloop:
     ) -> EvaluatorDetails:
         """
         Placeholder regex evaluator - validates that placeholders match a regex pattern.
+
+        Required task output fields:
+            - placeholder_value: The value of the placeholder to validate
 
         Args:
             regex: The regular expression pattern to match against
@@ -153,7 +171,7 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config)
+        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config, required_input_fields=["placeholder_value"])
 
     @staticmethod
     def char_count(
@@ -161,12 +179,15 @@ class EvaluatorMadeByTraceloop:
         """
         Character count evaluator - counts the number of characters in text.
 
+        Required task output fields:
+            - completion: The text to count characters in
+
         Returns:
             EvaluatorDetails configured for character counting
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count", version=None, config=config)
+        return EvaluatorDetails(slug="char-count", version=None, config=config, required_input_fields=["completion"])
 
     @staticmethod
     def char_count_ratio(
@@ -174,24 +195,31 @@ class EvaluatorMadeByTraceloop:
         """
         Character count ratio evaluator - measures the ratio of characters between two texts.
 
+        Required task output fields:
+            - completion: The completion text
+            - question: The input question text
+
         Returns:
             EvaluatorDetails configured for character count ratio calculation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config)
+        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config, required_input_fields=["completion", "question"])
 
     @staticmethod
     def word_count() -> EvaluatorDetails:
         """
         Word count evaluator - counts the number of words in text.
 
+        Required task output fields:
+            - completion: The text to count words in
+
         Returns:
             EvaluatorDetails configured for word counting
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count", version=None, config=config)
+        return EvaluatorDetails(slug="word-count", version=None, config=config, required_input_fields=["completion"])
 
     @staticmethod
     def word_count_ratio(
@@ -199,12 +227,16 @@ class EvaluatorMadeByTraceloop:
         """
         Word count ratio evaluator - measures the ratio of words between two texts.
 
+        Required task output fields:
+            - completion: The completion text
+            - question: The input question text
+
         Returns:
             EvaluatorDetails configured for word count ratio calculation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config)
+        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config, required_input_fields=["completion", "question"])
 
     @staticmethod
     def answer_relevancy(
@@ -212,12 +244,16 @@ class EvaluatorMadeByTraceloop:
         """
         Answer relevancy evaluator - verifies responses address the query.
 
+        Required task output fields:
+            - question: The input question
+            - answer: The answer to evaluate
+
         Returns:
             EvaluatorDetails configured for answer relevancy evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="answer-relevancy", version=None, config=config)
+        return EvaluatorDetails(slug="answer-relevancy", version=None, config=config, required_input_fields=["question", "answer"])
 
     @staticmethod
     def faithfulness(
@@ -225,24 +261,32 @@ class EvaluatorMadeByTraceloop:
         """
         Faithfulness evaluator - detects hallucinations and verifies facts.
 
+        Required task output fields:
+            - question: The input question
+            - answer: The answer to evaluate for faithfulness
+            - context: The context to verify against
+
         Returns:
             EvaluatorDetails configured for faithfulness evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="faithfulness", version=None, config=config)
+        return EvaluatorDetails(slug="faithfulness", version=None, config=config, required_input_fields=["question", "answer", "context"])
 
     @staticmethod
     def profanity_detector() -> EvaluatorDetails:
         """
         Profanity detector evaluator - flags inappropriate language.
 
+        Required task output fields:
+            - text: The text to check for profanity
+
         Returns:
             EvaluatorDetails configured for profanity detection
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="profanity-detector", version=None, config=config)
+        return EvaluatorDetails(slug="profanity-detector", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def sexism_detector(
@@ -250,6 +294,9 @@ class EvaluatorMadeByTraceloop:
     ) -> EvaluatorDetails:
         """
         Sexism detector evaluator - detects sexist language and bias.
+
+        Required task output fields:
+            - text: The text to check for sexism
 
         Args:
             threshold: Minimum threshold for detecting sexism (0.0-1.0)
@@ -259,7 +306,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {"threshold": threshold}
 
-        return EvaluatorDetails(slug="sexism-detector", version=None, config=config)
+        return EvaluatorDetails(slug="sexism-detector", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def secrets_detector(
@@ -267,11 +314,14 @@ class EvaluatorMadeByTraceloop:
         """
         Secrets detector evaluator - monitors for credential and key leaks.
 
+        Required task output fields:
+            - text: The text to check for secrets
+
         Returns:
             EvaluatorDetails configured for secrets detection
         """
         config: Dict[str, Any] = {}
-        return EvaluatorDetails(slug="secrets-detector", version=None, config=config)
+        return EvaluatorDetails(slug="secrets-detector", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def sql_validator(
@@ -279,12 +329,15 @@ class EvaluatorMadeByTraceloop:
         """
         SQL validator evaluator - validates SQL queries.
 
+        Required task output fields:
+            - text: The SQL query to validate
+
         Returns:
             EvaluatorDetails configured for SQL validation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="sql-validator", version=None, config=config)
+        return EvaluatorDetails(slug="sql-validator", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def semantic_similarity(
@@ -292,12 +345,16 @@ class EvaluatorMadeByTraceloop:
         """
         Semantic similarity evaluator - measures semantic similarity between texts.
 
+        Required task output fields:
+            - completion: The completion text to compare
+            - reference: The reference text to compare against
+
         Returns:
             EvaluatorDetails configured for semantic similarity evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="semantic-similarity", version=None, config=config)
+        return EvaluatorDetails(slug="semantic-similarity", version=None, config=config, required_input_fields=["completion", "reference"])
 
     @staticmethod
     def agent_goal_accuracy(
@@ -305,12 +362,16 @@ class EvaluatorMadeByTraceloop:
         """
         Agent goal accuracy evaluator - validates agent goal achievement.
 
+        Required task output fields:
+            - question: The input question or goal
+            - completion: The agent's completion
+
         Returns:
             EvaluatorDetails configured for agent goal accuracy evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config)
+        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config, required_input_fields=["question", "completion"])
 
     @staticmethod
     def topic_adherence(
@@ -318,12 +379,16 @@ class EvaluatorMadeByTraceloop:
         """
         Topic adherence evaluator - validates topic adherence.
 
+        Required task output fields:
+            - completion: The completion text to evaluate
+            - reference_topics: The expected topic or topics
+
         Returns:
             EvaluatorDetails configured for topic adherence evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="topic-adherence", version=None, config=config)
+        return EvaluatorDetails(slug="topic-adherence", version=None, config=config, required_input_fields=["completion", "reference_topics"])
 
     @staticmethod
     def perplexity(
@@ -331,9 +396,12 @@ class EvaluatorMadeByTraceloop:
         """
         Perplexity evaluator - measures text perplexity from logprobs.
 
+        Required task output fields:
+            - logprobs: The log probabilities from the model
+
         Returns:
             EvaluatorDetails configured for perplexity measurement
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="perplexity", version=None, config=config)
+        return EvaluatorDetails(slug="perplexity", version=None, config=config, required_input_fields=["logprobs"])

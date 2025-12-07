@@ -75,7 +75,7 @@ async def run_security_experiment():
     evaluators = [
         EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7,),
         EvaluatorMadeByTraceloop.secrets_detector(),
-        # EvaluatorMadeByTraceloop.prompt_injection(threshold=0.6),
+        EvaluatorMadeByTraceloop.prompt_injection(threshold=0.6),
     ]
 
     print("\n" + "-"*80 + "\n")
