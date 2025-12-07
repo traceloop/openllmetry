@@ -10,7 +10,8 @@ class EvaluatorDetails(BaseModel):
         slug: The evaluator slug/identifier
         version: Optional version of the evaluator
         config: Optional configuration dictionary for the evaluator
-        required_input_fields: Optional list of required fields to the evaluator input. These fields must be present in the task output.
+        required_input_fields: Optional list of required fields to the evaluator
+            input. These fields must be present in the task output.
 
     Example:
         >>> EvaluatorDetails(slug="pii-detector", config={"probability_threshold": 0.8}, required_input_fields=["text"])

@@ -171,7 +171,12 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config, required_input_fields=["text", "placeholder_value"])
+        return EvaluatorDetails(
+            slug="placeholder-regex",
+            version=None,
+            config=config,
+            required_input_fields=["text", "placeholder_value"],
+        )
 
     @staticmethod
     def char_count(
@@ -204,7 +209,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config, required_input_fields=["numerator_text", "denominator_text"])
+        return EvaluatorDetails(
+            slug="char-count-ratio",
+            version=None,
+            config=config,
+            required_input_fields=["numerator_text", "denominator_text"],
+        )
 
     @staticmethod
     def word_count() -> EvaluatorDetails:
@@ -236,7 +246,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config, required_input_fields=["numerator_text", "denominator_text"])
+        return EvaluatorDetails(
+            slug="word-count-ratio",
+            version=None,
+            config=config,
+            required_input_fields=["numerator_text", "denominator_text"],
+        )
 
     @staticmethod
     def answer_relevancy(
@@ -253,7 +268,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="answer-relevancy", version=None, config=config, required_input_fields=["question", "answer"])
+        return EvaluatorDetails(
+            slug="answer-relevancy",
+            version=None,
+            config=config,
+            required_input_fields=["question", "answer"],
+        )
 
     @staticmethod
     def faithfulness(
@@ -271,7 +291,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="faithfulness", version=None, config=config, required_input_fields=["question", "completion", "context"])
+        return EvaluatorDetails(
+            slug="faithfulness",
+            version=None,
+            config=config,
+            required_input_fields=["question", "completion", "context"],
+        )
 
     @staticmethod
     def profanity_detector() -> EvaluatorDetails:
@@ -354,7 +379,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="semantic-similarity", version=None, config=config, required_input_fields=["completion", "reference"])
+        return EvaluatorDetails(
+            slug="semantic-similarity",
+            version=None,
+            config=config,
+            required_input_fields=["completion", "reference"],
+        )
 
     @staticmethod
     def agent_goal_accuracy(
@@ -365,13 +395,19 @@ class EvaluatorMadeByTraceloop:
         Required task output fields:
             - question: The input question or goal
             - completion: The agent's completion
+            - reference: The reference answer or goal
 
         Returns:
             EvaluatorDetails configured for agent goal accuracy evaluation
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config, required_input_fields=["question", "completion", "reference"])
+        return EvaluatorDetails(
+            slug="agent-goal-accuracy",
+            version=None,
+            config=config,
+            required_input_fields=["question", "completion", "reference"],
+        )
 
     @staticmethod
     def topic_adherence(
@@ -380,6 +416,7 @@ class EvaluatorMadeByTraceloop:
         Topic adherence evaluator - validates topic adherence.
 
         Required task output fields:
+            - question: The input question or goal
             - completion: The completion text to evaluate
             - reference_topics: The expected topic or topics
 
@@ -388,7 +425,12 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="topic-adherence", version=None, config=config, required_input_fields=["question", "completion", "reference_topics"])
+        return EvaluatorDetails(
+            slug="topic-adherence",
+            version=None,
+            config=config,
+            required_input_fields=["question", "completion", "reference_topics"],
+        )
 
     @staticmethod
     def perplexity(
@@ -403,5 +445,10 @@ class EvaluatorMadeByTraceloop:
             EvaluatorDetails configured for perplexity measurement
         """
         config: Dict[str, Any] = {}
-        
-        return EvaluatorDetails(slug="perplexity", version=None, config=config, required_input_fields=["prompt"])
+
+        return EvaluatorDetails(
+            slug="perplexity",
+            version=None,
+            config=config,
+            required_input_fields=["prompt"],
+        )

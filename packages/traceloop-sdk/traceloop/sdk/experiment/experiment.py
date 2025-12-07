@@ -161,6 +161,7 @@ class Experiment:
         errors: List[str] = []
 
         evaluators_to_validate = [evaluator for evaluator in evaluators if isinstance(evaluator, EvaluatorDetails)]
+
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResponse:
             try:
                 task_result = await task(row)
