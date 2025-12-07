@@ -1,7 +1,7 @@
 """
 Validation Evaluators Experiment
 
-This example demonstrates Traceloop's validation evaluators:
+This example demonstrates Traceloop's formatting evaluators:
 - JSON Validation: Validates JSON format and optional schema compliance
 - SQL Validation: Validates SQL query syntax
 - Regex Validation: Validates text matches regex patterns
@@ -70,9 +70,9 @@ async def validation_task(row):
     }
 
 
-async def run_validation_experiment():
+async def run_formatting_experiment():
     """
-    Run experiment with validation evaluators.
+    Run experiment with formatting evaluators.
 
     This experiment validates:
     1. JSON Validation - Proper JSON format and schema
@@ -125,17 +125,17 @@ async def run_validation_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="validation",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="formatting",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=validation_task,
         evaluators=evaluators,
-        experiment_slug="validation-evaluators-exp",
+        experiment_slug="formatting-evaluators-exp",
         stop_on_error=False,
         wait_for_results=True,
     )
 
     print("\n" + "="*80)
-    print("Validation experiment completed!")
+    print("Formatting experiment completed!")
     print("="*80 + "\n")
 
 
@@ -192,6 +192,6 @@ async def run_validation_examples():
 
 
 if __name__ == "__main__":
-    print("\nValidation Evaluators Experiment\n")
+    print("\nFormatting Evaluators Experiment\n")
 
-    asyncio.run(run_validation_experiment())
+    asyncio.run(run_formatting_experiment())

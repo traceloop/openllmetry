@@ -1,13 +1,12 @@
 """
-Content Safety Evaluators Experiment
+Content Compliance Evaluators Experiment
 
-This example demonstrates Traceloop's content safety evaluators:
+This example demonstrates Traceloop's content compliance evaluators:
 - Profanity Detection: Flags inappropriate language
 - Toxicity Detection: Identifies toxic or harmful content
 - Sexism Detection: Identifies sexist language or bias
 
-These evaluators help ensure AI-generated content is safe,
-appropriate, and adheres to community guidelines.
+These evaluators help ensure AI-generated content is compliant with community guidelines.
 """
 
 import asyncio
@@ -51,9 +50,9 @@ async def content_safety_task(row):
     }
 
 
-async def run_content_safety_experiment():
+async def run_content_compliance_experiment():
     """
-    Run experiment with content safety evaluators.
+    Run experiment with content compliance evaluators.
 
     This experiment evaluates:
     1. Profanity Detection - Flags inappropriate language
@@ -61,15 +60,15 @@ async def run_content_safety_experiment():
     """
 
     print("\n" + "="*80)
-    print("CONTENT SAFETY EVALUATORS EXPERIMENT")
+    print("CONTENT COMPLIANCE EVALUATORS EXPERIMENT")
     print("="*80 + "\n")
 
-    print("This experiment tests content safety:\n")
+    print("This experiment tests content compliance:\n")
     print("1. Profanity Detection - Identifies inappropriate language")
     print("2. Toxicity Detection - Detects harmful, aggressive, or toxic content")
     print("\n" + "-"*80 + "\n")
 
-    # Configure content safety evaluators
+    # Configure content compliance evaluators
     evaluators = [
         EvaluatorMadeByTraceloop.profanity_detector(),
         EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
@@ -87,21 +86,21 @@ async def run_content_safety_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="content-safety",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="content-compliance",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=content_safety_task,
         evaluators=evaluators,
-        experiment_slug="content-safety-exp",
+        experiment_slug="content-compliance-exp",
         stop_on_error=False,
         wait_for_results=True,
     )
 
     print("\n" + "="*80)
-    print("Content safety experiment completed!")
+    print("Content compliance experiment completed!")
     print("="*80 + "\n")
 
 
 if __name__ == "__main__":
-    print("\nContent Safety Evaluators Experiment\n")
+    print("\nContent Compliance Evaluators Experiment\n")
 
-    asyncio.run(run_content_safety_experiment())
+    asyncio.run(run_content_compliance_experiment())

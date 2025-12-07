@@ -1,14 +1,11 @@
 """
 Metrics Evaluators Experiment
 
-This example demonstrates Traceloop's metrics evaluators:
-- Character Count: Measure response length in characters
-- Word Count: Measure response length in words
-- Character Count Ratio: Compare lengths between texts
-- Word Count Ratio: Compare word counts between texts
-
-These evaluators help analyze and optimize response verbosity,
-conciseness, and length consistency.
+This example demonstrates Traceloop's style evaluators:
+- Character Count: Counts the number of characters in a text
+- Word Count: Counts the number of words in a text
+- Character Count Ratio: Compares the length of two texts
+- Word Count Ratio: Compares the number of words between two texts
 """
 
 import asyncio
@@ -35,7 +32,7 @@ async def generate_response(prompt: str, max_tokens: int = 200) -> str:
     return response.choices[0].message.content
 
 
-async def metrics_task(row):
+async def style_task(row):
     """
     Task function that generates responses and measures their metrics.
     """
@@ -45,7 +42,7 @@ async def metrics_task(row):
     # Generate response
     completion = await generate_response(question)
 
-    # Return data for metrics evaluation
+    # Return data for style evaluation
     return {
         "text": completion,
         "numerator_text": completion,
@@ -53,9 +50,9 @@ async def metrics_task(row):
     }
 
 
-async def run_metrics_experiment():
+async def run_style_experiment():
     """
-    Run experiment with metrics evaluators.
+    Run experiment with style evaluators.
 
     This experiment measures:
     1. Character Count - Total characters in response
@@ -91,21 +88,21 @@ async def run_metrics_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="metrics",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="style",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
-        task=metrics_task,
+        task=style_task,
         evaluators=evaluators,
-        experiment_slug="metrics-evaluators-exp",
+        experiment_slug="style-evaluators-exp",
         stop_on_error=False,
         wait_for_results=True,
     )
 
     print("\n" + "="*80)
-    print("Metrics experiment completed!")
+    print("Style experiment completed!")
     print("="*80 + "\n")
 
 
 if __name__ == "__main__":
-    print("\nMetrics Evaluators Experiment\n")
+    print("\nStyle Evaluators Experiment\n")
 
-    asyncio.run(run_metrics_experiment())
+    asyncio.run(run_style_experiment())

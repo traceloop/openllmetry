@@ -1,12 +1,14 @@
 """
-Quality Evaluators Experiment
+Advanced Quality Evaluators Experiment
 
-This example demonstrates Traceloop's quality evaluators:
-- Answer Relevancy: Verifies responses address the query
-- Faithfulness: Detects hallucinations and verifies facts
+This example demonstrates Traceloop's advanced quality evaluators:
+- Measure Perplexity: Measure text perplexity from logprobs
+- Agent Goal Accuracy: Validate agent goal achievement
+- Semantic Similarity: Measure semantic similarity between texts
+- Topic Adherence: Validate topic adherence
 
-These evaluators help ensure your AI applications provide accurate,
-relevant, and faithful responses.
+These evaluators help analyze response quality, goal achievement,
+semantic correctness, and topic consistency.
 """
 
 import asyncio
@@ -19,72 +21,80 @@ from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 client = Traceloop.init()
 
 
-async def generate_response(prompt: str, context: str = None) -> str:
-    """Generate a response using OpenAI"""
+async def generate_response(prompt: str, max_tokens: int = 300) -> str:
+    """Generate a response using OpenAI with logprobs for perplexity measurement"""
     openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    messages = [{"role": "user", "content": prompt}]
-    if context:
-        messages.insert(0, {"role": "system", "content": f"Context: {context}"})
 
     response = await openai_client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=messages,
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
-        max_tokens=200,
+        max_tokens=max_tokens,
+        logprobs=True,  # Enable logprobs for perplexity calculation
     )
 
     return response.choices[0].message.content
 
 
-async def quality_task(row):
+async def advanced_quality_task(row):
     """
-    Task function that processes questions with context.
-    Returns data that will be evaluated for quality and faithfulness.
+    Task function that generates responses and provides data for advanced quality evaluation.
+
+    Expected dataset fields:
+    - question: The input question/prompt
+    - expected_goal: The expected outcome or goal (for agent goal accuracy)
+    - reference_answer: Reference answer for semantic similarity
+    - topic: The expected topic for adherence checking
     """
-    question = row.get("question", "This is a demo question")
-    context = row.get("context", "This is a demo context")
+    question = row.get("question", "")
+    reference_answer = row.get("reference_answer", "This is a demo reference answer")
+    topic = row.get("topic", "general knowledge")
+
     # Generate response
-    completion = await generate_response(question, context)
+    completion = await generate_response(question)
 
     # Return data for evaluation
+    # Different evaluators expect different fields
     return {
+        "logprobs": completion,  # For perplexity
         "question": question,
-        "answer": completion,
-        "completion": completion,
-        "context": context,
+        "completion": completion,  # Standard completion field
+        "reference": reference_answer,  # For semantic similarity comparison
+        "reference_topics": topic,  # For topic adherence
     }
 
 
-async def run_quality_experiment():
+async def run_advanced_quality_experiment():
     """
-    Run experiment with quality evaluators.
+    Run experiment with advanced quality evaluators.
 
-    This experiment will evaluate responses for:
-    1. Answer Relevancy - Does the answer address the question?
-    2. Faithfulness - Is the answer faithful to the provided context?
+    This experiment measures:
+    1. Perplexity - Text fluency and predictability from logprobs
+    2. Agent Goal Accuracy - Whether the response achieves its intended goal
+    3. Semantic Similarity - Semantic alignment with reference answer
+    4. Topic Adherence - Whether the response stays on topic
     """
 
     print("\n" + "="*80)
-    print("QUALITY EVALUATORS EXPERIMENT")
+    print("ADVANCED QUALITY EVALUATORS EXPERIMENT")
     print("="*80 + "\n")
 
-    print("This experiment will test two critical quality evaluators:\n")
-    print("1. Answer Relevancy - Verifies the response addresses the query")
-    print("2. Faithfulness - Detects hallucinations and verifies factual accuracy")
+    print("This experiment measures response quality across multiple dimensions:\n")
+    print("1. Perplexity - Measures text fluency and predictability")
+    print("2. Agent Goal Accuracy - Validates goal achievement")
+    print("3. Semantic Similarity - Compares semantic meaning with reference")
+    print("4. Topic Adherence - Ensures response stays on topic")
     print("\n" + "-"*80 + "\n")
 
-    # Configure quality evaluators
+    # Configure advanced quality evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.answer_relevancy(
-            description="Check if the answer is relevant to the question"
-        ),
-        EvaluatorMadeByTraceloop.faithfulness(
-            description="Verify the answer is faithful to the context"
-        ),
+        EvaluatorMadeByTraceloop.perplexity(),
+        EvaluatorMadeByTraceloop.agent_goal_accuracy(),
+        EvaluatorMadeByTraceloop.semantic_similarity(),
+        EvaluatorMadeByTraceloop.topic_adherence(),
     ]
 
-    print("Running experiment with evaluators:")
+    print("Running experiment with advanced quality evaluators:")
     for evaluator in evaluators:
         print(f"  - {evaluator.slug}")
 
@@ -94,18 +104,19 @@ async def run_quality_experiment():
     results, errors = await client.experiment.run(
         dataset_slug="quality",  # Set a ddataset slug that exists in the traceloop platform
         dataset_version="v1",
-        task=quality_task,
+        task=advanced_quality_task,
         evaluators=evaluators,
-        experiment_slug="quality-evaluators-exp",
+        experiment_slug="advanced-quality-exp",
         stop_on_error=False,
         wait_for_results=True,
     )
 
     print("\n" + "="*80)
-    print("Quality experiment completed!")
+    print("Advanced quality experiment completed!")
     print("="*80 + "\n")
 
-if __name__ == "__main__":
-    print("\nQuality Evaluators Experiment\n")
 
-    asyncio.run(run_quality_experiment())
+if __name__ == "__main__":
+    print("\n🚀 Advanced Quality Evaluators Experiment\n")
+
+    asyncio.run(run_advanced_quality_experiment())
