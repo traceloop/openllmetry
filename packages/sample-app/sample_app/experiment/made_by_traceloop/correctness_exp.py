@@ -76,12 +76,8 @@ async def run_correctness_experiment():
 
     # Configure correctness evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.answer_relevancy(
-            description="Check if the answer is relevant to the question"
-        ),
-        EvaluatorMadeByTraceloop.faithfulness(
-            description="Verify the answer is faithful to the context"
-        ),
+        EvaluatorMadeByTraceloop.answer_relevancy(),
+        EvaluatorMadeByTraceloop.faithfulness(),
     ]
 
     print("Running experiment with evaluators:")
@@ -92,7 +88,7 @@ async def run_correctness_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="correctness",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="correctness",  # Set a dataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=quality_task,
         evaluators=evaluators,

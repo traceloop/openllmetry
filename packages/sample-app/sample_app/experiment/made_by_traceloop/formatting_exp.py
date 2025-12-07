@@ -125,7 +125,7 @@ async def run_formatting_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="formatting",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="formatting",  # Set a dataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=validation_task,
         evaluators=evaluators,

@@ -88,7 +88,7 @@ async def run_style_experiment():
 
     # Run the experiment
     results, errors = await client.experiment.run(
-        dataset_slug="style",  # Set a ddataset slug that exists in the traceloop platform
+        dataset_slug="style",  # Set a dataset slug that exists in the traceloop platform
         dataset_version="v1",
         task=style_task,
         evaluators=evaluators,
