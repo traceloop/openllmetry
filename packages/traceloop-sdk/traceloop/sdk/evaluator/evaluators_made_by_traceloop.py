@@ -74,7 +74,7 @@ class EvaluatorMadeByTraceloop:
             EvaluatorDetails configured for prompt injection detection
         """
         config: Dict[str, Any] = {"threshold": threshold}
-        return EvaluatorDetails(slug="prompt-injection", version=None, config=config, required_input_fields=["text"])
+        return EvaluatorDetails(slug="prompt-injection", version=None, config=config, required_input_fields=["prompt"])
 
     @staticmethod
     def regex_validator(
@@ -171,7 +171,7 @@ class EvaluatorMadeByTraceloop:
             "multi_line": multi_line,
         }
 
-        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config, required_input_fields=["placeholder_value"])
+        return EvaluatorDetails(slug="placeholder-regex", version=None, config=config, required_input_fields=["text", "placeholder_value"])
 
     @staticmethod
     def char_count(
@@ -187,7 +187,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count", version=None, config=config, required_input_fields=["completion"])
+        return EvaluatorDetails(slug="char-count", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def char_count_ratio(
@@ -204,7 +204,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config, required_input_fields=["completion", "question"])
+        return EvaluatorDetails(slug="char-count-ratio", version=None, config=config, required_input_fields=["numerator_text", "denominator_text"])
 
     @staticmethod
     def word_count() -> EvaluatorDetails:
@@ -219,7 +219,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count", version=None, config=config, required_input_fields=["completion"])
+        return EvaluatorDetails(slug="word-count", version=None, config=config, required_input_fields=["text"])
 
     @staticmethod
     def word_count_ratio(
@@ -236,7 +236,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config, required_input_fields=["completion", "question"])
+        return EvaluatorDetails(slug="word-count-ratio", version=None, config=config, required_input_fields=["numerator_text", "denominator_text"])
 
     @staticmethod
     def answer_relevancy(
@@ -271,7 +271,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="faithfulness", version=None, config=config, required_input_fields=["question", "answer", "context"])
+        return EvaluatorDetails(slug="faithfulness", version=None, config=config, required_input_fields=["question", "completion", "context"])
 
     @staticmethod
     def profanity_detector() -> EvaluatorDetails:
@@ -371,7 +371,7 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config, required_input_fields=["question", "completion"])
+        return EvaluatorDetails(slug="agent-goal-accuracy", version=None, config=config, required_input_fields=["question", "completion", "reference"])
 
     @staticmethod
     def topic_adherence(
@@ -388,20 +388,20 @@ class EvaluatorMadeByTraceloop:
         """
         config: Dict[str, Any] = {}
 
-        return EvaluatorDetails(slug="topic-adherence", version=None, config=config, required_input_fields=["completion", "reference_topics"])
+        return EvaluatorDetails(slug="topic-adherence", version=None, config=config, required_input_fields=["question", "completion", "reference_topics"])
 
     @staticmethod
     def perplexity(
     ) -> EvaluatorDetails:
         """
-        Perplexity evaluator - measures text perplexity from logprobs.
+        Perplexity evaluator - measures text perplexity from prompt.
 
         Required task output fields:
-            - logprobs: The log probabilities from the model
+            - prompt: The prompt to measure perplexity for
 
         Returns:
             EvaluatorDetails configured for perplexity measurement
         """
         config: Dict[str, Any] = {}
-
-        return EvaluatorDetails(slug="perplexity", version=None, config=config, required_input_fields=["logprobs"])
+        
+        return EvaluatorDetails(slug="perplexity", version=None, config=config, required_input_fields=["prompt"])

@@ -212,7 +212,10 @@ class Experiment:
                                 eval_results[evaluator_slug] = msg
 
                         except Exception as e:
-                            eval_results[evaluator_slug] = f"Error: {str(e)}"
+                            error_msg = f"Error: {str(e)}"
+                            eval_results[evaluator_slug] = error_msg
+                            # Log the error so user can see it
+                            print(f"\033[91m❌ Evaluator '{evaluator_slug}' failed: {str(e)}\033[0m")
 
                 return TaskResponse(
                     task_result=task_result,
