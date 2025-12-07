@@ -5,7 +5,7 @@ import os
 from typing import Any, List, Callable, Optional, Tuple, Dict, Awaitable, Union
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
-from traceloop.sdk.evaluator.evaluator import Evaluator
+from traceloop.sdk.evaluator.evaluator import Evaluator, validate_task_function_schema, validate_task_output
 from traceloop.sdk.experiment.model import (
     InitExperimentRequest,
     ExperimentInitResponse,
@@ -40,7 +40,7 @@ class Experiment:
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorSpec]] = None,
+        evaluators: List[EvaluatorSpec] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -54,7 +54,7 @@ class Experiment:
             task: Async function to run on each dataset row
             dataset_slug: Slug of the dataset to use
             dataset_version: Version of the dataset to use
-            evaluators: List of evaluator slugs to run
+            evaluators: List of evaluator slugs or EvaluatorDetails objects to run
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Related reference for this experiment run
@@ -64,6 +64,15 @@ class Experiment:
         Returns:
             Tuple of (results, errors). Returns ([], []) if wait_for_results is False
         """
+        # Early validation: Check task function schema against evaluator requirements
+        evaluators_to_validate = []
+        for evaluator in evaluators:
+            if isinstance(evaluator, EvaluatorDetails):
+                evaluators_to_validate.append(evaluator)
+
+        if evaluators_to_validate:
+            validate_task_function_schema(task, evaluators_to_validate)
+
         if os.getenv("GITHUB_ACTIONS"):
             return await self._run_in_github(
                 task=task,
