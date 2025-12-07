@@ -118,10 +118,10 @@ def test_parse_jsonl_to_rows_complex_json_objects(experiment):
     assert result == expected
 
 
-@pytest.mark.anyio(backends=["asyncio"])
 class TestRunLocallyValidation:
     """Tests for _run_locally to ensure validation failures are handled correctly"""
 
+    @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_breaks_on_validation_failure_with_stop_on_error(self):
         """Test that _run_locally stops processing when validation fails and stop_on_error=True"""
         mock_http_client = Mock(spec=HTTPClient)
@@ -169,6 +169,7 @@ class TestRunLocallyValidation:
         # With stop_on_error=True, it should break and not process all 3 rows
         assert len(results) + len(errors) <= 3
 
+    @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_continues_on_validation_failure_without_stop_on_error(self):
         """Test that _run_locally captures error when validation fails and stop_on_error=False"""
         mock_http_client = Mock(spec=HTTPClient)
@@ -212,6 +213,7 @@ class TestRunLocallyValidation:
         assert "Task output missing required fields for evaluators:" in errors[0]
         assert "pii-detector requires: ['text']" in errors[0]
 
+    @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_succeeds_with_valid_output(self):
         """Test that _run_locally succeeds when task output matches required fields"""
         mock_http_client = Mock(spec=HTTPClient)
@@ -265,6 +267,7 @@ class TestRunLocallyValidation:
         assert len(errors) == 0
         assert results[0].task_result == {"text": "hello world", "score": 0.9}
 
+    @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_validation_with_multiple_evaluators(self):
         """Test validation with multiple evaluators having different required fields"""
         mock_http_client = Mock(spec=HTTPClient)
@@ -313,6 +316,7 @@ class TestRunLocallyValidation:
         assert "'prompt'" in error_message
         assert "'response'" in error_message
 
+    @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_no_validation_for_string_evaluators(self):
         """Test that validation is not performed for string evaluators (only EvaluatorDetails)"""
         mock_http_client = Mock(spec=HTTPClient)
