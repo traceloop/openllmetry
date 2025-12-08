@@ -62,7 +62,7 @@ def extract_trajectory_from_spans(spans):
             if key.startswith("gen_ai.prompt."):
                 trajectory_prompts_dict[key] = value
             elif key.startswith("gen_ai.completion."):
-                trajectory_completions_dict[key] = value    
+                trajectory_completions_dict[key] = value
 
         # Extract tool calls for summary
         if "gen_ai.tool.name" in attributes:
@@ -248,7 +248,7 @@ async def run_travel_agent_experiment():
         dataset_version="v1",
         task=travel_agent_task,
         evaluators=evaluators,
-        experiment_slug="travel-agent-exp-3",
+        experiment_slug="travel-agent-exp",
         stop_on_error=False,
         wait_for_results=True,
     )
