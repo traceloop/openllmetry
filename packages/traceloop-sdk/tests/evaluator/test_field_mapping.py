@@ -85,7 +85,7 @@ class TestNormalizeTaskOutput:
 
         assert "completion" in normalized
         assert normalized["completion"] == "hello world"
-        assert "text" in normalized  # Original field preserved
+        assert "text" not in normalized  # Original field removed after mapping
 
     def test_normalize_answer_to_completion(self):
         """Test normalizing 'answer' to 'completion'"""

@@ -71,35 +71,41 @@ def normalize_task_output(
     Normalize task output field names to match required evaluator fields.
 
     This function maps user-provided field names to the evaluator's required field names
-    using synonym groups. For example, if a user returns {"answer": "..."} but the
-    evaluator needs "completion", this function will map it appropriately.
+    using synonym groups. Original fields that are mapped to required fields are removed,
+    while fields that don't participate in mapping are preserved.
+
+    For example, if a user returns {"answer": "..."} but the evaluator needs "completion",
+    this function will create {"completion": "..."} and remove "answer".
 
     Args:
         task_output: The dictionary returned by the task function
         required_fields: List of field names required by the evaluator
 
     Returns:
-        A new dictionary with normalized field names that match required_fields
+        A new dictionary with normalized field names that match required_fields.
+        Original synonym fields are removed, but unmapped fields are preserved.
 
     Example:
         >>> task_output = {"answer": "Paris", "prompt": "What is the capital?"}
         >>> required = ["completion", "question"]
         >>> normalize_task_output(task_output, required)
-        {"completion": "Paris", "question": "What is the capital?", "answer": "Paris", "prompt": "What is the capital?"}
+        {"completion": "Paris", "question": "What is the capital?"}
     """
-    # Start with a copy of the original task output to preserve all fields
-    normalized = dict(task_output)
+    normalized = {}
+    mapped_keys: Set[str] = set()
 
+    # First pass: map required fields from task output
     for required_field in required_fields:
         # If the exact required field already exists, use it (prioritize exact match)
         if required_field in task_output:
+            normalized[required_field] = task_output[required_field]
+            mapped_keys.add(required_field)
             continue
 
         # Get all possible synonyms for this required field
         synonyms = get_synonyms(required_field)
 
         # Find which synonym (if any) exists in the task output
-        # Prioritize exact match first (required_field), then check synonyms
         found_key = None
         for synonym in synonyms:
             if synonym in task_output:
@@ -109,6 +115,13 @@ def normalize_task_output(
         if found_key:
             # Map the found field to the required field name
             normalized[required_field] = task_output[found_key]
+            mapped_keys.add(found_key)
+
+    # Second pass: preserve fields that weren't mapped
+    # (they might be needed by other evaluators or for debugging)
+    for key, value in task_output.items():
+        if key not in mapped_keys and key not in normalized:
+            normalized[key] = value
 
     return normalized
 
