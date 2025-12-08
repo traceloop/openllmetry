@@ -31,12 +31,12 @@ opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.3.0"
 
 [tool.poetry.group.test.dependencies]
 qdrant-client = "^1.9.1"
 pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
+pytest-sugar = "1.1.1"
 opentelemetry-sdk = "^1.38.0"
 
 [build-system]
