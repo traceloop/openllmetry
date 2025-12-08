@@ -507,7 +507,7 @@ class EvaluatorMadeByTraceloop:
         Required task output fields:
             - question: The input question
             - completion: The completion to evaluate
-            - reference: The ground truth answer
+            - ground_truth: The ground truth answer
 
         Returns:
             EvaluatorDetails configured for answer correctness evaluation
@@ -518,7 +518,7 @@ class EvaluatorMadeByTraceloop:
             slug="answer-correctness",
             version=None,
             config=config,
-            required_input_fields=["question", "completion", "reference"],
+            required_input_fields=["question", "completion", "ground_truth"],
         )
 
     @staticmethod
@@ -638,7 +638,7 @@ class EvaluatorMadeByTraceloop:
 
         Required task output fields:
             - instructions: The instructions to evaluate against
-            - completion: The completion to evaluate
+            - response: The response to evaluate
 
         Returns:
             EvaluatorDetails configured for instruction adherence evaluation
@@ -649,7 +649,7 @@ class EvaluatorMadeByTraceloop:
             slug="instruction-adherence",
             version=None,
             config=config,
-            required_input_fields=["instructions", "completion"],
+            required_input_fields=["instructions", "response"],
         )
 
     @staticmethod
