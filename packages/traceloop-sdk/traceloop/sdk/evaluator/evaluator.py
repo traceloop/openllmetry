@@ -148,21 +148,36 @@ class Evaluator:
 def validate_task_output(
     task_output: Dict[str, Any],
     evaluators: List[EvaluatorDetails],
-) -> None:
+) -> Dict[str, Any]:
     """
     Validate that task output contains all required fields for the given evaluators.
+    Automatically normalizes field names using synonym mappings.
 
     Args:
         task_output: The dictionary returned by the task function
         evaluators: List of EvaluatorDetails to validate against
 
-    Raises:
-        ValueError: If task output is missing required fields for any evaluator
-    """
-    if not evaluators:
-        return
+    Returns:
+        Normalized task output with field names mapped to evaluator requirements
 
-    # Collect all validation errors
+    Raises:
+        ValueError: If task output is missing required fields for any evaluator (even after synonym mapping)
+    """
+    from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
+
+    if not evaluators:
+        return task_output
+
+    # Collect all required fields across all evaluators
+    all_required_fields = []
+    for evaluator in evaluators:
+        if evaluator.required_input_fields:
+            all_required_fields.extend(evaluator.required_input_fields)
+
+    # Normalize task output to match required fields using synonyms
+    normalized_output = normalize_task_output(task_output, all_required_fields)
+
+    # Now validate against normalized output
     missing_fields_by_evaluator: Dict[str, set[str]] = {}
 
     for evaluator in evaluators:
@@ -171,7 +186,7 @@ def validate_task_output(
 
         missing_fields = [
             field for field in evaluator.required_input_fields
-            if field not in task_output
+            if field not in normalized_output
         ]
 
         if missing_fields:
@@ -180,18 +195,28 @@ def validate_task_output(
                 missing_fields_by_evaluator[evaluator.slug] = set()
             missing_fields_by_evaluator[evaluator.slug].update(missing_fields)
 
-    # If there are any missing fields, raise a detailed error
+    # If there are any missing fields, raise a detailed error with suggestions
     if missing_fields_by_evaluator:
         error_lines = ["Task output missing required fields for evaluators:"]
 
         for slug, fields in missing_fields_by_evaluator.items():
-            error_lines.append(f"  - {slug} requires: {sorted(fields)}")
+            error_lines.append(f"  - {slug} requires:")
+            for field in sorted(fields):
+                suggestions = get_field_suggestions(field, list(task_output.keys()))
+                field_help = format_field_help(field)
+                if suggestions:
+                    error_lines.append(f"      {field_help} - Did you mean: {suggestions}?")
+                else:
+                    error_lines.append(f"      {field_help}")
 
         error_lines.append(f"\nTask output contains: {list(task_output.keys())}")
 
         error_lines.append("\nHint: Update your task function to return a dictionary with the required fields.")
+        error_lines.append("You can use any of the accepted synonyms shown above.")
 
         raise ValueError("\n".join(error_lines))
+
+    return normalized_output
 
 
 def _extract_error_from_response(response: httpx.Response) -> str:

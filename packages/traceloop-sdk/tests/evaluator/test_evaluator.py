@@ -51,7 +51,8 @@ class TestValidateTaskOutput:
 
         error_message = str(exc_info.value)
         assert "Task output missing required fields for evaluators:" in error_message
-        assert "pii-detector requires: ['text']" in error_message
+        assert "pii-detector requires:" in error_message
+        assert "'text'" in error_message
         assert "Task output contains: ['prompt']" in error_message
         assert (
             "Hint: Update your task function to return a dictionary "
@@ -159,7 +160,8 @@ class TestValidateTaskOutput:
             validate_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
-        assert "pii-detector requires: ['text']" in error_message
+        assert "pii-detector requires:" in error_message
+        assert "'text'" in error_message
         assert "Task output contains: ['Text']" in error_message
 
     def test_validate_task_output_with_evaluator_config(self):
@@ -195,7 +197,8 @@ class TestValidateTaskOutput:
 
         error_message = str(exc_info.value)
         # Should only mention failing evaluator
-        assert "relevance-checker requires: ['prompt']" in error_message
+        assert "relevance-checker requires:" in error_message
+        assert "'prompt'" in error_message
         assert "evaluator-no-requirements" not in error_message
         assert "pii-detector" not in error_message or "pii-detector requires:" not in error_message
 

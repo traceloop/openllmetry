@@ -53,13 +53,24 @@ async def agent_evaluators_task(row):
     """
     Unified task function for all 5 agent evaluators.
 
-    This task returns all required fields for the agent evaluators:
-    - question: The input question or goal (for agent_goal_accuracy)
-    - completion: The agent's completion (for agent_goal_accuracy)
-    - reference: The reference answer or goal (for agent_goal_accuracy)
-    - trace: The trace data (for all evaluators)
-    - expected_flow: The expected flow description (for agent_flow_quality)
-    - goal: The goal to evaluate against (for agent_goal_completeness)
+    IMPORTANT: Thanks to field synonym mapping, you can use flexible field names!
+    For example:
+    - "answer", "response", "text" → all map to "completion"
+    - "prompt", "instructions" → map to "question"
+    - "context", "ground_truth" → map to "reference"
+    - "prompts" → maps to "trajectory_prompts"
+    - "completions" → maps to "trajectory_completions"
+
+    This makes it easier to write tasks without worrying about exact field names.
+
+    Required fields for the 5 agent evaluators:
+    - question (or prompt): The input question or goal (for agent_goal_accuracy)
+    - completion (or answer, response, text): The agent's completion (for agent_goal_accuracy)
+    - reference (or ground_truth, context): The reference answer (for agent_goal_accuracy)
+    - tool_input: The input to tools (for agent_tool_error_detector)
+    - tool_output: The output from tools (for agent_tool_error_detector)
+    - trajectory_prompts (or prompts): The agent's prompt trajectory (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
+    - trajectory_completions (or completions): The agent's completion trajectory (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
     """
     # Get data from row or use defaults
     question = row.get("question", "Book a flight from New York to Paris")
@@ -68,19 +79,22 @@ async def agent_evaluators_task(row):
     tool_output = row.get("tool_output", "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22")
     trajectory_prompts = row.get("trajectory_prompts", "New York to Paris")
     trajectory_completions = row.get("trajectory_completions", "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22")
-    
+
     # Generate agent trace
     trace_data = await generate_agent_trace(question)
 
-    # Return all fields needed by the 5 agent evaluators
+    # You can use synonyms! These will automatically map to the required fields:
+    # - Using "answer" instead of "completion" ✓
+    # - Using "prompt" instead of "question" ✓
+    # - Using "context" instead of "reference" ✓
     return {
-        "question": question,
-        "completion": trace_data["completion"],
-        "reference": reference,
-        "tool_input": tool_input, # for agent_tool_error_detector
-        "tool_output": tool_output, # for agent_tool_error_detector
-        "trajectory_prompts": trajectory_prompts, # for agent_efficiency and agent_goal_completeness
-        "trajectory_completions": trajectory_completions, # for agent_efficiency  and agent_goal_completeness
+        "prompt": question,  # Maps to "question"
+        "answer": trace_data["completion"],  # Maps to "completion"
+        "context": reference,  # Maps to "reference"
+        "tool_input": tool_input,
+        "tool_output": tool_output,
+        "prompts": trajectory_prompts,  # Maps to "trajectory_prompts"
+        "completions": trajectory_completions,  # Maps to "trajectory_completions"
     }
 
 
