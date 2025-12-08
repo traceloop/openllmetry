@@ -14,9 +14,8 @@ for detailed analysis and evaluation.
 """
 
 import asyncio
-import sys
 import json
-import importlib.util
+import sys
 from pathlib import Path
 
 from traceloop.sdk import Traceloop
@@ -24,22 +23,15 @@ from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 from traceloop.sdk.utils.in_memory_span_exporter import InMemorySpanExporter
 from traceloop.sdk.tracing.tracing import TracerWrapper
 
+# Add the agents directory to sys.path for imports
+agents_dir = Path(__file__).parent.parent.parent / "agents"
+if str(agents_dir) not in sys.path:
+    sys.path.insert(0, str(agents_dir))
+
+from travel_agent_example import run_travel_query  # noqa: E402
+
 # Initialize Traceloop client (will be reinitialized per task with in-memory exporter)
 client = Traceloop.init()
-
-
-def _load_travel_agent_module():
-    """Dynamically load the travel_agent_example module."""
-    agents_path = Path(__file__).parent.parent.parent / "agents" / "travel_agent_example.py"
-    spec = importlib.util.spec_from_file_location("travel_agent_example", agents_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["travel_agent_example"] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# Load the module at import time
-travel_agent_module = _load_travel_agent_module()
 
 
 def extract_trajectory_from_spans(spans):
@@ -66,21 +58,11 @@ def extract_trajectory_from_spans(spans):
 
         attributes = span.attributes or {}
 
-        # Convert gen_ai.prompt.* to llm.prompts.* format
         for key, value in attributes.items():
             if key.startswith("gen_ai.prompt."):
-                # Convert gen_ai.prompt.X.Y to llm.prompts.X.Y
-                new_key = key.replace("gen_ai.prompt.", "llm.prompts.")
-                trajectory_prompts_dict[new_key] = value
-            elif key.startswith("gen_ai.completion."):
-                # Convert gen_ai.completion.X.Y to llm.completions.X.Y
-                new_key = key.replace("gen_ai.completion.", "llm.completions.")
-                trajectory_completions_dict[new_key] = value
-            # Also check for existing llm.* attributes
-            elif key.startswith("llm.prompts."):
                 trajectory_prompts_dict[key] = value
-            elif key.startswith("llm.completions."):
-                trajectory_completions_dict[key] = value
+            elif key.startswith("gen_ai.completion."):
+                trajectory_completions_dict[key] = value    
 
         # Extract tool calls for summary
         if "gen_ai.tool.name" in attributes:
@@ -127,9 +109,6 @@ async def travel_agent_task(row):
     - trajectory_completions (or completions): The agent's completion trajectory
     - tool_calls: List of tools called during execution
     """
-    # Use the dynamically loaded module
-    run_travel_query = travel_agent_module.run_travel_query
-
     # Get query from row
     query = row.get("query", "Plan a 5-day trip to Paris")
 
