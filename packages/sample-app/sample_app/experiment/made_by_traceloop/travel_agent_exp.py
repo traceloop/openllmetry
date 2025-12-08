@@ -14,14 +14,12 @@ for detailed analysis and evaluation.
 """
 
 import asyncio
-import json
 import sys
 from pathlib import Path
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
-from traceloop.sdk.utils.in_memory_span_exporter import InMemorySpanExporter
-from traceloop.sdk.tracing.tracing import TracerWrapper
+from traceloop.sdk.experiment.utils import run_with_span_capture
 
 # Add the agents directory to sys.path for imports
 agents_dir = Path(__file__).parent.parent.parent / "agents"
@@ -32,63 +30,6 @@ from travel_agent_example import run_travel_query  # noqa: E402
 
 # Initialize Traceloop client (will be reinitialized per task with in-memory exporter)
 client = Traceloop.init()
-
-
-def extract_trajectory_from_spans(spans):
-    """
-    Extract prompt and completion trajectory from OpenTelemetry spans.
-    Converts gen_ai.prompt.* to llm.prompts.* format expected by evaluators.
-
-    Args:
-        spans: List of ReadableSpan objects from InMemorySpanExporter
-
-    Returns:
-        dict with trajectory_prompts (as dict with llm.prompts.* keys), trajectory_completions, and tool_calls
-    """
-    # Collect all gen_ai attributes and convert to llm.prompts/completions format
-    trajectory_prompts_dict = {}
-    trajectory_completions_dict = {}
-    tool_calls = []
-    tool_inputs = []
-    tool_outputs = []
-
-    for span in spans:
-        if not hasattr(span, 'attributes'):
-            continue
-
-        attributes = span.attributes or {}
-
-        for key, value in attributes.items():
-            if key.startswith("gen_ai.prompt."):
-                trajectory_prompts_dict[key] = value
-            elif key.startswith("gen_ai.completion."):
-                trajectory_completions_dict[key] = value
-
-        # Extract tool calls for summary
-        if "gen_ai.tool.name" in attributes:
-            tool_name = attributes["gen_ai.tool.name"]
-            if tool_name:
-                tool_calls.append(tool_name)
-
-                # Extract tool input
-                tool_input = attributes.get("gen_ai.completion.tool.arguments", "")
-                if not tool_input:
-                    tool_input = attributes.get("gen_ai.tool.input", "")
-                tool_inputs.append(tool_input)
-
-                # Extract tool output
-                tool_output = attributes.get("gen_ai.tool.output", "")
-                if not tool_output:
-                    tool_output = attributes.get("gen_ai.completion.tool.result", "")
-                tool_outputs.append(tool_output)
-
-    return {
-        "trajectory_prompts": trajectory_prompts_dict,
-        "trajectory_completions": trajectory_completions_dict,
-        "tool_calls": tool_calls,
-        "tool_inputs": tool_inputs,
-        "tool_outputs": tool_outputs
-    }
 
 
 async def travel_agent_task(row):
@@ -112,92 +53,19 @@ async def travel_agent_task(row):
     # Get query from row
     query = row.get("query", "Plan a 5-day trip to Paris")
 
-    # Clear singleton if existed to reinitialize with in-memory exporter
-    if hasattr(TracerWrapper, "instance"):
-        del TracerWrapper.instance
-
-    # Create in-memory exporter to capture spans
-    exporter = InMemorySpanExporter()
-
-    # Initialize Traceloop with in-memory exporter
-    Traceloop.init(
-        app_name="travel-agent-experiment",
-        disable_batch=True,
-        exporter=exporter,
+    # Run the travel agent with span capture
+    trajectory_prompts, trajectory_completions, final_completion = await run_with_span_capture(
+        run_travel_query, # This is the function that calls the Agent
+        query # This is the agents input
     )
 
-    try:
-        # Run the travel agent query
-        print(f"\n{'='*80}")
-        print(f"Running travel agent for query: {query}")
-        print(f"{'='*80}\n")
-
-        tool_calls_made = await run_travel_query(query)
-
-        # Get all captured spans
-        spans = exporter.get_finished_spans()
-
-        print(f"\n{'='*80}")
-        print(f"Captured {len(spans)} spans from travel agent execution")
-        print(f"{'='*80}\n")
-
-        # Extract trajectory from spans
-        trajectory_data = extract_trajectory_from_spans(spans)
-
-        # Get the final completion from llm.completions dict
-        completions_dict = trajectory_data["trajectory_completions"]
-        final_completion = ""
-        if completions_dict:
-            # Find the highest index completion content
-            max_idx = -1
-            for key in completions_dict.keys():
-                if ".content" in key:
-                    try:
-                        parts = key.split(".")
-                        idx = int(parts[2])
-                        if idx > max_idx:
-                            max_idx = idx
-                            final_completion = completions_dict[key]
-                    except (ValueError, IndexError):
-                        pass
-
-        # trajectory_prompts and trajectory_completions are dicts with llm.prompts/completions.* keys
-        # If empty, use JSON string fallback to avoid validation errors
-        trajectory_prompts = trajectory_data["trajectory_prompts"]
-        trajectory_completions = trajectory_data["trajectory_completions"]
-
-        # Convert to JSON strings if empty (evaluators expect string when no data)
-        if not trajectory_prompts:
-            trajectory_prompts = json.dumps([])
-        if not trajectory_completions:
-            trajectory_completions = json.dumps([])
-
-        print("📊 Trajectory Summary:")
-        print(f"  - Prompt attributes captured: {len(trajectory_prompts)}")
-        print(f"  - Completion attributes captured: {len(trajectory_completions)}")
-        tools_called = ', '.join(trajectory_data['tool_calls']) if trajectory_data['tool_calls'] else 'None'
-        print(f"  - Tools called: {tools_called}")
-        print(f"  - Tools from run: {', '.join(tool_calls_made) if tool_calls_made else 'None'}\n")
-
-        # Return data using field synonyms that map to required evaluator fields
-        # - "prompt" maps to "question"
-        # - "answer" maps to "completion"
-        # - "context" maps to "reference"
-        # - "trajectory_prompts" and "trajectory_completions" as JSON strings
-
-        json_trajectory_prompts = json.dumps(trajectory_prompts)
-        json_trajectory_completions = json.dumps(trajectory_completions)
-
-        return {
-            "prompt": query,
-            "answer": final_completion if final_completion else query,
-            "context": f"The agent should create a complete travel itinerary for: {query}",
-            "trajectory_prompts": json_trajectory_prompts,
-            "trajectory_completions": json_trajectory_completions,
-        }
-
-    except Exception as e:
-        raise e
+    return {
+        "prompt": query,
+        "answer": final_completion if final_completion else query,
+        "context": f"The agent should create a complete travel itinerary for: {query}",
+        "trajectory_prompts": trajectory_prompts,
+        "trajectory_completions": trajectory_completions,
+    }
 
 
 async def run_travel_agent_experiment():
@@ -265,20 +133,6 @@ async def run_travel_agent_experiment():
         print("\nErrors:")
         for error in errors:
             print(f"  - {error}")
-
-    if results:
-        print("\nSample results:")
-        for i, result in enumerate(results[:3], 1):
-            print(f"\n  Result {i}:")
-            if hasattr(result, 'task_result'):
-                task_result = result.task_result
-                print(f"    - Query: {task_result.get('prompt', 'N/A')[:100]}...")
-                print(f"    - Tools used: {len(task_result.get('tool_calls', []))}")
-                print(f"    - Prompts captured: {len(task_result.get('prompts', '').split('---'))}")
-                print(f"    - Completions captured: {len(task_result.get('completions', '').split('---'))}")
-            if hasattr(result, 'evaluations'):
-                print(f"    - Evaluations: {list(result.evaluations.keys())}")
-
 
 if __name__ == "__main__":
     print("\nTravel Agent Evaluators Experiment\n")
