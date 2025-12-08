@@ -193,10 +193,6 @@ async def travel_agent_task(row):
         if not trajectory_completions:
             trajectory_completions = json.dumps([])
 
-        # Combine tool inputs and outputs for evaluators
-        all_tool_inputs = "\n\n---\n\n".join(str(ti) for ti in trajectory_data["tool_inputs"]) if trajectory_data["tool_inputs"] else "No tool inputs captured"
-        all_tool_outputs = "\n\n---\n\n".join(str(to) for to in trajectory_data["tool_outputs"]) if trajectory_data["tool_outputs"] else "No tool outputs captured"
-
         print("📊 Trajectory Summary:")
         print(f"  - Prompt attributes captured: {len(trajectory_prompts)}")
         print(f"  - Completion attributes captured: {len(trajectory_completions)}")
@@ -215,8 +211,6 @@ async def travel_agent_task(row):
             "context": f"The agent should create a complete travel itinerary for: {query}",
             "trajectory_prompts": trajectory_prompts,  # Dict with llm.prompts.* keys
             "trajectory_completions": trajectory_completions,  # Dict with llm.completions.* keys
-            "tool_input": all_tool_inputs,
-            "tool_output": all_tool_outputs,
         }
 
     except Exception as e:
@@ -250,7 +244,6 @@ async def run_travel_agent_experiment():
     # Configure agent evaluators
     evaluators = [
         EvaluatorMadeByTraceloop.agent_goal_accuracy(),
-        EvaluatorMadeByTraceloop.agent_tool_error_detector(),
         EvaluatorMadeByTraceloop.agent_flow_quality(),
         EvaluatorMadeByTraceloop.agent_efficiency(),
         EvaluatorMadeByTraceloop.agent_goal_completeness(),
