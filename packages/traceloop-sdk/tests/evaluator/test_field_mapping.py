@@ -325,10 +325,10 @@ class TestFormatFieldHelp:
 
 
 class TestIntegrationWithValidateTaskOutput:
-    """Integration tests with validate_task_output"""
+    """Integration tests with validate_and_normalize_task_output"""
 
     def test_validate_with_synonym_mapping(self):
-        """Test that validate_task_output uses synonym mapping"""
+        """Test that validate_and_normalize_task_output uses synonym mapping"""
         from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
         from traceloop.sdk.evaluator.config import EvaluatorDetails
 
