@@ -147,7 +147,17 @@ def _with_tracer_wrapper(func):
 
     def _with_tracer(tracer, event_logger, to_wrap, token_histogram, duration_histogram):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs, token_histogram, duration_histogram)
+            return func(
+                tracer,
+                event_logger,
+                to_wrap,
+                token_histogram,
+                duration_histogram,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
 
         return wrapper
 
@@ -159,12 +169,13 @@ async def _awrap(
     tracer,
     event_logger,
     to_wrap,
+    token_histogram,
+    duration_histogram,
     wrapped,
     instance,
     args,
     kwargs,
-    token_histogram,
-    duration_histogram,
+
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
@@ -228,12 +239,13 @@ def _wrap(
     tracer,
     event_logger,
     to_wrap,
+    token_histogram,
+    duration_histogram,
     wrapped,
     instance,
     args,
     kwargs,
-    token_histogram,
-    duration_histogram,
+
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
@@ -292,8 +304,10 @@ def _wrap(
     span.end()
     return response
 
+
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
@@ -309,7 +323,6 @@ def _create_metrics(meter: Meter):
     )
 
     return token_histogram, duration_histogram
-
 
 
 class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
@@ -353,9 +366,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
             wrapper_args = (
                 tracer,
                 event_logger,
-                wrapped_method,
                 token_histogram,
                 duration_histogram,
+                wrapped_method,
             )
 
             wrapper = (
