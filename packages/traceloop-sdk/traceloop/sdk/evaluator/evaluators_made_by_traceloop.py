@@ -453,3 +453,266 @@ class EvaluatorMadeByTraceloop:
             config=config,
             required_input_fields=["prompt"],
         )
+
+    @staticmethod
+    def answer_completeness(
+    ) -> EvaluatorDetails:
+        """
+        Answer completeness evaluator - measures how completely responses use relevant context.
+
+        Required task output fields:
+            - question: The input question
+            - completion: The completion to evaluate
+            - context: The context to evaluate against
+
+        Returns:
+            EvaluatorDetails configured for answer completeness evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="answer-completeness",
+            version=None,
+            config=config,
+            required_input_fields=["question", "completion", "context"],
+        )
+
+    @staticmethod
+    def prompt_perplexity(
+    ) -> EvaluatorDetails:
+        """
+        Prompt perplexity evaluator - measures how predictable/familiar a prompt is to a language model.
+
+        Required task output fields:
+            - prompt: The prompt to measure perplexity for
+
+        Returns:
+            EvaluatorDetails configured for prompt perplexity measurement
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="prompt-perplexity",
+            version=None,
+            config=config,
+            required_input_fields=["prompt"],
+        )
+
+    @staticmethod
+    def answer_correctness(
+    ) -> EvaluatorDetails:
+        """
+        Answer correctness evaluator - evaluates factual accuracy by comparing answers against ground truth.
+
+        Required task output fields:
+            - question: The input question
+            - completion: The completion to evaluate
+            - reference: The ground truth answer
+
+        Returns:
+            EvaluatorDetails configured for answer correctness evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="answer-correctness",
+            version=None,
+            config=config,
+            required_input_fields=["question", "completion", "reference"],
+        )
+
+    @staticmethod
+    def uncertainty_detector(
+    ) -> EvaluatorDetails:
+        """
+        Uncertainty detector evaluator - generates responses and measures model uncertainty from logprobs.
+
+        Required task output fields:
+            - prompt: The prompt to evaluate uncertainty for
+
+        Returns:
+            EvaluatorDetails configured for uncertainty detection
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="uncertainty-detector",
+            version=None,
+            config=config,
+            required_input_fields=["prompt"],
+        )
+
+    @staticmethod
+    def agent_tool_error_detector(
+    ) -> EvaluatorDetails:
+        """
+        Agent tool error detector evaluator - detects errors or failures during tool execution.
+
+        Required task output fields:
+            - tool_input: The input parameters passed to the tool
+            - tool_output: The output or response from the tool execution
+
+        Returns:
+            EvaluatorDetails configured for agent tool error detection
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="agent-tool-error-detector",
+            version=None,
+            config=config,
+            required_input_fields=["tool_input", "tool_output"],
+        )
+
+    @staticmethod
+    def agent_flow_quality(
+    ) -> EvaluatorDetails:
+        """
+        Agent flow quality evaluator - validates agent trajectories against user-defined natural language tests.
+
+        Required task output fields:
+            - trajectory_prompts: The prompts extracted from the span attributes (llm.prompts.*)
+            - trajectory_completions: The completions extracted from the span attributes (llm.completions.*)
+
+        Returns:
+            EvaluatorDetails configured for agent flow quality evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="agent-flow-quality",
+            version=None,
+            config=config,
+            required_input_fields=["trajectory_prompts", "trajectory_completions"],
+        )
+
+    @staticmethod
+    def agent_efficiency(
+    ) -> EvaluatorDetails:
+        """
+        Agent efficiency evaluator - evaluates agent efficiency by checking for redundant calls and optimal paths.
+
+        Required task output fields:
+            - trajectory_prompts: The prompts extracted from the span attributes (llm.prompts.*)
+            - trajectory_completions: The completions extracted from the span attributes (llm.completions.*)
+
+        Returns:
+            EvaluatorDetails configured for agent efficiency evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="agent-efficiency",
+            version=None,
+            config=config,
+            required_input_fields=["trajectory_prompts", "trajectory_completions"],
+        )
+
+    @staticmethod
+    def agent_goal_completeness(
+    ) -> EvaluatorDetails:
+        """
+        Agent goal completeness evaluator - measures whether the agent successfully accomplished all user goals.
+
+        Required task output fields:
+            - trajectory_prompts: The prompts extracted from the span attributes (llm.prompts.*)
+            - trajectory_completions: The completions extracted from the span attributes (llm.completions.*)
+
+        Returns:
+            EvaluatorDetails configured for agent goal completeness evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="agent-goal-completeness",
+            version=None,
+            config=config,
+            required_input_fields=["trajectory_prompts", "trajectory_completions"],
+        )
+
+    @staticmethod
+    def instruction_adherence(
+    ) -> EvaluatorDetails:
+        """
+        Instruction adherence evaluator - measures how well the LLM response follows given instructions.
+
+        Required task output fields:
+            - instructions: The instructions to evaluate against
+            - completion: The completion to evaluate
+
+        Returns:
+            EvaluatorDetails configured for instruction adherence evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="instruction-adherence",
+            version=None,
+            config=config,
+            required_input_fields=["instructions", "completion"],
+        )
+
+    @staticmethod
+    def conversation_quality(
+    ) -> EvaluatorDetails:
+        """
+        Conversation quality evaluator - evaluates conversation quality based on tone, clarity, flow, responsiveness, and transparency.
+
+        Required task output fields:
+            - prompts: The conversation prompts (flattened dict with llm.prompts.X.content/role)
+            - completions: The conversation completions (flattened dict with llm.completions.X.content/role)
+
+        Returns:
+            EvaluatorDetails configured for conversation quality evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="conversation-quality",
+            version=None,
+            config=config,
+            required_input_fields=["prompts", "completions"],
+        )
+
+    @staticmethod
+    def intent_change(
+    ) -> EvaluatorDetails:
+        """
+        Intent change evaluator - detects whether the user's primary intent or workflow changed significantly during a conversation.
+
+        Required task output fields:
+            - prompts: The conversation prompts (flattened dict with llm.prompts.X.content/role)
+            - completions: The conversation completions (flattened dict with llm.completions.X.content/role)
+
+        Returns:
+            EvaluatorDetails configured for intent change detection
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="intent-change",
+            version=None,
+            config=config,
+            required_input_fields=["prompts", "completions"],
+        )
+
+    @staticmethod
+    def tone_detection(
+    ) -> EvaluatorDetails:
+        """
+        Tone detection evaluator - classifies emotional tone of responses (joy, anger, sadness, etc.).
+
+        Required task output fields:
+            - text: The text to analyze for tone
+
+        Returns:
+            EvaluatorDetails configured for tone detection
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="tone-detection",
+            version=None,
+            config=config,
+            required_input_fields=["text"],
+        )
