@@ -1,6 +1,6 @@
 """Hook-based instrumentation for OpenAI Agents using the SDK's native callback system."""
 
-from typing import Dict, Any
+from typing import Dict, Any, Final
 import json
 import time
 from collections import OrderedDict
@@ -11,7 +11,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes
 )
 from agents.tracing.processors import TracingProcessor
-from .utils import dont_throw
+from .utils import dont_throw, should_send_prompts
 
 from traceloop.sdk.tracing import set_agent_name
 
@@ -233,6 +233,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if span in self._otel_spans:
             otel_span = self._otel_spans[span]
             span_data = getattr(span, 'span_data', None)
+            should_trace_content: Final[bool] = should_send_prompts()
             if span_data and (
                 type(span_data).__name__ == 'ResponseSpanData' or isinstance(
                     span_data,
@@ -298,7 +299,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                             otel_span.set_attribute(f"{prefix}.role", role)
 
                         # Set content attribute
-                        if content is not None:
+                        if should_trace_content and content is not None:
                             if not isinstance(content, str):
                                 content = json.dumps(content)
                             otel_span.set_attribute(f"{prefix}.content", content)
@@ -399,7 +400,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     if hasattr(response, 'output') and response.output:
                         for i, output in enumerate(response.output):
                             # Handle different output types
-                            if hasattr(output, 'content') and output.content:
+                            if should_trace_content and hasattr(output, 'content') and output.content:
                                 # Text message with content array (ResponseOutputMessage)
                                 content_text = ""
                                 for content_item in output.content:
@@ -430,7 +431,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                                 otel_span.set_attribute(
                                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.id", tool_call_id)
 
-                            elif hasattr(output, 'text'):
+                            elif should_trace_content and hasattr(output, 'text'):
                                 # Direct text content
                                 otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", output.text)
                                 otel_span.set_attribute(
@@ -466,7 +467,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             elif span_data:
                 # Extract prompt data from input and add to response span (legacy support)
                 input_data = getattr(span_data, 'input', [])
-                if input_data:
+                if should_trace_content and input_data:
                     for i, message in enumerate(input_data):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
                             otel_span.set_attribute(f"gen_ai.prompt.{i}.role", message.role)
@@ -508,7 +509,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     if hasattr(response, 'output') and response.output:
                         for i, output in enumerate(response.output):
                             # Handle different output types
-                            if hasattr(output, 'content') and output.content:
+                            if should_trace_content and hasattr(output, 'content') and output.content:
                                 # Text message with content array (ResponseOutputMessage)
                                 content_text = ""
                                 for content_item in output.content:
@@ -539,7 +540,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                                 otel_span.set_attribute(
                                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.id", tool_call_id)
 
-                            elif hasattr(output, 'text'):
+                            elif should_trace_content and hasattr(output, 'text'):
                                 # Direct text content
                                 otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", output.text)
                                 otel_span.set_attribute(
