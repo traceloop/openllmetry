@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from .config import EvaluatorDetails
 
 
@@ -567,6 +567,8 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def agent_flow_quality(
+        threshold: float = 0.5,
+        conditions: List[str] = [],
     ) -> EvaluatorDetails:
         """
         Agent flow quality evaluator - validates agent trajectories against user-defined natural language tests.
@@ -574,11 +576,17 @@ class EvaluatorMadeByTraceloop:
         Required task output fields:
             - trajectory_prompts: The prompts extracted from the span attributes (llm.prompts.*)
             - trajectory_completions: The completions extracted from the span attributes (llm.completions.*)
+        Args:
+            threshold: Minimum threshold for detecting tool errors (0.0-1.0)
+            conditions: List of conditions in natural language to evaluate the agent flow quality against
 
         Returns:
             EvaluatorDetails configured for agent flow quality evaluation
         """
-        config: Dict[str, Any] = {}
+        config: Dict[str, Any] = {
+            "threshold": threshold,
+            "conditions": conditions,
+        }
 
         return EvaluatorDetails(
             slug="agent-flow-quality",

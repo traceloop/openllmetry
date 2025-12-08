@@ -249,7 +249,10 @@ async def run_travel_agent_experiment():
     # Configure agent evaluators
     evaluators = [
         EvaluatorMadeByTraceloop.agent_goal_accuracy(),
-        EvaluatorMadeByTraceloop.agent_flow_quality(),
+        EvaluatorMadeByTraceloop.agent_flow_quality(
+            threshold=0.7,
+            conditions=["create_itinerary tool should be called last"],
+        ),
         EvaluatorMadeByTraceloop.agent_efficiency(),
         EvaluatorMadeByTraceloop.agent_goal_completeness(),
     ]
