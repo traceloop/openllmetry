@@ -1,5 +1,4 @@
 import asyncio
-import json
 import random
 import argparse
 import time
@@ -183,7 +182,7 @@ async def search_destinations(
         # Filter by subregion if provided
         if subregion:
             countries_data = [c for c in countries_data
-                            if c.get("subregion", "").lower() == subregion.lower()]
+                              if c.get("subregion", "").lower() == subregion.lower()]
 
         # Limit to 10 countries to avoid too much data
         countries_data = countries_data[:10]
@@ -293,7 +292,9 @@ async def get_weather_forecast(
             location=location_name,
             latitude=float(latitude),
             longitude=float(longitude),
-            current_temperature=float(current.get("temperature_2m", 0.0)) if current.get("temperature_2m") is not None else 0.0,
+            current_temperature=float(
+                current.get("temperature_2m", 0.0)
+            ) if current.get("temperature_2m") is not None else 0.0,
             current_conditions=current_conditions,
             forecast_days=forecast_days
         )
@@ -703,7 +704,6 @@ async def run_travel_query(query: str):
     print(f"Query: {query}")
     print("=" * 80)
 
-    travel_ctx = TravelContext(conversation_history=[])
     travel_agent = TravelPlannerAgent()
 
     print("\nAgent Response: ", end="", flush=True)
@@ -726,35 +726,47 @@ def generate_travel_queries(n: int = 10) -> List[str]:
     templates = [
         # === VERY SPECIFIC REQUESTS (most details provided) ===
         # Agent should: get weather + destination info + create itinerary (3-4 tools)
-        "Plan a {duration}-day {budget} trip to {city} for {travelers} interested in {interest}. Create a complete itinerary.",
+        ("Plan a {duration}-day {budget} trip to {city} for {travelers} interested in "
+         "{interest}. Create a complete itinerary."),
 
-        "I want to visit {city} for {duration} days with a {budget} budget. I love {interest}. Create me an itinerary.",
+        ("I want to visit {city} for {duration} days with a {budget} budget. I love "
+         "{interest}. Create me an itinerary."),
 
-        "Create a {duration}-day itinerary for {city}. Budget: {budget}, interests: {interest} and {interest2}.",
+        ("Create a {duration}-day itinerary for {city}. Budget: {budget}, interests: "
+         "{interest} and {interest2}."),
 
         # === MODERATELY SPECIFIC REQUESTS (some details, need destination selection) ===
         # Agent should: search destinations + coordinates + weather + info + create itinerary (5-6 tools)
-        "I want a {duration}-day {budget} {season} vacation in {region}. I'm interested in {interest}. Plan my trip.",
+        ("I want a {duration}-day {budget} {season} vacation in {region}. I'm "
+         "interested in {interest}. Plan my trip."),
 
-        "Plan a {adjective} trip to {region} for {travelers}. Budget is {budget}, duration {duration} days. Interested in {interest}.",
+        ("Plan a {adjective} trip to {region} for {travelers}. Budget is {budget}, "
+         "duration {duration} days. Interested in {interest}."),
 
-        "I need a {duration}-day itinerary for {region} focusing on {interest} and {interest2}. Budget: {budget}.",
+        ("I need a {duration}-day itinerary for {region} focusing on {interest} and "
+         "{interest2}. Budget: {budget}."),
 
         # === BROAD REQUESTS (region only, need destination research) ===
         # Agent should: search destinations + coordinates + weather + info + create itinerary (5-7 tools)
-        "I want to explore {region} in {season}. Find good destinations and create an itinerary for me.",
+        ("I want to explore {region} in {season}. Find good destinations and create an "
+         "itinerary for me."),
 
-        "Plan a {budget} trip to {region}. I love {interest}. Find the best place and create an itinerary.",
+        ("Plan a {budget} trip to {region}. I love {interest}. Find the best place and "
+         "create an itinerary."),
 
-        "Help me plan a vacation in {region} for {travelers}. I'm interested in {interest}.",
+        ("Help me plan a vacation in {region} for {travelers}. I'm interested in "
+         "{interest}."),
 
-        "I want to visit {region}. Create a travel plan for me focusing on {interest} and {interest2}.",
+        ("I want to visit {region}. Create a travel plan for me focusing on {interest} "
+         "and {interest2}."),
 
         # === COMPARISON REQUESTS (compare then decide and create itinerary) ===
         # Agent should: coordinates + weather + info for both + create itinerary for winner (6-8 tools)
-        "Should I visit {city1} or {city2} for a {duration}-day {season} trip? Compare them and create an itinerary for the better option.",
+        ("Should I visit {city1} or {city2} for a {duration}-day {season} trip? "
+         "Compare them and create an itinerary for the better option."),
 
-        "I'm deciding between {city1} and {city2}. Check weather, compare them, and create a {duration}-day itinerary for your recommendation.",
+        ("I'm deciding between {city1} and {city2}. Check weather, compare them, and "
+         "create a {duration}-day itinerary for your recommendation."),
 
         # === VAGUE/OPEN-ENDED REQUESTS (minimal details) ===
         # Agent should: search region + pick destination + weather + info + create itinerary (5-7 tools)
@@ -768,17 +780,23 @@ def generate_travel_queries(n: int = 10) -> List[str]:
 
         # === RESEARCH-HEAVY REQUESTS (lots of comparison before itinerary) ===
         # Agent should: search + coordinates (multiple) + weather (multiple) + info + create itinerary (7-10 tools)
-        "Find the best {season} destinations in {region}. Check weather for top 3, then create an itinerary for the best one.",
+        ("Find the best {season} destinations in {region}. Check weather for top 3, "
+         "then create an itinerary for the best one."),
 
-        "I want a {budget} {interest} trip. Search {region}, compare weather in several places, and create an itinerary for the top pick.",
+        ("I want a {budget} {interest} trip. Search {region}, compare weather in "
+         "several places, and create an itinerary for the top pick."),
 
-        "Show me good {adjective} destinations in {region}. Compare a few, then plan a {duration}-day trip to your favorite.",
+        ("Show me good {adjective} destinations in {region}. Compare a few, then plan "
+         "a {duration}-day trip to your favorite."),
 
         # === MULTI-CITY REQUESTS ===
-        # Agent should: coordinates (multiple) + distances + weather (multiple) + create multi-city itinerary (7-9 tools)
-        "Plan a {duration}-day multi-city trip visiting {city1}, {city2}, and {city3}. Create a complete itinerary.",
+        # Agent should: coordinates (multiple) + distances + weather (multiple)
+        # + create multi-city itinerary (7-9 tools)
+        ("Plan a {duration}-day multi-city trip visiting {city1}, {city2}, and "
+         "{city3}. Create a complete itinerary."),
 
-        "I want to visit multiple cities in {region} over {duration} days. Find the best route and create an itinerary.",
+        ("I want to visit multiple cities in {region} over {duration} days. Find the "
+         "best route and create an itinerary."),
     ]
 
     regions = ["Europe", "Asia", "Americas", "Africa", "Oceania"]

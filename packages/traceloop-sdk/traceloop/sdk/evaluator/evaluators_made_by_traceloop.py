@@ -499,7 +499,6 @@ class EvaluatorMadeByTraceloop:
             required_input_fields=["question", "completion", "context"],
         )
 
-
     @staticmethod
     def answer_correctness(
     ) -> EvaluatorDetails:
