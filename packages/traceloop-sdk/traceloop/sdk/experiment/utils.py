@@ -17,7 +17,7 @@ def extract_trajectory_from_spans(spans):
         spans: List of ReadableSpan objects from InMemorySpanExporter
 
     Returns:
-        dict with trajectory_prompts (as dict with llm.prompts.* keys), trajectory_completions, and tool_calls
+        dict with trajectory_prompts, trajectory_completions, and tool_calls
     """
     # Collect all gen_ai attributes and convert to llm.prompts/completions format
     trajectory_prompts_dict = {}
