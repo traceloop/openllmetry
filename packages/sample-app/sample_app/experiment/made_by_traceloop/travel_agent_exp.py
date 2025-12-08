@@ -55,8 +55,8 @@ async def travel_agent_task(row):
 
     # Run the travel agent with span capture
     trajectory_prompts, trajectory_completions, final_completion = await run_with_span_capture(
-        run_travel_query, # This is the function that calls the Agent
-        query # This is the agents input
+        run_travel_query,  # This is the function that calls the Agent
+        query  # This is the agents input
     )
 
     return {
