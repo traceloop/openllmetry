@@ -366,9 +366,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
             wrapper_args = (
                 tracer,
                 event_logger,
+                wrapped_method,
                 token_histogram,
                 duration_histogram,
-                wrapped_method,
             )
 
             wrapper = (
