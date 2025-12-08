@@ -469,7 +469,7 @@ def set_model_response_attributes(span, response, llm_model, token_histogram):
             response.usage_metadata.prompt_token_count,
         )
 
-    if token_histogram:
+    if token_histogram and hasattr(response, "usage_metadata"):
         token_histogram.record(
             response.usage_metadata.prompt_token_count,
             attributes={

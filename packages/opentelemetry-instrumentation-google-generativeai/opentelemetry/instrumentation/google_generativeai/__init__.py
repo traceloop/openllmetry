@@ -204,13 +204,13 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
-    start_time = time.time()
+    start_time = time.perf_counter()
     _handle_request(span, args, kwargs, llm_model, event_logger)
 
     response = await wrapped(*args, **kwargs)
 
     if duration_histogram:
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time
         duration_histogram.record(
             duration,
             attributes={
@@ -275,13 +275,13 @@ def _wrap(
         },
     )
 
-    start_time = time.time()
+    start_time = time.perf_counter()
     _handle_request(span, args, kwargs, llm_model, event_logger)
 
     response = wrapped(*args, **kwargs)
 
     if duration_histogram:
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time
         duration_histogram.record(
             duration,
             attributes={
