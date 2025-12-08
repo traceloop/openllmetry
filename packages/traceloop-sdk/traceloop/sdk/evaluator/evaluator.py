@@ -1,5 +1,6 @@
 import httpx
 from typing import Dict, Optional, Any, List
+from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
 
 from .model import (
     InputExtractor,
@@ -145,7 +146,7 @@ class Evaluator:
         return execute_response.execution_id
 
 
-def validate_task_output(
+def validate_and_normalize_task_output(
     task_output: Dict[str, Any],
     evaluators: List[EvaluatorDetails],
 ) -> Dict[str, Any]:
@@ -163,8 +164,6 @@ def validate_task_output(
     Raises:
         ValueError: If task output is missing required fields for any evaluator (even after synonym mapping)
     """
-    from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
-
     if not evaluators:
         return task_output
 

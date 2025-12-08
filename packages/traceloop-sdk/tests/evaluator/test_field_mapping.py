@@ -328,7 +328,7 @@ class TestIntegrationWithValidateTaskOutput:
 
     def test_validate_with_synonym_mapping(self):
         """Test that validate_task_output uses synonym mapping"""
-        from traceloop.sdk.evaluator.evaluator import validate_task_output
+        from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
         from traceloop.sdk.evaluator.config import EvaluatorDetails
 
         # User returns "answer" but evaluator needs "completion"
@@ -341,7 +341,7 @@ class TestIntegrationWithValidateTaskOutput:
         ]
 
         # Should not raise - synonyms should be mapped
-        normalized = validate_task_output(task_output, evaluators)
+        normalized = validate_and_normalize_task_output(task_output, evaluators)
         assert "completion" in normalized
         assert "question" in normalized
         assert normalized["completion"] == "Paris"
@@ -349,7 +349,7 @@ class TestIntegrationWithValidateTaskOutput:
 
     def test_validate_fails_with_helpful_message(self):
         """Test that validation failure includes synonym suggestions"""
-        from traceloop.sdk.evaluator.evaluator import validate_task_output
+        from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
         from traceloop.sdk.evaluator.config import EvaluatorDetails
 
         task_output = {"wrong_field": "value"}
@@ -361,7 +361,7 @@ class TestIntegrationWithValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "test-evaluator requires:" in error_message
@@ -370,7 +370,7 @@ class TestIntegrationWithValidateTaskOutput:
 
     def test_validate_with_context_to_reference_mapping(self):
         """Test specific case of context mapping to reference"""
-        from traceloop.sdk.evaluator.evaluator import validate_task_output
+        from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
         from traceloop.sdk.evaluator.config import EvaluatorDetails
 
         task_output = {
@@ -385,14 +385,14 @@ class TestIntegrationWithValidateTaskOutput:
             )
         ]
 
-        normalized = validate_task_output(task_output, evaluators)
+        normalized = validate_and_normalize_task_output(task_output, evaluators)
         assert normalized["completion"] == "Yes"
         assert normalized["question"] == "Is it true?"
         assert normalized["reference"] == "The sky is blue"
 
     def test_validate_with_trajectory_fields(self):
         """Test mapping for trajectory fields used in agent evaluators"""
-        from traceloop.sdk.evaluator.evaluator import validate_task_output
+        from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
         from traceloop.sdk.evaluator.config import EvaluatorDetails
 
         task_output = {
@@ -406,6 +406,6 @@ class TestIntegrationWithValidateTaskOutput:
             )
         ]
 
-        normalized = validate_task_output(task_output, evaluators)
+        normalized = validate_and_normalize_task_output(task_output, evaluators)
         assert normalized["trajectory_prompts"] == "prompt1, prompt2"
         assert normalized["trajectory_completions"] == "comp1, comp2"

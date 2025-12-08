@@ -5,7 +5,7 @@ import os
 from typing import Any, List, Callable, Optional, Tuple, Dict, Awaitable, Union
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
-from traceloop.sdk.evaluator.evaluator import Evaluator, validate_task_output
+from traceloop.sdk.evaluator.evaluator import Evaluator, validate_and_normalize_task_output
 from traceloop.sdk.experiment.model import (
     InitExperimentRequest,
     ExperimentInitResponse,
@@ -168,7 +168,7 @@ class Experiment:
 
                 # Validate task output with EvaluatorDetails and normalize field names using synonyms
                 if evaluators_to_validate:
-                    task_result = validate_task_output(task_result, evaluators_to_validate)
+                    task_result = validate_and_normalize_task_output(task_result, evaluators_to_validate)
 
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
@@ -484,7 +484,7 @@ class Experiment:
                 # Validate task output schema and normalize field names using synonyms
                 if evaluators_to_validate:
                     try:
-                        task_output = validate_task_output(task_output, evaluators_to_validate)
+                        task_output = validate_and_normalize_task_output(task_output, evaluators_to_validate)
                     except ValueError as validation_error:
                         print(f"\033[91m❌ Task validation failed: {str(validation_error)}\033[0m")
                         raise ValueError(str(validation_error))

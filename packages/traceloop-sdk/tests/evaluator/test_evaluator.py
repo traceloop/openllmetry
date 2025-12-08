@@ -1,5 +1,5 @@
 import pytest
-from traceloop.sdk.evaluator.evaluator import validate_task_output
+from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
 from traceloop.sdk.evaluator.config import EvaluatorDetails
 
 
@@ -12,7 +12,7 @@ class TestValidateTaskOutput:
         evaluators = []
 
         # Should not raise any exception
-        validate_task_output(task_output, evaluators)
+        validate_and_normalize_task_output(task_output, evaluators)
 
     def test_validate_task_output_with_evaluators_no_required_fields(self):
         """Test that validation passes when evaluators have no required fields"""
@@ -23,7 +23,7 @@ class TestValidateTaskOutput:
         ]
 
         # Should not raise any exception
-        validate_task_output(task_output, evaluators)
+        validate_and_normalize_task_output(task_output, evaluators)
 
     def test_validate_task_output_with_valid_output(self):
         """Test that validation passes when all required fields are present"""
@@ -37,7 +37,7 @@ class TestValidateTaskOutput:
         ]
 
         # Should not raise any exception
-        validate_task_output(task_output, evaluators)
+        validate_and_normalize_task_output(task_output, evaluators)
 
     def test_validate_task_output_missing_single_field(self):
         """Test that validation fails when a single required field is missing"""
@@ -47,7 +47,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "Task output missing required fields for evaluators:" in error_message
@@ -70,7 +70,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "relevance-checker requires:" in error_message
@@ -91,7 +91,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "pii-detector requires:" in error_message
@@ -113,7 +113,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         # Should only mention the failing evaluator
@@ -128,7 +128,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "Task output contains: []" in error_message
@@ -147,7 +147,7 @@ class TestValidateTaskOutput:
         ]
 
         # Should not raise any exception - extra fields are allowed
-        validate_task_output(task_output, evaluators)
+        validate_and_normalize_task_output(task_output, evaluators)
 
     def test_validate_task_output_case_sensitive_field_names(self):
         """Test that field name matching is case-sensitive"""
@@ -157,7 +157,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "pii-detector requires:" in error_message
@@ -177,7 +177,7 @@ class TestValidateTaskOutput:
         ]
 
         # Should not raise any exception - config shouldn't affect validation
-        validate_task_output(task_output, evaluators)
+        validate_and_normalize_task_output(task_output, evaluators)
 
     def test_validate_task_output_mixed_evaluators(self):
         """Test validation with a mix of evaluators with and without required fields"""
@@ -193,7 +193,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         # Should only mention failing evaluator
@@ -215,7 +215,7 @@ class TestValidateTaskOutput:
         ]
 
         with pytest.raises(ValueError) as exc_info:
-            validate_task_output(task_output, evaluators)
+            validate_and_normalize_task_output(task_output, evaluators)
 
         error_message = str(exc_info.value)
         assert "pii-detector requires:" in error_message
