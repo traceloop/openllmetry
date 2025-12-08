@@ -18,7 +18,7 @@ SYNONYM_GROUPS = [
     {"reference", "ground_truth", "context"},
 
     # Input/Question fields - user input variations
-    {"question", "prompt", "instructions"},
+    {"question", "prompt", "instructions", "query"},
 
     # Conversation/Trajectory prompts
     {"prompts", "trajectory_prompts"},

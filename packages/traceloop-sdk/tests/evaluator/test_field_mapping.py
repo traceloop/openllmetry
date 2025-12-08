@@ -25,7 +25,8 @@ class TestGetSynonyms:
         assert "question" in synonyms
         assert "prompt" in synonyms
         assert "instructions" in synonyms
-        assert len(synonyms) == 3
+        assert "query" in synonyms
+        assert len(synonyms) == 4
 
     def test_get_synonyms_for_reference(self):
         """Test getting synonyms for 'reference' field"""

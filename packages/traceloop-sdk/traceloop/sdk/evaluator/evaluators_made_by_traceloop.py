@@ -300,6 +300,28 @@ class EvaluatorMadeByTraceloop:
         )
 
     @staticmethod
+    def context_relevance(
+    ) -> EvaluatorDetails:
+        """
+        Context relevance evaluator - validates context relevance.
+
+        Required task output fields:
+            - query: The user's query or question
+            - context: The retrieved context to evaluate for relevance
+
+        Returns:
+            EvaluatorDetails configured for context relevance evaluation
+        """
+        config: Dict[str, Any] = {}
+
+        return EvaluatorDetails(
+            slug="context-relevance",
+            version=None,
+            config=config,
+            required_input_fields=["query", "context"],
+        )
+
+    @staticmethod
     def profanity_detector() -> EvaluatorDetails:
         """
         Profanity detector evaluator - flags inappropriate language.
@@ -477,26 +499,6 @@ class EvaluatorMadeByTraceloop:
             required_input_fields=["question", "completion", "context"],
         )
 
-    @staticmethod
-    def prompt_perplexity(
-    ) -> EvaluatorDetails:
-        """
-        Prompt perplexity evaluator - measures how predictable/familiar a prompt is to a language model.
-
-        Required task output fields:
-            - prompt: The prompt to measure perplexity for
-
-        Returns:
-            EvaluatorDetails configured for prompt perplexity measurement
-        """
-        config: Dict[str, Any] = {}
-
-        return EvaluatorDetails(
-            slug="prompt-perplexity",
-            version=None,
-            config=config,
-            required_input_fields=["prompt"],
-        )
 
     @staticmethod
     def answer_correctness(
