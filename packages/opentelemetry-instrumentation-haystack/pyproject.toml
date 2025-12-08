@@ -31,15 +31,15 @@ opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.3.0"
 pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
+pytest-sugar = "1.1.1"
 
 [tool.poetry.group.test.dependencies]
-haystack-ai = ">=2.0,<2.4"
+haystack-ai = ">=2.0,<2.21"
 pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
+pytest-sugar = "1.1.1"
+vcrpy = ">=6.0.1,<8.0.0"
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.38.0"
 
