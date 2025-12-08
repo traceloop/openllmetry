@@ -1,3 +1,12 @@
+## v0.49.7 (2025-12-08)
+
+### Fix
+
+- **exp**: Add a real agent example (#3507)
+- **evals**: Add agent evaluators to made by traceloop (#3505)
+- **exp**: Add made by traceloop evaluators (#3503)
+- **traceloop-sdk**: Fixes gRPC exporter initialisation with insecure OTLP (#3481)
+
 ## v0.49.6 (2025-12-01)
 
 ### Fix
