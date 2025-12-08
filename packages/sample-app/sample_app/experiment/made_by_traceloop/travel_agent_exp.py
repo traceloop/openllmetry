@@ -43,15 +43,17 @@ travel_agent_module = _load_travel_agent_module()
 def extract_trajectory_from_spans(spans):
     """
     Extract prompt and completion trajectory from OpenTelemetry spans.
+    Converts gen_ai.prompt.* to llm.prompts.* format expected by evaluators.
 
     Args:
         spans: List of ReadableSpan objects from InMemorySpanExporter
 
     Returns:
-        dict with trajectory_prompts, trajectory_completions, tool_calls, tool_inputs, and tool_outputs
+        dict with trajectory_prompts (as dict with llm.prompts.* keys), trajectory_completions, and tool_calls
     """
-    trajectory_prompts = []
-    trajectory_completions = []
+    # Collect all gen_ai attributes and convert to llm.prompts/completions format
+    trajectory_prompts_dict = {}
+    trajectory_completions_dict = {}
     tool_calls = []
     tool_inputs = []
     tool_outputs = []
@@ -62,71 +64,43 @@ def extract_trajectory_from_spans(spans):
 
         attributes = span.attributes or {}
 
-        # Extract prompts (gen_ai.prompt.{i}.content)
-        prompt_indices = set()
-        for key in attributes.keys():
-            if key.startswith("gen_ai.prompt.") and key.endswith(".content"):
-                # Extract index from "gen_ai.prompt.{i}.content"
-                parts = key.split(".")
-                if len(parts) >= 3:
-                    try:
-                        idx = int(parts[2])
-                        prompt_indices.add(idx)
-                    except ValueError:
-                        pass
+        # Convert gen_ai.prompt.* to llm.prompts.* format
+        for key, value in attributes.items():
+            if key.startswith("gen_ai.prompt."):
+                # Convert gen_ai.prompt.X.Y to llm.prompts.X.Y
+                new_key = key.replace("gen_ai.prompt.", "llm.prompts.")
+                trajectory_prompts_dict[new_key] = value
+            elif key.startswith("gen_ai.completion."):
+                # Convert gen_ai.completion.X.Y to llm.completions.X.Y
+                new_key = key.replace("gen_ai.completion.", "llm.completions.")
+                trajectory_completions_dict[new_key] = value
+            # Also check for existing llm.* attributes
+            elif key.startswith("llm.prompts."):
+                trajectory_prompts_dict[key] = value
+            elif key.startswith("llm.completions."):
+                trajectory_completions_dict[key] = value
 
-        # Collect prompts in order
-        for idx in sorted(prompt_indices):
-            content_key = f"gen_ai.prompt.{idx}.content"
-            if content_key in attributes:
-                content = attributes[content_key]
-                if content and content not in trajectory_prompts:
-                    trajectory_prompts.append(content)
-
-        # Extract completions (gen_ai.completion.{i}.content)
-        completion_indices = set()
-        for key in attributes.keys():
-            if key.startswith("gen_ai.completion.") and key.endswith(".content"):
-                # Extract index from "gen_ai.completion.{i}.content"
-                parts = key.split(".")
-                if len(parts) >= 3:
-                    try:
-                        idx = int(parts[2])
-                        completion_indices.add(idx)
-                    except ValueError:
-                        pass
-
-        # Collect completions in order
-        for idx in sorted(completion_indices):
-            content_key = f"gen_ai.completion.{idx}.content"
-            if content_key in attributes:
-                content = attributes[content_key]
-                if content and content not in trajectory_completions:
-                    trajectory_completions.append(content)
-
-        # Extract tool calls and their inputs/outputs
+        # Extract tool calls for summary
         if "gen_ai.tool.name" in attributes:
             tool_name = attributes["gen_ai.tool.name"]
             if tool_name:
                 tool_calls.append(tool_name)
 
-                # Extract tool input (look for function call parameters)
+                # Extract tool input
                 tool_input = attributes.get("gen_ai.completion.tool.arguments", "")
                 if not tool_input:
-                    # Try alternative attribute names
                     tool_input = attributes.get("gen_ai.tool.input", "")
                 tool_inputs.append(tool_input)
 
-                # Extract tool output (look for function results)
+                # Extract tool output
                 tool_output = attributes.get("gen_ai.tool.output", "")
                 if not tool_output:
-                    # Try to find in span events or other attributes
                     tool_output = attributes.get("gen_ai.completion.tool.result", "")
                 tool_outputs.append(tool_output)
 
     return {
-        "trajectory_prompts": trajectory_prompts,
-        "trajectory_completions": trajectory_completions,
+        "trajectory_prompts": trajectory_prompts_dict,
+        "trajectory_completions": trajectory_completions_dict,
         "tool_calls": tool_calls,
         "tool_inputs": tool_inputs,
         "tool_outputs": tool_outputs
@@ -190,21 +164,42 @@ async def travel_agent_task(row):
         # Extract trajectory from spans
         trajectory_data = extract_trajectory_from_spans(spans)
 
-        # Get the final completion (last completion in trajectory or empty string)
-        final_completion = trajectory_data["trajectory_completions"][-1] if trajectory_data["trajectory_completions"] else ""
+        # Get the final completion from llm.completions dict
+        completions_dict = trajectory_data["trajectory_completions"]
+        final_completion = ""
+        if completions_dict:
+            # Find the highest index completion content
+            max_idx = -1
+            for key in completions_dict.keys():
+                if ".content" in key:
+                    try:
+                        parts = key.split(".")
+                        idx = int(parts[2])
+                        if idx > max_idx:
+                            max_idx = idx
+                            final_completion = completions_dict[key]
+                    except (ValueError, IndexError):
+                        pass
 
-        # Convert trajectory prompts and completions to JSON arrays
+        # trajectory_prompts and trajectory_completions are dicts with llm.prompts/completions.* keys
+        # If empty, use JSON string fallback to avoid validation errors
         import json
-        trajectory_prompts_json = json.dumps(trajectory_data["trajectory_prompts"])
-        trajectory_completions_json = json.dumps(trajectory_data["trajectory_completions"])
+        trajectory_prompts = trajectory_data["trajectory_prompts"]
+        trajectory_completions = trajectory_data["trajectory_completions"]
+
+        # Convert to JSON strings if empty (evaluators expect string when no data)
+        if not trajectory_prompts:
+            trajectory_prompts = json.dumps([])
+        if not trajectory_completions:
+            trajectory_completions = json.dumps([])
 
         # Combine tool inputs and outputs for evaluators
         all_tool_inputs = "\n\n---\n\n".join(str(ti) for ti in trajectory_data["tool_inputs"]) if trajectory_data["tool_inputs"] else "No tool inputs captured"
         all_tool_outputs = "\n\n---\n\n".join(str(to) for to in trajectory_data["tool_outputs"]) if trajectory_data["tool_outputs"] else "No tool outputs captured"
 
         print("📊 Trajectory Summary:")
-        print(f"  - Prompts captured: {len(trajectory_data['trajectory_prompts'])}")
-        print(f"  - Completions captured: {len(trajectory_data['trajectory_completions'])}")
+        print(f"  - Prompt attributes captured: {len(trajectory_prompts)}")
+        print(f"  - Completion attributes captured: {len(trajectory_completions)}")
         print(f"  - Tools called: {', '.join(trajectory_data['tool_calls']) if trajectory_data['tool_calls'] else 'None'}")
         print(f"  - Tools from run: {', '.join(tool_calls_made) if tool_calls_made else 'None'}\n")
 
@@ -212,14 +207,14 @@ async def travel_agent_task(row):
         # - "prompt" maps to "question"
         # - "answer" maps to "completion"
         # - "context" maps to "reference"
-        # - "trajectory_prompts" and "trajectory_completions" as JSON arrays
+        # - "trajectory_prompts" and "trajectory_completions" as dicts with llm.prompts/completions.* keys
         # - "tool_input" and "tool_output" for agent_tool_error_detector
         return {
             "prompt": query,
-            "answer": final_completion,
+            "answer": final_completion if final_completion else query,
             "context": f"The agent should create a complete travel itinerary for: {query}",
-            "trajectory_prompts": trajectory_prompts_json,
-            "trajectory_completions": trajectory_completions_json,
+            "trajectory_prompts": trajectory_prompts,  # Dict with llm.prompts.* keys
+            "trajectory_completions": trajectory_completions,  # Dict with llm.completions.* keys
             "tool_input": all_tool_inputs,
             "tool_output": all_tool_outputs,
         }
