@@ -348,6 +348,9 @@ class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
 
+        token_histogram = None
+        duration_histogram = None
+
         if is_metrics_enabled():
             token_histogram, duration_histogram = _create_metrics(meter)
 
