@@ -656,7 +656,8 @@ class EvaluatorMadeByTraceloop:
     def conversation_quality(
     ) -> EvaluatorDetails:
         """
-        Conversation quality evaluator - evaluates conversation quality based on tone, clarity, flow, responsiveness, and transparency.
+        Conversation quality evaluator - evaluates conversation quality based on tone,
+        clarity, flow, responsiveness, and transparency.
 
         Required task output fields:
             - prompts: The conversation prompts (flattened dict with llm.prompts.X.content/role)
@@ -678,7 +679,8 @@ class EvaluatorMadeByTraceloop:
     def intent_change(
     ) -> EvaluatorDetails:
         """
-        Intent change evaluator - detects whether the user's primary intent or workflow changed significantly during a conversation.
+        Intent change evaluator - detects whether the user's primary intent or workflow
+        changed significantly during a conversation.
 
         Required task output fields:
             - prompts: The conversation prompts (flattened dict with llm.prompts.X.content/role)

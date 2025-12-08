@@ -69,16 +69,27 @@ async def agent_evaluators_task(row):
     - reference (or ground_truth, context): The reference answer (for agent_goal_accuracy)
     - tool_input: The input to tools (for agent_tool_error_detector)
     - tool_output: The output from tools (for agent_tool_error_detector)
-    - trajectory_prompts (or prompts): The agent's prompt trajectory (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
-    - trajectory_completions (or completions): The agent's completion trajectory (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
+    - trajectory_prompts (or prompts): The agent's prompt trajectory
+        (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
+    - trajectory_completions (or completions): The agent's completion trajectory
+        (for agent_flow_quality, agent_efficiency, agent_goal_completeness)
     """
     # Get data from row or use defaults
     question = row.get("question", "Book a flight from New York to Paris")
-    reference = row.get("reference", "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22")
+    reference = row.get(
+        "reference",
+        "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22"
+    )
     tool_input = row.get("tool_input", "New York to Paris")
-    tool_output = row.get("tool_output", "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22")
+    tool_output = row.get(
+        "tool_output",
+        "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22"
+    )
     trajectory_prompts = row.get("trajectory_prompts", "New York to Paris")
-    trajectory_completions = row.get("trajectory_completions", "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22")
+    trajectory_completions = row.get(
+        "trajectory_completions",
+        "Successfully booked flight NYC to Paris, departure 2024-12-15, return 2024-12-22"
+    )
 
     # Generate agent trace
     trace_data = await generate_agent_trace(question)
