@@ -31,34 +31,34 @@ opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.3.1"
-flake8 = "7.1.1"
+flake8 = "7.3.0"
 pytest = "^8.3.3"
-pytest-sugar = "1.0.0"
+pytest-sugar = "1.1.1"
 
 
 [tool.poetry.group.test.dependencies]
 langchain = "^0.3.15"
 langchain-community = "^0.3.3"
-openai = "^1.52.2"
+openai = ">=1.52.2,<3.0.0"
 pytest = "^8.3.3"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.2"
+pytest-sugar = "1.1.1"
+vcrpy = ">=6.0.2,<8.0.0"
 pytest-recording = "^0.13.2"
-pytest-asyncio = "^0.24.0"
+pytest-asyncio = ">=0.24,<1.3"
 opentelemetry-sdk = "^1.38.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", develop = true }
 text-generation = "^0.7.0"
-anthropic = "^0.51.0"
+anthropic = ">=0.51,<0.76"
 boto3 = "^1.35.49"
 langchain-anthropic = "^0.3.13"
 langchain-aws = "^0.2.11"
 langchain-openai = "^0.3.1"
-langchain-cohere = "0.3.1"
-langchain-huggingface = "^0.1.2"
+langchain-cohere = "0.4.6"
+langchain-huggingface = ">=0.1.2,<0.4.0"
 pydantic = "^2.10.5"
 langchainhub = "^0.1.21"
-langgraph = "^0.4"
+langgraph = ">=0.4,<0.7"
 
 [build-system]
 requires = ["poetry-core"]
