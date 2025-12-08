@@ -15,6 +15,7 @@ for detailed analysis and evaluation.
 
 import asyncio
 import sys
+import json
 import importlib.util
 from pathlib import Path
 
@@ -183,7 +184,6 @@ async def travel_agent_task(row):
 
         # trajectory_prompts and trajectory_completions are dicts with llm.prompts/completions.* keys
         # If empty, use JSON string fallback to avoid validation errors
-        import json
         trajectory_prompts = trajectory_data["trajectory_prompts"]
         trajectory_completions = trajectory_data["trajectory_completions"]
 
@@ -204,13 +204,18 @@ async def travel_agent_task(row):
         # - "answer" maps to "completion"
         # - "context" maps to "reference"
         # - "trajectory_prompts" and "trajectory_completions" as dicts with llm.prompts/completions.* keys
-        # - "tool_input" and "tool_output" for agent_tool_error_detector
+        
+        json_trajectory_prompts = json.dumps(trajectory_prompts)
+        json_trajectory_completions = json.dumps(trajectory_completions)
+        # prompt_list = str(trajectory_prompts)
+        # completion_list = str(trajectory_completions)
+
         return {
             "prompt": query,
             "answer": final_completion if final_completion else query,
             "context": f"The agent should create a complete travel itinerary for: {query}",
-            "trajectory_prompts": trajectory_prompts,  # Dict with llm.prompts.* keys
-            "trajectory_completions": trajectory_completions,  # Dict with llm.completions.* keys
+            "trajectory_prompts": json_trajectory_prompts,  
+            "trajectory_completions": json_trajectory_completions,  
         }
 
     except Exception as e:
@@ -259,10 +264,10 @@ async def run_travel_agent_experiment():
     # Note: You'll need to create a dataset with travel queries in the Traceloop platform
     results, errors = await client.experiment.run(
         dataset_slug="travel-queries",  # Dataset slug that should exist in traceloop platform
-        dataset_version="v2",
+        dataset_version="v1",
         task=travel_agent_task,
         evaluators=evaluators,
-        experiment_slug="travel-agent-exp",
+        experiment_slug="travel-agent-exp-2",
         stop_on_error=False,
         wait_for_results=True,
     )
