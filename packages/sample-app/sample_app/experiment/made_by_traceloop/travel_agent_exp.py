@@ -193,15 +193,16 @@ async def travel_agent_task(row):
         # Get the final completion (last completion in trajectory or empty string)
         final_completion = trajectory_data["trajectory_completions"][-1] if trajectory_data["trajectory_completions"] else ""
 
-        # Combine all prompts and completions into strings for evaluator compatibility
-        all_prompts = "\n\n---\n\n".join(trajectory_data["trajectory_prompts"])
-        all_completions = "\n\n---\n\n".join(trajectory_data["trajectory_completions"])
+        # Convert trajectory prompts and completions to JSON arrays
+        import json
+        trajectory_prompts_json = json.dumps(trajectory_data["trajectory_prompts"])
+        trajectory_completions_json = json.dumps(trajectory_data["trajectory_completions"])
 
         # Combine tool inputs and outputs for evaluators
         all_tool_inputs = "\n\n---\n\n".join(str(ti) for ti in trajectory_data["tool_inputs"]) if trajectory_data["tool_inputs"] else "No tool inputs captured"
         all_tool_outputs = "\n\n---\n\n".join(str(to) for to in trajectory_data["tool_outputs"]) if trajectory_data["tool_outputs"] else "No tool outputs captured"
 
-        print(f"📊 Trajectory Summary:")
+        print("📊 Trajectory Summary:")
         print(f"  - Prompts captured: {len(trajectory_data['trajectory_prompts'])}")
         print(f"  - Completions captured: {len(trajectory_data['trajectory_completions'])}")
         print(f"  - Tools called: {', '.join(trajectory_data['tool_calls']) if trajectory_data['tool_calls'] else 'None'}")
@@ -210,41 +211,21 @@ async def travel_agent_task(row):
         # Return data using field synonyms that map to required evaluator fields
         # - "prompt" maps to "question"
         # - "answer" maps to "completion"
-        # - "prompts" maps to "trajectory_prompts"
-        # - "completions" maps to "trajectory_completions"
         # - "context" maps to "reference"
+        # - "trajectory_prompts" and "trajectory_completions" as JSON arrays
         # - "tool_input" and "tool_output" for agent_tool_error_detector
         return {
-            "prompt": query, 
+            "prompt": query,
             "answer": final_completion,
             "context": f"The agent should create a complete travel itinerary for: {query}",
-            "prompts": all_prompts,  
-            "completions": all_completions, 
-            "tool_input": all_tool_inputs,  # For agent_tool_error_detector
-            "tool_output": all_tool_outputs,  # For agent_tool_error_detector
+            "trajectory_prompts": trajectory_prompts_json,
+            "trajectory_completions": trajectory_completions_json,
+            "tool_input": all_tool_inputs,
+            "tool_output": all_tool_outputs,
         }
 
     except Exception as e:
-        print(f"\n❌ Error running travel agent: {str(e)}")
-        import traceback
-        traceback.print_exc()
-
-        return {
-            "prompt": query,
-            "answer": f"Error: {str(e)}",
-            "context": f"The agent should create a complete travel itinerary for: {query}",
-            "prompts": "",
-            "completions": "",
-            "tool_input": "Error occurred before tool execution",
-            "tool_output": f"Error: {str(e)}",
-            "tool_calls": [],
-            "tool_count": 0,
-            "error": str(e)
-        }
-    finally:
-        # Restore singleton if any
-        if '_trace_wrapper_instance' in locals():
-            TracerWrapper.instance = _trace_wrapper_instance
+        raise e
 
 
 async def run_travel_agent_experiment():
@@ -290,7 +271,7 @@ async def run_travel_agent_experiment():
     # Note: You'll need to create a dataset with travel queries in the Traceloop platform
     results, errors = await client.experiment.run(
         dataset_slug="travel-queries",  # Dataset slug that should exist in traceloop platform
-        dataset_version="v1",
+        dataset_version="v2",
         task=travel_agent_task,
         evaluators=evaluators,
         experiment_slug="travel-agent-exp",
