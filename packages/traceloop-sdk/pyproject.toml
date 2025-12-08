@@ -121,6 +121,7 @@ exclude = [
     "traceloop/sdk/tracing",
     "traceloop/sdk/utils",
     "traceloop/sdk/__init__.py",
+    "traceloop/sdk/experiment/utils.py",
     "tests/",
 ]
 
