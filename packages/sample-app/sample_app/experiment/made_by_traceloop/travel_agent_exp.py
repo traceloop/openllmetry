@@ -27,7 +27,7 @@ from traceloop.sdk.tracing.tracing import TracerWrapper
 # Initialize Traceloop client (will be reinitialized per task with in-memory exporter)
 client = Traceloop.init()
 
-# Load travel_agent_example module dynamically
+
 def _load_travel_agent_module():
     """Dynamically load the travel_agent_example module."""
     agents_path = Path(__file__).parent.parent.parent / "agents" / "travel_agent_example.py"
@@ -36,6 +36,7 @@ def _load_travel_agent_module():
     sys.modules["travel_agent_example"] = module
     spec.loader.exec_module(module)
     return module
+
 
 # Load the module at import time
 travel_agent_module = _load_travel_agent_module()
@@ -134,7 +135,6 @@ async def travel_agent_task(row):
 
     # Clear singleton if existed to reinitialize with in-memory exporter
     if hasattr(TracerWrapper, "instance"):
-        _trace_wrapper_instance = TracerWrapper.instance
         del TracerWrapper.instance
 
     # Create in-memory exporter to capture spans
@@ -196,26 +196,25 @@ async def travel_agent_task(row):
         print("📊 Trajectory Summary:")
         print(f"  - Prompt attributes captured: {len(trajectory_prompts)}")
         print(f"  - Completion attributes captured: {len(trajectory_completions)}")
-        print(f"  - Tools called: {', '.join(trajectory_data['tool_calls']) if trajectory_data['tool_calls'] else 'None'}")
+        tools_called = ', '.join(trajectory_data['tool_calls']) if trajectory_data['tool_calls'] else 'None'
+        print(f"  - Tools called: {tools_called}")
         print(f"  - Tools from run: {', '.join(tool_calls_made) if tool_calls_made else 'None'}\n")
 
         # Return data using field synonyms that map to required evaluator fields
         # - "prompt" maps to "question"
         # - "answer" maps to "completion"
         # - "context" maps to "reference"
-        # - "trajectory_prompts" and "trajectory_completions" as dicts with llm.prompts/completions.* keys
-        
+        # - "trajectory_prompts" and "trajectory_completions" as JSON strings
+
         json_trajectory_prompts = json.dumps(trajectory_prompts)
         json_trajectory_completions = json.dumps(trajectory_completions)
-        # prompt_list = str(trajectory_prompts)
-        # completion_list = str(trajectory_completions)
 
         return {
             "prompt": query,
             "answer": final_completion if final_completion else query,
             "context": f"The agent should create a complete travel itinerary for: {query}",
-            "trajectory_prompts": json_trajectory_prompts,  
-            "trajectory_completions": json_trajectory_completions,  
+            "trajectory_prompts": json_trajectory_prompts,
+            "trajectory_completions": json_trajectory_completions,
         }
 
     except Exception as e:
@@ -270,7 +269,7 @@ async def run_travel_agent_experiment():
         dataset_version="v1",
         task=travel_agent_task,
         evaluators=evaluators,
-        experiment_slug="travel-agent-exp-2",
+        experiment_slug="travel-agent-exp-3",
         stop_on_error=False,
         wait_for_results=True,
     )
