@@ -90,6 +90,7 @@ def metrics_test_context():
 
 @pytest.fixture(scope="session", autouse=True)
 def clear_metrics_test_context(metrics_test_context):
+    yield
     provider, reader = metrics_test_context
     reader.shutdown()
     provider.shutdown()
