@@ -1,8 +1,7 @@
 import json
 import os
 import time
-from math import inf
-from typing import Collection
+from typing import Any, Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
@@ -69,7 +68,7 @@ class CrewAIInstrumentor(BaseInstrumentor):
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
-        unwrap("crewai.tools.tool_usage", "ToolUsage._use")
+        unwrap("crewai.tools.tool_usage.ToolUsage", "_use")
 
 
 def with_tracer_wrapper(func):
@@ -245,21 +244,27 @@ def wrap_tool_use(
     tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs
 ):
     tool = kwargs.get("tool")
-    tool_name = ""
-    attributes = {
+    tool_name = "unknown"
+    attributes: dict[str, Any] = {
         GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.EXECUTE_TOOL.value,
     }
     if tool:
         tool_name = tool.name
-        attributes = {
-            GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
-            "crewai.tool.current_usage_count": getattr(tool, "current_usage_count", 0),
-            "crewai.tool.max_usage_count": getattr(tool, "max_usage_count", inf),
-            "crewai.tool.result_as_answer": getattr(tool, "result_as_answer", False),
-            GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS: json.dumps(
-                getattr(tool, "args", {})
-            ),
-        }
+        attributes.update(
+            {
+                GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+                "crewai.tool.current_usage_count": getattr(
+                    tool, "current_usage_count", 0
+                ),
+                "crewai.tool.max_usage_count": getattr(tool, "max_usage_count", -1),
+                "crewai.tool.result_as_answer": getattr(
+                    tool, "result_as_answer", False
+                ),
+                GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS: json.dumps(
+                    getattr(tool, "args", {})
+                ),
+            }
+        )
     with tracer.start_as_current_span(
         f"{tool_name}.tool", kind=SpanKind.CLIENT, attributes=attributes
     ) as span:
