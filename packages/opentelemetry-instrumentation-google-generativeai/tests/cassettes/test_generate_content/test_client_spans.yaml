@@ -19,7 +19,7 @@ interactions:
       x-goog-api-client:
       - google-genai-sdk/1.52.0 gl-python/3.11.11
       x-goog-api-key:
-      - AIzaSyCYDUVmQyuWr6y7ADadgKF9u-DGsP0OsNA
+      - DUMMY_GOOGLE_API_KEY
     method: POST
     uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
   response:
