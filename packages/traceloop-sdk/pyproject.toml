@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "traceloop-sdk"
-version = "0.49.6"
+version = "0.49.7"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
     "Gal Kleinman <gal@traceloop.com>",
@@ -121,6 +121,7 @@ exclude = [
     "traceloop/sdk/tracing",
     "traceloop/sdk/utils",
     "traceloop/sdk/__init__.py",
+    "traceloop/sdk/experiment/utils.py",
     "tests/",
 ]
 

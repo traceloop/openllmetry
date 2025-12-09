@@ -159,7 +159,7 @@ def test_ollama_chat_tool_calls_legacy(
                     {
                         "function": {
                             "name": "get_current_weather",
-                            "arguments": '{"location": "San Francisco"}',
+                            "arguments": {"location": "San Francisco"},
                         }
                     }
                 ],
@@ -218,7 +218,7 @@ def test_ollama_chat_tool_calls_with_events_with_content(
                     {
                         "function": {
                             "name": "get_current_weather",
-                            "arguments": '{"location": "San Francisco"}',
+                            "arguments": {"location": "San Francisco"},
                         }
                     }
                 ],
@@ -293,7 +293,7 @@ def test_ollama_chat_tool_calls_with_events_with_no_content(
                     {
                         "function": {
                             "name": "get_current_weather",
-                            "arguments": '{"location": "San Francisco"}',
+                            "arguments": {"location": "San Francisco"},
                         }
                     }
                 ],

@@ -5,19 +5,20 @@ import os
 from typing import Any, List, Callable, Optional, Tuple, Dict, Awaitable, Union
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.datasets.datasets import Datasets
-from traceloop.sdk.evaluator.evaluator import Evaluator
+from traceloop.sdk.evaluator.evaluator import Evaluator, validate_and_normalize_task_output
 from traceloop.sdk.experiment.model import (
     InitExperimentRequest,
     ExperimentInitResponse,
     CreateTaskRequest,
     CreateTaskResponse,
-    EvaluatorDetails,
+    EvaluatorSpec,
     TaskResponse,
     RunInGithubRequest,
     RunInGithubResponse,
     TaskResult,
     GithubContext,
 )
+from traceloop.sdk.evaluator.config import EvaluatorDetails
 import httpx
 
 
@@ -37,9 +38,9 @@ class Experiment:
     async def run(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -51,9 +52,9 @@ class Experiment:
 
         Args:
             task: Async function to run on each dataset row
+            evaluators: List of evaluator slugs or EvaluatorDetails objects to run
             dataset_slug: Slug of the dataset to use
             dataset_version: Version of the dataset to use
-            evaluators: List of evaluator slugs to run
             experiment_slug: Slug for this experiment run
             experiment_metadata: Metadata for this experiment (an experiment holds all the experiment runs)
             related_ref: Related reference for this experiment run
@@ -76,9 +77,9 @@ class Experiment:
         else:
             return await self._run_locally(
                 task=task,
+                evaluators=evaluators,
                 dataset_slug=dataset_slug,
                 dataset_version=dataset_version,
-                evaluators=evaluators,
                 experiment_slug=experiment_slug,
                 experiment_metadata=experiment_metadata,
                 related_ref=related_ref,
@@ -90,9 +91,9 @@ class Experiment:
     async def _run_locally(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -126,20 +127,23 @@ class Experiment:
             if value is not None
         }
 
-        evaluator_details = (
-            [
-                (evaluator, None) if isinstance(evaluator, str) else evaluator
-                for evaluator in evaluators
-            ]
-            if evaluators
-            else None
-        )
+        # Convert evaluators to tuples of (slug, version, config)
+        evaluator_details: Optional[List[Tuple[str, Optional[str], Optional[Dict[str, Any]]]]] = None
+        if evaluators:
+            evaluator_details = []
+            for evaluator in evaluators:
+                if isinstance(evaluator, str):
+                    # Simple string slug
+                    evaluator_details.append((evaluator, None, None))
+                elif isinstance(evaluator, EvaluatorDetails):
+                    # EvaluatorDetails object with config
+                    evaluator_details.append((evaluator.slug, evaluator.version, evaluator.config))
 
         experiment = self._init_experiment(
             experiment_slug,
             dataset_slug=dataset_slug,
             dataset_version=dataset_version,
-            evaluator_slugs=[slug for slug, _ in evaluator_details]
+            evaluator_slugs=[slug for slug, _, _ in evaluator_details]
             if evaluator_details
             else None,
             experiment_metadata=experiment_metadata,
@@ -156,9 +160,16 @@ class Experiment:
         results: List[TaskResponse] = []
         errors: List[str] = []
 
+        evaluators_to_validate = [evaluator for evaluator in evaluators if isinstance(evaluator, EvaluatorDetails)]
+
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResponse:
             try:
                 task_result = await task(row)
+
+                # Validate task output with EvaluatorDetails and normalize field names using synonyms
+                if evaluators_to_validate:
+                    task_result = validate_and_normalize_task_output(task_result, evaluators_to_validate)
+
                 task_id = self._create_task(
                     experiment_slug=experiment_slug,
                     experiment_run_id=run_id,
@@ -168,13 +179,14 @@ class Experiment:
 
                 eval_results: Dict[str, Union[Dict[str, Any], str]] = {}
                 if evaluator_details:
-                    for evaluator_slug, evaluator_version in evaluator_details:
+                    for evaluator_slug, evaluator_version, evaluator_config in evaluator_details:
                         try:
                             if wait_for_results:
                                 eval_result = (
                                     await self._evaluator.run_experiment_evaluator(
                                         evaluator_slug=evaluator_slug,
                                         evaluator_version=evaluator_version,
+                                        evaluator_config=evaluator_config,
                                         task_id=task_id,
                                         experiment_id=experiment.experiment.id,
                                         experiment_run_id=run_id,
@@ -187,6 +199,7 @@ class Experiment:
                                 await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
                                     evaluator_version=evaluator_version,
+                                    evaluator_config=evaluator_config,
                                     task_id=task_id,
                                     experiment_id=experiment.experiment.id,
                                     experiment_run_id=run_id,
@@ -197,7 +210,10 @@ class Experiment:
                                 eval_results[evaluator_slug] = msg
 
                         except Exception as e:
-                            eval_results[evaluator_slug] = f"Error: {str(e)}"
+                            error_msg = f"Error: {str(e)}"
+                            eval_results[evaluator_slug] = error_msg
+                            # Log the error so user can see it
+                            print(f"\033[91m❌ Evaluator '{evaluator_slug}' failed: {str(e)}\033[0m")
 
                 return TaskResponse(
                     task_result=task_result,
@@ -205,6 +221,8 @@ class Experiment:
                 )
             except Exception as e:
                 error_msg = f"Error processing row: {str(e)}"
+                # Print error to console so user can see it
+                print(f"\033[91m❌ Task execution failed: {str(e)}\033[0m")
                 if stop_on_error:
                     raise e
                 return TaskResponse(error=error_msg)
@@ -240,9 +258,9 @@ class Experiment:
     async def _run_in_github(
         self,
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: List[EvaluatorSpec],
         dataset_slug: Optional[str] = None,
         dataset_version: Optional[str] = None,
-        evaluators: Optional[List[EvaluatorDetails]] = None,
         experiment_slug: Optional[str] = None,
         experiment_metadata: Optional[Dict[str, Any]] = None,
         related_ref: Optional[Dict[str, str]] = None,
@@ -290,7 +308,7 @@ class Experiment:
             jsonl_data = self._datasets.get_version_jsonl(dataset_slug, dataset_version)
             rows = self._parse_jsonl_to_rows(jsonl_data)
 
-        task_results = await self._execute_tasks(rows, task)
+        task_results = await self._execute_tasks(rows, task, evaluators)
 
         # Construct GitHub context
         repository = os.getenv("GITHUB_REPOSITORY")
@@ -340,10 +358,12 @@ class Experiment:
         # Extract evaluator slugs
         evaluator_slugs = None
         if evaluators:
-            evaluator_slugs = [
-                slug if isinstance(slug, str) else slug[0]
-                for slug in evaluators
-            ]
+            evaluator_slugs = []
+            for evaluator in evaluators:
+                if isinstance(evaluator, str):
+                    evaluator_slugs.append(evaluator)
+                elif isinstance(evaluator, EvaluatorDetails):
+                    evaluator_slugs.append(evaluator.slug)
 
         # Prepare request payload
         request_body = RunInGithubRequest(
@@ -436,26 +456,47 @@ class Experiment:
         self,
         rows: List[Dict[str, Any]],
         task: Callable[[Optional[Dict[str, Any]]], Awaitable[Dict[str, Any]]],
+        evaluators: Optional[List[EvaluatorSpec]] = None,
     ) -> List[TaskResult]:
         """Execute tasks locally with concurrency control
 
         Args:
             rows: List of dataset rows to process
             task: Function to run on each row
+            evaluators: List of evaluators to validate task output against
 
         Returns:
             List of TaskResult objects with inputs, outputs, and errors
         """
         task_results: List[TaskResult] = []
 
+        # Extract EvaluatorDetails from evaluators list
+        evaluators_to_validate = []
+        if evaluators:
+            for evaluator in evaluators:
+                if isinstance(evaluator, EvaluatorDetails):
+                    evaluators_to_validate.append(evaluator)
+
         async def run_single_row(row: Optional[Dict[str, Any]]) -> TaskResult:
             try:
                 task_output = await task(row)
+
+                # Validate task output schema and normalize field names using synonyms
+                if evaluators_to_validate:
+                    try:
+                        task_output = validate_and_normalize_task_output(task_output, evaluators_to_validate)
+                    except ValueError as validation_error:
+                        print(f"\033[91m❌ Task validation failed: {str(validation_error)}\033[0m")
+                        raise ValueError(str(validation_error))
+
                 return TaskResult(
                     input=row,
                     output=task_output,
                 )
             except Exception as e:
+                if isinstance(e, ValueError):
+                    raise e
+                print(f"\033[91m❌ Task execution error: {str(e)}\033[0m")
                 return TaskResult(
                     input=row,
                     error=str(e),
