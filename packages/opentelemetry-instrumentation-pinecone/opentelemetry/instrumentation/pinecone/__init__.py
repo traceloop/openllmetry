@@ -70,8 +70,19 @@ WRAPPED_METHODS = [
 
 
 @dont_throw
+def _get_server_address(instance):
+    if hasattr(instance, 'config') and hasattr(instance.config, 'host'):
+        host = instance.config.host
+        return host if host.startswith('http') else f"https://{host}"
+
+    return None
+
+
+@dont_throw
 def _set_input_attributes(span, instance, kwargs):
-    set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, instance._config.host)
+    server_address = _get_server_address(instance)
+    if server_address:
+        set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, server_address)
 
 
 @dont_throw
@@ -150,8 +161,9 @@ def _wrap(
                 set_query_input_attributes(span, kwargs)
 
         shared_attributes = {}
-        if hasattr(instance, "_config"):
-            shared_attributes["server.address"] = instance._config.host
+        server_address = _get_server_address(instance)
+        if server_address:
+            shared_attributes["server.address"] = server_address
 
         start_time = time.time()
         response = wrapped(*args, **kwargs)

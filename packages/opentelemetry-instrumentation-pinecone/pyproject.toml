@@ -119,7 +119,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
-instruments = ["pinecone-client"]
+instruments = ["pinecone"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
