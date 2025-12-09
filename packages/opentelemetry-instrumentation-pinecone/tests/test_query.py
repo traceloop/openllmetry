@@ -101,8 +101,10 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     ]
 
     span = next(span for span in spans if span.name == "pinecone.query")
-    # Note: server.address is not available in Pinecone v5+ API
-    # The _config.host attribute structure changed in newer versions
+    assert (
+        span.attributes.get("server.address")
+        == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+    )
     assert span.attributes.get(SpanAttributes.PINECONE_QUERY_TOP_K) == 3
     assert span.attributes.get(SpanAttributes.PINECONE_USAGE_READ_UNITS) == 6
     assert span.attributes.get(SpanAttributes.PINECONE_USAGE_WRITE_UNITS) == 0
@@ -163,19 +165,28 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
                         assert data_point.sum == sum(
                             match.get("score") for match in query_res.get("matches")
                         )
-                        # Note: server.address not available in Pinecone v5+ metrics
+                        assert (
+                            data_point.attributes["server.address"]
+                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        )
 
                 if metric.name == Meters.PINECONE_DB_USAGE_READ_UNITS:
                     found_read_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 6
-                        # Note: server.address not available in Pinecone v5+ metrics
+                        assert (
+                            data_point.attributes["server.address"]
+                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        )
 
                 if metric.name == Meters.PINECONE_DB_USAGE_WRITE_UNITS:
                     found_write_units_metric = True
                     for data_point in metric.data.data_points:
                         assert data_point.value == 0
-                        # Note: server.address not available in Pinecone v5+ metrics
+                        assert (
+                            data_point.attributes["server.address"]
+                            == "https://gen-qa-openai-fast-90c5d9e.svc.gcp-starter.pinecone.io"
+                        )
 
     assert found_query_duration_metric is True
     assert found_scores_metric is True
