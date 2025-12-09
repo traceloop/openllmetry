@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field
+from traceloop.sdk.evaluator.config import EvaluatorDetails
 
-EvaluatorVersion = str
-EvaluatorSlug = str
-EvaluatorDetails = Union[EvaluatorSlug, Tuple[EvaluatorSlug, EvaluatorVersion]]
+EvaluatorSpec = Union[str, EvaluatorDetails]
 
 
 class TaskResponse(BaseModel):
