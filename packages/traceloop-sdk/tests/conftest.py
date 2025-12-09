@@ -231,3 +231,9 @@ def datasets():
 
     http = HTTPClient(base_url=base_url, api_key=api_key, version="1.0.0")
     return Datasets(http)
+
+
+@pytest.fixture(scope="session")
+def anyio_backend():
+    """Force anyio to use only asyncio backend."""
+    return "asyncio"
