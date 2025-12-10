@@ -82,10 +82,12 @@ async def realtime_text_conversation():
             elif event.type == "response.text.done":
                 print()  # newline after response
             elif event.type == "response.done":
-                print(f"\n[Response completed]")
+                print("\n[Response completed]")
                 if hasattr(event.response, "usage"):
                     usage = event.response.usage
-                    print(f"Usage: input={usage.input_tokens}, output={usage.output_tokens}")
+                    print(
+                        f"Usage: input={usage.input_tokens}, output={usage.output_tokens}"
+                    )
                 break
             elif event.type == "error":
                 print(f"Error: {event.error}")
@@ -138,7 +140,9 @@ async def realtime_multi_turn_conversation():
             item={
                 "type": "message",
                 "role": "user",
-                "content": [{"type": "input_text", "text": "And what is that times 3?"}],
+                "content": [
+                    {"type": "input_text", "text": "And what is that times 3?"}
+                ],
             }
         )
         await connection.response.create()
@@ -197,7 +201,9 @@ async def realtime_with_tools():
             item={
                 "type": "message",
                 "role": "user",
-                "content": [{"type": "input_text", "text": "What's the weather in Paris?"}],
+                "content": [
+                    {"type": "input_text", "text": "What's the weather in Paris?"}
+                ],
             }
         )
         await connection.response.create()
