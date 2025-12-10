@@ -59,119 +59,38 @@ class RealtimeSessionState:
         self.trace_context = None
 
 
-class RealtimeConnectionWrapper:
-    """
-    Wrapper for OpenAI Realtime connection that instruments events.
+class RealtimeEventProcessor:
+    """Shared event processing logic for realtime connections."""
 
-    Wraps the connection object returned by client.beta.realtime.connect()
-    to capture telemetry for session lifecycle and response cycles.
-    """
-
-    def __init__(self, connection, state: RealtimeSessionState):
-        self._connection = connection
+    def __init__(self, state: RealtimeSessionState):
         self._state = state
-        self._closed = False
-
-    def __getattr__(self, name):
-        """Delegate attribute access to the wrapped connection."""
-        return getattr(self._connection, name)
-
-    @property
-    def session(self):
-        """Return a wrapped session object."""
-        return RealtimeSessionWrapper(self._connection.session, self._state)
-
-    @property
-    def conversation(self):
-        """Return a wrapped conversation object."""
-        return RealtimeConversationWrapper(self._connection.conversation, self._state)
-
-    @property
-    def response(self):
-        """Return a wrapped response object."""
-        return RealtimeResponseWrapper(self._connection.response, self._state)
-
-    async def recv(self):
-        """Receive and process an event."""
-        event = await self._connection.recv()
-        self._process_event(event)
-        return event
-
-    def recv_bytes(self):
-        """Delegate to wrapped connection."""
-        return self._connection.recv_bytes()
-
-    async def send(self, event):
-        """Send an event, tracking response.create."""
-        self._process_outgoing_event(event)
-        return await self._connection.send(event)
-
-    def __aiter__(self):
-        """Return async iterator for events."""
-        return RealtimeEventIterator(self._connection, self._state)
-
-    async def close(self):
-        """Close the connection and end the session span."""
-        if not self._closed:
-            self._closed = True
-            self._end_session_span()
-        return await self._connection.close()
-
-    async def __aenter__(self):
-        """Async context manager entry."""
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
-        if not self._closed:
-            self._closed = True
-            if exc_type is not None:
-                self._handle_error(exc_val)
-            self._end_session_span()
-        if hasattr(self._connection, "__aexit__"):
-            return await self._connection.__aexit__(exc_type, exc_val, exc_tb)
-        await self._connection.close()
-        return False
 
     @dont_throw
-    def _process_event(self, event):
+    def process_event(self, event):
         """Process incoming server events."""
         event_type = getattr(event, "type", None)
         if not event_type:
             return
 
         if event_type == "session.created":
-            self._handle_session_created(event)
+            self.handle_session_created(event)
         elif event_type == "session.updated":
-            self._handle_session_updated(event)
+            self.handle_session_updated(event)
         elif event_type == "response.created":
-            self._handle_response_created(event)
+            self.handle_response_created(event)
         elif event_type == "response.text.delta":
-            self._handle_text_delta(event)
+            self.handle_text_delta(event)
         elif event_type == "response.audio_transcript.delta":
-            self._handle_audio_transcript_delta(event)
+            self.handle_audio_transcript_delta(event)
         elif event_type == "response.function_call_arguments.done":
-            self._handle_function_call_done(event)
+            self.handle_function_call_done(event)
         elif event_type == "response.done":
-            self._handle_response_done(event)
+            self.handle_response_done(event)
         elif event_type == "error":
-            self._handle_error_event(event)
+            self.handle_error_event(event)
 
     @dont_throw
-    def _process_outgoing_event(self, event):
-        """Process outgoing client events."""
-        if isinstance(event, dict):
-            event_type = event.get("type")
-        else:
-            event_type = getattr(event, "type", None)
-
-        if event_type == "response.create":
-            self._start_response_span()
-        elif event_type == "conversation.item.create":
-            self._track_input(event)
-
-    @dont_throw
-    def _handle_session_created(self, event):
+    def handle_session_created(self, event):
         """Handle session.created event."""
         if hasattr(event, "session"):
             session = event.session
@@ -190,11 +109,13 @@ class RealtimeConnectionWrapper:
             )
 
     @dont_throw
-    def _handle_session_updated(self, event):
+    def handle_session_updated(self, event):
         """Handle session.updated event."""
         if hasattr(event, "session"):
             session = event.session
-            session_dict = model_as_dict(session) if hasattr(session, "__dict__") else {}
+            session_dict = (
+                model_as_dict(session) if hasattr(session, "__dict__") else {}
+            )
             self._state.session_config.update(session_dict)
 
             if self._state.session_span and self._state.session_span.is_recording():
@@ -212,25 +133,29 @@ class RealtimeConnectionWrapper:
                     )
 
     @dont_throw
-    def _handle_response_created(self, event):
+    def handle_response_created(self, event, start_span_if_none: bool = False):
         """Handle response.created event - response cycle started."""
         if hasattr(event, "response") and hasattr(event.response, "id"):
             self._state.current_response_id = event.response.id
 
+        # Optionally start span if not already started (used by iterator)
+        if start_span_if_none and self._state.response_span is None:
+            self.start_response_span()
+
     @dont_throw
-    def _handle_text_delta(self, event):
+    def handle_text_delta(self, event):
         """Handle response.text.delta event - accumulate text."""
         if hasattr(event, "delta"):
             self._state.accumulated_text += event.delta
 
     @dont_throw
-    def _handle_audio_transcript_delta(self, event):
+    def handle_audio_transcript_delta(self, event):
         """Handle response.audio_transcript.delta event."""
         if hasattr(event, "delta"):
             self._state.accumulated_audio_transcript += event.delta
 
     @dont_throw
-    def _handle_function_call_done(self, event):
+    def handle_function_call_done(self, event):
         """Handle response.function_call_arguments.done event."""
         self._state.function_calls.append({
             "name": getattr(event, "name", None),
@@ -239,7 +164,7 @@ class RealtimeConnectionWrapper:
         })
 
     @dont_throw
-    def _handle_response_done(self, event):
+    def handle_response_done(self, event):
         """Handle response.done event - end the response span."""
         if self._state.response_span is None:
             return
@@ -339,10 +264,10 @@ class RealtimeConnectionWrapper:
             span.set_status(Status(StatusCode.OK))
 
         span.end()
-        self._reset_response_state()
+        self.reset_response_state()
 
     @dont_throw
-    def _handle_error_event(self, event):
+    def handle_error_event(self, event):
         """Handle error event."""
         error_msg = str(getattr(event, "error", "Unknown error"))
 
@@ -350,19 +275,21 @@ class RealtimeConnectionWrapper:
             self._state.response_span.set_status(Status(StatusCode.ERROR, error_msg))
             self._state.response_span.record_exception(Exception(error_msg))
             self._state.response_span.end()
-            self._reset_response_state()
+            self.reset_response_state()
 
-    def _start_response_span(self):
+    def start_response_span(self, end_existing: bool = False, set_input: bool = False):
         """Start a new response span."""
         if self._state.response_span is not None:
-            # End any existing response span with OK status
-            self._state.response_span.set_status(Status(StatusCode.OK))
-            self._state.response_span.end()
-            self._reset_response_state()
+            if end_existing:
+                # End any existing response span with OK status
+                self._state.response_span.set_status(Status(StatusCode.OK))
+                self._state.response_span.end()
+                self.reset_response_state()
+            else:
+                return  # Don't start a new span if one exists and end_existing=False
 
         self._state.response_start_time = time.time_ns()
 
-        # Use session span context as parent if available
         ctx = self._state.trace_context or context_api.get_current()
 
         self._state.response_span = self._state.tracer.start_span(
@@ -389,8 +316,8 @@ class RealtimeConnectionWrapper:
                 "realtime",
             )
 
-            # Set input if available
-            if should_send_prompts() and self._state.input_text:
+            # Set input if available and requested
+            if set_input and should_send_prompts() and self._state.input_text:
                 _set_span_attribute(
                     self._state.response_span,
                     f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
@@ -401,6 +328,107 @@ class RealtimeConnectionWrapper:
                     f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
                     "user",
                 )
+
+    def reset_response_state(self):
+        """Reset state for the next response cycle."""
+        self._state.response_span = None
+        self._state.response_start_time = None
+        self._state.current_response_id = None
+        self._state.accumulated_text = ""
+        self._state.accumulated_audio_transcript = ""
+        self._state.function_calls = []
+        self._state.input_text = ""
+
+
+class RealtimeConnectionWrapper:
+    """
+    Wrapper for OpenAI Realtime connection that instruments events.
+
+    Wraps the connection object returned by client.beta.realtime.connect()
+    to capture telemetry for session lifecycle and response cycles.
+    """
+
+    def __init__(self, connection, state: RealtimeSessionState):
+        self._connection = connection
+        self._state = state
+        self._processor = RealtimeEventProcessor(state)
+        self._closed = False
+
+    def __getattr__(self, name):
+        """Delegate attribute access to the wrapped connection."""
+        return getattr(self._connection, name)
+
+    @property
+    def session(self):
+        """Return a wrapped session object."""
+        return RealtimeSessionWrapper(self._connection.session, self._state)
+
+    @property
+    def conversation(self):
+        """Return a wrapped conversation object."""
+        return RealtimeConversationWrapper(self._connection.conversation, self._state)
+
+    @property
+    def response(self):
+        """Return a wrapped response object."""
+        return RealtimeResponseWrapper(
+            self._connection.response, self._state, self._processor
+        )
+
+    async def recv(self):
+        """Receive and process an event."""
+        event = await self._connection.recv()
+        self._processor.process_event(event)
+        return event
+
+    def recv_bytes(self):
+        """Delegate to wrapped connection."""
+        return self._connection.recv_bytes()
+
+    async def send(self, event):
+        """Send an event, tracking response.create."""
+        self._process_outgoing_event(event)
+        return await self._connection.send(event)
+
+    def __aiter__(self):
+        """Return async iterator for events."""
+        return RealtimeEventIterator(self._connection, self._state, self._processor)
+
+    async def close(self):
+        """Close the connection and end the session span."""
+        if not self._closed:
+            self._closed = True
+            self._end_session_span()
+        return await self._connection.close()
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        if not self._closed:
+            self._closed = True
+            if exc_type is not None:
+                self._handle_error(exc_val)
+            self._end_session_span()
+        if hasattr(self._connection, "__aexit__"):
+            return await self._connection.__aexit__(exc_type, exc_val, exc_tb)
+        await self._connection.close()
+        return False
+
+    @dont_throw
+    def _process_outgoing_event(self, event):
+        """Process outgoing client events."""
+        if isinstance(event, dict):
+            event_type = event.get("type")
+        else:
+            event_type = getattr(event, "type", None)
+
+        if event_type == "response.create":
+            self._processor.start_response_span(end_existing=True, set_input=True)
+        elif event_type == "conversation.item.create":
+            self._track_input(event)
 
     @dont_throw
     def _track_input(self, event):
@@ -420,16 +448,6 @@ class RealtimeConnectionWrapper:
                         # Audio input - could capture transcript if available
                         pass
 
-    def _reset_response_state(self):
-        """Reset state for the next response cycle."""
-        self._state.response_span = None
-        self._state.response_start_time = None
-        self._state.current_response_id = None
-        self._state.accumulated_text = ""
-        self._state.accumulated_audio_transcript = ""
-        self._state.function_calls = []
-        self._state.input_text = ""
-
     def _handle_error(self, error):
         """Handle connection errors."""
         if self._state.response_span and self._state.response_span.is_recording():
@@ -438,7 +456,7 @@ class RealtimeConnectionWrapper:
             )
             self._state.response_span.record_exception(error)
             self._state.response_span.end()
-            self._reset_response_state()
+            self._processor.reset_response_state()
 
         if self._state.session_span and self._state.session_span.is_recording():
             self._state.session_span.set_status(
@@ -456,9 +474,15 @@ class RealtimeConnectionWrapper:
 class RealtimeEventIterator:
     """Async iterator that wraps connection events and processes them."""
 
-    def __init__(self, connection, state: RealtimeSessionState):
+    def __init__(
+        self,
+        connection,
+        state: RealtimeSessionState,
+        processor: RealtimeEventProcessor,
+    ):
         self._connection = connection
         self._state = state
+        self._processor = processor
         self._iterator = connection.__aiter__()
 
     def __aiter__(self):
@@ -476,215 +500,12 @@ class RealtimeEventIterator:
         if not event_type:
             return
 
-        if event_type == "session.created":
-            self._handle_session_created(event)
-        elif event_type == "session.updated":
-            self._handle_session_updated(event)
-        elif event_type == "response.created":
-            self._handle_response_created(event)
-        elif event_type == "response.text.delta":
-            if hasattr(event, "delta"):
-                self._state.accumulated_text += event.delta
-        elif event_type == "response.audio_transcript.delta":
-            if hasattr(event, "delta"):
-                self._state.accumulated_audio_transcript += event.delta
-        elif event_type == "response.function_call_arguments.done":
-            self._state.function_calls.append({
-                "name": getattr(event, "name", None),
-                "call_id": getattr(event, "call_id", None),
-                "arguments": getattr(event, "arguments", None),
-            })
-        elif event_type == "response.done":
-            self._handle_response_done(event)
-        elif event_type == "error":
-            self._handle_error_event(event)
-
-    def _handle_session_created(self, event):
-        """Handle session.created event."""
-        if hasattr(event, "session"):
-            session = event.session
-            if hasattr(session, "model"):
-                self._state.model = session.model
-            if hasattr(session, "modalities"):
-                self._state.session_config["modalities"] = session.modalities
-
-        if self._state.session_span and self._state.session_span.is_recording():
-            _set_span_attribute(
-                self._state.session_span,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL,
-                self._state.model,
-            )
-
-    def _handle_session_updated(self, event):
-        """Handle session.updated event."""
-        if hasattr(event, "session"):
-            session = event.session
-            if self._state.session_span and self._state.session_span.is_recording():
-                if hasattr(session, "temperature") and session.temperature is not None:
-                    _set_span_attribute(
-                        self._state.session_span,
-                        GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
-                        session.temperature,
-                    )
-
-    def _handle_response_created(self, event):
-        """Handle response.created - start response span if not already started."""
-        if hasattr(event, "response") and hasattr(event.response, "id"):
-            self._state.current_response_id = event.response.id
-
-        # Start span if not already started by explicit response.create call
-        if self._state.response_span is None:
-            self._start_response_span()
-
-    def _start_response_span(self):
-        """Start a new response span."""
-        self._state.response_start_time = time.time_ns()
-
-        ctx = self._state.trace_context or context_api.get_current()
-
-        self._state.response_span = self._state.tracer.start_span(
-            SPAN_NAME_RESPONSE,
-            kind=SpanKind.CLIENT,
-            start_time=self._state.response_start_time,
-            context=ctx,
-        )
-
-        if self._state.response_span.is_recording():
-            _set_span_attribute(
-                self._state.response_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
-                "openai",
-            )
-            _set_span_attribute(
-                self._state.response_span,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL,
-                self._state.model,
-            )
-            _set_span_attribute(
-                self._state.response_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
-                "realtime",
-            )
-
-    @dont_throw
-    def _handle_response_done(self, event):
-        """Handle response.done event."""
-        if self._state.response_span is None:
-            return
-
-        span = self._state.response_span
-
-        if span.is_recording():
-            if hasattr(event, "response"):
-                response = event.response
-                _set_span_attribute(
-                    span,
-                    GenAIAttributes.GEN_AI_RESPONSE_ID,
-                    getattr(response, "id", None),
-                )
-
-                if hasattr(response, "usage") and response.usage:
-                    usage = response.usage
-                    _set_span_attribute(
-                        span,
-                        GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                        getattr(usage, "input_tokens", None),
-                    )
-                    _set_span_attribute(
-                        span,
-                        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                        getattr(usage, "output_tokens", None),
-                    )
-                    total = (getattr(usage, "input_tokens", 0) or 0) + (
-                        getattr(usage, "output_tokens", 0) or 0
-                    )
-                    _set_span_attribute(
-                        span,
-                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                        total,
-                    )
-
-                if should_send_prompts():
-                    # Always set role for completions
-                    _set_span_attribute(
-                        span,
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                        "assistant",
-                    )
-
-                    # Set content (text or audio transcript)
-                    if self._state.accumulated_text:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                            self._state.accumulated_text,
-                        )
-                    elif self._state.accumulated_audio_transcript:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                            self._state.accumulated_audio_transcript,
-                        )
-
-                    # Set tool calls and finish_reason
-                    if self._state.function_calls:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
-                            "tool_calls",
-                        )
-                        for i, call in enumerate(self._state.function_calls):
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.type",
-                                "function",
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
-                                call.get("name"),
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
-                                call.get("call_id"),
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
-                                call.get("arguments"),
-                            )
-                    else:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
-                            "stop",
-                        )
-
-            span.set_status(Status(StatusCode.OK))
-
-        span.end()
-        self._reset_response_state()
-
-    def _handle_error_event(self, event):
-        """Handle error event."""
-        error_msg = str(getattr(event, "error", "Unknown error"))
-
-        if self._state.response_span and self._state.response_span.is_recording():
-            self._state.response_span.set_status(Status(StatusCode.ERROR, error_msg))
-            self._state.response_span.record_exception(Exception(error_msg))
-            self._state.response_span.end()
-            self._reset_response_state()
-
-    def _reset_response_state(self):
-        """Reset state for the next response cycle."""
-        self._state.response_span = None
-        self._state.response_start_time = None
-        self._state.current_response_id = None
-        self._state.accumulated_text = ""
-        self._state.accumulated_audio_transcript = ""
-        self._state.function_calls = []
-        self._state.input_text = ""
+        # For response.created, start span if not already started
+        if event_type == "response.created":
+            self._processor.handle_response_created(event, start_span_if_none=True)
+        else:
+            # Delegate all other events to the shared processor
+            self._processor.process_event(event)
 
 
 class RealtimeSessionWrapper:
@@ -771,9 +592,15 @@ class RealtimeConversationItemWrapper:
 class RealtimeResponseWrapper:
     """Wrapper for connection.response to track response lifecycle."""
 
-    def __init__(self, response, state: RealtimeSessionState):
+    def __init__(
+        self,
+        response,
+        state: RealtimeSessionState,
+        processor: RealtimeEventProcessor,
+    ):
         self._response = response
         self._state = state
+        self._processor = processor
 
     def __getattr__(self, name):
         return getattr(self._response, name)
@@ -781,7 +608,7 @@ class RealtimeResponseWrapper:
     async def create(self, **kwargs):
         """Wrap response.create to start a response span."""
         # Start the response span before making the call
-        self._start_response_span()
+        self._processor.start_response_span(end_existing=True, set_input=True)
 
         return await self._response.create(**kwargs)
 
@@ -796,68 +623,9 @@ class RealtimeResponseWrapper:
             )
             self._state.response_span.set_attribute("response.cancelled", True)
             self._state.response_span.end()
-            self._reset_response_state()
+            self._processor.reset_response_state()
 
         return result
-
-    def _start_response_span(self):
-        """Start a new response span."""
-        if self._state.response_span is not None:
-            # End any existing response span with OK status
-            self._state.response_span.set_status(Status(StatusCode.OK))
-            self._state.response_span.end()
-            self._reset_response_state()
-
-        self._state.response_start_time = time.time_ns()
-
-        ctx = self._state.trace_context or context_api.get_current()
-
-        self._state.response_span = self._state.tracer.start_span(
-            SPAN_NAME_RESPONSE,
-            kind=SpanKind.CLIENT,
-            start_time=self._state.response_start_time,
-            context=ctx,
-        )
-
-        if self._state.response_span.is_recording():
-            _set_span_attribute(
-                self._state.response_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
-                "openai",
-            )
-            _set_span_attribute(
-                self._state.response_span,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL,
-                self._state.model,
-            )
-            _set_span_attribute(
-                self._state.response_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
-                "realtime",
-            )
-
-            # Set input if available
-            if should_send_prompts() and self._state.input_text:
-                _set_span_attribute(
-                    self._state.response_span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                    self._state.input_text,
-                )
-                _set_span_attribute(
-                    self._state.response_span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
-                    "user",
-                )
-
-    def _reset_response_state(self):
-        """Reset state for the next response cycle."""
-        self._state.response_span = None
-        self._state.response_start_time = None
-        self._state.current_response_id = None
-        self._state.accumulated_text = ""
-        self._state.accumulated_audio_transcript = ""
-        self._state.function_calls = []
-        self._state.input_text = ""
 
 
 class RealtimeConnectionManagerWrapper:

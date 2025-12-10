@@ -95,6 +95,7 @@ class TestRealtimeWrappers:
         """Test processing session.created event."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
             RealtimeEventIterator,
+            RealtimeEventProcessor,
             RealtimeSessionState,
         )
 
@@ -105,6 +106,7 @@ class TestRealtimeWrappers:
 
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.session_span = mock_span
+        processor = RealtimeEventProcessor(state)
 
         # Create mock event
         session = MockRealtimeSession(model="gpt-4o-realtime-preview-2024-12-17")
@@ -112,7 +114,7 @@ class TestRealtimeWrappers:
 
         # Create iterator and process event
         mock_connection = MagicMock()
-        iterator = RealtimeEventIterator(mock_connection, state)
+        iterator = RealtimeEventIterator(mock_connection, state, processor)
         iterator._process_event(event)
 
         # Verify state was updated
@@ -123,6 +125,7 @@ class TestRealtimeWrappers:
         """Test processing response.done event."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
             RealtimeEventIterator,
+            RealtimeEventProcessor,
             RealtimeSessionState,
         )
 
@@ -134,6 +137,7 @@ class TestRealtimeWrappers:
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.response_span = mock_span
         state.accumulated_text = "Hello, world!"
+        processor = RealtimeEventProcessor(state)
 
         # Create mock response with usage
         usage = MockRealtimeUsage(input_tokens=15, output_tokens=25)
@@ -142,7 +146,7 @@ class TestRealtimeWrappers:
 
         # Create iterator and process event
         mock_connection = MagicMock()
-        iterator = RealtimeEventIterator(mock_connection, state)
+        iterator = RealtimeEventIterator(mock_connection, state, processor)
         iterator._process_event(event)
 
         # Verify span was ended
@@ -157,19 +161,21 @@ class TestRealtimeWrappers:
         """Test processing response.text.delta event."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
             RealtimeEventIterator,
+            RealtimeEventProcessor,
             RealtimeSessionState,
         )
 
         mock_tracer = MagicMock()
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.accumulated_text = "Hello"
+        processor = RealtimeEventProcessor(state)
 
         # Create mock delta event
         event = MockRealtimeEvent("response.text.delta", delta=", world!")
 
         # Create iterator and process event
         mock_connection = MagicMock()
-        iterator = RealtimeEventIterator(mock_connection, state)
+        iterator = RealtimeEventIterator(mock_connection, state, processor)
         iterator._process_event(event)
 
         # Verify text was accumulated
@@ -180,11 +186,13 @@ class TestRealtimeWrappers:
         """Test processing response.function_call_arguments.done event."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
             RealtimeEventIterator,
+            RealtimeEventProcessor,
             RealtimeSessionState,
         )
 
         mock_tracer = MagicMock()
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
+        processor = RealtimeEventProcessor(state)
 
         # Create mock function call event
         event = MockRealtimeEvent(
@@ -196,7 +204,7 @@ class TestRealtimeWrappers:
 
         # Create iterator and process event
         mock_connection = MagicMock()
-        iterator = RealtimeEventIterator(mock_connection, state)
+        iterator = RealtimeEventIterator(mock_connection, state, processor)
         iterator._process_event(event)
 
         # Verify function call was tracked
@@ -210,6 +218,7 @@ class TestRealtimeWrappers:
         """Test processing error event."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
             RealtimeEventIterator,
+            RealtimeEventProcessor,
             RealtimeSessionState,
         )
 
@@ -219,13 +228,14 @@ class TestRealtimeWrappers:
 
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.response_span = mock_span
+        processor = RealtimeEventProcessor(state)
 
         # Create mock error event
         event = MockRealtimeEvent("error", error="Something went wrong")
 
         # Create iterator and process event
         mock_connection = MagicMock()
-        iterator = RealtimeEventIterator(mock_connection, state)
+        iterator = RealtimeEventIterator(mock_connection, state, processor)
         iterator._process_event(event)
 
         # Verify error was recorded
@@ -265,6 +275,7 @@ class TestRealtimeSpanAttributes:
     async def test_response_span_has_correct_attributes(self):
         """Test that response spans have correct attributes."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
+            RealtimeEventProcessor,
             RealtimeSessionState,
             RealtimeResponseWrapper,
         )
@@ -276,11 +287,12 @@ class TestRealtimeSpanAttributes:
 
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.trace_context = None
+        processor = RealtimeEventProcessor(state)
 
         # Create response wrapper
         mock_response = AsyncMock()
         mock_response.create = AsyncMock()
-        wrapper = RealtimeResponseWrapper(mock_response, state)
+        wrapper = RealtimeResponseWrapper(mock_response, state, processor)
 
         # Call create
         await wrapper.create()
@@ -816,6 +828,7 @@ class TestRealtimeResponseWrapper:
     async def test_response_cancel_ends_span(self):
         """Test that response.cancel properly ends the span."""
         from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
+            RealtimeEventProcessor,
             RealtimeResponseWrapper,
             RealtimeSessionState,
         )
@@ -827,12 +840,13 @@ class TestRealtimeResponseWrapper:
 
         state = RealtimeSessionState(mock_tracer, "gpt-4o-realtime-preview")
         state.trace_context = None
+        processor = RealtimeEventProcessor(state)
 
         mock_response = MagicMock()
         mock_response.create = AsyncMock()
         mock_response.cancel = AsyncMock()
 
-        wrapper = RealtimeResponseWrapper(mock_response, state)
+        wrapper = RealtimeResponseWrapper(mock_response, state, processor)
 
         # Start a response
         await wrapper.create()
