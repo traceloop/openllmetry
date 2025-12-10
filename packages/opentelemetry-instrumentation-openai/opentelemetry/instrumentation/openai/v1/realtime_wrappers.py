@@ -18,6 +18,7 @@ import time
 from typing import Optional
 
 from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -36,8 +37,8 @@ from opentelemetry.instrumentation.openai.utils import (
 )
 
 
-SPAN_NAME_SESSION = "openai.realtime"
-SPAN_NAME_RESPONSE = "openai.realtime.response"
+SPAN_NAME_SESSION = "openai.session"
+SPAN_NAME_RESPONSE = "openai.realtime"
 
 
 class RealtimeSessionState:
@@ -279,16 +280,19 @@ class RealtimeConnectionWrapper:
 
                 # Set output content if tracing is enabled
                 if should_send_prompts():
+                    # Always set role for completions
+                    _set_span_attribute(
+                        span,
+                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
+                        "assistant",
+                    )
+
+                    # Set content (text or audio transcript)
                     if self._state.accumulated_text:
                         _set_span_attribute(
                             span,
                             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
                             self._state.accumulated_text,
-                        )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                            "assistant",
                         )
                     elif self._state.accumulated_audio_transcript:
                         _set_span_attribute(
@@ -296,28 +300,40 @@ class RealtimeConnectionWrapper:
                             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
                             self._state.accumulated_audio_transcript,
                         )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                            "assistant",
-                        )
 
-                    # Set tool calls
-                    for i, call in enumerate(self._state.function_calls):
+                    # Set tool calls and finish_reason
+                    if self._state.function_calls:
                         _set_span_attribute(
                             span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
-                            call.get("name"),
+                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
+                            "tool_calls",
                         )
+                        for i, call in enumerate(self._state.function_calls):
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.type",
+                                "function",
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
+                                call.get("name"),
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
+                                call.get("call_id"),
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
+                                call.get("arguments"),
+                            )
+                    else:
                         _set_span_attribute(
                             span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
-                            call.get("call_id"),
-                        )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
-                            call.get("arguments"),
+                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
+                            "stop",
                         )
 
             span.set_status(Status(StatusCode.OK))
@@ -588,16 +604,19 @@ class RealtimeEventIterator:
                     )
 
                 if should_send_prompts():
+                    # Always set role for completions
+                    _set_span_attribute(
+                        span,
+                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
+                        "assistant",
+                    )
+
+                    # Set content (text or audio transcript)
                     if self._state.accumulated_text:
                         _set_span_attribute(
                             span,
                             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
                             self._state.accumulated_text,
-                        )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                            "assistant",
                         )
                     elif self._state.accumulated_audio_transcript:
                         _set_span_attribute(
@@ -605,27 +624,40 @@ class RealtimeEventIterator:
                             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
                             self._state.accumulated_audio_transcript,
                         )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                            "assistant",
-                        )
 
-                    for i, call in enumerate(self._state.function_calls):
+                    # Set tool calls and finish_reason
+                    if self._state.function_calls:
                         _set_span_attribute(
                             span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
-                            call.get("name"),
+                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
+                            "tool_calls",
                         )
+                        for i, call in enumerate(self._state.function_calls):
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.type",
+                                "function",
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
+                                call.get("name"),
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
+                                call.get("call_id"),
+                            )
+                            _set_span_attribute(
+                                span,
+                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
+                                call.get("arguments"),
+                            )
+                    else:
                         _set_span_attribute(
                             span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
-                            call.get("call_id"),
-                        )
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
-                            call.get("arguments"),
+                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
+                            "stop",
                         )
 
             span.set_status(Status(StatusCode.OK))
@@ -850,12 +882,17 @@ class RealtimeConnectionManagerWrapper:
 
         # Start the session span
         self._state = RealtimeSessionState(self._tracer, self._model)
-        self._state.trace_context = context_api.get_current()
+        parent_context = context_api.get_current()
 
         self._state.session_span = self._tracer.start_span(
             SPAN_NAME_SESSION,
             kind=SpanKind.CLIENT,
-            context=self._state.trace_context,
+            context=parent_context,
+        )
+
+        # Set trace_context to include the session span as parent for response spans
+        self._state.trace_context = trace.set_span_in_context(
+            self._state.session_span, parent_context
         )
 
         if self._state.session_span.is_recording():

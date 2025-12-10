@@ -290,7 +290,7 @@ class TestRealtimeSpanAttributes:
         call_kwargs = mock_tracer.start_span.call_args
 
         # Verify span name
-        assert call_kwargs[0][0] == "openai.realtime.response"
+        assert call_kwargs[0][0] == "openai.realtime"
 
     @pytest.mark.asyncio
     async def test_session_span_has_correct_attributes(self):
@@ -321,7 +321,7 @@ class TestRealtimeSpanAttributes:
         call_kwargs = mock_tracer.start_span.call_args
 
         # Verify span name
-        assert call_kwargs[0][0] == "openai.realtime"
+        assert call_kwargs[0][0] == "openai.session"
 
 
 class TestRealtimeConnectionWrapper:
@@ -456,18 +456,68 @@ class TestRealtimeFullFlow:
 
         spans = exporter.get_finished_spans()
         span_names = [s.name for s in spans]
+        assert "openai.session" in span_names
         assert "openai.realtime" in span_names
-        assert "openai.realtime.response" in span_names
 
-        session_span = next(s for s in spans if s.name == "openai.realtime")
+        session_span = next(s for s in spans if s.name == "openai.session")
         assert session_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
         assert session_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-realtime-preview"
         assert session_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
         assert session_span.status.status_code == StatusCode.OK
 
-        response_span = next(s for s in spans if s.name == "openai.realtime.response")
+        response_span = next(s for s in spans if s.name == "openai.realtime")
         assert response_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
         assert response_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
+
+        # Verify finish_reason is "stop" for text response without tool calls
+        attrs = dict(response_span.attributes)
+        assert attrs.get("gen_ai.completion.0.finish_reason") == "stop"
+
+    @pytest.mark.asyncio
+    async def test_response_span_is_child_of_session_span(self, tracer_provider_and_exporter):
+        """Test that response spans are properly nested under session spans."""
+        from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
+            RealtimeConnectionManagerWrapper,
+        )
+
+        provider, exporter = tracer_provider_and_exporter
+        tracer = provider.get_tracer("test")
+
+        events = [
+            MockRealtimeEvent("session.created", session=MockRealtimeSession()),
+            MockRealtimeEvent("response.created", response=MockRealtimeResponse()),
+            MockRealtimeEvent("response.text.delta", delta="Hello"),
+            MockRealtimeEvent("response.done", response=MockRealtimeResponse(
+                usage=MockRealtimeUsage(input_tokens=5, output_tokens=10)
+            )),
+        ]
+
+        mock_connection = MockAsyncIterableConnection(events)
+        mock_manager = AsyncMock()
+        mock_manager.__aenter__ = AsyncMock(return_value=mock_connection)
+        mock_manager.__aexit__ = AsyncMock(return_value=None)
+        wrapper = RealtimeConnectionManagerWrapper(
+            mock_manager, tracer, "gpt-4o-realtime-preview"
+        )
+
+        async with wrapper as conn:
+            await conn.response.create()
+            async for event in conn:
+                if event.type == "response.done":
+                    break
+
+        spans = exporter.get_finished_spans()
+        session_span = next(s for s in spans if s.name == "openai.session")
+        response_span = next(s for s in spans if s.name == "openai.realtime")
+
+        # Verify parent-child relationship
+        assert response_span.parent is not None, "Response span should have a parent"
+        assert response_span.parent.span_id == session_span.context.span_id, (
+            "Response span's parent should be the session span"
+        )
+        assert response_span.context.trace_id == session_span.context.trace_id, (
+            "Response span should be in the same trace as session span"
+        )
 
     @pytest.mark.asyncio
     async def test_multi_turn_conversation_creates_multiple_spans(self, tracer_provider_and_exporter):
@@ -510,7 +560,7 @@ class TestRealtimeFullFlow:
                         break
 
         spans = exporter.get_finished_spans()
-        response_spans = [s for s in spans if s.name == "openai.realtime.response"]
+        response_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(response_spans) == 2
 
     @pytest.mark.asyncio
@@ -552,8 +602,17 @@ class TestRealtimeFullFlow:
                     break
 
         spans = exporter.get_finished_spans()
-        response_span = next(s for s in spans if s.name == "openai.realtime.response")
+        response_span = next(s for s in spans if s.name == "openai.realtime")
         assert response_span.status.status_code == StatusCode.OK
+
+        # Verify tool call attributes are set
+        attrs = dict(response_span.attributes)
+        assert attrs.get("gen_ai.completion.0.role") == "assistant"
+        assert attrs.get("gen_ai.completion.0.finish_reason") == "tool_calls"
+        assert attrs.get("gen_ai.completion.0.tool_calls.0.type") == "function"
+        assert attrs.get("gen_ai.completion.0.tool_calls.0.name") == "get_weather"
+        assert attrs.get("gen_ai.completion.0.tool_calls.0.id") == "call_123"
+        assert attrs.get("gen_ai.completion.0.tool_calls.0.arguments") == '{"location": "NYC"}'
 
     @pytest.mark.asyncio
     async def test_error_handling_in_response(self, tracer_provider_and_exporter):
@@ -586,7 +645,7 @@ class TestRealtimeFullFlow:
                     break
 
         spans = exporter.get_finished_spans()
-        response_span = next(s for s in spans if s.name == "openai.realtime.response")
+        response_span = next(s for s in spans if s.name == "openai.realtime")
         assert response_span.status.status_code == StatusCode.ERROR
 
     @pytest.mark.asyncio
@@ -615,7 +674,7 @@ class TestRealtimeFullFlow:
             pass
 
         spans = exporter.get_finished_spans()
-        session_span = next(s for s in spans if s.name == "openai.realtime")
+        session_span = next(s for s in spans if s.name == "openai.session")
         assert session_span.status.status_code == StatusCode.ERROR
 
 
