@@ -355,7 +355,8 @@ class RealtimeConnectionWrapper:
     def _start_response_span(self):
         """Start a new response span."""
         if self._state.response_span is not None:
-            # End any existing response span
+            # End any existing response span with OK status
+            self._state.response_span.set_status(Status(StatusCode.OK))
             self._state.response_span.end()
             self._reset_response_state()
 
@@ -802,7 +803,8 @@ class RealtimeResponseWrapper:
     def _start_response_span(self):
         """Start a new response span."""
         if self._state.response_span is not None:
-            # End any existing response span
+            # End any existing response span with OK status
+            self._state.response_span.set_status(Status(StatusCode.OK))
             self._state.response_span.end()
             self._reset_response_state()
 
@@ -941,7 +943,8 @@ class RealtimeConnectionManagerWrapper:
 
         finally:
             # Exit the underlying connection manager
-            return await self._connection_manager.__aexit__(exc_type, exc_val, exc_tb)
+            # Don't return the result - let any exception propagate naturally
+            await self._connection_manager.__aexit__(exc_type, exc_val, exc_tb)
 
 
 @_with_tracer_wrapper
