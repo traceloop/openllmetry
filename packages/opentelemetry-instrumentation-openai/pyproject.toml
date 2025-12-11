@@ -28,6 +28,7 @@ opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+mutagen = { version = "^1.47.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -49,6 +50,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 instruments = ["openai"]
+audio = ["mutagen"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 openai = "opentelemetry.instrumentation.openai:OpenAIInstrumentor"

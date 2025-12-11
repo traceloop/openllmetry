@@ -18,6 +18,10 @@ from opentelemetry.instrumentation.openai.shared.embeddings_wrappers import (
 from opentelemetry.instrumentation.openai.shared.image_gen_wrappers import (
     image_gen_metrics_wrapper,
 )
+from opentelemetry.instrumentation.openai.shared.audio_wrappers import (
+    atranscription_wrapper,
+    transcription_wrapper,
+)
 from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
 from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     assistants_create_wrapper,
@@ -247,6 +251,36 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             image_gen_metrics_wrapper(duration_histogram, image_gen_exception_counter),
         )
 
+        if is_metrics_enabled():
+            audio_transcription_exception_counter = meter.create_counter(
+                # name=Meters.LLM_AUDIO_TRANSCRIPTIONS_EXCEPTIONS, # TODO(Ata): come back here later when semconv is published
+                name='llm.openai.audio.transcriptions.exceptions',
+                unit="time",
+                description="Number of exceptions occurred during audio transcriptions operation",
+            )
+        else:
+            audio_transcription_exception_counter = None
+
+        wrap_function_wrapper(
+            "openai.resources.audio.transcriptions",
+            "Transcriptions.create",
+            transcription_wrapper(
+                tracer,
+                duration_histogram,
+                audio_transcription_exception_counter,
+            ),
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.audio.transcriptions",
+            "AsyncTranscriptions.create",
+            atranscription_wrapper(
+                tracer,
+                duration_histogram,
+                audio_transcription_exception_counter,
+            ),
+        )
+
         # Beta APIs may not be available consistently in all versions
         self._try_wrap(
             "openai.resources.beta.assistants",
@@ -338,6 +372,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         unwrap("openai.resources.completions", "AsyncCompletions.create")
         unwrap("openai.resources.embeddings", "AsyncEmbeddings.create")
         unwrap("openai.resources.images", "Images.generate")
+        unwrap("openai.resources.audio.transcriptions", "Transcriptions.create")
+        unwrap("openai.resources.audio.transcriptions", "AsyncTranscriptions.create")
 
         # Beta APIs may not be available consistently in all versions
         try:
