@@ -6,7 +6,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-
+        
 
 @pytest.mark.vcr
 def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
