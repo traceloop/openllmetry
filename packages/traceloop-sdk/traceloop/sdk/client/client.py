@@ -6,6 +6,7 @@ from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
+from traceloop.sdk.associations.associations import Associations
 import httpx
 
 
@@ -25,6 +26,7 @@ class Client:
     user_feedback: UserFeedback
     datasets: Datasets
     experiment: Experiment
+    associations: Associations
     _http: HTTPClient
     _async_http: httpx.AsyncClient
 
@@ -65,3 +67,4 @@ class Client:
         experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
         # TODO: Fix type - Experiment constructor should accept Optional[str]
         self.experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]
+        self.associations = Associations()

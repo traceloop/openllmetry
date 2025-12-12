@@ -33,6 +33,7 @@ from typing import Dict
 from traceloop.sdk.client.client import Client
 
 
+
 class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
         Path.home() / ".cache" / "traceloop" / "auto_created_key"
