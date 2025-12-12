@@ -1,3 +1,38 @@
+## v0.49.8 (2025-12-11)
+
+### Fix
+
+- **openai**: add support for realtime api (websockets) (#3511)
+- **ollama**: support Older Version Ollama (#3501)
+
+## v0.49.7 (2025-12-08)
+
+### Fix
+
+- **exp**: Add a real agent example (#3507)
+- **evals**: Add agent evaluators to made by traceloop (#3505)
+- **exp**: Add made by traceloop evaluators (#3503)
+- **traceloop-sdk**: Fixes gRPC exporter initialisation with insecure OTLP (#3481)
+
+## v0.49.6 (2025-12-01)
+
+### Fix
+
+- **agno**: add streaming support for Agent.run() and Agent.arun() (#3483)
+
+## v0.49.5 (2025-11-27)
+
+### Fix
+
+- **openai**: responses instrumentation broken traces for async streaming (#3475)
+- **mcp**: remove faulty logic of trying to deduce HTTP errors (#3477)
+
+## v0.49.4 (2025-11-27)
+
+### Fix
+
+- **exp**: Add run in github experiment  (#3459)
+
 ## v0.49.3 (2025-11-26)
 
 ### Fix

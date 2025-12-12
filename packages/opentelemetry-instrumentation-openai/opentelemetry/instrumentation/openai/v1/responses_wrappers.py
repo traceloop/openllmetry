@@ -179,6 +179,12 @@ class TracedData(pydantic.BaseModel):
     request_service_tier: Optional[str] = pydantic.Field(default=None)
     response_service_tier: Optional[str] = pydantic.Field(default=None)
 
+    # Trace context - to maintain trace continuity across async operations
+    trace_context: Any = pydantic.Field(default=None)
+
+    class Config:
+        arbitrary_types_allowed = True
+
 
 responses: dict[str, TracedData] = {}
 
@@ -499,10 +505,13 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
+            # Capture current trace context to maintain trace continuity
+            ctx = context_api.get_current()
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
+                context=ctx,
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
@@ -552,16 +561,22 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
                 request_service_tier=non_sentinel_kwargs.get("service_tier"),
                 response_service_tier=existing_data.get("response_service_tier"),
+                # Capture trace context to maintain continuity
+                trace_context=existing_data.get("trace_context", context_api.get_current()),
             )
         except Exception:
             traced_data = None
 
+        # Restore the original trace context to maintain trace continuity
+        ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
+               else context_api.get_current())
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=(
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -618,16 +633,21 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
             request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
+            # Capture trace context to maintain continuity across async operations
+            trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
     if parsed_response.status == "completed":
+        # Restore the original trace context to maintain trace continuity
+        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
@@ -651,10 +671,13 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
+            # Capture current trace context to maintain trace continuity
+            ctx = context_api.get_current()
             span = tracer.start_span(
                 SPAN_NAME,
                 kind=SpanKind.CLIENT,
                 start_time=start_time,
+                context=ctx,
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
@@ -700,16 +723,22 @@ async def async_responses_get_or_create_wrapper(
                 response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
                 request_service_tier=non_sentinel_kwargs.get("service_tier"),
                 response_service_tier=existing_data.get("response_service_tier"),
+                # Capture trace context to maintain continuity
+                trace_context=existing_data.get("trace_context", context_api.get_current()),
             )
         except Exception:
             traced_data = None
 
+        # Restore the original trace context to maintain trace continuity
+        ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
+               else context_api.get_current())
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=(
                 start_time if traced_data is None else int(traced_data.start_time)
             ),
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -767,16 +796,21 @@ async def async_responses_get_or_create_wrapper(
             response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
             request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
+            # Capture trace context to maintain continuity across async operations
+            trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
         responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
     if parsed_response.status == "completed":
+        # Restore the original trace context to maintain trace continuity
+        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=int(traced_data.start_time),
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
@@ -799,11 +833,14 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     parsed_response = parse_response(response)
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
+        # Restore the original trace context to maintain trace continuity
+        ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=existing_data.start_time,
             record_exception=True,
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
@@ -828,11 +865,14 @@ async def async_responses_cancel_wrapper(
     parsed_response = parse_response(response)
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
+        # Restore the original trace context to maintain trace continuity
+        ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
         span = tracer.start_span(
             SPAN_NAME,
             kind=SpanKind.CLIENT,
             start_time=existing_data.start_time,
             record_exception=True,
+            context=ctx,
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))

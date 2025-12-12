@@ -507,6 +507,230 @@ def test_response_stream_init_with_none_tools():
     assert stream._traced_data.tools == [] or stream._traced_data.tools is None
 
 
+def test_responses_trace_context_propagation_unit():
+    """Unit test for trace context propagation in responses API.
+
+    This test verifies that when TracedData is created with a trace context,
+    and later a span is created from that TracedData, the span uses the correct
+    trace context that was captured at creation time.
+
+    This is critical for guardrails and other wrappers that make multiple calls
+    across different execution contexts.
+
+    Note: This is a unit test that simulates what guardrails does. For integration
+    testing with the actual openai-guardrails library, see the sample app at:
+    packages/sample-app/sample_app/openai_guardrails_example.py
+    """
+    from opentelemetry import trace, context
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import TracedData
+    import time
+
+    # Set up tracing
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)
+    tracer = trace.get_tracer(__name__)
+
+    # Create a parent span and capture its trace context
+    with tracer.start_as_current_span("parent-span") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_context = context.get_current()
+
+        # Create TracedData with the current trace context (simulating responses.create)
+        traced_data = TracedData(
+            start_time=time.time_ns(),
+            response_id="test-response-id",
+            input="What is 2+2?",
+            instructions=None,
+            tools=None,
+            output_blocks={},
+            usage=None,
+            output_text="4",
+            request_model="gpt-4.1-nano",
+            response_model="gpt-4.1-nano-2025-04-14",
+            trace_context=parent_context,
+        )
+
+    # Now we're outside the parent span context
+    # Simulate creating a span with the stored trace context (like responses.retrieve does)
+    ctx = traced_data.trace_context
+    span = tracer.start_span(
+        "openai.response",
+        context=ctx,
+        start_time=traced_data.start_time,
+    )
+    span.end()
+
+    # Verify the span has the correct trace context
+    spans = exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "parent-span"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1
+    assert len(openai_spans) == 1
+
+    # The openai.response span should have the same trace_id as the parent
+    assert openai_spans[0].context.trace_id == parent_trace_id, (
+        f"openai.response span trace_id ({openai_spans[0].context.trace_id}) "
+        f"should match parent trace_id ({parent_trace_id})"
+    )
+
+    # The openai.response span should be a child of the parent span
+    assert (
+        openai_spans[0].parent.span_id == parent_spans[0].context.span_id
+    ), "openai.response span should be a child of parent-span"
+
+
+@pytest.mark.vcr
+def test_responses_streaming_with_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider,
+    openai_client: OpenAI,
+):
+    """Integration test for trace context propagation with sync streaming responses.
+
+    This test simulates what openai-guardrails does: wrapping OpenAI calls
+    with a parent span. It verifies that:
+    1. The streaming response span maintains the parent trace context
+    2. All spans share the same trace_id
+    3. The response span is properly nested as a child of the parent span
+
+    This prevents regressions of the issue where streaming responses would
+    create separate traces instead of maintaining trace continuity.
+    """
+    # Get tracer from the provider used by the test fixtures
+    tracer = tracer_provider.get_tracer(__name__)
+
+    # Create a parent span (simulating what guardrails wrapper does)
+    with tracer.start_as_current_span("guardrails-wrapper") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_span_id = parent_span.get_span_context().span_id
+
+        # Make a sync streaming responses.create() call
+        # This should create a child span under the parent
+        stream = openai_client.responses.create(
+            model="gpt-4o",
+            input="Count to 3",
+            stream=True,
+        )
+
+        full_text = ""
+        for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    # Verify span hierarchy
+    spans = span_exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "guardrails-wrapper"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1, "Should have exactly one parent span"
+    assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
+
+    openai_span = openai_spans[0]
+
+    # Verify the openai.response span has the same trace_id as the parent
+    assert openai_span.context.trace_id == parent_trace_id, (
+        f"OpenAI span trace_id ({hex(openai_span.context.trace_id)}) "
+        f"should match parent trace_id ({hex(parent_trace_id)}). "
+        "If they differ, trace context is not being propagated correctly."
+    )
+
+    # Verify the openai.response span is a child of the parent span
+    assert openai_span.parent is not None, "OpenAI span should have a parent"
+    assert openai_span.parent.span_id == parent_span_id, (
+        f"OpenAI span parent_id ({hex(openai_span.parent.span_id)}) "
+        f"should match parent span_id ({hex(parent_span_id)}). "
+        "The span should be properly nested under the parent."
+    )
+
+    # Verify streaming worked correctly
+    assert full_text != "", "Should have received streaming content"
+    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
+    assert openai_span.attributes["llm.is_streaming"] is True
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_streaming_async_with_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider,
+    async_openai_client: AsyncOpenAI,
+):
+    """Integration test for trace context propagation with async streaming responses.
+
+    This test simulates what openai-guardrails does: wrapping OpenAI calls
+    with a parent span. It verifies that:
+    1. The streaming response span maintains the parent trace context
+    2. All spans share the same trace_id
+    3. The response span is properly nested as a child of the parent span
+
+    This prevents regressions of the issue where streaming responses would
+    create separate traces instead of maintaining trace continuity.
+    """
+    # Get tracer from the provider used by the test fixtures
+    tracer = tracer_provider.get_tracer(__name__)
+
+    # Create a parent span (simulating what guardrails wrapper does)
+    with tracer.start_as_current_span("guardrails-wrapper") as parent_span:
+        parent_trace_id = parent_span.get_span_context().trace_id
+        parent_span_id = parent_span.get_span_context().span_id
+
+        # Make an async streaming responses.create() call
+        # This should create a child span under the parent
+        stream = await async_openai_client.responses.create(
+            model="gpt-4o",
+            input="Count to 3",
+            stream=True,
+        )
+
+        full_text = ""
+        async for chunk in stream:
+            if chunk.type == "response.output_text.delta":
+                full_text += chunk.delta
+
+    # Verify span hierarchy
+    spans = span_exporter.get_finished_spans()
+    parent_spans = [s for s in spans if s.name == "guardrails-wrapper"]
+    openai_spans = [s for s in spans if s.name == "openai.response"]
+
+    assert len(parent_spans) == 1, "Should have exactly one parent span"
+    assert len(openai_spans) == 1, "Should have exactly one OpenAI response span"
+
+    openai_span = openai_spans[0]
+
+    # Verify the openai.response span has the same trace_id as the parent
+    assert openai_span.context.trace_id == parent_trace_id, (
+        f"OpenAI span trace_id ({hex(openai_span.context.trace_id)}) "
+        f"should match parent trace_id ({hex(parent_trace_id)}). "
+        "If they differ, trace context is not being propagated correctly."
+    )
+
+    # Verify the openai.response span is a child of the parent span
+    assert openai_span.parent is not None, "OpenAI span should have a parent"
+    assert openai_span.parent.span_id == parent_span_id, (
+        f"OpenAI span parent_id ({hex(openai_span.parent.span_id)}) "
+        f"should match parent span_id ({hex(parent_span_id)}). "
+        "The span should be properly nested under the parent."
+    )
+
+    # Verify streaming worked correctly
+    assert full_text != "", "Should have received streaming content"
+    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
+    assert openai_span.attributes["llm.is_streaming"] is True
+
+
 def test_response_stream_init_with_not_given_reasoning():
     """Test ResponseStream initialization when reasoning=NOT_GIVEN sentinel.
 
