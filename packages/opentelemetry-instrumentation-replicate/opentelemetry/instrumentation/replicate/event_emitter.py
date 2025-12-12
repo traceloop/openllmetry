@@ -40,9 +40,11 @@ def emit_choice_events(
     # Handle replicate.run responses
     if isinstance(response, list):
         for i, generation in enumerate(response):
+            # Convert FileOutput objects to strings
+            content = str(generation) if hasattr(generation, 'url') else generation
             emit_event(
                 ChoiceEvent(
-                    index=i, message={"content": generation, "role": "assistant"}
+                    index=i, message={"content": content, "role": "assistant"}
                 ),
                 event_logger,
             )

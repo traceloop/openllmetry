@@ -23,11 +23,14 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/qdrant"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+urllib3 = "^2.5.0"
+requests = "^2.32.4"
+protobuf = "^5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"

@@ -23,11 +23,13 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/bedrock"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+urllib3 = "^2.5.0"
+requests = "^2.32.4"
 anthropic = ">=0.17.0"
 tokenizers = ">=0.13.0"
 
@@ -37,7 +39,7 @@ flake8 = "7.0.0"
 
 [tool.poetry.group.test.dependencies]
 boto3 = "^1.34.120"
-vcrpy = "^6.0.1"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
