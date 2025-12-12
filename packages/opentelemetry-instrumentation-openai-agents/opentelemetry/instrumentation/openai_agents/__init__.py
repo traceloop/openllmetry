@@ -15,10 +15,33 @@ _instruments = ("openai-agents >= 0.2.0",)
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
     """An instrumentor for OpenAI Agents SDK."""
 
+    def __init__(self, *, clear: bool = False) -> None:
+        """Initialize the instrumentor.
+
+        Args:
+            clear: Optional bool and default to False.
+                If True, existing trace processors are dropped
+                and this instrumentor's processor is set as the only one.
+                This is useful for replacing the default OpenAI instrumentation
+                (enabled by default) with this one.
+        """
+        # base class BaseInstrumentor is an ABC without __init__
+        self._clear: bool = clear
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
-    def _instrument(self, **kwargs):
+    def _instrument(self, **kwargs) -> None:
+        """Instruments OpenAI Agents SDK.
+
+        Args:
+            tracer_provider: An optional TracerProvider to use
+                when creating a Tracer.
+            meter_provider: An optional MeterProvider to use
+                when creating a Meter.
+
+            Additional kwargs are ignored.
+        """
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -30,12 +53,15 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         # Use hook-based approach with OpenAI Agents SDK callbacks
         try:
-            from agents import add_trace_processor
+            from agents import add_trace_processor, set_trace_processors
             from ._hooks import OpenTelemetryTracingProcessor
 
             # Create and add our OpenTelemetry processor
             otel_processor = OpenTelemetryTracingProcessor(tracer)
-            add_trace_processor(otel_processor)
+            if self._clear:
+                set_trace_processors([otel_processor])
+            else:
+                add_trace_processor(otel_processor)
 
         except Exception:
             # Silently handle import errors - OpenAI Agents SDK may not be available
