@@ -269,7 +269,10 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                 )
                 if tool_calls and isinstance(tool_calls, list):
                     _set_chat_tool_calls(span, prefix, tool_calls)
-
+            else:
+                _set_span_attribute(
+                    span, f"{prefix}.role", "assistant"
+                )
             i += 1
 
 

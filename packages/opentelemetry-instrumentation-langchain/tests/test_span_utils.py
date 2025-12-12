@@ -82,5 +82,5 @@ def test_plain_generation_defaults_to_assistant_role():
     set_chat_response(span, result)
 
     prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.0"
-    assert prefix + ".role" not in span.attributes
+    assert span.attributes[prefix + ".role"] == "assistant"
     assert span.attributes[prefix + ".content"] == "plain completion"
