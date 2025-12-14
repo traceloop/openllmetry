@@ -39,7 +39,7 @@ class Associations:
             ])
         """
         # Store all associations in context
-        current_associations: dict[str, str] = get_value("associations") or {}  # type: ignore
+        current_associations: dict[str, str] = get_value("associations") or {}
         for prop, value in associations:
             current_associations[prop.value] = value
 
