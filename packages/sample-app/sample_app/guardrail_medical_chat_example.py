@@ -55,7 +55,6 @@ def handle_medical_evaluation(evaluator_result, original_result):
     Returns:
         Either the original result dict or a modified version
     """
-    print("NOMI - handle_medical_evaluation - evaluator_result:", evaluator_result)
     if not evaluator_result.success:
         # Return a modified dict with error message
         return {

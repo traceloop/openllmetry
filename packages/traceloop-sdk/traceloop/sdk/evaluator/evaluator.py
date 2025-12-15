@@ -98,13 +98,9 @@ class Evaluator:
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
-        print("NOMI - run_experiment_evaluator - request:", request)
-
         execute_response = await self._execute_evaluator_request(
             evaluator_slug, request, timeout_in_sec
         )
-
-        print("NOMI - run_experiment_evaluator - execute_response:", execute_response)
 
         sse_client = SSEClient(shared_client=self._async_http_client)
         sse_result = await sse_client.wait_for_result(
@@ -112,8 +108,6 @@ class Evaluator:
             execute_response.stream_url,
             timeout_in_sec,
         )
-
-        print("NOMI - run_experiment_evaluator - sse_result:", sse_result)
 
         return sse_result
 

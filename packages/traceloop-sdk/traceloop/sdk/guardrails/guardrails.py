@@ -47,17 +47,11 @@ def guardrail(
 
     slug, evaluator_version, evaluator_config, required_input_fields = evaluator_details
 
-    print("NOMI - guardrail - slug:", slug)
-    print("NOMI - guardrail - evaluator_version:", evaluator_version)
-    print("NOMI - guardrail - evaluator_config:", evaluator_config)
-    print("NOMI - guardrail - required_input_fields:", required_input_fields)
-
     def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
         @wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
             # Execute the original function - should return a dict with fields matching required_input_fields
             original_result = await func(*args, **kwargs)
-            print("NOMI - guardrail - original_result:", original_result)
 
             # Validate that original_result is a dict
             if not isinstance(original_result, dict):
@@ -76,8 +70,6 @@ def guardrail(
             evaluator_result = await client_instance.guardrails.execute_evaluator(
                 slug, original_result, evaluator_version, evaluator_config
             )
-
-            print("NOMI - guardrail - evaluator_result:", evaluator_result)
 
             # Use callback if provided, otherwise use default behavior
             if on_evaluation_complete:
@@ -178,10 +170,6 @@ class Guardrails:
         """
         try:
 
-            print("NOMI - guardrails - data:", data)
-            print("NOMI - guardrails - evaluator_version:", evaluator_version)
-            print("NOMI - guardrails - evaluator_config:", evaluator_config)
-
             # Use dummy IDs for guardrails (they don't need experiment tracking)
             result = await self._evaluator.run_experiment_evaluator(
                 evaluator_slug=slug,
@@ -203,8 +191,6 @@ class Guardrails:
                 evaluator_result = raw_result.get("evaluator_result", "")
                 success = evaluator_result == "pass"
                 reason = raw_result.get("reason", None)
-                print("NOMI - guardrails - reason:", reason)
-                print("NOMI - guardrails - success:", success)
                 return OutputSchema(reason=reason, success=success)
 
             # Otherwise, try custom evaluator format with 'pass' and 'reason' fields
