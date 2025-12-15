@@ -57,6 +57,7 @@ def handle_medical_evaluation(evaluator_result, original_result):
     """
     if not evaluator_result.success:
         # Return a modified dict with error message
+        print(f"handle_medical_evaluation was activated - evaluator_result: {evaluator_result}")
         return {
             "There is an issue with the request. Please try again."
         }
