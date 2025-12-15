@@ -1,3 +1,9 @@
+## v0.50.0 (2025-12-15)
+
+### Feat
+
+- **guardrail**: Add guardrail decorator (#3521)
+
 ## v0.49.8 (2025-12-11)
 
 ### Fix
