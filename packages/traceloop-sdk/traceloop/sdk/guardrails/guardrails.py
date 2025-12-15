@@ -30,30 +30,41 @@ def guardrail(
     Returns:
         Result from on_evaluation_complete callback if provided, otherwise original result or error message
     """
-    # Extract evaluator details as tuple (slug, version, config) - same pattern as experiments
+    # Extract evaluator details as tuple (slug, version, config, required_fields) - same pattern as experiments
     if isinstance(evaluator, str):
-        # Simple string slug
-        evaluator_details = (evaluator, None, None)
+        # Simple string slug - use default field mapping
+        evaluator_details = (evaluator, None, None, None)
     elif isinstance(evaluator, EvaluatorDetails):
         # EvaluatorDetails object with config
-        evaluator_details = (evaluator.slug, evaluator.version, evaluator.config)
+        evaluator_details = (
+            evaluator.slug,
+            evaluator.version,
+            evaluator.config,
+            evaluator.required_input_fields
+        )
     else:
         raise ValueError(f"evaluator must be str or EvaluatorDetails, got {type(evaluator)}")
 
-    slug, evaluator_version, evaluator_config = evaluator_details
+    slug, evaluator_version, evaluator_config, required_input_fields = evaluator_details
+
+    print("NOMI - guardrail - slug:", slug)
+    print("NOMI - guardrail - evaluator_version:", evaluator_version)
+    print("NOMI - guardrail - evaluator_config:", evaluator_config)
+    print("NOMI - guardrail - required_input_fields:", required_input_fields)
 
     def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
         @wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
-            # Execute the original function
+            # Execute the original function - should return a dict with fields matching required_input_fields
             original_result = await func(*args, **kwargs)
+            print("NOMI - guardrail - original_result:", original_result)
 
-            # Create input data for evaluator with the function output
-            evaluator_data = {
-                "completion": InputExtractor(
-                    source=original_result,
+            # Validate that original_result is a dict
+            if not isinstance(original_result, dict):
+                raise ValueError(
+                    f"Function {func.__name__} must return a dict, got {type(original_result)}. "
+                    f"Required fields: {required_input_fields or 'unknown'}"
                 )
-            }
 
             try:
                 from traceloop.sdk import Traceloop
@@ -63,33 +74,47 @@ def guardrail(
                 return original_result
 
             evaluator_result = await client_instance.guardrails.execute_evaluator(
-                slug, evaluator_data, evaluator_version, evaluator_config
+                slug, original_result, evaluator_version, evaluator_config
             )
+
+            print("NOMI - guardrail - evaluator_result:", evaluator_result)
 
             # Use callback if provided, otherwise use default behavior
             if on_evaluation_complete:
                 return on_evaluation_complete(evaluator_result, original_result)
             else:
-                # Default behavior: return error message on failure
-                if not evaluator_result.success:
-                    return (
-                        "I can see you are seeking medical advice. "
-                        "Sorry for the inconvenience, but I cannot answer these types of questions."
-                    )
+                # Default behavior: return original result (dict) regardless of pass/fail
+                # Users should use callback for custom behavior
                 return original_result
 
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
 
-            # Execute the original function
+            # Execute the original function - should return a dict with fields matching required_input_fields
             original_result = func(*args, **kwargs)
 
-            # Create input data for evaluator with the function output
-            evaluator_data = {
-                "completion": InputExtractor(
-                    source=original_result,
+            # Validate that original_result is a dict
+            if not isinstance(original_result, dict):
+                raise ValueError(
+                    f"Function {func.__name__} must return a dict, got {type(original_result)}. "
+                    f"Required fields: {required_input_fields or 'unknown'}"
                 )
-            }
+
+            # Build evaluator_data based on required_input_fields or use all fields from result
+            evaluator_data = {}
+            if required_input_fields:
+                # Use only the required fields from the function result
+                for field in required_input_fields:
+                    if field not in original_result:
+                        raise ValueError(
+                            f"Function {func.__name__} must return dict with field '{field}'. "
+                            f"Got: {list(original_result.keys())}"
+                        )
+                    evaluator_data[field] = InputExtractor(source=original_result[field])
+            else:
+                # No required fields specified, use all fields from result
+                for field, value in original_result.items():
+                    evaluator_data[field] = InputExtractor(source=value)
 
             # Get client instance
             try:
@@ -110,12 +135,8 @@ def guardrail(
             if on_evaluation_complete:
                 return on_evaluation_complete(evaluator_result, original_result)
             else:
-                # Default behavior: return error message on failure
-                if not evaluator_result.success:
-                    return (
-                        "I can see you are seeking medical advice. "
-                        "Sorry for the inconvenience, but I cannot answer these types of questions."
-                    )
+                # Default behavior: return original result (dict) regardless of pass/fail
+                # Users should use callback for custom behavior
                 return original_result
 
         # Return appropriate wrapper based on function type
@@ -139,7 +160,7 @@ class Guardrails:
     async def execute_evaluator(
         self,
         slug: str,
-        data: Dict[str, InputExtractor],
+        data: Dict[str, str],
         evaluator_version: Optional[str] = None,
         evaluator_config: Optional[Dict[str, Any]] = None
     ) -> OutputSchema:
@@ -156,11 +177,10 @@ class Guardrails:
             OutputSchema: The evaluation result with success/reason fields
         """
         try:
-            # Convert guardrails InputExtractor format to evaluator format
-            # Guardrails use InputExtractor(source=value) while Evaluator uses {field: value}
-            input_dict = {}
-            for field_name, extractor in data.items():
-                input_dict[field_name] = extractor.source
+
+            print("NOMI - guardrails - data:", data)
+            print("NOMI - guardrails - evaluator_version:", evaluator_version)
+            print("NOMI - guardrails - evaluator_config:", evaluator_config)
 
             # Use dummy IDs for guardrails (they don't need experiment tracking)
             result = await self._evaluator.run_experiment_evaluator(
@@ -168,7 +188,7 @@ class Guardrails:
                 task_id="guardrail",
                 experiment_id="guardrail",
                 experiment_run_id="guardrail",
-                input=input_dict,
+                input=data,
                 timeout_in_sec=120,
                 evaluator_version=evaluator_version,
                 evaluator_config=evaluator_config,
@@ -176,6 +196,7 @@ class Guardrails:
 
             # Parse the result to OutputSchema format
             inner_result = result.result.get("result", {})
+
             return OutputSchema.model_validate(inner_result)
 
         except Exception as e:
