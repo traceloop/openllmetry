@@ -1,9 +1,8 @@
-from typing import Dict, Any, Optional, Callable, TypeVar, ParamSpec
-from traceloop.sdk.client.http import HTTPClient
-from .types import ExecuteEvaluatorRequest, InputExtractor, OutputSchema
-import os
+from typing import Dict, Any, Optional, Callable, TypeVar, ParamSpec, Union
+from traceloop.sdk.evaluator.config import EvaluatorDetails
+from traceloop.sdk.evaluator.evaluator import Evaluator
+from .types import InputExtractor, OutputSchema
 import httpx
-import json
 import asyncio
 from functools import wraps
 
@@ -11,181 +10,175 @@ from functools import wraps
 P = ParamSpec('P')
 R = TypeVar('R')
 
+# Type alias for evaluator specification - can be either a slug string or EvaluatorDetails
+EvaluatorSpec = Union[str, EvaluatorDetails]
 
-def guardrail(slug: str):
+
+def guardrail(
+    evaluator: EvaluatorSpec,
+    on_evaluation_complete: Optional[Callable[[OutputSchema, Any], Any]] = None
+):
     """
     Decorator that executes a guardrails evaluator on the decorated function's output.
-    
+
     Args:
-        slug: The evaluator slug to execute
-        
+        evaluator: Either a slug string or an EvaluatorDetails object (with slug, version, config)
+        on_evaluation_complete: Optional callback function that receives (evaluator_result, original_result)
+                                and returns the final result. If not provided, returns original result on
+                                success or an error message on failure.
+
     Returns:
-        Combined result containing original function output and evaluator result
+        Result from on_evaluation_complete callback if provided, otherwise original result or error message
     """
+    # Extract evaluator details as tuple (slug, version, config) - same pattern as experiments
+    if isinstance(evaluator, str):
+        # Simple string slug
+        evaluator_details = (evaluator, None, None)
+    elif isinstance(evaluator, EvaluatorDetails):
+        # EvaluatorDetails object with config
+        evaluator_details = (evaluator.slug, evaluator.version, evaluator.config)
+    else:
+        raise ValueError(f"evaluator must be str or EvaluatorDetails, got {type(evaluator)}")
+
+    slug, evaluator_version, evaluator_config = evaluator_details
+
     def decorator(func: Callable[P, R]) -> Callable[P, Dict[str, Any]]:
         @wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
             # Execute the original function
             original_result = await func(*args, **kwargs)
-            
+
             # Create input data for evaluator with the function output
             evaluator_data = {
                 "completion": InputExtractor(
                     source=original_result,
                 )
             }
-            
+
             try:
                 from traceloop.sdk import Traceloop
                 client_instance = Traceloop.get()
             except Exception as e:
                 print(f"Warning: Could not get Traceloop client: {e}")
                 return original_result
-                
-            evaluator_result = await client_instance.guardrails.execute_evaluator(slug, evaluator_data)
 
-            if not evaluator_result.success:
-                return "I can see you are seeking medical advice. Sorry for the inconvenience, but I cannot answer these types of questions."
+            evaluator_result = await client_instance.guardrails.execute_evaluator(
+                slug, evaluator_data, evaluator_version, evaluator_config
+            )
 
-            return original_result
-           
-        
+            # Use callback if provided, otherwise use default behavior
+            if on_evaluation_complete:
+                return on_evaluation_complete(evaluator_result, original_result)
+            else:
+                # Default behavior: return error message on failure
+                if not evaluator_result.success:
+                    return (
+                        "I can see you are seeking medical advice. "
+                        "Sorry for the inconvenience, but I cannot answer these types of questions."
+                    )
+                return original_result
+
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> Dict[str, Any]:
 
             # Execute the original function
             original_result = func(*args, **kwargs)
-            
+
             # Create input data for evaluator with the function output
             evaluator_data = {
                 "completion": InputExtractor(
                     source=original_result,
                 )
             }
-            
+
             # Get client instance
             try:
                 from traceloop.sdk import Traceloop
                 client_instance = Traceloop.get()
             except Exception as e:
                 print(f"Warning: Could not get Traceloop client: {e}")
-                return {
-                    "original_result": original_result,
-                    "guardrails_result": None
-                }
-                
+                return original_result
+
             loop = asyncio.get_event_loop()
-            evaluator_result = loop.run_until_complete(client_instance.guardrails.execute_evaluator(slug, evaluator_data))
-            
-            # Combine results
-            return {
-                "original_result": original_result,
-                "guardrails_result": evaluator_result
-            }
-        
+            evaluator_result = loop.run_until_complete(
+                client_instance.guardrails.execute_evaluator(
+                    slug, evaluator_data, evaluator_version, evaluator_config
+                )
+            )
+
+            # Use callback if provided, otherwise use default behavior
+            if on_evaluation_complete:
+                return on_evaluation_complete(evaluator_result, original_result)
+            else:
+                # Default behavior: return error message on failure
+                if not evaluator_result.success:
+                    return (
+                        "I can see you are seeking medical advice. "
+                        "Sorry for the inconvenience, but I cannot answer these types of questions."
+                    )
+                return original_result
+
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper
-    
+
     return decorator
 
+
 class Guardrails:
-    def __init__(self, http: HTTPClient, app_name: str, api_key: str):
-        self._http = http
-        self._app_name = app_name
-        self._flow = "guardrails"
-        self._api_key = api_key
+    """
+    Guardrails class that wraps the Evaluator class for real-time evaluations.
+    Unlike experiments, guardrails don't require task/experiment IDs.
+    """
 
-    async def execute_evaluator(self, slug: str, data: Dict[str, InputExtractor]) -> Dict[str, Any]:
-        """Execute evaluator and return accumulated SSE event data."""
-        try:
-            response = await self._post_request(slug, data)
+    def __init__(self, async_http_client: httpx.AsyncClient):
+        self._evaluator = Evaluator(async_http_client)
 
-            if response:
-                # Handle SSE streaming
-                response_from_stream = await self._wait_for_result(
-                    stream_url=response["stream_url"],
-                    execution_id=response["execution_id"],
-                    timeout=120
-                )
-
-                return response_from_stream
-            else:
-                # Handle direct response
-                return response or {}
-
-        except Exception as e:
-            # Log error and return empty data
-            print(f"Error executing evaluator {slug}. Error: {str(e)}")
-            return {}
-
-    async def _post_request(self, slug: str, data: Dict[str, InputExtractor]) -> Optional[Dict[str, Any]]:
-        """Make POST request using the HTTP client."""
-        try:
-            url = f"evaluators/slug/{slug}/execute"
-
-            request_body = ExecuteEvaluatorRequest(input_schema_mapping=data)
-            body = request_body.model_dump()
-
-            response = self._http.post(url, body)
-
-            return response
-        except Exception as e:
-            print(f"Error making POST request to {url}: {str(e)}")
-            return None
-
-    async def _wait_for_result(
+    async def execute_evaluator(
         self,
-        execution_id: str,
-        stream_url: str,
-        timeout: int,
-    ) -> Dict[str, Any]:
-        """Wait for the evaluation result via server-sent events."""
+        slug: str,
+        data: Dict[str, InputExtractor],
+        evaluator_version: Optional[str] = None,
+        evaluator_config: Optional[Dict[str, Any]] = None
+    ) -> OutputSchema:
+        """
+        Execute evaluator for guardrails (real-time evaluation without experiment context).
+
+        Args:
+            slug: The evaluator slug to execute
+            data: Input data mapping (guardrails format with InputExtractor)
+            evaluator_version: Optional version of the evaluator
+            evaluator_config: Optional configuration for the evaluator
+
+        Returns:
+            OutputSchema: The evaluation result with success/reason fields
+        """
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
-                headers = {
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Accept": "text/event-stream",
-                    "Cache-Control": "no-cache"
-                }
-                api_endpoint = os.getenv("TRACELOOP_BASE_URL")
-                stream_url = f"{api_endpoint}/v2{stream_url}"
+            # Convert guardrails InputExtractor format to evaluator format
+            # Guardrails use InputExtractor(source=value) while Evaluator uses {field: value}
+            input_dict = {}
+            for field_name, extractor in data.items():
+                input_dict[field_name] = extractor.source
 
-                async with client.stream("GET", stream_url, headers=headers) as response:
-                    if response.status_code != 200:
-                        error_text = await response.aread()
-                        raise Exception(
-                            f"Failed to stream results: {response.status_code}, body: {error_text}"
-                        )
+            # Use dummy IDs for guardrails (they don't need experiment tracking)
+            result = await self._evaluator.run_experiment_evaluator(
+                evaluator_slug=slug,
+                task_id="guardrail",
+                experiment_id="guardrail",
+                experiment_run_id="guardrail",
+                input=input_dict,
+                timeout_in_sec=120,
+                evaluator_version=evaluator_version,
+                evaluator_config=evaluator_config,
+            )
 
-                    response_text = await response.aread()
-                    parsed_response = self._parse_result(response_text)
-
-                    return parsed_response
-
-        except httpx.ConnectError as e:
-            print(f"Connection error: {e}")
-            raise Exception(f"Failed to connect to stream URL: {stream_url}. Error: {e}")
-        except httpx.TimeoutException as e:
-            print(f"Timeout error: {e}")
-            raise Exception(f"Stream request timed out: {e}")
-        except Exception as e:
-            print(f"Unexpected error in _wait_for_result: {e}")
-            raise
-
-    def _parse_result(self, response_text: str) -> OutputSchema:
-        """Parse the response text into an EvaluatorResponse object using Pydantic."""
-        try:
-            response_data = json.loads(response_text)
-
-            inner_result = response_data.get("result", {}).get("result", {})
-
-            evaluator_response = OutputSchema.model_validate(inner_result)
-
-            return evaluator_response
+            # Parse the result to OutputSchema format
+            inner_result = result.result.get("result", {})
+            return OutputSchema.model_validate(inner_result)
 
         except Exception as e:
-            print(f"Error parsing result: {e}")
-            raise
+            print(f"Error executing evaluator {slug}. Error: {str(e)}")
+            # Return a failure result on error
+            return OutputSchema(reason=f"Evaluation error: {str(e)}", success=False)

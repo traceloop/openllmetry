@@ -67,4 +67,4 @@ class Client:
         experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
         # TODO: Fix type - Experiment constructor should accept Optional[str]
         self.experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]
-        self.guardrails = Guardrails(self._http, self.app_name, self.api_key)
+        self.guardrails = Guardrails(self._async_http)

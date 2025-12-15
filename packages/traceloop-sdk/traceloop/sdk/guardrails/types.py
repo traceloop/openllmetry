@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from pydantic import BaseModel, Field
 
 
@@ -11,6 +11,8 @@ class InputExtractor(BaseModel):
 
 class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: Dict[str, InputExtractor]
+    evaluator_version: Optional[str] = None
+    evaluator_config: Optional[Dict[str, Any]] = None
 
 
 class OutputSchema(BaseModel):
