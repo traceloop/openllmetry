@@ -1,6 +1,5 @@
 from typing import Optional
 from jinja2 import Environment, meta
-from traceloop.sdk import Telemetry
 from traceloop.sdk.prompts.model import Prompt, PromptVersion, TemplateEngine
 from traceloop.sdk.prompts.registry import PromptRegistry
 from traceloop.sdk.tracing.tracing import set_managed_prompt_tracing_context
@@ -54,8 +53,6 @@ class PromptRegistryClient:
         version_hash: Optional[str] = None,
         variables: dict = {},
     ):
-        Telemetry().capture("prompt:rendered")
-
         prompt = self._registry.get_prompt_by_key(key)
         if prompt is None:
             raise Exception(f"Prompt {key} does not exist")
@@ -74,6 +71,14 @@ class PromptRegistryClient:
             raise Exception(
                 f"Prompt {key} does not have an available version to render"
             )
+
+        # By default, OpenAI will set tool_choice to "auto"
+        # if tools not provided and there is tool_choice set it throws an error
+        if (
+            not prompt_version.llm_config.tools
+            or len(prompt_version.llm_config.tools) == 0
+        ) and prompt_version.llm_config.tool_choice is not None:
+            prompt_version.llm_config.tool_choice = None
 
         params_dict = {"messages": self.render_messages(prompt_version, **variables)}
         params_dict.update(

@@ -8,7 +8,7 @@ show_missing = true
 
 [tool.poetry]
 name = "opentelemetry-instrumentation-mcp"
-version = "0.40.14"
+version = "0.49.8"
 description = "OpenTelemetry mcp instrumentation"
 authors = ["Felix George <felix.george@ibm.com>"]
 repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-mcp"
@@ -20,23 +20,27 @@ include = "opentelemetry/instrumentation/mcp"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4"
-opentelemetry-api = "^1.28.0"
-opentelemetry-instrumentation = ">=0.50b0"
-opentelemetry-semantic-conventions = ">=0.50b0"
-opentelemetry-semantic-conventions-ai = "0.4.9"
+opentelemetry-api = "^1.38.0"
+opentelemetry-instrumentation = ">=0.59b0"
+opentelemetry-semantic-conventions = ">=0.59b0"
+opentelemetry-semantic-conventions-ai = "^0.4.13"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
 flake8 = "7.1.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
+opentelemetry-exporter-otlp = "^1.34.1"
 
 [tool.poetry.group.test.dependencies]
 mcp = { version = "^1.3.0", python = ">=3.10,<=3.13" }
+fastmcp = "^2.12.2"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
-opentelemetry-sdk = "^1.27.0"
+opentelemetry-sdk = "^1.38.0"
+pytest-asyncio = "^1.2.0"
+opentelemetry-exporter-otlp = "^1.34.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -47,3 +51,13 @@ instruments = ["mcp"]
 
 [tool.poetry.plugins."opentelemetry_instrumentor"]
 mcp = "opentelemetry.instrumentation.mcp:McpInstrumentor"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = [
+  "src",
+  ".",
+]
+testpaths = [
+  "tests",
+]

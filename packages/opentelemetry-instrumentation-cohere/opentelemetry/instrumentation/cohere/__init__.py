@@ -1,29 +1,44 @@
 """OpenTelemetry Cohere instrumentation"""
 
 import logging
-import os
-from typing import Collection
-from opentelemetry.instrumentation.cohere.config import Config
-from opentelemetry.instrumentation.cohere.utils import dont_throw
-from wrapt import wrap_function_wrapper
+from typing import Collection, Union
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._logs import Logger, get_logger
+from opentelemetry.instrumentation.cohere.config import Config
+from opentelemetry.instrumentation.cohere.event_emitter import (
+    emit_input_event,
+    emit_response_events,
+)
+from opentelemetry.instrumentation.cohere.span_utils import (
+    set_input_content_attributes,
+    set_response_content_attributes,
+    set_span_request_attributes,
+    set_span_response_attributes,
+)
+from opentelemetry.instrumentation.cohere.streaming import (
+    process_chat_v1_streaming_response,
+    aprocess_chat_v1_streaming_response,
+    process_chat_v2_streaming_response,
+    aprocess_chat_v2_streaming_response,
+)
+from opentelemetry.instrumentation.cohere.utils import dont_throw, should_emit_events
+from opentelemetry.instrumentation.cohere.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.cohere.version import __version__
+from opentelemetry.trace import SpanKind, Status, StatusCode, Tracer, get_tracer, use_span
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -31,181 +46,130 @@ _instruments = ("cohere >=4.2.7, <6",)
 
 WRAPPED_METHODS = [
     {
+        "module": "cohere.client",
         "object": "Client",
         "method": "generate",
         "span_name": "cohere.completion",
     },
     {
+        "module": "cohere.client",
         "object": "Client",
         "method": "chat",
         "span_name": "cohere.chat",
     },
     {
+        "module": "cohere.client",
+        "object": "Client",
+        "method": "chat_stream",
+        "span_name": "cohere.chat",
+        "stream_process_func": process_chat_v1_streaming_response,
+    },
+    {
+        "module": "cohere.client",
         "object": "Client",
         "method": "rerank",
         "span_name": "cohere.rerank",
     },
+    {
+        "module": "cohere.client",
+        "object": "Client",
+        "method": "embed",
+        "span_name": "cohere.embed",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "ClientV2",
+        "method": "chat",
+        "span_name": "cohere.chat",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "ClientV2",
+        "method": "chat_stream",
+        "span_name": "cohere.chat",
+        "stream_process_func": process_chat_v2_streaming_response,
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "ClientV2",
+        "method": "rerank",
+        "span_name": "cohere.rerank",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "ClientV2",
+        "method": "embed",
+        "span_name": "cohere.embed",
+    },
+    # Async methods that return AsyncIterator must be wrapped with sync wrapper
+    {
+        "module": "cohere.client",
+        "object": "AsyncClient",
+        "method": "chat_stream",
+        "span_name": "cohere.chat",
+        "stream_process_func": aprocess_chat_v1_streaming_response,
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "AsyncClientV2",
+        "method": "chat_stream",
+        "span_name": "cohere.chat",
+        "stream_process_func": aprocess_chat_v2_streaming_response,
+    },
 ]
 
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
-def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
-
-
-@dont_throw
-def _set_input_attributes(span, llm_request_type, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TEMPERATURE, kwargs.get("temperature")
-    )
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
-    )
-    _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
-    )
-
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-            )
-        elif llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("message")
-            )
-        elif llm_request_type == LLMRequestTypeValues.RERANK:
-            for index, document in enumerate(kwargs.get("documents")):
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.role", "system"
-                )
-                _set_span_attribute(
-                    span, f"{SpanAttributes.LLM_PROMPTS}.{index}.content", document
-                )
-
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.role",
-                "user",
-            )
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_PROMPTS}.{len(kwargs.get('documents'))}.content",
-                kwargs.get("query"),
-            )
-
-    return
-
-
-def _set_span_chat_response(span, response):
-    index = 0
-    prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-    _set_span_attribute(span, f"{prefix}.content", response.text)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.response_id)
-
-    # Cohere v4
-    if hasattr(response, "token_count"):
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            response.token_count.get("total_tokens"),
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            response.token_count.get("response_tokens"),
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            response.token_count.get("prompt_tokens"),
-        )
-
-    # Cohere v5
-    if hasattr(response, "meta") and hasattr(response.meta, "billed_units"):
-        input_tokens = response.meta.billed_units.input_tokens
-        output_tokens = response.meta.billed_units.output_tokens
-
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            input_tokens + output_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-            output_tokens,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-            input_tokens,
-        )
-
-
-def _set_span_generations_response(span, response):
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
-    if hasattr(response, "generations"):
-        generations = response.generations  # Cohere v5
-    else:
-        generations = response  # Cohere v4
-
-    for index, generation in enumerate(generations):
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-        _set_span_attribute(span, f"{prefix}.content", generation.text)
-        _set_span_attribute(span, f"gen_ai.response.{index}.id", generation.id)
-
-
-def _set_span_rerank_response(span, response):
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
-    for idx, doc in enumerate(response.results):
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{idx}"
-        _set_span_attribute(span, f"{prefix}.role", "assistant")
-        content = f"Doc {doc.index}, Score: {doc.relevance_score}"
-        if doc.document:
-            if hasattr(doc.document, "text"):
-                content += f"\n{doc.document.text}"
-            else:
-                content += f"\n{doc.document.get('text')}"
-        _set_span_attribute(
-            span,
-            f"{prefix}.content",
-            content,
-        )
-
-
-@dont_throw
-def _set_response_attributes(span, llm_request_type, response):
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_chat_response(span, response)
-        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_generations_response(span, response)
-        elif llm_request_type == LLMRequestTypeValues.RERANK:
-            _set_span_rerank_response(span, response)
+WRAPPED_AMETHODS = [
+    {
+        "module": "cohere.client",
+        "object": "AsyncClient",
+        "method": "generate",
+        "span_name": "cohere.completion",
+    },
+    {
+        "module": "cohere.client",
+        "object": "AsyncClient",
+        "method": "chat",
+        "span_name": "cohere.chat",
+    },
+    {
+        "module": "cohere.client",
+        "object": "AsyncClient",
+        "method": "rerank",
+        "span_name": "cohere.rerank",
+    },
+    {
+        "module": "cohere.client",
+        "object": "AsyncClient",
+        "method": "embed",
+        "span_name": "cohere.embed",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "AsyncClientV2",
+        "method": "chat",
+        "span_name": "cohere.chat",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "AsyncClientV2",
+        "method": "rerank",
+        "span_name": "cohere.rerank",
+    },
+    {
+        "module": "cohere.client_v2",
+        "object": "AsyncClientV2",
+        "method": "embed",
+        "span_name": "cohere.embed",
+    },
+]
 
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -213,18 +177,42 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
-    if method_name == "chat":
+    if method_name in ["chat", "chat_stream"]:
         return LLMRequestTypeValues.CHAT
-    elif method_name == "generate":
+    elif method_name in ["generate", "generate_stream"]:
         return LLMRequestTypeValues.COMPLETION
     elif method_name == "rerank":
         return LLMRequestTypeValues.RERANK
+    elif method_name == "embed":
+        return LLMRequestTypeValues.EMBEDDING
     else:
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _handle_input_content(span, event_logger, llm_request_type, kwargs):
+    set_input_content_attributes(span, llm_request_type, kwargs)
+    if should_emit_events():
+        emit_input_event(event_logger, llm_request_type, kwargs)
+
+
+@dont_throw
+def _handle_response_content(span, event_logger, llm_request_type, response):
+    set_response_content_attributes(span, llm_request_type, response)
+    if should_emit_events():
+        emit_response_events(event_logger, llm_request_type, response)
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer: Tracer,
+    event_logger: Union[Logger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -233,23 +221,77 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
     name = to_wrap.get("span_name")
     llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
-    with tracer.start_as_current_span(
+    span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.LLM_SYSTEM: "Cohere",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
-    ) as span:
-        if span.is_recording():
-            _set_input_attributes(span, llm_request_type, kwargs)
+    )
 
-        response = wrapped(*args, **kwargs)
+    with use_span(span, end_on_exit=False):
+        set_span_request_attributes(span, kwargs)
+        _handle_input_content(span, event_logger, llm_request_type, kwargs)
 
-        if response:
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
             if span.is_recording():
-                _set_response_attributes(span, llm_request_type, response)
-                span.set_status(Status(StatusCode.OK))
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.record_exception(e)
+                span.end()
+            raise
+
+        if to_wrap.get("stream_process_func"):
+            return to_wrap.get("stream_process_func")(span, event_logger, llm_request_type, response)
+
+        set_span_response_attributes(span, response)
+        _handle_response_content(span, event_logger, llm_request_type, response)
+        span.end()
+        return response
+
+
+@_with_tracer_wrapper
+async def _awrap(
+    tracer: Tracer,
+    event_logger: Union[Logger, None],
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return await wrapped(*args, **kwargs)
+
+    name = to_wrap.get("span_name")
+    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
+    with tracer.start_as_current_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_SYSTEM: "Cohere",
+            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
+        },
+    ) as span:
+        set_span_request_attributes(span, kwargs)
+        _handle_input_content(span, event_logger, llm_request_type, kwargs)
+
+        try:
+            response = await wrapped(*args, **kwargs)
+        except Exception as e:
+            if span.is_recording():
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.record_exception(e)
+                span.end()
+            raise
+
+        set_span_response_attributes(span, response)
+        _handle_response_content(span, event_logger, llm_request_type, response)
 
         return response
 
@@ -257,9 +299,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class CohereInstrumentor(BaseInstrumentor):
     """An instrumentor for Cohere's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -267,19 +310,59 @@ class CohereInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        event_logger = None
+        if not Config.use_legacy_attributes:
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
+            )
         for wrapped_method in WRAPPED_METHODS:
+            wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                "cohere.client",
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
-            )
+            try:
+                wrap_function_wrapper(
+                    wrap_module,
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(tracer, event_logger, wrapped_method),
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to instrument {wrap_module}.{wrap_object}.{wrap_method}")
+
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_module = wrapped_method.get("module")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+            try:
+                wrap_function_wrapper(
+                    wrap_module,
+                    f"{wrap_object}.{wrap_method}",
+                    _awrap(tracer, event_logger, wrapped_method),
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to instrument {wrap_module}.{wrap_object}.{wrap_method}")
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_module = wrapped_method.get("module")
             wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"cohere.client.{wrap_object}",
-                wrapped_method.get("method"),
-            )
+            wrap_method = wrapped_method.get("method")
+            try:
+                unwrap(
+                    f"{wrap_module}.{wrap_object}",
+                    wrap_method,
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to uninstrument {wrap_module}.{wrap_object}.{wrap_method}")
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_module = wrapped_method.get("module")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+            try:
+                unwrap(
+                    f"{wrap_module}.{wrap_object}",
+                    wrap_method,
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to uninstrument {wrap_module}.{wrap_object}.{wrap_method}")

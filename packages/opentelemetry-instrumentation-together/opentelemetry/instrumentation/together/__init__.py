@@ -1,30 +1,39 @@
 """OpenTelemetry Together AI instrumentation"""
 
 import logging
-import os
 from typing import Collection
-from opentelemetry.instrumentation.together.config import Config
-from opentelemetry.instrumentation.together.utils import dont_throw
-from wrapt import wrap_function_wrapper
 
 from opentelemetry import context as context_api
-from opentelemetry.trace import get_tracer, SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.instrumentation.together.event_emitter import (
+    emit_completion_event,
+    emit_prompt_events,
+)
+from opentelemetry.instrumentation.together.span_utils import (
+    set_completion_attributes,
+    set_model_completion_attributes,
+    set_model_prompt_attributes,
+    set_prompt_attributes,
+)
+from opentelemetry.instrumentation.together.utils import dont_throw, should_emit_events
+from opentelemetry.instrumentation.together.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
-
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_RESPONSE_ID
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     LLMRequestTypeValues,
+    SpanAttributes,
 )
-from opentelemetry.instrumentation.together.version import __version__
-
+from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -44,101 +53,12 @@ WRAPPED_METHODS = [
 ]
 
 
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
-
-
-def _set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
-
-
-@dont_throw
-def _set_input_attributes(span, llm_request_type, kwargs):
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, kwargs.get("model"))
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_IS_STREAMING,
-        kwargs.get("stream"),
-    )
-
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            for index, message in enumerate(kwargs.get("messages")):
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.content",
-                    message.get("content"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{index}.role",
-                    message.get("role"),
-                )
-        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_PROMPTS}.0.content", kwargs.get("prompt")
-            )
-
-
-@dont_throw
-def _set_response_attributes(span, llm_request_type, response):
-    if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span,
-                f"{SpanAttributes.LLM_COMPLETIONS}.0.content",
-                response.choices[0].text,
-            )
-            _set_span_attribute(
-                span, f"{SpanAttributes.LLM_COMPLETIONS}.0.role", "assistant"
-            )
-        elif llm_request_type == LLMRequestTypeValues.CHAT:
-            index = 0
-            prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
-            _set_span_attribute(
-                span, f"{prefix}.content", response.choices[0].message.content
-            )
-            _set_span_attribute(
-                span, f"{prefix}.role", response.choices[0].message.role
-            )
-
-    _set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.model)
-    _set_span_attribute(span, GEN_AI_RESPONSE_ID, response.id)
-
-    usage_data = response.usage
-    input_tokens = getattr(usage_data, "prompt_tokens", 0)
-    output_tokens = getattr(usage_data, "completion_tokens", 0)
-
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-        input_tokens + output_tokens,
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        output_tokens,
-    )
-    _set_span_attribute(
-        span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-        input_tokens,
-    )
-
-
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, to_wrap):
+    def _with_tracer(tracer, event_logger, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, to_wrap, wrapped, instance, args, kwargs)
+            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
@@ -154,8 +74,36 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.UNKNOWN
 
 
+@dont_throw
+def _handle_input(span, event_logger, llm_request_type, kwargs):
+    set_model_prompt_attributes(span, kwargs)
+
+    if should_emit_events() and event_logger:
+        emit_prompt_events(event_logger, llm_request_type, kwargs)
+    else:
+        set_prompt_attributes(span, llm_request_type, kwargs)
+
+
+@dont_throw
+def _handle_response(span, event_logger, llm_request_type, response):
+    if should_emit_events() and event_logger:
+        emit_completion_event(event_logger, llm_request_type, response)
+    else:
+        set_completion_attributes(span, llm_request_type, response)
+
+    set_model_completion_attributes(span, response)
+
+
 @_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
+def _wrap(
+    tracer,
+    event_logger,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
         SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
@@ -168,19 +116,17 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            SpanAttributes.LLM_SYSTEM: "TogetherAI",
+            GenAIAttributes.GEN_AI_SYSTEM: "TogetherAI",
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
-    if span.is_recording():
-        _set_input_attributes(span, llm_request_type, kwargs)
+    _handle_input(span, event_logger, llm_request_type, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
+        _handle_response(span, event_logger, llm_request_type, response)
         if span.is_recording():
-
-            _set_response_attributes(span, llm_request_type, response)
             span.set_status(Status(StatusCode.OK))
 
     span.end()
@@ -190,9 +136,10 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 class TogetherAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Together AI's client library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes: bool = True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -200,13 +147,21 @@ class TogetherAiInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        event_logger = None
+        if not Config.use_legacy_attributes:
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             wrap_function_wrapper(
                 "together",
                 f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, wrapped_method),
+                _wrap(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

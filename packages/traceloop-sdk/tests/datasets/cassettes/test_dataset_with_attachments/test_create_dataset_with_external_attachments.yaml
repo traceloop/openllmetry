@@ -1,0 +1,245 @@
+interactions:
+- request:
+    body: '{"slug": "test-dataset-external-attachments", "name": "Products with External
+      Media", "description": "Test dataset with external URLs", "columns": [{"slug":
+      "name", "name": "Product Name", "type": "string"}, {"slug": "price", "name":
+      "Price", "type": "number"}, {"slug": "video", "name": "Demo Video", "type":
+      "file"}, {"slug": "manual", "name": "Manual", "type": "file"}], "rows": [{"name":
+      "Widget Pro", "price": 99.99, "video": null, "manual": null}, {"name": "Gadget
+      Plus", "price": 149.99, "video": null, "manual": null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '527'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidi6rjt001x01r5bsu7xlhr","slug":"test-dataset-external-attachments","name":"Products
+        with External Media","description":"Test dataset with external URLs","columns":{"manual":{"slug":"manual","name":"Manual","type":"file"},"name":{"slug":"name","name":"Product
+        Name","type":"string"},"price":{"slug":"price","name":"Price","type":"number"},"video":{"slug":"video","name":"Demo
+        Video","type":"file"}},"total_columns":4,"created_at":"2025-11-24T18:51:41.177964302Z","updated_at":"2025-11-24T18:51:41.177964356Z","rows":[{"id":"cmidi6rk3001y01r56v1z7q7k","row_index":1,"values":{"manual":null,"name":"Widget
+        Pro","price":99.99,"video":null},"created_at":"2025-11-24T18:51:41.191181097Z","updated_at":"2025-11-24T18:51:41.191181097Z"},{"id":"cmidi6rk3001z01r58myok3jg","row_index":2,"values":{"manual":null,"name":"Gadget
+        Plus","price":149.99,"video":null},"created_at":"2025-11-24T18:51:41.191181097Z","updated_at":"2025-11-24T18:51:41.191181097Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3b195dcaffd0ed-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '955'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:41 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 892f1a76b9e9da2d11beb336f90f3e17
+      x-kong-upstream-latency:
+      - '25'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"type": "video", "url": "https://www.youtube.com/watch?v=demo1", "metadata":
+      {"title": "Widget Pro Demo", "duration": "3:45"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '127'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-external-attachments/rows/cmidi6rk3001y01r56v1z7q7k/cells/video/external-url
+  response:
+    body:
+      string: '{"storage":"external","success":true,"url":"https://www.youtube.com/watch?v=demo1"}'
+    headers:
+      CF-RAY:
+      - 9a3b195f2d7c9b09-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:41 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 57bd7938e041191b32381f0d3f3f9e73
+      x-kong-upstream-latency:
+      - '17'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "file", "url": "https://docs.google.com/document/d/widget-manual",
+      "metadata": {"pages": 25}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '102'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-external-attachments/rows/cmidi6rk3001y01r56v1z7q7k/cells/manual/external-url
+  response:
+    body:
+      string: '{"storage":"external","success":true,"url":"https://docs.google.com/document/d/widget-manual"}'
+    headers:
+      CF-RAY:
+      - 9a3b19607f0b9d70-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:41 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - dc26aa33261e190afe72264d77ef703f
+      x-kong-upstream-latency:
+      - '14'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "video", "url": "https://vimeo.com/demo2", "metadata": {}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '67'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-external-attachments/rows/cmidi6rk3001z01r58myok3jg/cells/video/external-url
+  response:
+    body:
+      string: '{"storage":"external","success":true,"url":"https://vimeo.com/demo2"}'
+    headers:
+      CF-RAY:
+      - 9a3b1961cfca9384-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:41 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - d40f6a00071a0219db2d8a3220af8460
+      x-kong-upstream-latency:
+      - '15'
+    status:
+      code: 200
+      message: OK
+version: 1

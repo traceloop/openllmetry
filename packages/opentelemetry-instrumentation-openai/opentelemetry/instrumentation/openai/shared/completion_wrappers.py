@@ -1,6 +1,7 @@
 import logging
 
 from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
     _set_client_attributes,
     _set_functions_attributes,
@@ -8,13 +9,12 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_response_attributes,
     _set_span_attribute,
     _set_span_stream_usage,
-    get_token_count_from_string,
     is_streaming_response,
     model_as_dict,
     propagate_trace_context,
-    should_record_stream_token_usage,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
@@ -28,6 +28,9 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
 )
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -56,23 +59,27 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        _handle_request(span, kwargs, instance)
 
-    try:
-        response = wrapped(*args, **kwargs)
-    except Exception as e:
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            return _build_from_streaming_response(span, kwargs, response)
+        else:
+            _handle_response(response, span, instance)
+
         span.end()
-        raise e
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        return _build_from_streaming_response(span, kwargs, response)
-    else:
-        _handle_response(response, span)
-
-    span.end()
-    return response
+        return response
 
 
 @_with_tracer_wrapper
@@ -88,28 +95,32 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
     )
 
-    _handle_request(span, kwargs, instance)
+    # Use the span as current context to ensure events get proper trace context
+    with trace.use_span(span, end_on_exit=False):
+        _handle_request(span, kwargs, instance)
 
-    try:
-        response = await wrapped(*args, **kwargs)
-    except Exception as e:
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+        try:
+            response = await wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
+
+        if is_streaming_response(response):
+            # span will be closed after the generator is done
+            return _abuild_from_streaming_response(span, kwargs, response)
+        else:
+            _handle_response(response, span, instance)
+
         span.end()
-        raise e
-
-    if is_streaming_response(response):
-        # span will be closed after the generator is done
-        return _abuild_from_streaming_response(span, kwargs, response)
-    else:
-        _handle_response(response, span)
-
-    span.end()
-    return response
+        return response
 
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
-    _set_request_attributes(span, kwargs)
+    _set_request_attributes(span, kwargs, instance)
     if should_emit_events():
         _emit_prompts_events(kwargs)
     else:
@@ -131,7 +142,7 @@ def _emit_prompts_events(kwargs):
 
 
 @dont_throw
-def _handle_response(response, span):
+def _handle_response(response, span, instance=None):
     if is_openai_v1():
         response_dict = model_as_dict(response)
     else:
@@ -152,7 +163,7 @@ def _set_prompts(span, prompt):
 
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_PROMPTS}.0.user",
+        f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
         prompt[0] if isinstance(prompt, list) else prompt,
     )
 
@@ -164,7 +175,7 @@ def _set_completions(span, choices):
 
     for choice in choices:
         index = choice.get("index")
-        prefix = f"{SpanAttributes.LLM_COMPLETIONS}.{index}"
+        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
         _set_span_attribute(
             span, f"{prefix}.finish_reason", choice.get("finish_reason")
         )
@@ -226,35 +237,19 @@ def _emit_streaming_response_events(complete_response):
 
 @dont_throw
 def _set_token_usage(span, request_kwargs, complete_response):
-    # use tiktoken calculate token usage
-    if should_record_stream_token_usage():
-        prompt_usage = -1
-        completion_usage = -1
+    prompt_usage = -1
+    completion_usage = -1
 
-        # prompt_usage
-        if request_kwargs and request_kwargs.get("prompt"):
-            prompt_content = request_kwargs.get("prompt")
-            model_name = complete_response.get("model") or None
+    # Use token usage from API response only
+    if complete_response.get("usage"):
+        usage = complete_response["usage"]
+        if usage.get("prompt_tokens"):
+            prompt_usage = usage["prompt_tokens"]
+        if usage.get("completion_tokens"):
+            completion_usage = usage["completion_tokens"]
 
-            if model_name:
-                prompt_usage = get_token_count_from_string(prompt_content, model_name)
-
-        # completion_usage
-        if complete_response.get("choices"):
-            completion_content = ""
-            model_name = complete_response.get("model") or None
-
-            for choice in complete_response.get("choices"):
-                if choice.get("text"):
-                    completion_content += choice.get("text")
-
-            if model_name:
-                completion_usage = get_token_count_from_string(
-                    completion_content, model_name
-                )
-
-        # span record
-        _set_span_stream_usage(span, prompt_usage, completion_usage)
+    # span record
+    _set_span_stream_usage(span, prompt_usage, completion_usage)
 
 
 @dont_throw
@@ -264,6 +259,11 @@ def _accumulate_streaming_response(complete_response, item):
 
     complete_response["model"] = item.get("model")
     complete_response["id"] = item.get("id")
+
+    # capture usage information from the stream chunks
+    if item.get("usage"):
+        complete_response["usage"] = item.get("usage")
+
     for choice in item.get("choices"):
         index = choice.get("index")
         if len(complete_response.get("choices")) <= index:

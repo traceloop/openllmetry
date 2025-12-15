@@ -1,0 +1,87 @@
+interactions:
+- request:
+    body: '{"model":"mistral-tiny","messages":[{"content":"Tell me a joke about OpenTelemetry","role":"user"}],"stream":false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '115'
+      content-type:
+      - application/json
+      host:
+      - api.mistral.ai
+      user-agent:
+      - mistral-client-python/1.9.10
+    method: POST
+    uri: https://api.mistral.ai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA0SQzWobQRCEX6XTpwQ2xopWf3MJ+OaTL4Ec4iB6Z1rasWe6l+neOELo3cMG4pwK
+        iqLqo66YEwbcb/sUd3vaH4Ztv48DrQ/bL9t+N+zTqU9rxg5jY3JOGFa7zW63OfSH+w6rJi4YsGbz
+        RuWzZ7lgh7PRmTFccWpaJz+6vrIYhtWqQ1en8u5s+w6j1qmwZ5V3e7O+dajDC0fHgHEkv/ufWmBG
+        zZENw48rZkn8G8N9h6cs2cZjYzIVDGiuE3ZY2f7xNC2MAcksm5M4LjxajpFKMQwyl7LwiLMsw9/H
+        C6Sc4Gli+caFK3u7wItmAYKBJH19lmd54EizMWSHNxLnBK4wZgcf1RgmbidtlSQyLAU5GrR8Hh1U
+        wEeGgck/LEUfH1RmC/DoQMUURjIgeMuJoZGcGfQEWczbXFmcli9Ap0Wsg0qvWc4LBMEvbkaeCwOl
+        lP/mXIHkAnW2HKkAi3EdCt99wtvt5+0PAAAA//8DAOPg+PQHAgAA
+    headers:
+      CF-RAY:
+      - 97e6f9ae6e975b91-VIE
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 13 Sep 2025 10:31:31 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=jthw1oLmWF6xrdpSmmzkauIHyNYeEVbWasD_mjwkiE4-1757759491-1.0.1.1-zgrCjD1J7b958q8eI3W37Vxq.KfykNk90T7DQD88kMN_c431_V8u8jroMHgQEGuYz37EhcRnjh5t9Lr3rrsX2qREgjBQbbTpPA072CohpqQ;
+        path=/; expires=Sat, 13-Sep-25 11:01:31 GMT; domain=.mistral.ai; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=hhz10D82pArbEttd.bwY0ZJfcYIOo4BjoPNouGS1TRs-1757759491312-0.0.1.1-604800000;
+        path=/; domain=.mistral.ai; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      mistral-correlation-id:
+      - 019942a1-491f-7b74-aaf2-b92daa09de2a
+      x-envoy-upstream-service-time:
+      - '944'
+      x-kong-proxy-latency:
+      - '7'
+      x-kong-request-id:
+      - 019942a1-491f-7b74-aaf2-b92daa09de2a
+      x-kong-upstream-latency:
+      - '945'
+      x-ratelimit-limit-req-10-second:
+      - '60'
+      x-ratelimit-limit-tokens-minute:
+      - '2000000'
+      x-ratelimit-limit-tokens-month:
+      - '10000000000'
+      x-ratelimit-remaining-req-10-second:
+      - '58'
+      x-ratelimit-remaining-tokens-minute:
+      - '1999829'
+      x-ratelimit-remaining-tokens-month:
+      - '9999999829'
+      x-ratelimit-tokens-query-cost:
+      - '64'
+    status:
+      code: 200
+      message: OK
+version: 1

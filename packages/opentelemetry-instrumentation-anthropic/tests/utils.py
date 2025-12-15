@@ -1,7 +1,12 @@
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import Meters
 
 
-def verify_metrics(resource_metrics, model_name: str, ignore_zero_input_tokens: bool = False):
+def verify_metrics(
+    resource_metrics, model_name: str, ignore_zero_input_tokens: bool = False
+):
     assert len(resource_metrics) > 0
     found_token_metric = False
     found_choice_metric = False
@@ -14,12 +19,12 @@ def verify_metrics(resource_metrics, model_name: str, ignore_zero_input_tokens: 
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+                            data_point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
                             == model_name
                         )
                         if not ignore_zero_input_tokens:
@@ -30,7 +35,7 @@ def verify_metrics(resource_metrics, model_name: str, ignore_zero_input_tokens: 
                     for data_point in metric.data.data_points:
                         assert data_point.value >= 1
                         assert (
-                            data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
+                            data_point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
                             == model_name
                         )
 
@@ -43,7 +48,7 @@ def verify_metrics(resource_metrics, model_name: str, ignore_zero_input_tokens: 
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
                     assert all(
-                        data_point.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
+                        data_point.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL)
                         == model_name
                         or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points

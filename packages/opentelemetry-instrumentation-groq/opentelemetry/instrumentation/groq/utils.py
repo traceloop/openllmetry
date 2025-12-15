@@ -1,15 +1,20 @@
-from importlib.metadata import version
-import os
 import logging
+import os
 import traceback
+from importlib.metadata import version
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.groq.config import Config
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 GEN_AI_SYSTEM = "gen_ai.system"
 GEN_AI_SYSTEM_GROQ = "groq"
 
 _PYDANTIC_VERSION = version("pydantic")
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def set_span_attribute(span, name, value):
@@ -19,7 +24,7 @@ def set_span_attribute(span, name, value):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -57,7 +62,7 @@ def shared_metrics_attributes(response):
     return {
         **common_attributes,
         GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
-        SpanAttributes.LLM_RESPONSE_MODEL: response_dict.get("model"),
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
     }
 
 
@@ -78,3 +83,12 @@ def model_as_dict(model):
         return model_as_dict(model.parse())
     else:
         return model
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+
+    return not Config.use_legacy_attributes

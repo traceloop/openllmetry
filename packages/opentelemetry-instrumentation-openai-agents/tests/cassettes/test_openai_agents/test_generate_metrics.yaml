@@ -1,0 +1,176 @@
+interactions:
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_592ec2e06b8a4dc3b9369ba0","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":"span_c03ad8041497444d89807081","started_at":"2025-08-15T17:56:15.504305+00:00","ended_at":"2025-08-15T17:56:32.924924+00:00","span_data":{"type":"response","response_id":"resp_689f74c00c54819e8c87a14f710b59e802d985ee604595f2"},"error":null},{"object":"trace.span","id":"span_c03ad8041497444d89807081","trace_id":"trace_677ed7b1d062439194c8e3d54ed879c2","parent_id":null,"started_at":"2025-08-15T17:56:15.503703+00:00","ended_at":"2025-08-15T17:56:32.926026+00:00","span_data":{"type":"agent","name":"SearchAgent","handoffs":[],"tools":["web_search_preview"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_ddebf51199d147aa9c276699d6344191","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_62c6185da3e145b4a82a3402","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:32.944060+00:00","ended_at":"2025-08-15T17:56:33.764724+00:00","span_data":{"type":"response","response_id":"resp_689f74d139588191a462ea4e7046500307faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_0bb132f90d1d494f8754f59f","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_31a060c154064c77860efebb","started_at":"2025-08-15T17:56:33.765094+00:00","ended_at":"2025-08-15T17:56:33.765369+00:00","span_data":{"type":"handoff","from_agent":"TriageAgent","to_agent":"AgentA"},"error":null},{"object":"trace.span","id":"span_31a060c154064c77860efebb","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:32.943376+00:00","ended_at":"2025-08-15T17:56:33.765656+00:00","span_data":{"type":"agent","name":"TriageAgent","handoffs":["AgentA","AgentB"],"tools":["handoff_to_agent_a","handoff_to_agent_b"],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_5dae755c0c2b4a2582d35948","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":"span_83a42886feef4f04ba202879","started_at":"2025-08-15T17:56:33.766388+00:00","ended_at":"2025-08-15T17:56:35.240587+00:00","span_data":{"type":"response","response_id":"resp_689f74d20ec88191b7c982b9eafade0c07faccddfd4bb942"},"error":null},{"object":"trace.span","id":"span_83a42886feef4f04ba202879","trace_id":"trace_ddebf51199d147aa9c276699d6344191","parent_id":null,"started_at":"2025-08-15T17:56:33.765861+00:00","ended_at":"2025-08-15T17:56:35.240878+00:00","span_data":{"type":"agent","name":"AgentA","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_a14fd79430914a80afdc0c9f25282b1b","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2779'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96fa91d0efb409bb-HFA
+      Connection:
+      - keep-alive
+      Date:
+      - Fri, 15 Aug 2025 17:56:37 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '102'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '106'
+      x-request-id:
+      - req_0e0eac723ad91ed664fec78595f6763b
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"content":"What is AI?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","stream":false,"temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '235'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dFVNb+M2EL3nVwx02hhJIH8lTm45GiiKotseit1CGFMjmTVFameGTryL
+        /PeClK3YbfZiWPPxOPNm+PjjCqCwdfEEBZP01f3qsXlY1PMV3pvVFGcbmpnpjKhZre7LDW7K1eIe
+        HzaLzdSYx2aJxU0CCJt/yOgJJHihwW6YUKmuMPmmD8vlbFUuH5fZJ4oaJeWY0PWOlOohaYNm13KI
+        PlXVoBPKZmIOXDyBj85lg/WnxKomRevk0ivK0agNPh/yV4iATICwJdc30QGKWFH0CrpFBfTyQiyA
+        zsG3SDJkZqwOX6sQtY9aadhRBpyWs8Xo1BBcZdBdltCFmlw6u+31dnE3vZ2Vs+VtubidLo60Zczi
+        Cb5cAQD8yL/jPDppT+NYzMppHsdj+fBgqDblrJyb+fzhw3FkDD30lFFIBFt6d/yM9+w0wSv595LO
+        y7qAPdFBrzpm5wD0PiieaP/y94XThbbnsPnAk4GeoJhMnteTCaS51AJNYJhMnlltY41FB2uv5Jxt
+        yRuaTO5grcDUpLFpAN0S1LQnF/qOvEJoILUYlRjkIEqdQGCQ0OhLWoU8doMeeuImcAeKshPQQ2/T
+        LA/A9C1atr6FbezQgz07/Q7+2JLQMcd642JNT1/9V38Lf/qaOLeQctHX0HMwJJI+PWpkdODQtxFb
+        gk/O7gikJ9wlf2B4YavWt9cJ63cyofX2e3LZDlvKPfSoSuwlRfxCyD65Gw4d0GtPbFOF8KlDs7We
+        wB0jMuDn4PYpOg3CJUpSfd1wdk3GShpdCvzN4SEZW+yGQ2u2OXNPW2scSWr2eZ0Z3BA06caC9UB7
+        4kONB1AyWx9caC0JSDRbQIG9ZY14dvvkSMBnyzad8uzoFa9vgMmEriNf52UaBzgE6zYIQfDwK2nj
+        7GtO7PB78Nc3IOSa21OxBlluhh5TBV1gukuFrz1I7Drkw01asTVYyQskZiAvZZBvrSfKGxCaE0lH
+        VlO49bsciEYh15X3RCaTu2Jc7rfjv3HfCw4u36GRgiE4BeagokdG58hd6opyHJSwZ9rbEKU6iW2V
+        BWPUnZ5D12tl0Gyp2tHh3MeEEtIuFE/Hi11Q0wTWs6AkEgM1R+MVwNug2diQHipbk09Xki70WIj3
+        1lClg72oqcHoBnkoRAPTeRNKXU+c7kIyl3fzozXLwLGydCnx/ftMfnLcwNqx4j3xJojVwyB6tY1d
+        MdY98LgN1gzERw3F6HhXo0JDX51pVDka+1zjbPjm6E1eytylFdy409sVs9aODVh/8WYML8Z/7GeP
+        19hmHl39nlhetPq/p2g+/cjzEfA4/p9ha1B0Z9DL5UhilMt5d6RYo2LCf7t6+xcAAP//AwCpa8sp
+        SggAAA==
+    headers:
+      CF-RAY:
+      - 96fa91c9694109c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:38 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '3167'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '3171'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999957'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_e75beac7fc4da4c25148e1b170170e79
+    status:
+      code: 200
+      message: OK
+version: 1

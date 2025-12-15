@@ -1,0 +1,165 @@
+interactions:
+- request:
+    body: '{"input": "Count to 3", "model": "gpt-4o", "stream": true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '58'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - AsyncOpenAI/Python 1.99.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.16
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_0833439a21e2e07f00692744f7343c8194a974c6475b934753","object":"response","created_at":1764181239,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_0833439a21e2e07f00692744f7343c8194a974c6475b934753","object":"response","created_at":1764181239,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","type":"message","status":"in_progress","content":[],"role":"assistant"}}
+
+
+        event: response.content_part.added
+
+        data: {"type":"response.content_part.added","sequence_number":3,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""}}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":"1","logprobs":[],"obfuscation":"XA0B7nq36y3I0p0"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":5,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"Xr3zhqYKv3CQfSO"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":6,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":"
+        ","logprobs":[],"obfuscation":"UVLmTFr7FkA87lB"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":7,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":"2","logprobs":[],"obfuscation":"wPVtjCN3qKdLhJk"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":8,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"7ajjiAJKL5KDRn7"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":9,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":"
+        ","logprobs":[],"obfuscation":"mJIUyOlMT0CuNgP"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":10,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"delta":"3","logprobs":[],"obfuscation":"tkvYO2ofKRqiMo2"}
+
+
+        event: response.output_text.done
+
+        data: {"type":"response.output_text.done","sequence_number":11,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"text":"1,
+        2, 3","logprobs":[]}
+
+
+        event: response.content_part.done
+
+        data: {"type":"response.content_part.done","sequence_number":12,"item_id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":"1,
+        2, 3"}}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":13,"output_index":0,"item":{"id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"1,
+        2, 3"}],"role":"assistant"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":14,"response":{"id":"resp_0833439a21e2e07f00692744f7343c8194a974c6475b934753","object":"response","created_at":1764181239,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"msg_0833439a21e2e07f00692744f7989c81949dceeaed14d8e652","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"1,
+        2, 3"}],"role":"assistant"}],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":11,"input_tokens_details":{"cached_tokens":0},"output_tokens":8,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":19},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 9a4b66a84caf0dd4-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Wed, 26 Nov 2025 18:20:39 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=V.B2dWw7Yqqxcb1uimxGCTcSgcx.eZynXeAnI8MdqrY-1764181239-1.0.1.1-fLTkIx0eOASBJaTgLguVlUcPeXfGdMzkMTJLHFk_x1Cp16J1_CVnZQv28zh4n2kXaZhhKmaa.rU.jVIHjsuftLTTbR8d2NsEO_GRuM9Oe3k;
+        path=/; expires=Wed, 26-Nov-25 18:50:39 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=OlLe323e8JzelzLOlibVBzWl3.rFDoa53lmaaBwwA4Y-1764181239310-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '31'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '36'
+      x-request-id:
+      - req_e541f460fc054ca5b778bb69c39095e9
+    status:
+      code: 200
+      message: OK
+version: 1

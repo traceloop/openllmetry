@@ -27,9 +27,8 @@ openai = "^1.52.2"
 requests = "^2.32.3"
 # pinecone-datasets = "^0.7.0"
 pinecone-client = "^3.2.2"
-llama-index = "^0.12.6"
+llama-index = "^0.12.52"
 duckduckgo-search = "^3.9.11"
-torch = "^2.5.0"
 chromadb = "^0.5.15"
 tokenizers = "~0.20.1"
 boto3 = "^1.35.49"
@@ -44,6 +43,8 @@ langchain-community = "^0.3.22"
 haystack-ai = "~2.6.1"
 datasets = "~2.21.0"
 llama-index-embeddings-huggingface = "^0.4.0"
+llama-index-embeddings-openai = "^0.3.1"
+llama-index-agent-openai = "^0.4.12"
 litellm = "^1.51.0"
 text-generation = "^0.7.0"
 llama-index-vector-stores-chroma = "^0.4.1"
@@ -51,10 +52,13 @@ langchain-openai = "^0.3.14"
 google-generativeai = "^0.8.3"
 langgraph = "^0.2.39"
 groq = "^0.11.0"
-llama-index-llms-openai = "^0.3.12"
+llama-index-llms-openai = "^0.4.0"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
+openai-agents = "^0.2.7"
+fastmcp = "^2.12.3"
+agno = ">=2.2.2"
 
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-openai]
@@ -91,6 +95,14 @@ develop = true
 
 [tool.poetry.dependencies.opentelemetry-instrumentation-crewai]
 path = "../opentelemetry-instrumentation-crewai"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-openai-agents]
+path = "../opentelemetry-instrumentation-openai-agents"
+develop = true
+
+[tool.poetry.dependencies.opentelemetry-instrumentation-agno]
+path = "../opentelemetry-instrumentation-agno"
 develop = true
 
 [tool.poetry.group.dev.dependencies]

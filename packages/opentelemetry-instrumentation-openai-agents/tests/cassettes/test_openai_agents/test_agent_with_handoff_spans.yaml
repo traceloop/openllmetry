@@ -1,0 +1,224 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"content":"Please handle this task by delegating
+      to another agent.","role":"user"}],"instructions":"You decide which agent to
+      handoff to.","model":"gpt-4.1","stream":false,"tools":[{"name":"handoff_to_agent_a","parameters":{"properties":{"input":{"title":"Input","type":"string"}},"required":["input"],"title":"handoff_to_agent_a_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Handoff
+      to Agent A for specific tasks"},{"name":"handoff_to_agent_b","parameters":{"properties":{"input":{"title":"Input","type":"string"}},"required":["input"],"title":"handoff_to_agent_b_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Handoff
+      to Agent B for different tasks"},{"name":"transfer_to_agenta","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true,"type":"function","description":"Handoff
+      to the AgentA agent to handle the request. "},{"name":"transfer_to_agentb","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true,"type":"function","description":"Handoff
+      to the AgentB agent to handle the request. "}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1223'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//5FbLbts6EN37Kwitk0Cy5fixS4qivbt7VxdFEQgjcmizpkiVHCZNA/97
+        IUrWI482QIsCRTeGPIcznDlnSM7DjLFEiWTLEoe+Li7XG7nKRbbYLNfrbJNBfjlHyHGV5pfLNF2k
+        KwmcCyFFXpabfJ6cNQFs+Qk5nYJY47G1c4dAKAposGy1XM7X6XKziJgnoOAbH26rWiOhaJ1K4Ied
+        s8E0WUnQHqMZnbMu2TITtI4GZU6OhUACpf0U9eQCJ2VN3OSDDUwgVwLZ3V7xPYMdGmJk2R6MsFIy
+        shdtAhV8KWygOlBB9oBmErcByVpdcNDTHSsrUDdb7Wo6zy+y83k6X56n+XmWdyzFmMmWfZwxxthD
+        /O3pl7wnvyyXPJJ/WcpFLuVilS3yfJ0/S34MQfc1xiDBxJJjdgP8EtcRBLcLFRqK+MNxAJoYRZtc
+        /HxH9PXdytzd0+GN/S/c5eu35u3/7tPgYaCKaZAD4yW6gmwReYYkLjnOGLuJXNTgQGvUUy7JhVbs
+        2uGtssEXp35q8+i5rp2taio48D0WB7wfYw7BW6PMLtl2HCcopXU0WtRwEqoK3MlzxtixbUuQSPeF
+        EmhISYWTlvPobhXHglp7IlBC0JR0DW0djosgrGp0QCGas4u0s36hITNpXQXD/5GUcV3LWpfxLbrS
+        ekVNzkmFQoUq6fNuedxbxaM3BLJJD/inTfe4YwYRBXruVB2NW5a8748Hu4pH5opJ65ivkSupOCPw
+        B/+0BbpT1XdAAcOaRvwKCZ0fFd6qWqMjhVN7PM3tyRkbmyIU6bjbPxE/e4R2JXpyTTeMwGP/fRx8
+        Eoefg3IoerImm/eWm5FLn8DTcgtwO5+M13bpdJflCAEhVEM36H/HDMS7b/Yoz1hNvGubPhv3xy+Q
+        9jpKK5SU6OLt+Epty79L2/LP0pb22Op7NX30NEaooQY9XbBX3eM/FPp7Bb+KsWmnvCTize8m7/qn
+        ySv/LPL6t5psXWi7q50tm6hpb6zHz5oLhsOJQKE8lPo00QUPOxzevHjmhtEqW27OngKjme5hGEj4
+        HsXgmU6ex8cjW7Z4Dngubj8xvBSaLIEeRV7N+3c3+OmIUCGBAIJI/+z4DQAA//8DAFuxG79gCwAA
+    headers:
+      CF-RAY:
+      - 96fa91bb0eaf09c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:33 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '595'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '597'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999624'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_ac5a5da3776763a1e744e75310bb345e
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"content":"Please handle this task by delegating
+      to another agent.","role":"user"},{"arguments":"{}","call_id":"call_GttzG7nwytkCoQuw48EnEWrj","name":"transfer_to_agenta","type":"function_call","id":"fc_689f74d1bb5c8191a6bf34ff3713448407faccddfd4bb942","status":"completed"},{"call_id":"call_GttzG7nwytkCoQuw48EnEWrj","output":"{\"assistant\":
+      \"AgentA\"}","type":"function_call_output"}],"instructions":"Agent A does something.","model":"gpt-4.1","stream":false,"tools":[]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '498'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//dFTBjts4DL3PV7C69DITOKkziXPrce+9FQuDlmhHG1n0StS0QTH/vrCc
+        OHZ3egkcPvKJfHzSrycAZY06gQoUh/r1WLWH0uwK0sfjtto2B10dd01F2KKhQheHFrU2pjVl01Tl
+        Tj2PBNz8Q1ruJOwjTXEdCIVMjSO2Pez3u2Oxr8qMRUFJcazR3A+OhMxU1KC+dIGTH7tq0UXKYQqB
+        gzqBT87lgPX3wtqQoHVxjUYJSYtlnw/52pEX+AqGKULknuRsfbeZjuzxZ81JhiS18IX8imkEhdnV
+        Gt36jJ4NuZG8G+Sl3GxfdsVu/1KUL9vypkvmVCf4/gQA8Cv/zoL3sZv1PlCb9cZtcdTFa4klVs2u
+        On6od+aQ60CZhWLEjh7An4TNoGYv5B8tLdta0d7loJ8yV+cE9J4F77p+/3sFOu6GwM0HSCY6gfqG
+        8QJnjNAQeTDkqBstAsJwW9Hm/gE/rHNwRm8cgZwJAv2bKMoG/mrhygnO+EbQcyBYbhs4gCcygB7S
+        YFAI2Od6wXj5HGEI3AWK8RkGRxgJHAn0BBfPPz6puen329c8hwrssjYYo42CXqbkMTEnqQEDOkdu
+        7RcJabLwEOjNcor1/ZbU2Qizn4bA/SC1Rn2m+kLXJRYII3vrO3W6LUxR23KQRdK4/NT3GO6VTwDv
+        02XDluRaW0NebGtpdZEihTerqZYprgy1mNy0dhWFAy2HEOoHCigph7eb4hbN67111nLo8fF/Yauc
+        N6l26/iNQsPRynUys7GpV3Pfk45ntnoSPgmrGXi4TAkP9cJ7xRwclj2G5HV2bp7SRmzc/dFJ+Q7N
+        A1i/egv2h+f/xxevzjxmXp15FBarUX9/Yr68fgR8xDtv/0/UwoLuAVZfZglTXG+7J0GDgiP9+9P7
+        fwAAAP//AwCfc+CEAQYAAA==
+    headers:
+      CF-RAY:
+      - 96fa91c02a0f09c9-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:35 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1282'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '1284'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999924'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_d1c98a5aeb66ec1b124d4c4d4ad0605e
+    status:
+      code: 200
+      message: OK
+version: 1

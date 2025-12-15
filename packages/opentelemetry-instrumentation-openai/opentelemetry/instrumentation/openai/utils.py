@@ -5,9 +5,10 @@ import threading
 import traceback
 from contextlib import asynccontextmanager
 from importlib.metadata import version
+from packaging import version as pkg_version
 
 from opentelemetry import context as context_api
-from opentelemetry._events import EventLogger
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.openai.shared.config import Config
 
 import openai
@@ -18,7 +19,15 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def is_openai_v1():
-    return _OPENAI_VERSION >= "1.0.0"
+    return pkg_version.parse(_OPENAI_VERSION) >= pkg_version.parse("1.0.0")
+
+
+def is_reasoning_supported():
+    # Reasoning has been introduced in OpenAI API on Dec 17, 2024
+    #     as per https://platform.openai.com/docs/changelog.
+    # The updated OpenAI library version is 1.58.0
+    #     as per https://pypi.org/project/openai/.
+    return pkg_version.parse(_OPENAI_VERSION) >= pkg_version.parse("1.58.0")
 
 
 def is_azure_openai(instance):
@@ -29,10 +38,6 @@ def is_azure_openai(instance):
 
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
-
-
-def should_record_stream_token_usage():
-    return Config.enrich_token_usage
 
 
 def _with_image_gen_metric_wrapper(func):
@@ -181,5 +186,5 @@ def should_emit_events() -> bool:
     and if the event logger is not None.
     """
     return not Config.use_legacy_attributes and isinstance(
-        Config.event_logger, EventLogger
+        Config.event_logger, Logger
     )

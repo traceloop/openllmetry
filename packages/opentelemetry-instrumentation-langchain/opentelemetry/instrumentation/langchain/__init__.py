@@ -2,29 +2,27 @@
 
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.langchain.config import Config
-from wrapt import wrap_function_wrapper
 
-from opentelemetry.trace import get_tracer
+from opentelemetry import context as context_api
 
+
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
-from opentelemetry.instrumentation.langchain.version import __version__
-from opentelemetry.instrumentation.langchain.utils import is_package_available
-
-
-from opentelemetry.trace.propagation.tracecontext import (
-    TraceContextTextMapPropagator,
-)
-from opentelemetry.trace.propagation import set_span_in_context
-
 from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
-
+from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.instrumentation.langchain.utils import is_package_available
+from opentelemetry.instrumentation.langchain.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.metrics import get_meter
-from opentelemetry.semconv_ai import Meters
+from opentelemetry.semconv_ai import Meters, SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, SpanAttributes
+from opentelemetry.trace import get_tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.propagation.tracecontext import (
+    TraceContextTextMapPropagator,
+)
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +32,28 @@ _instruments = ("langchain-core > 0.1.0", )
 class LangchainInstrumentor(BaseInstrumentor):
     """An instrumentor for Langchain SDK."""
 
-    def __init__(self, exception_logger=None, disable_trace_context_propagation=False):
+    def __init__(
+        self,
+        exception_logger=None,
+        disable_trace_context_propagation=False,
+        use_legacy_attributes: bool = True,
+        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES
+    ):
+        """Create a Langchain instrumentor instance.
+
+        Args:
+            exception_logger: A callable that takes an Exception as input. This will be
+                used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
+            disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
+            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            metadata_key_prefix: Prefix for metadata keys added to spans. Defaults to
+                `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
+                Useful for using with other backends.
+        """
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
+        Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -63,6 +80,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             unit="token",
             description="Measures number of input and output tokens used",
         )
+
+        if not Config.use_legacy_attributes:
+            logger_provider = kwargs.get("logger_provider")
+            Config.event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
+            )
 
         traceloopCallbackHandler = TraceloopCallbackHandler(
             tracer, duration_histogram, token_histogram
@@ -176,8 +199,8 @@ class LangchainInstrumentor(BaseInstrumentor):
 
 
 class _BaseCallbackManagerInitWrapper:
-    def __init__(self, callback_manager: "TraceloopCallbackHandler"):
-        self._callback_manager = callback_manager
+    def __init__(self, callback_handler: "TraceloopCallbackHandler"):
+        self._callback_handler = callback_handler
 
     def __call__(
         self,
@@ -188,10 +211,14 @@ class _BaseCallbackManagerInitWrapper:
     ) -> None:
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
-            if isinstance(handler, type(self._callback_manager)):
+            if isinstance(handler, type(self._callback_handler)):
                 break
         else:
-            instance.add_handler(self._callback_manager, True)
+            # Add a property to the handler which indicates the CallbackManager instance.
+            # Since the CallbackHandler only propagates context for sync callbacks,
+            # we need a way to determine the type of CallbackManager being wrapped.
+            self._callback_handler._callback_manager = instance
+            instance.add_handler(self._callback_handler, True)
 
 
 # This class wraps a function call to inject tracing information (trace headers) into
@@ -212,19 +239,31 @@ class _OpenAITracingWrapper:
         args,
         kwargs,
     ) -> None:
-
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
-            span_holder = self._callback_manager.spans[run_id]
+            span_holder = self._callback_manager.spans.get(run_id)
 
-            extra_headers = kwargs.get("extra_headers", {})
+            if span_holder:
+                extra_headers = kwargs.get("extra_headers", {})
+                ctx = set_span_in_context(span_holder.span)
+                TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
+                kwargs["extra_headers"] = extra_headers
+            else:
+                logger.debug(
+                    "No span found for run_id %s, skipping header injection",
+                    run_id
+                )
 
-            # Inject tracing context into the extra headers
-            ctx = set_span_in_context(span_holder.span)
-            TraceContextTextMapPropagator().inject(extra_headers, context=ctx)
-
-            # Update kwargs to include the modified headers
-            kwargs["extra_headers"] = extra_headers
+        # In legacy chains like LLMChain, suppressing model instrumentations
+        # within create_llm_span doesn't work, so this should helps as a fallback
+        try:
+            context_api.attach(
+                context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+            )
+        except Exception:
+            # If context setting fails, continue without suppression
+            # This is not critical for core functionality
+            pass
 
         return wrapped(*args, **kwargs)

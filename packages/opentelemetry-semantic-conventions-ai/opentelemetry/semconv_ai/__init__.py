@@ -3,14 +3,42 @@ from enum import Enum
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
+class GenAISystem(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    These values match the actual strings used in span attributes (LLM_SYSTEM)
+    throughout the instrumentation packages.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "Anthropic"
+    COHERE = "Cohere"
+    MISTRALAI = "MistralAI"
+    OLLAMA = "Ollama"
+    GROQ = "Groq"
+    ALEPH_ALPHA = "AlephAlpha"
+    REPLICATE = "Replicate"
+    TOGETHER_AI = "TogetherAI"
+    WATSONX = "Watsonx"
+    HUGGINGFACE = "HuggingFace"
+    FIREWORKS = "Fireworks"
+
+    AZURE = "Azure"
+    AWS = "AWS"
+    GOOGLE = "Google"
+    OPENROUTER = "OpenRouter"
+
+    LANGCHAIN = "Langchain"
+    CREWAI = "crewai"
+
+
 class Meters:
     LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_GENERATE = (
-        "llm.chat_completions.streaming_time_to_generate"
-    )
+    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
@@ -21,6 +49,12 @@ class Meters:
     PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
     PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
 
+    DB_QUERY_DURATION = "db.client.query.duration"
+    DB_SEARCH_DISTANCE = "db.client.search.distance"
+    DB_USAGE_INSERT_UNITS = "db.client.usage.insert_units"
+    DB_USAGE_UPSERT_UNITS = "db.client.usage.upsert_units"
+    DB_USAGE_DELETE_UNITS = "db.client.usage.delete_units"
+
     LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
     LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
     LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
@@ -28,26 +62,13 @@ class Meters:
 
 
 class SpanAttributes:
-    # Semantic Conventions for LLM requests, this needs to be removed after
-    # OpenTelemetry Semantic Conventions support Gen AI.
-    # Issue at https://github.com/open-telemetry/opentelemetry-python/issues/3868
-    # Refer to https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md
-    # for more detail for LLM spans from OpenTelemetry Community.
-    LLM_SYSTEM = "gen_ai.system"
-    LLM_REQUEST_MODEL = "gen_ai.request.model"
-    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
-    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
-    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
-    LLM_PROMPTS = "gen_ai.prompt"
-    LLM_COMPLETIONS = "gen_ai.completion"
-    LLM_RESPONSE_MODEL = "gen_ai.response.model"
-    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
-    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    # GenAI Usage Cache Attributes (missing from incubating semantic conventions)
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+
+    # LLM Cache Attributes (legacy naming - keeping for backward compatibility)
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
-    LLM_TOKEN_TYPE = "gen_ai.token.type"
-    # To be added
-    # LLM_RESPONSE_ID = "gen_ai.response.id"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"

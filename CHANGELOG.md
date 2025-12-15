@@ -1,3 +1,344 @@
+## v0.49.8 (2025-12-11)
+
+### Fix
+
+- **openai**: add support for realtime api (websockets) (#3511)
+- **ollama**: support Older Version Ollama (#3501)
+
+## v0.49.7 (2025-12-08)
+
+### Fix
+
+- **exp**: Add a real agent example (#3507)
+- **evals**: Add agent evaluators to made by traceloop (#3505)
+- **exp**: Add made by traceloop evaluators (#3503)
+- **traceloop-sdk**: Fixes gRPC exporter initialisation with insecure OTLP (#3481)
+
+## v0.49.6 (2025-12-01)
+
+### Fix
+
+- **agno**: add streaming support for Agent.run() and Agent.arun() (#3483)
+
+## v0.49.5 (2025-11-27)
+
+### Fix
+
+- **openai**: responses instrumentation broken traces for async streaming (#3475)
+- **mcp**: remove faulty logic of trying to deduce HTTP errors (#3477)
+
+## v0.49.4 (2025-11-27)
+
+### Fix
+
+- **exp**: Add run in github experiment  (#3459)
+
+## v0.49.3 (2025-11-26)
+
+### Fix
+
+- **openai**: recognize NOT_GIVEN and Omit (#3473)
+- **dataset**: add support for file cells in datasets with upload and external URL linking capabilities (#3462)
+- **openai**: report request attributes in responses API instrumentation (#3471)
+- **sdk**: crewai tracing provider conflict (#3470)
+- **sdk**: watsonx warning on initialization (#3469)
+- **traceloop-sdk**: add type-checking support with mypy (#3463)
+
+## v0.49.2 (2025-11-25)
+
+### Fix
+
+- **sdk**: remove posthog (#3466)
+
+## v0.49.1 (2025-11-24)
+
+### Fix
+
+- **langchain**: allow configuration of metadata key prefix (#3367)
+- **openai**: record service_tier attribute (#3458)
+
+## v0.49.0 (2025-11-23)
+
+### Feat
+
+- **agno**: add instrumentation for agno framework (#3452)
+
+## v0.48.2 (2025-11-23)
+
+### Fix
+
+- add structured outputs schema logging for Anthropic and Gemini (#3454)
+- **openai**: use SpanAttributes instead of GenAIAttributes for cache token attributes (#3442)
+- migrate from events api to log records for otel 1.37.0+ compatibility (#3453)
+
+## v0.48.1 (2025-11-17)
+
+### Fix
+
+- **openai**: safe handle None tools value in responses api (#3447)
+- **mcp**: move exporter dependency to dev and test environment (#3445)
+
+## v0.48.0 (2025-11-11)
+
+### Feat
+
+- **instrumentation**: updated GenAI attributes to use OTel's (#3138)
+
+### Fix
+
+- **openai**: add streaming support for responses.create() api (#3437)
+- **bedrock**: handle non-text contentBlockDelta events in converse_stream (#3404)
+- **openai-agents**: span attribute handling for tool calls and results (#3422)
+- **watson**: collect prompt content and set as span attribute (#3417)
+
+## v0.47.5 (2025-10-24)
+
+### Fix
+
+- **google-genai**: make streaming responses work (again) (#3421)
+- **langchain**: changed dictionary access from spans[run_id] to spans.get(run_id) (#3403)
+
+## v0.47.4 (2025-10-22)
+
+### Fix
+
+- **fastmcp**: Remote MCP instrumentation (#3419)
+
+## v0.47.3 (2025-09-21)
+
+### Fix
+
+- **openai-agents**: propagate gen_ai.agent.name through an agent flow + set workflow name to fast mcp (#3388)
+
+## v0.47.2 (2025-09-17)
+
+### Fix
+
+- **mcp**: add mcp.server parent span wrapper for FastMCP tool calls (#3382)
+
+## v0.47.1 (2025-09-14)
+
+### Fix
+
+- **mcp**: better instrumentation for FastMCP (#3372)
+- **anthropic**: preserve streaming helper methods in instrumentation (#3377)
+- **cohere**: add v2 api instrumentation (#3378)
+- **mistralai**: instrumentation for version 1.9+ compatibility (#3376)
+- **sdk**: dual bearer send via httpx (#3373)
+
+## v0.47.0 (2025-09-10)
+
+### Feat
+
+- **writer**: initial implementation (#3209)
+
+### Fix
+
+- **crewai**: Update CrewAI instrumentation name (#3363)
+- **sample-app**: Update google genai package (#3358)
+- **traceloop-sdk**: include telemetry SDK attributes in tracing (#3359)
+- **sdk**: get default span processor don't work without a base URL (#3360)
+
+## v0.46.2 (2025-08-29)
+
+### Fix
+
+- **vertexai**: add missing role attributes when handling images (#3347)
+- **sdk**: manual logging example + fix span ended error (#3352)
+- **sdk**: support disabling all instrumentations (#3353)
+- **openai-agents**: support json inputs (#3354)
+- **openai**: reasoning jsons weren't stored
+- **crewai**: fix unpack error when metrics are disabled (#3345)
+- **milvus**: Set default values when metrics are disabled (#3344)
+
+## v0.46.1 (2025-08-24)
+
+### Fix
+
+- **google-generativeai,vertexai**: image support for Gemini models (#3340)
+
+## v0.46.0 (2025-08-24)
+
+### Feat
+
+- **openai**: add reasoning attributes (#3336)
+- **semantic-conventions-ai**: Add reasoning attributes (#3330)
+- **experiment**: Add run experiment capabilities (#3331)
+
+### Fix
+
+- **traceloop-sdk**: bump logging instrumentation to support newer otel versions (#3339)
+- **traceloop-sdk**: add @staticmethod decorator to set_association_properties (#3341)
+- **google-genai**: update logic for deciding whether to use awrap or wrap in the Google Generative AI Instrumentation (#3329)
+- **ollama**: missing response model attr in operation duration metric (#3328)
+- **bedrock**: add guardrail on span attributes (#3326)
+
+## v0.45.6 (2025-08-18)
+
+### Fix
+
+- **anthropic**: fix with_raw_response wrapper consistency and re-enable beta API instrumentation (#3297)
+- **langchain**: include content attribute when assistant messages have tool calls (#3287)
+- **google-genai**: migrate Google Generative AI instrumentation to googleapis/python-genai (#3282)
+
+## v0.45.5 (2025-08-15)
+
+### Fix
+
+- **openai-agents**: switch to hook-based instrumentation (#3283)
+
+## v0.45.4 (2025-08-14)
+
+### Fix
+
+- relax opentelemetry-semantic-conventions-ai deps (#3259)
+
+## v0.45.3 (2025-08-14)
+
+### Fix
+
+- **anthropic**: temp disable beta apis instrumentation (#3258)
+
+## v0.45.2 (2025-08-14)
+
+### Fix
+
+- **langchain**: langgraph application crash due to context detach (#3256)
+
+## v0.45.1 (2025-08-13)
+
+### Fix
+
+- **langchain**: context detach exception (#3255)
+- **mcp**: MCP Instrumentation: streamablehttp_client Parameter Corruption (#3199)
+
+## v0.45.0 (2025-08-12)
+
+### Feat
+
+- **datasets**: add dataset and datasets functionality (#3247)
+
+### Fix
+
+- **anthropic**: support with_raw_response wrapper for span generation (#3250)
+- **langchain**: fix nesting of langgraph spans (#3206)
+- **langchain**: Add "dont_throw" to "on_llm_end" and remove blank file (#3232)
+
+## v0.44.3 (2025-08-12)
+
+### Fix
+
+- **sdk**: avoid initializing metrics exporter on custom tracing config (#3249)
+- **openai**: propagate span IDs properly to events (#3243)
+
+## v0.44.2 (2025-08-11)
+
+### Fix
+
+- **openai**: dynamically import types for 1.99 (#3244)
+- **langchain**: Added new method for fetching model name from association metadata (#3237)
+
+## v0.44.1 (2025-08-04)
+
+### Fix
+
+- **mcp**: do not override meta pydantic types (#3179)
+
+## v0.44.0 (2025-08-03)
+
+### Feat
+
+- **sdk**: support multiple span processors (#3207)
+- **semantic-conentions-ai**: add LLMVendor enum to semantic conventions (#3170)
+
+### Fix
+
+- **langchain**: spans dictionary memory leak (#3216)
+- **openai-agents**: use framework's context to infer trace (#3215)
+- **sdk**: respect truncation otel environment variable (#3212)
+- **anthropic**: async stream manager (#3220)
+- **langchain**: populate metadata as span attributes in batch operations (#3218)
+- **anthropic**: various fixes around tools parsing (#3204)
+- **qdrant**: fix qdrant-client auto instrumentation condition (#3208)
+- **instrumentation**: remove param `enrich_token_usage` and simplify token calculation (#3205)
+- **langchain**: ensure llm spans are created for sync cases (#3201)
+- **openai**: support for openai non-consumed streams (#3155)
+
+## v0.43.1 (2025-07-23)
+
+### Fix
+
+- **langchain**: added vendors to llm calls (#3165)
+
+## v0.43.0 (2025-07-22)
+
+### Feat
+
+- **prompts**: add tool function support (#3153)
+
+### Fix
+
+- **llamaindex**: structured llm model and temperature parsing (#3159)
+- **langchain**: report token usage histogram (#3059)
+- **openai**: prioritize api-provided token over tiktoken calculation (#3142)
+- **milvus**: Add metrics support (#3013)
+
+## v0.42.0 (2025-07-17)
+
+### Feat
+
+- **llamaindex**: support llamaparse instrumentation (#3103)
+- **milvus**: add semantic convention for Milvus DB metrics (#3015)
+
+### Fix
+
+- **openai-agents**: fix broken traces with agents handoff on run_stream (#3143)
+- **traceloop-sdk**: redefine histogram bucket boundaries (#3129)
+
+## v0.41.0 (2025-07-13)
+
+### Feat
+
+- **openai-agents**: initial instrumentation; collect OpenAI agent traces and metrics (#2966)
+- **google-generativeai**: implement emitting events in addition to current behavior (#2887)
+- **vertexai**: implement emitting events in addition to current behavior (#2942)
+- **langchain**: implement emitting events in addition to current behavior (#2889)
+- **anthropic**: implement emitting events in addition to current behavior (#2884)
+- **bedrock**: implement emitting events in addition to current behavior (#2885)
+- **llamaindex**: implement emitting events in addition to current behavior (#2941)
+- **watsonx**: implement emitting events in addition to current behavior (#2896)
+- **cohere**: implement emitting events in addition to current behavior (#2886)
+- **groq**: implement emitting events in addition to current behavior (#2888)
+- **sagemaker**: implement emitting events in addition to current behavior  (#2894)
+- **together**: implement emitting events in addition to current behavior  (#2895)
+- **replicate**: implement emitting events in addition to current behavior (#2893)
+- **ollama**: implement emitting events in addition to current behavior (#2891)
+- **mistralai**: implement emitting events in addition to current behavior  (#2890)
+- vendor matching (#3062)
+- **semconv**: add an attribute for output schema (#3064)
+- **transformers**: implement the support to emitting events in addition to current behavior (#2940)
+- **alephalpha**: implement emitting events in addition to current behavior (#2880)
+- **mcp**: Add support for mcp streamable http transport type (#3049)
+- **milvus**: Add error.type attribute from OpenTelemetry Semantic Conventions  (#3009)
+- **openai**: OpenAI responses minimal instrumentation (#3052)
+- **ollama**: add meter STTG to ollama instrumentation (#3053)
+- **openai**: implement emitting events in addition to current behavior (#2892)
+
+### Fix
+
+- align semconv deps (#3106)
+- **sagemaker**: add should_send_prompts checks (#3072)
+- **watsonx**: add should_send_prompts check to model response (#3071)
+- **groq**: add should_send_prompts checks (#3074)
+- **ollama**: add should_send_prompts check (#3073)
+- **transformers**: add should_send_prompts checks (#3070)
+- **groq**: wrong system attribute was given (#3069)
+- **openai**: record exception as span events as well (#3067)
+- **openai**: add request schema attribute (#3065)
+- **mcp**: add support for error_type in mcp instrumentation (#3050)
+- google gemini insturmentation (#3055)
+- **openai**: completions.parse out of beta, azure remove double-slash (#3051)
+
 ## v0.40.14 (2025-06-24)
 
 ### Fix

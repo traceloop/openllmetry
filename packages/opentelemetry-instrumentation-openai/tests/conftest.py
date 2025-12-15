@@ -4,12 +4,11 @@ import os
 
 import pytest
 from openai import AsyncAzureOpenAI, AsyncOpenAI, AzureOpenAI, OpenAI
-from opentelemetry._events import get_event_logger
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.instrumentation.openai.version import __version__
-from opentelemetry.sdk._events import EventLoggerProvider
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
@@ -41,6 +40,22 @@ def environment():
 @pytest.fixture
 def openai_client():
     return OpenAI()
+
+
+@pytest.fixture
+def mock_openai_client():
+    return OpenAI(
+        api_key="test-key",
+        base_url="http://localhost:5002/v1/"
+    )
+
+
+@pytest.fixture
+def deepseek_client():
+    return OpenAI(
+        api_key="test-key",
+        base_url="https://api.deepseek.com/v1"
+    )
 
 
 @pytest.fixture
@@ -91,13 +106,12 @@ def fixture_log_exporter():
     yield exporter
 
 
-@pytest.fixture(scope="function", name="event_logger_provider")
-def fixture_event_logger_provider(log_exporter):
+@pytest.fixture(scope="function", name="logger_provider")
+def fixture_logger_provider(log_exporter):
     provider = LoggerProvider()
     provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
-    event_logger_provider = EventLoggerProvider(provider)
 
-    return event_logger_provider
+    return provider
 
 
 @pytest.fixture(scope="session", name="reader")
@@ -123,7 +137,6 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
     instrumentor = OpenAIInstrumentor(
         enrich_assistant=True,
-        enrich_token_usage=True,
         upload_base64_image=upload_base64_image,
     )
     instrumentor.instrument(
@@ -138,14 +151,14 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
 @pytest.fixture(scope="function")
 def instrument_with_content(
-    instrument_legacy, reader, tracer_provider, event_logger_provider, meter_provider
+    instrument_legacy, reader, tracer_provider, logger_provider, meter_provider
 ):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
-    Config.event_logger = get_event_logger(
-        __name__, __version__, event_logger_provider=event_logger_provider
+    Config.event_logger = get_logger(
+        __name__, __version__, logger_provider=logger_provider
     )
 
     yield instrumentor
@@ -158,14 +171,14 @@ def instrument_with_content(
 
 @pytest.fixture(scope="function")
 def instrument_with_no_content(
-    instrument_legacy, reader, tracer_provider, event_logger_provider, meter_provider
+    instrument_legacy, reader, tracer_provider, logger_provider, meter_provider
 ):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = instrument_legacy
     Config.use_legacy_attributes = False
-    Config.event_logger = get_event_logger(
-        __name__, __version__, event_logger_provider=event_logger_provider
+    Config.event_logger = get_logger(
+        __name__, __version__, logger_provider=logger_provider
     )
 
     yield instrumentor

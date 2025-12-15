@@ -1,13 +1,16 @@
 import dataclasses
 import json
-import os
 import logging
+import os
 import traceback
 from contextlib import asynccontextmanager
 
 from opentelemetry import context as context_api
+from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def _with_tracer_wrapper(func):
@@ -28,7 +31,7 @@ async def start_as_current_span_async(tracer, *args, **kwargs):
 
 def should_send_prompts():
     return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
     ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
@@ -84,3 +87,18 @@ def process_response(span, res):
             SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
             json.dumps(res, cls=JSONEncoder),
         )
+
+
+def is_role_valid(role: str) -> bool:
+    return role in ["user", "assistant", "system", "tool"]
+
+
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, Logger
+    )

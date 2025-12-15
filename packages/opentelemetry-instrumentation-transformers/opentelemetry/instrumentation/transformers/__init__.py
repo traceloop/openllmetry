@@ -2,18 +2,18 @@
 
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.transformers.config import Config
-from wrapt import wrap_function_wrapper
 
-from opentelemetry.trace import get_tracer
-
+from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
-
+from opentelemetry.instrumentation.transformers.config import Config
 from opentelemetry.instrumentation.transformers.text_generation_pipeline_wrapper import (
     text_generation_pipeline_wrapper,
 )
+from opentelemetry.instrumentation.transformers.utils import should_emit_events
 from opentelemetry.instrumentation.transformers.version import __version__
+from opentelemetry.instrumentation.utils import unwrap
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +33,10 @@ WRAPPED_METHODS = [
 class TransformersInstrumentor(BaseInstrumentor):
     """An instrumentor for transformers library."""
 
-    def __init__(self, exception_logger=None):
+    def __init__(self, exception_logger=None, use_legacy_attributes=True):
         super().__init__()
         Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -43,6 +44,17 @@ class TransformersInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        event_logger = None
+
+        if should_emit_events():
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__,
+                __version__,
+                logger_provider=logger_provider,
+            )
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
@@ -51,7 +63,7 @@ class TransformersInstrumentor(BaseInstrumentor):
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}" if wrap_object else wrap_method,
-                wrapper(tracer, wrapped_method),
+                wrapper(tracer, event_logger, wrapped_method),
             )
 
     def _uninstrument(self, **kwargs):

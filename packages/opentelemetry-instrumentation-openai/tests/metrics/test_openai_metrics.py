@@ -1,7 +1,12 @@
 import pytest
 from openai import OpenAI
-from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
-from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.metrics import (
+    gen_ai_metrics as GenAIMetrics,
+)
+from opentelemetry.semconv_ai import Meters
 from pydantic import BaseModel
 
 
@@ -41,7 +46,7 @@ def test_chat_completion_metrics(instrument_legacy, reader, openai_client):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -106,7 +111,7 @@ def test_chat_parsed_completion_metrics(instrument_legacy, reader, openai_client
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
                 for data_point in metric.data.data_points:
-                    model = data_point.attributes.get(SpanAttributes.LLM_RESPONSE_MODEL)
+                    model = data_point.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL)
                     if (
                         metric.name == Meters.LLM_TOKEN_USAGE
                         and model == "gpt-4o-2024-08-06"
@@ -129,9 +134,11 @@ def test_chat_parsed_completion_metrics(instrument_legacy, reader, openai_client
 
 
 @pytest.mark.vcr
-def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
-    response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
+def test_chat_streaming_metrics(instrument_legacy, reader, deepseek_client):
+    # Since there isn't an official OpenAI API,
+    # using a deepseek API that offers compatibility with the OpenAI standard.
+    response = deepseek_client.chat.completions.create(
+        model="deepseek-chat",
         messages=[
             {
                 "role": "system",
@@ -165,7 +172,7 @@ def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
-                        assert data_point.attributes[SpanAttributes.LLM_TOKEN_TYPE] in [
+                        assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
                             "output",
                             "input",
                         ]
@@ -205,11 +212,12 @@ def test_chat_streaming_metrics(instrument_legacy, reader, openai_client):
 
                 for data_point in metric.data.data_points:
                     assert (
-                        data_point.attributes.get(SpanAttributes.LLM_SYSTEM) == "openai"
+                        data_point.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "openai"
                     )
+                    # Add `deepseek-chat` to the list of models since it's a alternative to OpenAI API
                     assert str(
-                        data_point.attributes[SpanAttributes.LLM_RESPONSE_MODEL]
-                    ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06")
+                        data_point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
+                    ) in ("gpt-3.5-turbo", "gpt-3.5-turbo-0125", "gpt-4o-2024-08-06", "deepseek-chat")
                     assert data_point.attributes["gen_ai.operation.name"] == "chat"
                     assert data_point.attributes["server.address"] != ""
 

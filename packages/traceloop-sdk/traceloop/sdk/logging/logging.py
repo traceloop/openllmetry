@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Dict, Optional, Any
 
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
     OTLPLogExporter as GRPCExporter,
@@ -15,13 +15,13 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 
 
 class LoggerWrapper(object):
-    resource_attributes: dict = {}
-    endpoint: str = None
+    resource_attributes: Dict[Any, Any] = {}
+    endpoint: Optional[str] = None
     headers: Dict[str, str] = {}
-    __logging_exporter: LogExporter = None
-    __logging_provider: LoggerProvider = None
+    __logging_exporter: Optional[LogExporter] = None
+    __logging_provider: Optional[LoggerProvider] = None
 
-    def __new__(cls, exporter: LogExporter = None) -> "LoggerWrapper":
+    def __new__(cls, exporter: Optional[LogExporter] = None) -> "LoggerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(LoggerWrapper, cls).__new__(cls)
             if not LoggerWrapper.endpoint:
@@ -58,7 +58,7 @@ def init_logging_exporter(endpoint: str, headers: Dict[str, str]) -> LogExporter
 
 
 def init_logging_provider(
-    exporter: LogExporter, resource_attributes: dict = None
+    exporter: LogExporter, resource_attributes: Optional[Dict[Any, Any]] = None
 ) -> LoggerProvider:
     resource = (
         Resource.create(resource_attributes)

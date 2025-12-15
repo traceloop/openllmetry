@@ -5,9 +5,6 @@ import pytest
 import requests
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
-from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
@@ -42,7 +39,7 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
     ]
     open_ai_span = spans[0]
     assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "What is in this image?"},
         {
@@ -51,7 +48,7 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
         },
     ]
 
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -228,7 +225,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
     ]
     open_ai_span = spans[0]
     assert json.loads(
-        open_ai_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     ) == [
         {"type": "text", "text": "What is in this image?"},
         {
@@ -237,7 +234,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
         },
     ]
 
-    assert open_ai_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
         open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -394,7 +391,7 @@ def test_vision_base64_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value

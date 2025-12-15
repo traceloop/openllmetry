@@ -1,6 +1,7 @@
 import atexit
 import logging
 import os
+from urllib.parse import urlparse
 
 
 from colorama import Fore
@@ -21,18 +22,22 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     BatchSpanProcessor,
 )
-from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider
+from opentelemetry.context import Context
+
+from opentelemetry.trace import get_tracer_provider, ProxyTracerProvider, Span
 from opentelemetry.context import get_value, attach, set_value
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 
 from opentelemetry.semconv_ai import SpanAttributes
-from traceloop.sdk import Telemetry
 from traceloop.sdk.images.image_uploader import ImageUploader
 from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Union
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_AGENT_NAME,
+)
 
 
 TRACER_NAME = "traceloop.tracer"
@@ -67,7 +72,7 @@ class TracerWrapper(object):
     def __new__(
         cls,
         disable_batch=False,
-        processor: SpanProcessor = None,
+        processor: Optional[Union[SpanProcessor, List[SpanProcessor]]] = None,
         propagator: TextMapPropagator = None,
         exporter: SpanExporter = None,
         sampler: Optional[Sampler] = None,
@@ -83,46 +88,49 @@ class TracerWrapper(object):
                 return obj
 
             obj.__image_uploader = image_uploader
-            obj.__resource = Resource(attributes=TracerWrapper.resource_attributes)
-            obj.__tracer_provider = init_tracer_provider(resource=obj.__resource, sampler=sampler)
-            if processor:
-                Telemetry().capture("tracer:init", {"processor": "custom"})
-                obj.__spans_processor: SpanProcessor = processor
-                obj.__spans_processor_original_on_start = processor.on_start
-            else:
-                if exporter:
-                    Telemetry().capture(
-                        "tracer:init",
-                        {
-                            "exporter": "custom",
-                            "processor": "simple" if disable_batch else "batch",
-                        },
-                    )
-                else:
-                    Telemetry().capture(
-                        "tracer:init",
-                        {
-                            "exporter": TracerWrapper.endpoint,
-                            "processor": "simple" if disable_batch else "batch",
-                        },
-                    )
+            obj.__resource = Resource.create(TracerWrapper.resource_attributes)
+            obj.__tracer_provider = init_tracer_provider(
+                resource=obj.__resource, sampler=sampler
+            )
 
-                obj.__spans_exporter: SpanExporter = (
-                    exporter
-                    if exporter
-                    else init_spans_exporter(
-                        TracerWrapper.endpoint, TracerWrapper.headers
-                    )
+            # Handle multiple processors case
+            if processor is not None and isinstance(processor, list):
+                obj.__spans_processors = []
+                for proc in processor:
+                    original_on_start = proc.on_start
+
+                    def chained_on_start(
+                        span, parent_context=None, orig=original_on_start
+                    ):
+                        if orig:
+                            orig(span, parent_context)
+                        obj._span_processor_on_start(span, parent_context)
+
+                    proc.on_start = chained_on_start
+                    obj.__spans_processors.append(proc)
+
+                    obj.__tracer_provider.add_span_processor(proc)
+
+            # Handle single processor case (backward compatibility)
+            elif processor is not None:
+                obj.__spans_processor: SpanProcessor = processor
+                original_on_start = obj.__spans_processor.on_start
+
+                def chained_on_start(span, parent_context=None, orig=original_on_start):
+                    obj._span_processor_on_start(span, parent_context)
+                    if orig:
+                        orig(span, parent_context)
+
+                obj.__spans_processor.on_start = chained_on_start
+
+                obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+
+            # Handle default processor case
+            else:
+                obj.__spans_processor = get_default_span_processor(
+                    disable_batch=disable_batch, exporter=exporter
                 )
-                if disable_batch or is_notebook():
-                    obj.__spans_processor: SpanProcessor = SimpleSpanProcessor(
-                        obj.__spans_exporter
-                    )
-                else:
-                    obj.__spans_processor: SpanProcessor = BatchSpanProcessor(
-                        obj.__spans_exporter
-                    )
-                obj.__spans_processor_original_on_start = None
+
                 if span_postprocess_callback:
                     # Create a wrapper that calls both the custom and original methods
                     original_on_end = obj.__spans_processor.on_end
@@ -132,10 +140,11 @@ class TracerWrapper(object):
                         span_postprocess_callback(span)
                         # Then call the original to ensure normal processing
                         original_on_end(span)
+
                     obj.__spans_processor.on_end = wrapped_on_end
 
-            obj.__spans_processor.on_start = obj._span_processor_on_start
-            obj.__tracer_provider.add_span_processor(obj.__spans_processor)
+                obj.__spans_processor.on_start = obj._span_processor_on_start
+                obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
             if propagator:
                 set_global_textmap(propagator)
@@ -161,70 +170,17 @@ class TracerWrapper(object):
         self.flush()
 
     def _span_processor_on_start(self, span, parent_context):
-        workflow_name = get_value("workflow_name")
-        if workflow_name is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
+        default_span_processor_on_start(span, parent_context)
 
-        entity_path = get_value("entity_path")
-        if entity_path is not None:
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
-
+        # TODO: this is here only because we need self to be able to access the content allow list
+        # we should refactor this to not need self
         association_properties = get_value("association_properties")
         if association_properties is not None:
-            _set_association_properties_attributes(span, association_properties)
-
             if not self.enable_content_tracing:
                 if self.__content_allow_list.is_allowed(association_properties):
                     attach(set_value("override_enable_content_tracing", True))
                 else:
                     attach(set_value("override_enable_content_tracing", False))
-
-        if is_llm_span(span):
-            managed_prompt = get_value("managed_prompt")
-            if managed_prompt is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_MANAGED, managed_prompt
-                )
-
-            prompt_key = get_value("prompt_key")
-            if prompt_key is not None:
-                span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_KEY, prompt_key)
-
-            prompt_version = get_value("prompt_version")
-            if prompt_version is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION, prompt_version
-                )
-
-            prompt_version_name = get_value("prompt_version_name")
-            if prompt_version_name is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, prompt_version_name
-                )
-
-            prompt_version_hash = get_value("prompt_version_hash")
-            if prompt_version_hash is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, prompt_version_hash
-                )
-
-            prompt_template = get_value("prompt_template")
-            if prompt_template is not None:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, prompt_template
-                )
-
-            prompt_template_variables = get_value("prompt_template_variables")
-            if prompt_template_variables is not None:
-                for key, value in prompt_template_variables.items():
-                    span.set_attribute(
-                        f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
-                        value,
-                    )
-
-        # Call original on_start method if it exists in custom processor
-        if self.__spans_processor_original_on_start:
-            self.__spans_processor_original_on_start(span, parent_context)
 
     @staticmethod
     def set_static_params(
@@ -261,7 +217,11 @@ class TracerWrapper(object):
         cls.__disabled = disabled
 
     def flush(self):
-        self.__spans_processor.force_flush()
+        if hasattr(self, "_TracerWrapper__spans_processor"):
+            self.__spans_processor.force_flush()
+        elif hasattr(self, "_TracerWrapper__spans_processors"):
+            for processor in self.__spans_processors:
+                processor.force_flush()
 
     def get_tracer(self):
         return self.__tracer_provider.get_tracer(TRACER_NAME)
@@ -285,6 +245,10 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
 
 def set_workflow_name(workflow_name: str) -> None:
     attach(set_value("workflow_name", workflow_name))
+
+
+def set_agent_name(agent_name: str) -> None:
+    attach(set_value("agent_name", agent_name))
 
 
 def set_entity_path(entity_path: str) -> None:
@@ -328,13 +292,149 @@ def is_llm_span(span) -> bool:
 
 
 def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExporter:
-    if "http" in api_endpoint.lower() or "https" in api_endpoint.lower():
-        return HTTPExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
+    """
+    Initialize a span exporter based on the endpoint URL scheme.
+
+    Supported schemes:
+        - http:// or https:// → HTTP exporter
+        - grpc:// → gRPC exporter (insecure)
+        - grpcs:// → gRPC exporter (secure/TLS)
+        - No scheme → gRPC exporter (insecure, for backward compatibility)
+
+    Args:
+        api_endpoint: The endpoint URL (with or without scheme)
+        headers: Headers to include with the exporter requests
+
+    Returns:
+        SpanExporter: Configured HTTP or gRPC exporter
+    """
+    parsed = urlparse(api_endpoint.strip())
+
+    match parsed.scheme.lower():
+        case "http" | "https":
+            base_url = api_endpoint.strip().rstrip('/')
+            if not base_url.endswith('/v1/traces'):
+                endpoint = f"{base_url}/v1/traces"
+            else:
+                endpoint = base_url
+            return HTTPExporter(endpoint=endpoint, headers=headers)
+        case "grpc":
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=True
+            )
+        case "grpcs":
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=False
+            )
+        case _:
+            # No scheme → default to insecure gRPC for backward compatibility
+            return GRPCExporter(
+                endpoint=api_endpoint.strip(), headers=headers, insecure=True
+            )
+
+
+def default_span_processor_on_start(span: Span, parent_context: Context | None = None):
+    """
+    Same as _span_processor_on_start but without the usage of self which comes from the sdk, good for standalone usage.
+    """
+    workflow_name = get_value("workflow_name")
+    if workflow_name is not None:
+        span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, str(workflow_name))
+
+    agent_name = get_value("agent_name")
+    if agent_name is not None:
+        span.set_attribute(GEN_AI_AGENT_NAME, str(agent_name))
+
+    entity_path = get_value("entity_path")
+    if entity_path is not None:
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, str(entity_path))
+
+    association_properties = get_value("association_properties")
+    if association_properties is not None and isinstance(association_properties, dict):
+        _set_association_properties_attributes(span, association_properties)
+
+    if is_llm_span(span):
+        managed_prompt = get_value("managed_prompt")
+        if managed_prompt is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_MANAGED, str(managed_prompt)
+            )
+
+        prompt_key = get_value("prompt_key")
+        if prompt_key is not None:
+            span.set_attribute(SpanAttributes.TRACELOOP_PROMPT_KEY, str(prompt_key))
+
+        prompt_version = get_value("prompt_version")
+        if prompt_version is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION, str(prompt_version)
+            )
+
+        prompt_version_name = get_value("prompt_version_name")
+        if prompt_version_name is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION_NAME, str(prompt_version_name)
+            )
+
+        prompt_version_hash = get_value("prompt_version_hash")
+        if prompt_version_hash is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_VERSION_HASH, str(prompt_version_hash)
+            )
+
+        prompt_template = get_value("prompt_template")
+        if prompt_template is not None:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_PROMPT_TEMPLATE, str(prompt_template)
+            )
+
+        prompt_template_variables = get_value("prompt_template_variables")
+        if prompt_template_variables is not None and isinstance(
+            prompt_template_variables, dict
+        ):
+            for key, value in prompt_template_variables.items():
+                span.set_attribute(
+                    f"{SpanAttributes.TRACELOOP_PROMPT_TEMPLATE_VARIABLES}.{key}",
+                    value,
+                )
+
+
+def get_default_span_processor(
+    disable_batch: bool = False,
+    api_endpoint: Optional[str] = None,
+    headers: Optional[Dict[str, str]] = None,
+    exporter: Optional[SpanExporter] = None,
+) -> SpanProcessor:
+    """
+    Creates and returns the default Traceloop span processor.
+
+    Args:
+        disable_batch: If True, uses SimpleSpanProcessor, otherwise BatchSpanProcessor
+        api_endpoint: The endpoint URL for the exporter (uses TracerWrapper.endpoint if None)
+        headers: Headers for the exporter (uses TracerWrapper.headers if None)
+        exporter: Custom exporter to use (creates default if None)
+
+    Returns:
+        SpanProcessor: The default Traceloop span processor
+    """
+    endpoint = api_endpoint or TracerWrapper.endpoint
+    request_headers = headers or TracerWrapper.headers
+
+    spans_exporter = exporter or init_spans_exporter(endpoint, request_headers)
+
+    if disable_batch or is_notebook():
+        processor = SimpleSpanProcessor(spans_exporter)
     else:
-        return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
+        processor = BatchSpanProcessor(spans_exporter)
+
+    setattr(processor, "_traceloop_processor", True)
+    processor.on_start = default_span_processor_on_start
+    return processor
 
 
-def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) -> TracerProvider:
+def init_tracer_provider(
+    resource: Resource, sampler: Optional[Sampler] = None
+) -> TracerProvider:
     provider: TracerProvider = None
     default_provider: TracerProvider = get_tracer_provider()
 
@@ -357,21 +457,23 @@ def init_tracer_provider(resource: Resource, sampler: Optional[Sampler] = None) 
 
 def init_instrumentations(
     should_enrich_metrics: bool,
-    base64_image_uploader: Callable[[str, str, str], str],
+    base64_image_uploader: Callable[[str, str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
     block_instruments: Optional[Set[Instruments]] = None,
 ):
     block_instruments = block_instruments or set()
-    instruments = instruments or set(
-        Instruments
-    )  # Use all instruments if none specified
+    # explictly test for None since empty set is a False value
+    instruments = instruments if instruments is not None else set(Instruments)
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
 
     instrument_set = False
     for instrument in instruments:
-        if instrument == Instruments.ALEPHALPHA:
+        if instrument == Instruments.AGNO:
+            if init_agno_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.ALEPHALPHA:
             if init_alephalpha_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.ANTHROPIC:
@@ -388,11 +490,13 @@ def init_instrumentations(
         elif instrument == Instruments.COHERE:
             if init_cohere_instrumentor():
                 instrument_set = True
-        elif instrument == Instruments.CREW:
+        elif instrument == Instruments.CREWAI:
             if init_crewai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-            if init_google_generativeai_instrumentor():
+            if init_google_generativeai_instrumentor(
+                should_enrich_metrics, base64_image_uploader
+            ):
                 instrument_set = True
         elif instrument == Instruments.GROQ:
             if init_groq_instrumentor():
@@ -427,6 +531,9 @@ def init_instrumentations(
         elif instrument == Instruments.OPENAI:
             if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
+        elif instrument == Instruments.OPENAI_AGENTS:
+            if init_openai_agents_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.PINECONE:
             if init_pinecone_instrumentor():
                 instrument_set = True
@@ -458,13 +565,16 @@ def init_instrumentations(
             if init_urllib3_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.VERTEXAI:
-            if init_vertexai_instrumentor():
+            if init_vertexai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
             if init_watsonx_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.WRITER:
+            if init_writer_instrumentor():
                 instrument_set = True
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
@@ -488,17 +598,15 @@ def init_instrumentations(
 
 
 def init_openai_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
         if is_package_installed("openai"):
-            Telemetry().capture("instrumentation:openai:init")
             from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
             instrumentor = OpenAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_assistant=should_enrich_metrics,
-                enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
             )
@@ -508,20 +616,18 @@ def init_openai_instrumentor(
 
     except Exception as e:
         logging.error(f"Error initializing OpenAI instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_anthropic_instrumentor(
-    should_enrich_metrics: bool, base64_image_uploader: Callable[[str, str, str], str]
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
         if is_package_installed("anthropic"):
-            Telemetry().capture("instrumentation:anthropic:init")
             from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
             instrumentor = AnthropicInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
@@ -531,245 +637,201 @@ def init_anthropic_instrumentor(
             return True
     except Exception as e:
         logging.error(f"Error initializing Anthropic instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_cohere_instrumentor():
     try:
         if is_package_installed("cohere"):
-            Telemetry().capture("instrumentation:cohere:init")
             from opentelemetry.instrumentation.cohere import CohereInstrumentor
 
-            instrumentor = CohereInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = CohereInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Cohere instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_pinecone_instrumentor():
     try:
         if is_package_installed("pinecone"):
-            Telemetry().capture("instrumentation:pinecone:init")
             from opentelemetry.instrumentation.pinecone import PineconeInstrumentor
 
-            instrumentor = PineconeInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = PineconeInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Pinecone instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_qdrant_instrumentor():
     try:
-        if is_package_installed("qdrant_client"):
-            Telemetry().capture("instrumentation:qdrant:init")
+        if is_package_installed("qdrant_client") or is_package_installed(
+            "qdrant-client"
+        ):
             from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
 
-            instrumentor = QdrantInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = QdrantInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Qdrant instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_chroma_instrumentor():
     try:
         if is_package_installed("chromadb"):
-            Telemetry().capture("instrumentation:chromadb:init")
             from opentelemetry.instrumentation.chromadb import ChromaInstrumentor
 
-            instrumentor = ChromaInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = ChromaInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Chroma instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
-def init_google_generativeai_instrumentor():
+def init_google_generativeai_instrumentor(
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
+):
     try:
-        if is_package_installed("google-generativeai") or is_package_installed("google-genai"):
-            Telemetry().capture("instrumentation:gemini:init")
+        if is_package_installed("google-generativeai") or is_package_installed(
+            "google-genai"
+        ):
             from opentelemetry.instrumentation.google_generativeai import (
                 GoogleGenerativeAiInstrumentor,
             )
 
             instrumentor = GoogleGenerativeAiInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Gemini instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_haystack_instrumentor():
     try:
         if is_package_installed("haystack"):
-            Telemetry().capture("instrumentation:haystack:init")
             from opentelemetry.instrumentation.haystack import HaystackInstrumentor
 
-            instrumentor = HaystackInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = HaystackInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Haystack instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_langchain_instrumentor():
     try:
         if is_package_installed("langchain") or is_package_installed("langgraph"):
-            Telemetry().capture("instrumentation:langchain:init")
             from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
-            instrumentor = LangchainInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = LangchainInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing LangChain instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_mistralai_instrumentor():
     try:
         if is_package_installed("mistralai"):
-            Telemetry().capture("instrumentation:mistralai:init")
             from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
 
-            instrumentor = MistralAiInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = MistralAiInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing MistralAI instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_ollama_instrumentor():
     try:
         if is_package_installed("ollama"):
-            Telemetry().capture("instrumentation:ollama:init")
             from opentelemetry.instrumentation.ollama import OllamaInstrumentor
 
-            instrumentor = OllamaInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = OllamaInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Ollama instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_transformers_instrumentor():
     try:
         if is_package_installed("transformers"):
-            Telemetry().capture("instrumentation:transformers:init")
             from opentelemetry.instrumentation.transformers import (
                 TransformersInstrumentor,
             )
 
-            instrumentor = TransformersInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = TransformersInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Transformers instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_together_instrumentor():
     try:
         if is_package_installed("together"):
-            Telemetry().capture("instrumentation:together:init")
             from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
-            instrumentor = TogetherAiInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = TogetherAiInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing TogetherAI instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_llama_index_instrumentor():
     try:
         if is_package_installed("llama-index") or is_package_installed("llama_index"):
-            Telemetry().capture("instrumentation:llamaindex:init")
             from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 
-            instrumentor = LlamaIndexInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = LlamaIndexInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing LlamaIndex instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_milvus_instrumentor():
     try:
         if is_package_installed("pymilvus"):
-            Telemetry().capture("instrumentation:milvus:init")
             from opentelemetry.instrumentation.milvus import MilvusInstrumentor
 
-            instrumentor = MilvusInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = MilvusInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Milvus instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
@@ -784,7 +846,6 @@ def init_requests_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Requests instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
@@ -799,7 +860,6 @@ def init_urllib3_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing urllib3 instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
@@ -814,25 +874,19 @@ def init_pymysql_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing SQLAlchemy instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_bedrock_instrumentor(should_enrich_metrics: bool):
-    try:
-        if is_package_installed("boto3"):
-            from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
+    if is_package_installed("boto3"):
+        from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
-            instrumentor = BedrockInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
-            )
-            if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument()
-            return True
-    except Exception as e:
-        logging.error(f"Error initializing Bedrock instrumentor: {e}")
-        Telemetry().log_exception(e)
+        instrumentor = BedrockInstrumentor(
+            enrich_token_usage=should_enrich_metrics,
+        )
+        if not instrumentor.is_instrumented_by_opentelemetry:
+            instrumentor.instrument()
+        return True
     return False
 
 
@@ -841,144 +895,145 @@ def init_sagemaker_instrumentor(should_enrich_metrics: bool):
         if is_package_installed("boto3"):
             from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
 
-            instrumentor = SageMakerInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-                enrich_token_usage=should_enrich_metrics,
-            )
+            instrumentor = SageMakerInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing SageMaker instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_replicate_instrumentor():
     try:
         if is_package_installed("replicate"):
-            Telemetry().capture("instrumentation:replicate:init")
             from opentelemetry.instrumentation.replicate import ReplicateInstrumentor
 
-            instrumentor = ReplicateInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = ReplicateInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Replicate instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
-def init_vertexai_instrumentor():
+def init_vertexai_instrumentor(
+    should_enrich_metrics: bool,
+    base64_image_uploader: Callable[[str, str, str, str], str],
+):
     try:
         if is_package_installed("google-cloud-aiplatform"):
-            Telemetry().capture("instrumentation:vertexai:init")
             from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
             instrumentor = VertexAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
+                upload_base64_image=base64_image_uploader,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.warning(f"Error initializing Vertex AI instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_watsonx_instrumentor():
     try:
         if is_package_installed("ibm-watsonx-ai") or is_package_installed(
-            "ibm_watson_machine_learning"
+            "ibm-watson-machine-learning"
         ):
-            Telemetry().capture("instrumentation:watsonx:init")
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
-            instrumentor = WatsonxInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = WatsonxInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.warning(f"Error initializing Watsonx instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_weaviate_instrumentor():
     try:
         if is_package_installed("weaviate"):
-            Telemetry().capture("instrumentation:weaviate:init")
             from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
-            instrumentor = WeaviateInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = WeaviateInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
-        Telemetry().log_exception(e)
+    return False
+
+
+def init_writer_instrumentor():
+    try:
+        if is_package_installed("writer-sdk"):
+            from opentelemetry.instrumentation.writer import WriterInstrumentor
+
+            instrumentor = WriterInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Writer instrumentor: {e}")
+    return False
+
+
+def init_agno_instrumentor():
+    try:
+        if is_package_installed("agno"):
+            from opentelemetry.instrumentation.agno import AgnoInstrumentor
+
+            instrumentor = AgnoInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Agno instrumentor: {e}")
     return False
 
 
 def init_alephalpha_instrumentor():
     try:
         if is_package_installed("aleph_alpha_client"):
-            Telemetry().capture("instrumentation:alephalpha:init")
             from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
-            instrumentor = AlephAlphaInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = AlephAlphaInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Aleph Alpha instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_marqo_instrumentor():
     try:
         if is_package_installed("marqo"):
-            Telemetry().capture("instrumentation:marqo:init")
             from opentelemetry.instrumentation.marqo import MarqoInstrumentor
 
-            instrumentor = MarqoInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = MarqoInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing marqo instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_lancedb_instrumentor():
     try:
         if is_package_installed("lancedb"):
-            Telemetry().capture("instrumentation:lancedb:init")
             from opentelemetry.instrumentation.lancedb import LanceInstrumentor
 
-            instrumentor = LanceInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = LanceInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing LanceDB instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
@@ -993,61 +1048,65 @@ def init_redis_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing redis instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_groq_instrumentor():
     try:
         if is_package_installed("groq"):
-            Telemetry().capture("instrumentation:groq:init")
             from opentelemetry.instrumentation.groq import GroqInstrumentor
 
-            instrumentor = GroqInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = GroqInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing Groq instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_crewai_instrumentor():
     try:
         if is_package_installed("crewai"):
-            Telemetry().capture("instrumentation:crewai:init")
+            os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
             from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
 
-            instrumentor = CrewAIInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = CrewAIInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing CrewAI instrumentor: {e}")
-        Telemetry().log_exception(e)
     return False
 
 
 def init_mcp_instrumentor():
     try:
         if is_package_installed("mcp"):
-            Telemetry().capture("instrumentation:mcp:init")
             from opentelemetry.instrumentation.mcp import McpInstrumentor
 
-            instrumentor = McpInstrumentor(
-                exception_logger=lambda e: Telemetry().log_exception(e),
-            )
+            instrumentor = McpInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing MCP instrumentor: {e}")
-        Telemetry().log_exception(e)
+    return False
+
+
+def init_openai_agents_instrumentor():
+    try:
+        if is_package_installed("openai-agents"):
+            from opentelemetry.instrumentation.openai_agents import (
+                OpenAIAgentsInstrumentor,
+            )
+
+            instrumentor = OpenAIAgentsInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing OpenAI Agents instrumentor: {e}")
     return False
 
 

@@ -2,12 +2,14 @@ from enum import Enum
 
 
 class Instruments(Enum):
+    AGNO = "agno"
     ALEPHALPHA = "alephalpha"
     ANTHROPIC = "anthropic"
     BEDROCK = "bedrock"
     CHROMA = "chroma"
     COHERE = "cohere"
-    CREW = "crew"
+    CREWAI = "crewai"
+    CREW = "crewai"  # deprecated alias; remove in future major version
     GOOGLE_GENERATIVEAI = "google_generativeai"
     GROQ = "groq"
     HAYSTACK = "haystack"
@@ -20,6 +22,7 @@ class Instruments(Enum):
     MISTRAL = "mistral"
     OLLAMA = "ollama"
     OPENAI = "openai"
+    OPENAI_AGENTS = "openai_agents"
     PINECONE = "pinecone"
     PYMYSQL = "pymysql"
     QDRANT = "qdrant"
@@ -33,3 +36,4 @@ class Instruments(Enum):
     VERTEXAI = "vertexai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
+    WRITER = "writer"

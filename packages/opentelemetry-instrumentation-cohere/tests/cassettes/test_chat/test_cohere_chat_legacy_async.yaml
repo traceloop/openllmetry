@@ -1,0 +1,81 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a joke, pirate style", "model": "command", "stream":
+      false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '80'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.6.1
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"response_id":"ea2d074c-4f25-47cb-bef8-b00dc2ae991b","text":"Arrrr,
+        matey! Shiver me timbers, here''s a pirate-style joke for ye: \n\nI spoke
+        with an astronomer and argh, matey, she told me the Sun would be blowin''
+        up! But cheer up, me hearties, it''ll happen in five billion years. We''ve
+        got plenty of time to find a new treasure trove before then!","generation_id":"41bd7ae5-511d-449f-a64d-dd54e5d697e4","chat_history":[{"role":"USER","message":"Tell
+        me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
+        me timbers, here''s a pirate-style joke for ye: \n\nI spoke with an astronomer
+        and argh, matey, she told me the Sun would be blowin'' up! But cheer up, me
+        hearties, it''ll happen in five billion years. We''ve got plenty of time to
+        find a new treasure trove before then!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"warnings":["model
+        ''command'' is deprecated and will be removed September 15 2025. Please consider
+        upgrading to a newer model to avoid future service disruptions"],"billed_units":{"input_tokens":7,"output_tokens":80},"tokens":{"input_tokens":69,"output_tokens":81}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '1127'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 01:23:07 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '324'
+      num_tokens:
+      - '87'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 37d8ceb858f86160192181d6ece63b36
+      x-envoy-upstream-service-time:
+      - '2401'
+    status:
+      code: 200
+      message: OK
+version: 1
