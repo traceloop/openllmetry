@@ -1,15 +1,12 @@
 import json
 import asyncio
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, cast
+from typing import Any, Callable, Optional, TypeVar, ParamSpec, Awaitable, cast, Dict
 
-from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
 
 from traceloop.sdk.decorators.base import _setup_span, _handle_span_input, _handle_span_output, _cleanup_span
-from traceloop.sdk.tracing import get_tracer
-from traceloop.sdk.client import Client
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 from .types import InputSchemaMapping

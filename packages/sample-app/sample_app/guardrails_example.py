@@ -10,7 +10,6 @@ from traceloop.sdk.guardrails import (
     guardrails,
     get_current_score,
     InputExtractor,
-    InputSchemaMapping,
 )
 
 
