@@ -52,12 +52,14 @@ def guardrails(
                     
                     # Extract input data based on schema
                     input_data = extract_input_data(args, kwargs, input_schema)
-                    
+                    print("NOMI - async_wrapper - input_data:", input_data)
+
                     # Also extract from output if needed
                     output_data = extract_output_data(result, input_schema)
                     input_data.update(output_data)
-                    
+                    print("NOMI - async_wrapper - input_data after update:", input_data)
                     # Execute guardrails evaluation
+
                     event_data = await _execute_guardrails(evaluator_slug, input_data)
                     
                     # Calculate score
@@ -141,8 +143,9 @@ async def _execute_guardrails(evaluator_slug: str, input_data: Dict[str, Any]) -
         guardrails_client = GuardrailsClient(client._http)
         
         # Execute evaluator
+        print("NOMI - _execute_guardrails - input_data:", input_data)
         event_data = await guardrails_client.execute_evaluator(evaluator_slug, input_data)
-        
+        print("NOMI - _execute_guardrails - event_data:", event_data)
         return event_data
     except Exception as e:
         # Log error and return empty data

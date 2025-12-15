@@ -7,12 +7,6 @@ from traceloop.sdk.decorators.base import (
     entity_class,
     entity_method,
 )
-from traceloop.sdk.guardrails import (
-    guardrails,
-    get_current_score,
-    InputExtractor,
-    InputSchemaMapping,
-)
 
 F = TypeVar("F", bound=Callable[..., Any])
 

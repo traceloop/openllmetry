@@ -15,6 +15,7 @@ from traceloop.sdk.guardrails import (
 
 def calculate_sentiment_score(event_data: dict) -> float:
     """Calculate sentiment score from event data."""
+    print("NOMI - calculate_sentiment_score - event_data:", event_data)
     return event_data.get("sentiment_score", 0.5)
 
 
@@ -29,11 +30,10 @@ def calculate_factuality_score(event_data: dict) -> float:
 
 
 @guardrails(
-    evaluator_slug="sentiment-analyzer",
+    evaluator_slug="medical-advice-given",
     score_calculator=calculate_sentiment_score,
     input_schema={
-        "text": InputExtractor(source="input", key="message"),
-        "user_id": InputExtractor(source="input", key="user_id")
+        "answer": InputExtractor(source="input",),
     }
 )
 def process_user_message(message: str, user_id: str) -> str:
@@ -64,8 +64,8 @@ def process_user_message(message: str, user_id: str) -> str:
     evaluator_slug="content-moderation",
     score_calculator=calculate_toxicity_score,
     input_schema={
-        "content": InputExtractor(source="input", key="text"),
-        "author": InputExtractor(source="input", key="author_id")
+        "content": InputExtractor(source="input",),
+        "author": InputExtractor(source="input",)
     }
 )
 def moderate_content(text: str, author_id: str) -> str:
@@ -96,8 +96,8 @@ def moderate_content(text: str, author_id: str) -> str:
     evaluator_slug="fact-checker",
     score_calculator=calculate_factuality_score,
     input_schema={
-        "claim": InputExtractor(source="input", key="statement"),
-        "source": InputExtractor(source="input", key="source_url")
+        "claim": InputExtractor(source="input",),
+        "source": InputExtractor(source="input",)
     }
 )
 def fact_check_statement(statement: str, source_url: str) -> dict:

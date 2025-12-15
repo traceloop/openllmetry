@@ -14,12 +14,16 @@ class GuardrailsClient:
         url = f"projects/default/evaluators/{slug}/execute"
         
         try:
+            print("NOMI - GuardrailsClient - execute_evaluator - url:", url)
+            print("NOMI - GuardrailsClient - execute_evaluator - data:", data)
             # Make POST request to evaluator endpoint
             response = await self._make_post_request(url, data)
-            
+            print("NOMI - GuardrailsClient - execute_evaluator - response:", response)
             if response and "stream_url" in response:
                 # Handle SSE streaming
+                print("NOMI - GuardrailsClient - execute_evaluator - handling SSE streaming")
                 return await self._handle_sse_stream(response["stream_url"])
+            
             else:
                 # Handle direct response
                 return response or {}
