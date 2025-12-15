@@ -59,11 +59,7 @@ def handle_medical_evaluation(evaluator_result, original_result):
     if not evaluator_result.success:
         # Return a modified dict with error message
         return {
-            "text": (
-                "I can see you are seeking medical advice. "
-                "Sorry for the inconvenience, but I cannot answer these types of questions. "
-                f"Reason: {evaluator_result.reason}"
-            )
+            "There is an issue with the request. Please try again."
         }
     return original_result
 

@@ -102,55 +102,64 @@ async def guarded_travel_agent(query: str) -> dict:
 
 async def main():
     """
-    Main function demonstrating guardrails with the travel agent.
+    Interactive travel agent with PII detection guardrails.
     """
     print("=" * 80)
-    print("Travel Agent with PII Detection Guardrails")
+    print("🛡️  Travel Agent with PII Detection Guardrails")
     print("=" * 80)
-    print("This example wraps the existing travel agent with PII detection.")
-    print("If the generated itinerary contains PII, it will be blocked.")
+    print("This travel agent uses PII detection to protect your privacy.")
+    print("The agent's output is hidden until the guardrail check completes.")
+    print("Type 'quit' or 'exit' to stop.\n")
+    print("💡 Example queries:")
+    print("  - Plan a 5-day trip to Paris for couples interested in food")
+    print("  - I want to visit Tokyo for 7 days with a moderate budget")
+    print("  - Create an itinerary for a family trip to Barcelona")
     print("=" * 80)
     print()
 
-    # Test query - should pass as it's a general request
-    test_query = "Plan a 5-day moderate trip to Paris for couples interested in food and museums."
+    while True:
+        try:
+            # Get user input
+            user_query = input("\n✈️  Your travel request: ").strip()
 
-    print(f"Query: {test_query}\n")
+            if not user_query:
+                print("Please enter a travel planning request.")
+                continue
 
-    try:
-        # Run the guarded travel agent
-        result = await guarded_travel_agent(test_query)
+            if user_query.lower() in ['quit', 'exit', 'q']:
+                print("\n👋 Thank you for using the Travel Agent. Safe travels!")
+                break
 
-        # Display the result
-        print("\n" + "=" * 80)
-        print("FINAL RESPONSE (after PII check):")
-        print("=" * 80)
-        response_text = result.get("text", "")
+            print("\n🔒 Running travel agent with PII guardrail check...")
+            print("(Agent output will appear after guardrail validation)\n")
 
-        # Show first 1000 chars to avoid cluttering terminal
-        if len(response_text) > 1000:
-            print(response_text[:1000] + "...\n[Response truncated for display]")
-        else:
+            # Run the guarded travel agent
+            result = await guarded_travel_agent(user_query)
+
+            # Display the result
+            print("\n" + "=" * 80)
+            print("📋 FINAL RESPONSE (after PII guardrail check):")
+            print("=" * 80)
+            response_text = result.get("text", "")
             print(response_text)
+            print("=" * 80)
 
-        print("=" * 80)
-        print("✅ Query completed with PII guardrail check")
-        print("=" * 80)
+            # Check if this was a warning (PII detected)
+            if "PRIVACY ALERT" in response_text:
+                print("❌ Response blocked due to PII detection")
+            else:
+                print("✅ Response approved by guardrail")
 
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+            print("=" * 80)
 
-    print("\n" + "=" * 80)
-    print("✅ Guardrail demo completed!")
-    print("=" * 80)
-    print("\nKey features demonstrated:")
-    print("  - Existing travel agent with 6 tools and agentic workflows")
-    print("  - PII detection guardrail on final output")
-    print("  - Custom callback for handling PII violations")
-    print("  - Seamless integration with existing code")
-    print("=" * 80)
+        except KeyboardInterrupt:
+            print("\n\n👋 Session interrupted. Goodbye!")
+            break
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print("\nPlease try again or type 'quit' to exit.")
 
 
 if __name__ == "__main__":
