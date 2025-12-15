@@ -2,9 +2,8 @@
 
 import logging
 import types
-from typing import Collection
+from typing import Collection, TYPE_CHECKING
 
-from google.genai.types import GenerateContentResponse
 from opentelemetry import context as context_api
 from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.google_generativeai.config import Config
@@ -35,6 +34,10 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from wrapt import wrap_function_wrapper
+
+if TYPE_CHECKING:
+    from google.genai.types import GenerateContentResponse
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +79,7 @@ def is_async_streaming_response(response):
 
 def _build_from_streaming_response(
     span,
-    response: GenerateContentResponse,
+    response: "GenerateContentResponse",
     llm_model,
     event_logger,
 ):
@@ -98,7 +101,7 @@ def _build_from_streaming_response(
 
 
 async def _abuild_from_streaming_response(
-    span, response: GenerateContentResponse, llm_model, event_logger
+    span, response: "GenerateContentResponse", llm_model, event_logger
 ):
     complete_response = ""
     last_chunk = None

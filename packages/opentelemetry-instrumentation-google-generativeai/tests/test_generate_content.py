@@ -1,3 +1,5 @@
+import sys
+
 from opentelemetry.sdk._logs import LogData
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -160,3 +162,10 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+def test_imports():
+    # Ensure heavy dependencies are not accidentally imported
+    import opentelemetry.instrumentation.google_generativeai  # noqa: F401
+
+    assert "google.genai" not in sys.modules
