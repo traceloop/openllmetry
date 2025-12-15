@@ -17,32 +17,6 @@ if not api_key:
 client = AsyncOpenAI(api_key=api_key)
 
 
-# Example 1: Using a simple slug string (backwards compatible)
-@guardrail(evaluator="medical-advice-given")
-async def get_doctor_response_simple(patient_message: str) -> dict:
-    """Get a doctor's response with simple slug-based guardrail."""
-
-    system_prompt = """You are a medical AI assistant. Provide helpful,
-      general medical information and advice while being clear about your limitations.
-      Always recommend consulting with qualified healthcare providers for proper diagnosis and treatment.
-      Be empathetic and professional in your responses."""
-
-    response = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": patient_message}
-        ],
-        max_tokens=500,
-        temperature=0
-    )
-
-    # Return dict with fields expected by evaluator
-    return {
-        "text": response.choices[0].message.content
-    }
-
-
 # Custom callback function to handle evaluation results
 def handle_medical_evaluation(evaluator_result, original_result):
     """
@@ -64,7 +38,6 @@ def handle_medical_evaluation(evaluator_result, original_result):
     return original_result
 
 
-# Example 2: Using EvaluatorDetails from Made by Traceloop with custom callback
 @guardrail(
     evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
     on_evaluation_complete=handle_medical_evaluation
@@ -76,6 +49,26 @@ async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
       general medical information and advice while being clear about your limitations.
       Always recommend consulting with qualified healthcare providers for proper diagnosis and treatment.
       Be empathetic and professional in your responses."""
+    
+    # This is the system prompt for the personal information case
+    personal_info_system_prompt = """You are a medical AI assistant that provides helpful, general medical information
+        tailored to the individual user.
+
+        When personal information is available (such as age, sex, symptoms, medical history,
+        lifestyle, medications, or concerns), actively incorporate it into your responses
+        to make guidance more relevant and personalized.
+
+        Adapt explanations, examples, and recommendations to the user’s context whenever possible.
+        If key personal details are missing, ask concise and relevant follow-up questions
+        before giving advice.
+
+        Be clear about your limitations as an AI and do not provide diagnoses or definitive
+        treatment plans. Always encourage consultation with qualified healthcare professionals
+        for diagnosis, treatment, or urgent concerns.
+
+        Maintain a professional, empathetic, and supportive tone.
+        Avoid assumptions, respect privacy, and clearly distinguish general information
+        from personalized considerations."""
 
     response = await client.chat.completions.create(
         model="gpt-4o",
@@ -93,7 +86,7 @@ async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
 
 
 # Main function using the simple example
-@guardrail(evaluator="medical-advice-given")
+@guardrail(evaluator="medicaladvicegiven")
 async def get_doctor_response(patient_message: str) -> dict:
     """Get a doctor's response to patient input using GPT-4o."""
 
