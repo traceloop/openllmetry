@@ -59,14 +59,14 @@ def handle_medical_evaluation(evaluator_result, original_result):
         # Return a modified dict with error message
         print(f"handle_medical_evaluation was activated - evaluator_result: {evaluator_result}")
         return {
-            "There is an issue with the request. Please try again."
+            "text": "There is an issue with the request. Please try again."
         }
     return original_result
 
 
 # Example 2: Using EvaluatorDetails from Made by Traceloop with custom callback
 @guardrail(
-    evaluator=EvaluatorMadeByTraceloop.sexism_detector(threshold=0.8),
+    evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
     on_evaluation_complete=handle_medical_evaluation
 )
 async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
