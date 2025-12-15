@@ -195,9 +195,20 @@ class Guardrails:
             )
 
             # Parse the result to OutputSchema format
-            inner_result = result.result.get("result", {})
+            # Made by Traceloop evaluators return: {'evaluator_result': 'pass'/'fail', ...}
+            raw_result = result.result
 
-            return OutputSchema.model_validate(inner_result)
+            # Check if this is a Made by Traceloop evaluator format
+            if "evaluator_result" in raw_result:
+                evaluator_result = raw_result.get("evaluator_result", "")
+                success = evaluator_result == "pass"
+                reason = raw_result.get("reason", None)
+                print("NOMI - guardrails - reason:", reason)
+                print("NOMI - guardrails - success:", success)
+                return OutputSchema(reason=reason, success=success)
+
+            # Otherwise, try custom evaluator format with 'pass' and 'reason' fields
+            return OutputSchema.model_validate(raw_result)
 
         except Exception as e:
             print(f"Error executing evaluator {slug}. Error: {str(e)}")

@@ -55,6 +55,7 @@ def handle_medical_evaluation(evaluator_result, original_result):
     Returns:
         Either the original result dict or a modified version
     """
+    print("NOMI - handle_medical_evaluation - evaluator_result:", evaluator_result)
     if not evaluator_result.success:
         # Return a modified dict with error message
         return {
@@ -69,31 +70,29 @@ def handle_medical_evaluation(evaluator_result, original_result):
 
 # Example 2: Using EvaluatorDetails from Made by Traceloop with custom callback
 @guardrail(
-    evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
+    evaluator=EvaluatorMadeByTraceloop.sexism_detector(threshold=0.8),
     on_evaluation_complete=handle_medical_evaluation
 )
 async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
     """Get a doctor's response with PII detection guardrail and custom callback."""
 
-    # system_prompt = """You are a medical AI assistant. Provide helpful,
-    #   general medical information and advice while being clear about your limitations.
-    #   Always recommend consulting with qualified healthcare providers for proper diagnosis and treatment.
-    #   Be empathetic and professional in your responses."""
+    system_prompt = """You are a medical AI assistant. Provide helpful,
+      general medical information and advice while being clear about your limitations.
+      Always recommend consulting with qualified healthcare providers for proper diagnosis and treatment.
+      Be empathetic and professional in your responses."""
 
-    # response = await client.chat.completions.create(
-    #     model="gpt-4o",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt},
-    #         {"role": "user", "content": patient_message}
-    #     ],
-    #     max_tokens=500,
-    #     temperature=0
-    # )
+    response = await client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": patient_message}
+        ],
+        max_tokens=500,
+        temperature=0
+    )
 
     return {
-        # "text": response.choices[0].message.content
-        "text": "I have cancer"
-        
+        "text": response.choices[0].message.content
     }
 
 

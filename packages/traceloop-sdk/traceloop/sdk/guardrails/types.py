@@ -16,5 +16,5 @@ class ExecuteEvaluatorRequest(BaseModel):
 
 
 class OutputSchema(BaseModel):
-    reason: str
-    success: bool = Field(alias="pass")
+    reason: Optional[str] = None
+    success: bool
