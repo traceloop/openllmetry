@@ -32,6 +32,13 @@ from traceloop.sdk.tracing.tracing import (
 from typing import Dict
 from traceloop.sdk.client.client import Client
 
+# Import guardrails module
+from traceloop.sdk.guardrails import (
+    guardrails,
+    get_current_score,
+    InputExtractor,
+    InputSchemaMapping,
+)
 
 class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
