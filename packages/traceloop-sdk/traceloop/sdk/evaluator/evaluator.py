@@ -101,12 +101,14 @@ class Evaluator:
         execute_response = await self._execute_evaluator_request(
             evaluator_slug, request, timeout_in_sec
         )
+
         sse_client = SSEClient(shared_client=self._async_http_client)
         sse_result = await sse_client.wait_for_result(
             execute_response.execution_id,
             execute_response.stream_url,
             timeout_in_sec,
         )
+
         return sse_result
 
     async def trigger_experiment_evaluator(

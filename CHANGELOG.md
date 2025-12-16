@@ -1,3 +1,16 @@
+## v0.50.0 (2025-12-15)
+
+### Feat
+
+- **guardrail**: Add guardrail decorator (#3521)
+
+## v0.49.8 (2025-12-11)
+
+### Fix
+
+- **openai**: add support for realtime api (websockets) (#3511)
+- **ollama**: support Older Version Ollama (#3501)
+
 ## v0.49.7 (2025-12-08)
 
 ### Fix

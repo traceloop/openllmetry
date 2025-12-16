@@ -33,6 +33,9 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     responses_cancel_wrapper,
     responses_get_or_create_wrapper,
 )
+from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
+    realtime_connect_wrapper,
+)
 
 from opentelemetry.instrumentation.openai.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
@@ -329,6 +332,17 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "AsyncResponses.cancel",
             async_responses_cancel_wrapper(tracer),
         )
+        # Realtime API (beta, WebSocket-based)
+        self._try_wrap(
+            "openai.resources.beta.realtime.realtime",
+            "Realtime.connect",
+            realtime_connect_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.beta.realtime.realtime",
+            "AsyncRealtime.connect",
+            realtime_connect_wrapper(tracer),
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("openai.resources.chat.completions", "Completions.create")
@@ -354,5 +368,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.responses", "AsyncResponses.create")
             unwrap("openai.resources.responses", "AsyncResponses.retrieve")
             unwrap("openai.resources.responses", "AsyncResponses.cancel")
+            unwrap("openai.resources.beta.realtime.realtime", "Realtime.connect")
+            unwrap("openai.resources.beta.realtime.realtime", "AsyncRealtime.connect")
         except ImportError:
             pass
