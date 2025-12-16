@@ -50,8 +50,8 @@ async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
       Always recommend consulting with qualified healthcare providers for proper diagnosis and treatment.
       Be empathetic and professional in your responses."""
     # This is the system prompt for the personal information case
-    personal_info_system_prompt = """You are a medical AI assistant that provides helpful, general medical information  # noqa: F841
-        tailored to the individual user.
+    personal_info_system_prompt = """You are a medical AI assistant that provides helpful,
+        general medical information tailored to the individual user.  # noqa: F841
 
         When personal information is available (such as age, sex, symptoms, medical history,
         lifestyle, medications, or concerns), actively incorporate it into your responses
