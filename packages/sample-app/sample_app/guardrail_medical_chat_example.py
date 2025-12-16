@@ -6,13 +6,13 @@ from traceloop.sdk.guardrails.guardrails import guardrail
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 
-Traceloop.init(
-    app_name="medical-chat-example"
-)
+Traceloop.init(app_name="medical-chat-example")
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    raise ValueError("OPENAI_API_KEY environment variable is required. Please set it before running this example.")
+    raise ValueError(
+        "OPENAI_API_KEY environment variable is required. Please set it before running this example."
+    )
 
 client = AsyncOpenAI(api_key=api_key)
 
@@ -31,16 +31,16 @@ def handle_medical_evaluation(evaluator_result, original_result):
     """
     if not evaluator_result.success:
         # Return a modified dict with error message
-        print(f"handle_medical_evaluation was activated - evaluator_result: {evaluator_result}")
-        return {
-            "text": "There is an issue with the request. Please try again."
-        }
+        print(
+            f"handle_medical_evaluation was activated - evaluator_result: {evaluator_result}"
+        )
+        return {"text": "There is an issue with the request. Please try again."}
     return original_result
 
 
 @guardrail(
     evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
-    on_evaluation_complete=handle_medical_evaluation
+    on_evaluation_complete=handle_medical_evaluation,
 )
 async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
     """Get a doctor's response with PII detection guardrail and custom callback."""
@@ -73,15 +73,13 @@ async def get_doctor_response_with_pii_check(patient_message: str) -> dict:
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": patient_message}
+            {"role": "user", "content": patient_message},
         ],
         max_tokens=500,
-        temperature=0
+        temperature=0,
     )
 
-    return {
-        "text": response.choices[0].message.content
-    }
+    return {"text": response.choices[0].message.content}
 
 
 # Main function using the simple example
@@ -98,16 +96,14 @@ async def get_doctor_response(patient_message: str) -> dict:
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": patient_message}
+            {"role": "user", "content": patient_message},
         ],
         max_tokens=500,
-        temperature=0
+        temperature=0,
     )
 
     # Return dict with 'text' field
-    return {
-        "text": response.choices[0].message.content
-    }
+    return {"text": response.choices[0].message.content}
 
 
 async def medical_chat_session():
@@ -122,7 +118,7 @@ async def medical_chat_session():
         try:
             patient_input = input("Patient: ").strip()
 
-            if patient_input.lower() in ['quit', 'exit', 'q']:
+            if patient_input.lower() in ["quit", "exit", "q"]:
                 print("\n👋 Thank you for using the medical chat. Take care!")
                 break
 
