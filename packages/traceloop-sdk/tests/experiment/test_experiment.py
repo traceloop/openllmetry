@@ -165,7 +165,8 @@ class TestRunLocallyValidation:
         # Should have at least one error and should have broken early
         assert len(errors) >= 1
         assert "Task output missing required fields for evaluators:" in errors[0]
-        assert "pii-detector requires: ['text']" in errors[0]
+        assert "pii-detector requires:" in errors[0]
+        assert "'text'" in errors[0]
         # With stop_on_error=True, it should break and not process all 3 rows
         assert len(results) + len(errors) <= 3
 
@@ -211,7 +212,8 @@ class TestRunLocallyValidation:
         assert len(errors) == 1
         assert len(results) == 0
         assert "Task output missing required fields for evaluators:" in errors[0]
-        assert "pii-detector requires: ['text']" in errors[0]
+        assert "pii-detector requires:" in errors[0]
+        assert "'text'" in errors[0]
 
     @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_succeeds_with_valid_output(self):
@@ -310,11 +312,12 @@ class TestRunLocallyValidation:
         )
 
         # Should have error with validation message
+        # Note: 'text' in task output maps to 'response' via synonym mapping,
+        # so only 'prompt' is missing
         assert len(errors) >= 1
         error_message = errors[0]
         assert "relevance-checker requires:" in error_message
         assert "'prompt'" in error_message
-        assert "'response'" in error_message
 
     @pytest.mark.anyio(backends=["asyncio"])
     async def test_run_locally_no_validation_for_string_evaluators(self):

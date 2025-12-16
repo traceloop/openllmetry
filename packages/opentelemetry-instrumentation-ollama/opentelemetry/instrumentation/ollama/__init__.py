@@ -45,7 +45,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("ollama >= 0.4.0, < 1",)
+_instruments = ("ollama >= 0.1.0, < 1",)
 
 WRAPPED_METHODS = [
     {
@@ -497,11 +497,21 @@ class OllamaInstrumentor(BaseInstrumentor):
             )
 
         # Patch _copy_messages to sanitize tool_calls arguments before Pydantic validation
-        wrap_function_wrapper(
-            "ollama._client",
-            "_copy_messages",
-            _sanitize_copy_messages,
-        )
+        # Only wrap if it exists (not available in older versions of ollama)
+        try:
+            import ollama._client as ollama_client
+            if hasattr(ollama_client, "_copy_messages"):
+                try:
+                    wrap_function_wrapper(
+                        "ollama._client",
+                        "_copy_messages",
+                        _sanitize_copy_messages,
+                    )
+                except (AttributeError, ImportError):
+                    pass
+        except (ImportError, AttributeError):
+            # _copy_messages not available in older versions, skip it
+            pass
         # instrument all llm methods (generate/chat/embeddings) via _request dispatch wrapper
         wrap_function_wrapper(
             "ollama._client",
