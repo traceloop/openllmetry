@@ -654,11 +654,13 @@ async def handle_runner_stream(runner: "Runner"):
     """Process runner events and display output."""
 
     tool_calls_made = []
+    response_text_parts = []
 
     async for event in runner.stream_events():
         if event.type == "raw_response_event":
             if isinstance(event.data, ResponseTextDeltaEvent):
                 print(event.data.delta, end="", flush=True)
+                response_text_parts.append(event.data.delta)
             elif isinstance(event.data, ResponseOutputItemAddedEvent):
                 if isinstance(event.data.item, ResponseFunctionToolCall):
                     tool_name = event.data.item.name
@@ -688,17 +690,29 @@ async def handle_runner_stream(runner: "Runner"):
                     for part in getattr(raw_item, "content", []):
                         if isinstance(part, ResponseOutputText):
                             content_parts.append(part.text)
+                            response_text_parts.append(part.text)
                         elif isinstance(part, ResponseOutputRefusal):
                             content_parts.append(part.refusal)
+                            response_text_parts.append(part.refusal)
                     if content_parts:
                         print("".join(content_parts), end="", flush=True)
 
     print()
-    return tool_calls_made
+    return tool_calls_made, "".join(response_text_parts)
 
 
-async def run_travel_query(query: str):
-    """Run a single travel planning query."""
+async def run_travel_query(query: str, return_response_text: bool = False):
+    """
+    Run a single travel planning query.
+
+    Args:
+        query: The travel planning query
+        return_response_text: If True, returns the response text.
+            If False, returns tool_calls (for backward compatibility)
+
+    Returns:
+        Either response_text (str) or tool_calls (list) depending on parameter
+    """
 
     print("=" * 80)
     print(f"Query: {query}")
@@ -710,13 +724,16 @@ async def run_travel_query(query: str):
 
     messages = [{"role": "user", "content": query}]
     runner = Runner().run_streamed(starting_agent=travel_agent, input=messages)
-    tool_calls = await handle_runner_stream(runner)
+    tool_calls, response_text = await handle_runner_stream(runner)
 
     print(f"\n{'='*80}")
     print(f"✅ Query completed! Tools used: {', '.join(tool_calls) if tool_calls else 'None'}")
     print(f"{'='*80}\n")
 
-    return tool_calls
+    if return_response_text:
+        return response_text
+    else:
+        return tool_calls  # Backward compatibility for existing code
 
 
 def generate_travel_queries(n: int = 10) -> List[str]:
