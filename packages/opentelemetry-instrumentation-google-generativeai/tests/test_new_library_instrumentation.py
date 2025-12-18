@@ -1,54 +1,54 @@
 """Test that the google-genai library instrumentation works."""
-
+import wrapt
 from opentelemetry.instrumentation.google_generativeai import (
     GoogleGenerativeAiInstrumentor,
 )
+from google.genai.models import Models, AsyncModels
 
 
-def test_library_instrumentation():
-    """Test that the google-genai library gets properly instrumented."""
-    # Import the library
-    from google import genai
-    from google.genai.models import AsyncModels, Models
+def _is_instrumented(func):
+    """
+    OpenTelemetry instrumentations wrap functions using wrapt.
+    Presence of __wrapped__ or a wrapt wrapper means instrumented.
+    """
+    return hasattr(func, "__wrapped__") or isinstance(
+        func,
+        (wrapt.FunctionWrapper, wrapt.BoundFunctionWrapper),
+    )
 
-    # Set up instrumentor
+
+def test_google_genai_instrumentation_lifecycle():
+    """Validate instrumentation, idempotency, and cleanup."""
+
     instrumentor = GoogleGenerativeAiInstrumentor()
 
-    # Verify methods are not wrapped initially
-    assert not hasattr(Models.generate_content, '__wrapped__')
-    assert not hasattr(Models.generate_content_stream, '__wrapped__')
-    assert not hasattr(AsyncModels.generate_content, '__wrapped__')
-    assert not hasattr(AsyncModels.generate_content_stream, '__wrapped__')
+    # --- ensure clean state ---
+    instrumentor.uninstrument()
 
-    try:
-        instrumentor.instrument()
+    assert not _is_instrumented(Models.generate_content)
+    assert not _is_instrumented(Models.generate_content_stream)
+    assert not _is_instrumented(AsyncModels.generate_content)
+    assert not _is_instrumented(AsyncModels.generate_content_stream)
 
-        # Verify all methods are now wrapped
-        assert hasattr(Models.generate_content, '__wrapped__')
-        assert hasattr(Models.generate_content_stream, '__wrapped__')
-        assert hasattr(AsyncModels.generate_content, '__wrapped__')
-        assert hasattr(AsyncModels.generate_content_stream, '__wrapped__')
+    # --- instrument ---
+    instrumentor.instrument()
 
-        # Verify they're callable
-        assert callable(Models.generate_content)
-        assert callable(Models.generate_content_stream)
-        assert callable(AsyncModels.generate_content)
-        assert callable(AsyncModels.generate_content_stream)
+    assert _is_instrumented(Models.generate_content)
+    assert _is_instrumented(Models.generate_content_stream)
+    assert _is_instrumented(AsyncModels.generate_content)
+    assert _is_instrumented(AsyncModels.generate_content_stream)
 
-        # Test that we can create a client
-        client = genai.Client(api_key="test_key")
-        assert client is not None
-        assert hasattr(client, 'models')
-        assert isinstance(client.models, Models)
+    # --- instrumentation is idempotent ---
+    instrumentor.instrument()
+    assert _is_instrumented(Models.generate_content)
 
-    finally:
-        instrumentor.uninstrument()
+    # --- uninstrument ---
+    instrumentor.uninstrument()
 
-        # Verify methods are unwrapped
-        assert not hasattr(Models.generate_content, '__wrapped__')
-        assert not hasattr(Models.generate_content_stream, '__wrapped__')
-        assert not hasattr(AsyncModels.generate_content, '__wrapped__')
-        assert not hasattr(AsyncModels.generate_content_stream, '__wrapped__')
+    assert not _is_instrumented(Models.generate_content)
+    assert not _is_instrumented(Models.generate_content_stream)
+    assert not _is_instrumented(AsyncModels.generate_content)
+    assert not _is_instrumented(AsyncModels.generate_content_stream)
 
 
 def test_instrumentation_dependencies():
