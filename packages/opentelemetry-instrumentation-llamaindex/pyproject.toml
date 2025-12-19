@@ -32,28 +32,28 @@ inflection = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
-flake8 = "7.0.0"
+flake8 = "7.3.0"
 
 [tool.poetry.group.test.dependencies]
-vcrpy = "^6.0.1"
+vcrpy = ">=6.0.1,<8.0.0"
 pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
-chromadb = "^0.5.23"
+pytest-asyncio = ">=0.23.7,<1.3.0"
+chromadb = ">=0.5.23,<1.4.0"
 openai = "^1.52.2"
 opentelemetry-sdk = "^1.38.0"
 llama-index = "^0.12.52"
-llama-index-postprocessor-cohere-rerank = "^0.3.0"
+llama-index-postprocessor-cohere-rerank = ">=0.3,<0.5"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
 opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", develop = true }
 opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", develop = true }
 sqlalchemy = "^2.0.31"
 llama-index-agent-openai = "^0.4.12"
 llama-index-vector-stores-chroma = "^0.4.1"
-llama-index-llms-cohere = "^0.4.0"
+llama-index-llms-cohere = ">=0.4,<0.6"
 llama-index-embeddings-openai = "^0.3.1"
 llama-index-llms-openai = "^0.4.0"
-onnxruntime = "<1.20.0"
-llama-parse = "^0.5.20"
+onnxruntime = "<1.21.0"
+llama-parse = ">=0.5.20,<0.7.0"
 
 [build-system]
 requires = ["poetry-core"]
