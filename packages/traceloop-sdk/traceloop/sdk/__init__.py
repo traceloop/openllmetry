@@ -29,11 +29,9 @@ from traceloop.sdk.tracing.tracing import (
     set_association_properties,
     set_external_prompt_tracing_context,
 )
-from traceloop.sdk.associations import Associations, AssociationProperty
 from typing import Dict
 from traceloop.sdk.client.client import Client
-
-__all__ = ["Traceloop", "Client", "Instruments", "Associations", "AssociationProperty"]
+from traceloop.sdk.associations.associations import AssociationProperty
 
 
 class Traceloop:
