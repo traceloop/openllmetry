@@ -3,6 +3,7 @@ from typing import Sequence
 from opentelemetry import trace
 from opentelemetry.context import attach, set_value, get_value
 
+ASSOCIATIONS_KEY = "associations"
 
 class AssociationProperty(str, Enum):
     """Standard association properties for tracing."""
@@ -39,7 +40,7 @@ class Associations:
             ])
         """
         # Store all associations in context
-        current_associations: dict[str, str] = get_value("associations") or {}
+        current_associations: dict[str, str] = get_value(ASSOCIATIONS_KEY) or {}
         for prop, value in associations:
             current_associations[prop.value] = value
 
