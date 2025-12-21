@@ -5,6 +5,7 @@ from opentelemetry.context import attach, set_value, get_value
 
 ASSOCIATIONS_KEY = "associations"
 
+
 class AssociationProperty(str, Enum):
     """Standard association properties for tracing."""
 
@@ -44,7 +45,7 @@ class Associations:
         for prop, value in associations:
             current_associations[prop.value] = value
 
-        attach(set_value("associations", current_associations))
+        attach(set_value(ASSOCIATIONS_KEY, current_associations))
 
         # Also set directly on the current span
         span = trace.get_current_span()
