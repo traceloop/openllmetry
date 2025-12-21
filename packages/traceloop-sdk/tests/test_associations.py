@@ -57,7 +57,7 @@ def test_associations_create_single(client_with_exporter):
     def test_task():
         return
 
-    client.associations.set([(AssociationProperty.CONVERSATION_ID, "conv-123")])
+    client.associations.set([(AssociationProperty.SESSION_ID, "conv-123")])
     test_workflow()
 
     spans = exporter.get_finished_spans()
@@ -69,8 +69,8 @@ def test_associations_create_single(client_with_exporter):
     task_span = spans[0]
     workflow_span = spans[1]
 
-    assert workflow_span.attributes["conversation_id"] == "conv-123"
-    assert task_span.attributes["conversation_id"] == "conv-123"
+    assert workflow_span.attributes["session_id"] == "conv-123"
+    assert task_span.attributes["session_id"] == "conv-123"
 
 
 def test_associations_create_multiple(client_with_exporter):
@@ -118,7 +118,7 @@ def test_associations_within_workflow(client_with_exporter):
     @workflow(name="test_associations_within")
     def test_workflow():
         client.associations.set([
-            (AssociationProperty.CONVERSATION_ID, "conv-abc"),
+            (AssociationProperty.SESSION_ID, "conv-abc"),
             (AssociationProperty.USER_ID, "user-xyz"),
         ])
         return test_task()
@@ -139,10 +139,10 @@ def test_associations_within_workflow(client_with_exporter):
     workflow_span = spans[1]
 
     # Both spans should have all associations
-    assert workflow_span.attributes["conversation_id"] == "conv-abc"
+    assert workflow_span.attributes["session_id"] == "conv-abc"
     assert workflow_span.attributes["user_id"] == "user-xyz"
 
-    assert task_span.attributes["conversation_id"] == "conv-abc"
+    assert task_span.attributes["session_id"] == "conv-abc"
     assert task_span.attributes["user_id"] == "user-xyz"
 
 
@@ -155,7 +155,7 @@ def test_all_association_properties(client_with_exporter):
         return
 
     client.associations.set([
-        (AssociationProperty.CONVERSATION_ID, "conv-1"),
+        (AssociationProperty.SESSION_ID, "conv-1"),
         (AssociationProperty.CUSTOMER_ID, "customer-2"),
         (AssociationProperty.USER_ID, "user-3"),
         (AssociationProperty.SESSION_ID, "session-4"),
@@ -165,7 +165,7 @@ def test_all_association_properties(client_with_exporter):
     spans = exporter.get_finished_spans()
     workflow_span = spans[0]
 
-    assert workflow_span.attributes["conversation_id"] == "conv-1"
+    assert workflow_span.attributes["session_id"] == "conv-1"
     assert workflow_span.attributes["customer_id"] == "customer-2"
     assert workflow_span.attributes["user_id"] == "user-3"
     assert workflow_span.attributes["session_id"] == "session-4"

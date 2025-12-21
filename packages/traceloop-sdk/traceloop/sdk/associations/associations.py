@@ -9,7 +9,6 @@ ASSOCIATIONS_KEY = "associations"
 class AssociationProperty(str, Enum):
     """Standard association properties for tracing."""
 
-    CONVERSATION_ID = "conversation_id"
     CUSTOMER_ID = "customer_id"
     USER_ID = "user_id"
     SESSION_ID = "session_id"
@@ -32,7 +31,7 @@ class Associations:
 
         Example:
             # Single association
-            traceloop.associations.set([(AssociationProperty.CONVERSATION_ID, "conv-123")])
+            traceloop.associations.set([(AssociationProperty.SESSION_ID, "conv-123")])
 
             # Multiple associations
             traceloop.associations.set([
