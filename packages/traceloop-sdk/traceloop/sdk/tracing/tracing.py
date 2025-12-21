@@ -1,6 +1,7 @@
 import atexit
 import logging
 import os
+from urllib.parse import urlparse
 
 
 from colorama import Fore
@@ -291,10 +292,45 @@ def is_llm_span(span) -> bool:
 
 
 def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExporter:
-    if "http" in api_endpoint.lower() or "https" in api_endpoint.lower():
-        return HTTPExporter(endpoint=f"{api_endpoint}/v1/traces", headers=headers)
-    else:
-        return GRPCExporter(endpoint=f"{api_endpoint}", headers=headers)
+    """
+    Initialize a span exporter based on the endpoint URL scheme.
+
+    Supported schemes:
+        - http:// or https:// → HTTP exporter
+        - grpc:// → gRPC exporter (insecure)
+        - grpcs:// → gRPC exporter (secure/TLS)
+        - No scheme → gRPC exporter (insecure, for backward compatibility)
+
+    Args:
+        api_endpoint: The endpoint URL (with or without scheme)
+        headers: Headers to include with the exporter requests
+
+    Returns:
+        SpanExporter: Configured HTTP or gRPC exporter
+    """
+    parsed = urlparse(api_endpoint.strip())
+
+    match parsed.scheme.lower():
+        case "http" | "https":
+            base_url = api_endpoint.strip().rstrip('/')
+            if not base_url.endswith('/v1/traces'):
+                endpoint = f"{base_url}/v1/traces"
+            else:
+                endpoint = base_url
+            return HTTPExporter(endpoint=endpoint, headers=headers)
+        case "grpc":
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=True
+            )
+        case "grpcs":
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=False
+            )
+        case _:
+            # No scheme → default to insecure gRPC for backward compatibility
+            return GRPCExporter(
+                endpoint=api_endpoint.strip(), headers=headers, insecure=True
+            )
 
 
 def default_span_processor_on_start(span: Span, parent_context: Context | None = None):
