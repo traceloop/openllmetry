@@ -165,7 +165,6 @@ def test_all_association_properties(client_with_exporter):
     spans = exporter.get_finished_spans()
     workflow_span = spans[0]
 
-    assert workflow_span.attributes["session_id"] == "conv-1"
     assert workflow_span.attributes["customer_id"] == "customer-2"
     assert workflow_span.attributes["user_id"] == "user-3"
     assert workflow_span.attributes["session_id"] == "session-4"
