@@ -64,6 +64,8 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
+        if hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
         elif hasattr(o, "json"):
             return o.json()
         elif hasattr(o, "to_json"):
