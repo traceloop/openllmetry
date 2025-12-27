@@ -1,9 +1,6 @@
 from enum import Enum
 from typing import Sequence
-from opentelemetry import trace
-from opentelemetry.context import attach, set_value, get_value
-
-ASSOCIATIONS_KEY = "associations"
+from traceloop.sdk.tracing.tracing import set_association_properties
 
 
 class AssociationProperty(str, Enum):
@@ -39,15 +36,6 @@ class Associations:
                 (AssociationProperty.SESSION_ID, "session-789")
             ])
         """
-        # Store all associations in context
-        current_associations: dict[str, str] = get_value(ASSOCIATIONS_KEY) or {}  # type: ignore
-        for prop, value in associations:
-            current_associations[prop.value] = value
-
-        attach(set_value(ASSOCIATIONS_KEY, current_associations))
-
-        # Also set directly on the current span
-        span = trace.get_current_span()
-        if span and span.is_recording():
-            for prop, value in associations:
-                span.set_attribute(prop.value, value)
+        # Convert associations to a dict and use set_association_properties
+        properties = {prop.value: value for prop, value in associations}
+        set_association_properties(properties)

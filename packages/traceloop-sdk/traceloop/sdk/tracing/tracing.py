@@ -349,12 +349,6 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     if entity_path is not None:
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_PATH, str(entity_path))
 
-    # Handle associations
-    associations = get_value("associations")
-    if associations is not None:
-        for key, value in associations.items():
-            span.set_attribute(key, str(value))
-
     association_properties = get_value("association_properties")
     if association_properties is not None and isinstance(association_properties, dict):
         _set_association_properties_attributes(span, association_properties)
