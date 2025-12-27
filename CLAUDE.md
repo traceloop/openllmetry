@@ -28,6 +28,7 @@ nx affected:lint
 
 ## Package Management
 All packages use Poetry as the package manager. Always execute commands through Poetry:
+sorry i don't know why the need it for that .
 ```bash
 poetry run <command>
 ```
