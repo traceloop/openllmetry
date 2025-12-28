@@ -10,29 +10,41 @@ from opentelemetry.instrumentation.google_generativeai import (
 from opentelemetry.instrumentation.google_generativeai.utils import (
     TRACELOOP_TRACE_CONTENT,
 )
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
     SimpleLogRecordProcessor,
 )
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import set_tracer_provider
+from opentelemetry.sdk.trace.export import (
+    SimpleSpanProcessor,
+)
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
+
+from opentelemetry import metrics
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+
 
 pytest_plugins = []
 
 
-@pytest.fixture(scope="function", name="span_exporter")
-def fixture_span_exporter():
+@pytest.fixture(scope="session")
+def exporter():
     exporter = InMemorySpanExporter()
-    yield exporter
+    processor = SimpleSpanProcessor(exporter)
 
-
-@pytest.fixture(scope="function", name="tracer_provider")
-def fixture_tracer_provider(span_exporter):
     provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(span_exporter))
-    return provider
+    provider.add_span_processor(processor)
+    set_tracer_provider(provider)
+
+    GoogleGenerativeAiInstrumentor().instrument()
+
+    return exporter
 
 
 @pytest.fixture(scope="function", name="log_exporter")
@@ -51,7 +63,7 @@ def fixture_logger_provider(log_exporter):
 @pytest.fixture
 def genai_client():
     client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
-    return client.models
+    return client
 
 
 @pytest.fixture(scope="function")
@@ -64,6 +76,24 @@ def instrument_legacy(tracer_provider):
     yield instrumentor
 
     instrumentor.uninstrument()
+
+
+@pytest.fixture(scope="session")
+def metrics_test_context():
+    resource = Resource.create()
+    reader = InMemoryMetricReader()
+    provider = MeterProvider(metric_readers=[reader], resource=resource)
+    metrics.set_meter_provider(provider)
+    GoogleGenerativeAiInstrumentor().instrument(meter_provider=provider)
+    return provider, reader
+
+
+@pytest.fixture(scope="session", autouse=True)
+def clear_metrics_test_context(metrics_test_context):
+    yield
+    provider, reader = metrics_test_context
+    reader.shutdown()
+    provider.shutdown()
 
 
 @pytest.fixture(scope="function")
@@ -100,7 +130,7 @@ def instrument_with_no_content(tracer_provider, logger_provider):
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {"filter_headers": ["authorization", "x-goog-api-key"]}
 
 
 @pytest.fixture(autouse=True)
