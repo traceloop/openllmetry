@@ -20,11 +20,12 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/openai_agents"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+starlette = "^0.47.2"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -36,7 +37,7 @@ pytest-sugar = "1.0.0"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
 pytest-recording = "^0.13.1"
-vcrpy = "^6.0.1"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest-asyncio = "^1.0.0"
 litellm = "^1.71.2"
 opentelemetry-sdk = "^1.38.0"

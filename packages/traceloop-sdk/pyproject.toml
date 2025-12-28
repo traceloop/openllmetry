@@ -71,8 +71,11 @@ tenacity = ">=8.2.3, <10.0"
 pydantic = ">=1"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
-aiohttp = "^3.11.11"
+aiohttp = "^3.12.14"
 cuid = "^0.4"
+urllib3 = "^2.5.0"
+requests = "^2.32.4"
+protobuf = "^5.29.5"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
@@ -86,13 +89,13 @@ pandas-stubs = "*"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.31.1"
-vcrpy = "^7.0.0"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest-recording = "^0.13.1"
 pydantic = "<3"
 pytest-asyncio = "^0.23.7"
 anthropic = "^0.25.2"
-langchain = "^0.2.5"
-langchain-openai = "^0.1.15"
+langchain = "^0.3.24"
+langchain-openai = "^0.3.14"
 pandas = ">=1.0.0"
 
 [tool.poetry.extras]

@@ -23,12 +23,16 @@ readme = "README.md"
 include = "opentelemetry/instrumentation/weaviate"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 opentelemetry-api = "^1.38.0"
 opentelemetry-instrumentation = ">=0.59b0"
 opentelemetry-semantic-conventions = ">=0.59b0"
 opentelemetry-semantic-conventions-ai = "^0.4.13"
+urllib3 = "^2.5.0"
+requests = "^2.32.4"
+protobuf = "^5.29.5"
 
+authlib = "^1.6.5"
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.2.0"
 flake8 = "7.0.0"
@@ -39,7 +43,7 @@ pytest-sugar = "1.0.0"
 openai = "^1.31.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
+vcrpy = { git = "https://github.com/kevin1024/vcrpy.git", branch = "master" }
 pytest-recording = "^0.13.1"
 opentelemetry-sdk = "^1.38.0"
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
