@@ -28,7 +28,6 @@ nx affected:lint
 
 ## Package Management
 All packages use Poetry as the package manager. Always execute commands through Poetry:
-sorry i don't know why the need it for that .
 ```bash
 poetry run <command>
 ```
@@ -88,4 +87,4 @@ https://opentelemetry.io/docs/specs/semconv/gen-ai/
 Instrumentation packages should leverage the semantic conventions package. Their purpose is to instrument AI-related libraries and generate spans and tracing data compliant with OpenTelemetry semantic conventions.
 
 ## Code Quality
-Flake8 is used for code linting.
+Flake8 is used for code linting. For further assistance create an issue on github
