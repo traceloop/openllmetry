@@ -55,7 +55,7 @@ class ExecutionResponse(BaseModel):
             An instance of the provided model class
 
         Example:
-            from traceloop.sdk.evaluators_generated import PIIDetectorResponse
+            from traceloop.sdk.generated.evaluators import PIIDetectorResponse
             result = await evaluator.run_experiment_evaluator(...)
             pii = result.typed_result(PIIDetectorResponse)
             print(pii.has_pii)  # IDE autocomplete works!

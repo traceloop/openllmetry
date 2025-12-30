@@ -12,7 +12,7 @@ from .model import (
 )
 from .stream_client import SSEClient
 from .config import EvaluatorDetails
-from ..evaluators_generated import get_request_model
+from ..generated.evaluators import get_request_model
 
 
 def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:

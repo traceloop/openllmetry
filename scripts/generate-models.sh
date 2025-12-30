@@ -14,7 +14,7 @@ fi
 SWAGGER_PATH="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-OUTPUT_DIR="${ROOT_DIR}/packages/traceloop-sdk/traceloop/sdk/evaluators_generated"
+OUTPUT_DIR="${ROOT_DIR}/packages/traceloop-sdk/traceloop/sdk/generated/evaluators"
 CODEGEN_SCRIPT="${SCRIPT_DIR}/codegen/generate_evaluator_models.py"
 
 if [ ! -f "${SWAGGER_PATH}" ]; then

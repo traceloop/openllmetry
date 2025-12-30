@@ -11,4 +11,4 @@ exclude =
 max-line-length = 120
 per-file-ignores =
 	__init__.py:F401
-	traceloop/sdk/evaluators_generated/*.py:E501
+	traceloop/sdk/generated/**/*.py:E501

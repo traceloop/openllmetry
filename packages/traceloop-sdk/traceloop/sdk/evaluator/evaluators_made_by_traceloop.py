@@ -1,12 +1,12 @@
 """
 Factory class for creating Traceloop evaluators with proper configuration.
 
-This module dynamically generates factory methods from the evaluators_generated registry.
+This module dynamically generates factory methods from the generated.evaluators registry.
 """
 
 from typing import Any, List
 
-from ..evaluators_generated import REQUEST_MODELS
+from ..generated.evaluators import REQUEST_MODELS
 from .config import EvaluatorDetails
 
 
