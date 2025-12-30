@@ -83,6 +83,7 @@ mypy = "^1.18.2"
 types-requests = "^2.31.0"
 types-colorama = "^0.4.15"
 pandas-stubs = "*"
+datamodel-code-generator = "^0.26.0"
 
 [tool.poetry.group.test.dependencies]
 openai = "^1.31.1"
