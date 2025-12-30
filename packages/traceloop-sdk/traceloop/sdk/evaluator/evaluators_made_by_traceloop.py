@@ -5,8 +5,9 @@ This module dynamically generates factory methods from the evaluators_generated 
 """
 
 from typing import Any, List
-from .config import EvaluatorDetails
+
 from ..evaluators_generated import REQUEST_MODELS
+from .config import EvaluatorDetails
 
 
 def _get_required_fields(slug: str) -> List[str]:
@@ -74,10 +75,13 @@ class _EvaluatorMadeByTraceloopMeta(type):
         """Dynamically create factory methods for any evaluator slug."""
         slug = _method_name_to_slug(name)
         if slug in REQUEST_MODELS:
+
             def factory(**config: Any) -> EvaluatorDetails:
                 return create_evaluator(slug, **config)
+
             factory.__name__ = name
-            factory.__doc__ = f"Create {slug} evaluator. Config fields: {list(_get_config_fields(slug).keys()) or 'none'}"
+            config_fields = list(_get_config_fields(slug).keys()) or "none"
+            factory.__doc__ = f"Create {slug} evaluator. Config fields: {config_fields}"
             return factory
         raise AttributeError(f"'{cls.__name__}' has no attribute '{name}'")
 
@@ -112,4 +116,5 @@ class EvaluatorMadeByTraceloop(metaclass=_EvaluatorMadeByTraceloopMeta):
         - agent_goal_accuracy, agent_efficiency, agent_flow_quality
         - and more... (use dir(EvaluatorMadeByTraceloop) to see all)
     """
+
     pass
