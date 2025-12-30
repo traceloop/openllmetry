@@ -9,21 +9,15 @@ from pydantic import BaseModel, Field
 
 
 class AgentEfficiencyResponse(BaseModel):
-    step_efficiency_reason: Optional[str] = Field(
-        None, examples=['Agent completed task with minimal redundant steps']
-    )
+    step_efficiency_reason: Optional[str] = Field(None, examples=["Agent completed task with minimal redundant steps"])
     step_efficiency_score: Optional[float] = Field(None, examples=[0.85])
-    task_completion_reason: Optional[str] = Field(
-        None, examples=['All required tasks were completed successfully']
-    )
+    task_completion_reason: Optional[str] = Field(None, examples=["All required tasks were completed successfully"])
     task_completion_score: Optional[float] = Field(None, examples=[0.92])
 
 
 class AgentFlowQualityResponse(BaseModel):
-    reason: Optional[str] = Field(
-        None, examples=['Agent followed the expected flow correctly']
-    )
-    result: Optional[str] = Field(None, examples=['pass'])
+    reason: Optional[str] = Field(None, examples=["Agent followed the expected flow correctly"])
+    result: Optional[str] = Field(None, examples=["pass"])
     score: Optional[float] = Field(None, examples=[0.89])
 
 
@@ -32,16 +26,14 @@ class AgentGoalAccuracyResponse(BaseModel):
 
 
 class AgentGoalCompletenessResponse(BaseModel):
-    reason: Optional[str] = Field(None, examples=['All user goals were accomplished'])
-    result: Optional[str] = Field(None, examples=['complete'])
+    reason: Optional[str] = Field(None, examples=["All user goals were accomplished"])
+    result: Optional[str] = Field(None, examples=["complete"])
     score: Optional[float] = Field(None, examples=[0.95])
 
 
 class AgentToolErrorDetectorResponse(BaseModel):
-    reason: Optional[str] = Field(
-        None, examples=['Tool executed successfully without errors']
-    )
-    result: Optional[str] = Field(None, examples=['success'])
+    reason: Optional[str] = Field(None, examples=["Tool executed successfully without errors"])
+    result: Optional[str] = Field(None, examples=["success"])
 
 
 class AnswerCompletenessResponse(BaseModel):
@@ -73,7 +65,7 @@ class ConversationQualityResponse(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    error: Optional[str] = Field(None, examples=['error message'])
+    error: Optional[str] = Field(None, examples=["error message"])
 
 
 class FaithfulnessResponse(BaseModel):
@@ -85,10 +77,8 @@ class InstructionAdherenceResponse(BaseModel):
 
 
 class IntentChangeResponse(BaseModel):
-    pass_: Optional[bool] = Field(None, alias='pass', examples=[True])
-    reason: Optional[str] = Field(
-        None, examples=['User intent remained consistent throughout the conversation']
-    )
+    pass_: Optional[bool] = Field(None, alias="pass", examples=[True])
+    reason: Optional[str] = Field(None, examples=["User intent remained consistent throughout the conversation"])
     score: Optional[int] = Field(None, examples=[1])
 
 
@@ -113,7 +103,7 @@ class ProfanityDetectorResponse(BaseModel):
 
 
 class PromptInjectionResponse(BaseModel):
-    has_injection: Optional[str] = Field(None, examples=['safe'])
+    has_injection: Optional[str] = Field(None, examples=["safe"])
 
 
 class PromptPerplexityResponse(BaseModel):
@@ -137,12 +127,12 @@ class SemanticSimilarityResponse(BaseModel):
 
 
 class SexismDetectorResponse(BaseModel):
-    is_safe: Optional[str] = Field(None, examples=['safe'])
+    is_safe: Optional[str] = Field(None, examples=["safe"])
 
 
 class ToneDetectionResponse(BaseModel):
     score: Optional[float] = Field(None, examples=[0.95])
-    tone: Optional[str] = Field(None, examples=['neutral'])
+    tone: Optional[str] = Field(None, examples=["neutral"])
 
 
 class TopicAdherenceResponse(BaseModel):
@@ -154,7 +144,7 @@ class ToxicityDetectorResponse(SexismDetectorResponse):
 
 
 class UncertaintyDetectorResponse(BaseModel):
-    answer: Optional[str] = Field(None, examples=['Paris'])
+    answer: Optional[str] = Field(None, examples=["Paris"])
     uncertainty: Optional[float] = Field(None, examples=[0.95])
 
 
