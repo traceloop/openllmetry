@@ -71,7 +71,7 @@ def create_evaluator(slug: str, **config: Any) -> EvaluatorDetails:
 class _EvaluatorMadeByTraceloopMeta(type):
     """Metaclass that dynamically generates evaluator factory methods."""
 
-    def __getattr__(cls, name: str):
+    def __getattr__(cls, name: str) -> Any:
         """Dynamically create factory methods for any evaluator slug."""
         slug = _method_name_to_slug(name)
         if slug in REQUEST_MODELS:
@@ -85,7 +85,7 @@ class _EvaluatorMadeByTraceloopMeta(type):
             return factory
         raise AttributeError(f"'{cls.__name__}' has no attribute '{name}'")
 
-    def __dir__(cls):
+    def __dir__(cls) -> List[str]:
         """List all available evaluator methods."""
         methods = list(super().__dir__())
         for slug in REQUEST_MODELS:
