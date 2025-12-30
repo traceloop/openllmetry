@@ -40,6 +40,13 @@ from .request import (
     WordCountRequest,
 )
 
+from .registry import (
+    REQUEST_MODELS,
+    RESPONSE_MODELS,
+    get_request_model,
+    get_response_model,
+)
+
 from .response import (
     AgentEfficiencyResponse,
     AgentFlowQualityResponse,
@@ -78,6 +85,11 @@ from .response import (
 )
 
 __all__ = [
+    # Registry functions
+    "REQUEST_MODELS",
+    "RESPONSE_MODELS",
+    "get_request_model",
+    "get_response_model",
     # Evaluator request models
     "AgentEfficiencyRequest",
     "AgentFlowQualityRequest",

@@ -15,28 +15,50 @@ import tempfile
 from pathlib import Path
 
 
-def extract_definitions(swagger_path: str) -> dict:
-    """Extract definitions used by v2/evaluators/execute/* endpoints."""
+def extract_definitions_and_mappings(swagger_path: str) -> tuple[dict, dict]:
+    """
+    Extract definitions used by v2/evaluators/execute/* endpoints.
+    Also extracts slug-to-model mappings.
+
+    Returns:
+        tuple: (filtered_definitions, slug_mappings)
+        slug_mappings: {slug: {"request": "ModelName", "response": "ModelName"}}
+    """
     with open(swagger_path) as f:
         data = json.load(f)
 
     all_definitions = data["definitions"]
     needed_refs = set()
+    slug_mappings = {}
 
     # Collect all definitions referenced by target endpoints
     for path, methods in data["paths"].items():
         if "/v2/evaluators/execute/" in path:
+            # Extract slug from path like /v2/evaluators/execute/pii-detector
+            slug = path.split("/v2/evaluators/execute/")[-1]
+            if slug:
+                slug_mappings[slug] = {"request": None, "response": None}
+
             for method, details in methods.items():
                 # Get request body refs
                 for param in details.get("parameters", []):
                     if "schema" in param and "$ref" in param["schema"]:
                         ref = param["schema"]["$ref"].replace("#/definitions/", "")
                         needed_refs.add(ref)
+                        if slug and ref.startswith("request."):
+                            # Convert request.PIIDetectorRequest to PIIDetectorRequest
+                            model_name = ref.split(".")[-1]
+                            slug_mappings[slug]["request"] = model_name
+
                 # Get response refs
                 for code, resp in details.get("responses", {}).items():
                     if "schema" in resp and "$ref" in resp["schema"]:
                         ref = resp["schema"]["$ref"].replace("#/definitions/", "")
                         needed_refs.add(ref)
+                        # Only use 200 response for the success model mapping
+                        if slug and code == "200" and ref.startswith("response."):
+                            model_name = ref.split(".")[-1]
+                            slug_mappings[slug]["response"] = model_name
 
     # Recursively find all referenced definitions
     def find_refs(obj, refs):
@@ -65,7 +87,88 @@ def extract_definitions(swagger_path: str) -> dict:
         k: v for k, v in all_definitions.items() if k in all_needed
     }
 
-    return filtered_definitions
+    # Clean up slug_mappings - remove entries without both request and response
+    slug_mappings = {
+        slug: models
+        for slug, models in slug_mappings.items()
+        if models["request"] and models["response"]
+    }
+
+    return filtered_definitions, slug_mappings
+
+
+def generate_registry_py(output_dir: Path, slug_mappings: dict) -> int:
+    """Generate registry.py with slug-to-model mappings."""
+
+    # Collect all unique request and response model names
+    request_models = sorted(set(
+        m["request"] for m in slug_mappings.values() if m["request"]
+    ))
+    response_models = sorted(set(
+        m["response"] for m in slug_mappings.values() if m["response"]
+    ))
+
+    content = '''"""
+Registry mapping evaluator slugs to their request/response Pydantic models.
+
+This enables type-safe validation of inputs and parsing of outputs.
+
+DO NOT EDIT MANUALLY - Regenerate with:
+    ./scripts/generate-models.sh /path/to/swagger.json
+"""
+
+from typing import Dict, Type, Optional
+from pydantic import BaseModel
+
+'''
+
+    # Import request models
+    if request_models:
+        content += "from .request import (\n"
+        for model in request_models:
+            content += f"    {model},\n"
+        content += ")\n\n"
+
+    # Import response models
+    if response_models:
+        content += "from .response import (\n"
+        for model in response_models:
+            content += f"    {model},\n"
+        content += ")\n\n"
+
+    # Generate REQUEST_MODELS dict
+    content += "\n# Mapping from evaluator slug to request model\n"
+    content += "REQUEST_MODELS: Dict[str, Type[BaseModel]] = {\n"
+    for slug in sorted(slug_mappings.keys()):
+        model = slug_mappings[slug]["request"]
+        if model:
+            content += f'    "{slug}": {model},\n'
+    content += "}\n\n"
+
+    # Generate RESPONSE_MODELS dict
+    content += "# Mapping from evaluator slug to response model\n"
+    content += "RESPONSE_MODELS: Dict[str, Type[BaseModel]] = {\n"
+    for slug in sorted(slug_mappings.keys()):
+        model = slug_mappings[slug]["response"]
+        if model:
+            content += f'    "{slug}": {model},\n'
+    content += "}\n\n"
+
+    # Add helper functions
+    content += '''
+def get_request_model(slug: str) -> Optional[Type[BaseModel]]:
+    """Get the request model for an evaluator by slug."""
+    return REQUEST_MODELS.get(slug)
+
+
+def get_response_model(slug: str) -> Optional[Type[BaseModel]]:
+    """Get the response model for an evaluator by slug."""
+    return RESPONSE_MODELS.get(slug)
+'''
+
+    (output_dir / "registry.py").write_text(content)
+
+    return len(slug_mappings)
 
 
 def generate_init_py(output_dir: Path) -> tuple[int, int]:
@@ -93,19 +196,38 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
 
 '''
 
+    # Import request models
     if request_classes:
         init_content += "from .request import (\n"
         for cls in sorted(request_classes):
             init_content += f"    {cls},\n"
         init_content += ")\n\n"
 
+    # Import registry
+    init_content += """from .registry import (
+    REQUEST_MODELS,
+    RESPONSE_MODELS,
+    get_request_model,
+    get_response_model,
+)
+
+"""
+
+    # Import response models
     if response_classes:
         init_content += "from .response import (\n"
         for cls in sorted(response_classes):
             init_content += f"    {cls},\n"
         init_content += ")\n\n"
 
+    # Generate __all__
     init_content += "__all__ = [\n"
+    init_content += "    # Registry functions\n"
+    init_content += '    "REQUEST_MODELS",\n'
+    init_content += '    "RESPONSE_MODELS",\n'
+    init_content += '    "get_request_model",\n'
+    init_content += '    "get_response_model",\n'
+
     if request_classes:
         init_content += "    # Evaluator request models\n"
         for cls in sorted(request_classes):
@@ -134,10 +256,12 @@ def main():
         print(f"Error: Swagger file not found at {swagger_path}")
         sys.exit(1)
 
-    print(f"=== Extracting definitions for evaluator execute endpoints ===")
+    print("=== Extracting definitions for evaluator execute endpoints ===")
 
-    # Extract definitions
-    filtered_definitions = extract_definitions(swagger_path)
+    # Extract definitions and slug mappings
+    filtered_definitions, slug_mappings = extract_definitions_and_mappings(
+        swagger_path
+    )
 
     request_count = len(
         [k for k in filtered_definitions if k.startswith("request.")]
@@ -149,6 +273,7 @@ def main():
     print(f"Extracted {len(filtered_definitions)} definitions")
     print(f"Request types: {request_count}")
     print(f"Response types: {response_count}")
+    print(f"Evaluator slugs: {len(slug_mappings)}")
 
     # Create JSON Schema with filtered definitions
     schema = {
@@ -164,7 +289,7 @@ def main():
         json.dump(schema, f, indent=2)
         temp_schema = f.name
 
-    print(f"=== Generating Pydantic models ===")
+    print("=== Generating Pydantic models ===")
 
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -189,15 +314,18 @@ def main():
         # Cleanup temp file
         Path(temp_schema).unlink(missing_ok=True)
 
-    print(f"=== Generating __init__.py with exports ===")
+    print("=== Generating registry.py with slug mappings ===")
+    registry_count = generate_registry_py(output_dir, slug_mappings)
+    print(f"Generated registry.py with {registry_count} evaluator mappings")
 
+    print("=== Generating __init__.py with exports ===")
     req_count, resp_count = generate_init_py(output_dir)
     print(
         f"Generated __init__.py with {req_count} request "
         f"and {resp_count} response exports"
     )
 
-    print(f"=== Model generation complete ===")
+    print("=== Model generation complete ===")
     print(f"Output written to: {output_dir}")
 
 

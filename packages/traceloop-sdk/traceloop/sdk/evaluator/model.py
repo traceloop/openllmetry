@@ -1,6 +1,8 @@
 import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TypeVar, Type
 from pydantic import BaseModel, RootModel
+
+T = TypeVar('T', bound=BaseModel)
 
 
 class InputExtractor(BaseModel):
@@ -42,3 +44,20 @@ class ExecutionResponse(BaseModel):
 
     execution_id: str
     result: Dict[str, Any]
+
+    def typed_result(self, model: Type[T]) -> T:
+        """Parse result into a typed Pydantic model.
+
+        Args:
+            model: The Pydantic model class to parse the result into
+
+        Returns:
+            An instance of the provided model class
+
+        Example:
+            from traceloop.sdk.evaluators_generated import PIIDetectorResponse
+            result = await evaluator.run_experiment_evaluator(...)
+            pii = result.typed_result(PIIDetectorResponse)
+            print(pii.has_pii)  # IDE autocomplete works!
+        """
+        return model(**self.result)
