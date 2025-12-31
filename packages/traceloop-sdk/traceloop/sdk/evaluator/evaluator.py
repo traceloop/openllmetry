@@ -16,26 +16,10 @@ from ..generated.evaluators import get_request_model
 
 
 def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:
-    """Validate input against the evaluator's request model if available.
-
-    The request model has a nested structure:
-    - input: Contains the actual input fields (required)
-    - config: Contains optional configuration (optional)
-
-    The flat input dict is wrapped in the nested structure for validation.
-
-    Args:
-        slug: The evaluator slug (e.g., "pii-detector")
-        input: Dictionary of input field names to values
-
-    Raises:
-        ValueError: If input fails validation against the request model
-    """
+    """Validate input against the evaluator's request model if available."""
     request_model = get_request_model(slug)
     if request_model:
         try:
-            # The request model expects nested structure: {input: {...}, config: {...}}
-            # Wrap the flat input dict in the nested 'input' field
             request_model(input=input)
         except ValidationError as e:
             raise ValueError(f"Invalid input for '{slug}': {e}") from e
