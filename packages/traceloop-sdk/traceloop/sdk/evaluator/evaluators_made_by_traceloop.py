@@ -15,18 +15,45 @@ def _get_required_fields(slug: str) -> List[str]:
     model = REQUEST_MODELS.get(slug)
     if not model:
         return []
-    return [name for name, field in model.model_fields.items() if field.is_required()]
+
+    input_field = model.model_fields.get("input")
+    if not input_field or not input_field.annotation:
+        return []
+
+    input_model = input_field.annotation
+    if not hasattr(input_model, "model_fields"):
+        return []
+
+    return [
+        name for name, field in input_model.model_fields.items()
+        if field.is_required()
+    ]
 
 
 def _get_config_fields(slug: str) -> dict:
-    """Get config fields (non-required) with their defaults from the request model."""
+    """Get config fields with their defaults from the request model."""
     model = REQUEST_MODELS.get(slug)
     if not model:
         return {}
+
+    config_field = model.model_fields.get("config")
+    if not config_field or not config_field.annotation:
+        return {}
+
+    config_annotation = config_field.annotation
+    origin = getattr(config_annotation, "__origin__", None)
+    if origin is not None:
+        args = getattr(config_annotation, "__args__", ())
+        config_model = next((a for a in args if a is not type(None)), None)
+    else:
+        config_model = config_annotation
+
+    if not config_model or not hasattr(config_model, "model_fields"):
+        return {}
+
     config_fields = {}
-    for name, field in model.model_fields.items():
-        if not field.is_required():
-            config_fields[name] = field.default
+    for name, field in config_model.model_fields.items():
+        config_fields[name] = field.default
     return config_fields
 
 
