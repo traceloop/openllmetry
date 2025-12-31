@@ -11,22 +11,60 @@ from .config import EvaluatorDetails
 
 
 def _get_required_fields(slug: str) -> List[str]:
-    """Get required input fields for an evaluator from its request model."""
+    """Get required input fields for an evaluator from its request model.
+
+    The request model has a nested `input` field containing the actual input fields.
+    """
     model = REQUEST_MODELS.get(slug)
     if not model:
         return []
-    return [name for name, field in model.model_fields.items() if field.is_required()]
+
+    # Get the 'input' field's annotation (the nested Input model)
+    input_field = model.model_fields.get("input")
+    if not input_field or not input_field.annotation:
+        return []
+
+    input_model = input_field.annotation
+    if not hasattr(input_model, "model_fields"):
+        return []
+
+    return [
+        name for name, field in input_model.model_fields.items()
+        if field.is_required()
+    ]
 
 
 def _get_config_fields(slug: str) -> dict:
-    """Get config fields (non-required) with their defaults from the request model."""
+    """Get config fields with their defaults from the request model.
+
+    The request model has a nested optional `config` field containing config options.
+    """
     model = REQUEST_MODELS.get(slug)
     if not model:
         return {}
+
+    # Get the 'config' field's annotation (the nested ConfigRequest model)
+    config_field = model.model_fields.get("config")
+    if not config_field or not config_field.annotation:
+        return {}
+
+    # Handle Optional[ConfigModel] - extract the inner type
+    config_annotation = config_field.annotation
+    origin = getattr(config_annotation, "__origin__", None)
+    if origin is not None:
+        # It's a generic type like Optional[X] = Union[X, None]
+        args = getattr(config_annotation, "__args__", ())
+        # Get the non-None type from Union
+        config_model = next((a for a in args if a is not type(None)), None)
+    else:
+        config_model = config_annotation
+
+    if not config_model or not hasattr(config_model, "model_fields"):
+        return {}
+
     config_fields = {}
-    for name, field in model.model_fields.items():
-        if not field.is_required():
-            config_fields[name] = field.default
+    for name, field in config_model.model_fields.items():
+        config_fields[name] = field.default
     return config_fields
 
 
