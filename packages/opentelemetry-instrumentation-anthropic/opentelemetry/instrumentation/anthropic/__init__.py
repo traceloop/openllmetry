@@ -85,6 +85,8 @@ WRAPPED_METHODS = [
         "span_name": "anthropic.chat",
     },
     # Beta API methods (regular Anthropic SDK)
+    # Note: AsyncMessages.stream returns an async context manager (not a coroutine),
+    # so it uses the sync wrapper like the non-beta version above
     {
         "package": "anthropic.resources.beta.messages.messages",
         "object": "Messages",
@@ -97,7 +99,15 @@ WRAPPED_METHODS = [
         "method": "stream",
         "span_name": "anthropic.chat",
     },
+    {
+        "package": "anthropic.resources.beta.messages.messages",
+        "object": "AsyncMessages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
     # Beta API methods (Bedrock SDK)
+    # Note: AsyncMessages.stream returns an async context manager (not a coroutine),
+    # so it uses the sync wrapper like the non-beta version above
     {
         "package": "anthropic.lib.bedrock._beta_messages",
         "object": "Messages",
@@ -107,6 +117,12 @@ WRAPPED_METHODS = [
     {
         "package": "anthropic.lib.bedrock._beta_messages",
         "object": "Messages",
+        "method": "stream",
+        "span_name": "anthropic.chat",
+    },
+    {
+        "package": "anthropic.lib.bedrock._beta_messages",
+        "object": "AsyncMessages",
         "method": "stream",
         "span_name": "anthropic.chat",
     },
@@ -132,23 +148,11 @@ WRAPPED_AMETHODS = [
         "method": "create",
         "span_name": "anthropic.chat",
     },
-    {
-        "package": "anthropic.resources.beta.messages.messages",
-        "object": "AsyncMessages",
-        "method": "stream",
-        "span_name": "anthropic.chat",
-    },
     # Beta API async methods (Bedrock SDK)
     {
         "package": "anthropic.lib.bedrock._beta_messages",
         "object": "AsyncMessages",
         "method": "create",
-        "span_name": "anthropic.chat",
-    },
-    {
-        "package": "anthropic.lib.bedrock._beta_messages",
-        "object": "AsyncMessages",
-        "method": "stream",
         "span_name": "anthropic.chat",
     },
 ]
