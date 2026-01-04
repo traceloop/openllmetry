@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing_extensions import Annotated
 
 
@@ -10,8 +10,9 @@ class TemplateEngine:
 
 
 class RegistryObjectBaseModel(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
 
 class TextContent(RegistryObjectBaseModel):
