@@ -53,6 +53,7 @@ def tracer_provider():
     provider = TracerProvider()
     return provider
 
+
 @pytest.fixture(scope="function", name="log_exporter")
 def fixture_log_exporter():
     exporter = InMemoryLogExporter()
