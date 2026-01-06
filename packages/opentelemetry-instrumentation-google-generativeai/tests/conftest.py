@@ -34,7 +34,7 @@ pytest_plugins = []
 
 
 @pytest.fixture(scope="session")
-def exporter():
+def exporter(metrics_test_context):
     exporter = InMemorySpanExporter()
     processor = SimpleSpanProcessor(exporter)
 
@@ -42,10 +42,16 @@ def exporter():
     provider.add_span_processor(processor)
     set_tracer_provider(provider)
 
-    GoogleGenerativeAiInstrumentor().instrument()
+    meter_provider, _ = metrics_test_context
+    GoogleGenerativeAiInstrumentor().instrument(meter_provider=meter_provider)
 
     return exporter
 
+
+@pytest.fixture(scope="function")
+def tracer_provider():
+    provider = TracerProvider()
+    return provider
 
 @pytest.fixture(scope="function", name="log_exporter")
 def fixture_log_exporter():
@@ -84,7 +90,6 @@ def metrics_test_context():
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader], resource=resource)
     metrics.set_meter_provider(provider)
-    GoogleGenerativeAiInstrumentor().instrument(meter_provider=provider)
     return provider, reader
 
 
