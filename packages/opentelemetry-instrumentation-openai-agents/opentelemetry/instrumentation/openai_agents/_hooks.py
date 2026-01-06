@@ -13,7 +13,12 @@ from opentelemetry.semconv._incubating.attributes import (
 from agents.tracing.processors import TracingProcessor
 from .utils import dont_throw
 
-from traceloop.sdk.tracing import set_agent_name
+try:
+    # Attempt to import once, so that we aren't looking for it repeatedly.
+    # Each failed lookup is somewhat expensive as it has to walk the path.
+    from traceloop.sdk.tracing import set_agent_name
+except ModuleNotFoundError:
+    set_agent_name = None
 
 
 class OpenTelemetryTracingProcessor(TracingProcessor):
@@ -77,8 +82,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if isinstance(span_data, AgentSpanData):
             agent_name = getattr(span_data, 'name', None) or "unknown_agent"
-            # Set agent name in OpenTelemetry context for propagation to child spans
-            set_agent_name(agent_name)
+
+            if set_agent_name is not None:
+                set_agent_name(agent_name)
 
             handoff_parent = None
             trace_id = getattr(span, 'trace_id', None)

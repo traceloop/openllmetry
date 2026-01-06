@@ -1,5 +1,6 @@
 import httpx
 from typing import Dict, Optional, Any, List
+from pydantic import ValidationError
 from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
 
 from .model import (
@@ -11,6 +12,25 @@ from .model import (
 )
 from .stream_client import SSEClient
 from .config import EvaluatorDetails
+from ..generated.evaluators import get_request_model
+
+
+def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:
+    """Validate input against the evaluator's request model if available.
+
+    Args:
+        slug: The evaluator slug (e.g., "pii-detector")
+        input: Dictionary of input field names to values
+
+    Raises:
+        ValueError: If input fails validation against the request model
+    """
+    request_model = get_request_model(slug)
+    if request_model:
+        try:
+            request_model(**input)
+        except ValidationError as e:
+            raise ValueError(f"Invalid input for '{slug}': {e}") from e
 
 
 class Evaluator:
@@ -94,6 +114,8 @@ class Evaluator:
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
+        _validate_evaluator_input(evaluator_slug, input)
+
         request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
@@ -101,12 +123,14 @@ class Evaluator:
         execute_response = await self._execute_evaluator_request(
             evaluator_slug, request, timeout_in_sec
         )
+
         sse_client = SSEClient(shared_client=self._async_http_client)
         sse_result = await sse_client.wait_for_result(
             execute_response.execution_id,
             execute_response.stream_url,
             timeout_in_sec,
         )
+
         return sse_result
 
     async def trigger_experiment_evaluator(
@@ -134,6 +158,8 @@ class Evaluator:
         Returns:
             str: The execution_id that can be used to check results later
         """
+        _validate_evaluator_input(evaluator_slug, input)
+
         request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
