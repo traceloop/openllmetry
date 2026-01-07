@@ -1,7 +1,6 @@
 """Tests for realtime session instrumentation via wrapper patching."""
 
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
