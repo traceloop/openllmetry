@@ -626,12 +626,12 @@ def check_requirements():
     missing = []
 
     try:
-        import agents
+        import agents  # noqa: F401
     except ImportError:
         missing.append("openai-agents")
 
     try:
-        from agents.realtime import RealtimeAgent
+        from agents.realtime import RealtimeAgent  # noqa: F401
     except ImportError:
         missing.append("openai-agents (realtime module)")
 
