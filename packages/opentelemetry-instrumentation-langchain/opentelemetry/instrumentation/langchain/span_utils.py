@@ -212,7 +212,6 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
         for generation in generations:
             prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
 
-            # Extract role from generation message if available, otherwise default to assistant
             if hasattr(generation, "message") and generation.message and hasattr(generation.message, "type"):
                 role = _message_type_to_role(generation.message.type)
             else:
