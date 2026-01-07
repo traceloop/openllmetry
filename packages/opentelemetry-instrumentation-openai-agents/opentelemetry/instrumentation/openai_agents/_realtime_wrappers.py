@@ -26,7 +26,6 @@ class RealtimeTracingState:
         self.agent_spans: Dict[str, Span] = {}
         self.tool_spans: Dict[str, Span] = {}
         self.audio_spans: Dict[str, Span] = {}
-        self.llm_spans: Dict[str, Span] = {}
         self.span_contexts: Dict[str, Any] = {}
         self.current_agent_name: Optional[str] = None
         self.prompt_index: int = 0
@@ -291,6 +290,10 @@ class RealtimeTracingState:
 
 def wrap_realtime_session(tracer: Tracer):
     """Wrap the RealtimeSession class to add OpenTelemetry tracing."""
+    # Guard against multiple wrapping - don't overwrite originals with wrapped methods
+    if _original_methods:
+        return
+
     try:
         from agents.realtime.session import RealtimeSession
     except ImportError:
