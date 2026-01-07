@@ -20,6 +20,16 @@ try:
 except ModuleNotFoundError:
     set_agent_name = None
 
+# Import realtime span types at module level to avoid repeated lookups
+try:
+    from agents import SpeechSpanData, TranscriptionSpanData, SpeechGroupSpanData
+    _has_realtime_spans = True
+except ImportError:
+    _has_realtime_spans = False
+    SpeechSpanData = None
+    TranscriptionSpanData = None
+    SpeechGroupSpanData = None
+
 
 def _extract_prompt_attributes(otel_span, input_data):
     """
@@ -280,15 +290,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         """Called when a span starts - create appropriate OpenTelemetry span."""
         from agents import AgentSpanData, HandoffSpanData, FunctionSpanData, GenerationSpanData
 
-        try:
-            from agents import SpeechSpanData, TranscriptionSpanData, SpeechGroupSpanData
-            has_realtime_spans = True
-        except ImportError:
-            has_realtime_spans = False
-            SpeechSpanData = None
-            TranscriptionSpanData = None
-            SpeechGroupSpanData = None
-
         if not span or not hasattr(span, 'span_data'):
             return
 
@@ -445,7 +446,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 start_time=time.time_ns()
             )
 
-        elif has_realtime_spans and SpeechSpanData and isinstance(span_data, SpeechSpanData):
+        elif _has_realtime_spans and SpeechSpanData and isinstance(span_data, SpeechSpanData):
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
@@ -472,7 +473,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 start_time=time.time_ns()
             )
 
-        elif has_realtime_spans and TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
+        elif _has_realtime_spans and TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
@@ -499,7 +500,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 start_time=time.time_ns()
             )
 
-        elif has_realtime_spans and SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
+        elif _has_realtime_spans and SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
             current_agent_span = self._find_current_agent_span()
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
@@ -585,7 +586,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     model_settings = _extract_response_attributes(otel_span, response)
                     self._last_model_settings = model_settings
 
-            elif span_data and type(span_data).__name__ == 'SpeechSpanData':
+            elif _has_realtime_spans and SpeechSpanData and isinstance(span_data, SpeechSpanData):
                 input_text = getattr(span_data, 'input', None)
                 if input_text:
                     otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", input_text)
@@ -602,7 +603,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if first_content_at:
                     otel_span.set_attribute("gen_ai.speech.first_content_at", first_content_at)
 
-            elif span_data and type(span_data).__name__ == 'TranscriptionSpanData':
+            elif _has_realtime_spans and TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
                 input_audio = getattr(span_data, 'input', None)
                 if input_audio:
                     if isinstance(input_audio, (bytes, bytearray)):
@@ -615,7 +616,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", output_text)
                     otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant")
 
-            elif span_data and type(span_data).__name__ == 'SpeechGroupSpanData':
+            elif _has_realtime_spans and SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
                 input_text = getattr(span_data, 'input', None)
                 if input_text:
                     otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", input_text)

@@ -282,15 +282,56 @@ async def run_text_only_demo():
 
     @function_tool
     def calculate(expression: str) -> str:
-        """Evaluate a simple math expression."""
+        """Evaluate a simple math expression safely using AST parsing."""
+        import ast
+        import operator
+
+        # Supported binary operators (no exponentiation to prevent resource exhaustion)
+        safe_ops = {
+            ast.Add: operator.add,
+            ast.Sub: operator.sub,
+            ast.Mult: operator.mul,
+            ast.Div: operator.truediv,
+        }
+
+        # Supported unary operators
+        safe_unary_ops = {
+            ast.UAdd: operator.pos,
+            ast.USub: operator.neg,
+        }
+
+        def _safe_eval(node, depth=0):
+            """Recursively evaluate AST nodes safely."""
+            if depth > 50:  # Prevent deeply nested expressions
+                raise ValueError("Expression too deeply nested")
+
+            if isinstance(node, ast.Constant):  # Python 3.8+
+                if isinstance(node.value, (int, float)):
+                    return node.value
+                raise ValueError(f"Unsupported constant type: {type(node.value)}")
+            elif isinstance(node, ast.Num):  # Python 3.7 compatibility
+                return node.n
+            elif isinstance(node, ast.BinOp):
+                if type(node.op) not in safe_ops:
+                    raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+                left = _safe_eval(node.left, depth + 1)
+                right = _safe_eval(node.right, depth + 1)
+                return safe_ops[type(node.op)](left, right)
+            elif isinstance(node, ast.UnaryOp):
+                if type(node.op) not in safe_unary_ops:
+                    raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+                operand = _safe_eval(node.operand, depth + 1)
+                return safe_unary_ops[type(node.op)](operand)
+            elif isinstance(node, ast.Expression):
+                return _safe_eval(node.body, depth + 1)
+            else:
+                raise ValueError(f"Unsupported expression type: {type(node).__name__}")
+
         try:
-            # Only allow safe math operations
-            allowed = set('0123456789+-*/.() ')
-            if all(c in allowed for c in expression):
-                result = eval(expression)
-                return f"Result: {result}"
-            return "Invalid expression"
-        except Exception as e:
+            tree = ast.parse(expression, mode='eval')
+            result = _safe_eval(tree)
+            return f"Result: {result}"
+        except (ValueError, SyntaxError, ZeroDivisionError) as e:
             return f"Error: {e}"
 
     # Create a text-only realtime agent

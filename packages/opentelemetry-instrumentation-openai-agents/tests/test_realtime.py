@@ -95,21 +95,12 @@ class TestRealtimeSpeechSpans:
 
         mock_span = MockAgentSpan(speech_data, trace_id="test-trace-123")
 
-        # Patch the imports to provide our mock types
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -151,20 +142,12 @@ class TestRealtimeSpeechSpans:
 
         mock_span = MockAgentSpan(speech_data, trace_id="test-trace-456")
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -210,20 +193,12 @@ class TestRealtimeTranscriptionSpans:
 
         mock_span = MockAgentSpan(transcription_data, trace_id="test-trace-789")
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -265,20 +240,12 @@ class TestRealtimeTranscriptionSpans:
 
         mock_span = MockAgentSpan(transcription_data, trace_id="test-trace-abc")
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -321,20 +288,12 @@ class TestRealtimeSpeechGroupSpans:
 
         mock_span = MockAgentSpan(speech_group_data, trace_id="test-trace-def")
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -381,20 +340,12 @@ class TestRealtimeErrorHandling:
             speech_data, trace_id="test-trace-err", error="Connection timeout"
         )
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -437,20 +388,12 @@ class TestRealtimeSpanHierarchy:
             transcription_data, trace_id="test-trace-hierarchy"
         )
 
-        with patch.dict(
-            "sys.modules",
-            {
-                "agents": MagicMock(
-                    AgentSpanData=type("AgentSpanData", (), {}),
-                    HandoffSpanData=type("HandoffSpanData", (), {}),
-                    FunctionSpanData=type("FunctionSpanData", (), {}),
-                    GenerationSpanData=type("GenerationSpanData", (), {}),
-                    SpeechSpanData=MockSpeechSpanData,
-                    TranscriptionSpanData=MockTranscriptionSpanData,
-                    SpeechGroupSpanData=MockSpeechGroupSpanData,
-                ),
-            },
-        ):
+        # Patch the module-level variables directly
+        import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
+        with patch.object(hooks_module, '_has_realtime_spans', True), \
+             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
+             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
+             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
             processor.on_span_start(speech_span)
             processor.on_span_end(speech_span)
 
