@@ -41,9 +41,23 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
             # Silently handle import errors - OpenAI Agents SDK may not be available
             pass
 
+        # Add realtime session instrumentation
+        # The realtime API doesn't use the SDK's tracing system, so we patch it directly
+        try:
+            from ._realtime_wrappers import wrap_realtime_session
+            wrap_realtime_session(tracer)
+        except Exception:
+            # Silently handle import errors - realtime may not be available
+            pass
+
     def _uninstrument(self, **kwargs):
         # Hook-based approach: cleanup happens automatically when processors are removed
-        pass
+        # Unwrap realtime session
+        try:
+            from ._realtime_wrappers import unwrap_realtime_session
+            unwrap_realtime_session()
+        except Exception:
+            pass
 
 
 def is_metrics_enabled() -> bool:

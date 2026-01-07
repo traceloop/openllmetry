@@ -31,6 +31,7 @@ autopep8 = "^2.2.0"
 flake8 = "7.1.1"
 pytest = "^8.2.2"
 pytest-sugar = "1.0.0"
+websockets = "^15.0.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
