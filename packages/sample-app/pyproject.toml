@@ -24,7 +24,7 @@ include = "sample_app"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 openai = "^2.14.0"
-requests = "^2.32.3"
+requests = "^2.32.5"
 # pinecone-datasets = "^0.7.0"
 pinecone-client = "^3.2.2"
 llama-index = "^0.14.12"
@@ -55,8 +55,6 @@ llama-index-llms-openai = "^0.6.12"
 ibm-watson-machine-learning = "^1.0.367"
 ollama = "^0.4.7"
 mcp = "^1.7.1"
-# Note: voice extras removed due to numpy conflict with haystack-ai
-# For realtime API with audio, install separately: pip install openai-agents[voice]
 openai-agents = "^0.6.5"
 fastmcp = "^2.12.3"
 agno = ">=2.2.2"

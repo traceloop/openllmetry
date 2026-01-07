@@ -11,7 +11,6 @@ from opentelemetry.trace import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from .utils import dont_throw
 
-# Store original methods for uninstrumentation
 _original_methods: Dict[str, Any] = {}
 
 
@@ -21,28 +20,25 @@ class RealtimeTracingState:
     def __init__(self, tracer: Tracer):
         self.tracer = tracer
         self.workflow_span: Optional[Span] = None
-        self.agent_spans: Dict[str, Span] = {}  # agent_name -> span
-        self.tool_spans: Dict[str, Span] = {}  # tool_name -> span
-        self.audio_spans: Dict[str, Span] = {}  # item_id -> span
-        self.llm_spans: Dict[str, Span] = {}  # llm_call_id -> span
-        self.span_contexts: Dict[str, Any] = {}  # span_id -> context token
+        self.agent_spans: Dict[str, Span] = {}
+        self.tool_spans: Dict[str, Span] = {}
+        self.audio_spans: Dict[str, Span] = {}
+        self.llm_spans: Dict[str, Span] = {}
+        self.span_contexts: Dict[str, Any] = {}
         self.current_agent_name: Optional[str] = None
-        self.prompt_index: int = 0  # Track prompt message index
-        self.completion_index: int = 0  # Track completion message index
-        self.pending_prompts: List[str] = []  # Buffer for user prompts awaiting completion
-        self.llm_call_index: int = 0  # Track LLM call index
-        # Store agent span contexts even after spans end (for async tool calls)
-        self.agent_span_contexts: Dict[str, Any] = {}  # agent_name -> context
-        # Track agent start times (for LLM span duration)
-        self.agent_start_times: Dict[str, int] = {}  # agent_name -> start time in ns
-        # Track when prompt was sent (for response time calculation)
-        self.prompt_start_time: Optional[int] = None  # nanoseconds timestamp
-        self.prompt_agent_name: Optional[str] = None  # agent name when prompt was recorded
-        self.starting_agent_name: Optional[str] = None  # the initial agent for fallback
+        self.prompt_index: int = 0
+        self.completion_index: int = 0
+        self.pending_prompts: List[str] = []
+        self.llm_call_index: int = 0
+        self.agent_span_contexts: Dict[str, Any] = {}
+        self.agent_start_times: Dict[str, int] = {}
+        self.prompt_start_time: Optional[int] = None
+        self.prompt_agent_name: Optional[str] = None
+        self.starting_agent_name: Optional[str] = None
 
     def start_workflow_span(self, agent_name: str):
         """Start the root workflow span for the session."""
-        self.starting_agent_name = agent_name  # Save for fallback when recording prompts
+        self.starting_agent_name = agent_name
         self.workflow_span = self.tracer.start_span(
             "Realtime Session",
             kind=SpanKind.CLIENT,
@@ -83,9 +79,7 @@ class RealtimeTracingState:
         )
         self.agent_spans[agent_name] = span
         self.current_agent_name = agent_name
-        # Store context for async tool calls that may come after span ends
         self.agent_span_contexts[agent_name] = set_span_in_context(span)
-        # Record start time for LLM span duration
         self.agent_start_times[agent_name] = time.time_ns()
         return span
 
@@ -103,14 +97,11 @@ class RealtimeTracingState:
     def start_tool_span(self, tool_name: str, agent_name: Optional[str] = None):
         """Start a tool span."""
         parent_context = None
-        # Try to parent under the current agent span (or its saved context for async tools)
         if agent_name and agent_name in self.agent_spans:
             parent_context = set_span_in_context(self.agent_spans[agent_name])
         elif agent_name and agent_name in self.agent_span_contexts:
-            # Agent span ended but we have its context (async tool call)
             parent_context = self.agent_span_contexts[agent_name]
         elif self.current_agent_name and self.current_agent_name in self.agent_span_contexts:
-            # Fall back to current agent's saved context
             parent_context = self.agent_span_contexts[self.current_agent_name]
         elif self.workflow_span:
             parent_context = set_span_in_context(self.workflow_span)
@@ -147,7 +138,6 @@ class RealtimeTracingState:
         if from_agent and from_agent in self.agent_spans:
             parent_context = set_span_in_context(self.agent_spans[from_agent])
         elif from_agent and from_agent in self.agent_span_contexts:
-            # Agent span ended but we have its context
             parent_context = self.agent_span_contexts[from_agent]
         elif self.workflow_span:
             parent_context = set_span_in_context(self.workflow_span)
@@ -173,13 +163,11 @@ class RealtimeTracingState:
         if self.current_agent_name and self.current_agent_name in self.agent_spans:
             parent_context = set_span_in_context(self.agent_spans[self.current_agent_name])
         elif self.current_agent_name and self.current_agent_name in self.agent_span_contexts:
-            # Agent span ended but we have its context
             parent_context = self.agent_span_contexts[self.current_agent_name]
         elif self.workflow_span:
             parent_context = set_span_in_context(self.workflow_span)
 
         span_key = f"{item_id}:{content_index}"
-        # Use "openai.realtime" to match the OpenAI instrumentation span name
         span = self.tracer.start_span(
             "openai.realtime",
             kind=SpanKind.CLIENT,
@@ -216,10 +204,8 @@ class RealtimeTracingState:
         """Record a prompt message - buffers it for the LLM span."""
         if not content:
             return
-        # Record start time and agent name when first prompt is received
         if not self.pending_prompts:
             self.prompt_start_time = time.time_ns()
-            # Use current agent, or fall back to starting agent if no agent is active yet
             self.prompt_agent_name = self.current_agent_name or self.starting_agent_name
         self.pending_prompts.append(content)
 
@@ -227,42 +213,33 @@ class RealtimeTracingState:
         """Record a completion message - creates an LLM span with prompt and completion."""
         if not content:
             return
-
-        # Create a dedicated LLM span for this exchange
         self.create_llm_span(content)
 
     def create_llm_span(self, completion_content: str):
         """Create an LLM span that shows the prompt and completion."""
-        # Get pending prompts, start time, and agent name
         prompts = self.pending_prompts.copy()
         self.pending_prompts.clear()
         prompt_time = self.prompt_start_time
-        self.prompt_start_time = None  # Reset for next exchange
+        self.prompt_start_time = None
         agent_name = self.prompt_agent_name
-        self.prompt_agent_name = None  # Reset for next exchange
+        self.prompt_agent_name = None
 
-        # Calculate response time if we have prompt time
         response_time_ms = None
         if prompt_time:
-            response_time_ms = (time.time_ns() - prompt_time) / 1_000_000  # Convert to ms
+            response_time_ms = (time.time_ns() - prompt_time) / 1_000_000
 
-        # Use the agent name from when the prompt was sent (not current)
         parent_context = None
         if agent_name and agent_name in self.agent_spans:
             parent_context = set_span_in_context(self.agent_spans[agent_name])
         elif agent_name and agent_name in self.agent_span_contexts:
-            # Agent span ended but we have its context
             parent_context = self.agent_span_contexts[agent_name]
         elif self.workflow_span:
             parent_context = set_span_in_context(self.workflow_span)
 
-        # Use agent start time as LLM span start time (so it fits within parent)
         start_time = None
         if agent_name and agent_name in self.agent_start_times:
             start_time = self.agent_start_times[agent_name]
 
-        # Create the LLM span with agent's start time
-        # Use "openai.realtime" to match the OpenAI instrumentation span name
         span = self.tracer.start_span(
             "openai.realtime",
             kind=SpanKind.CLIENT,
@@ -276,20 +253,16 @@ class RealtimeTracingState:
             }
         )
 
-        # Record actual response time as attribute
         if response_time_ms is not None:
             span.set_attribute("gen_ai.response_time_ms", response_time_ms)
 
-        # Set prompt attributes
         for i, prompt in enumerate(prompts):
             span.set_attribute(f"gen_ai.prompt.{i}.role", "user")
             span.set_attribute(f"gen_ai.prompt.{i}.content", prompt[:4096])
 
-        # Set completion attributes
         span.set_attribute("gen_ai.completion.0.role", "assistant")
         span.set_attribute("gen_ai.completion.0.content", completion_content[:4096])
 
-        # Finish the span immediately
         span.set_status(Status(StatusCode.OK))
         span.end()
 
@@ -312,8 +285,6 @@ class RealtimeTracingState:
             span.set_status(Status(StatusCode.OK))
             span.end()
         self.agent_spans.clear()
-
-        # Clear saved agent contexts
         self.agent_span_contexts.clear()
 
         if self.workflow_span:
@@ -327,71 +298,54 @@ def wrap_realtime_session(tracer: Tracer):
     try:
         from agents.realtime.session import RealtimeSession
     except ImportError:
-        return  # Realtime not available
+        return
 
-    # Store original methods
     _original_methods['__aenter__'] = RealtimeSession.__aenter__
     _original_methods['__aexit__'] = RealtimeSession.__aexit__
     _original_methods['_put_event'] = RealtimeSession._put_event
     if hasattr(RealtimeSession, 'send_message'):
         _original_methods['send_message'] = RealtimeSession.send_message
 
-    # Store tracing state on the session instance
     _tracing_states: Dict[int, RealtimeTracingState] = {}
 
     @dont_throw
     async def traced_aenter(self):
         """Wrapped __aenter__ that starts the workflow span."""
-        # Always call original first to ensure session works
         result = await _original_methods['__aenter__'](self)
 
-        # Then do tracing (failures here shouldn't break the session)
         try:
             state = RealtimeTracingState(tracer)
             _tracing_states[id(self)] = state
-
-            # Get agent name
             agent_name = getattr(self._current_agent, 'name', 'Unknown Agent')
-
-            # Start workflow span
             state.start_workflow_span(agent_name)
         except Exception:
-            pass  # Tracing failure shouldn't break the app
+            pass
 
         return result
 
     @dont_throw
     async def traced_aexit(self, exc_type, exc_val, exc_tb):
         """Wrapped __aexit__ that ends the workflow span."""
-        # Always call original first to ensure session closes properly
         result = await _original_methods['__aexit__'](self, exc_type, exc_val, exc_tb)
 
-        # Then do tracing cleanup (failures here shouldn't break the app)
         try:
             session_id = id(self)
             state = _tracing_states.get(session_id)
 
             if state:
-                # Cleanup any remaining spans
                 state.cleanup()
-
-                # End workflow span
                 state.end_workflow_span(error=exc_val if exc_type else None)
-
-                # Remove state
                 del _tracing_states[session_id]
         except Exception:
-            pass  # Tracing failure shouldn't break the app
+            pass
 
         return result
 
     @dont_throw
     async def traced_put_event(self, event):
         """Wrapped _put_event that creates spans for key events."""
-        # Always call original first to ensure event gets queued
         result = await _original_methods['_put_event'](self, event)
 
-        # Then do tracing (failures here shouldn't break the app)
         try:
             session_id = id(self)
             state = _tracing_states.get(session_id)
@@ -432,7 +386,6 @@ def wrap_realtime_session(tracer: Tracer):
                 elif event_type == 'audio':
                     item_id = getattr(event, 'item_id', 'unknown')
                     content_index = getattr(event, 'content_index', 0)
-                    # Only start if we don't have an existing span for this item
                     span_key = f"{item_id}:{content_index}"
                     if span_key not in state.audio_spans:
                         state.start_audio_span(item_id, content_index)
@@ -447,17 +400,13 @@ def wrap_realtime_session(tracer: Tracer):
                     state.record_error(error)
 
                 elif event_type == 'history_added':
-                    # Capture text content from history items
                     item = getattr(event, 'item', None)
                     if item:
                         role = getattr(item, 'role', None)
                         content = None
 
-                        # Try to extract text content from the item
-                        # The item may have a 'content' attribute (list) or 'text' attribute
                         item_content = getattr(item, 'content', None)
                         if item_content:
-                            # Content is usually a list of content parts
                             if isinstance(item_content, list):
                                 for part in item_content:
                                     if hasattr(part, 'text'):
@@ -469,7 +418,6 @@ def wrap_realtime_session(tracer: Tracer):
                             elif isinstance(item_content, str):
                                 content = item_content
 
-                        # Also check for direct text/transcript attributes
                         if not content:
                             content = getattr(item, 'text', None) or getattr(item, 'transcript', None)
 
@@ -480,7 +428,6 @@ def wrap_realtime_session(tracer: Tracer):
                                 state.record_completion(role, content)
 
                 elif event_type == 'raw_model_event':
-                    # Handle raw model events to capture response text
                     data = getattr(event, 'data', None)
                     if data:
                         data_type = getattr(data, 'type', None)
@@ -495,33 +442,25 @@ def wrap_realtime_session(tracer: Tracer):
                                         if text and role == 'assistant':
                                             state.record_completion(role, text)
         except Exception:
-            pass  # Tracing failure shouldn't break the app
+            pass
 
         return result
 
     @dont_throw
     async def traced_send_message(self, message):
-        """Wrapped send_message that captures user input.
-
-        Args:
-            message: RealtimeUserInput - can be str or RealtimeUserInputMessage
-        """
-        # Always call original first to ensure message is sent
+        """Wrapped send_message that captures user input."""
         result = None
         if 'send_message' in _original_methods:
             result = await _original_methods['send_message'](self, message)
 
-        # Then do tracing (failures here shouldn't break the app)
         try:
             session_id = id(self)
             state = _tracing_states.get(session_id)
 
             if state and message:
-                # Extract text content from message
                 if isinstance(message, str):
                     state.record_prompt("user", message)
                 else:
-                    # message is RealtimeUserInputMessage - extract text from content
                     content = getattr(message, 'content', None)
                     if content:
                         if isinstance(content, str):
@@ -533,11 +472,10 @@ def wrap_realtime_session(tracer: Tracer):
                                     state.record_prompt("user", text)
                                     break
         except Exception:
-            pass  # Tracing failure shouldn't break the app
+            pass
 
         return result
 
-    # Replace the methods
     RealtimeSession.__aenter__ = traced_aenter
     RealtimeSession.__aexit__ = traced_aexit
     RealtimeSession._put_event = traced_put_event
