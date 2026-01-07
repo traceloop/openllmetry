@@ -37,6 +37,7 @@ class RealtimeTracingState:
         self.prompt_start_time: Optional[int] = None
         self.prompt_agent_name: Optional[str] = None
         self.starting_agent_name: Optional[str] = None
+        self.model_name: str = "gpt-4o-realtime-preview"  # Default, updated from session config
 
     def start_workflow_span(self, agent_name: str):
         """Start the root workflow span for the session."""
@@ -244,7 +245,7 @@ class RealtimeTracingState:
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
                 SpanAttributes.LLM_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: "gpt-4o-realtime-preview",
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: self.model_name,
             }
         )
 
@@ -317,6 +318,24 @@ def wrap_realtime_session(tracer: Tracer):
             _tracing_states[id(self)] = state
             agent_name = getattr(self._current_agent, 'name', 'Unknown Agent')
             state.start_workflow_span(agent_name)
+
+            # Try to capture the model name from the session configuration
+            model_name = None
+            # Try self._model or self.model
+            model_name = getattr(self, '_model', None) or getattr(self, 'model', None)
+            # Try nested config paths
+            if not model_name:
+                config = getattr(self, '_config', None) or getattr(self, 'config', None)
+                if config:
+                    model_settings = getattr(config, 'model_settings', None)
+                    if model_settings:
+                        model_name = getattr(model_settings, 'model_name', None) or \
+                                     getattr(model_settings, 'model', None)
+                    if not model_name:
+                        model_name = getattr(config, 'model_name', None) or \
+                                     getattr(config, 'model', None)
+            if model_name:
+                state.model_name = model_name
         except Exception:
             pass
 
