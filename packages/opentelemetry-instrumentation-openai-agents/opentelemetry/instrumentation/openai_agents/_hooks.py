@@ -46,7 +46,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             kind=SpanKind.CLIENT,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 "gen_ai.workflow.name": "Agent Workflow"
             }
         )
@@ -105,7 +105,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-                "gen_ai.system": "openai_agents"
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents"
             }
 
             if handoff_parent:
@@ -148,7 +148,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             handoff_attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                "gen_ai.system": "openai_agents"
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents"
             }
 
             if from_agent and from_agent != 'unknown':
@@ -173,8 +173,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             tool_attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
-                "gen_ai.tool.name": tool_name,
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "FunctionTool",
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True
@@ -200,8 +200,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             response_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "response",
-                "gen_ai.system": "openai",
-                "gen_ai.operation.name": "response"
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "response"
             }
 
             otel_span = self.tracer.start_span(
@@ -219,8 +219,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             response_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "chat",
-                "gen_ai.system": "openai",
-                "gen_ai.operation.name": "chat"
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat"
             }
 
             otel_span = self.tracer.start_span(
@@ -238,8 +238,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             speech_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                "gen_ai.system": "openai",
-                "gen_ai.operation.name": "speech",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "speech",
             }
 
             model = getattr(span_data, 'model', None)
@@ -265,8 +265,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             transcription_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                "gen_ai.system": "openai",
-                "gen_ai.operation.name": "transcription",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "transcription",
             }
 
             model = getattr(span_data, 'model', None)
@@ -292,8 +292,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             speech_group_attributes = {
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                "gen_ai.system": "openai",
-                "gen_ai.operation.name": "speech_group",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "speech_group",
             }
 
             otel_span = self.tracer.start_span(
@@ -481,7 +481,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     if hasattr(response, 'model') and response.model:
                         model_settings['model'] = response.model
-                        otel_span.set_attribute("gen_ai.request.model", response.model)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, response.model)
 
                     # Extract completions and add directly to response span using OpenAI semantic conventions
                     if hasattr(response, 'output') and response.output:
@@ -557,18 +557,18 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if input_data:
                     for i, message in enumerate(input_data):
                         if hasattr(message, 'role') and hasattr(message, 'content'):
-                            otel_span.set_attribute(f"gen_ai.prompt.{i}.role", message.role)
+                            otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", message.role)
                             content = message.content
                             if isinstance(content, dict):
                                 content = json.dumps(content)
-                            otel_span.set_attribute(f"gen_ai.prompt.{i}.content", content)
+                            otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", content)
                         elif isinstance(message, dict):
                             if 'role' in message and 'content' in message:
-                                otel_span.set_attribute(f"gen_ai.prompt.{i}.role", message['role'])
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", message['role'])
                                 content = message['content']
                                 if isinstance(content, dict):
                                     content = json.dumps(content)
-                                otel_span.set_attribute(f"gen_ai.prompt.{i}.content", content)
+                                otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", content)
 
                 response = getattr(span_data, 'response', None)
                 if response:
@@ -590,7 +590,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                     if hasattr(response, 'model') and response.model:
                         model_settings['model'] = response.model
-                        otel_span.set_attribute("gen_ai.request.model", response.model)
+                        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, response.model)
 
                     # Extract completions and add directly to response span using OpenAI semantic conventions
                     if hasattr(response, 'output') and response.output:
@@ -710,7 +710,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         elif key == 'top_p':
                             otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TOP_P, value)
                         elif key == 'model':
-                            otel_span.set_attribute("gen_ai.request.model", value)
+                            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, value)
                         elif key == 'frequency_penalty':
                             otel_span.set_attribute("openai.agent.model.frequency_penalty", value)
                         # Note: prompt_attributes, completion_attributes, and usage tokens are now

@@ -9,6 +9,9 @@ from typing import Dict, Any, Optional, List
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
 from opentelemetry.trace import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes
+)
 from .utils import dont_throw
 
 _original_methods: Dict[str, Any] = {}
@@ -44,7 +47,7 @@ class RealtimeTracingState:
             kind=SpanKind.CLIENT,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 "gen_ai.workflow.name": "Realtime Session",
                 "gen_ai.agent.starting_agent": agent_name,
             }
@@ -73,8 +76,8 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                "gen_ai.agent.name": agent_name,
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
             }
         )
         self.agent_spans[agent_name] = span
@@ -112,8 +115,8 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
-                "gen_ai.tool.name": tool_name,
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
             }
         )
         self.tool_spans[tool_name] = span
@@ -148,7 +151,7 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                "gen_ai.system": "openai_agents",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 "gen_ai.handoff.from_agent": from_agent,
                 "gen_ai.handoff.to_agent": to_agent,
             }
@@ -174,7 +177,7 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                "gen_ai.system": "openai",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 "gen_ai.audio.item_id": item_id,
                 "gen_ai.audio.content_index": content_index,
             }
@@ -248,8 +251,8 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
                 SpanAttributes.LLM_SYSTEM: "openai",
-                "gen_ai.system": "openai",
-                "gen_ai.request.model": "gpt-4o-realtime-preview",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: "gpt-4o-realtime-preview",
             }
         )
 
