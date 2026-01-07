@@ -417,11 +417,8 @@ def wrap_realtime_session(tracer: Tracer):
                         if not content:
                             content = getattr(item, 'text', None) or getattr(item, 'transcript', None)
 
-                        if content and role:
-                            if role == 'user':
-                                state.record_prompt(role, content)
-                            elif role == 'assistant':
-                                state.record_completion(role, content)
+                        if content and role == 'assistant':
+                            state.record_completion(role, content)
 
                 elif event_type == 'raw_model_event':
                     data = getattr(event, 'data', None)
