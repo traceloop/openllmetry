@@ -64,6 +64,25 @@ class RealtimeTracingState:
             self.workflow_span.end()
             self.workflow_span = None
 
+    def _get_parent_context(self, agent_name: Optional[str] = None):
+        """Get parent context from agent spans or workflow span.
+
+        Looks up the parent context in this order:
+        1. Specified agent_name in active agent_spans
+        2. Specified agent_name in agent_span_contexts
+        3. Current agent in agent_span_contexts
+        4. Workflow span
+        """
+        target = agent_name or self.current_agent_name
+        if target:
+            if target in self.agent_spans:
+                return set_span_in_context(self.agent_spans[target])
+            if target in self.agent_span_contexts:
+                return self.agent_span_contexts[target]
+        if self.workflow_span:
+            return set_span_in_context(self.workflow_span)
+        return None
+
     def start_agent_span(self, agent_name: str):
         """Start an agent span."""
         parent_context = None
@@ -99,15 +118,7 @@ class RealtimeTracingState:
 
     def start_tool_span(self, tool_name: str, agent_name: Optional[str] = None):
         """Start a tool span."""
-        parent_context = None
-        if agent_name and agent_name in self.agent_spans:
-            parent_context = set_span_in_context(self.agent_spans[agent_name])
-        elif agent_name and agent_name in self.agent_span_contexts:
-            parent_context = self.agent_span_contexts[agent_name]
-        elif self.current_agent_name and self.current_agent_name in self.agent_span_contexts:
-            parent_context = self.agent_span_contexts[self.current_agent_name]
-        elif self.workflow_span:
-            parent_context = set_span_in_context(self.workflow_span)
+        parent_context = self._get_parent_context(agent_name)
 
         span = self.tracer.start_span(
             f"{tool_name}.tool",
@@ -137,13 +148,7 @@ class RealtimeTracingState:
 
     def create_handoff_span(self, from_agent: str, to_agent: str):
         """Create a handoff span."""
-        parent_context = None
-        if from_agent and from_agent in self.agent_spans:
-            parent_context = set_span_in_context(self.agent_spans[from_agent])
-        elif from_agent and from_agent in self.agent_span_contexts:
-            parent_context = self.agent_span_contexts[from_agent]
-        elif self.workflow_span:
-            parent_context = set_span_in_context(self.workflow_span)
+        parent_context = self._get_parent_context(from_agent)
 
         span = self.tracer.start_span(
             f"{from_agent} → {to_agent}.handoff",
@@ -162,13 +167,7 @@ class RealtimeTracingState:
 
     def start_audio_span(self, item_id: str, content_index: int):
         """Start an audio/speech span."""
-        parent_context = None
-        if self.current_agent_name and self.current_agent_name in self.agent_spans:
-            parent_context = set_span_in_context(self.agent_spans[self.current_agent_name])
-        elif self.current_agent_name and self.current_agent_name in self.agent_span_contexts:
-            parent_context = self.agent_span_contexts[self.current_agent_name]
-        elif self.workflow_span:
-            parent_context = set_span_in_context(self.workflow_span)
+        parent_context = self._get_parent_context()
 
         span_key = f"{item_id}:{content_index}"
         span = self.tracer.start_span(
@@ -231,13 +230,7 @@ class RealtimeTracingState:
         if prompt_time:
             response_time_ms = (time.time_ns() - prompt_time) / 1_000_000
 
-        parent_context = None
-        if agent_name and agent_name in self.agent_spans:
-            parent_context = set_span_in_context(self.agent_spans[agent_name])
-        elif agent_name and agent_name in self.agent_span_contexts:
-            parent_context = self.agent_span_contexts[agent_name]
-        elif self.workflow_span:
-            parent_context = set_span_in_context(self.workflow_span)
+        parent_context = self._get_parent_context(agent_name)
 
         start_time = None
         if agent_name and agent_name in self.agent_start_times:
