@@ -248,12 +248,12 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
     return len(request_classes), len(response_classes)
 
 
-def generate_factories_py(
+def generate_definitions_py(
     output_dir: Path, slug_mappings: dict, filtered_definitions: dict
 ) -> int:
-    """Generate factories.py with static factory methods for each evaluator.
+    """Generate definitions.py with static definitions for each evaluator.
 
-    This creates type-safe factory methods with proper IDE autocomplete support.
+    This creates type-safe methods with proper IDE autocomplete support.
     """
 
     def slug_to_method_name(slug: str) -> str:
@@ -339,9 +339,9 @@ def generate_factories_py(
 
     # Start building the definitions.py content
     content = '''"""
-Factory methods for creating Traceloop evaluators.
+Definitions for creating Traceloop evaluators.
 
-Provides type-safe factory methods with IDE autocomplete support.
+Provides type-safe methods with IDE autocomplete support.
 
 DO NOT EDIT MANUALLY - Regenerate with:
     ./scripts/generate-models.sh /path/to/swagger.json
@@ -353,7 +353,7 @@ from ...evaluator.config import EvaluatorDetails
 
 class EvaluatorMadeByTraceloopDefinition:
     """
-    Factory class for creating Traceloop evaluators with type-safe configuration.
+    Definition class for creating Traceloop evaluators with type-safe configuration.
 
     Each method creates an EvaluatorDetails instance for a specific evaluator,
     with properly typed configuration parameters.
@@ -514,9 +514,9 @@ def main():
     registry_count = generate_registry_py(output_dir, slug_mappings)
     print(f"Generated registry.py with {registry_count} evaluator mappings")
 
-    print("=== Generating definitions.py with evaluator factory methods ===")
-    factory_count = generate_factories_py(output_dir, slug_mappings, filtered_definitions)
-    print(f"Generated definitions.py with {factory_count} evaluator factory methods")
+    print("=== Generating definitions.py with evaluator definitions ===")
+    definition_count = generate_definitions_py(output_dir, slug_mappings, filtered_definitions)
+    print(f"Generated definitions.py with {definition_count} evaluator definitions")
 
     print("=== Generating __init__.py with exports ===")
     req_count, resp_count = generate_init_py(output_dir)
