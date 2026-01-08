@@ -11,7 +11,7 @@ agents_dir = Path(__file__).parent / "agents"
 sys.path.insert(0, str(agents_dir))
 
 from traceloop.sdk.guardrails.guardrails import guardrail  # noqa: E402
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop  # noqa: E402
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition  # noqa: E402
 
 # Import the travel agent function
 try:
@@ -62,7 +62,7 @@ def handle_pii_detection(evaluator_result, original_result):
 
 
 @guardrail(
-    evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7),
+    evaluator=EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.7),
     on_evaluation_complete=handle_pii_detection
 )
 async def guarded_travel_agent(query: str) -> dict:

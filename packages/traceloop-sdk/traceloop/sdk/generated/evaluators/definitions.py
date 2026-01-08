@@ -11,7 +11,7 @@ from __future__ import annotations
 from ...evaluator.config import EvaluatorDetails
 
 
-class EvaluatorMadeByTraceloop:
+class EvaluatorMadeByTraceloopDefinition:
     """
     Factory class for creating Traceloop evaluators with type-safe configuration.
 

@@ -15,7 +15,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -88,10 +88,10 @@ async def run_advanced_quality_experiment():
 
     # Configure advanced quality evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.perplexity(),
-        EvaluatorMadeByTraceloop.agent_goal_accuracy(),
-        EvaluatorMadeByTraceloop.semantic_similarity(),
-        EvaluatorMadeByTraceloop.topic_adherence(),
+        EvaluatorMadeByTraceloopDefinition.perplexity(),
+        EvaluatorMadeByTraceloopDefinition.agent_goal_accuracy(),
+        EvaluatorMadeByTraceloopDefinition.semantic_similarity(),
+        EvaluatorMadeByTraceloopDefinition.topic_adherence(),
     ]
 
     print("Running experiment with advanced quality evaluators:")

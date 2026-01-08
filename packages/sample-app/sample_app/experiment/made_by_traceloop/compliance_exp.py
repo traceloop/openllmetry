@@ -13,7 +13,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -70,9 +70,9 @@ async def run_content_compliance_experiment():
 
     # Configure content compliance evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.profanity_detector(),
-        EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
-        EvaluatorMadeByTraceloop.sexism_detector(threshold=0.7),
+        EvaluatorMadeByTraceloopDefinition.profanity_detector(),
+        EvaluatorMadeByTraceloopDefinition.toxicity_detector(threshold=0.7),
+        EvaluatorMadeByTraceloopDefinition.sexism_detector(threshold=0.7),
     ]
 
     print("Running experiment with content safety evaluators:")

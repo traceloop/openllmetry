@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
 from traceloop.sdk.experiment.utils import run_with_span_capture
 
 # Add the agents directory to sys.path for imports
@@ -94,13 +94,13 @@ async def run_travel_agent_experiment():
 
     # Configure agent evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.agent_goal_accuracy(),
-        EvaluatorMadeByTraceloop.agent_flow_quality(
+        EvaluatorMadeByTraceloopDefinition.agent_goal_accuracy(),
+        EvaluatorMadeByTraceloopDefinition.agent_flow_quality(
             threshold=0.7,
             conditions=["create_itinerary tool should be called last"],
         ),
-        EvaluatorMadeByTraceloop.agent_efficiency(),
-        EvaluatorMadeByTraceloop.agent_goal_completeness(),
+        EvaluatorMadeByTraceloopDefinition.agent_efficiency(),
+        EvaluatorMadeByTraceloopDefinition.agent_goal_completeness(),
     ]
 
     print("Running experiment with evaluators:")

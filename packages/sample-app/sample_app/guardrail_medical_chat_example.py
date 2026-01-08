@@ -3,7 +3,7 @@ import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.guardrails.guardrails import guardrail
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
 
 
 Traceloop.init(app_name="medical-chat-example")
@@ -39,7 +39,7 @@ def handle_medical_evaluation(evaluator_result, original_result):
 
 
 @guardrail(
-    evaluator=EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
+    evaluator=EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.8),
     on_evaluation_complete=handle_medical_evaluation,
 )
 async def get_doctor_response_with_pii_check(patient_message: str) -> dict:

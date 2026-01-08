@@ -203,8 +203,8 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
             init_content += f"    {cls},\n"
         init_content += ")\n\n"
 
-    # Import factory class
-    init_content += "from .factories import EvaluatorMadeByTraceloop\n\n"
+    # Import definitions class
+    init_content += "from .definitions import EvaluatorMadeByTraceloopDefinition\n\n"
 
     # Import registry
     init_content += """from .registry import (
@@ -225,8 +225,8 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
 
     # Generate __all__
     init_content += "__all__ = [\n"
-    init_content += "    # Factory class\n"
-    init_content += '    "EvaluatorMadeByTraceloop",\n'
+    init_content += "    # Definitions class\n"
+    init_content += '    "EvaluatorMadeByTraceloopDefinition",\n'
     init_content += "    # Registry functions\n"
     init_content += '    "REQUEST_MODELS",\n'
     init_content += '    "RESPONSE_MODELS",\n'
@@ -434,7 +434,7 @@ class EvaluatorMadeByTraceloop:
     # Remove trailing whitespace to pass lint
     content = content.rstrip() + "\n"
 
-    (output_dir / "factories.py").write_text(content)
+    (output_dir / "definitions.py").write_text(content)
 
     return len(slug_mappings)
 
@@ -514,9 +514,9 @@ def main():
     registry_count = generate_registry_py(output_dir, slug_mappings)
     print(f"Generated registry.py with {registry_count} evaluator mappings")
 
-    print("=== Generating factories.py with evaluator factory methods ===")
+    print("=== Generating definitions.py with evaluator factory methods ===")
     factory_count = generate_factories_py(output_dir, slug_mappings, filtered_definitions)
-    print(f"Generated factories.py with {factory_count} evaluator factory methods")
+    print(f"Generated definitions.py with {factory_count} evaluator factory methods")
 
     print("=== Generating __init__.py with exports ===")
     req_count, resp_count = generate_init_py(output_dir)

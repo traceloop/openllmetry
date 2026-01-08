@@ -88,7 +88,7 @@ from .request import (
     WordCountRequest,
 )
 
-from .factories import EvaluatorMadeByTraceloop
+from .definitions import EvaluatorMadeByTraceloopDefinition
 
 from .registry import (
     REQUEST_MODELS,
@@ -138,7 +138,7 @@ from .response import (
 
 __all__ = [
     # Factory class
-    "EvaluatorMadeByTraceloop",
+    "EvaluatorMadeByTraceloopDefinition",
     # Registry functions
     "REQUEST_MODELS",
     "RESPONSE_MODELS",

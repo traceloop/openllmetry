@@ -14,7 +14,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -73,9 +73,9 @@ async def run_security_experiment():
 
     # Configure security evaluators
     evaluators = [
-        EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7,),
-        EvaluatorMadeByTraceloop.secrets_detector(),
-        EvaluatorMadeByTraceloop.prompt_injection(threshold=0.6),
+        EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.7,),
+        EvaluatorMadeByTraceloopDefinition.secrets_detector(),
+        EvaluatorMadeByTraceloopDefinition.prompt_injection(threshold=0.6),
     ]
 
     print("\n" + "-"*80 + "\n")

@@ -1,9 +1,9 @@
 from .evaluator import Evaluator
 from .config import EvaluatorDetails
-from ..generated.evaluators.factories import EvaluatorMadeByTraceloop
+from ..generated.evaluators.definitions import EvaluatorMadeByTraceloopDefinition
 
 __all__ = [
     "Evaluator",
     "EvaluatorDetails",
-    "EvaluatorMadeByTraceloop",
+    "EvaluatorMadeByTraceloopDefinition",
 ]
