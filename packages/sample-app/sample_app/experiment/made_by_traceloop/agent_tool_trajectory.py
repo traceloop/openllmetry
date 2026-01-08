@@ -1,5 +1,5 @@
 """
-Agent Evaluators Experiment
+Agent Tool Trajectory Experiment
 
 This example demonstrates Traceloop's agent tool trajectory evaluator:
 - Agent Tool Trajectory: Validates the agent tool trajectory
@@ -17,10 +17,12 @@ client = Traceloop.init()
 
 async def agent_evaluators_task(row):
     executed_tool_calls = row.get("actual", "")
-    expected_tool_calls = row.get(
-        "expected",
-        "[{'name': 'search', 'input': {'query': 'weather'}}, {'name': 'book_flight', 'input': {'flight': 'NYC to Paris'}}, {'name': 'get_confirmation', 'input': {'confirmation': 'flight booked'}}]"
+    default_expected = (
+        "[{'name': 'search', 'input': {'query': 'weather'}}, "
+        "{'name': 'book_flight', 'input': {'flight': 'NYC to Paris'}}, "
+        "{'name': 'get_confirmation', 'input': {'confirmation': 'flight booked'}}]"
     )
+    expected_tool_calls = row.get("expected", default_expected)
 
     return {
         "executed_tool_calls": executed_tool_calls,
