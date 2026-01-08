@@ -304,7 +304,8 @@ def generate_factories_py(
                 for name, prop in config_props.items():
                     field_type = get_type_hint(prop)
                     is_required = name in config_required
-                    example = prop.get("examples", [None])[0]
+                    examples = prop.get("examples", [])
+                    example = examples[0] if examples else None
                     fields.append({
                         "name": name,
                         "type": field_type,
@@ -388,12 +389,12 @@ class EvaluatorMadeByTraceloop:
         # Method signature
         if params:
             params_str = ",\n        ".join(params)
-            content += f"    @staticmethod\n"
+            content += "    @staticmethod\n"
             content += f"    def {method_name}(\n"
             content += f"        {params_str},\n"
-            content += f"    ) -> EvaluatorDetails:\n"
+            content += "    ) -> EvaluatorDetails:\n"
         else:
-            content += f"    @staticmethod\n"
+            content += "    @staticmethod\n"
             content += f"    def {method_name}() -> EvaluatorDetails:\n"
 
         # Docstring
@@ -413,22 +414,22 @@ class EvaluatorMadeByTraceloop:
             config_items = ", ".join(
                 f'"{f["name"]}": {f["name"]}' for f in config_fields
             )
-            content += f"        config = {{\n"
+            content += "        config = {\n"
             content += f"            k: v for k, v in {{{config_items}}}.items()\n"
-            content += f"            if v is not None\n"
-            content += f"        }}\n"
-            content += f"        return EvaluatorDetails(\n"
+            content += "            if v is not None\n"
+            content += "        }\n"
+            content += "        return EvaluatorDetails(\n"
             content += f'            slug="{slug}",\n'
-            content += f"            config=config if config else None,\n"
+            content += "            config=config if config else None,\n"
             if input_fields:
                 content += f"            required_input_fields={input_fields},\n"
-            content += f"        )\n\n"
+            content += "        )\n\n"
         else:
-            content += f"        return EvaluatorDetails(\n"
+            content += "        return EvaluatorDetails(\n"
             content += f'            slug="{slug}",\n'
             if input_fields:
                 content += f"            required_input_fields={input_fields},\n"
-            content += f"        )\n\n"
+            content += "        )\n\n"
 
     # Remove trailing whitespace to pass lint
     content = content.rstrip() + "\n"

@@ -15,7 +15,7 @@ from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 client = Traceloop.init()
 
 
-async def agent_evaluators_task(row):
+def agent_evaluators_task(row):
     executed_tool_calls = row.get("actual", "")
     default_expected = (
         "[{'name': 'search', 'input': {'query': 'weather'}}, "
