@@ -16,28 +16,8 @@
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "upload_records",
-        "span_name": "qdrant.upload_records"
-    },
-    {
-        "object": "AsyncQdrantClient",
         "method": "upload_collection",
         "span_name": "qdrant.upload_collection"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search",
-        "span_name": "qdrant.search"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search_batch",
-        "span_name": "qdrant.search_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search_groups",
-        "span_name": "qdrant.search_groups"
     },
     {
         "object": "AsyncQdrantClient",
@@ -51,33 +31,28 @@
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "discover",
-        "span_name": "qdrant.discover"
+        "method": "query_points",
+        "span_name": "qdrant.query_points"
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "discover_batch",
-        "span_name": "qdrant.discover_batch"
+        "method": "query_batch_points",
+        "span_name": "qdrant.query_batch_points"
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "recommend",
-        "span_name": "qdrant.recommend"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "recommend_batch",
-        "span_name": "qdrant.recommend_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "recommend_groups",
-        "span_name": "qdrant.recommend_groups"
+        "method": "query_points_groups",
+        "span_name": "qdrant.query_points_groups"
     },
     {
         "object": "AsyncQdrantClient",
         "method": "scroll",
         "span_name": "qdrant.scroll"
+    },
+    {
+        "object": "AsyncQdrantClient",
+        "method": "retrieve",
+        "span_name": "qdrant.retrieve"
     },
     {
         "object": "AsyncQdrantClient",
@@ -113,5 +88,20 @@
         "object": "AsyncQdrantClient",
         "method": "batch_update_points",
         "span_name": "qdrant.batch_update_points"
+    },
+    {
+        "object": "AsyncQdrantClient",
+        "method": "facet",
+        "span_name": "qdrant.facet"
+    },
+    {
+        "object": "AsyncQdrantClient",
+        "method": "search_matrix_offsets",
+        "span_name": "qdrant.search_matrix_offsets"
+    },
+    {
+        "object": "AsyncQdrantClient",
+        "method": "search_matrix_pairs",
+        "span_name": "qdrant.search_matrix_pairs"
     }
 ]
