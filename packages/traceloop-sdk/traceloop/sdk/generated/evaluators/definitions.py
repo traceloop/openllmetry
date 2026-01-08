@@ -19,12 +19,12 @@ class EvaluatorMadeByTraceloopDefinition:
     with properly typed configuration parameters.
 
     Example:
-        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
         >>>
         >>> evaluators = [
-        ...     EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
-        ...     EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
-        ...     EvaluatorMadeByTraceloop.faithfulness(),
+        ...     EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.8),
+        ...     EvaluatorMadeByTraceloopDefinition.toxicity_detector(threshold=0.7),
+        ...     EvaluatorMadeByTraceloopDefinition.faithfulness(),
         ... ]
     """
 
