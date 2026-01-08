@@ -347,8 +347,6 @@ DO NOT EDIT MANUALLY - Regenerate with:
 """
 from __future__ import annotations
 
-from typing import Any
-
 from ...evaluator.config import EvaluatorDetails
 
 
@@ -431,6 +429,9 @@ class EvaluatorMadeByTraceloop:
             if input_fields:
                 content += f"            required_input_fields={input_fields},\n"
             content += f"        )\n\n"
+
+    # Remove trailing whitespace to pass lint
+    content = content.rstrip() + "\n"
 
     (output_dir / "factories.py").write_text(content)
 

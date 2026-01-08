@@ -546,4 +546,3 @@ class EvaluatorMadeByTraceloop:
             slug="word-count-ratio",
             required_input_fields=['denominator_text', 'numerator_text'],
         )
-
