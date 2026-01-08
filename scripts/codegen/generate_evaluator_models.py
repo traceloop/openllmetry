@@ -337,7 +337,7 @@ def generate_factories_py(
                 return list(input_def.get("required", []))
         return []
 
-    # Start building the factories.py content
+    # Start building the definitions.py content
     content = '''"""
 Factory methods for creating Traceloop evaluators.
 
