@@ -9,7 +9,7 @@ This evaluator helps ensure your AI agents perform optimally and follow the expe
 
 import asyncio
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -40,7 +40,7 @@ async def run_agent_tool_trajectory_experiment():
 
     # Configure agent evaluators
     evaluators = [
-        EvaluatorMadeByTraceloopDefinition.agent_tool_trajectory(
+        EvaluatorMadeByTraceloop.agent_tool_trajectory(
             input_params_sensitive=True,
             mismatch_sensitive=False,
             order_sensitive=False,

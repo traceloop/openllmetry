@@ -15,7 +15,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -135,11 +135,11 @@ async def run_agents_experiment():
 
     # Configure agent evaluators
     evaluators = [
-        EvaluatorMadeByTraceloopDefinition.agent_goal_accuracy(),
-        EvaluatorMadeByTraceloopDefinition.agent_tool_error_detector(),
-        EvaluatorMadeByTraceloopDefinition.agent_flow_quality(),
-        EvaluatorMadeByTraceloopDefinition.agent_efficiency(),
-        EvaluatorMadeByTraceloopDefinition.agent_goal_completeness(),
+        EvaluatorMadeByTraceloop.agent_goal_accuracy(),
+        EvaluatorMadeByTraceloop.agent_tool_error_detector(),
+        EvaluatorMadeByTraceloop.agent_flow_quality(),
+        EvaluatorMadeByTraceloop.agent_efficiency(),
+        EvaluatorMadeByTraceloop.agent_goal_completeness(),
     ]
 
     print("Running experiment with evaluators:")

@@ -13,7 +13,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -76,8 +76,8 @@ async def run_correctness_experiment():
 
     # Configure correctness evaluators
     evaluators = [
-        EvaluatorMadeByTraceloopDefinition.answer_relevancy(),
-        EvaluatorMadeByTraceloopDefinition.faithfulness(),
+        EvaluatorMadeByTraceloop.answer_relevancy(),
+        EvaluatorMadeByTraceloop.faithfulness(),
     ]
 
     print("Running experiment with evaluators:")

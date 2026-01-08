@@ -11,7 +11,7 @@ from __future__ import annotations
 from ...evaluator.config import EvaluatorDetails
 
 
-class EvaluatorMadeByTraceloopDefinition:
+class EvaluatorMadeByTraceloop:
     """
     Factory class for creating Traceloop evaluators with type-safe configuration.
 
@@ -19,12 +19,12 @@ class EvaluatorMadeByTraceloopDefinition:
     with properly typed configuration parameters.
 
     Example:
-        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
         >>>
         >>> evaluators = [
-        ...     EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.8),
-        ...     EvaluatorMadeByTraceloopDefinition.toxicity_detector(threshold=0.7),
-        ...     EvaluatorMadeByTraceloopDefinition.faithfulness(),
+        ...     EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
+        ...     EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
+        ...     EvaluatorMadeByTraceloop.faithfulness(),
         ... ]
     """
 

@@ -204,7 +204,7 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
         init_content += ")\n\n"
 
     # Import definitions class
-    init_content += "from .definitions import EvaluatorMadeByTraceloopDefinition\n\n"
+    init_content += "from .definitions import EvaluatorMadeByTraceloop\n\n"
 
     # Import registry
     init_content += """from .registry import (
@@ -226,7 +226,7 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
     # Generate __all__
     init_content += "__all__ = [\n"
     init_content += "    # Definitions class\n"
-    init_content += '    "EvaluatorMadeByTraceloopDefinition",\n'
+    init_content += '    "EvaluatorMadeByTraceloop",\n'
     init_content += "    # Registry functions\n"
     init_content += '    "REQUEST_MODELS",\n'
     init_content += '    "RESPONSE_MODELS",\n'
@@ -351,7 +351,7 @@ from __future__ import annotations
 from ...evaluator.config import EvaluatorDetails
 
 
-class EvaluatorMadeByTraceloopDefinition:
+class EvaluatorMadeByTraceloop:
     """
     Definition class for creating Traceloop evaluators with type-safe configuration.
 
@@ -359,12 +359,12 @@ class EvaluatorMadeByTraceloopDefinition:
     with properly typed configuration parameters.
 
     Example:
-        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
         >>>
         >>> evaluators = [
-        ...     EvaluatorMadeByTraceloopDefinition.pii_detector(probability_threshold=0.8),
-        ...     EvaluatorMadeByTraceloopDefinition.toxicity_detector(threshold=0.7),
-        ...     EvaluatorMadeByTraceloopDefinition.faithfulness(),
+        ...     EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
+        ...     EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
+        ...     EvaluatorMadeByTraceloop.faithfulness(),
         ... ]
     """
 

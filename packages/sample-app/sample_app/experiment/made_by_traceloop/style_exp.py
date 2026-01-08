@@ -12,7 +12,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -74,10 +74,10 @@ async def run_style_experiment():
 
     # Configure metrics evaluators
     evaluators = [
-        EvaluatorMadeByTraceloopDefinition.char_count(),
-        EvaluatorMadeByTraceloopDefinition.word_count(),
-        EvaluatorMadeByTraceloopDefinition.char_count_ratio(),
-        EvaluatorMadeByTraceloopDefinition.word_count_ratio(),
+        EvaluatorMadeByTraceloop.char_count(),
+        EvaluatorMadeByTraceloop.word_count(),
+        EvaluatorMadeByTraceloop.char_count_ratio(),
+        EvaluatorMadeByTraceloop.word_count_ratio(),
     ]
 
     print("Running experiment with metrics evaluators:")

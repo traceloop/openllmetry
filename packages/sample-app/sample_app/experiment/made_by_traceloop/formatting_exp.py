@@ -15,7 +15,7 @@ import asyncio
 import os
 from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloopDefinition
+from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
 client = Traceloop.init()
@@ -104,17 +104,17 @@ async def run_formatting_experiment():
     }'''
 
     evaluators = [
-        EvaluatorMadeByTraceloopDefinition.json_validator(
+        EvaluatorMadeByTraceloop.json_validator(
             enable_schema_validation=True,
             schema_string=json_schema
         ),
-        EvaluatorMadeByTraceloopDefinition.sql_validator(),
-        EvaluatorMadeByTraceloopDefinition.regex_validator(
+        EvaluatorMadeByTraceloop.sql_validator(),
+        EvaluatorMadeByTraceloop.regex_validator(
             regex=r"^\d{3}-\d{2}-\d{4}$",  # SSN format
             should_match=True,
             case_sensitive=True
         ),
-        EvaluatorMadeByTraceloopDefinition.placeholder_regex(
+        EvaluatorMadeByTraceloop.placeholder_regex(
             regex=r"^user_.*",
             placeholder_name="username",
             should_match=True
