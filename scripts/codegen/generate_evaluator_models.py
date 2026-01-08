@@ -203,6 +203,9 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
             init_content += f"    {cls},\n"
         init_content += ")\n\n"
 
+    # Import factory class
+    init_content += "from .factories import EvaluatorMadeByTraceloop\n\n"
+
     # Import registry
     init_content += """from .registry import (
     REQUEST_MODELS,
@@ -222,6 +225,8 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
 
     # Generate __all__
     init_content += "__all__ = [\n"
+    init_content += "    # Factory class\n"
+    init_content += '    "EvaluatorMadeByTraceloop",\n'
     init_content += "    # Registry functions\n"
     init_content += '    "REQUEST_MODELS",\n'
     init_content += '    "RESPONSE_MODELS",\n'
@@ -241,6 +246,195 @@ def generate_init_py(output_dir: Path) -> tuple[int, int]:
     (output_dir / "__init__.py").write_text(init_content)
 
     return len(request_classes), len(response_classes)
+
+
+def generate_factories_py(
+    output_dir: Path, slug_mappings: dict, filtered_definitions: dict
+) -> int:
+    """Generate factories.py with static factory methods for each evaluator.
+
+    This creates type-safe factory methods with proper IDE autocomplete support.
+    """
+
+    def slug_to_method_name(slug: str) -> str:
+        """Convert slug like 'pii-detector' to method name like 'pii_detector'."""
+        return slug.replace("-", "_")
+
+    def get_type_hint(prop: dict) -> str:
+        """Convert JSON schema property to Python type hint."""
+        prop_type = prop.get("type")
+        if prop_type == "number":
+            return "float"
+        elif prop_type == "integer":
+            return "int"
+        elif prop_type == "boolean":
+            return "bool"
+        elif prop_type == "string":
+            return "str"
+        elif prop_type == "array":
+            items = prop.get("items", {})
+            item_type = get_type_hint(items) if items else "Any"
+            return f"list[{item_type}]"
+        return "Any"
+
+    def get_config_fields(request_model_name: str) -> list[dict]:
+        """Extract config fields from the request model's config property."""
+        # Find the request model definition
+        request_def_key = f"request.{request_model_name}"
+        if request_def_key not in filtered_definitions:
+            return []
+
+        request_def = filtered_definitions[request_def_key]
+        properties = request_def.get("properties", {})
+
+        # Check if there's a config property
+        if "config" not in properties:
+            return []
+
+        config_prop = properties["config"]
+        # Get the config model reference
+        if "$ref" in config_prop:
+            config_ref = config_prop["$ref"].replace("#/definitions/", "")
+            if config_ref in filtered_definitions:
+                config_def = filtered_definitions[config_ref]
+                config_props = config_def.get("properties", {})
+                config_required = set(config_def.get("required", []))
+
+                fields = []
+                for name, prop in config_props.items():
+                    field_type = get_type_hint(prop)
+                    is_required = name in config_required
+                    example = prop.get("examples", [None])[0]
+                    fields.append({
+                        "name": name,
+                        "type": field_type,
+                        "required": is_required,
+                        "example": example,
+                    })
+                return fields
+        return []
+
+    def get_input_fields(request_model_name: str) -> list[str]:
+        """Extract required input fields from the request model's input property."""
+        request_def_key = f"request.{request_model_name}"
+        if request_def_key not in filtered_definitions:
+            return []
+
+        request_def = filtered_definitions[request_def_key]
+        properties = request_def.get("properties", {})
+
+        # Check if there's an input property
+        if "input" not in properties:
+            return []
+
+        input_prop = properties["input"]
+        if "$ref" in input_prop:
+            input_ref = input_prop["$ref"].replace("#/definitions/", "")
+            if input_ref in filtered_definitions:
+                input_def = filtered_definitions[input_ref]
+                # Return all required fields from the input model
+                return list(input_def.get("required", []))
+        return []
+
+    # Start building the factories.py content
+    content = '''"""
+Factory methods for creating Traceloop evaluators.
+
+Provides type-safe factory methods with IDE autocomplete support.
+
+DO NOT EDIT MANUALLY - Regenerate with:
+    ./scripts/generate-models.sh /path/to/swagger.json
+"""
+from __future__ import annotations
+
+from typing import Any
+
+from ...evaluator.config import EvaluatorDetails
+
+
+class EvaluatorMadeByTraceloop:
+    """
+    Factory class for creating Traceloop evaluators with type-safe configuration.
+
+    Each method creates an EvaluatorDetails instance for a specific evaluator,
+    with properly typed configuration parameters.
+
+    Example:
+        >>> from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+        >>>
+        >>> evaluators = [
+        ...     EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.8),
+        ...     EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7),
+        ...     EvaluatorMadeByTraceloop.faithfulness(),
+        ... ]
+    """
+
+'''
+
+    # Generate a method for each evaluator
+    for slug in sorted(slug_mappings.keys()):
+        request_model = slug_mappings[slug]["request"]
+        method_name = slug_to_method_name(slug)
+        config_fields = get_config_fields(request_model)
+        input_fields = get_input_fields(request_model)
+
+        # Build method signature
+        params = []
+        for field in config_fields:
+            type_hint = field["type"]
+            if not field["required"]:
+                type_hint = f"{type_hint} | None"
+            default = " = None" if not field["required"] else ""
+            params.append(f"{field['name']}: {type_hint}{default}")
+
+        # Method signature
+        if params:
+            params_str = ",\n        ".join(params)
+            content += f"    @staticmethod\n"
+            content += f"    def {method_name}(\n"
+            content += f"        {params_str},\n"
+            content += f"    ) -> EvaluatorDetails:\n"
+        else:
+            content += f"    @staticmethod\n"
+            content += f"    def {method_name}() -> EvaluatorDetails:\n"
+
+        # Docstring
+        content += f'        """Create {slug} evaluator.\n'
+        if config_fields:
+            content += "\n        Args:\n"
+            for field in config_fields:
+                example_str = f" (example: {field['example']})" if field["example"] is not None else ""
+                content += f"            {field['name']}: {field['type']}{example_str}\n"
+        if input_fields:
+            content += f"\n        Required input fields: {', '.join(input_fields)}\n"
+        content += '        """\n'
+
+        # Method body
+        if config_fields:
+            # Build config dict, filtering out None values
+            config_items = ", ".join(
+                f'"{f["name"]}": {f["name"]}' for f in config_fields
+            )
+            content += f"        config = {{\n"
+            content += f"            k: v for k, v in {{{config_items}}}.items()\n"
+            content += f"            if v is not None\n"
+            content += f"        }}\n"
+            content += f"        return EvaluatorDetails(\n"
+            content += f'            slug="{slug}",\n'
+            content += f"            config=config if config else None,\n"
+            if input_fields:
+                content += f"            required_input_fields={input_fields},\n"
+            content += f"        )\n\n"
+        else:
+            content += f"        return EvaluatorDetails(\n"
+            content += f'            slug="{slug}",\n'
+            if input_fields:
+                content += f"            required_input_fields={input_fields},\n"
+            content += f"        )\n\n"
+
+    (output_dir / "factories.py").write_text(content)
+
+    return len(slug_mappings)
 
 
 def main():
@@ -317,6 +511,10 @@ def main():
     print("=== Generating registry.py with slug mappings ===")
     registry_count = generate_registry_py(output_dir, slug_mappings)
     print(f"Generated registry.py with {registry_count} evaluator mappings")
+
+    print("=== Generating factories.py with evaluator factory methods ===")
+    factory_count = generate_factories_py(output_dir, slug_mappings, filtered_definitions)
+    print(f"Generated factories.py with {factory_count} evaluator factory methods")
 
     print("=== Generating __init__.py with exports ===")
     req_count, resp_count = generate_init_py(output_dir)
