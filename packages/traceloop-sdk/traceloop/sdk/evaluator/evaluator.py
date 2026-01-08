@@ -28,7 +28,8 @@ def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:
     request_model = get_request_model(slug)
     if request_model:
         try:
-            request_model(**input)
+            # Request models expect data nested under 'input' field
+            request_model(input=input)
         except ValidationError as e:
             raise ValueError(f"Invalid input for '{slug}': {e}") from e
 
