@@ -171,6 +171,29 @@ We no longer log or collect any telemetry in the SDK or in the instrumentations.
 - We only collect anonymous data, with no personally identifiable information. You can view exactly what data we collect in our [Privacy documentation](https://www.traceloop.com/docs/openllmetry/privacy/telemetry).
 - Telemetry is only collected in the SDK. If you use the instrumentations directly without the SDK, no telemetry is collected.
 
+
+### Disable telemetry
+
+To opt out of anonymous telemetry, either:
+
+- Set environment variable `TRACELOOP_TELEMETRY=FALSE`, or
+- Initialize the SDK with `Traceloop.init(telemetry_enabled=False)`.
+
+### Simple Example
+
+```python
+import os
+from traceloop.sdk import Traceloop
+
+Traceloop.init(app_name="your_app_name", disable_batch=True)
+
+from traceloop.sdk import Traceloop
+
+Traceloop.init(app_name="openllmetry_demo_mohith", disable_batch=True)
+
+# ... your code ...
+
+
 ## 🌱 Contributing
 
 Whether big or small, we love contributions ❤️ Check out our guide to see how to [get started](https://traceloop.com/docs/openllmetry/contributing/overview).
