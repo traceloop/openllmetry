@@ -15,6 +15,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return dataclasses.asdict(o)
         if hasattr(o, "to_json"):
             return o.to_json()
+        if hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
         return super().default(o)
 
 

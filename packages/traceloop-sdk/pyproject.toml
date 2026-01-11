@@ -68,7 +68,7 @@ opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-
 opentelemetry-instrumentation-mcp = { path = "../opentelemetry-instrumentation-mcp", develop = true }
 colorama = "^0.4.6"
 tenacity = ">=8.2.3, <10.0"
-pydantic = ">=1"
+pydantic = ">=2"
 jinja2 = "^3.1.5"
 deprecated = "^1.2.14"
 aiohttp = "^3.11.11"
