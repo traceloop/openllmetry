@@ -473,17 +473,17 @@ def set_model_response_attributes(span, response, llm_model, token_histogram):
         token_histogram.record(
             response.usage_metadata.prompt_token_count,
             attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: "Google",
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                "gen_ai.provider.name": "Google",
+                "gen_ai.token.type": "input",
+                "gen_ai.response.model": llm_model,
             }
         )
         token_histogram.record(
                     response.usage_metadata.candidates_token_count,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: "Google",
-                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
-                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                        "gen_ai.provider.name": "Google",
+                        "gen_ai.token.type": "output",
+                        "gen_ai.response.model": llm_model,
                     },
                 )
 

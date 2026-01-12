@@ -111,8 +111,8 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert duration_dp.sum >= 0
 
     # Required attributes (values are intentionally not hard-coded)
-    assert SpanAttributes.LLM_SYSTEM in duration_dp.attributes
-    assert SpanAttributes.LLM_RESPONSE_MODEL in duration_dp.attributes
+    assert "gen_ai.provider.name" in duration_dp.attributes
+    assert "gen_ai.response.model" in duration_dp.attributes
 
     token_metric = metrics[Meters.LLM_TOKEN_USAGE]
 
@@ -132,5 +132,5 @@ def test_generate_metrics(metrics_test_context, genai_client):
         assert dp.sum >= 0
 
         # Required semantic attributes
-        assert SpanAttributes.LLM_SYSTEM in dp.attributes
-        assert SpanAttributes.LLM_RESPONSE_MODEL in dp.attributes
+        assert "gen_ai.provider.name" in dp.attributes
+        assert "gen_ai.response.model" in dp.attributes

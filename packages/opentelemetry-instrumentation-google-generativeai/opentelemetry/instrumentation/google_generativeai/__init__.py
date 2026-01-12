@@ -33,8 +33,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
-    SpanAttributes,
-    Meters
+    SpanAttributes
 )
 from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.trace import SpanKind, get_tracer
@@ -214,8 +213,8 @@ async def _awrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: "Google",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
+                "gen_ai.provider.name": "Google",
+                "gen_ai.response.model": llm_model
             },
         )
     if response:
@@ -285,8 +284,8 @@ def _wrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: "Google",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
+                "gen_ai.provider.name": "Google",
+                "gen_ai.response.model": llm_model
             },
         )
     if response:
@@ -311,13 +310,13 @@ def is_metrics_enabled() -> bool:
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
-        name=Meters.LLM_TOKEN_USAGE,
+        name="gen_ai.client.token.usage",
         unit="token",
         description="Measures number of input and output tokens used",
     )
 
     duration_histogram = meter.create_histogram(
-        name=Meters.LLM_OPERATION_DURATION,
+        name="gen_ai.client.operation.duration",
         unit="s",
         description="GenAI operation duration",
     )
