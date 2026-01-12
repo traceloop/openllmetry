@@ -94,12 +94,12 @@ def test_generate_metrics(metrics_test_context, genai_client):
 
     # ---- Required metrics (semantic conventions) ----
     required_metrics = {
-        Meters.LLM_OPERATION_DURATION,
-        Meters.LLM_TOKEN_USAGE,
+        "gen_ai.client.operation.duration",
+        "gen_ai.client.token.usage",
     }
     assert required_metrics.issubset(metrics.keys())
 
-    duration_metric = metrics[Meters.LLM_OPERATION_DURATION]
+    duration_metric = metrics["gen_ai.client.operation.duration"]
 
     assert duration_metric.unit is not None
     assert duration_metric.data.data_points
@@ -120,7 +120,7 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert token_metric.data.data_points
 
     token_points_by_type = {
-        dp.attributes.get(GenAIAttributes.GEN_AI_TOKEN_TYPE): dp
+        dp.attributes.get("gen_ai.token.type"): dp
         for dp in token_metric.data.data_points
     }
 
