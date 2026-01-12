@@ -256,7 +256,8 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
 
         if is_metrics_enabled():
             audio_transcription_exception_counter = meter.create_counter(
-                # name=Meters.LLM_AUDIO_TRANSCRIPTIONS_EXCEPTIONS, # TODO(Ata): come back here later when semconv is published
+                # TODO: Replace with Meters.LLM_AUDIO_TRANSCRIPTIONS_EXCEPTIONS
+                # once the semconv metric is published
                 name='llm.openai.audio.transcriptions.exceptions',
                 unit="time",
                 description="Number of exceptions occurred during audio transcriptions operation",

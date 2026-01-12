@@ -19,13 +19,14 @@ from opentelemetry.instrumentation.openai.utils import (
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-)
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
 SPAN_NAME = "openai.audio.transcriptions"
+
+# TODO: Replace with SpanAttributes.GEN_AI_OPENAI_AUDIO_INPUT_DURATION_SECONDS
+# once the semconv attribute is published
+GEN_AI_OPENAI_AUDIO_INPUT_DURATION_SECONDS = "gen_ai.openai.audio.input.duration_seconds"
 
 logger = logging.getLogger(__name__)
 
@@ -84,14 +85,13 @@ def transcription_wrapper(
     ) as span:
         _handle_request(span, kwargs, instance)
 
+        start_time = time.time()
         try:
-            # record time for duration
-            start_time = time.time()
             response = wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
             end_time = time.time()
-            duration = end_time - start_time if "start_time" in locals() else 0
+            duration = end_time - start_time
             attributes = {
                 "error.type": e.__class__.__name__,
             }
@@ -105,7 +105,6 @@ def transcription_wrapper(
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
-            span.end()
 
             raise
 
@@ -144,14 +143,13 @@ async def atranscription_wrapper(
     ) as span:
         _handle_request(span, kwargs, instance)
 
+        start_time = time.time()
         try:
-            # record time for duration
-            start_time = time.time()
             response = await wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
             end_time = time.time()
-            duration = end_time - start_time if "start_time" in locals() else 0
+            duration = end_time - start_time
             attributes = {
                 "error.type": e.__class__.__name__,
             }
@@ -165,7 +163,6 @@ async def atranscription_wrapper(
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
-            span.end()
 
             raise
 
@@ -192,15 +189,9 @@ def _handle_request(span, kwargs, instance):
     if file_param:
         audio_duration = _get_audio_duration(file_param)
         if audio_duration is not None:
-            # _set_span_attribute(
-            #     span, SpanAttributes.LLM_OPENAI_AUDIO_INPUT_DURATION_SECONDS, audio_duration
-            # )
-            # TODO(Ata): come back here later when semconv is published
             _set_span_attribute(
-                span, 'gen_ai.openai.audio.input.duration_seconds', audio_duration
+                span, GEN_AI_OPENAI_AUDIO_INPUT_DURATION_SECONDS, audio_duration
             )
-        else:
-            print("REMOVE ME : ATA-DBG : COULD NOT READ AUDIO FILE WITH MUTAGEN")
 
 
 @dont_throw
