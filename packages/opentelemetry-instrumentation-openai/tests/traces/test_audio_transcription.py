@@ -6,9 +6,17 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv_ai import SpanAttributes
 
 
+@pytest.fixture(scope="module")
+def vcr_config():
+    return {
+        "filter_headers": ["authorization", "api-key"],
+        "match_on": ["method", "scheme", "host", "port", "path"],
+    }
+
+
 @pytest.mark.vcr
 def test_audio_transcription(instrument_legacy, span_exporter, openai_client):
-    # Create a mock audio file (in real test, use VCR cassette)
+    # Create a mock audio file (VCR cassette will intercept the actual API call)
     audio_file = io.BytesIO(b"fake audio content")
     audio_file.name = "test_audio.mp3"
 
@@ -36,7 +44,7 @@ def test_audio_transcription(instrument_legacy, span_exporter, openai_client):
 async def test_audio_transcription_async(
     instrument_legacy, span_exporter, async_openai_client
 ):
-    # Create a mock audio file
+    # Create a mock audio file (VCR cassette will intercept the actual API call)
     audio_file = io.BytesIO(b"fake audio content")
     audio_file.name = "test_audio.mp3"
 
