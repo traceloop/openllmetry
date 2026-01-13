@@ -213,8 +213,8 @@ async def _awrap(
         duration_histogram.record(
             duration,
             attributes={
-                "gen_ai.provider.name": "Google",
-                "gen_ai.response.model": llm_model
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
             },
         )
     if response:
@@ -284,8 +284,8 @@ def _wrap(
         duration_histogram.record(
             duration,
             attributes={
-                "gen_ai.provider.name": "Google",
-                "gen_ai.response.model": llm_model
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
             },
         )
     if response:

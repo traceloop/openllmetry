@@ -94,12 +94,12 @@ def test_generate_metrics(metrics_test_context, genai_client):
 
     # ---- Required metrics (semantic conventions) ----
     required_metrics = {
-        "gen_ai.client.operation.duration",
-        "gen_ai.client.token.usage",
+        Meters.LLM_OPERATION_DURATION,
+        Meters.LLM_TOKEN_USAGE,
     }
     assert required_metrics.issubset(metrics.keys())
 
-    duration_metric = metrics["gen_ai.client.operation.duration"]
+    duration_metric = metrics[Meters.LLM_OPERATION_DURATION]
 
     assert duration_metric.unit is not None
     assert duration_metric.data.data_points
@@ -111,8 +111,8 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert duration_dp.sum >= 0
 
     # Required attributes (values are intentionally not hard-coded)
-    assert "gen_ai.provider.name" in duration_dp.attributes
-    assert "gen_ai.response.model" in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_PROVIDER_NAME in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in duration_dp.attributes
 
     token_metric = metrics[Meters.LLM_TOKEN_USAGE]
 
@@ -120,7 +120,7 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert token_metric.data.data_points
 
     token_points_by_type = {
-        dp.attributes.get("gen_ai.token.type"): dp
+        dp.attributes.get(SpanAttributes.LLM_TOKEN_TYPE): dp
         for dp in token_metric.data.data_points
     }
 
@@ -132,5 +132,5 @@ def test_generate_metrics(metrics_test_context, genai_client):
         assert dp.sum >= 0
 
         # Required semantic attributes
-        assert "gen_ai.provider.name" in dp.attributes
-        assert "gen_ai.response.model" in dp.attributes
+        assert GenAIAttributes.GEN_AI_PROVIDER_NAME in dp.attributes
+        assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in dp.attributes
