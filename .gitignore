@@ -180,3 +180,6 @@ chroma.sqlite3
 
 # Claude
 .claude
+
+# Development files
+packages/sample-app/sample_app/development/
