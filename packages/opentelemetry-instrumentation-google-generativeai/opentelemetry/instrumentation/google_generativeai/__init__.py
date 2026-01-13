@@ -36,7 +36,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.metrics import Meter, get_meter
-from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace import SpanKind, get_tracer, StatusCode
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,9 @@ def _build_from_streaming_response(
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, complete_response, llm_model)
-    set_model_response_attributes(span, last_chunk or response, llm_model, token_histogram)
+    set_model_response_attributes(
+        span, last_chunk or response, llm_model, token_histogram
+    )
     span.end()
 
 
@@ -117,7 +119,9 @@ async def _abuild_from_streaming_response(
         emit_choice_events(response, event_logger)
     else:
         set_response_attributes(span, complete_response, llm_model)
-    set_model_response_attributes(span, last_chunk if last_chunk else response, llm_model, token_histogram)
+    set_model_response_attributes(
+        span, last_chunk if last_chunk else response, llm_model, token_histogram
+    )
     span.end()
 
 
@@ -144,7 +148,9 @@ def _handle_response(span, response, llm_model, event_logger, token_histogram):
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, event_logger, to_wrap, token_histogram, duration_histogram):
+    def _with_tracer(
+        tracer, event_logger, to_wrap, token_histogram, duration_histogram
+    ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
@@ -174,7 +180,6 @@ async def _awrap(
     instance,
     args,
     kwargs,
-
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
@@ -205,32 +210,37 @@ async def _awrap(
     )
     start_time = time.perf_counter()
     _handle_request(span, args, kwargs, llm_model, event_logger)
+    try:
+        response = await wrapped(*args, **kwargs)
 
-    response = await wrapped(*args, **kwargs)
-
-    if duration_histogram:
-        duration = time.perf_counter() - start_time
-        duration_histogram.record(
-            duration,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
-            },
-        )
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
+        if duration_histogram:
+            duration = time.perf_counter() - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
             )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
-        else:
-            _handle_response(span, response, llm_model, event_logger, token_histogram)
+        if response:
+            if is_streaming_response(response):
+                return _build_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            elif is_async_streaming_response(response):
+                return _abuild_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            else:
+                _handle_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
 
-    span.end()
-    return response
+        span.end()
+        return response
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR)
 
 
 @_with_tracer_wrapper
@@ -244,7 +254,6 @@ def _wrap(
     instance,
     args,
     kwargs,
-
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
@@ -276,32 +285,37 @@ def _wrap(
 
     start_time = time.perf_counter()
     _handle_request(span, args, kwargs, llm_model, event_logger)
+    try:
+        response = wrapped(*args, **kwargs)
 
-    response = wrapped(*args, **kwargs)
-
-    if duration_histogram:
-        duration = time.perf_counter() - start_time
-        duration_histogram.record(
-            duration,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model
-            },
-        )
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
+        if duration_histogram:
+            duration = time.perf_counter() - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
             )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
-        else:
-            _handle_response(span, response, llm_model, event_logger, token_histogram)
+        if response:
+            if is_streaming_response(response):
+                return _build_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            elif is_async_streaming_response(response):
+                return _abuild_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            else:
+                _handle_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
 
-    span.end()
-    return response
+        span.end()
+        return response
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR)
 
 
 def is_metrics_enabled() -> bool:
@@ -327,7 +341,12 @@ def _create_metrics(meter: Meter):
 class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Google Generative AI's client library."""
 
-    def __init__(self, exception_logger=None, use_legacy_attributes=True, upload_base64_image=None):
+    def __init__(
+        self,
+        exception_logger=None,
+        use_legacy_attributes=True,
+        upload_base64_image=None,
+    ):
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes

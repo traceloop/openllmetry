@@ -1,8 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
-from opentelemetry.instrumentation.google_generativeai import (
-    GoogleGenerativeAiInstrumentor,
-)
 from opentelemetry.trace import StatusCode, SpanKind
 from opentelemetry.semconv_ai import (
     SpanAttributes,
@@ -24,14 +20,6 @@ def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
-
-
-@pytest.fixture
-def mock_instrumentor():
-    instrumentor = GoogleGenerativeAiInstrumentor()
-    instrumentor.instrument = MagicMock()
-    instrumentor.uninstrument = MagicMock()
-    return instrumentor
 
 
 @pytest.mark.vcr
