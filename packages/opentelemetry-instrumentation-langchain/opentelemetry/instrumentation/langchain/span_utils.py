@@ -211,10 +211,17 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
     for generations in response.generations:
         for generation in generations:
             prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
+
+            if hasattr(generation, "message") and generation.message and hasattr(generation.message, "type"):
+                role = _message_type_to_role(generation.message.type)
+            else:
+                # For non-chat completions (Generation objects), default to assistant
+                role = "assistant"
+
             _set_span_attribute(
                 span,
                 f"{prefix}.role",
-                _message_type_to_role(generation.type),
+                role,
             )
 
             # Try to get content from various sources
