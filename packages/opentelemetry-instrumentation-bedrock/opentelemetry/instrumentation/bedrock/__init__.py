@@ -1,5 +1,7 @@
 """OpenTelemetry Bedrock instrumentation"""
 
+import asyncio
+import inspect
 import json
 import logging
 import os
@@ -96,12 +98,20 @@ logger = logging.getLogger(__name__)
 _instruments = ("boto3 >= 1.28.57",)
 
 WRAPPED_METHODS = [
+    # Sync boto3 client creation
     {
         "package": "botocore.client",
         "object": "ClientCreator",
         "method": "create_client",
     },
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
+    # Async aioboto3 client creation - wrap the context manager entry
+    {
+        "package": "aiobotocore.session",
+        "object": "ClientCreatorContext",
+        "method": "__aenter__",
+        "async": True,
+    },
 ]
 
 _BEDROCK_INVOKE_SPAN_NAME = "bedrock.completion"
@@ -194,6 +204,61 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
+@_with_tracer_wrapper
+async def _wrap_aioboto3_context(
+    tracer,
+    metric_params,
+    event_logger,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """
+    Wraps aioboto3's ClientCreatorContext.__aenter__ to instrument the client
+    when it's created from the async context manager.
+    """
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return await wrapped(*args, **kwargs)
+
+    # Call the original __aenter__ to get the client
+    client = await wrapped(*args, **kwargs)
+
+    # Check if this is a bedrock-runtime client
+    # The client has _service_model.service_name attribute
+    is_bedrock = (
+        hasattr(client, '_service_model') and
+        hasattr(client._service_model, 'service_name') and
+        client._service_model.service_name == "bedrock-runtime"
+    )
+
+    if is_bedrock:
+        try:
+            # Instrument the client's methods with async wrappers
+            client.invoke_model = _instrumented_model_invoke_async(
+                client.invoke_model, tracer, metric_params, event_logger
+            )
+            client.invoke_model_with_response_stream = (
+                _instrumented_model_invoke_with_response_stream_async(
+                    client.invoke_model_with_response_stream,
+                    tracer,
+                    metric_params,
+                    event_logger,
+                )
+            )
+            client.converse = _instrumented_converse_async(
+                client.converse, tracer, metric_params, event_logger
+            )
+            client.converse_stream = _instrumented_converse_stream_async(
+                client.converse_stream, tracer, metric_params, event_logger
+            )
+        except Exception as e:
+            logger.debug(f"Failed to instrument aioboto3 client: {e}")
+
+    return client
+
+
 def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
@@ -256,6 +321,74 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
 
         span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
         response = fn(*args, **kwargs)
+        if span.is_recording():
+            _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
+
+        return response
+
+    return with_instrumentation
+
+
+# Async instrumentation wrappers for aioboto3
+def _instrumented_model_invoke_async(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        with tracer.start_as_current_span(
+            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
+        ) as span:
+            response = await fn(*args, **kwargs)
+            _handle_call(span, kwargs, response, metric_params, event_logger)
+            return response
+
+    return with_instrumentation
+
+
+def _instrumented_model_invoke_with_response_stream_async(
+    fn, tracer, metric_params, event_logger
+):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
+
+        response = await fn(*args, **kwargs)
+        _handle_stream_call(span, kwargs, response, metric_params, event_logger)
+
+        return response
+
+    return with_instrumentation
+
+
+def _instrumented_converse_async(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        with tracer.start_as_current_span(
+            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
+        ) as span:
+            response = await fn(*args, **kwargs)
+            _handle_converse(span, kwargs, response, metric_params, event_logger)
+
+            return response
+
+    return with_instrumentation
+
+
+def _instrumented_converse_stream_async(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+        response = await fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
@@ -638,10 +771,18 @@ class BedrockInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
+            is_async = wrapped_method.get("async", False)
+
+            # Use the appropriate wrapper based on whether it's async
+            wrapper_func = (
+                _wrap_aioboto3_context if is_async
+                else _wrap
+            )
+
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                _wrap(
+                wrapper_func(
                     tracer,
                     metric_params,
                     event_logger,
