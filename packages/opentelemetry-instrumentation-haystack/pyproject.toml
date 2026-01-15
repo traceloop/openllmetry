@@ -29,17 +29,17 @@ haystack-ai = "opentelemetry.instrumentation.haystack:HaystackInstrumentor"
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
+  "pytest-sugar==1.1.1",
   "pytest>=8.2.2,<9",
   "ruff>=0.4.0",
 ]
 test = [
-  "haystack-ai>=2.0,<2.4",
+  "haystack-ai>=2.0,<2.22",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
+  "pytest-sugar==1.1.1",
   "pytest>=8.2.2,<9",
-  "vcrpy>=6.0.1,<7",
+  "vcrpy>=6.0.1,<8",
 ]
 
 [build-system]
