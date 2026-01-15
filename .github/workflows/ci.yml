@@ -9,7 +9,6 @@ on:
       - "main"
 
 env:
-  UV_CACHE_DIR: /tmp/uv-cache
   PIP_NO_CACHE_DIR: 1
 
 jobs:
@@ -55,16 +54,10 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Ensure uv cache directory exists
-        run: mkdir -p /tmp/uv-cache
-
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
-          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
@@ -110,16 +103,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Ensure uv cache directory exists
-        run: mkdir -p /tmp/uv-cache
-
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
-          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
@@ -179,16 +166,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Ensure uv cache directory exists
-        run: mkdir -p /tmp/uv-cache
-
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
-          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
