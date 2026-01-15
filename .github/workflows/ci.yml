@@ -61,6 +61,7 @@ jobs:
           version: "latest"
           enable-cache: true
           cache-dependency-glob: "**/uv.lock"
+          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
@@ -112,6 +113,7 @@ jobs:
           version: "latest"
           enable-cache: true
           cache-dependency-glob: "**/uv.lock"
+          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
@@ -177,6 +179,7 @@ jobs:
           version: "latest"
           enable-cache: true
           cache-dependency-glob: "**/uv.lock"
+          cache-local-path: /tmp/uv-cache
 
       - uses: actions/setup-node@v4
         with:
