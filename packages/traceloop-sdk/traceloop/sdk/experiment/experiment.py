@@ -28,12 +28,14 @@ class Experiment:
     _datasets: Datasets
     _evaluator: Evaluator
     _http_client: HTTPClient
+    _last_run_id: Optional[str]
 
     def __init__(self, http_client: HTTPClient, async_http_client: httpx.AsyncClient, experiment_slug: str):
         self._datasets = Datasets(http_client)
         self._evaluator = Evaluator(async_http_client)
         self._http_client = http_client
         self._experiment_slug = experiment_slug
+        self._last_run_id = None
 
     async def run(
         self,
@@ -151,6 +153,7 @@ class Experiment:
         )
 
         run_id = experiment.run.id
+        self._last_run_id = run_id
 
         rows = []
         if dataset_slug and dataset_version:
@@ -387,7 +390,9 @@ class Experiment:
                 f"Failed to submit experiment '{experiment_slug}' for GitHub execution. "
             )
 
-        return RunInGithubResponse(**response)
+        result = RunInGithubResponse(**response)
+        self._last_run_id = result.run_id
+        return result
 
     def _init_experiment(
         self,
@@ -516,3 +521,67 @@ class Experiment:
             task_results.append(result)
 
         return task_results
+
+    def _resolve_export_params(
+        self,
+        experiment_slug: Optional[str],
+        run_id: Optional[str],
+    ) -> Tuple[str, str]:
+        """Resolve experiment_slug and run_id from params or last run."""
+        slug = experiment_slug or self._experiment_slug
+        rid = run_id or self._last_run_id
+
+        if not slug:
+            raise ValueError(
+                "experiment_slug is required - either pass it or call run() first"
+            )
+        if not rid:
+            raise ValueError(
+                "run_id is required - either pass it or call run() first"
+            )
+
+        return slug, rid
+
+    def to_csv(
+        self,
+        experiment_slug: Optional[str] = None,
+        run_id: Optional[str] = None,
+    ) -> str:
+        """Get experiment run results as CSV string.
+
+        Args:
+            experiment_slug: Experiment slug (uses last run if not provided)
+            run_id: Run ID (uses last run if not provided)
+
+        Returns:
+            CSV formatted string of results
+        """
+        slug, rid = self._resolve_export_params(experiment_slug, run_id)
+        result = self._http_client.get(f"/experiments/{slug}/runs/{rid}/export/csv")
+        if result is None:
+            raise Exception(
+                f"Failed to export CSV for experiment '{slug}' run '{rid}'"
+            )
+        return str(result)
+
+    def to_json(
+        self,
+        experiment_slug: Optional[str] = None,
+        run_id: Optional[str] = None,
+    ) -> str:
+        """Get experiment run results as JSON string.
+
+        Args:
+            experiment_slug: Experiment slug (uses last run if not provided)
+            run_id: Run ID (uses last run if not provided)
+
+        Returns:
+            JSON formatted string of results
+        """
+        slug, rid = self._resolve_export_params(experiment_slug, run_id)
+        result = self._http_client.get(f"/experiments/{slug}/runs/{rid}/export/json")
+        if result is None:
+            raise Exception(
+                f"Failed to export JSON for experiment '{slug}' run '{rid}'"
+            )
+        return json.dumps(result) if isinstance(result, dict) else str(result)
