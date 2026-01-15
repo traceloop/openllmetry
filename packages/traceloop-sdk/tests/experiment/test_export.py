@@ -59,8 +59,8 @@ class TestExportMethods:
         mock_http_client.get = Mock(return_value="csv,data")
         mock_async_http_client = Mock()
 
-        experiment = Experiment(mock_http_client, mock_async_http_client, "my-exp")
-        experiment._last_experiment_id = "exp-456"
+        experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = "my-exp"
         experiment._last_run_id = "run-789"
 
         result = experiment.to_csv()
@@ -77,8 +77,8 @@ class TestExportMethods:
         mock_http_client.get = Mock(return_value={"data": "value"})
         mock_async_http_client = Mock()
 
-        experiment = Experiment(mock_http_client, mock_async_http_client, "my-exp")
-        experiment._last_experiment_id = "exp-456"
+        experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = "my-exp"
         experiment._last_run_id = "run-789"
 
         result = experiment.to_json()
@@ -94,8 +94,9 @@ class TestExportMethods:
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
 
-        # Create experiment with empty slug
+        # Create experiment with empty slug and no last_experiment_slug
         experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = None
 
         with pytest.raises(ValueError) as exc_info:
             experiment.to_csv(run_id="run-123")
@@ -108,7 +109,8 @@ class TestExportMethods:
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
 
-        experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
+        experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = "test-exp"
 
         with pytest.raises(ValueError) as exc_info:
             experiment.to_csv()
@@ -121,7 +123,9 @@ class TestExportMethods:
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
 
+        # Create experiment with empty slug and no last_experiment_slug
         experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = None
 
         with pytest.raises(ValueError) as exc_info:
             experiment.to_json(run_id="run-123")
@@ -134,7 +138,8 @@ class TestExportMethods:
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
 
-        experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
+        experiment = Experiment(mock_http_client, mock_async_http_client, "")
+        experiment._last_experiment_slug = "test-exp"
 
         with pytest.raises(ValueError) as exc_info:
             experiment.to_json()
