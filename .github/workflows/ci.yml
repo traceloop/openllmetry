@@ -9,7 +9,6 @@ on:
       - "main"
 
 env:
-  UV_CACHE_DIR: /tmp/uv-cache
   PIP_NO_CACHE_DIR: 1
 
 jobs:
@@ -59,8 +58,6 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
@@ -110,8 +107,6 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
@@ -175,8 +170,6 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-          enable-cache: true
-          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
