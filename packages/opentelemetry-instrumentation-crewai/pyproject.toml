@@ -38,6 +38,7 @@ test = [
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
+  "setuptools",
 ]
 
 [build-system]
