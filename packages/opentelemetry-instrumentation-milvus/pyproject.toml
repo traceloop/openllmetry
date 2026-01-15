@@ -21,7 +21,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-milvus"
 
 [project.optional-dependencies]
-instruments = ["milvus"]
+instruments = ["pymilvus"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 milvus = "opentelemetry.instrumentation.milvus:MilvusInstrumentor"

@@ -30,7 +30,6 @@ boto3 = "opentelemetry.instrumentation.bedrock:BedrockInstrumentor"
 
 [dependency-groups]
 dev = [
-  "autopep8>=2.2.0,<3",
   "ruff>=0.4.0",
 ]
 test = [

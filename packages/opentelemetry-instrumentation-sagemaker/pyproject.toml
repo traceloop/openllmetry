@@ -18,6 +18,12 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-sagemaker"
 
+[project.optional-dependencies]
+instruments = ["boto3"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+sagemaker = "opentelemetry.instrumentation.sagemaker:SageMakerInstrumentor"
+
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",

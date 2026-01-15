@@ -20,6 +20,12 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-transformers"
 
+[project.optional-dependencies]
+instruments = ["transformers"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+transformers = "opentelemetry.instrumentation.transformers:TransformersInstrumentor"
+
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
