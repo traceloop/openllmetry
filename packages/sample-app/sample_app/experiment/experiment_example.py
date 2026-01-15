@@ -34,7 +34,7 @@ async def medical_task_refuse_advice(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"Prod_Answer": answer, "prompt": prompt_text}
 
 
 async def medical_task_provide_info(row):
@@ -43,7 +43,7 @@ async def medical_task_provide_info(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"Prod_Answer": answer, "prompt": prompt_text}
 
 
 async def run_experiment_example():
@@ -56,8 +56,8 @@ async def run_experiment_example():
         dataset_slug="medical-q",
         dataset_version="v1",
         task=medical_task_refuse_advice,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
+        evaluators=["medical-advice-eval"],
+        experiment_slug="medical-advice-exp-14-01-2026",
         stop_on_error=False,
     )
 
@@ -72,8 +72,8 @@ async def run_experiment_example():
         dataset_slug="medical-q",
         dataset_version="v1",
         task=medical_task_provide_info,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
+        evaluators=["medical-advice-eval"],
+        experiment_slug="medical-advice-exp-14-01-2026",
         stop_on_error=False,
     )
 

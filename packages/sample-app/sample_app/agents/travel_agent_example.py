@@ -2,7 +2,9 @@ import asyncio
 import random
 import argparse
 import time
-from typing import Dict, List
+import csv
+import json
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from pydantic import BaseModel
 import requests
@@ -16,6 +18,7 @@ from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseOutputText,
     ResponseOutputRefusal,
+    ResponseFunctionCallArgumentsDoneEvent,
 )
 
 load_dotenv()
@@ -650,11 +653,233 @@ class TravelPlannerAgent(Agent[TravelContext]):
         )
 
 
-async def handle_runner_stream(runner: "Runner"):
+# =============================================================================
+# Dataset Collector
+# =============================================================================
+
+class DatasetCollector:
+    """Collects tool call data for BFCL-style dataset generation."""
+
+    def __init__(self):
+        self.rows: List[Dict[str, Any]] = []
+        self.current_query_id: int = 0
+        self.current_turn: int = 0
+        self.current_history: List[Dict[str, Any]] = []
+        self.current_query: str = ""
+
+    def start_new_query(self, query: str):
+        """Start tracking a new query."""
+        self.current_query = query
+        self.current_turn = 0
+        self.current_history = []
+
+    def record_tool_call(
+        self,
+        tool_name: str,
+        tool_arguments: Dict[str, Any],
+        result_status: str = "pass"
+    ):
+        """Record a single tool call."""
+        row = {
+            "id": f"travel_{self.current_query_id}_turn{self.current_turn}",
+            "category": "travel_multi_turn",
+            "user_query": self.current_query,
+            "selected_tool": tool_name,
+            "selected_tool_arguments": json.dumps(tool_arguments),
+            "expected_result": result_status,
+            "failure_mode": "",
+            "expected_score_min": 0.75,
+            "expected_score_max": 1.0,
+            "has_agent_history": len(self.current_history) > 0,
+            "agent_history": json.dumps(self.current_history),
+            "available_tools": json.dumps(self._get_available_tools_schema())
+        }
+        self.rows.append(row)
+
+        # Update history for next turn
+        self.current_history.append({
+            "tool_name": tool_name,
+            "arguments": tool_arguments,
+            "result": {"success": result_status == "pass"}
+        })
+        self.current_turn += 1
+
+    def end_query(self):
+        """End tracking for current query."""
+        self.current_query_id += 1
+
+    def export_to_csv(self, filepath: str):
+        """Export collected data to CSV file."""
+        if not self.rows:
+            print("No data to export")
+            return
+
+        fieldnames = [
+            "id", "category", "user_query", "selected_tool",
+            "selected_tool_arguments", "expected_result", "failure_mode",
+            "expected_score_min", "expected_score_max", "has_agent_history",
+            "agent_history", "available_tools"
+        ]
+
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self.rows)
+
+        print(f"Exported {len(self.rows)} rows to {filepath}")
+
+    def _get_available_tools_schema(self) -> List[Dict[str, Any]]:
+        """Get JSON schema for all available tools."""
+        return [
+            {
+                "name": "search_destinations",
+                "description": "Search for travel destinations by region or subregion.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Region to search (e.g., Europe, Asia)"
+                        },
+                        "subregion": {
+                            "type": "string",
+                            "description": "Subregion to search"
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "get_location_coordinates",
+                "description": "Get coordinates for a location.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location_name": {
+                            "type": "string",
+                            "description": "Name of the city or location"
+                        }
+                    },
+                    "required": ["location_name"]
+                }
+            },
+            {
+                "name": "get_weather_forecast",
+                "description": "Get current weather and 7-day forecast.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location_name": {
+                            "type": "string",
+                            "description": "Name of the location"
+                        },
+                        "latitude": {
+                            "type": "number",
+                            "description": "Latitude coordinate"
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "description": "Longitude coordinate"
+                        }
+                    },
+                    "required": ["location_name", "latitude", "longitude"]
+                }
+            },
+            {
+                "name": "get_destination_info",
+                "description": "Get information about a destination from Wikipedia.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "destination_name": {
+                            "type": "string",
+                            "description": "Name of the destination"
+                        }
+                    },
+                    "required": ["destination_name"]
+                }
+            },
+            {
+                "name": "calculate_travel_distance",
+                "description": "Calculate distance and flight time between two locations.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "from_location": {
+                            "type": "string",
+                            "description": "Starting location name"
+                        },
+                        "to_location": {
+                            "type": "string",
+                            "description": "Destination location name"
+                        },
+                        "from_lat": {
+                            "type": "number",
+                            "description": "Starting latitude"
+                        },
+                        "from_lon": {
+                            "type": "number",
+                            "description": "Starting longitude"
+                        },
+                        "to_lat": {
+                            "type": "number",
+                            "description": "Destination latitude"
+                        },
+                        "to_lon": {
+                            "type": "number",
+                            "description": "Destination longitude"
+                        }
+                    },
+                    "required": ["from_location", "to_location", "from_lat", "from_lon", "to_lat", "to_lon"]
+                }
+            },
+            {
+                "name": "create_itinerary",
+                "description": "Create a detailed day-by-day travel itinerary.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "destination": {
+                            "type": "string",
+                            "description": "Main destination for the trip"
+                        },
+                        "duration_days": {
+                            "type": "integer",
+                            "description": "Number of days for the trip"
+                        },
+                        "budget": {
+                            "type": "string",
+                            "description": "Budget level (budget, moderate, luxury)"
+                        },
+                        "interests": {
+                            "type": "string",
+                            "description": "Traveler interests"
+                        },
+                        "weather_info": {
+                            "type": "string",
+                            "description": "Weather forecast information"
+                        },
+                        "destination_details": {
+                            "type": "string",
+                            "description": "Additional destination details"
+                        }
+                    },
+                    "required": ["destination", "duration_days", "budget", "interests"]
+                }
+            }
+        ]
+
+
+async def handle_runner_stream(
+    runner: "Runner",
+    collector: Optional[DatasetCollector] = None
+):
     """Process runner events and display output."""
 
     tool_calls_made = []
     response_text_parts = []
+    # Track pending tool calls by item_id to capture arguments when complete
+    pending_tool_calls: Dict[str, str] = {}  # item_id -> tool_name
 
     async for event in runner.stream_events():
         if event.type == "raw_response_event":
@@ -664,8 +889,34 @@ async def handle_runner_stream(runner: "Runner"):
             elif isinstance(event.data, ResponseOutputItemAddedEvent):
                 if isinstance(event.data.item, ResponseFunctionToolCall):
                     tool_name = event.data.item.name
+                    item_id = getattr(event.data.item, "id", None)
                     tool_calls_made.append(tool_name)
-                    print(f"\n[Calling tool: {tool_name}]\n")
+                    print(f"\n[Calling tool: {tool_name}]")
+
+                    # Track this tool call to capture arguments later
+                    if item_id:
+                        pending_tool_calls[item_id] = tool_name
+
+            elif isinstance(event.data, ResponseFunctionCallArgumentsDoneEvent):
+                # Arguments are now complete - record to dataset collector
+                item_id = getattr(event.data, "item_id", None)
+                arguments_str = getattr(event.data, "arguments", "{}")
+
+                tool_name = pending_tool_calls.get(item_id, "unknown")
+
+                try:
+                    tool_arguments = json.loads(arguments_str) if arguments_str else {}
+                except json.JSONDecodeError:
+                    tool_arguments = {}
+
+                # Record to dataset collector with complete arguments
+                if collector:
+                    collector.record_tool_call(
+                        tool_name=tool_name,
+                        tool_arguments=tool_arguments,
+                        result_status="pass"
+                    )
+
         elif event.type == "run_item_stream_event":
             if event.name == "tool_output" and isinstance(
                 event.item, ToolCallOutputItem
@@ -677,7 +928,7 @@ async def handle_runner_stream(runner: "Runner"):
                     else getattr(raw_item, "content", "")
                 )
                 if content:
-                    print(f"\n[Tool output: {content[:200]}...]\n", end="", flush=True)
+                    print(f"[Tool output: {str(content)[:150]}...]", end="", flush=True)
 
             elif event.name == "message_output_created":
                 raw_item = event.item.raw_item
@@ -701,12 +952,17 @@ async def handle_runner_stream(runner: "Runner"):
     return tool_calls_made, "".join(response_text_parts)
 
 
-async def run_travel_query(query: str, return_response_text: bool = False):
+async def run_travel_query(
+    query: str,
+    collector: Optional[DatasetCollector] = None,
+    return_response_text: bool = False
+):
     """
     Run a single travel planning query.
 
     Args:
         query: The travel planning query
+        collector: Optional DatasetCollector for recording tool calls
         return_response_text: If True, returns the response text.
             If False, returns tool_calls (for backward compatibility)
 
@@ -718,16 +974,22 @@ async def run_travel_query(query: str, return_response_text: bool = False):
     print(f"Query: {query}")
     print("=" * 80)
 
+    if collector:
+        collector.start_new_query(query)
+
     travel_agent = TravelPlannerAgent()
 
     print("\nAgent Response: ", end="", flush=True)
 
     messages = [{"role": "user", "content": query}]
     runner = Runner().run_streamed(starting_agent=travel_agent, input=messages)
-    tool_calls, response_text = await handle_runner_stream(runner)
+    tool_calls, response_text = await handle_runner_stream(runner, collector)
+
+    if collector:
+        collector.end_query()
 
     print(f"\n{'='*80}")
-    print(f"✅ Query completed! Tools used: {', '.join(tool_calls) if tool_calls else 'None'}")
+    print(f"Query completed! Tools used: {', '.join(tool_calls) if tool_calls else 'None'}")
     print(f"{'='*80}\n")
 
     if return_response_text:
@@ -867,13 +1129,24 @@ async def main():
         "--count",
         type=int,
         default=1,
-        help="Number of queries to run (default: 3)"
+        help="Number of queries to run (default: 1)"
     )
     parser.add_argument(
         "--delay",
         type=float,
         default=2.0,
         help="Delay between queries in seconds (default: 2.0)"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="travel_dataset.csv",
+        help="Output CSV file path (default: travel_dataset.csv)"
+    )
+    parser.add_argument(
+        "--no-collect",
+        action="store_true",
+        help="Disable dataset collection"
     )
 
     args = parser.parse_args()
@@ -888,6 +1161,9 @@ async def main():
     print("=" * 80)
     print()
 
+    # Initialize dataset collector
+    collector = None if args.no_collect else DatasetCollector()
+
     queries = generate_travel_queries(args.count)
 
     all_tool_calls = []
@@ -896,7 +1172,7 @@ async def main():
         print(f"# Query {i} of {args.count}")
         print(f"{'#'*80}\n")
 
-        tool_calls = await run_travel_query(query)
+        tool_calls = await run_travel_query(query, collector=collector)
         all_tool_calls.append({
             "query": query,
             "tools_used": tool_calls,
@@ -906,6 +1182,10 @@ async def main():
         if i < args.count:
             print(f"\nWaiting {args.delay} seconds before next query...")
             time.sleep(args.delay)
+
+    # Export dataset
+    if collector:
+        collector.export_to_csv(args.output)
 
     # Summary
     print("\n\n" + "=" * 80)
@@ -926,12 +1206,19 @@ async def main():
     unique_trajectories = len(set(tuple(r["tools_used"]) for r in all_tool_calls))
     print(f"  - Unique tool call sequences: {unique_trajectories}/{len(all_tool_calls)}")
 
-    avg_tools = sum(r["tool_count"] for r in all_tool_calls) / len(all_tool_calls)
+    avg_tools = (
+        sum(r["tool_count"] for r in all_tool_calls) / len(all_tool_calls)
+        if all_tool_calls else 0
+    )
     print(f"  - Average tools per query: {avg_tools:.2f}")
 
+    if collector:
+        print(f"\nDataset exported to: {args.output}")
+        print(f"Total rows in dataset: {len(collector.rows)}")
+
     print("\n" + "=" * 80)
-    print("✅ Travel Agent demo completed successfully!")
-    print("🔍 All spans captured by OpenTelemetry instrumentation")
+    print("Travel Agent demo completed!")
+    print("All spans captured by OpenTelemetry instrumentation")
     print("=" * 80)
 
 
