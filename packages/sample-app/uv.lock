@@ -3481,7 +3481,7 @@ dev = [
 test = [
     { name = "agno", specifier = ">=2.2.2" },
     { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
@@ -3937,8 +3937,8 @@ test = [
     { name = "langchainhub", specifier = ">=0.1.21,<0.2.0" },
     { name = "langgraph", specifier = ">=0.4,<0.5.0" },
     { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-bedrock", editable = "../opentelemetry-instrumentation-bedrock" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-bedrock" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pydantic", specifier = ">=2.10.5,<3" },
     { name = "pytest", specifier = ">=8.3.3,<9" },
@@ -3990,9 +3990,9 @@ test = [
     { name = "llama-parse", specifier = ">=0.5.20,<0.6.0" },
     { name = "onnxruntime", specifier = "<1.20.0" },
     { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-chromadb", editable = "../opentelemetry-instrumentation-chromadb" },
-    { name = "opentelemetry-instrumentation-cohere", editable = "../opentelemetry-instrumentation-cohere" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-chromadb" },
+    { name = "opentelemetry-instrumentation-cohere" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
@@ -4309,7 +4309,7 @@ dev = [
 ]
 test = [
     { name = "openai", extras = ["datalib"], specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pinecone-client", specifier = ">=5.0.0,<6" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
@@ -4670,7 +4670,7 @@ dev = [
 ]
 test = [
     { name = "openai", specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
@@ -4760,10 +4760,24 @@ wheels = [
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
 version = "0.4.13"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ba/e6/40b59eda51ac47009fb47afcdf37c6938594a0bd7f3b9fadcbc6058248e3/opentelemetry_semantic_conventions_ai-0.4.13.tar.gz", hash = "sha256:94efa9fb4ffac18c45f54a3a338ffeb7eedb7e1bb4d147786e77202e159f0036", size = 5368 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/b5/cf25da2218910f0d6cdf7f876a06bed118c4969eacaf60a887cbaef44f44/opentelemetry_semantic_conventions_ai-0.4.13-py3-none-any.whl", hash = "sha256:883a30a6bb5deaec0d646912b5f9f6dcbb9f6f72557b73d0f2560bf25d13e2d5", size = 6080 },
+source = { editable = "../opentelemetry-semantic-conventions-ai" }
+dependencies = [
+    { name = "opentelemetry-sdk" },
+    { name = "opentelemetry-semantic-conventions" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autopep8", specifier = ">=2.2.0,<3" },
+    { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "ruff", specifier = ">=0.4.0" },
 ]
 
 [[package]]
@@ -6691,7 +6705,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-weaviate", editable = "../opentelemetry-instrumentation-weaviate" },
     { name = "opentelemetry-instrumentation-writer", editable = "../opentelemetry-instrumentation-writer" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
+    { name = "opentelemetry-semantic-conventions-ai", editable = "../opentelemetry-semantic-conventions-ai" },
     { name = "pandas", marker = "extra == 'datasets'" },
     { name = "pydantic", specifier = ">=1" },
     { name = "tenacity", specifier = ">=8.2.3,<10.0" },

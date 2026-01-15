@@ -750,38 +750,16 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-openai"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-openai" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "openai", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "openai", extras = ["datalib"], specifier = "==1.99.7" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "requests", specifier = ">=2.31.0,<3" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+sdist = { url = "https://files.pythonhosted.org/packages/ef/f4/2cd7698431474102e85466fe197ffa440d8309e59a1260b62d85602e472a/opentelemetry_instrumentation_openai-0.50.1.tar.gz", hash = "sha256:43eea552ca80cc31f0197fac3458b53c4dbc2cff8f80aa9aa9d3fe899dba9190", size = 32262 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/62/909c5d0674f24d36388ca0b2454d84f9e5b09765b0294ba5b9a8f6b7d9e7/opentelemetry_instrumentation_openai-0.50.1-py3-none-any.whl", hash = "sha256:ea0ca70f09f1bcfd6a188d5122327386386dcc9b85fbf7187dd34e38d32c126d", size = 43002 },
 ]
 
 [[package]]
@@ -837,7 +815,7 @@ dev = [
 ]
 test = [
     { name = "openai", specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
