@@ -56,7 +56,7 @@ async def run_experiment_example():
         dataset_slug="medical-q",
         dataset_version="v1",
         task=medical_task_refuse_advice,
-        evaluators=["medical-advice"],
+        evaluators=["medical_advice"],
         experiment_slug="medical-advice-exp",
         stop_on_error=False,
     )
