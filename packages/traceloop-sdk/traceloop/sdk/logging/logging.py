@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, cast
 
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (
     OTLPLogExporter as GRPCExporter,
@@ -52,9 +52,9 @@ class LoggerWrapper(object):
 
 def init_logging_exporter(endpoint: str, headers: Dict[str, str]) -> LogExporter:
     if "http" in endpoint.lower() or "https" in endpoint.lower():
-        return HTTPExporter(endpoint=f"{endpoint}/v1/logs", headers=headers)
+        return cast(LogExporter, HTTPExporter(endpoint=f"{endpoint}/v1/logs", headers=headers))
     else:
-        return GRPCExporter(endpoint=endpoint, headers=headers)
+        return cast(LogExporter, GRPCExporter(endpoint=endpoint, headers=headers))
 
 
 def init_logging_provider(
