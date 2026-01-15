@@ -34,7 +34,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "chromadb>=0.5.23,<0.6.0",
+  "chromadb>=0.5.23,<1.5.0",
   "llama-index-agent-openai>=0.4.12,<0.5.0",
   "llama-index-embeddings-openai>=0.3.1,<0.4.0",
   "llama-index-llms-cohere>=0.4.0,<0.5.0",
@@ -42,17 +42,17 @@ test = [
   "llama-index-postprocessor-cohere-rerank>=0.3.0,<0.4.0",
   "llama-index-vector-stores-chroma>=0.4.1,<0.5.0",
   "llama-index>=0.12.52,<0.13.0",
-  "llama-parse>=0.5.20,<0.6.0",
-  "onnxruntime<1.20.0",
+  "llama-parse>=0.5.20,<0.7.0",
+  "onnxruntime<1.21.0",
   "openai>=1.52.2,<2",
   "opentelemetry-instrumentation-chromadb",
   "opentelemetry-instrumentation-cohere",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-sdk>=1.38.0,<2",
-  "pytest-asyncio>=0.23.7,<0.24.0",
+  "pytest-asyncio>=0.23.7,<1.3.0",
   "pytest-recording>=0.13.1,<0.14.0",
   "sqlalchemy>=2.0.31,<3",
-  "vcrpy>=6.0.1,<7",
+  "vcrpy>=6.0.1,<8",
 ]
 [build-system]
 requires = ["hatchling"]
