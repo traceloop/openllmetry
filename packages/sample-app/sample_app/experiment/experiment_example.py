@@ -65,12 +65,14 @@ async def run_experiment_example():
     if errors_1:
         print(f"Medical Refuse Advice Errors: {errors_1}")
 
-    # Export results to CSV and JSON example
+    # Export results to CSV and JSON files
     csv_data = client.experiment.to_csv_string()
-    print(f"\n\033[93mCSV Export:\033[0m\n{csv_data[:500]}...")
+    with open("experiment_results.csv", "w") as f:
+        f.write(csv_data)
 
     json_data = client.experiment.to_json_string()
-    print(f"\n\033[93mJSON Export:\033[0m\n{json_data[:500]}...")
+    with open("experiment_results.json", "w") as f:
+        f.write(json_data)
 
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
