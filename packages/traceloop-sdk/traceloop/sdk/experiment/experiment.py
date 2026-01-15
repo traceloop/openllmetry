@@ -29,6 +29,7 @@ class Experiment:
     _evaluator: Evaluator
     _http_client: HTTPClient
     _last_run_id: Optional[str]
+    _last_experiment_slug: Optional[str]
 
     def __init__(self, http_client: HTTPClient, async_http_client: httpx.AsyncClient, experiment_slug: str):
         self._datasets = Datasets(http_client)
@@ -122,6 +123,7 @@ class Experiment:
 
         if not experiment_slug:
             experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
+        self._last_experiment_slug = experiment_slug
 
         experiment_run_metadata = {
             key: value
@@ -304,6 +306,7 @@ class Experiment:
 
         if not experiment_slug:
             experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
+        self._last_experiment_slug = experiment_slug
 
         # Fetch dataset rows
         rows = []
@@ -528,7 +531,7 @@ class Experiment:
         run_id: Optional[str],
     ) -> Tuple[str, str]:
         """Resolve experiment_slug and run_id from params or last run."""
-        slug = experiment_slug or self._experiment_slug
+        slug = experiment_slug or self._last_experiment_slug
         rid = run_id or self._last_run_id
 
         if not slug:

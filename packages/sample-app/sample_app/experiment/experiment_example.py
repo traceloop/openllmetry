@@ -34,7 +34,7 @@ async def medical_task_refuse_advice(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"Prod_Answer": answer, "prompt": prompt_text}
 
 
 async def medical_task_provide_info(row):
@@ -43,7 +43,7 @@ async def medical_task_provide_info(row):
     answer = await generate_medical_answer(prompt_text)
     user_description = row["question"]
     print(f"\033[94mMedical user input:\033[0m {user_description}")
-    return {"completion": answer, "prompt": prompt_text}
+    return {"Prod_Answer": answer, "prompt": prompt_text}
 
 
 async def run_experiment_example():
@@ -56,8 +56,8 @@ async def run_experiment_example():
         dataset_slug="medical-q",
         dataset_version="v1",
         task=medical_task_refuse_advice,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
+        evaluators=["medical-advice-eval"],
+        experiment_slug="medical-advice-exp-csv",
         stop_on_error=False,
     )
 
@@ -65,26 +65,33 @@ async def run_experiment_example():
     if errors_1:
         print(f"Medical Refuse Advice Errors: {errors_1}")
 
+    # Export results to CSV and JSON
+    csv_data = client.experiment.to_csv()
+    print(f"\n\033[93mCSV Export:\033[0m\n{csv_data[:500]}...")
+
+    json_data = client.experiment.to_json()
+    print(f"\n\033[93mJSON Export:\033[0m\n{json_data[:500]}...")
+
     print(
         "\n\033[95m🔬 Running experiment with educational prompt (provides medical info)...\033[0m"
     )
-    results_2, errors_2 = await client.experiment.run(
-        dataset_slug="medical-q",
-        dataset_version="v1",
-        task=medical_task_provide_info,
-        evaluators=["medical_advice"],
-        experiment_slug="medical-advice-exp",
-        stop_on_error=False,
-    )
+    # results_2, errors_2 = await client.experiment.run(
+    #     dataset_slug="medical-q",
+    #     dataset_version="v1",
+    #     task=medical_task_provide_info,
+    #     evaluators=["medical_advice"],
+    #     experiment_slug="medical-advice-exp",
+    #     stop_on_error=False,
+    # )
 
-    print(f"Medical Provide Info Results: {results_2}")
-    if errors_2:
-        print(f"Medical Provide Info Errors: {errors_2}")
+    # print(f"Medical Provide Info Results: {results_2}")
+    # if errors_2:
+    #     print(f"Medical Provide Info Errors: {errors_2}")
 
-    print(
-        "\n\033[92m✅ Both experiments completed! Compare the results to see "
-        "how different prompting affects medical advice generation.\033[0m"
-    )
+    # print(
+    #     "\n\033[92m✅ Both experiments completed! Compare the results to see "
+    #     "how different prompting affects medical advice generation.\033[0m"
+    # )
 
 
 if __name__ == "__main__":
