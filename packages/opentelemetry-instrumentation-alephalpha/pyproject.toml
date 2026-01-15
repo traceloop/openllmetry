@@ -29,18 +29,18 @@ aleph_alpha_client = "opentelemetry.instrumentation.alephalpha:AlephAlphaInstrum
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
+  "pytest-sugar==1.1.1",
   "pytest>=8.2.2,<9",
   "ruff>=0.4.0",
 ]
 test = [
-  "aleph_alpha_client>=7.1.0,<8",
+  "aleph_alpha_client>=7.1.0,<12",
   "opentelemetry-sdk>=1.38.0,<2",
-  "pytest-asyncio>=0.23.7,<0.24.0",
+  "pytest-asyncio>=0.23.7,<1.3.0",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
+  "pytest-sugar==1.1.1",
   "pytest>=8.2.2,<9",
-  "vcrpy>=6.0.1,<7",
+  "vcrpy>=6.0.1,<8",
 ]
 
 [build-system]
