@@ -5,10 +5,10 @@ from traceloop.sdk.client.http import HTTPClient
 
 
 class TestExportMethods:
-    """Tests for to_csv() and to_json() export methods"""
+    """Tests for to_csv_string() and to_json_string() export methods"""
 
     def test_to_csv_with_explicit_params(self):
-        """Test to_csv with explicit experiment_slug and run_id"""
+        """Test to_csv_string with explicit experiment_slug and run_id"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value="col1,col2\nval1,val2")
@@ -24,7 +24,7 @@ class TestExportMethods:
         )
 
     def test_to_json_with_explicit_params(self):
-        """Test to_json with explicit experiment_slug and run_id"""
+        """Test to_json_string with explicit experiment_slug and run_id"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value={"results": [{"score": 0.9}]})
@@ -40,7 +40,7 @@ class TestExportMethods:
         )
 
     def test_to_json_with_string_response(self):
-        """Test to_json when API returns a string instead of dict"""
+        """Test to_json_string when API returns a string instead of dict"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value='{"already": "json"}')
@@ -53,7 +53,7 @@ class TestExportMethods:
         assert result == '{"already": "json"}'
 
     def test_to_csv_uses_last_run_ids(self):
-        """Test to_csv uses stored IDs from last run"""
+        """Test to_csv_string uses stored IDs from last run"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value="csv,data")
@@ -71,7 +71,7 @@ class TestExportMethods:
         )
 
     def test_to_json_uses_last_run_ids(self):
-        """Test to_json uses stored IDs from last run"""
+        """Test to_json_string uses stored IDs from last run"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value={"data": "value"})
@@ -89,7 +89,7 @@ class TestExportMethods:
         )
 
     def test_to_csv_raises_when_no_experiment_slug(self):
-        """Test to_csv raises ValueError when no experiment_slug available"""
+        """Test to_csv_string raises ValueError when no experiment_slug available"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
@@ -104,7 +104,7 @@ class TestExportMethods:
         assert "experiment_slug is required" in str(exc_info.value)
 
     def test_to_csv_raises_when_no_run_id(self):
-        """Test to_csv raises ValueError when no run_id available"""
+        """Test to_csv_string raises ValueError when no run_id available"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
@@ -118,7 +118,7 @@ class TestExportMethods:
         assert "run_id is required" in str(exc_info.value)
 
     def test_to_json_raises_when_no_experiment_slug(self):
-        """Test to_json raises ValueError when no experiment_slug available"""
+        """Test to_json_string raises ValueError when no experiment_slug available"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
@@ -133,7 +133,7 @@ class TestExportMethods:
         assert "experiment_slug is required" in str(exc_info.value)
 
     def test_to_json_raises_when_no_run_id(self):
-        """Test to_json raises ValueError when no run_id available"""
+        """Test to_json_string raises ValueError when no run_id available"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_async_http_client = Mock()
@@ -147,7 +147,7 @@ class TestExportMethods:
         assert "run_id is required" in str(exc_info.value)
 
     def test_to_csv_raises_on_api_failure(self):
-        """Test to_csv raises Exception when API returns None"""
+        """Test to_csv_string raises Exception when API returns None"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value=None)
@@ -161,7 +161,7 @@ class TestExportMethods:
         assert "Failed to export CSV" in str(exc_info.value)
 
     def test_to_json_raises_on_api_failure(self):
-        """Test to_json raises Exception when API returns None"""
+        """Test to_json_string raises Exception when API returns None"""
         mock_http_client = Mock(spec=HTTPClient)
         mock_http_client.base_url = "https://api.example.com"
         mock_http_client.get = Mock(return_value=None)
