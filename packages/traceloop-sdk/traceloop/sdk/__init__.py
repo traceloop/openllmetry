@@ -31,7 +31,7 @@ from traceloop.sdk.tracing.tracing import (
 )
 from typing import Dict
 from traceloop.sdk.client.client import Client
-from traceloop.sdk.associations.associations import AssociationProperty
+from traceloop.sdk.associations.associations import AssociationProperty as AssociationProperty
 
 
 class Traceloop:

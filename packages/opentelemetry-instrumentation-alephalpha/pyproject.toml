@@ -1,55 +1,73 @@
+[project]
+name = "opentelemetry-instrumentation-alephalpha"
+version = "0.50.1"
+description = "OpenTelemetry Aleph Alpha instrumentation"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Benedikt Wolf", email = "bene25@web.de" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-alephalpha"
+
+[project.optional-dependencies]
+instruments = ["aleph_alpha_client"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+aleph_alpha_client = "opentelemetry.instrumentation.alephalpha:AlephAlphaInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "ruff>=0.4.0",
+]
+test = [
+  "aleph_alpha_client>=7.1.0,<8",
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-asyncio>=0.23.7,<0.24.0",
+  "pytest-recording>=0.13.1,<0.14.0",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "vcrpy>=6.0.1,<7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/alephalpha"]
 
 [tool.coverage.report]
-exclude_lines = ['if TYPE_CHECKING:']
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "opentelemetry-instrumentation-alephalpha"
-version = "0.50.1"
-description = "OpenTelemetry Aleph Alpha instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Benedikt Wolf <bene25@web.de>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-alephalpha"
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/alephalpha"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.38.0"
-opentelemetry-instrumentation = ">=0.59b0"
-opentelemetry-semantic-conventions = ">=0.59b0"
-opentelemetry-semantic-conventions-ai = "^0.4.13"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-
-[tool.poetry.group.test.dependencies]
-aleph_alpha_client = "^7.1.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.1"
-pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
-opentelemetry-sdk = "^1.38.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["aleph_alpha_client"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-aleph_alpha_client = "opentelemetry.instrumentation.alephalpha:AlephAlphaInstrumentor"
+[tool.ruff.lint]
+select = ["E", "F", "W"]

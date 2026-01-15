@@ -24,11 +24,11 @@ fi
 
 echo "=== Generating models from ${SWAGGER_PATH} ==="
 
-# Change to traceloop-sdk directory for poetry
+# Change to traceloop-sdk directory for uv
 cd "${ROOT_DIR}/packages/traceloop-sdk"
 
 # Run the Python generation script
-poetry run python "${CODEGEN_SCRIPT}" "${SWAGGER_PATH}" "${OUTPUT_DIR}"
+uv run python "${CODEGEN_SCRIPT}" "${SWAGGER_PATH}" "${OUTPUT_DIR}"
 
 echo ""
 echo "Generated files:"

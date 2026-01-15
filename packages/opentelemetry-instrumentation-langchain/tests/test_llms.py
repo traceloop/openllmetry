@@ -16,11 +16,8 @@ from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_openai import ChatOpenAI, OpenAI
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.sdk.trace import Span
-from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -221,7 +218,7 @@ def test_custom_llm_with_events_with_no_content(
     )
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -635,7 +632,7 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
     model = ChatAnthropic(model="claude-2.1", temperature=0.5)
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -835,7 +832,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
     )
 
     chain = prompt | model
-    response = chain.invoke({"input": "tell me a short joke"})
+    chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -872,28 +869,17 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
-    # We need to remove the id from the output because it is random
-    assert {k: v for k, v in output["outputs"]["kwargs"].items() if k != "id"} == {
-        "content": "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!",
-        "additional_kwargs": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "response_metadata": {
-            "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-            "stop_reason": "end_turn",
-            "usage": {"prompt_tokens": 16, "completion_tokens": 27, "total_tokens": 43},
-        },
-        "usage_metadata": {
-            "input_tokens": 16,
-            "output_tokens": 27,
-            "total_tokens": 43,
-        },
-        "type": "ai",
-        "tool_calls": [],
-        "invalid_tool_calls": [],
-    }
+    # We check essential fields instead of exact match due to library version differences
+    output_kwargs = output["outputs"]["kwargs"]
+    assert output_kwargs["content"] == "Here's a short joke for you:\n\nWhat do you call a bear with no teeth? A gummy bear!"
+    assert output_kwargs["type"] == "ai"
+    assert output_kwargs["tool_calls"] == []
+    assert output_kwargs["invalid_tool_calls"] == []
+    assert output_kwargs["additional_kwargs"]["model_id"] == "anthropic.claude-3-haiku-20240307-v1:0"
+    assert output_kwargs["additional_kwargs"]["stop_reason"] == "end_turn"
+    assert output_kwargs["usage_metadata"]["input_tokens"] == 16
+    assert output_kwargs["usage_metadata"]["output_tokens"] == 27
+    assert output_kwargs["usage_metadata"]["total_tokens"] == 43
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (
@@ -1065,7 +1051,7 @@ def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
 
     expected_vendors = {
         OpenAI: "openai",
-        VLLMOpenAI: "openai", 
+        VLLMOpenAI: "openai",
         ChatOpenAI: "openai"
     }
     assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == expected_vendors[LLM]
@@ -1674,7 +1660,7 @@ async def test_trace_propagation_stream_async_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 

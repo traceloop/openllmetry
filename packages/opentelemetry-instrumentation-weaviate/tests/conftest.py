@@ -2,6 +2,7 @@
 
 import os
 import pytest
+import weaviate
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -10,6 +11,22 @@ from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.instrumentation.weaviate import WeaviateInstrumentor
 
 pytest_plugins = []
+
+# Check weaviate client version
+_weaviate_version = tuple(int(x) for x in weaviate.__version__.split(".")[:2])
+_is_v3 = _weaviate_version < (4, 0)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip v4 tests if using weaviate-client v3, and vice versa."""
+    skip_v4 = pytest.mark.skip(reason="weaviate-client v4 required for this test")
+    skip_v3 = pytest.mark.skip(reason="weaviate-client v3 required for this test")
+
+    for item in items:
+        if "test_weaviate_instrumentation_v3" in item.nodeid and not _is_v3:
+            item.add_marker(skip_v3)
+        elif "test_weaviate_instrumentation.py" in item.nodeid and _is_v3:
+            item.add_marker(skip_v4)
 
 
 def pytest_addoption(parser):

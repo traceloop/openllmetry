@@ -8,7 +8,7 @@ from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.llms.cohere import Cohere
 from llama_index.llms.openai import OpenAI
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -40,7 +40,7 @@ def make_sql_table():
     return SQLDatabase(engine, include_tables=["city_stats"])
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "llamaindex"
 

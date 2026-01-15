@@ -2,9 +2,11 @@ import json
 
 import pytest
 import weaviate
-import weaviate.classes as wvc
 
-from opentelemetry.semconv_ai import SpanAttributes
+# Skip this entire module if weaviate.classes is not available (v3)
+wvc = pytest.importorskip("weaviate.classes")
+
+from opentelemetry.semconv_ai import SpanAttributes  # noqa: E402
 
 
 ARTICLE_SCHEMA = {
