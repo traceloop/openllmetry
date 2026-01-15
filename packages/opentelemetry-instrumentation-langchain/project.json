@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-langchain",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-langchain/opentelemetry_instrumentation_anthropic",
+  "sourceRoot": "packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain",
   "targets": {
     "lock": {
       "executor": "nx:run-commands",

@@ -2,7 +2,7 @@
   "name": "opentelemetry-instrumentation-llamaindex",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/opentelemetry-instrumentation-llamaindex/opentelemetry_instrumentation_anthropic",
+  "sourceRoot": "packages/opentelemetry-instrumentation-llamaindex/opentelemetry/instrumentation/llamaindex",
   "targets": {
     "lock": {
       "executor": "nx:run-commands",

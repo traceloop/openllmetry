@@ -164,7 +164,14 @@ def vcr_config():
         return request
 
     return {
-        "filter_headers": ["authorization", "x-api-key"],
+        "filter_headers": [
+            "authorization",
+            "x-api-key",
+            "x-amz-security-token",
+            "x-amz-credential",
+            "x-amz-signature",
+            "x-amz-date",
+        ],
         "match_on": ["method", "scheme", "host", "port", "path", "query"],
         "before_record_request": before_record_request,
         # Ignore AWS Instance Metadata Service (IMDS) requests that boto3 makes
