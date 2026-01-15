@@ -174,7 +174,8 @@ class ContextRelevanceInput(BaseModel):
     context: str = Field(
         ...,
         examples=[
-            'Our store is open Monday to Friday from 9am to 6pm, and Saturday from 10am to 4pm. We are closed on Sundays.'
+            "Our store is open Monday to Friday from 9am to 6pm, "
+            "and Saturday from 10am to 4pm. We are closed on Sundays."
         ],
     )
     query: str = Field(..., examples=['What are the business hours?'])
@@ -208,7 +209,8 @@ class FaithfulnessInput(BaseModel):
     context: str = Field(
         ...,
         examples=[
-            'The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It was constructed from 1887 to 1889.'
+            "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. "
+            "It was constructed from 1887 to 1889."
         ],
     )
     question: str = Field(..., examples=['When was the Eiffel Tower built?'])

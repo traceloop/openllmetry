@@ -9,9 +9,7 @@ on:
       - "main"
 
 env:
-  POETRY_CACHE_DIR: /tmp/pypoetry-cache
-  POETRY_VENV_IN_PROJECT: false
-  POETRY_INSTALLER_MODERN_INSTALLATION: false
+  UV_CACHE_DIR: /tmp/uv-cache
   PIP_NO_CACHE_DIR: 1
 
 jobs:
@@ -56,13 +54,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
@@ -107,13 +105,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
@@ -131,7 +129,7 @@ jobs:
 
       - name: Build
         run: npx nx affected -t build-release --parallel=2
-        
+
       - name: Clean build artifacts to save space
         run: |
           find packages -name "dist" -type d -exec rm -rf {} + || true
@@ -173,13 +171,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
 
       - uses: actions/setup-node@v4
         with:
@@ -199,7 +196,7 @@ jobs:
         env:
           HAYSTACK_TELEMETRY_ENABLED: False
         run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=2
-        
+
       - name: Clean test artifacts to save space
         run: |
           find packages -name ".pytest_cache" -type d -exec rm -rf {} + || true

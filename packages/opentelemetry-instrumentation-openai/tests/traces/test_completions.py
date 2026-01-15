@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -945,7 +945,7 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
     assert open_ai_span.attributes.get("error.type") == "AuthenticationError"
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)

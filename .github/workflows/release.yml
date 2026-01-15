@@ -21,8 +21,10 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
       - id: cz
         name: Bump Version, Create Tag and Changelog
@@ -60,8 +62,11 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
 
       - uses: actions/setup-node@v4
         with:
@@ -98,8 +103,11 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
 
       - uses: actions/setup-node@v4
         with:

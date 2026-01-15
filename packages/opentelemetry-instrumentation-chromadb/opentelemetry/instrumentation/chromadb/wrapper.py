@@ -50,8 +50,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "query":
             _set_query_attributes(span, kwargs)
         elif to_wrap.get("method") == "_query":
-            _set_segment_query_attributes(span, kwargs)
-            _add_segment_query_embeddings_events(span, kwargs)
+            _set_segment_query_attributes(span, kwargs, args)
+            _add_segment_query_embeddings_events(span, kwargs, args)
         elif to_wrap.get("method") == "modify":
             _set_modify_attributes(span, kwargs)
         elif to_wrap.get("method") == "update":
@@ -181,21 +181,31 @@ def _set_query_attributes(span, kwargs):
 
 
 @dont_throw
-def _set_segment_query_attributes(span, kwargs):
+def _set_segment_query_attributes(span, kwargs, args=None):
+    # collection_id can be passed as positional arg[0] or keyword arg
+    collection_id = kwargs.get("collection_id")
+    if collection_id is None and args and len(args) > 0:
+        collection_id = args[0]
     _set_span_attribute(
         span,
         AISpanAttributes.CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID,
-        str(kwargs.get("collection_id")),
+        str(collection_id) if collection_id else None,
     )
 
 
 @dont_throw
-def _add_segment_query_embeddings_events(span, kwargs):
-    for i, embeddings in enumerate(kwargs.get("query_embeddings", [])):
+def _add_segment_query_embeddings_events(span, kwargs, args=None):
+    # query_embeddings can be passed as positional arg[1] or keyword arg
+    query_embeddings = kwargs.get("query_embeddings")
+    if query_embeddings is None and args and len(args) > 1:
+        query_embeddings = args[1]
+    for embeddings in query_embeddings or []:
         span.add_event(
             name=Events.DB_QUERY_EMBEDDINGS.value,
             attributes={
-                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(embeddings)
+                EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value: json.dumps(
+                    embeddings.tolist() if hasattr(embeddings, "tolist") else list(embeddings)
+                )
             },
         )
 

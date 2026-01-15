@@ -5,9 +5,9 @@
   "sourceRoot": "packages/opentelemetry-instrumentation-weaviate/opentelemetry/instrumentation/weaviate",
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-weaviate/dist",
         "publish": false,
@@ -34,37 +36,32 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "nx:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-weaviate/pylint.txt"
-      ],
+      "executor": "nx:run-commands",
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-weaviate/pylint.txt"
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
     "test": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-weaviate/unittests",
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-weaviate"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       }
     },
     "build-release": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "chmod +x ../../scripts/build-release.sh",
@@ -72,8 +69,12 @@
         ],
         "cwd": "packages/opentelemetry-instrumentation-weaviate"
       },
-      "dependsOn": ["^build-release"]
+      "dependsOn": [
+        "^build-release"
+      ]
     }
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }
