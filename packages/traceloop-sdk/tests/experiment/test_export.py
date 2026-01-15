@@ -16,7 +16,7 @@ class TestExportMethods:
 
         experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
 
-        result = experiment.to_csv(experiment_slug="my-exp", run_id="run-123")
+        result = experiment.to_csv_string(experiment_slug="my-exp", run_id="run-123")
 
         assert result == "col1,col2\nval1,val2"
         mock_http_client.get.assert_called_once_with(
@@ -32,7 +32,7 @@ class TestExportMethods:
 
         experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
 
-        result = experiment.to_json(experiment_slug="my-exp", run_id="run-123")
+        result = experiment.to_json_string(experiment_slug="my-exp", run_id="run-123")
 
         assert result == '{"results": [{"score": 0.9}]}'
         mock_http_client.get.assert_called_once_with(
@@ -48,7 +48,7 @@ class TestExportMethods:
 
         experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
 
-        result = experiment.to_json(experiment_slug="my-exp", run_id="run-123")
+        result = experiment.to_json_string(experiment_slug="my-exp", run_id="run-123")
 
         assert result == '{"already": "json"}'
 
@@ -63,7 +63,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = "my-exp"
         experiment._last_run_id = "run-789"
 
-        result = experiment.to_csv()
+        result = experiment.to_csv_string()
 
         assert result == "csv,data"
         mock_http_client.get.assert_called_once_with(
@@ -81,7 +81,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = "my-exp"
         experiment._last_run_id = "run-789"
 
-        result = experiment.to_json()
+        result = experiment.to_json_string()
 
         assert result == '{"data": "value"}'
         mock_http_client.get.assert_called_once_with(
@@ -99,7 +99,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = None
 
         with pytest.raises(ValueError) as exc_info:
-            experiment.to_csv(run_id="run-123")
+            experiment.to_csv_string(run_id="run-123")
 
         assert "experiment_slug is required" in str(exc_info.value)
 
@@ -113,7 +113,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = "test-exp"
 
         with pytest.raises(ValueError) as exc_info:
-            experiment.to_csv()
+            experiment.to_csv_string()
 
         assert "run_id is required" in str(exc_info.value)
 
@@ -128,7 +128,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = None
 
         with pytest.raises(ValueError) as exc_info:
-            experiment.to_json(run_id="run-123")
+            experiment.to_json_string(run_id="run-123")
 
         assert "experiment_slug is required" in str(exc_info.value)
 
@@ -142,7 +142,7 @@ class TestExportMethods:
         experiment._last_experiment_slug = "test-exp"
 
         with pytest.raises(ValueError) as exc_info:
-            experiment.to_json()
+            experiment.to_json_string()
 
         assert "run_id is required" in str(exc_info.value)
 
@@ -156,7 +156,7 @@ class TestExportMethods:
         experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
 
         with pytest.raises(Exception) as exc_info:
-            experiment.to_csv(experiment_slug="my-exp", run_id="run-123")
+            experiment.to_csv_string(experiment_slug="my-exp", run_id="run-123")
 
         assert "Failed to export CSV" in str(exc_info.value)
 
@@ -170,6 +170,6 @@ class TestExportMethods:
         experiment = Experiment(mock_http_client, mock_async_http_client, "test-exp")
 
         with pytest.raises(Exception) as exc_info:
-            experiment.to_json(experiment_slug="my-exp", run_id="run-123")
+            experiment.to_json_string(experiment_slug="my-exp", run_id="run-123")
 
         assert "Failed to export JSON" in str(exc_info.value)

@@ -545,7 +545,7 @@ class Experiment:
 
         return slug, rid
 
-    def to_csv(
+    def to_csv_string(
         self,
         experiment_slug: Optional[str] = None,
         run_id: Optional[str] = None,
@@ -567,7 +567,7 @@ class Experiment:
             )
         return str(result)
 
-    def to_json(
+    def to_json_string(
         self,
         experiment_slug: Optional[str] = None,
         run_id: Optional[str] = None,

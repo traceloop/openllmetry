@@ -66,10 +66,10 @@ async def run_experiment_example():
         print(f"Medical Refuse Advice Errors: {errors_1}")
 
     # Export results to CSV and JSON example
-    csv_data = client.experiment.to_csv()
+    csv_data = client.experiment.to_csv_string()
     print(f"\n\033[93mCSV Export:\033[0m\n{csv_data[:500]}...")
 
-    json_data = client.experiment.to_json()
+    json_data = client.experiment.to_json_string()
     print(f"\n\033[93mJSON Export:\033[0m\n{json_data[:500]}...")
 
     print(
