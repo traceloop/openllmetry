@@ -1,6 +1,6 @@
 import asyncio
-from langchain.prompts import ChatPromptTemplate
-from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
