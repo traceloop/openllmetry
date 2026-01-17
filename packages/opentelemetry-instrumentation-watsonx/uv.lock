@@ -7,7 +7,10 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "urllib3", specifier = ">=2.6.3" }]
+constraints = [
+    { name = "requests", specifier = ">=2.32.5" },
+    { name = "urllib3", specifier = ">=2.6.3" },
+]
 
 [[package]]
 name = "autopep8"
@@ -134,7 +137,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371 }
 wheels = [
@@ -143,18 +146,18 @@ wheels = [
 
 [[package]]
 name = "ibm-cos-sdk"
-version = "2.13.6"
+version = "2.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ibm-cos-sdk-core" },
     { name = "ibm-cos-sdk-s3transfer" },
     { name = "jmespath" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/38/65403a36d3dc159ec09ba5c9e56d4f8aa7619467e19240bb9d3d02d45c81/ibm-cos-sdk-2.13.6.tar.gz", hash = "sha256:171cf2ae4ab662a4b8ab58dcf4ac994b0577d6c92d78490295fd7704a83978f6", size = 58594 }
+sdist = { url = "https://files.pythonhosted.org/packages/98/b8/b99f17ece72d4bccd7e75539b9a294d0f73ace5c6c475d8f2631afd6f65b/ibm_cos_sdk-2.14.3.tar.gz", hash = "sha256:643b6f2aa1683adad7f432df23407d11ae5adb9d9ad01214115bee77dc64364a", size = 58831 }
 
 [[package]]
 name = "ibm-cos-sdk-core"
-version = "2.13.6"
+version = "2.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
@@ -162,20 +165,20 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/94/f6/13f1b89adf4c53beae54c05e6b3a00d754b72a6c95766e4fba3c180d3b33/ibm-cos-sdk-core-2.13.6.tar.gz", hash = "sha256:dd41fb789eeb65546501afabcd50e78846ab4513b6ad4042e410b6a14ff88413", size = 1101762 }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/45/80c23aa1e13175a9deefe43cbf8e853a3d3bfc8dfa8b6d6fe83e5785fe21/ibm_cos_sdk_core-2.14.3.tar.gz", hash = "sha256:85dee7790c92e8db69bf39dae4c02cac211e3c1d81bb86e64fa2d1e929674623", size = 1103637 }
 
 [[package]]
 name = "ibm-cos-sdk-s3transfer"
-version = "2.13.6"
+version = "2.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ibm-cos-sdk-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/46/4f/8cabc69ae0cb6f66f378ba5286d01af3ae31791a9aeebe90c68d5ec0ee9b/ibm-cos-sdk-s3transfer-2.13.6.tar.gz", hash = "sha256:e0acce6f380c47d11e07c6765b684b4ababbf5c66cc0503bc246469a1e2b9790", size = 139513 }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/ff/c9baf0997266d398ae08347951a2970e5e96ed6232ed0252f649f2b9a7eb/ibm_cos_sdk_s3transfer-2.14.3.tar.gz", hash = "sha256:2251ebfc4a46144401e431f4a5d9f04c262a0d6f95c88a8e71071da056e55f72", size = 139594 }
 
 [[package]]
 name = "ibm-watson-machine-learning"
-version = "1.0.333"
+version = "1.0.368"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -188,9 +191,9 @@ dependencies = [
     { name = "tabulate" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/7e/6a4ed108d920528aecab5429b2d966727e85fc013341699b8ffe675ffb44/ibm_watson_machine_learning-1.0.333.tar.gz", hash = "sha256:a09685f36fed9ba1a838778127fcb430fa708cc266ae381136e14793e95de264", size = 740297 }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/be/cf3ea49d95a2e42ca776592015f77a83a7ac5a9a7c7b33509fae5b828695/ibm_watson_machine_learning-1.0.368.tar.gz", hash = "sha256:bdef2af35397d8da6f99302850d7766d51db1330b5e6ae2388e30213d74d038f", size = 608987 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/3f/602a3aad2172c8b703861ce01ac86ecb15b128b2068dd98c7c6932e1bb0c/ibm_watson_machine_learning-1.0.333-py3-none-any.whl", hash = "sha256:ca9427a5c2e9ff8530b89cf530089fb76e03af78cc0a0a16fceabc2667d81822", size = 1709430 },
+    { url = "https://files.pythonhosted.org/packages/64/86/10904fe3bfbb582484e569135d6e8de1f318ce4b91130f71df7161c71e92/ibm_watson_machine_learning-1.0.368-py3-none-any.whl", hash = "sha256:965dd00ac1e6b8dc7a4d94ab280399eb6e6fee2311c7ee9bb5fdd8c1fc3b3d98", size = 1311572 },
 ]
 
 [[package]]
@@ -470,7 +473,7 @@ dev = [
     { name = "ruff", specifier = ">=0.4.0" },
 ]
 test = [
-    { name = "ibm-watson-machine-learning", specifier = "==1.0.333" },
+    { name = "ibm-watson-machine-learning", specifier = "==1.0.368" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
@@ -721,7 +724,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.32.2"
+version = "2.32.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -729,9 +732,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/ec/535bf6f9bd280de6a4637526602a146a68fde757100ecf8c9333173392db/requests-2.32.2.tar.gz", hash = "sha256:dd951ff5ecf3e3b3aa26b40703ba77495dab41da839ae72ef3c8e5d8e2433289", size = 130327 }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/20/748e38b466e0819491f0ce6e90ebe4184966ee304fe483e2c414b0f4ef07/requests-2.32.2-py3-none-any.whl", hash = "sha256:fc06670dd0ed212426dfeb94fc1b983d917c4f9847c863f313c9dfaaffb7c23c", size = 63902 },
+    { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738 },
 ]
 
 [[package]]
