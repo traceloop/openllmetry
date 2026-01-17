@@ -2,11 +2,11 @@ interactions:
 - request:
     body: '{"messages":[{"role":"system","content":"Extract invoice information from
       the following text."},{"role":"user","content":"Invoice #12345 for $199.99 to
-      John Smith"}],"model":"gpt-4o","stream":false,"temperature":0.7,"tool_choice":"required","tools":[{"type":"function","function":{"name":"Invoice","description":"Example
-      model for structured output testing.","parameters":{"properties":{"invoice_id":{"description":"Invoice
+      John Smith"}],"model":"gpt-4o","response_format":{"type":"json_schema","json_schema":{"schema":{"description":"Example
+      model for structured output testing.","properties":{"invoice_id":{"description":"Invoice
       identifier","title":"Invoice Id","type":"string"},"amount":{"description":"Invoice
       amount","title":"Amount","type":"number"},"customer_name":{"description":"Customer
-      name","title":"Customer Name","type":"string"}},"required":["invoice_id","amount","customer_name"],"type":"object","additionalProperties":false},"strict":false}}]}'
+      name","title":"Customer Name","type":"string"}},"required":["invoice_id","amount","customer_name"],"title":"Invoice","type":"object","additionalProperties":false},"name":"Invoice","strict":true}},"stream":false,"temperature":0.7}'
     headers:
       accept:
       - application/json
@@ -15,15 +15,15 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '753'
+      - '755'
       content-type:
       - application/json
       host:
       - api.openai.com
       traceparent:
-      - 00-fea82171c54bdef7cc2453298f3b9c96-2e3d335209cf620a-01
+      - 00-8552c659441230e82e4c2379136d8768-24615b95074ea2af-01
       user-agent:
-      - OpenAI/Python 1.58.1
+      - OpenAI/Python 1.109.1
       x-stainless-arch:
       - arm64
       x-stainless-async:
@@ -33,31 +33,32 @@ interactions:
       x-stainless-os:
       - MacOS
       x-stainless-package-version:
-      - 1.58.1
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '60.0'
       x-stainless-retry-count:
       - '0'
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.9.5
+      - 3.12.6
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAAwAAAP//jFPRbtowFH3PV1j3OVQkAQJ56zpNo1pVTUjbtKWKXOdCTB07s50Oivj3
-        yQmQQJm0PETWPT7nHh9f7zxCgOeQEGAFtaysxODDn2DBNl8+vf14GG43xe0LXdR1/PPjOg5/fwff
-        MdTzGpk9sm6YKiuBlivZwkwjtehUg3gcBZNpFE0boFQ5CkdbVXYwUoNwGI4Gw+lgODkQC8UZGkjI
-        L48QQnbN31mUOW4gIUP/WCnRGLpCSE6bCAGthKsANYYbS6UFvwOZkhalcy1rIXqAVUpkjArRNW6/
-        XW/d5USFyPJq/rmOH9nD/Nvdbayi+0cze17ffe31a6W3VWNoWUt2yqeHn+rJRTNCQNKy4c7lq0vl
-        gkoIUL2qS5TW2YZdCrRUtbQpJMFsdjOb+Smw2lhVos6cVgpJCveqkGRRcluk4KfAW+2M5w0ahNFo
-        nMIezlrtvWvrp16CGpe1oeJ9tFRKZak7YZPt0wHZn65RqFWl1bO5oMKSS26KTCM1TTr9S/KORhoL
-        UJ/NAVRalZXNrHrBpuls1IpCN6UdGMYH0CpLRVcPwsC/IpflaClv5uQ0moyyAvOO2o0orXOueoDX
-        O/p7N9e02+Nzufof+Q5gDCuLeVZpzDk7P3G3TaN7xP/adgq5MQwG9asbFMtRu+vIcUlr0b4vMFtj
-        scyWXK5QV5o3jwyWVRZN4vF0EuXTELy99xcAAP//AwAYSN8XbQQAAA==
+        H4sIAAAAAAAAAwAAAP//jFJNb9swDL37Vwg8O0U+3DT2tadthwEbsMtcGKpE21ptUZHotkGQ/z7I
+        SWN364BddODjo9575DERAoyGQoBqJavedYv7w2H/8rR/+fbJyfz1B+0zd+eb3Zfc+PuvkEYGPf5C
+        xW+sG0W965AN2TOsPErGOHV1t91ts3y7yUagJ41dpDWOFxkt1st1tljuFsvthdiSURigED8TIYQ4
+        jm+UaDW+QiGW6VulxxBkg1Bcm4QAT12sgAzBBJaWIZ1ARZbRjqqPJRj7HP+qjC6hKGG13mS3JaQl
+        yJ4GyyUUqzy/yfO0BDUEph59ZWWPY/dnaq343htuSzjN//BYD0FGi3bouhkgrSWWMaLR3cMFOV39
+        dNQ4T4/hDyrUxprQVh5lIBu1ByYHI3pKhHgYcxveRQHOU++4YnrC8bvVanOeB9OmZmh+AZlYdrP6
+        Zp1+MK/SyNJ0YZY8KKla1BN1WpMctKEZkMxc/63mo9ln58Y2/zN+ApRCx6gr51Eb9d7x1OYxHvK/
+        2q4pj4IhoH+OJ8MGfdyExloO3fnGIBwCY1/VxjbonTfnQ6tdpVEqrW/rbQ3JKfkNAAD//wMAY1p8
+        A3EDAAA=
     headers:
       CF-RAY:
-      - 963120fffc22efea-TLV
+      - 9bf58a5558b83d7c-TLV
       Connection:
       - keep-alive
       Content-Encoding:
@@ -65,15 +66,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Tue, 22 Jul 2025 07:12:19 GMT
+      - Sat, 17 Jan 2026 11:33:55 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=KVzJcC68SQuziL071b4WwO20k3mVcAnXeO74ikQvbTk-1753168339-1.0.1.1-VjNOeRtShSwdWPgUcGHVVipel_nbk82XRkGT5m__qbU7aBiCFLU6Oj8DNlL53ZnnKptoG4CaJSvVt6Zh5YLChq9Ad7vpo5IhXwUtoeR3ws0;
-        path=/; expires=Tue, 22-Jul-25 07:42:19 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=kOKSBij7iqxI20rtakon77FGA9Ta4PgrXJpyQd9A_e0-1768649635-1.0.1.1-SqC1qP0N85XlnPiBcnJ6aYmpbAz0rJGHbg75LBe0wEOc7SrzoNkyrWbhgz6zctDOAT9gFggxxXjEOgx2_Yrk1enFs9I1m0Zm3GG.0hVdL_U;
+        path=/; expires=Sat, 17-Jan-26 12:03:55 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
-      - _cfuvid=B236WyNvITlBmvDyAycWz.GvuU_hKcSHN1HBQ8O2fa4-1753168339363-0.0.1.1-604800000;
+      - _cfuvid=6GPfG2dem27FDWrPhG_MQIsUqiFbyfc0ypx_HFsI8Bw-1768649635237-0.0.1.1-604800000;
         path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
       Transfer-Encoding:
       - chunked
       X-Content-Type-Options:
@@ -87,15 +90,15 @@ interactions:
       openai-organization:
       - traceloop
       openai-processing-ms:
-      - '890'
+      - '271'
       openai-project:
       - proj_tzz1TbPPOXaf6j9tEkVUBIAa
       openai-version:
       - '2020-10-01'
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains; preload
       x-envoy-upstream-service-time:
-      - '897'
+      - '485'
+      x-openai-proxy-wasm:
+      - v0.1
       x-ratelimit-limit-requests:
       - '10000'
       x-ratelimit-limit-tokens:
@@ -103,13 +106,13 @@ interactions:
       x-ratelimit-remaining-requests:
       - '9999'
       x-ratelimit-remaining-tokens:
-      - '29999973'
+      - '29999974'
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
       - 0s
       x-request-id:
-      - req_d35a94342d3f797254ffcd31f2a6b423
+      - req_4cbc5042574d41d8a6c0aa1e0ed1ea88
     status:
       code: 200
       message: OK
