@@ -8,6 +8,9 @@ resolution-markers = [
     "python_full_version < '3.10'",
 ]
 
+[manifest]
+constraints = [{ name = "urllib3", specifier = ">=2.6.3" }]
+
 [[package]]
 name = "autopep8"
 version = "2.3.2"
@@ -149,14 +152,6 @@ resolution-markers = [
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484 },
-]
-
-[[package]]
-name = "milvus"
-version = "2.3.9"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/2a/4a1ffb2b17e7ca851a9b12fae3b2878b9c6b5c956207719520424cb5b92b/milvus-2.3.9-py3-none-macosx_12_0_arm64.whl", hash = "sha256:2e770b1cb76d8f4ba0e3ce1c2e49bdb9cd38222f8662762db9d794e577dac826", size = 36326762 },
 ]
 
 [[package]]
@@ -417,7 +412,7 @@ dependencies = [
 
 [package.optional-dependencies]
 instruments = [
-    { name = "milvus" },
+    { name = "pymilvus" },
 ]
 
 [package.dev-dependencies]
@@ -437,11 +432,11 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "milvus", marker = "extra == 'instruments'" },
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
+    { name = "pymilvus", marker = "extra == 'instruments'" },
 ]
 provides-extras = ["instruments"]
 

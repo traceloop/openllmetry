@@ -7,6 +7,9 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+constraints = [{ name = "urllib3", specifier = ">=2.6.3" }]
+
 [[package]]
 name = "accelerate"
 version = "1.12.0"
@@ -3474,7 +3477,7 @@ test = [
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3657,7 +3660,7 @@ test = [
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3695,7 +3698,7 @@ test = [
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3732,7 +3735,7 @@ test = [
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3903,7 +3906,7 @@ test = [
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
     { name = "requests", specifier = ">=2.31.0,<3" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3942,7 +3945,7 @@ test = [
     { name = "pytest-asyncio", specifier = ">=1.0.0,<2" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -3981,7 +3984,7 @@ test = [
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -4048,7 +4051,7 @@ test = [
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
     { name = "replicate", specifier = ">=0.23.1,<0.27.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -4192,7 +4195,7 @@ test = [
     { name = "pytest-asyncio", specifier = ">=0.23.0,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=6.0.1,<7" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]
@@ -6259,7 +6262,7 @@ test = [
     { name = "pydantic", specifier = "<3" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "vcrpy", specifier = ">=7.0.0,<8" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
 [[package]]

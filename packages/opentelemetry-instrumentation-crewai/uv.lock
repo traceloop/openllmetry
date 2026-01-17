@@ -8,6 +8,9 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+constraints = [{ name = "urllib3", specifier = ">=2.6.3" }]
+
 [[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
