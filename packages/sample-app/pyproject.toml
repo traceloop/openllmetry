@@ -25,8 +25,8 @@ dependencies = [
   "anthropic>=0.37.1,<0.38.0",
   "google-cloud-aiplatform>=1.81.0,<2",
   "python-dotenv>=1.0.1,<2",
-  "langchain>=0.3.24,<0.4.0",
-  "langchain-community>=0.3.22,<0.4.0",
+  "langchain>=1.0.0,<2.0.0",
+  "langchain-community>=0.4.0,<0.5.0",
   "haystack-ai>=2.6.1,<2.7.0",
   "datasets>=2.21.0,<2.22.0",
   "llama-index-embeddings-huggingface>=0.6.1,<0.7.0",
@@ -36,9 +36,9 @@ dependencies = [
   "litellm>=1.51.0,<2",
   "text-generation>=0.7.0,<0.8.0",
   "llama-index-vector-stores-chroma>=0.5.0,<0.6.0",
-  "langchain-openai>=0.3.14,<0.4.0",
+  "langchain-openai>=1.0.0,<2.0.0",
   "google-generativeai>=0.8.3,<0.9.0",
-  "langgraph>=0.2.39,<0.3.0",
+  "langgraph>=1.0.0,<2.0.0",
   "groq>=0.11.0,<0.12.0",
   "llama-index-llms-openai>=0.6.0,<0.7.0",
   "ibm-watson-machine-learning>=1.0.367,<2",
@@ -113,4 +113,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3"]
+constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0"]
