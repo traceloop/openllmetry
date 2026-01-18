@@ -7,7 +7,7 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.9,<4"
+requires-python = ">=3.10,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
@@ -32,13 +32,13 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "ibm-watson-machine-learning==1.0.333",
+  "ibm-watson-machine-learning==1.0.368",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=0.23.7,<0.24.0",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
-  "vcrpy>=6.0.1,<7",
+  "vcrpy>=8.0.0,<9",
 ]
 
 [build-system]
@@ -61,3 +61,6 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
+
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "requests>=2.32.5", "pip>=25.3"]

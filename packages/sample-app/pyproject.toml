@@ -14,10 +14,11 @@ dependencies = [
   "openai>=1.52.2,<2",
   "requests>=2.32.3,<3",
   "pinecone-client>=3.2.2,<4",
-  "llama-index>=0.12.52,<0.13.0",
-  "duckduckgo-search>=3.9.11,<4",
+  "llama-index>=0.14.12,<0.15.0",
+  "ddgs>=9.0.0,<10",
+  "numexpr>=2.8.0,<3",
   "chromadb>=0.5.15,<0.6.0",
-  "tokenizers>=0.20.1,<0.21.0",
+  "tokenizers>=0.22.0,<0.24.0",
   "boto3>=1.35.49,<2",
   "transformers>=4.46.0,<5",
   "replicate>=0.22.0,<0.23.0",
@@ -25,21 +26,23 @@ dependencies = [
   "anthropic>=0.37.1,<0.38.0",
   "google-cloud-aiplatform>=1.81.0,<2",
   "python-dotenv>=1.0.1,<2",
-  "langchain>=0.3.24,<0.4.0",
-  "langchain-community>=0.3.22,<0.4.0",
+  "langchain>=1.0.0,<2.0.0",
+  "langchain-classic>=1.0.0,<2.0.0",
+  "langchain-community>=0.4.0,<0.5.0",
   "haystack-ai>=2.6.1,<2.7.0",
   "datasets>=2.21.0,<2.22.0",
-  "llama-index-embeddings-huggingface>=0.4.0,<0.5.0",
-  "llama-index-embeddings-openai>=0.3.1,<0.4.0",
-  "llama-index-agent-openai>=0.4.12,<0.5.0",
+  "llama-index-embeddings-huggingface>=0.6.1,<0.7.0",
+  "llama-index-embeddings-openai>=0.5.0,<0.6.0",
+  "llama-index-llms-huggingface>=0.6.0,<0.7.0",
+  "llama-index-llms-huggingface-api>=0.6.0,<0.7.0",
   "litellm>=1.51.0,<2",
   "text-generation>=0.7.0,<0.8.0",
-  "llama-index-vector-stores-chroma>=0.4.1,<0.5.0",
-  "langchain-openai>=0.3.14,<0.4.0",
+  "llama-index-vector-stores-chroma>=0.5.0,<0.6.0",
+  "langchain-openai>=1.0.0,<2.0.0",
   "google-generativeai>=0.8.3,<0.9.0",
-  "langgraph>=0.2.39,<0.3.0",
+  "langgraph>=1.0.0,<2.0.0",
   "groq>=0.11.0,<0.12.0",
-  "llama-index-llms-openai>=0.4.0,<0.5.0",
+  "llama-index-llms-openai>=0.6.0,<0.7.0",
   "ibm-watson-machine-learning>=1.0.367,<2",
   "ollama>=0.4.7,<0.5.0",
   "mcp>=1.7.1,<2",
@@ -59,18 +62,8 @@ dependencies = [
   "traceloop-sdk",
 ]
 
-[tool.uv.sources]
-opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
-opentelemetry-instrumentation-haystack = { path = "../opentelemetry-instrumentation-haystack", editable = true }
-opentelemetry-instrumentation-pinecone = { path = "../opentelemetry-instrumentation-pinecone", editable = true }
-opentelemetry-instrumentation-replicate = { path = "../opentelemetry-instrumentation-replicate", editable = true }
-opentelemetry-instrumentation-vertexai = { path = "../opentelemetry-instrumentation-vertexai", editable = true }
-opentelemetry-instrumentation-google-generativeai = { path = "../opentelemetry-instrumentation-google-generativeai", editable = true }
-opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-groq", editable = true }
-opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentation-crewai", editable = true }
-opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
-opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
-traceloop-sdk = { path = "../traceloop-sdk", editable = true }
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
 
 [dependency-groups]
 dev = [

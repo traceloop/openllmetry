@@ -1,6 +1,6 @@
 import os
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_classic.chains import LLMChain
 from langchain_ibm import WatsonxLLM
 
 from traceloop.sdk import Traceloop

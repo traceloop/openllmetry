@@ -5,6 +5,9 @@ from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 
+from llama_index.core.agent.workflow.workflow_events import (
+    ToolCall as WorkflowToolCall,
+)
 from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.instrumentation import get_dispatcher
@@ -225,6 +228,20 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
                 )
         except Exception:
             pass
+
+        # Extract tool information for call_tool spans (workflow-based agents)
+        if method_name == "call_tool":
+            try:
+                # The 'ev' argument is a WorkflowToolCall event
+                ev = bound_args.arguments.get("ev")
+                if ev and isinstance(ev, WorkflowToolCall):
+                    span.set_attribute("tool.name", ev.tool_name)
+                    span.set_attribute(
+                        "tool.arguments",
+                        json.dumps(ev.tool_kwargs, cls=JSONEncoder)
+                    )
+            except Exception:
+                pass
 
         return SpanHolder(id_, parent, span, token, current_context)
 

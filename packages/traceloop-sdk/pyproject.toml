@@ -81,7 +81,7 @@ dev = [
 ]
 test = [
   "openai>=1.31.1,<2",
-  "vcrpy>=7.0.0,<8",
+  "vcrpy>=8.0.0,<9",
   "pytest-recording>=0.13.1,<0.14.0",
   "pydantic<3",
   "pytest-asyncio>=0.23.7,<0.24.0",
@@ -149,3 +149,6 @@ exclude = [".git", "__pycache__", "build", "dist", ".venv", ".pytest_cache"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
+
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
