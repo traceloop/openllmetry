@@ -6,6 +6,14 @@ import httpx
 import pytest
 from langchain_core.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_core.prompts import ChatPromptTemplate
+
+# Check if text_generation is available (used by HuggingFaceTextGenInference)
+try:
+    import text_generation  # noqa: F401
+
+    HAS_TEXT_GENERATION = True
+except ImportError:
+    HAS_TEXT_GENERATION = False
 from langchain_anthropic import ChatAnthropic
 from langchain_aws import ChatBedrock
 from langchain_community.llms.huggingface_text_gen_inference import (
@@ -115,6 +123,7 @@ Whether you are building a single microservice or running a complex mesh of appl
 
 
 @pytest.mark.vcr
+@pytest.mark.skipif(not HAS_TEXT_GENERATION, reason="text_generation not installed")
 def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]
@@ -157,6 +166,7 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
 
 
 @pytest.mark.vcr
+@pytest.mark.skipif(not HAS_TEXT_GENERATION, reason="text_generation not installed")
 def test_custom_llm_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
 ):
@@ -207,6 +217,7 @@ def test_custom_llm_with_events_with_content(
 
 
 @pytest.mark.vcr
+@pytest.mark.skipif(not HAS_TEXT_GENERATION, reason="text_generation not installed")
 def test_custom_llm_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
