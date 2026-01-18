@@ -5,9 +5,9 @@
   "sourceRoot": "packages/sample-app/sample_app",
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/sample-app"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/sample-app/dist",
         "publish": false,
@@ -34,30 +36,27 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "nx:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "uv sync --all-groups",
+        "cwd": "packages/sample-app"
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": ["{workspaceRoot}/reports/packages/sample-app/pylint.txt"],
+      "executor": "nx:run-commands",
       "options": {
-        "outputFile": "reports/packages/sample-app/pylint.txt"
+        "command": "uv run ruff check .",
+        "cwd": "packages/sample-app"
       }
     },
     "test": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/sample-app/unittests",
         "{workspaceRoot}/coverage/packages/sample-app"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/sample-app"
       }
     }

@@ -27,9 +27,9 @@ nx affected:lint
 ```
 
 ## Package Management
-All packages use Poetry as the package manager. Always execute commands through Poetry:
+All packages use uv as the package manager. Always execute commands through uv:
 ```bash
-poetry run <command>
+uv run <command>
 ```
 
 ## Testing with VCR Cassettes
@@ -38,22 +38,22 @@ Tests utilize VCR cassettes for API calls.
 ### Commands
 ```bash
 # Run tests normally (uses existing cassettes)
-poetry run pytest tests/
+uv run pytest tests/
 
 # Re-record all cassettes (requires API keys)
-poetry run pytest tests/ --record-mode=all
+uv run pytest tests/ --record-mode=all
 
 # Record only new test episodes
-poetry run pytest tests/ --record-mode=new_episodes
+uv run pytest tests/ --record-mode=new_episodes
 
 # Record cassettes once (if they don't exist)
-poetry run pytest tests/ --record-mode=once
+uv run pytest tests/ --record-mode=once
 
 # Run tests without recording (fails if cassettes missing)
-poetry run pytest tests/ --record-mode=none
+uv run pytest tests/ --record-mode=none
 
 # Run specific test files
-poetry run pytest tests/test_agents.py --record-mode=once
+uv run pytest tests/test_agents.py --record-mode=once
 ```
 
 ### Guidance
@@ -87,4 +87,4 @@ https://opentelemetry.io/docs/specs/semconv/gen-ai/
 Instrumentation packages should leverage the semantic conventions package. Their purpose is to instrument AI-related libraries and generate spans and tracing data compliant with OpenTelemetry semantic conventions.
 
 ## Code Quality
-Flake8 is used for code linting.
+Ruff is used for code linting. Configuration is in each package's pyproject.toml under `[tool.ruff]`.

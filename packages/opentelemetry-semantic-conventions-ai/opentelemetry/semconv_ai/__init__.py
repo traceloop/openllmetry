@@ -86,6 +86,8 @@ class SpanAttributes:
     LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
     LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
     LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
+    LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"
+    LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"
 
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"

@@ -1,71 +1,87 @@
+[project]
+name = "opentelemetry-instrumentation-langchain"
+version = "0.50.1"
+description = "OpenTelemetry Langchain instrumentation"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-langchain"
+
+[project.optional-dependencies]
+instruments = ["langchain"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+langchain = "opentelemetry.instrumentation.langchain:LangchainInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.3.1,<3",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.3.3,<9",
+  "ruff>=0.4.0",
+]
+test = [
+  "anthropic>=0.51.0,<0.52.0",
+  "boto3>=1.35.49,<2",
+  "langchain-anthropic>=0.3.13,<0.4.0",
+  "langchain-aws>=0.2.11,<0.3.0",
+  "langchain-cohere==0.3.1",
+  "langchain-community>=0.3.3,<0.4.0",
+  "langchain-huggingface>=0.1.2,<0.2.0",
+  "langchain-openai>=0.3.1,<0.4.0",
+  "langchain>=0.3.15,<0.4.0",
+  "langchainhub>=0.1.21,<0.2.0",
+  "langgraph>=0.4,<0.5.0",
+  "openai>=1.52.2,<2",
+  "opentelemetry-instrumentation-bedrock",
+  "opentelemetry-instrumentation-openai",
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pydantic>=2.10.5,<3",
+  "pytest-asyncio>=0.24.0,<0.25.0",
+  "pytest-recording>=0.13.2,<0.14.0",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.3.3,<9",
+  "text-generation>=0.7.0,<0.8.0",
+  "vcrpy>=6.0.2,<7",
+]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/langchain"]
 
 [tool.coverage.report]
-exclude_lines = ['if TYPE_CHECKING:']
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "opentelemetry-instrumentation-langchain"
-version = "0.50.1"
-description = "OpenTelemetry Langchain instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-langchain"
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/langchain"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.38.0"
-opentelemetry-instrumentation = ">=0.59b0"
-opentelemetry-semantic-conventions = ">=0.59b0"
-opentelemetry-semantic-conventions-ai = "^0.4.13"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.3.1"
-flake8 = "7.1.1"
-pytest = "^8.3.3"
-pytest-sugar = "1.0.0"
-
-
-[tool.poetry.group.test.dependencies]
-langchain = "^0.3.15"
-langchain-community = "^0.3.3"
-openai = "^1.52.2"
-pytest = "^8.3.3"
-pytest-sugar = "1.0.0"
-vcrpy = "^6.0.2"
-pytest-recording = "^0.13.2"
-pytest-asyncio = "^0.24.0"
-opentelemetry-sdk = "^1.38.0"
-opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", develop = true }
-opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", develop = true }
-text-generation = "^0.7.0"
-anthropic = "^0.51.0"
-boto3 = "^1.35.49"
-langchain-anthropic = "^0.3.13"
-langchain-aws = "^0.2.11"
-langchain-openai = "^0.3.1"
-langchain-cohere = "0.3.1"
-langchain-huggingface = "^0.1.2"
-pydantic = "^2.10.5"
-langchainhub = "^0.1.21"
-langgraph = "^0.4"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["langchain"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-langchain = "opentelemetry.instrumentation.langchain:LangchainInstrumentor"
+[tool.ruff.lint]
+select = ["E", "F", "W"]

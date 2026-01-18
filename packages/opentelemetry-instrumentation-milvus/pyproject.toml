@@ -1,53 +1,71 @@
+[project]
+name = "opentelemetry-instrumentation-milvus"
+version = "0.50.1"
+description = "OpenTelemetry Milvus instrumentation"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-milvus"
+
+[project.optional-dependencies]
+instruments = ["pymilvus"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+milvus = "opentelemetry.instrumentation.milvus:MilvusInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "pymilvus>=2.4.1,<3",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "ruff>=0.4.0",
+]
+test = [
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pymilvus[milvus_lite]>=2.4.1,<3",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/milvus"]
 
 [tool.coverage.report]
-exclude_lines = ['if TYPE_CHECKING:']
+exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "opentelemetry-instrumentation-milvus"
-version = "0.50.1"
-description = "OpenTelemetry Milvus instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-milvus"
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/milvus"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.38.0"
-opentelemetry-semantic-conventions = ">=0.59b0"
-opentelemetry-instrumentation = ">=0.59b0"
-opentelemetry-semantic-conventions-ai = "^0.4.13"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.1.2"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-pymilvus = "^2.4.1"
-
-[tool.poetry.group.test.dependencies]
-pymilvus = "^2.4.1"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-opentelemetry-sdk = "^1.38.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["milvus"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-milvus = "opentelemetry.instrumentation.milvus:MilvusInstrumentor"
+[tool.ruff.lint]
+select = ["E", "F", "W"]
