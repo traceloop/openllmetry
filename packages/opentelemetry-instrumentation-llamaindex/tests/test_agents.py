@@ -5,7 +5,6 @@ from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.llms.cohere import Cohere
 from llama_index.llms.openai import OpenAI
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -35,17 +34,6 @@ def make_sql_table():
         with engine.begin() as connection:
             connection.execute(stmt)
     return SQLDatabase(engine, include_tables=["city_stats"])
-
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "llamaindex"
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content
 
 
 @pytest.mark.vcr
@@ -95,27 +83,21 @@ async def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
         "What is 2 times 3?"
     )
     assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_1.attributes
-    assert GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS in llm_span_1.attributes
-    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
-    assert GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS in llm_span_1.attributes
-    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
-    assert SpanAttributes.LLM_USAGE_TOTAL_TOKENS in llm_span_1.attributes
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 44
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 538
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 582
 
-    # If there's a second LLM span, verify it has the same attribute fields
-    if len(llm_spans) >= 2:
-        llm_span_2 = llm_spans[1]
-        assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-        assert GenAIAttributes.GEN_AI_REQUEST_MODEL in llm_span_2.attributes
-        assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in llm_span_2.attributes
-        assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in llm_span_2.attributes
-        assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_2.attributes
-        assert GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS in llm_span_2.attributes
-        assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
-        assert GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS in llm_span_2.attributes
-        assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
-        assert SpanAttributes.LLM_USAGE_TOTAL_TOKENS in llm_span_2.attributes
-        assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+    # Verify second LLM span
+    assert len(llm_spans) >= 2, "Expected at least 2 LLM spans"
+    llm_span_2 = llm_spans[1]
+    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
+    assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in llm_span_2.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in llm_span_2.attributes
+    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_2.attributes
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 30
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 594
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 624
 
     # Verify tool.name and tool.arguments are set on call_tool spans
     call_tool_spans = [span for span in spans if span.name == "call_tool.task"]
@@ -129,49 +111,6 @@ async def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-
-
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agents_and_tools_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
-
-
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agents_and_tools_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
-
-
-@pytest.mark.skip(reason="llama-index-agent-openai not compatible with llama-index 0.14.x")
-@pytest.mark.vcr
-def test_agent_with_query_tool(instrument_legacy, span_exporter, log_exporter):
-    # Test skipped - llama-index-agent-openai requires llama-index-core<0.13
-    pass
-
-
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agent_with_query_tool_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
-
-
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agent_with_query_tool_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
 
 
 @pytest.mark.vcr
@@ -313,19 +252,3 @@ async def test_agent_with_multiple_tools(instrument_legacy, span_exporter, log_e
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agent_with_multiple_tools_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
-
-
-@pytest.mark.skip(reason="Agent API changed in llama-index 0.13.1 - needs update for workflow-based agents")
-@pytest.mark.vcr
-def test_agent_with_multiple_tools_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
-    # Test skipped - Agent API changed in llama-index 0.13.1
-    pass
