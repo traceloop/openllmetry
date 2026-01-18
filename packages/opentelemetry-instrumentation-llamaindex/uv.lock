@@ -13,7 +13,10 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "urllib3", specifier = ">=2.6.3" }]
+constraints = [
+    { name = "pip", specifier = ">=25.3" },
+    { name = "urllib3", specifier = ">=2.6.3" },
+]
 
 [[package]]
 name = "aiohappyeyeballs"

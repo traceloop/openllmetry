@@ -11,6 +11,7 @@ resolution-markers = [
 [manifest]
 constraints = [
     { name = "langgraph-checkpoint", specifier = ">=4.0.0" },
+    { name = "pip", specifier = ">=25.3" },
     { name = "urllib3", specifier = ">=2.6.3" },
 ]
 

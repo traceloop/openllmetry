@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 constraints = [
+    { name = "pip", specifier = ">=25.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "urllib3", specifier = ">=2.6.3" },
 ]

@@ -10,6 +10,7 @@ resolution-markers = [
 [manifest]
 constraints = [
     { name = "langgraph-checkpoint", specifier = ">=4.0.0" },
+    { name = "pip", specifier = ">=25.3" },
     { name = "urllib3", specifier = ">=2.6.3" },
 ]
 
@@ -3512,41 +3513,16 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-agno"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-agno" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "agno", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.28.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "agno", specifier = ">=2.2.2" },
-    { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-sdk", specifier = ">=1.27.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/55/33/a7575d470297fb556cd378a7299f86b5f67320360eb5149cf972916aaea3/opentelemetry_instrumentation_agno-0.50.1.tar.gz", hash = "sha256:7c73b0f3f4bf9510398b66e5dfbe1e7c8f8fc12af81d4495dfc63cc528e04c2f", size = 5795 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/ca/d4cb9c7ebfef9774a57ed1d485146eba14adab8d4e98605a0817e3367db0/opentelemetry_instrumentation_agno-0.50.1-py3-none-any.whl", hash = "sha256:4b17f74213eb20d38d559a496ea2ad54acc447c47a477ae7fcd0c2d897a9db40", size = 8943 },
 ]
 
 [[package]]
@@ -3645,38 +3621,16 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-crewai"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-crewai" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "crewai", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "crewai", specifier = ">=0.80.0,<0.81.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "setuptools" },
+sdist = { url = "https://files.pythonhosted.org/packages/83/a7/49836fc800bd2e8e31e5536cd325381494250dd13e9f500f9abfbebac558/opentelemetry_instrumentation_crewai-0.50.1.tar.gz", hash = "sha256:dc5bfff9c55582baaaa3c7513faf461505176d7f225442647439e6fc68e15426", size = 4670 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/4f/4a1da76a51c91093d003983fbe8cb218b9909f3fe4fd7f7753bf5d47a7c5/opentelemetry_instrumentation_crewai-0.50.1-py3-none-any.whl", hash = "sha256:e8d96c79ca498985ff72102bc106baec603bc4ee3915ec506a955f4a94b1d7c9", size = 6231 },
 ]
 
 [[package]]
@@ -3698,113 +3652,46 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-google-generativeai" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "google-genai", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "google-genai", specifier = ">=1.0.0,<2" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/10/79/d57da4281e4a69da6907694bf8677d4188027cbf014b8ebcf3dd74453999/opentelemetry_instrumentation_google_generativeai-0.50.1.tar.gz", hash = "sha256:40e2e469ab4c30ef3853c58d2c3ef43209aa2da8134d7871f172d4d3ee272715", size = 9199 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/6f/3997aa343d35eeb938270fcca7cc3ab0b4af2f0e890c8907d4f6e47e9a60/opentelemetry_instrumentation_google_generativeai-0.50.1-py3-none-any.whl", hash = "sha256:64cc86f81d5fc5afa685f2a59146627418c7ccc9684a7332ef2691f5c4c285d1", size = 12052 },
 ]
 
 [[package]]
 name = "opentelemetry-instrumentation-groq"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-groq" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "groq", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "groq", specifier = ">=0.18.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/ba/46/2cf270bfc7712fc0bc022003a7c716a45073c16fcf29571eab969af62ef8/opentelemetry_instrumentation_groq-0.50.1.tar.gz", hash = "sha256:3515193adf606ed8608e56b326de81d695731024632ae1b5483767d35df48d2e", size = 8388 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/8d/4aeeaa33501992c9c8902f4f92cea25e25d79ed1db8fff38a34290475d72/opentelemetry_instrumentation_groq-0.50.1-py3-none-any.whl", hash = "sha256:b2d385c0a33c8c9a1f8aeab6e0c5b2e97d85cb25d3d5d771c578a770843c3a26", size = 11008 },
 ]
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-haystack" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "haystack-ai", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "haystack-ai", specifier = ">=2.0,<2.4" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/ff/e0/c140acb1b67070adac96562f3214a2d37e0a3dc248cea0d4feab3871ea81/opentelemetry_instrumentation_haystack-0.50.1.tar.gz", hash = "sha256:f50e592c7f4f08ff1055d559485077b18459c6bb8f30c69af18647868481b1f6", size = 4504 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/d3/80542a8040cde83bd611e5b0c7a342619f25db2522e6856abc20ef866405/opentelemetry_instrumentation_haystack-0.50.1-py3-none-any.whl", hash = "sha256:541bfab709c09b73cdc6f878f503432115d14d92b883891493f54b961ad68333", size = 7536 },
 ]
 
 [[package]]
@@ -3944,116 +3831,46 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-openai"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-openai" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "openai", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "openai", extras = ["datalib"], specifier = "==1.99.7" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "requests", specifier = ">=2.31.0,<3" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/ef/f4/2cd7698431474102e85466fe197ffa440d8309e59a1260b62d85602e472a/opentelemetry_instrumentation_openai-0.50.1.tar.gz", hash = "sha256:43eea552ca80cc31f0197fac3458b53c4dbc2cff8f80aa9aa9d3fe899dba9190", size = 32262 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/62/909c5d0674f24d36388ca0b2454d84f9e5b09765b0294ba5b9a8f6b7d9e7/opentelemetry_instrumentation_openai-0.50.1-py3-none-any.whl", hash = "sha256:ea0ca70f09f1bcfd6a188d5122327386386dcc9b85fbf7187dd34e38d32c126d", size = 43002 },
 ]
 
 [[package]]
 name = "opentelemetry-instrumentation-openai-agents"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-openai-agents" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "openai-agents", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "litellm", specifier = ">=1.71.2,<2" },
-    { name = "openai-agents", specifier = ">=0.2.7,<0.3.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=1.0.0,<2" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/da/3f/b571237b0780b76a4b23dd61fba3b7bb532a57afc8d945189a82fa5544e6/opentelemetry_instrumentation_openai_agents-0.50.1.tar.gz", hash = "sha256:d869f5967712d112549431d68500bc4dff4888212cb3ecc7f636455dcfc353ba", size = 8831 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/c6/c0fae8f39424da140ba125469647eefcbba0035ec45507d9cd959dc6ed4c/opentelemetry_instrumentation_openai_agents-0.50.1-py3-none-any.whl", hash = "sha256:d7c4d517b7e81baef7aa16587d9e3f01d0de0bb3bf4d164e0aa91274e81903ac", size = 9845 },
 ]
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-pinecone" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-    { name = "pinecone-client", marker = "extra == 'instruments'" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "openai", extras = ["datalib"], specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pinecone-client", specifier = ">=5.0.0,<6" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/55/25/13dcb1a575ee8de3ceaed9fb85eb7ae341343096d7eb7dacf614888ad163/opentelemetry_instrumentation_pinecone-0.50.1.tar.gz", hash = "sha256:6c24617d4bc265ca304fa63829427dec60570fc359571a416266917ad50ab08e", size = 4483 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/da/f4/760326d1e27bb1ee2654eec4f63181b89841b72762a24f46c1bf7b1d096c/opentelemetry_instrumentation_pinecone-0.50.1-py3-none-any.whl", hash = "sha256:2a4fff70805d241ef713fb7dde46080b5f37cbb87a6919881b46f69c5e2811a1", size = 6359 },
 ]
 
 [[package]]
@@ -4089,38 +3906,16 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-replicate" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-    { name = "replicate", marker = "extra == 'instruments'" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "replicate", specifier = ">=0.23.1,<0.27.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/f0/88/11850f4277c0b737b235a5baa97a6c4195f30339a5e9c4b6c905f595c0e5/opentelemetry_instrumentation_replicate-0.50.1.tar.gz", hash = "sha256:f991bdc6f2a6e17a58e20cce9d6e88844e03e9407ddf40f287e413bbb66ebadb", size = 5343 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/99/36c56ef75b6596fbf0c9a1e0ba352aaaeab55f583f0489ad8ea6d131d14a/opentelemetry_instrumentation_replicate-0.50.1-py3-none-any.whl", hash = "sha256:f4f684493ed7245ab11125ca4c55c5dd06d1f6b4d367bc9e42948147d414e36e", size = 8192 },
 ]
 
 [[package]]
@@ -4232,39 +4027,16 @@ wheels = [
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
 version = "0.50.1"
-source = { editable = "../opentelemetry-instrumentation-vertexai" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "google-cloud-aiplatform", marker = "extra == 'instruments'" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-]
-provides-extras = ["instruments"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-]
-test = [
-    { name = "google-cloud-aiplatform", specifier = ">=1.54.0,<2" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.23.0,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/ab/2f/38f300e6dd45b30495bb13dcef5c9720f92a5b5168108293125f1b7cdad1/opentelemetry_instrumentation_vertexai-0.50.1.tar.gz", hash = "sha256:00832c875ecac190a27bf9b4556592305c1f078fd0a21e10981adff8c716031d", size = 8370 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/46/125c651045898a6e5627720eaf2f5b8e916a70050e840f78e78558dfcd4a/opentelemetry_instrumentation_vertexai-0.50.1-py3-none-any.whl", hash = "sha256:e55980e3c10c990ee407903089e0145cd6b6f2d7e8e62772da7864964a8be29c", size = 10821 },
 ]
 
 [[package]]
@@ -5642,23 +5414,23 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.4.7,<0.5.0" },
     { name = "openai", specifier = ">=1.52.2,<2" },
     { name = "openai-agents", specifier = ">=0.2.7,<0.3.0" },
-    { name = "opentelemetry-instrumentation-agno", editable = "../opentelemetry-instrumentation-agno" },
-    { name = "opentelemetry-instrumentation-crewai", editable = "../opentelemetry-instrumentation-crewai" },
-    { name = "opentelemetry-instrumentation-google-generativeai", editable = "../opentelemetry-instrumentation-google-generativeai" },
-    { name = "opentelemetry-instrumentation-groq", editable = "../opentelemetry-instrumentation-groq" },
-    { name = "opentelemetry-instrumentation-haystack", editable = "../opentelemetry-instrumentation-haystack" },
-    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-instrumentation-openai-agents", editable = "../opentelemetry-instrumentation-openai-agents" },
-    { name = "opentelemetry-instrumentation-pinecone", editable = "../opentelemetry-instrumentation-pinecone" },
-    { name = "opentelemetry-instrumentation-replicate", editable = "../opentelemetry-instrumentation-replicate" },
-    { name = "opentelemetry-instrumentation-vertexai", editable = "../opentelemetry-instrumentation-vertexai" },
+    { name = "opentelemetry-instrumentation-agno" },
+    { name = "opentelemetry-instrumentation-crewai" },
+    { name = "opentelemetry-instrumentation-google-generativeai" },
+    { name = "opentelemetry-instrumentation-groq" },
+    { name = "opentelemetry-instrumentation-haystack" },
+    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai-agents" },
+    { name = "opentelemetry-instrumentation-pinecone" },
+    { name = "opentelemetry-instrumentation-replicate" },
+    { name = "opentelemetry-instrumentation-vertexai" },
     { name = "pinecone-client", specifier = ">=3.2.2,<4" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "replicate", specifier = ">=0.22.0,<0.23.0" },
     { name = "requests", specifier = ">=2.32.3,<3" },
     { name = "text-generation", specifier = ">=0.7.0,<0.8.0" },
     { name = "tokenizers", specifier = ">=0.22.0,<0.24.0" },
-    { name = "traceloop-sdk", editable = "../traceloop-sdk" },
+    { name = "traceloop-sdk" },
     { name = "transformers", specifier = ">=4.46.0,<5" },
 ]
 
@@ -6200,7 +5972,7 @@ wheels = [
 [[package]]
 name = "traceloop-sdk"
 version = "0.50.1"
-source = { editable = "../traceloop-sdk" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "colorama" },
@@ -6251,83 +6023,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "tenacity" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.11,<4" },
-    { name = "colorama", specifier = ">=0.4.6,<0.5.0" },
-    { name = "cuid", specifier = ">=0.4,<0.5" },
-    { name = "deprecated", specifier = ">=1.2.14,<2" },
-    { name = "jinja2", specifier = ">=3.1.5,<4" },
-    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-instrumentation-agno" },
-    { name = "opentelemetry-instrumentation-alephalpha" },
-    { name = "opentelemetry-instrumentation-anthropic" },
-    { name = "opentelemetry-instrumentation-bedrock" },
-    { name = "opentelemetry-instrumentation-chromadb" },
-    { name = "opentelemetry-instrumentation-cohere" },
-    { name = "opentelemetry-instrumentation-crewai" },
-    { name = "opentelemetry-instrumentation-google-generativeai" },
-    { name = "opentelemetry-instrumentation-groq" },
-    { name = "opentelemetry-instrumentation-haystack" },
-    { name = "opentelemetry-instrumentation-lancedb" },
-    { name = "opentelemetry-instrumentation-langchain" },
-    { name = "opentelemetry-instrumentation-llamaindex" },
-    { name = "opentelemetry-instrumentation-logging", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-marqo" },
-    { name = "opentelemetry-instrumentation-mcp" },
-    { name = "opentelemetry-instrumentation-milvus" },
-    { name = "opentelemetry-instrumentation-mistralai" },
-    { name = "opentelemetry-instrumentation-ollama" },
-    { name = "opentelemetry-instrumentation-openai" },
-    { name = "opentelemetry-instrumentation-openai-agents" },
-    { name = "opentelemetry-instrumentation-pinecone" },
-    { name = "opentelemetry-instrumentation-qdrant" },
-    { name = "opentelemetry-instrumentation-redis", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-replicate" },
-    { name = "opentelemetry-instrumentation-requests", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-sagemaker" },
-    { name = "opentelemetry-instrumentation-sqlalchemy", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-threading", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-together" },
-    { name = "opentelemetry-instrumentation-transformers" },
-    { name = "opentelemetry-instrumentation-urllib3", specifier = ">=0.59b0" },
-    { name = "opentelemetry-instrumentation-vertexai" },
-    { name = "opentelemetry-instrumentation-watsonx" },
-    { name = "opentelemetry-instrumentation-weaviate" },
-    { name = "opentelemetry-instrumentation-writer" },
-    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-    { name = "pandas", marker = "extra == 'datasets'" },
-    { name = "pydantic", specifier = ">=1" },
-    { name = "tenacity", specifier = ">=8.2.3,<10.0" },
-]
-provides-extras = ["datasets"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "datamodel-code-generator", specifier = ">=0.26.0,<0.27.0" },
-    { name = "mypy", specifier = ">=1.18.2,<2" },
-    { name = "pandas-stubs" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "ruff", specifier = ">=0.4.0" },
-    { name = "types-colorama", specifier = ">=0.4.15,<0.5.0" },
-    { name = "types-requests", specifier = ">=2.31.0,<3" },
-]
-test = [
-    { name = "anthropic", specifier = ">=0.25.2,<0.26.0" },
-    { name = "langchain", specifier = ">=0.2.5,<0.3.0" },
-    { name = "langchain-openai", specifier = ">=0.1.15,<0.2.0" },
-    { name = "openai", specifier = ">=1.31.1,<2" },
-    { name = "pandas", specifier = ">=1.0.0" },
-    { name = "pydantic", specifier = "<3" },
-    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
-    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
-    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+sdist = { url = "https://files.pythonhosted.org/packages/32/a1/e678e17f97a036192f46f3b56a1c0b87b36231e62d198039a7bb12047e9d/traceloop_sdk-0.50.1.tar.gz", hash = "sha256:fbdf6117f4cc41207c98cd828cca0a0fe69a4b8e9bebfa7fe439aac4fda2877a", size = 47911 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/6b/8e849ce50589643556cbfcfa2c10e95264e973cc8a9f3cdbd08e9056dc4a/traceloop_sdk-0.50.1-py3-none-any.whl", hash = "sha256:bc330c3e6ca474c2b5b636bdc9658114561815c0a9c91f9b86f6ddd697b23a82", size = 65252 },
 ]
 
 [[package]]
