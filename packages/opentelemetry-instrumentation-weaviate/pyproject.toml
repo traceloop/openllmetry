@@ -29,19 +29,19 @@ weaviate_client = "opentelemetry.instrumentation.weaviate:WeaviateInstrumentor"
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
+  "pytest>=8.2.2,<10",
   "ruff>=0.4.0",
 ]
 test = [
-  "openai>=1.31.1,<2",
+  "openai>=1.31.1,<3",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest-sugar==1.1.1",
+  "pytest>=8.2.2,<10",
   "vcrpy>=8.0.0,<9",
-  "weaviate-client>=3.26,<4",
+  "weaviate-client>=3.26,<5",
 ]
 [build-system]
 requires = ["hatchling"]
