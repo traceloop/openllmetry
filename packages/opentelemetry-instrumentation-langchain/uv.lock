@@ -1550,7 +1550,6 @@ test = [
     { name = "pytest-asyncio" },
     { name = "pytest-recording" },
     { name = "pytest-sugar" },
-    { name = "text-generation" },
     { name = "vcrpy" },
 ]
 
@@ -1594,7 +1593,6 @@ test = [
     { name = "pytest-asyncio", specifier = ">=0.24.0,<0.25.0" },
     { name = "pytest-recording", specifier = ">=0.13.2,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "text-generation", specifier = ">=0.7.0,<0.8.0" },
     { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
@@ -2485,20 +2483,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/46/79/cf31d7a93a8fdc6aa0fbb665be84426a8c5a557d9240b6239e9e11e35fc5/termcolor-3.3.0.tar.gz", hash = "sha256:348871ca648ec6a9a983a13ab626c0acce02f515b9e1983332b17af7979521c5", size = 14434 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/d1/8bb87d21e9aeb323cc03034f5eaf2c8f69841e40e4853c2627edf8111ed3/termcolor-3.3.0-py3-none-any.whl", hash = "sha256:cf642efadaf0a8ebbbf4bc7a31cec2f9b5f21a9f726f4ccbb08192c9c26f43a5", size = 7734 },
-]
-
-[[package]]
-name = "text-generation"
-version = "0.7.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "huggingface-hub" },
-    { name = "pydantic" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ef/53/1b2dc20686079464ae381f230a9fc412984a4255cea73c21afb6a46bc21f/text_generation-0.7.0.tar.gz", hash = "sha256:689200cd1f0d4141562af2515393c2c21cdbd9fac21c8398bf3043cdcc14184e", size = 10373 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/79/8fc351fd919a41287243c998a47692c7eb0fa5acded13db0080f2c6f1852/text_generation-0.7.0-py3-none-any.whl", hash = "sha256:02ab337a0ee0e7c70e04a607b311c261caae74bde46a7d837c6fdd150108f4d8", size = 12718 },
 ]
 
 [[package]]

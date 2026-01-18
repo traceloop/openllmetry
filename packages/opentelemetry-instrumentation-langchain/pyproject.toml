@@ -56,7 +56,6 @@ test = [
   "pytest-recording>=0.13.2,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.3.3,<9",
-  "text-generation>=0.7.0,<0.8.0",
   "vcrpy>=8.0.0,<9",
 ]
 [build-system]
