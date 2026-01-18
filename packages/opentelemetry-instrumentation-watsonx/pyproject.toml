@@ -61,6 +61,3 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
-
-[tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "requests>=2.32.5"]
