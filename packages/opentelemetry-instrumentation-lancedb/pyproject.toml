@@ -34,7 +34,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "lancedb>=0.9.0,<0.10.0",
+  "lancedb>=0.26.0",
   "numpy>=1.26.4,<2",
   "opentelemetry-sdk>=1.38.0,<2",
   "pandas>=2.2.2,<3",
