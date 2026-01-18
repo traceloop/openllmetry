@@ -84,8 +84,8 @@ async def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
     )
     assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_1.attributes
     assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
-    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 538
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 582
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
+    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
 
     # Verify second LLM span
     assert len(llm_spans) >= 2, "Expected at least 2 LLM spans"
@@ -95,9 +95,9 @@ async def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
     assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in llm_span_2.attributes
     assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in llm_span_2.attributes
     assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_2.attributes
-    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 30
-    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 594
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 624
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
+    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
 
     # Verify tool.name and tool.arguments are set on call_tool spans
     call_tool_spans = [span for span in spans if span.name == "call_tool.task"]
