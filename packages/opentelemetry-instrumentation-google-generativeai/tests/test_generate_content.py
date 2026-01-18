@@ -5,10 +5,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     Meters
 )
-from opentelemetry.sdk._logs import LogData
-
-
-from opentelemetry.sdk._logs import ReadableLogRecord
+from opentelemetry.sdk._logs import LogData, ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
