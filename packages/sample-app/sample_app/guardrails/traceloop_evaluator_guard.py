@@ -20,6 +20,7 @@ from traceloop.sdk.guardrail import (
     Condition,
     OnFailure,
 )
+from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop - returns client with guardrails access
@@ -85,7 +86,7 @@ async def toxicity_guard_example():
         text = completion.choices[0].message.content
         return GuardedFunctionOutput(
             result=text,
-            guard_input={"text": text},
+            guard_input=ToxicityDetectorInput(text=text),
         )
 
     result = await client.guardrails.run(

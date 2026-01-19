@@ -1,5 +1,6 @@
 import httpx
 from typing import Dict, Optional, Any, List
+from uuid import uuid4
 from pydantic import ValidationError
 from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
 
@@ -171,6 +172,59 @@ class Evaluator:
 
         # Return execution_id without waiting for SSE result
         return execute_response.execution_id
+
+    async def run(
+        self,
+        evaluator_slug: str,
+        input: Dict[str, Any],
+        timeout_in_sec: int = 120,
+        evaluator_version: Optional[str] = None,
+        evaluator_config: Optional[Dict[str, Any]] = None,
+    ) -> ExecutionResponse:
+        """
+        Execute an evaluator without experiment context.
+
+        This is a simpler interface for running evaluators standalone,
+        without associating results with experiments.
+
+        Args:
+            evaluator_slug: Slug of the evaluator to execute
+            input: Dict mapping evaluator input field names to their values.
+                   Values can be any type (str, int, dict, etc.)
+            timeout_in_sec: Timeout in seconds for execution
+            evaluator_version: Version of the evaluator to execute (optional)
+            evaluator_config: Configuration for the evaluator (optional)
+
+        Returns:
+            ExecutionResponse: The evaluation result
+        """
+        _validate_evaluator_input(evaluator_slug, input)
+
+        # Generate internal IDs for standalone execution
+        internal_id = uuid4().hex[:8]
+        task_id = f"eval-{internal_id}"
+        experiment_id = f"eval-exp-{internal_id}"
+        experiment_run_id = f"eval-run-{internal_id}"
+
+        request = self._build_evaluator_request(
+            task_id,
+            experiment_id,
+            experiment_run_id,
+            input,
+            evaluator_version,
+            evaluator_config,
+        )
+
+        execute_response = await self._execute_evaluator_request(
+            evaluator_slug, request, timeout_in_sec
+        )
+
+        sse_client = SSEClient(shared_client=self._async_http_client)
+        return await sse_client.wait_for_result(
+            execute_response.execution_id,
+            execute_response.stream_url,
+            timeout_in_sec,
+        )
 
 
 def validate_and_normalize_task_output(

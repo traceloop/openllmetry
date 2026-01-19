@@ -3,8 +3,7 @@ Guardrails class for running guarded operations through the Traceloop client.
 """
 import asyncio
 import time
-from typing import Any, Dict, Callable, Awaitable
-from uuid import uuid4
+from typing import Callable, Awaitable, cast
 
 import httpx
 from opentelemetry.trace.status import Status, StatusCode
@@ -48,8 +47,8 @@ class Guardrails:
         func_to_guard: Callable[
             [], Awaitable[GuardedFunctionOutput[GuardedFunctionResult, GuardInput]]
         ],
-        guard: Guard[GuardInput],
-        on_failure: OnFailureHandler[GuardedFunctionResult, GuardInput, FailureResult],
+        guard: Guard,
+        on_failure: OnFailureHandler,
     ) -> GuardedFunctionResult | FailureResult:
         """
         Execute a function with guardrail protection.
@@ -117,7 +116,7 @@ class Guardrails:
                     failure_result = on_failure(output)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
-                    return failure_result
+                    return cast(FailureResult, failure_result)
 
                 # 4. Guard passed, return result
                 return output.result

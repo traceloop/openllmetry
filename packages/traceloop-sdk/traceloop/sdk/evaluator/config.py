@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional, List, Callable, Awaitable
-from uuid import uuid4
 from pydantic import BaseModel
+
+from traceloop.sdk.guardrail.model import GuardExecutionError
 
 
 class EvaluatorDetails(BaseModel):
@@ -27,7 +28,8 @@ class EvaluatorDetails(BaseModel):
     def as_guard(
         self,
         condition: Callable[[Any], bool],
-    ) -> Callable[[Dict[str, Any]], Awaitable[bool]]:
+        timeout_in_sec: int = 60,
+    ) -> Callable[[BaseModel], Awaitable[bool]]:
         """
         Convert this evaluator to a guard function for use with client.guardrails.run().
 
@@ -42,52 +44,57 @@ class EvaluatorDetails(BaseModel):
 
         Example:
             from traceloop.sdk import Traceloop
-            from traceloop.sdk.guardrail import Condition, OnFailure
+            from traceloop.sdk.guardrail import Condition, OnFailure, GuardedFunctionOutput
             from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+            from traceloop.sdk.generated.evaluators import ToxicityDetectorInput
 
             client = Traceloop.init(api_key="...")
 
+            async def generate_text() -> GuardedFunctionOutput[str, ToxicityDetectorInput]:
+                text = "Hello world"
+                return GuardedFunctionOutput(
+                    result=text,
+                    guard_input=ToxicityDetectorInput(text=text),
+                )
+
             result = await client.guardrails.run(
-                func_to_guard=my_agent,
-                guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                    condition=Condition.is_false("has_pii")
+                func_to_guard=generate_text,
+                guard=EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
+                    condition=Condition.is_false("is_toxic")
                 ),
-                on_failure=OnFailure.raise_exception("PII detected"),
+                on_failure=OnFailure.raise_exception("Toxic content detected"),
             )
         """
         evaluator_slug = self.slug
         evaluator_version = self.version
         evaluator_config = self.config
 
-        async def guard_fn(input_data: Dict[str, Any]) -> bool:
+        async def guard_fn(input_data: BaseModel) -> bool:
             # Lazy import to avoid circular dependencies
             from traceloop.sdk import Traceloop
             from traceloop.sdk.evaluator.evaluator import Evaluator
+
+            # Convert Pydantic model to dict
+            input_dict = input_data.model_dump()
 
             # Get the SDK client
             client = Traceloop.get()
             evaluator = Evaluator(client._async_http)
 
-            # Generate internal IDs for guardrail execution (no experiment context)
-            internal_task_id = f"guard-{uuid4().hex[:8]}"
-            internal_experiment_id = f"guard-exp-{uuid4().hex[:8]}"
-            internal_run_id = f"guard-run-{uuid4().hex[:8]}"
-
             try:
-                eval_response = await evaluator.run_experiment_evaluator(
+                eval_response = await evaluator.run(
                     evaluator_slug=evaluator_slug,
-                    task_id=internal_task_id,
-                    experiment_id=internal_experiment_id,
-                    experiment_run_id=internal_run_id,
-                    input=input_data,
+                    input=input_dict,
                     evaluator_version=evaluator_version,
                     evaluator_config=evaluator_config,
-                    timeout_in_sec=60,
+                    timeout_in_sec=timeout_in_sec,
                 )
-                # Apply condition to the result
                 return condition(eval_response)
-            except Exception:
-                # Evaluator execution failed - treat as guard failure
-                return False
+            except Exception as e:
+                raise GuardExecutionError(
+                    message="Evaluator execution failed",
+                    original_exception=e,
+                    guard_input=input_dict,
+                ) from e
 
         return guard_fn
