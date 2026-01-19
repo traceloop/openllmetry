@@ -2,10 +2,10 @@ import datetime
 import json
 
 import pytest
-from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
-from langchain.prompts import ChatPromptTemplate, PromptTemplate
-from langchain.schema import StrOutputParser
-from langchain_core.utils.function_calling import (
+from langchain_core.output_parsers.openai_functions import JsonOutputFunctionsParser
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_community.utils.openai_functions import (
     convert_pydantic_to_openai_function,
 )
 from langchain_openai import ChatOpenAI

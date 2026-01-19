@@ -6,6 +6,12 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+constraints = [
+    { name = "pip", specifier = ">=25.3" },
+    { name = "urllib3", specifier = ">=2.6.3" },
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"

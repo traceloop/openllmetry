@@ -1,168 +1,331 @@
 interactions:
 - request:
-    body: '{"message": "write 2 lines of random text about $colorful socks", "model":
-      "command", "chat_history": [], "temperature": 0.75, "stream": true}'
+    body: '{"model":"command-r-08-2024","messages":[{"role":"user","content":"write
+      2 lines of random text about $colorful socks"}],"temperature":0.75,"stream":true}'
     headers:
-      accept:
+      Accept:
       - '*/*'
-      accept-encoding:
-      - gzip, deflate
-      connection:
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
       - keep-alive
-      content-length:
-      - '142'
+      Content-Length:
+      - '154'
+      Host:
+      - api.cohere.com
+      User-Agent:
+      - cohere/5.20.1
+      X-Client-Name:
+      - langchain:partner
+      X-Fern-Language:
+      - Python
+      X-Fern-SDK-Name:
+      - cohere
+      X-Fern-SDK-Version:
+      - 5.20.1
       content-type:
       - application/json
-      host:
-      - api.cohere.com
-      user-agent:
-      - python-httpx/0.27.0
-      x-client-name:
-      - langchain:partner
-      x-fern-language:
-      - Python
-      x-fern-sdk-name:
-      - cohere
-      x-fern-sdk-version:
-      - 5.5.8
     method: POST
-    uri: https://api.cohere.com/v1/chat
+    uri: https://api.cohere.com/v2/chat
   response:
     body:
-      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"582d2f4e-4fb9-4de1-ad9b-a85b8b86edea"}
+      string: 'event: message-start
 
-        {"is_finished":false,"event_type":"text-generation","text":"Wearing"}
+        data: {"id":"33a164cc-25f6-4777-82ba-8bcb1c67e936","type":"message-start","delta":{"message":{"role":"assistant","content":[],"tool_plan":"","tool_calls":[],"citations":[]}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+        event: content-start
 
-        {"is_finished":false,"event_type":"text-generation","text":" is"}
+        data: {"type":"content-start","index":0,"delta":{"message":{"content":{"type":"text","text":""}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" a"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" great"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" way"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"$"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" to"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" show"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" off"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"color"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" your"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" personality"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":"."}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"ful"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" Whether"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" you"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":"''re"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        socks"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" into"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" bright"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" and"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        add"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" bold"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" colors"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":","}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" prefer"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" more"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" subtle"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        vibrant"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" shades"}
 
-        {"is_finished":false,"event_type":"text-generation","text":","}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" or"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        pop"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" even"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" opt"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" for"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        to"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" patterns"}
 
-        {"is_finished":false,"event_type":"text-generation","text":","}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" it"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        any"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" is"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" a"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" great"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        outfit"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" way"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" to"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" express"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":","}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" yourself"}
 
-        {"is_finished":false,"event_type":"text-generation","text":"."}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" \nThey"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        bringing"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" can"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" be"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" a"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" fantastic"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" conversation"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" starter"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        unique"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":","}
 
-        {"is_finished":false,"event_type":"text-generation","text":" so"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" get"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        and"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" out"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" there"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" and"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        playful"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" show"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" off"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":" those"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        energy"}}}}
 
-        {"is_finished":false,"event_type":"text-generation","text":" colorful"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" socks"}
+        event: content-delta
 
-        {"is_finished":false,"event_type":"text-generation","text":"!"}
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        to"}}}}
 
-        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"00f83ba6-07e1-4af8-9107-a44cc43ddabe","text":"Wearing
-        colorful socks is a great way to show off your personality. Whether you''re
-        into bright and bold colors, prefer more subtle shades, or even opt for patterns,
-        it is a great way to express yourself. \nThey can be a fantastic conversation
-        starter, so get out there and show off those colorful socks!","generation_id":"582d2f4e-4fb9-4de1-ad9b-a85b8b86edea","chat_history":[{"role":"USER","message":"write
-        2 lines of random text about $colorful socks"},{"role":"CHATBOT","message":"Wearing
-        colorful socks is a great way to show off your personality. Whether you''re
-        into bright and bold colors, prefer more subtle shades, or even opt for patterns,
-        it is a great way to express yourself. \nThey can be a fantastic conversation
-        starter, so get out there and show off those colorful socks!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":11,"output_tokens":64},"tokens":{"input_tokens":73,"output_tokens":64}}},"finish_reason":"COMPLETE"}
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        your"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        daily"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        ensembles"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"."}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        With"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        wide"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        array"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        of"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        patterns"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        and"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        hues"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":","}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        they"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        offer"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        fun"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        way"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        to"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        express"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        your"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        personality"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        and"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        make"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        bold"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        statement"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"."}}}}
+
+
+        event: content-end
+
+        data: {"type":"content-end","index":0}
+
+
+        event: message-end
+
+        data: {"type":"message-end","delta":{"finish_reason":"COMPLETE","usage":{"billed_units":{"input_tokens":12,"output_tokens":47},"tokens":{"input_tokens":212,"output_tokens":47},"cached_tokens":208}}}
+
+
+        data: [DONE]
+
 
         '
     headers:
@@ -177,11 +340,11 @@ interactions:
       cache-control:
       - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
       content-type:
-      - application/stream+json
+      - text/event-stream
       date:
-      - Mon, 01 Jul 2024 18:19:51 GMT
+      - Sat, 17 Jan 2026 18:14:44 GMT
       expires:
-      - Thu, 01 Jan 1970 00:00:00 UTC
+      - Thu, 01 Jan 1970 00:00:00 GMT
       pragma:
       - no-cache
       server:
@@ -191,15 +354,15 @@ interactions:
       x-accel-expires:
       - '0'
       x-debug-trace-id:
-      - 679de51dd5abce63bb90ca3858bf9cf7
+      - 2ce3b874eb86923509700b6b67c31b05
       x-endpoint-monthly-call-limit:
       - '1000'
       x-envoy-upstream-service-time:
-      - '156'
+      - '491'
       x-trial-endpoint-call-limit:
-      - '10'
+      - '20'
       x-trial-endpoint-call-remaining:
-      - '9'
+      - '18'
     status:
       code: 200
       message: OK
