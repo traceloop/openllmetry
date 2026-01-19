@@ -108,7 +108,7 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert token_metric.data.data_points
 
     token_points_by_type = {
-        dp.attributes.get(SpanAttributes.LLM_TOKEN_TYPE): dp
+        dp.attributes.get(GenAIAttributes.GEN_AI_TOKEN_TYPE): dp
         for dp in token_metric.data.data_points
     }
 
