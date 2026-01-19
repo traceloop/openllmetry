@@ -48,7 +48,7 @@ class EvaluatorDetails(BaseModel):
             client = Traceloop.init(api_key="...")
 
             result = await client.guardrails.run(
-                func=my_agent,
+                func_to_guard=my_agent,
                 guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
                     condition=Condition.is_false("has_pii")
                 ),

@@ -1,33 +1,46 @@
 """
-Data models for the guardrail system.
+Data models and type definitions for the guardrail system.
 """
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Any
+from typing import TypeVar, Generic, Any, Union, Callable, Awaitable
 
-T = TypeVar("T")  # Result type (returned to caller)
-Z = TypeVar("Z")  # Guard input type (passed to guard for evaluation)
+GuardedFunctionResult = TypeVar("GuardedFunctionResult")
+GuardInput = TypeVar("GuardInput")
+FailureResult = TypeVar("FailureResult")
+
+# Type aliases for guards and handlers
+Guard = Union[Callable[[GuardInput], bool], Callable[[GuardInput], Awaitable[bool]]]
+OnFailureHandler = Union[
+    Callable[
+        ["GuardedFunctionOutput[GuardedFunctionResult, GuardInput]"], FailureResult
+    ],
+    Callable[
+        ["GuardedFunctionOutput[GuardedFunctionResult, GuardInput]"],
+        Awaitable[FailureResult],
+    ],
+]
 
 
 @dataclass
-class GuardedOutput(Generic[T, Z]):
+class GuardedFunctionOutput(Generic[GuardedFunctionResult, GuardInput]):
     """
     Container that separates what to return from what to evaluate.
 
     Attributes:
-        result: The value returned to the caller when guard passes
+        result: The original value returned by the guarded function
         guard_input: The value passed to the guard for evaluation
 
     Example:
-        async def generate_email() -> GuardedOutput[str, dict]:
+        async def generate_email() -> GuardedFunctionOutput[str, dict]:
             text = await llm.complete("Write a customer email...")
-            return GuardedOutput(
+            return GuardedFunctionOutput(
                 result=text,
                 guard_input={"text": text},
             )
     """
 
-    result: T
-    guard_input: Z
+    result: GuardedFunctionResult
+    guard_input: GuardInput
 
 
 class GuardValidationError(Exception):
@@ -39,7 +52,7 @@ class GuardValidationError(Exception):
         output: The full GuardedOutput that failed validation
     """
 
-    def __init__(self, message: str, output: GuardedOutput[Any, Any]):
+    def __init__(self, message: str, output: GuardedFunctionOutput[Any, Any]):
         self.output = output
         super().__init__(message)
 

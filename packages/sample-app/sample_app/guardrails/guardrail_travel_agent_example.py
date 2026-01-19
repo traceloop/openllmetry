@@ -20,7 +20,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
-    GuardedOutput,
+    GuardedFunctionOutput,
     Condition,
     OnFailure,
     GuardValidationError,
@@ -40,7 +40,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def simple_guard_example():
     """Demonstrate a simple lambda-based guard for length validation."""
 
-    async def generate_summary() -> GuardedOutput[str, dict]:
+    async def generate_summary() -> GuardedFunctionOutput[str, dict]:
         """Generate a travel summary with length constraints."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -52,7 +52,7 @@ async def simple_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text, "word_count": len(text.split())},
         )
@@ -74,7 +74,7 @@ async def simple_guard_example():
 async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
-    async def generate_customer_response() -> GuardedOutput[str, dict]:
+    async def generate_customer_response() -> GuardedFunctionOutput[str, dict]:
         """Generate a customer service response."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -90,7 +90,7 @@ async def pii_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text},  # PII detector expects 'text' field
         )
@@ -111,7 +111,7 @@ async def pii_guard_example():
 async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
-    async def generate_content() -> GuardedOutput[str, dict]:
+    async def generate_content() -> GuardedFunctionOutput[str, dict]:
         """Generate travel content that should be family-friendly."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -123,7 +123,7 @@ async def toxicity_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text},
         )
@@ -173,7 +173,7 @@ async def agent_trajectory_example():
     """Demonstrate agent trajectory evaluation for goal completeness."""
     state = TravelAgentState()
 
-    async def run_travel_agent() -> GuardedOutput[str, dict]:
+    async def run_travel_agent() -> GuardedFunctionOutput[str, dict]:
         """Run the travel agent and prepare trajectory for evaluation."""
         # Run the agent through multiple turns
         await travel_planner_agent(state, "I want to plan a 5-day trip to Japan.")
@@ -187,7 +187,7 @@ async def agent_trajectory_example():
             "trajectory_completions": json.dumps(state.completions),
         }
 
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=final_response,
             guard_input=trajectory,
         )
@@ -208,7 +208,7 @@ async def agent_trajectory_example():
 async def custom_handler_example():
     """Demonstrate custom on_failure handler with logging and alerting."""
 
-    async def generate_travel_advice() -> GuardedOutput[str, dict]:
+    async def generate_travel_advice() -> GuardedFunctionOutput[str, dict]:
         """Generate travel advice that might need safety review."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -220,12 +220,12 @@ async def custom_handler_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text},
         )
 
-    def custom_alert_handler(output: GuardedOutput) -> None:
+    def custom_alert_handler(output: GuardedFunctionOutput) -> None:
         """Custom handler that logs and could send alerts."""
         print(f"[ALERT] Guard failed for output: {str(output.result)[:50]}...")
         print(f"[ALERT] Guard input was: {output.guard_input}")
@@ -253,14 +253,14 @@ async def custom_handler_example():
 async def shadow_mode_example():
     """Demonstrate shadow mode for testing guards in production."""
 
-    async def generate_response() -> GuardedOutput[str, dict]:
+    async def generate_response() -> GuardedFunctionOutput[str, dict]:
         """Generate a response to test with experimental evaluator."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": "Tell me about visa requirements for Europe."}],
         )
         text = completion.choices[0].message.content
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text},
         )
@@ -279,10 +279,10 @@ async def shadow_mode_example():
 def sync_guard_example():
     """Demonstrate synchronous guardrail usage."""
 
-    def generate_simple_response() -> GuardedOutput[str, dict]:
+    def generate_simple_response() -> GuardedFunctionOutput[str, dict]:
         """Synchronous function that returns GuardedOutput."""
         text = "Welcome to our travel agency! How can I help you plan your trip?"
-        return GuardedOutput(
+        return GuardedFunctionOutput(
             result=text,
             guard_input={"text": text, "length": len(text)},
         )

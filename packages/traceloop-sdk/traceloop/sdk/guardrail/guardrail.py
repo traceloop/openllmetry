@@ -3,7 +3,7 @@ Guardrails class for running guarded operations through the Traceloop client.
 """
 import asyncio
 import time
-from typing import TypeVar, Callable, Awaitable, Union, Any, Dict
+from typing import Any, Dict, Callable, Awaitable
 from uuid import uuid4
 
 import httpx
@@ -12,17 +12,14 @@ from opentelemetry.trace.status import Status, StatusCode
 from traceloop.sdk.tracing import get_tracer
 from traceloop.sdk.evaluator.evaluator import Evaluator
 
-from .model import GuardedOutput
-
-T = TypeVar("T")  # Result type
-Z = TypeVar("Z")  # Guard input type
-
-# Type aliases for guards and handlers
-Guard = Union[Callable[[Z], bool], Callable[[Z], Awaitable[bool]]]
-OnFailureHandler = Union[
-    Callable[[GuardedOutput[T, Z]], None],
-    Callable[[GuardedOutput[T, Z]], Awaitable[None]],
-]
+from .model import (
+    GuardedFunctionOutput,
+    Guard,
+    OnFailureHandler,
+    GuardedFunctionResult,
+    GuardInput,
+    FailureResult,
+)
 
 
 class Guardrails:
@@ -32,7 +29,7 @@ class Guardrails:
     Access via the Traceloop client:
         client = Traceloop.init(api_key="...")
         result = await client.guardrails.run(
-            func=my_agent,
+            func_to_guard=my_agent,
             guard=lambda z: z["score"] > 0.8,
             on_failure=OnFailure.raise_exception("Quality check failed"),
         )
@@ -47,34 +44,37 @@ class Guardrails:
 
     async def run(
         self,
-        func: Callable[[], Awaitable[GuardedOutput[T, Z]]],
-        guard: Guard[Z],
-        on_failure: OnFailureHandler[T, Z],
-    ) -> T:
+        func_to_guard: Callable[
+            [], Awaitable[GuardedFunctionOutput[GuardedFunctionResult, GuardInput]]
+        ],
+        guard: Guard[GuardInput],
+        on_failure: OnFailureHandler[GuardedFunctionResult, GuardInput, FailureResult],
+    ) -> GuardedFunctionResult | FailureResult:
         """
         Execute a function with guardrail protection.
 
         Args:
-            func: Async function that returns GuardedOutput[T, Z].
-                  Executed immediately inside run().
+            func_to_guard: Async function that returns GuardedOutput[T, Z].
+                           Executed immediately inside run().
 
             guard: Function that receives Z (guard_input) and returns bool.
                    True = pass, False = fail.
                    Can be a lambda, custom function, or EvaluatorDetails.as_guard().
 
             on_failure: Called when guard returns False.
-                        Receives the full GuardedOutput[T, Z].
-                        Can raise, log, or perform custom actions.
+                        Receives the full GuardedFunctionOutput[T, Z].
+                        Can raise, return a fallback value, log, or perform custom actions.
+                        If it returns a value, that value is returned instead of output.result.
 
         Returns:
-            T: The result from GuardedOutput.result
+            T | F: The result from GuardedFunctionOutput.result, or the on_failure return value
 
         Raises:
             GuardValidationError: If guard fails and on_failure raises
 
         Example:
             result = await client.guardrails.run(
-                func=generate_email,
+                func_to_guard=generate_email,
                 guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
                     condition=Condition.is_false("has_pii")
                 ),
@@ -85,8 +85,10 @@ class Guardrails:
             with tracer.start_as_current_span("guardrail.run") as span:
                 start_time = time.perf_counter()
 
-                # 1. Execute func
-                output: GuardedOutput[T, Z] = await func()
+                # 1. Execute func_to_guard
+                output: GuardedFunctionOutput[
+                    GuardedFunctionResult, GuardInput
+                ] = await func_to_guard()
 
                 # 2. Run guard
                 try:
@@ -112,7 +114,10 @@ class Guardrails:
                     )
                     failure_result = on_failure(output)
                     if asyncio.iscoroutine(failure_result):
-                        await failure_result
+                        failure_result = await failure_result
+                    # If on_failure returns a value, use it; otherwise use output.result
+                    if failure_result is not None:
+                        return failure_result
 
                 # 4. Return result
                 return output.result
