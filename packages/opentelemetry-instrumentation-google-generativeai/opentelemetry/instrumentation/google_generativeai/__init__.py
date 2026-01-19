@@ -34,6 +34,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
     SpanAttributes,
+    Meters
 )
 from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.trace import SpanKind, get_tracer, StatusCode
@@ -328,13 +329,13 @@ def is_metrics_enabled() -> bool:
 
 def _create_metrics(meter: Meter):
     token_histogram = meter.create_histogram(
-        name="gen_ai.client.token.usage",
+        name=Meters.LLM_TOKEN_USAGE,
         unit="token",
         description="Measures number of input and output tokens used",
     )
 
     duration_histogram = meter.create_histogram(
-        name="gen_ai.client.operation.duration",
+        name=Meters.LLM_OPERATION_DURATION,
         unit="s",
         description="GenAI operation duration",
     )

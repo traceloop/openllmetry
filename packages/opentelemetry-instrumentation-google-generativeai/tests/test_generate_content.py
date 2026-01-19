@@ -40,7 +40,7 @@ def test_client_spans(exporter, genai_client):
 
     attrs = span.attributes
 
-    assert attrs[SpanAttributes.LLM_SYSTEM] == "Google"
+    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "Google"
     assert attrs[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
