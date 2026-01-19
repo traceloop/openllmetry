@@ -20,7 +20,7 @@ from traceloop.sdk.guardrail import (
     Condition,
     OnFailure,
 )
-from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput
+from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput, PIIDetectorInput
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop - returns client with guardrails access
@@ -53,14 +53,14 @@ async def pii_guard_example():
         text = completion.choices[0].message.content
         return GuardedFunctionOutput(
             result=text,
-            guard_input={"text": text},  # PII detector expects 'text' field
+            guard_input=PIIDetectorInput(text=text),
         )
 
     result = await client.guardrails.run(
         func_to_guard=generate_customer_response,
         guard=EvaluatorMadeByTraceloop.pii_detector(
             probability_threshold=0.7
-        ).as_guard(condition=Condition.is_false("has_pii")),
+        ).as_guard(condition=Condition.is_false(field="has_pii"), timeout_in_sec=45),
         on_failure=OnFailure.log(message="PII detected in response"),
     )
     print(f"Customer response: {result[:100]}...")
@@ -171,23 +171,23 @@ async def main():
     try:
         await pii_guard_example()
     except Exception as e:
-        print(f"Skipped (API key required): {e}")
+        print(f"Error: {e}")
 
-    print("\n" + "=" * 60)
-    print("Example 2: Toxicity Detection Guard")
-    print("=" * 60)
-    try:
-        await toxicity_guard_example()
-    except Exception as e:
-        print(f"Skipped (API key required): {e}")
+    # print("\n" + "=" * 60)
+    # print("Example 2: Toxicity Detection Guard")
+    # print("=" * 60)
+    # try:
+    #     await toxicity_guard_example()
+    # except Exception as e:
+    #     print(f"Error: {e}")
 
-    print("\n" + "=" * 60)
-    print("Example 3: Agent Trajectory Evaluation")
-    print("=" * 60)
-    try:
-        await agent_trajectory_example()
-    except Exception as e:
-        print(f"Skipped (API key required): {e}")
+    # print("\n" + "=" * 60)
+    # print("Example 3: Agent Trajectory Evaluation")
+    # print("=" * 60)
+    # try:
+    #     await agent_trajectory_example()
+    # except Exception as e:
+    #     print(f"Error: {e}")
 
 
 if __name__ == "__main__":

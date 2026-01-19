@@ -5,7 +5,7 @@ On failure handlers are called when a guard returns False.
 They receive the full GuardedOutput and can raise, log, or perform custom actions.
 """
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, Type
 
 from .model import GuardedFunctionOutput, GuardValidationError, FailureResult
 
@@ -18,6 +18,7 @@ class OnFailure:
     @staticmethod
     def raise_exception(
         message: str = "Guard validation failed",
+        exception_type: Type[Exception] = GuardValidationError
     ) -> Callable[[GuardedFunctionOutput[Any, Any]], None]:
         """
         Raise GuardValidationError on failure.
@@ -30,7 +31,7 @@ class OnFailure:
         """
 
         def handler(output: GuardedFunctionOutput[Any, Any]) -> None:
-            raise GuardValidationError(message, output)
+            raise exception_type(message, output)
 
         return handler
 
