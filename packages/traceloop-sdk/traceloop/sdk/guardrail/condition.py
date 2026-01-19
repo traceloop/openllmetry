@@ -1,0 +1,143 @@
+"""
+Built-in conditions for evaluating guard results.
+
+Conditions are functions that take an evaluator result and return a boolean
+indicating whether the guard should pass (True) or fail (False).
+"""
+from typing import Any, Callable
+
+
+class Condition:
+    """Built-in conditions for common evaluator result patterns."""
+
+    @staticmethod
+    def success() -> Callable[[Any], bool]:
+        """
+        Pass if result.success is True.
+
+        Example:
+            guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
+                condition=Condition.success()
+            )
+        """
+        return lambda result: getattr(result, "success", False) is True
+
+    @staticmethod
+    def is_true(field: str) -> Callable[[Any], bool]:
+        """
+        Pass if specified field is True.
+
+        Args:
+            field: The attribute name to check
+
+        Example:
+            condition=Condition.is_true("matched")
+        """
+        return lambda result: getattr(result, field, None) is True
+
+    @staticmethod
+    def is_false(field: str) -> Callable[[Any], bool]:
+        """
+        Pass if specified field is False.
+
+        Args:
+            field: The attribute name to check
+
+        Example:
+            condition=Condition.is_false("contains_pii")
+        """
+        return lambda result: getattr(result, field, None) is False
+
+    @staticmethod
+    def score_above(threshold: float, field: str = "score") -> Callable[[Any], bool]:
+        """
+        Pass if field >= threshold.
+
+        Args:
+            threshold: Minimum acceptable score (inclusive)
+            field: The attribute name containing the score (default: "score")
+
+        Example:
+            condition=Condition.score_above(0.8)
+        """
+        return lambda result: getattr(result, field, 0) >= threshold
+
+    @staticmethod
+    def score_below(threshold: float, field: str = "score") -> Callable[[Any], bool]:
+        """
+        Pass if field < threshold.
+
+        Args:
+            threshold: Maximum acceptable score (exclusive)
+            field: The attribute name containing the score (default: "score")
+
+        Example:
+            condition=Condition.score_below(0.7)
+        """
+        return lambda result: getattr(result, field, float("inf")) < threshold
+
+    @staticmethod
+    def between(
+        min_val: float, max_val: float, field: str = "score"
+    ) -> Callable[[Any], bool]:
+        """
+        Pass if min_val <= field <= max_val.
+
+        Args:
+            min_val: Minimum acceptable value (inclusive)
+            max_val: Maximum acceptable value (inclusive)
+            field: The attribute name to check (default: "score")
+
+        Example:
+            condition=Condition.between(50, 200, field="count")
+        """
+
+        def check(result: Any) -> bool:
+            value = getattr(result, field, None)
+            if value is None:
+                return False
+            return bool(min_val <= value <= max_val)
+
+        return check
+
+    @staticmethod
+    def equals(value: Any, field: str) -> Callable[[Any], bool]:
+        """
+        Pass if field == value.
+
+        Args:
+            value: The expected value
+            field: The attribute name to check
+
+        Example:
+            condition=Condition.equals("approved", field="status")
+        """
+        return lambda result: getattr(result, field, None) == value
+
+    @staticmethod
+    def greater_than(value: float, field: str = "score") -> Callable[[Any], bool]:
+        """
+        Pass if field > value.
+
+        Args:
+            value: The threshold (exclusive)
+            field: The attribute name to check (default: "score")
+
+        Example:
+            condition=Condition.greater_than(10, field="count")
+        """
+        return lambda result: getattr(result, field, 0) > value
+
+    @staticmethod
+    def less_than(value: float, field: str = "score") -> Callable[[Any], bool]:
+        """
+        Pass if field < value.
+
+        Args:
+            value: The threshold (exclusive)
+            field: The attribute name to check (default: "score")
+
+        Example:
+            condition=Condition.less_than(1000, field="latency_ms")
+        """
+        return lambda result: getattr(result, field, float("inf")) < value
