@@ -29,7 +29,13 @@ Example:
 """
 
 from .guardrail import Guardrails
-from .model import GuardedFunctionOutput, GuardValidationError, Guard, OnFailureHandler
+from .model import (
+    GuardedFunctionOutput,
+    GuardValidationError,
+    GuardExecutionError,
+    Guard,
+    OnFailureHandler,
+)
 from .condition import Condition
 from .on_failure import OnFailure
 
@@ -37,6 +43,7 @@ __all__ = [
     "Guardrails",
     "GuardedFunctionOutput",
     "GuardValidationError",
+    "GuardExecutionError",
     "Guard",
     "OnFailureHandler",
     "Condition",

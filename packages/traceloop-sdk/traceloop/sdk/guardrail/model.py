@@ -58,3 +58,33 @@ class GuardValidationError(Exception):
 
     def __str__(self) -> str:
         return f"{self.args[0]} (guard_input: {self.output.guard_input})"
+
+
+class GuardExecutionError(Exception):
+    """
+    Raised when the guard function itself throws an exception during execution.
+
+    This is different from GuardValidationError which is raised when the guard
+    returns False. GuardExecutionError indicates the guard could not complete.
+
+    Attributes:
+        message: Error description
+        original_exception: The exception that was raised by the guard
+        guard_input: The input that was passed to the guard
+    """
+
+    def __init__(
+        self,
+        message: str,
+        original_exception: Exception,
+        guard_input: Any,
+    ):
+        self.original_exception = original_exception
+        self.guard_input = guard_input
+        super().__init__(message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.args[0]}: {self.original_exception} "
+            f"(guard_input: {self.guard_input})"
+        )

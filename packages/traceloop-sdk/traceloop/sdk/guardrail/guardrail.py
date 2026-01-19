@@ -19,6 +19,7 @@ from .model import (
     GuardedFunctionResult,
     GuardInput,
     FailureResult,
+    GuardExecutionError,
 )
 
 
@@ -70,7 +71,8 @@ class Guardrails:
             T | F: The result from GuardedFunctionOutput.result, or the on_failure return value
 
         Raises:
-            GuardValidationError: If guard fails and on_failure raises
+            GuardValidationError: If guard returns False and on_failure raises
+            GuardExecutionError: If the guard function throws an exception during execution
 
         Example:
             result = await client.guardrails.run(
@@ -99,74 +101,23 @@ class Guardrails:
                 except Exception as e:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
-                    guard_passed = False
+                    raise GuardExecutionError(
+                        message="Guard execution failed",
+                        original_exception=e,
+                        guard_input=output.guard_input,
+                    ) from e
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
-                # Set span attributes
                 span.set_attribute("guardrail.passed", guard_passed)
                 span.set_attribute("guardrail.duration_ms", duration_ms)
 
                 # 3. Handle failure
                 if not guard_passed:
-                    span.set_status(
-                        Status(StatusCode.ERROR, "Guard validation failed")
-                    )
                     failure_result = on_failure(output)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
-                    # If on_failure returns a value, use it; otherwise use output.result
-                    if failure_result is not None:
-                        return failure_result
+                    return failure_result
 
-                # 4. Return result
+                # 4. Guard passed, return result
                 return output.result
-
-
-    async def run_evaluator(
-        self,
-        input_data: Dict[str, Any],
-        evaluator_slug: str,
-        evaluator_version: str | None = None,
-        evaluator_config: Dict[str, Any] | None = None,
-        timeout_in_sec: int = 60,
-    ) -> Dict[str, Any]:
-        """
-        Run a Traceloop evaluator directly and return its result.
-
-        This is useful when you need to evaluate content without the full
-        guardrail flow, or when building custom guard logic.
-
-        Args:
-            input_data: Dictionary of input fields for the evaluator
-            evaluator_slug: The evaluator identifier (e.g., "pii-detector")
-            evaluator_version: Optional version of the evaluator
-            evaluator_config: Optional configuration for the evaluator
-            timeout_in_sec: Timeout in seconds (default: 60)
-
-        Returns:
-            Dict containing the evaluator result
-
-        Example:
-            result = await client.guardrails.run_evaluator(
-                input_data={"text": "Hello, my name is John"},
-                evaluator_slug="pii-detector",
-            )
-            print(result)  # {"has_pii": True, "pii_types": ["PERSON"]}
-        """
-        # Generate internal IDs for guardrail execution (no experiment context)
-        internal_task_id = f"guard-{uuid4().hex[:8]}"
-        internal_experiment_id = f"guard-exp-{uuid4().hex[:8]}"
-        internal_run_id = f"guard-run-{uuid4().hex[:8]}"
-
-        eval_response = await self._evaluator.run_experiment_evaluator(
-            evaluator_slug=evaluator_slug,
-            task_id=internal_task_id,
-            experiment_id=internal_experiment_id,
-            experiment_run_id=internal_run_id,
-            input=input_data,
-            evaluator_version=evaluator_version,
-            evaluator_config=evaluator_config,
-            timeout_in_sec=timeout_in_sec,
-        )
-        return eval_response.result
