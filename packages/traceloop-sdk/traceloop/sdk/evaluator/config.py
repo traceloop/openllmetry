@@ -1,8 +1,6 @@
 from typing import Dict, Any, Optional, List, Callable, Awaitable
 from pydantic import BaseModel
 
-from traceloop.sdk.guardrail.model import GuardExecutionError
-
 
 class EvaluatorDetails(BaseModel):
     """
@@ -81,20 +79,13 @@ class EvaluatorDetails(BaseModel):
             client = Traceloop.get()
             evaluator = Evaluator(client._async_http)
 
-            try:
-                eval_response = await evaluator.run(
-                    evaluator_slug=evaluator_slug,
-                    input=input_dict,
-                    evaluator_version=evaluator_version,
-                    evaluator_config=evaluator_config,
-                    timeout_in_sec=timeout_in_sec,
-                )
-                return condition(eval_response)
-            except Exception as e:
-                raise GuardExecutionError(
-                    message="Evaluator execution failed",
-                    original_exception=e,
-                    guard_input=input_dict,
-                ) from e
+            eval_response = await evaluator.run(
+                evaluator_slug=evaluator_slug,
+                input=input_dict,
+                evaluator_version=evaluator_version,
+                evaluator_config=evaluator_config,
+                timeout_in_sec=timeout_in_sec,
+            )
+            return condition(eval_response)
 
         return guard_fn
