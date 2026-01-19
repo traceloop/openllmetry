@@ -48,33 +48,6 @@ class Condition:
         """
         return lambda result: getattr(result, field, None) is False
 
-    @staticmethod
-    def score_above(threshold: float, field: str = "score") -> Callable[[Any], bool]:
-        """
-        Pass if field >= threshold.
-
-        Args:
-            threshold: Minimum acceptable score (inclusive)
-            field: The attribute name containing the score (default: "score")
-
-        Example:
-            condition=Condition.score_above(0.8)
-        """
-        return lambda result: getattr(result, field, 0) >= threshold
-
-    @staticmethod
-    def score_below(threshold: float, field: str = "score") -> Callable[[Any], bool]:
-        """
-        Pass if field < threshold.
-
-        Args:
-            threshold: Maximum acceptable score (exclusive)
-            field: The attribute name containing the score (default: "score")
-
-        Example:
-            condition=Condition.score_below(0.7)
-        """
-        return lambda result: getattr(result, field, float("inf")) < threshold
 
     @staticmethod
     def between(
@@ -141,3 +114,33 @@ class Condition:
             condition=Condition.less_than(1000, field="latency_ms")
         """
         return lambda result: getattr(result, field, float("inf")) < value
+
+    @staticmethod
+    def greater_than_or_equal(
+        value: float, field: str = "score"
+    ) -> Callable[[Any], bool]:
+        """
+        Pass if field >= value.
+
+        Args:
+            value: The threshold (inclusive)
+            field: The attribute name to check (default: "score")
+
+        Example:
+            condition=Condition.greater_than_or_equal(0.8, field="confidence")
+        """
+        return lambda result: getattr(result, field, 0) >= value
+
+    @staticmethod
+    def less_than_or_equal(value: float, field: str = "score") -> Callable[[Any], bool]:
+        """
+        Pass if field <= value.
+
+        Args:
+            value: The threshold (inclusive)
+            field: The attribute name to check (default: "score")
+
+        Example:
+            condition=Condition.less_than_or_equal(0.5, field="toxicity")
+        """
+        return lambda result: getattr(result, field, float("inf")) <= value
