@@ -446,7 +446,7 @@ def set_response_attributes(span, response, llm_model):
             )
 
 
-def set_model_response_attributes(span, response, llm_model):
+def set_model_response_attributes(span, response, llm_model, token_histogram):
     if not span.is_recording():
         return
 
@@ -468,5 +468,23 @@ def set_model_response_attributes(span, response, llm_model):
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             response.usage_metadata.prompt_token_count,
         )
+
+    if token_histogram and hasattr(response, "usage_metadata"):
+        token_histogram.record(
+            response.usage_metadata.prompt_token_count,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+            }
+        )
+        token_histogram.record(
+                    response.usage_metadata.candidates_token_count,
+                    attributes={
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                    },
+                )
 
     span.set_status(Status(StatusCode.OK))
