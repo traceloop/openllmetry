@@ -32,6 +32,7 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
@@ -245,7 +246,14 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
     await _handle_request(span, event_logger, args, kwargs, llm_model)
 
-    response = await wrapped(*args, **kwargs)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if is_streaming_response(response):
@@ -299,7 +307,14 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     else:
         set_input_attributes_sync(span, args)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if is_streaming_response(response):
