@@ -149,13 +149,20 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
 def _build_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
+    try:
+        for item in response:
+            item_to_yield = item
+            complete_response += str(item.text)
+            if item.usage_metadata:
+                token_usage = item.usage_metadata
 
-        yield item_to_yield
+            yield item_to_yield
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     handle_streaming_response(
         span, event_logger, llm_model, complete_response, token_usage
@@ -168,13 +175,20 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    async for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
+    try:
+        async for item in response:
+            item_to_yield = item
+            complete_response += str(item.text)
+            if item.usage_metadata:
+                token_usage = item.usage_metadata
 
-        yield item_to_yield
+            yield item_to_yield
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     handle_streaming_response(span, event_logger, llm_model, response, token_usage)
 
