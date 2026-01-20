@@ -1,3 +1,18 @@
+## v0.51.0 (2026-01-20)
+
+### Feat
+
+- **google-generativeai**: Add metrics support (#3506)
+
+### Fix
+
+- **traceloop-sdk**: Add csv and json support to experiment (#3537)
+- **evals**: evals API supports input + config, generate mbt functions (#3534)
+- **langchain**: correct unknown role in completion spans (#3532)
+- **evals**: auto generate evals (#3529)
+- **tracing**: Add association property (#3524)
+- **openai-agents**: optional import of optional deps (#3488)
+
 ## v0.50.1 (2025-12-16)
 
 ### Fix
