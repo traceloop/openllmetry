@@ -86,6 +86,8 @@ class Guardrails:
             with tracer.start_as_current_span("guardrail.run") as span:
                 start_time = time.perf_counter()
 
+                print(f"NOMI - In the guard run function")
+
                 # 1. Execute func_to_guard
                 output: GuardedFunctionOutput[
                     GuardedFunctionResult, GuardInput
@@ -97,6 +99,7 @@ class Guardrails:
                     if asyncio.iscoroutine(guard_result):
                         guard_result = await guard_result
                     guard_passed = bool(guard_result)
+                    print(f"NOMI - Guard passed: {guard_passed}")
                 except Exception as e:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)

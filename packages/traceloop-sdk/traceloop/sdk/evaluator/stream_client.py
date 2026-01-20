@@ -28,6 +28,8 @@ class SSEClient:
 
             full_stream_url = f"{self.client.base_url}/v2{stream_url}"
 
+            print(f"NOMI - Full stream URL: {full_stream_url}")
+
             async with self.client.stream(
                 "GET",
                 full_stream_url,
@@ -54,6 +56,7 @@ class SSEClient:
 
     async def _handle_sse_response(self, response: httpx.Response) -> ExecutionResponse:
         """Handle SSE response: check status and parse result"""
+        print(f"NOMI - Handling SSE response")
         if response.status_code != 200:
             error_text = await response.aread()
             # TODO: Fix bytes formatting - should decode error_text or use !r
@@ -65,6 +68,7 @@ class SSEClient:
 
     def _parse_sse_result(self, response_text: str) -> ExecutionResponse:
         """Parse SSE response text into ExecutionResponse"""
+        print(f"NOMI - Parsing SSE response")
         try:
             response_data = json.loads(response_text)
             return ExecutionResponse(**response_data)

@@ -79,6 +79,8 @@ class EvaluatorDetails(BaseModel):
             client = Traceloop.get()
             evaluator = Evaluator(client._async_http)
 
+            print(f"NOMI - In the guard run function")
+
             eval_response = await evaluator.run(
                 evaluator_slug=evaluator_slug,
                 input=input_dict,

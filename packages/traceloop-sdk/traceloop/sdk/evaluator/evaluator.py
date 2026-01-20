@@ -215,9 +215,13 @@ class Evaluator:
             evaluator_config,
         )
 
+        print(f"NOMI - In the evaluator run function")
+
         execute_response = await self._execute_evaluator_request(
             evaluator_slug, request, timeout_in_sec
         )
+
+        print(f"NOMI - Execute response: {execute_response}")
 
         sse_client = SSEClient(shared_client=self._async_http_client)
         return await sse_client.wait_for_result(

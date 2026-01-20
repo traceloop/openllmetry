@@ -51,6 +51,7 @@ async def pii_guard_example():
             ],
         )
         text = completion.choices[0].message.content
+        print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
         return GuardedFunctionOutput(
             result=text,
             guard_input=PIIDetectorInput(text=text),
