@@ -190,7 +190,7 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
         span.end()
         raise
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(span, event_logger, llm_model, complete_response, token_usage)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
