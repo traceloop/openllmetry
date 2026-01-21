@@ -1,17 +1,38 @@
 """
-Guardrail Example: Using Custom Evaluators as Guards
+Guardrail Example: Medical Advice Detection with Custom Evaluators
 
 This example demonstrates how to use custom evaluators (defined in Traceloop)
-as guards. Custom evaluators are user-defined evaluation logic that runs
-on Traceloop's infrastructure.
+to detect and control medical advice in AI-generated responses. The examples show:
+
+1. PASS Case: General health information that should be allowed
+   - Educational content about hypertension and blood pressure
+   - Uses medical-advice-detector evaluator
+   - Demonstrates safe general health information
+
+2. FAIL Case: Specific diagnosis requests that should be blocked
+   - User asking for diagnosis based on symptoms
+   - Uses diagnosis-blocker evaluator with direct execution
+   - Shows how to block medical diagnosis attempts
+
+3. FAIL Case: Medical safety with professional referral fallback
+   - Cancer diagnosis question blocked with safe fallback message
+   - Uses medical-safety-guard evaluator
+   - Demonstrates return_value instead of raising exception
+
+Custom evaluators help distinguish between:
+- Safe general health information (allowed)
+- Specific medical diagnoses (blocked)
+- Medical emergencies requiring professional care (blocked with referral)
 
 Requires a Traceloop API key and custom evaluators configured in your account.
+See comments in each example for required evaluator specifications.
 """
 
 import asyncio
 import os
 
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
@@ -22,179 +43,162 @@ from traceloop.sdk.guardrail import (
 )
 from traceloop.sdk.evaluator import EvaluatorDetails
 
+
+# Input models for custom evaluators
+# Note: You can use either Pydantic models (recommended) OR plain dictionaries
+# for guard_input. Both are supported by as_guard().
+class MedicalAdviceInput(BaseModel):
+    """Input model for medical advice evaluator."""
+    text: str
+
+
+class DiagnosisRequestInput(BaseModel):
+    """Input model for diagnosis blocker evaluator."""
+    text: str
+    user_question: str
+    symptoms: list[str] | None = None
+
+
+class MedicalSafetyInput(BaseModel):
+    """Input model for medical safety guard evaluator."""
+    text: str
+    query: str
+
 # Initialize Traceloop - returns client with guardrails access
 client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-# Example 1: Custom Evaluator with EvaluatorDetails
-# =================================================
-@workflow(name="custom_evaluator_example")
-async def custom_evaluator_example():
+# Example 1: Medical Advice Quality Check (PASS Case)
+# ===================================================
+@workflow(name="medical_advice_quality_check")
+async def medical_advice_quality_check():
     """
-    Demonstrate using a custom evaluator defined in Traceloop.
+    Demonstrate safe general health information that passes the guard.
 
-    To use this example, first create a custom evaluator in Traceloop
-    with slug "my-custom-quality-check" that returns a 'quality_score' field.
+    This example shows content that SHOULD pass - general educational health
+    information that doesn't provide specific medical diagnoses.
+
+    Custom Evaluator Required: 'medical-advice-detector'
+    Expected Input Fields:
+      - text: The AI-generated response
     """
 
-    async def generate_travel_recommendation() -> GuardedFunctionOutput[str, dict]:
-        """Generate a travel recommendation."""
+    async def generate_health_info() -> GuardedFunctionOutput[str, MedicalAdviceInput]:
+        """Generate general health information about hypertension."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a travel expert. Provide detailed recommendations.",
+                    "content": "You are a health educator. Provide general educational "
+                               "information only. Never diagnose or prescribe.",
                 },
                 {
                     "role": "user",
-                    "content": "Recommend a 3-day itinerary for visiting Rome.",
+                    "content": "What is hypertension and how can I maintain healthy blood pressure?",
                 },
             ],
         )
         text = completion.choices[0].message.content
         return GuardedFunctionOutput(
             result=text,
-            guard_input={"text": text, "destination": "Rome"},
+            guard_input=MedicalAdviceInput(
+                text=text,
+            ),
         )
 
-    # Define custom evaluator by slug
-    custom_evaluator = EvaluatorDetails(
-        slug="my-custom-quality-check",  # Your custom evaluator slug
-        version="v1",  # Optional: specify version
-        config={"min_words": 100},  # Optional: evaluator config
+    # Configure custom evaluator for medical advice detection
+    medical_evaluator = EvaluatorDetails(
+        slug="medical-advice-given",
     )
 
     result = await client.guardrails.run(
-        func_to_guard=generate_travel_recommendation,
-        guard=custom_evaluator.as_guard(
-            condition=Condition.score_above(0.7, field="quality_score")
+        func_to_guard=generate_health_info,
+        guard=medical_evaluator.as_guard(
+            condition=Condition.is_true(field="pass")
         ),
-        on_failure=OnFailure.log(message="Quality check failed"),
+        on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
-    print(f"Travel recommendation: {result[:100]}...")
+    print(f"Health information (passed guard): {result[:200]}...")
 
 
-# Example 2: Direct Evaluator Execution
-# ====================================
-@workflow(name="direct_evaluator_example")
-async def direct_evaluator_example():
+# Example 2: Diagnosis Request Blocker (FAIL Case)
+# =================================================
+@workflow(name="diagnosis_request_blocker")
+async def diagnosis_request_blocker():
     """
-    Demonstrate running an evaluator directly without the full guardrail flow.
+    Demonstrate blocking specific medical diagnosis requests.
 
-    Useful for building custom guard logic or when you need more control.
+    This example shows content that SHOULD fail - user requesting specific
+    diagnosis based on symptoms.
+
+    Custom Evaluator Required: 'diagnosis-blocker'
+    Expected Input Fields:
+      - text: The AI-generated response
     """
 
-    async def generate_and_evaluate() -> GuardedFunctionOutput[str, dict]:
-        """Generate content and build custom guard input with evaluator result."""
+    async def attempt_diagnosis_request() -> GuardedFunctionOutput[str, dict]:
+        """Generate response to diagnosis request (will be blocked)."""
+        user_question = "I have chest pain, shortness of breath, and dizziness. Do I have a heart attack?"
+
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "user",
-                    "content": "Write a brief description of hiking in the Swiss Alps.",
+                    "content": user_question,
                 }
             ],
         )
         text = completion.choices[0].message.content
-
-        # Run evaluator directly to get result
-        eval_result = await client.guardrails.run_evaluator(
-            input_data={"text": text},
-            evaluator_slug="my-content-evaluator",  # Your custom evaluator
-            timeout_in_sec=30,
-        )
 
         return GuardedFunctionOutput(
             result=text,
             guard_input={
                 "text": text,
-                "eval_result": eval_result,  # Include evaluator result
             },
         )
-
-    # Use the pre-computed evaluator result in the guard
-    result = await client.guardrails.run(
-        func_to_guard=generate_and_evaluate,
-        guard=lambda z: z["eval_result"].get("score", 0) > 0.5,
-        on_failure=OnFailure.raise_exception("Content evaluation failed"),
-    )
-    print(f"Evaluated content: {result[:100]}...")
-
-
-# Example 3: Custom Evaluator with Fallback
-# ========================================
-@workflow(name="evaluator_with_fallback_example")
-async def evaluator_with_fallback_example():
-    """
-    Demonstrate using a custom evaluator with a fallback response on failure.
-    """
-
-    async def generate_response() -> GuardedFunctionOutput[str, dict]:
-        """Generate a response that will be evaluated."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": "What are some tips for budget travel in Southeast Asia?",
-                }
-            ],
-        )
-        text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
-            result=text,
-            guard_input={"text": text},
-        )
-
-    custom_evaluator = EvaluatorDetails(
-        slug="budget-travel-validator",
-        config={"check_practical_tips": True},
+    diagnosis_blocker = EvaluatorDetails(
+        slug="diagnosis-blocker",
     )
 
-    # Use return_value to provide a fallback instead of raising
     result = await client.guardrails.run(
-        func_to_guard=generate_response,
-        guard=custom_evaluator.as_guard(condition=Condition.success()),
-        on_failure=OnFailure.return_value(
-            "I apologize, but I couldn't generate quality travel tips. "
-            "Please try asking again with more specific questions."
+        func_to_guard=attempt_diagnosis_request,
+        guard=diagnosis_blocker.as_guard(
+            condition=Condition.is_false(field="pass")
+        ),
+        on_failure=OnFailure.raise_exception(
+            "This appears to be a request for medical diagnosis. "
+            "Please consult a qualified healthcare professional for symptoms that concern you."
         ),
     )
-    print(f"Response: {result[:100]}...")
+    print(f"Response: {result[:200]}...")
+
 
 
 async def main():
-    """Run all custom evaluator guard examples."""
-    print("=" * 60)
-    print("Example 1: Custom Evaluator with EvaluatorDetails")
-    print("=" * 60)
-    print("Note: Requires custom evaluator 'my-custom-quality-check' in Traceloop")
+    """Run all medical advice guardrail examples."""
+    print("=" * 70)
+    print("Example 1: Medical Advice Quality Check (PASS Case)")
+    print("=" * 70)
+    print("Note: Requires custom evaluator 'medical-advice-detector' in Traceloop")
+    print("Tests: General health information that SHOULD pass the guard\n")
     try:
-        await custom_evaluator_example()
+        await medical_advice_quality_check()
     except Exception as e:
         print(f"Skipped: {e}")
 
-    print("\n" + "=" * 60)
-    print("Example 2: Direct Evaluator Execution")
-    print("=" * 60)
-    print("Note: Requires custom evaluator 'my-content-evaluator' in Traceloop")
+    print("\n" + "=" * 70)
+    print("Example 2: Diagnosis Request Blocker (FAIL Case)")
+    print("=" * 70)
+    print("Note: Requires custom evaluator 'diagnosis-blocker' in Traceloop")
+    print("Tests: Specific diagnosis request that SHOULD fail the guard\n")
     try:
-        await direct_evaluator_example()
+        await diagnosis_request_blocker()
     except Exception as e:
-        print(f"Skipped: {e}")
-
-    print("\n" + "=" * 60)
-    print("Example 3: Custom Evaluator with Fallback")
-    print("=" * 60)
-    print("Note: Requires custom evaluator 'budget-travel-validator' in Traceloop")
-    try:
-        await evaluator_with_fallback_example()
-    except Exception as e:
-        print(f"Skipped: {e}")
-
+        print(f"Expected failure - guard blocked diagnosis request: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

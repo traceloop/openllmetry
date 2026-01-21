@@ -27,7 +27,7 @@ class EvaluatorDetails(BaseModel):
         self,
         condition: Callable[[Any], bool],
         timeout_in_sec: int = 60,
-    ) -> Callable[[BaseModel], Awaitable[bool]]:
+    ) -> Callable[[BaseModel | dict], Awaitable[bool]]:
         """
         Convert this evaluator to a guard function for use with client.guardrails.run().
 
@@ -36,11 +36,13 @@ class EvaluatorDetails(BaseModel):
                        True = pass, False = fail.
                        Use Condition helpers (e.g., Condition.success(), Condition.score_above(0.8))
                        or a custom lambda.
+            timeout_in_sec: Maximum time to wait for evaluator execution (default: 60 seconds)
 
         Returns:
             Async function suitable for client.guardrails.run(guard=...)
+            Accepts either a Pydantic BaseModel or a plain dict as input.
 
-        Example:
+        Example with Pydantic Model:
             from traceloop.sdk import Traceloop
             from traceloop.sdk.guardrail import Condition, OnFailure, GuardedFunctionOutput
             from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
@@ -62,18 +64,46 @@ class EvaluatorDetails(BaseModel):
                 ),
                 on_failure=OnFailure.raise_exception("Toxic content detected"),
             )
+
+        Example with Dictionary:
+            from pydantic import BaseModel
+
+            class CustomInput(BaseModel):
+                text: str
+                context: str
+
+            async def generate_text() -> GuardedFunctionOutput[str, CustomInput]:
+                text = "Hello world"
+                return GuardedFunctionOutput(
+                    result=text,
+                    guard_input=CustomInput(text=text, context="greeting"),
+                )
+
+            # Or use a plain dict:
+            async def generate_text_dict() -> GuardedFunctionOutput[str, dict]:
+                text = "Hello world"
+                return GuardedFunctionOutput(
+                    result=text,
+                    guard_input={"text": text, "context": "greeting"},
+                )
         """
         evaluator_slug = self.slug
         evaluator_version = self.version
         evaluator_config = self.config
 
-        async def guard_fn(input_data: BaseModel) -> bool:
+        async def guard_fn(input_data) -> bool:
             # Lazy import to avoid circular dependencies
             from traceloop.sdk import Traceloop
             from traceloop.sdk.evaluator.evaluator import Evaluator
 
-            # Convert Pydantic model to dict
-            input_dict = input_data.model_dump()
+            # Convert Pydantic model to dict, or use dict directly
+            if isinstance(input_data, dict):
+                input_dict = input_data
+            elif hasattr(input_data, "model_dump"):
+                input_dict = input_data.model_dump()
+            else:
+                # Fallback: try to convert to dict
+                input_dict = dict(input_data)
 
             # Get the SDK client
             client = Traceloop.get()
