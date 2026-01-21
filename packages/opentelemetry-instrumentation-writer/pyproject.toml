@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-writer"
-version = "0.50.1"
+version = "0.51.0"
 description = "OpenTelemetry Writer instrumentation"
 authors = [
   { name = "Yan Tolstoy", email = "yan.talstoi@writer.com" },
