@@ -7,6 +7,7 @@ from .field_mapping import normalize_task_output, get_field_suggestions, format_
 from .model import (
     InputExtractor,
     InputSchemaMapping,
+    ExecuteEvaluatorInExperimentRequest,
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
     ExecutionResponse,
@@ -46,19 +47,19 @@ class Evaluator:
         self._async_http_client = async_http_client
 
     @staticmethod
-    def _build_evaluator_request(
+    def _build_evaluator_in_experiment_request(
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
         input: Dict[str, str],
         evaluator_version: Optional[str] = None,
         evaluator_config: Optional[Dict[str, Any]] = None,
-    ) -> ExecuteEvaluatorRequest:
+    ) -> ExecuteEvaluatorInExperimentRequest:
         """Build evaluator request with common parameters"""
         schema_mapping = InputSchemaMapping(
             root={k: InputExtractor(source=v) for k, v in input.items()}
         )
-        return ExecuteEvaluatorRequest(
+        return ExecuteEvaluatorInExperimentRequest(
             input_schema_mapping=schema_mapping,
             evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
@@ -66,6 +67,28 @@ class Evaluator:
             experiment_id=experiment_id,
             experiment_run_id=experiment_run_id,
         )
+
+    async def _execute_evaluator_in_experiment_request(
+        self,
+        evaluator_slug: str,
+        request: ExecuteEvaluatorInExperimentRequest,
+        timeout_in_sec: int = 120,
+    ) -> ExecuteEvaluatorResponse:
+        """Execute evaluator request and return response"""
+        body = request.model_dump()
+        client = self._async_http_client
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-in-experiment"
+        response = await client.post(
+            full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        )
+        if response.status_code != 200:
+            error_detail = _extract_error_from_response(response)
+            raise Exception(
+                f"Failed to execute evaluator '{evaluator_slug}': "
+                f"{response.status_code} - {error_detail}"
+            )
+        result_data = response.json()
+        return ExecuteEvaluatorResponse(**result_data)
 
     async def _execute_evaluator_request(
         self,
@@ -118,11 +141,11 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        request = self._build_evaluator_request(
+        request = self._build_evaluator_in_experiment_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
-        execute_response = await self._execute_evaluator_request(
+        execute_response = await self._execute_evaluator_in_experiment_request(
             evaluator_slug, request, timeout_in_sec
         )
 
@@ -162,11 +185,11 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        request = self._build_evaluator_request(
+        request = self._build_evaluator_in_experiment_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
-        execute_response = await self._execute_evaluator_request(
+        execute_response = await self._execute_evaluator_in_experiment_request(
             evaluator_slug, request, 120
         )
 
@@ -200,19 +223,13 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        # Generate internal IDs for standalone execution
-        internal_id = uuid4().hex[:8]
-        task_id = f"eval-{internal_id}"
-        experiment_id = f"eval-exp-{internal_id}"
-        experiment_run_id = f"eval-run-{internal_id}"
-
-        request = self._build_evaluator_request(
-            task_id,
-            experiment_id,
-            experiment_run_id,
-            input,
-            evaluator_version,
-            evaluator_config,
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+        request = ExecuteEvaluatorRequest(
+            input_schema_mapping=schema_mapping,
+            evaluator_version=evaluator_version,
+            evaluator_config=evaluator_config,
         )
 
         print(f"NOMI - In the evaluator run function")

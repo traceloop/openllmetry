@@ -39,7 +39,7 @@ class OnFailure:
     def log(
         level: int = logging.WARNING,
         message: str = "Guard validation failed",
-    ) -> Callable[[GuardedFunctionOutput[Any, Any]], None]:
+    ) -> Callable[[GuardedFunctionOutput[Any, Any]], Any]:
         """
         Log failure and continue (return the result anyway).
 
@@ -51,13 +51,14 @@ class OnFailure:
             on_failure=OnFailure.log(message="Toxic content detected")
         """
 
-        def handler(output: GuardedFunctionOutput[Any, Any]) -> None:
+        def handler(output: GuardedFunctionOutput[Any, Any]) -> Any:
             logger.log(level, f"{message}: guard_input={output.guard_input}")
+            return output.result
 
         return handler
 
     @staticmethod
-    def noop() -> Callable[[GuardedFunctionOutput[Any, Any]], None]:
+    def noop() -> Callable[[GuardedFunctionOutput[Any, Any]], Any]:
         """
         Do nothing on failure (shadow mode).
 
@@ -67,8 +68,8 @@ class OnFailure:
             on_failure=OnFailure.noop()  # Just observe, don't block
         """
 
-        def handler(output: GuardedFunctionOutput[Any, Any]) -> None:
-            pass
+        def handler(output: GuardedFunctionOutput[Any, Any]) -> Any:
+            return output.result
 
         return handler
 

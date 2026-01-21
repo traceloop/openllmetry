@@ -62,7 +62,7 @@ async def pii_guard_example():
         guard=EvaluatorMadeByTraceloop.pii_detector(
             probability_threshold=0.7
         ).as_guard(condition=Condition.is_false(field="has_pii"), timeout_in_sec=45),
-        on_failure=OnFailure.log(message="PII detected in response"),
+        on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
     print(f"Customer response: {result[:100]}...")
 
