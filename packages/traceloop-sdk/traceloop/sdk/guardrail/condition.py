@@ -7,6 +7,25 @@ indicating whether the guard should pass (True) or fail (False).
 from typing import Any, Callable
 
 
+def _get_field(result: Any, field: str, default: Any = None) -> Any:
+    """
+    Get a field from result, supporting both dict and object attribute access.
+
+    Args:
+        result: The result object or dict
+        field: The field name to access
+        default: Default value if field not found
+
+    Returns:
+        The field value, or default if not found
+    """
+    # Try dict access first
+    if isinstance(result, dict):
+        return result.get(field, default)
+    # Fall back to attribute access
+    return getattr(result, field, default)
+
+
 class Condition:
     """Built-in conditions for common evaluator result patterns."""
 
@@ -20,7 +39,7 @@ class Condition:
                 condition=Condition.success()
             )
         """
-        return lambda result: getattr(result, "success", False) is True
+        return lambda result: _get_field(result, "success", False) is True
 
     @staticmethod
     def is_true(field: str) -> Callable[[Any], bool]:
@@ -33,7 +52,7 @@ class Condition:
         Example:
             condition=Condition.is_true("matched")
         """
-        return lambda result: getattr(result, field, None) is True
+        return lambda result: _get_field(result, field, None) is True
 
     @staticmethod
     def is_false(field: str) -> Callable[[Any], bool]:
@@ -46,7 +65,7 @@ class Condition:
         Example:
             condition=Condition.is_false("contains_pii")
         """
-        return lambda result: getattr(result, field, None) is False
+        return lambda result: _get_field(result, field, None) is False
 
 
     @staticmethod
@@ -66,7 +85,7 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            value = getattr(result, field, None)
+            value = _get_field(result, field, None)
             if value is None:
                 return False
             return bool(min_val <= value <= max_val)
@@ -85,7 +104,7 @@ class Condition:
         Example:
             condition=Condition.equals("approved", field="status")
         """
-        return lambda result: getattr(result, field, None) == value
+        return lambda result: _get_field(result, field, None) == value
 
     @staticmethod
     def greater_than(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -99,7 +118,7 @@ class Condition:
         Example:
             condition=Condition.greater_than(10, field="count")
         """
-        return lambda result: getattr(result, field, 0) > value
+        return lambda result: _get_field(result, field, 0) > value
 
     @staticmethod
     def less_than(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -113,7 +132,7 @@ class Condition:
         Example:
             condition=Condition.less_than(1000, field="latency_ms")
         """
-        return lambda result: getattr(result, field, float("inf")) < value
+        return lambda result: _get_field(result, field, float("inf")) < value
 
     @staticmethod
     def greater_than_or_equal(
@@ -129,7 +148,7 @@ class Condition:
         Example:
             condition=Condition.greater_than_or_equal(0.8, field="confidence")
         """
-        return lambda result: getattr(result, field, 0) >= value
+        return lambda result: _get_field(result, field, 0) >= value
 
     @staticmethod
     def less_than_or_equal(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -143,4 +162,4 @@ class Condition:
         Example:
             condition=Condition.less_than_or_equal(0.5, field="toxicity")
         """
-        return lambda result: getattr(result, field, float("inf")) <= value
+        return lambda result: _get_field(result, field, float("inf")) <= value

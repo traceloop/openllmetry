@@ -11,6 +11,7 @@ from .model import (
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
     ExecutionResponse,
+    EvaluatorExecutionResult,
 )
 from .stream_client import SSEClient
 from .config import EvaluatorDetails

@@ -20,7 +20,7 @@ from traceloop.sdk.guardrail import (
     Condition,
     OnFailure,
 )
-from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput, PIIDetectorInput
+from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput, PIIDetectorInput, AgentGoalCompletenessInput
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop - returns client with guardrails access
@@ -93,7 +93,7 @@ async def toxicity_guard_example():
     result = await client.guardrails.run(
         func_to_guard=generate_content,
         guard=EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
-            condition=Condition.score_below(0.5, field="toxicity_score")
+            condition=Condition.equals("pass", field="is_safe")
         ),
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
@@ -143,23 +143,30 @@ async def agent_trajectory_example():
             state, "What are the must-see attractions in Tokyo?"
         )
 
-        # Prepare trajectory for evaluation
-        trajectory = {
-            "trajectory_prompts": json.dumps(state.prompts),
-            "trajectory_completions": json.dumps(state.completions),
-        }
+        # Format trajectory in the flattened dictionary format expected by the evaluator
+        trajectory_prompts = {}
+        for i, prompt in enumerate(state.prompts):
+            trajectory_prompts[f"llm.prompts.{i}.role"] = "user"
+            trajectory_prompts[f"llm.prompts.{i}.content"] = prompt
+
+        trajectory_completions = {}
+        for i, completion in enumerate(state.completions):
+            trajectory_completions[f"llm.completions.{i}.content"] = completion
 
         return GuardedFunctionOutput(
             result=final_response,
-            guard_input=trajectory,
+            guard_input=AgentGoalCompletenessInput(
+                trajectory_prompts=json.dumps(trajectory_prompts),
+                trajectory_completions=json.dumps(trajectory_completions)
+            ),
         )
 
     result = await client.guardrails.run(
         func_to_guard=run_travel_agent,
         guard=EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.7).as_guard(
-            condition=Condition.score_above(0.6, field="completeness_score")
+            condition=Condition.greater_than_or_equal(0.8, field="score")
         ),
-        on_failure=OnFailure.log(message="Agent did not fully complete the user's goal"),
+        on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
     print(f"Agent final response: {result[:100]}...")
 
@@ -169,10 +176,10 @@ async def main():
     print("=" * 60)
     print("Example 1: PII Detection Guard")
     print("=" * 60)
-    try:
-        await pii_guard_example()
-    except Exception as e:
-        print(f"Error: {e}")
+    # try:
+    #     await pii_guard_example()
+    # except Exception as e:
+    #     print(f"Error: {e}")
 
     # print("\n" + "=" * 60)
     # print("Example 2: Toxicity Detection Guard")
@@ -182,13 +189,13 @@ async def main():
     # except Exception as e:
     #     print(f"Error: {e}")
 
-    # print("\n" + "=" * 60)
-    # print("Example 3: Agent Trajectory Evaluation")
-    # print("=" * 60)
-    # try:
-    #     await agent_trajectory_example()
-    # except Exception as e:
-    #     print(f"Error: {e}")
+    print("\n" + "=" * 60)
+    print("Example 3: Agent Trajectory Evaluation")
+    print("=" * 60)
+    try:
+        await agent_trajectory_example()
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":

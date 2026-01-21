@@ -1,6 +1,6 @@
 import datetime
 from typing import Dict, Any, Optional, TypeVar, Type
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, Field
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -42,12 +42,14 @@ class StreamEvent(BaseModel):
     data: Dict[str, Any]
     timestamp: datetime.datetime
 
+class EvaluatorExecutionResult(BaseModel):
+    evaluator_result: Dict[str, Any]
 
 class ExecutionResponse(BaseModel):
     """Complete response structure for evaluator execution"""
 
     execution_id: str
-    result: Dict[str, Any]
+    result: EvaluatorExecutionResult = Field(alias="evaluator_result")
 
     def typed_result(self, model: Type[T]) -> T:
         """Parse result into a typed Pydantic model.
