@@ -5,9 +5,9 @@
   "sourceRoot": "packages/opentelemetry-instrumentation-watsonx/opentelemetry/instrumentation/watsonx",
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-watsonx"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-watsonx/dist",
         "publish": false,
@@ -34,37 +36,32 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "nx:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-watsonx"
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-watsonx/pylint.txt"
-      ],
+      "executor": "nx:run-commands",
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-watsonx/pylint.txt"
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-watsonx"
       }
     },
     "test": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-watsonx/unittests",
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-watsonx"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-watsonx"
       }
     },
     "build-release": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "chmod +x ../../scripts/build-release.sh",
@@ -74,5 +71,7 @@
       }
     }
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }

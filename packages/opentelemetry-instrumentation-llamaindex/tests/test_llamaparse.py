@@ -73,10 +73,12 @@ def test_llamaparse_api_methods_exist():
     not pytest.importorskip("llama_parse"),
     reason="llama_parse not installed"
 )
-def test_llamaparse_deprecated_methods_dont_exist():
+def test_llamaparse_parse_methods_exist():
+    """Test that parse and aparse methods exist in newer llama-parse versions."""
     parser = LlamaParse(api_key=os.environ["LLAMA_CLOUD_API_KEY"])
 
-    non_existent_methods = ['parse', 'aparse']
+    parse_methods = ['parse', 'aparse']
 
-    for method_name in non_existent_methods:
-        assert not hasattr(parser, method_name), f"Method {method_name} should not exist in LlamaParse"
+    for method_name in parse_methods:
+        assert hasattr(parser, method_name), f"Method {method_name} should exist in LlamaParse"
+        assert callable(getattr(parser, method_name)), f"Method {method_name} should be callable"
