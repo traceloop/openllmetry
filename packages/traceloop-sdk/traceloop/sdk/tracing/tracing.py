@@ -493,7 +493,10 @@ def init_instrumentations(
         elif instrument == Instruments.CREWAI:
             if init_crewai_instrumentor():
                 instrument_set = True
-        elif instrument == Instruments.GOOGLE_GENERATIVEAI:
+        elif instrument in (
+            Instruments.GOOGLE_GENERATIVEAI,
+            Instruments.GOOGLE_ADK,
+        ):
             if init_google_generativeai_instrumentor(
                 should_enrich_metrics, base64_image_uploader
             ):
@@ -703,8 +706,10 @@ def init_google_generativeai_instrumentor(
     base64_image_uploader: Callable[[str, str, str, str], str],
 ):
     try:
-        if is_package_installed("google-generativeai") or is_package_installed(
-            "google-genai"
+        if (
+            is_package_installed("google-generativeai")
+            or is_package_installed("google-genai")
+            or is_package_installed("google-adk")
         ):
             from opentelemetry.instrumentation.google_generativeai import (
                 GoogleGenerativeAiInstrumentor,
