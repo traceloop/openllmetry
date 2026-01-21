@@ -1,6 +1,6 @@
 import datetime
 from typing import Dict, Any, Optional, TypeVar, Type
-from pydantic import BaseModel, RootModel, Field
+from pydantic import BaseModel, RootModel
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -49,7 +49,7 @@ class ExecutionResponse(BaseModel):
     """Complete response structure for evaluator execution"""
 
     execution_id: str
-    result: EvaluatorExecutionResult = Field(alias="evaluator_result")
+    result: EvaluatorExecutionResult
 
     def typed_result(self, model: Type[T]) -> T:
         """Parse result into a typed Pydantic model.

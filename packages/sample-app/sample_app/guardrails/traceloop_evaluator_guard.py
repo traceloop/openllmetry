@@ -176,18 +176,18 @@ async def main():
     print("=" * 60)
     print("Example 1: PII Detection Guard")
     print("=" * 60)
-    # try:
-    #     await pii_guard_example()
-    # except Exception as e:
-    #     print(f"Error: {e}")
+    try:
+        await pii_guard_example()
+    except Exception as e:
+        print(f"Error: {e}")
 
-    # print("\n" + "=" * 60)
-    # print("Example 2: Toxicity Detection Guard")
-    # print("=" * 60)
-    # try:
-    #     await toxicity_guard_example()
-    # except Exception as e:
-    #     print(f"Error: {e}")
+    print("\n" + "=" * 60)
+    print("Example 2: Toxicity Detection Guard")
+    print("=" * 60)
+    try:
+        await toxicity_guard_example()
+    except Exception as e:
+        print(f"Error: {e}")
 
     print("\n" + "=" * 60)
     print("Example 3: Agent Trajectory Evaluation")
