@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.50.1"
+version = "0.51.0"
 description = "OpenTelemetry Replicate instrumentation"
 authors = [
   { name = "Kartik Prajapati", email = "kartik@ktklab.org" },
