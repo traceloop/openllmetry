@@ -20,7 +20,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    GuardedFunctionOutput,
+    GuardedOutput,
     OnFailure,
     GuardValidationError,
 )
@@ -37,7 +37,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def simple_lambda_guard_example():
     """Demonstrate a simple lambda-based guard for length validation."""
 
-    async def generate_summary() -> GuardedFunctionOutput[str, dict]:
+    async def generate_summary() -> GuardedOutput[str, dict]:
         """Generate a travel summary with length constraints."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -49,7 +49,7 @@ async def simple_lambda_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input={"text": text, "word_count": len(text.split())},
         )
@@ -99,7 +99,7 @@ def content_safety_guard(guard_input: dict) -> bool:
 async def custom_function_guard_example():
     """Demonstrate a custom function guard with complex logic."""
 
-    async def generate_travel_advice() -> GuardedFunctionOutput[str, dict]:
+    async def generate_travel_advice() -> GuardedOutput[str, dict]:
         """Generate travel advice."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -111,7 +111,7 @@ async def custom_function_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input={"text": text},
         )
@@ -133,7 +133,7 @@ async def custom_function_guard_example():
 async def custom_handler_example():
     """Demonstrate custom on_failure handler with logging and alerting."""
 
-    async def generate_content() -> GuardedFunctionOutput[str, dict]:
+    async def generate_content() -> GuardedOutput[str, dict]:
         """Generate content that might need review."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -145,12 +145,12 @@ async def custom_handler_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input={"text": text},
         )
 
-    def custom_alert_handler(output: GuardedFunctionOutput) -> None:
+    def custom_alert_handler(output: GuardedOutput) -> None:
         """Custom handler that logs and could send alerts."""
         print(f"[ALERT] Guard failed for output: {str(output.result)[:50]}...")
         print(f"[ALERT] Guard input was: {list(output.guard_input.keys())}")
@@ -174,7 +174,7 @@ async def custom_handler_example():
 async def fallback_value_example():
     """Demonstrate returning a fallback value instead of raising on failure."""
 
-    async def generate_recommendation() -> GuardedFunctionOutput[str, dict]:
+    async def generate_recommendation() -> GuardedOutput[str, dict]:
         """Generate a recommendation that might fail the guard."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -186,7 +186,7 @@ async def fallback_value_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input={"text": text},
         )

@@ -16,7 +16,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
-    GuardedFunctionOutput,
+    GuardedOutput,
     Condition,
     OnFailure,
 )
@@ -35,7 +35,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
-    async def generate_customer_response() -> GuardedFunctionOutput[str, dict]:
+    async def generate_customer_response() -> GuardedOutput[str, dict]:
         """Generate a customer service response."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -52,7 +52,7 @@ async def pii_guard_example():
         )
         text = completion.choices[0].message.content
         print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input=PIIDetectorInput(text=text),
         )
@@ -73,7 +73,7 @@ async def pii_guard_example():
 async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
-    async def generate_content() -> GuardedFunctionOutput[str, dict]:
+    async def generate_content() -> GuardedOutput[str, dict]:
         """Generate travel content that should be family-friendly."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -85,7 +85,7 @@ async def toxicity_guard_example():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input=ToxicityDetectorInput(text=text),
         )
@@ -135,7 +135,7 @@ async def agent_trajectory_example():
     """Demonstrate agent trajectory evaluation for goal completeness."""
     state = TravelAgentState()
 
-    async def run_travel_agent() -> GuardedFunctionOutput[str, dict]:
+    async def run_travel_agent() -> GuardedOutput[str, dict]:
         """Run the travel agent and prepare trajectory for evaluation."""
         # Run the agent through multiple turns
         await travel_planner_agent(state, "I want to plan a 5-day trip to Japan.")
@@ -153,7 +153,7 @@ async def agent_trajectory_example():
         for i, completion in enumerate(state.completions):
             trajectory_completions[f"llm.completions.{i}.content"] = completion
 
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=final_response,
             guard_input=AgentGoalCompletenessInput(
                 trajectory_prompts=json.dumps(trajectory_prompts),

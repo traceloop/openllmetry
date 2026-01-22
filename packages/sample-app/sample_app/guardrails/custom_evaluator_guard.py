@@ -37,7 +37,7 @@ from pydantic import BaseModel
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    GuardedFunctionOutput,
+    GuardedOutput,
     Condition,
     OnFailure,
 )
@@ -85,7 +85,7 @@ async def medical_advice_quality_check():
       - text: The AI-generated response
     """
 
-    async def generate_health_info() -> GuardedFunctionOutput[str, MedicalAdviceInput]:
+    async def generate_health_info() -> GuardedOutput[str, MedicalAdviceInput]:
         """Generate general health information about hypertension."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -102,7 +102,7 @@ async def medical_advice_quality_check():
             ],
         )
         text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input=MedicalAdviceInput(
                 text=text,
@@ -139,7 +139,7 @@ async def diagnosis_request_blocker():
       - text: The AI-generated response
     """
 
-    async def attempt_diagnosis_request() -> GuardedFunctionOutput[str, dict]:
+    async def attempt_diagnosis_request() -> GuardedOutput[str, dict]:
         """Generate response to diagnosis request (will be blocked)."""
         user_question = "I have chest pain, shortness of breath, and dizziness. Do I have a heart attack?"
 
@@ -154,7 +154,7 @@ async def diagnosis_request_blocker():
         )
         text = completion.choices[0].message.content
 
-        return GuardedFunctionOutput(
+        return GuardedOutput(
             result=text,
             guard_input={
                 "text": text,

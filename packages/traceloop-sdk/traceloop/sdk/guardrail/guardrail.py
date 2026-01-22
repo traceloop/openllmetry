@@ -12,7 +12,7 @@ from traceloop.sdk.tracing import get_tracer
 from traceloop.sdk.evaluator.evaluator import Evaluator
 
 from .model import (
-    GuardedFunctionOutput,
+    GuardedOutput,
     Guard,
     OnFailureHandler,
     GuardedFunctionResult,
@@ -45,7 +45,7 @@ class Guardrails:
     async def run(
         self,
         func_to_guard: Callable[
-            [], Awaitable[GuardedFunctionOutput[GuardedFunctionResult, GuardInput]]
+            [], Awaitable[GuardedOutput[GuardedFunctionResult, GuardInput]]
         ],
         guard: Guard,
         on_failure: OnFailureHandler,
@@ -89,7 +89,7 @@ class Guardrails:
                 print(f"NOMI - In the guard run function")
 
                 # 1. Execute func_to_guard
-                output: GuardedFunctionOutput[
+                output: GuardedOutput[
                     GuardedFunctionResult, GuardInput
                 ] = await func_to_guard()
 

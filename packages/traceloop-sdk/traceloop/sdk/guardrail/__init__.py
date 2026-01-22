@@ -30,7 +30,7 @@ Example:
 
 from .guardrail import Guardrails
 from .model import (
-    GuardedFunctionOutput,
+    GuardedOutput,
     GuardValidationError,
     GuardExecutionError,
     Guard,
@@ -41,7 +41,7 @@ from .on_failure import OnFailure
 
 __all__ = [
     "Guardrails",
-    "GuardedFunctionOutput",
+    "GuardedOutput",
     "GuardValidationError",
     "GuardExecutionError",
     "Guard",

@@ -4,7 +4,7 @@ Data models and type definitions for the guardrail system.
 from dataclasses import dataclass
 from typing import TypeVar, Generic, Any, Union, Callable, Awaitable
 
-GuardedFunctionResult = TypeVar("GuardedFunctionResult")
+T = TypeVar("T")
 GuardInput = TypeVar("GuardInput")
 FailureResult = TypeVar("FailureResult")
 
@@ -12,17 +12,17 @@ FailureResult = TypeVar("FailureResult")
 Guard = Union[Callable[[GuardInput], bool], Callable[[GuardInput], Awaitable[bool]]]
 OnFailureHandler = Union[
     Callable[
-        ["GuardedFunctionOutput[GuardedFunctionResult, GuardInput]"], FailureResult
+        ["GuardedOutput[T, GuardInput]"], FailureResult
     ],
     Callable[
-        ["GuardedFunctionOutput[GuardedFunctionResult, GuardInput]"],
+        ["GuardedOutput[T, GuardInput]"],
         Awaitable[FailureResult],
     ],
 ]
 
 
 @dataclass
-class GuardedFunctionOutput(Generic[GuardedFunctionResult, GuardInput]):
+class GuardedOutput(Generic[T, GuardInput]):
     """
     Container that separates what to return from what to evaluate.
 
@@ -39,7 +39,7 @@ class GuardedFunctionOutput(Generic[GuardedFunctionResult, GuardInput]):
             )
     """
 
-    result: GuardedFunctionResult
+    result: T
     guard_input: GuardInput
 
 
@@ -52,7 +52,7 @@ class GuardValidationError(Exception):
         output: The full GuardedOutput that failed validation
     """
 
-    def __init__(self, message: str, output: GuardedFunctionOutput[Any, Any]):
+    def __init__(self, message: str, output: GuardedOutput[Any, Any]):
         self.output = output
         super().__init__(message)
 
