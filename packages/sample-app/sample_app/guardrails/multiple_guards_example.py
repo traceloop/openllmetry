@@ -38,6 +38,32 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Example 1: Multiple Lambda Guards (Parallel)
 # ============================================
+async def generate_content() -> GuardedOutput[str, dict]:
+    """Generate content with multiple validation inputs."""
+    completion = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": "Write a brief travel tip about visiting Japan.",
+            }
+        ],
+    )
+    text = completion.choices[0].message.content
+    word_count = len(text.split())
+    caps_count = sum(1 for c in text if c.isupper())
+    caps_ratio = caps_count / max(len(text), 1)
+
+    # Each guard gets its own input - order must match guards list
+    return GuardedOutput(
+        result=text,
+        guard_inputs=[
+            {"word_count": word_count},  # For length guard
+            {"text": text},               # For forbidden words guard
+            {"caps_ratio": caps_ratio},   # For capitalization guard
+        ],
+    )
+
 @workflow(name="multiple_lambda_guards")
 async def multiple_lambda_guards_example():
     """
@@ -47,32 +73,6 @@ async def multiple_lambda_guards_example():
     Guards run concurrently by default (parallel=True).
     """
 
-    async def generate_content() -> GuardedOutput[str, dict]:
-        """Generate content with multiple validation inputs."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Write a brief travel tip about visiting Japan.",
-                }
-            ],
-        )
-        text = completion.choices[0].message.content
-        word_count = len(text.split())
-        caps_count = sum(1 for c in text if c.isupper())
-        caps_ratio = caps_count / max(len(text), 1)
-
-        # Each guard gets its own input - order must match guards list
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[
-                {"word_count": word_count},  # For length guard
-                {"text": text},               # For forbidden words guard
-                {"caps_ratio": caps_ratio},   # For capitalization guard
-            ],
-        )
-
     guardrail = client.guardrails.create(
         guards=[
             lambda z: z["word_count"] < 200,           # Guard 0: Length check
@@ -80,7 +80,7 @@ async def multiple_lambda_guards_example():
             lambda z: z["caps_ratio"] < 0.3,           # Guard 2: No excessive caps
         ],
         on_failure=OnFailure.raise_exception("Content failed validation checks"),
-        parallel=True,  # Default - run all guards concurrently
+        parallel=True,
     )
 
     try:
@@ -110,6 +110,32 @@ def business_rules_guard(guard_input: dict) -> bool:
     return True
 
 
+async def generate_customer_response() -> GuardedOutput[str, dict]:
+    """Generate a customer service response."""
+    completion = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful travel agent. Be helpful but don't make guarantees.",
+            },
+            {
+                "role": "user",
+                "content": "What's the weather like in Hawaii in December?",
+            },
+        ],
+    )
+    text = completion.choices[0].message.content
+
+    # Different input types for different guards
+    return GuardedOutput(
+        result=text,
+        guard_inputs=[
+            PIIDetectorInput(text=text),  # Guard 0: Evaluator input (Pydantic)
+            {"text": text},                # Guard 1: Custom function input (dict)
+        ],
+    )
+
 @workflow(name="mixed_guard_types")
 async def mixed_guard_types_example():
     """
@@ -119,40 +145,11 @@ async def mixed_guard_types_example():
     Guard 1: Custom business rules (function-based)
     """
 
-    async def generate_customer_response() -> GuardedOutput[str, dict]:
-        """Generate a customer service response."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful travel agent. Be helpful but don't make guarantees.",
-                },
-                {
-                    "role": "user",
-                    "content": "What's the weather like in Hawaii in December?",
-                },
-            ],
-        )
-        text = completion.choices[0].message.content
-
-        # Different input types for different guards
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[
-                PIIDetectorInput(text=text),  # Guard 0: Evaluator input (Pydantic)
-                {"text": text},                # Guard 1: Custom function input (dict)
-            ],
-        )
-
     guardrail = client.guardrails.create(
         guards=[
-            # Guard 0: Traceloop evaluator
             EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7).as_guard(
                 condition=Condition.is_false(field="has_pii"),
-                timeout_in_sec=30,
             ),
-            # Guard 1: Custom function
             business_rules_guard,
         ],
         on_failure=OnFailure.raise_exception("Response failed safety or business rules"),
@@ -277,11 +274,11 @@ async def sequential_guards_example():
 
 async def main():
     """Run all multiple guards examples."""
-    print("=" * 70)
-    print("Example 1: Multiple Lambda Guards (Parallel)")
-    print("=" * 70)
-    print("3 guards checking: length, forbidden words, capitalization\n")
-    await multiple_lambda_guards_example()
+    # print("=" * 70)
+    # print("Example 1: Multiple Lambda Guards (Parallel)")
+    # print("=" * 70)
+    # print("3 guards checking: length, forbidden words, capitalization\n")
+    # await multiple_lambda_guards_example()
 
     print("\n" + "=" * 70)
     print("Example 2: Mixed Guard Types (Evaluator + Custom Function)")
@@ -292,17 +289,17 @@ async def main():
     except Exception as e:
         print(f"Skipped (requires API key): {e}")
 
-    print("\n" + "=" * 70)
-    print("Example 3: Run All Guards (Collect All Failures)")
-    print("=" * 70)
-    print("Using run_all=True to run all guards even after failures\n")
-    await run_all_guards_example()
+    # print("\n" + "=" * 70)
+    # print("Example 3: Run All Guards (Collect All Failures)")
+    # print("=" * 70)
+    # print("Using run_all=True to run all guards even after failures\n")
+    # await run_all_guards_example()
 
-    print("\n" + "=" * 70)
-    print("Example 4: Sequential Guards")
-    print("=" * 70)
-    print("Using parallel=False for ordered execution\n")
-    await sequential_guards_example()
+    # print("\n" + "=" * 70)
+    # print("Example 4: Sequential Guards")
+    # print("=" * 70)
+    # print("Using parallel=False for ordered execution\n")
+    # await sequential_guards_example()
 
 
 if __name__ == "__main__":

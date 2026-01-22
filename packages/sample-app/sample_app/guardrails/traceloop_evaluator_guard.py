@@ -31,31 +31,32 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Example 1: PII Detection Guard
 # ==============================
+
+async def generate_customer_response() -> GuardedOutput[str, dict]:
+    """Generate a customer service response."""
+    completion = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful travel agent. Never include personal information.",
+            },
+            {
+                "role": "user",
+                "content": "What are the best beaches in Thailand?",
+            },
+        ],
+    )
+    text = completion.choices[0].message.content
+    print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
+    return GuardedOutput(
+        result=text,
+        guard_inputs=[PIIDetectorInput(text=text)],
+    )
+
 @workflow(name="pii_guard_example")
 async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
-
-    async def generate_customer_response() -> GuardedOutput[str, dict]:
-        """Generate a customer service response."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful travel agent. Never include personal information.",
-                },
-                {
-                    "role": "user",
-                    "content": "What are the best beaches in Thailand?",
-                },
-            ],
-        )
-        text = completion.choices[0].message.content
-        print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[PIIDetectorInput(text=text)],
-        )
 
     guardrail = client.guardrails.create(
         guards=[EvaluatorMadeByTraceloop.pii_detector(
@@ -69,26 +70,26 @@ async def pii_guard_example():
 
 # Example 2: Toxicity Detection Guard
 # ===================================
+async def generate_content() -> GuardedOutput[str, dict]:
+    """Generate travel content that should be family-friendly."""
+    completion = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": "Write a family-friendly description of nightlife in Tokyo.",
+            }
+        ],
+    )
+    text = completion.choices[0].message.content
+    return GuardedOutput(
+        result=text,
+        guard_inputs=[ToxicityDetectorInput(text=text)],
+    )
+
 @workflow(name="toxicity_guard_example")
 async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
-
-    async def generate_content() -> GuardedOutput[str, dict]:
-        """Generate travel content that should be family-friendly."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Write a family-friendly description of nightlife in Tokyo.",
-                }
-            ],
-        )
-        text = completion.choices[0].message.content
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[ToxicityDetectorInput(text=text)],
-        )
 
     guardrail = client.guardrails.create(
         guards=[EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
