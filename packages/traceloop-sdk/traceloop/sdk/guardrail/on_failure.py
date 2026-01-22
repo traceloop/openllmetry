@@ -52,7 +52,7 @@ class OnFailure:
         """
 
         def handler(output: GuardedOutput[Any, Any]) -> Any:
-            logger.log(level, f"{message}: guard_input={output.guard_input}")
+            logger.log(level, f"{message}: guard_inputs={output.guard_inputs}")
             return output.result
 
         return handler

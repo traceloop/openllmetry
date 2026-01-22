@@ -29,19 +29,19 @@ class GuardedOutput(Generic[T, GuardInput]):
 
     Attributes:
         result: The original value returned by the guarded function
-        guard_input: The value passed to the guard for evaluation
+        guard_inputs: List of inputs for each guard (must match number of guards)
 
     Example:
-        async def generate_email() -> GuardedFunctionOutput[str, dict]:
+        async def generate_email() -> GuardedOutput[str, dict]:
             text = await llm.complete("Write a customer email...")
-            return GuardedFunctionOutput(
+            return GuardedOutput(
                 result=text,
-                guard_input={"text": text},
+                guard_inputs=[{"text": text, "word_count": len(text.split())}],
             )
     """
 
     result: T
-    guard_input: GuardInput
+    guard_inputs: list[GuardInput]
 
 
 class GuardValidationError(Exception):
@@ -58,7 +58,7 @@ class GuardValidationError(Exception):
         super().__init__(message)
 
     def __str__(self) -> str:
-        return f"{self.args[0]} (guard_input: {self.output.guard_input})"
+        return f"{self.args[0]} (guard_inputs: {self.output.guard_inputs})"
 
 
 class GuardExecutionError(Exception):
@@ -72,6 +72,7 @@ class GuardExecutionError(Exception):
         message: Error description
         original_exception: The exception that was raised by the guard
         guard_input: The input that was passed to the guard
+        guard_index: The index of the guard that failed (0-based)
     """
 
     def __init__(
@@ -79,13 +80,16 @@ class GuardExecutionError(Exception):
         message: str,
         original_exception: Exception,
         guard_input: Any,
+        guard_index: int | None = None,
     ):
         self.original_exception = original_exception
         self.guard_input = guard_input
+        self.guard_index = guard_index
         super().__init__(message)
 
     def __str__(self) -> str:
+        index_info = f" [guard {self.guard_index}]" if self.guard_index is not None else ""
         return (
-            f"{self.args[0]}: {self.original_exception} "
+            f"{self.args[0]}{index_info}: {self.original_exception} "
             f"(guard_input: {self.guard_input})"
         )

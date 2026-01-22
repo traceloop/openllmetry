@@ -51,12 +51,12 @@ async def simple_lambda_guard_example():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input={"text": text, "word_count": len(text.split())},
+            guard_inputs=[{"text": text, "word_count": len(text.split())}],
         )
 
     try:
         guardrail = client.guardrails.create(
-            guard=lambda z: z["word_count"] < 100,
+            guards=[lambda z: z["word_count"] < 100],
             on_failure=OnFailure.raise_exception("Summary too long"),
         )
         result = await guardrail.run(generate_summary)
@@ -113,12 +113,12 @@ async def custom_function_guard_example():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input={"text": text},
+            guard_inputs=[{"text": text}],
         )
 
     try:
         guardrail = client.guardrails.create(
-            guard=content_safety_guard,  # Pass function reference
+            guards=[content_safety_guard],  # Pass function reference
             on_failure=OnFailure.raise_exception("Content failed safety checks"),
         )
         result = await guardrail.run(generate_travel_advice)
@@ -147,18 +147,18 @@ async def custom_handler_example():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input={"text": text},
+            guard_inputs=[{"text": text}],
         )
 
     def custom_alert_handler(output: GuardedOutput) -> None:
         """Custom handler that logs and could send alerts."""
         print(f"[ALERT] Guard failed for output: {str(output.result)[:50]}...")
-        print(f"[ALERT] Guard input was: {list(output.guard_input.keys())}")
+        print(f"[ALERT] Guard inputs was: {output.guard_inputs}")
         raise GuardValidationError("Blocked after alerting team", output)
 
     try:
         guardrail = client.guardrails.create(
-            guard=lambda z: "danger" not in z["text"].lower(),
+            guards=[lambda z: "danger" not in z["text"].lower()],
             on_failure=custom_alert_handler,
         )
         result = await guardrail.run(generate_content)
@@ -188,12 +188,12 @@ async def fallback_value_example():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input={"text": text},
+            guard_inputs=[{"text": text}],
         )
 
     # Return a safe fallback instead of raising
     guardrail = client.guardrails.create(
-        guard=lambda z: "risk" not in z["text"].lower(),
+        guards=[lambda z: "risk" not in z["text"].lower()],
         on_failure=OnFailure.return_value(
             "I'd recommend visiting a local museum or taking a guided walking tour - "
             "both are safe and enjoyable options!"

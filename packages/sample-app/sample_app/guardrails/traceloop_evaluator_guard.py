@@ -54,13 +54,13 @@ async def pii_guard_example():
         print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
         return GuardedOutput(
             result=text,
-            guard_input=PIIDetectorInput(text=text),
+            guard_inputs=[PIIDetectorInput(text=text)],
         )
 
     guardrail = client.guardrails.create(
-        guard=EvaluatorMadeByTraceloop.pii_detector(
+        guards=[EvaluatorMadeByTraceloop.pii_detector(
             probability_threshold=0.7
-        ).as_guard(condition=Condition.is_false(field="has_pii"), timeout_in_sec=45),
+        ).as_guard(condition=Condition.is_false(field="has_pii"), timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
     result = await guardrail.run(generate_customer_response)
@@ -87,13 +87,13 @@ async def toxicity_guard_example():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input=ToxicityDetectorInput(text=text),
+            guard_inputs=[ToxicityDetectorInput(text=text)],
         )
 
     guardrail = client.guardrails.create(
-        guard=EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
+        guards=[EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
             condition=Condition.equals("pass", field="is_safe")
-        ),
+        )],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
     result = await guardrail.run(generate_content)
@@ -155,16 +155,16 @@ async def agent_trajectory_example():
 
         return GuardedOutput(
             result=final_response,
-            guard_input=AgentGoalCompletenessInput(
+            guard_inputs=[AgentGoalCompletenessInput(
                 trajectory_prompts=json.dumps(trajectory_prompts),
                 trajectory_completions=json.dumps(trajectory_completions)
-            ),
+            )],
         )
 
     guardrail = client.guardrails.create(
-        guard=EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.7).as_guard(
+        guards=[EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.7).as_guard(
             condition=Condition.greater_than_or_equal(0.8, field="score")
-        ),
+        )],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
     result = await guardrail.run(run_travel_agent)

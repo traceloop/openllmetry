@@ -104,9 +104,9 @@ async def medical_advice_quality_check():
         text = completion.choices[0].message.content
         return GuardedOutput(
             result=text,
-            guard_input=MedicalAdviceInput(
+            guard_inputs=[MedicalAdviceInput(
                 text=text,
-            ),
+            )],
         )
 
     # Configure custom evaluator for medical advice detection
@@ -115,9 +115,9 @@ async def medical_advice_quality_check():
     )
 
     guardrail = client.guardrails.create(
-        guard=medical_evaluator.as_guard(
+        guards=[medical_evaluator.as_guard(
             condition=Condition.is_true(field="pass")
-        ),
+        )],
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
     result = await guardrail.run(generate_health_info)
@@ -156,18 +156,18 @@ async def diagnosis_request_blocker():
 
         return GuardedOutput(
             result=text,
-            guard_input={
+            guard_inputs=[{
                 "text": text,
-            },
+            }],
         )
     diagnosis_blocker = EvaluatorDetails(
         slug="diagnosis-blocker",
     )
 
     guardrail = client.guardrails.create(
-        guard=diagnosis_blocker.as_guard(
+        guards=[diagnosis_blocker.as_guard(
             condition=Condition.is_false(field="pass")
-        ),
+        )],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
             "Please consult a qualified healthcare professional for symptoms that concern you."

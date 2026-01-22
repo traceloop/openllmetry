@@ -61,6 +61,9 @@ dependencies = [
   "traceloop-sdk",
 ]
 
+[tool.uv.sources]
+traceloop-sdk = { path = "../traceloop-sdk", editable = true }
+
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
 

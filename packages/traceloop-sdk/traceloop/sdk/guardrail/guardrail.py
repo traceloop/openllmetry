@@ -31,53 +31,111 @@ class Guardrails:
 
     Usage:
         g = client.guardrails.create(
-            guard=lambda z: z["score"] > 0.8,
-            on_failure=OnFailure.raise_exception("Quality check failed"),
+            guards=[
+                lambda z: z["score"] > 0.8,
+                EvaluatorMadeByTraceloop.pii_detector().as_guard(...),
+            ],
+            on_failure=OnFailure.raise_exception("Guard failed"),
         )
-        result1 = await g.run(agent1)
-        result2 = await g.run(agent2)
+        result = await g.run(my_function)
     """
 
     _evaluator: Evaluator
     _async_http: httpx.AsyncClient
-    _guard: Guard
+    _guards: list[Guard]
     _on_failure: OnFailureHandler
+    _run_all: bool
+    _parallel: bool
 
     def __init__(self, async_http_client: httpx.AsyncClient):
         self._async_http = async_http_client
         self._evaluator = Evaluator(async_http_client)
+        self._guards = []
+        self._on_failure = None
+        self._run_all = False
+        self._parallel = True
 
     def create(
         self,
-        guard: Guard,
+        guards: list[Guard],
         on_failure: OnFailureHandler,
+        run_all: bool = False,
+        parallel: bool = True,
     ) -> "Guardrails":
         """
-        Create a new guardrail instance with the given guard and failure handler.
+        Create a new guardrail instance with the given guards and failure handler.
 
         Args:
-            guard: Function that receives guard_input and returns bool.
-                   True = pass, False = fail.
-            on_failure: Called when guard returns False.
+            guards: List of guard functions. Each receives its corresponding
+                    guard_input and returns bool. True = pass, False = fail.
+            on_failure: Called when any guard returns False.
+            run_all: If True, run all guards before handling failures.
+                     If False (default), stop at first failure.
+            parallel: If True (default), run guards in parallel.
+                      If False, run guards sequentially.
 
         Returns:
-            Guardrails: A new instance configured with the given guard and on_failure.
+            Guardrails: A new instance configured with the given guards.
 
         Example:
-            g1 = client.guardrails.create(
-                guard=lambda z: z["score"] > 0.8,
-                on_failure=OnFailure.raise_exception("Quality check failed"),
+            g = client.guardrails.create(
+                guards=[
+                    lambda z: z["score"] > 0.8,
+                    EvaluatorMadeByTraceloop.pii_detector().as_guard(...),
+                ],
+                on_failure=OnFailure.raise_exception("Guard failed"),
+                parallel=True,
             )
-            g2 = client.guardrails.create(
-                guard=lambda z: z["score"] > 0.5,
-                on_failure=OnFailure.log("Warning"),
-            )
-            # g1 and g2 are independent instances
         """
         instance = Guardrails(self._async_http)
-        instance._guard = guard
+        instance._guards = guards
         instance._on_failure = on_failure
+        instance._run_all = run_all
+        instance._parallel = parallel
         return instance
+
+    async def _run_single_guard(
+        self,
+        guard: Guard,
+        guard_input: GuardInput,
+        index: int,
+    ) -> tuple[int, bool, Exception | None]:
+        """Run a single guard and return (index, passed, exception)."""
+        try:
+            result = guard(guard_input)
+            if asyncio.iscoroutine(result):
+                result = await result
+            return (index, bool(result), None)
+        except Exception as e:
+            return (index, False, e)
+
+    async def _run_guards_parallel(
+        self,
+        guard_inputs: list[GuardInput],
+    ) -> list[tuple[int, bool, Exception | None]]:
+        """Run all guards in parallel."""
+        tasks = [
+            self._run_single_guard(guard, guard_input, i)
+            for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs))
+        ]
+        return await asyncio.gather(*tasks)
+
+    async def _run_guards_sequential(
+        self,
+        guard_inputs: list[GuardInput],
+    ) -> list[tuple[int, bool, Exception | None]]:
+        """Run guards sequentially, optionally stopping at first failure."""
+        results = []
+        for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs)):
+            result = await self._run_single_guard(guard, guard_input, i)
+            results.append(result)
+
+            _, passed, exception = result
+            if (not passed or exception) and not self._run_all:
+                # Stop at first failure
+                break
+
+        return results
 
     async def run(
         self,
@@ -88,28 +146,28 @@ class Guardrails:
         """
         Execute a function with guardrail protection.
 
-        Must call create() first to configure guard and on_failure.
+        Must call create() first to configure guards and on_failure.
 
         Args:
             func_to_guard: Async function that returns GuardedOutput[T, Z].
-                           Executed immediately inside run().
+                           The guard_inputs list must match the number of guards.
 
         Returns:
             T | F: The result from GuardedOutput.result, or the on_failure return value
 
         Raises:
-            GuardValidationError: If guard returns False and on_failure raises
-            GuardExecutionError: If the guard function throws an exception during execution
-            ValueError: If create() was not called first
+            GuardValidationError: If any guard returns False and on_failure raises
+            GuardExecutionError: If a guard function throws an exception
+            ValueError: If create() was not called or guard_inputs length doesn't match
 
         Example:
             g = client.guardrails.create(
-                guard=lambda z: z["score"] > 0.8,
+                guards=[lambda z: z["score"] > 0.8],
                 on_failure=OnFailure.raise_exception("Quality check failed"),
             )
             result = await g.run(generate_email)
         """
-        if self._guard is None or self._on_failure is None:
+        if not self._guards or self._on_failure is None:
             raise ValueError("Must call create() before run()")
 
         with get_tracer() as tracer:
@@ -121,32 +179,49 @@ class Guardrails:
                     GuardedFunctionResult, GuardInput
                 ] = await func_to_guard()
 
-                # 2. Run guard
-                try:
-                    guard_result = self._guard(output.guard_input)
-                    if asyncio.iscoroutine(guard_result):
-                        guard_result = await guard_result
-                    guard_passed = bool(guard_result)
-                except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                    raise GuardExecutionError(
-                        message="Guard execution failed",
-                        original_exception=e,
-                        guard_input=output.guard_input,
-                    ) from e
+                # 2. Validate guard_inputs length matches guards
+                if len(output.guard_inputs) != len(self._guards):
+                    raise ValueError(
+                        f"Number of guard_inputs ({len(output.guard_inputs)}) "
+                        f"must match number of guards ({len(self._guards)})"
+                    )
+
+                # 3. Run guards
+                if self._parallel:
+                    results = await self._run_guards_parallel(output.guard_inputs)
+                else:
+                    results = await self._run_guards_sequential(output.guard_inputs)
+
+                # 4. Check for execution errors
+                for index, passed, exception in results:
+                    if exception is not None:
+                        span.set_status(Status(StatusCode.ERROR, str(exception)))
+                        span.record_exception(exception)
+                        raise GuardExecutionError(
+                            message="Guard execution failed",
+                            original_exception=exception,
+                            guard_input=output.guard_inputs[index],
+                            guard_index=index,
+                        ) from exception
+
+                # 5. Check for failures
+                failed_indices = [i for i, passed, _ in results if not passed]
+                all_passed = len(failed_indices) == 0
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
-                span.set_attribute("guardrail.passed", guard_passed)
+                span.set_attribute("guardrail.passed", all_passed)
                 span.set_attribute("guardrail.duration_ms", duration_ms)
+                span.set_attribute("guardrail.guards_count", len(self._guards))
+                if failed_indices:
+                    span.set_attribute("guardrail.failed_indices", failed_indices)
 
-                # 3. Handle failure
-                if not guard_passed:
+                # 6. Handle failure
+                if not all_passed:
                     failure_result = self._on_failure(output)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
                     return cast(FailureResult, failure_result)
 
-                # 4. Guard passed, return result
+                # 7. All guards passed, return result
                 return output.result
