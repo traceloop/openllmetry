@@ -78,7 +78,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-in-experiment"
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
@@ -100,7 +100,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-single"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
