@@ -93,3 +93,38 @@ class GuardExecutionError(Exception):
             f"{self.args[0]}{index_info}: {self.original_exception} "
             f"(guard_input: {self.guard_input})"
         )
+
+
+class GuardInputTypeError(Exception):
+    """
+    Raised when a guard_input doesn't match the expected type of its guard function.
+
+    This error occurs during input validation before guards are executed.
+
+    Attributes:
+        message: Error description
+        guard_index: The index of the guard with type mismatch (0-based)
+        expected_type: The type annotation from the guard function
+        actual_type: The actual type of the guard_input
+        validation_error: The underlying Pydantic validation error
+    """
+
+    def __init__(
+        self,
+        message: str,
+        guard_index: int,
+        expected_type: Any,
+        actual_type: type,
+        validation_error: Exception | None = None,
+    ):
+        self.guard_index = guard_index
+        self.expected_type = expected_type
+        self.actual_type = actual_type
+        self.validation_error = validation_error
+        super().__init__(message)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.args[0]} [guard {self.guard_index}]: "
+            f"expected {self.expected_type}, got {self.actual_type.__name__}"
+        )

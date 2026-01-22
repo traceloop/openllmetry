@@ -33,6 +33,7 @@ from .model import (
     GuardedOutput,
     GuardValidationError,
     GuardExecutionError,
+    GuardInputTypeError,
     Guard,
     OnFailureHandler,
 )
@@ -44,6 +45,7 @@ __all__ = [
     "GuardedOutput",
     "GuardValidationError",
     "GuardExecutionError",
+    "GuardInputTypeError",
     "Guard",
     "OnFailureHandler",
     "Condition",

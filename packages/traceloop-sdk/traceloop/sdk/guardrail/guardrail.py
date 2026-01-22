@@ -2,10 +2,12 @@
 Guardrails class for running guarded operations through the Traceloop client.
 """
 import asyncio
+import inspect
 import time
 from typing import Callable, Awaitable, cast
 
 import httpx
+from pydantic import TypeAdapter
 from opentelemetry.trace.status import Status, StatusCode
 
 from traceloop.sdk.tracing import get_tracer
@@ -19,6 +21,7 @@ from .model import (
     GuardInput,
     FailureResult,
     GuardExecutionError,
+    GuardInputTypeError,
 )
 
 
@@ -93,6 +96,54 @@ class Guardrails:
         instance._run_all = run_all
         instance._parallel = parallel
         return instance
+
+    def _validate_inputs(self, guard_inputs: list[GuardInput]) -> None:
+        """
+        Validate guard_inputs match guards in count and type.
+
+        Uses Pydantic TypeAdapter for robust type validation including
+        Pydantic models, TypedDicts, generic types, etc.
+
+        Raises:
+            ValueError: If the number of guard_inputs doesn't match the number of guards
+            GuardInputTypeError: If a guard_input doesn't match the guard's expected type
+        """
+        # Length validation
+        if len(guard_inputs) != len(self._guards):
+            raise ValueError(
+                f"Number of guard_inputs ({len(guard_inputs)}) "
+                f"must match number of guards ({len(self._guards)})"
+            )
+
+        # Type validation
+        for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs)):
+            try:
+                signature = inspect.signature(guard)
+            except (ValueError, TypeError):
+                # Can't get signature (e.g., built-in functions)
+                continue
+
+            params = list(signature.parameters.values())
+            if not params:
+                continue
+
+            first_param = params[0]
+            expected_type = first_param.annotation
+
+            # Skip if no type annotation (e.g., lambdas)
+            if expected_type is inspect.Parameter.empty:
+                continue
+
+            try:
+                TypeAdapter(expected_type).validate_python(guard_input)
+            except Exception as e:
+                raise GuardInputTypeError(
+                    message=f"Guard {i} expected {expected_type}, but got {type(guard_input).__name__}",
+                    guard_index=i,
+                    expected_type=expected_type,
+                    actual_type=type(guard_input),
+                    validation_error=e,
+                ) from e
 
     async def _run_single_guard(
         self,
@@ -179,12 +230,8 @@ class Guardrails:
                     GuardedFunctionResult, GuardInput
                 ] = await func_to_guard()
 
-                # 2. Validate guard_inputs length matches guards
-                if len(output.guard_inputs) != len(self._guards):
-                    raise ValueError(
-                        f"Number of guard_inputs ({len(output.guard_inputs)}) "
-                        f"must match number of guards ({len(self._guards)})"
-                    )
+                # 2. Validate guard_inputs (length and types)
+                self._validate_inputs(output.guard_inputs)
 
                 # 3. Run guards
                 if self._parallel:
