@@ -28,65 +28,93 @@ class Guardrails:
 
     Access via the Traceloop client:
         client = Traceloop.init(api_key="...")
-        result = await client.guardrails.run(
-            func_to_guard=my_agent,
+
+    Usage:
+        g = client.guardrails.create(
             guard=lambda z: z["score"] > 0.8,
             on_failure=OnFailure.raise_exception("Quality check failed"),
         )
+        result1 = await g.run(agent1)
+        result2 = await g.run(agent2)
     """
 
     _evaluator: Evaluator
     _async_http: httpx.AsyncClient
+    _guard: Guard
+    _on_failure: OnFailureHandler
 
     def __init__(self, async_http_client: httpx.AsyncClient):
         self._async_http = async_http_client
         self._evaluator = Evaluator(async_http_client)
+
+    def create(
+        self,
+        guard: Guard,
+        on_failure: OnFailureHandler,
+    ) -> "Guardrails":
+        """
+        Create a new guardrail instance with the given guard and failure handler.
+
+        Args:
+            guard: Function that receives guard_input and returns bool.
+                   True = pass, False = fail.
+            on_failure: Called when guard returns False.
+
+        Returns:
+            Guardrails: A new instance configured with the given guard and on_failure.
+
+        Example:
+            g1 = client.guardrails.create(
+                guard=lambda z: z["score"] > 0.8,
+                on_failure=OnFailure.raise_exception("Quality check failed"),
+            )
+            g2 = client.guardrails.create(
+                guard=lambda z: z["score"] > 0.5,
+                on_failure=OnFailure.log("Warning"),
+            )
+            # g1 and g2 are independent instances
+        """
+        instance = Guardrails(self._async_http)
+        instance._guard = guard
+        instance._on_failure = on_failure
+        return instance
 
     async def run(
         self,
         func_to_guard: Callable[
             [], Awaitable[GuardedOutput[GuardedFunctionResult, GuardInput]]
         ],
-        guard: Guard,
-        on_failure: OnFailureHandler,
     ) -> GuardedFunctionResult | FailureResult:
         """
         Execute a function with guardrail protection.
+
+        Must call create() first to configure guard and on_failure.
 
         Args:
             func_to_guard: Async function that returns GuardedOutput[T, Z].
                            Executed immediately inside run().
 
-            guard: Function that receives Z (guard_input) and returns bool.
-                   True = pass, False = fail.
-                   Can be a lambda, custom function, or EvaluatorDetails.as_guard().
-
-            on_failure: Called when guard returns False.
-                        Receives the full GuardedFunctionOutput[T, Z].
-                        Can raise, return a fallback value, log, or perform custom actions.
-                        If it returns a value, that value is returned instead of output.result.
-
         Returns:
-            T | F: The result from GuardedFunctionOutput.result, or the on_failure return value
+            T | F: The result from GuardedOutput.result, or the on_failure return value
 
         Raises:
             GuardValidationError: If guard returns False and on_failure raises
             GuardExecutionError: If the guard function throws an exception during execution
+            ValueError: If create() was not called first
 
         Example:
-            result = await client.guardrails.run(
-                func_to_guard=generate_email,
-                guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                    condition=Condition.is_false("has_pii")
-                ),
-                on_failure=OnFailure.raise_exception("PII detected"),
+            g = client.guardrails.create(
+                guard=lambda z: z["score"] > 0.8,
+                on_failure=OnFailure.raise_exception("Quality check failed"),
             )
+            result = await g.run(generate_email)
         """
+        if self._guard is None or self._on_failure is None:
+            raise ValueError("Must call create() before run()")
+
         with get_tracer() as tracer:
             with tracer.start_as_current_span("guardrail.run") as span:
                 start_time = time.perf_counter()
-
-                print(f"NOMI - In the guard run function")
 
                 # 1. Execute func_to_guard
                 output: GuardedOutput[
@@ -95,11 +123,10 @@ class Guardrails:
 
                 # 2. Run guard
                 try:
-                    guard_result = guard(output.guard_input)
+                    guard_result = self._guard(output.guard_input)
                     if asyncio.iscoroutine(guard_result):
                         guard_result = await guard_result
                     guard_passed = bool(guard_result)
-                    print(f"NOMI - Guard passed: {guard_passed}")
                 except Exception as e:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
@@ -116,7 +143,7 @@ class Guardrails:
 
                 # 3. Handle failure
                 if not guard_passed:
-                    failure_result = on_failure(output)
+                    failure_result = self._on_failure(output)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
                     return cast(FailureResult, failure_result)

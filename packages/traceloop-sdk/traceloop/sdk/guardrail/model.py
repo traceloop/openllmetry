@@ -7,6 +7,7 @@ from typing import TypeVar, Generic, Any, Union, Callable, Awaitable
 T = TypeVar("T")
 GuardInput = TypeVar("GuardInput")
 FailureResult = TypeVar("FailureResult")
+GuardedFunctionResult = TypeVar("GuardedFunctionResult")
 
 # Type aliases for guards and handlers
 Guard = Union[Callable[[GuardInput], bool], Callable[[GuardInput], Awaitable[bool]]]

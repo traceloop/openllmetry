@@ -114,13 +114,13 @@ async def medical_advice_quality_check():
         slug="medical-advice-given",
     )
 
-    result = await client.guardrails.run(
-        func_to_guard=generate_health_info,
+    guardrail = client.guardrails.create(
         guard=medical_evaluator.as_guard(
             condition=Condition.is_true(field="pass")
         ),
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
+    result = await guardrail.run(generate_health_info)
     print(f"Health information (passed guard): {result[:200]}...")
 
 
@@ -164,8 +164,7 @@ async def diagnosis_request_blocker():
         slug="diagnosis-blocker",
     )
 
-    result = await client.guardrails.run(
-        func_to_guard=attempt_diagnosis_request,
+    guardrail = client.guardrails.create(
         guard=diagnosis_blocker.as_guard(
             condition=Condition.is_false(field="pass")
         ),
@@ -174,6 +173,7 @@ async def diagnosis_request_blocker():
             "Please consult a qualified healthcare professional for symptoms that concern you."
         ),
     )
+    result = await guardrail.run(attempt_diagnosis_request)
     print(f"Response: {result[:200]}...")
 
 

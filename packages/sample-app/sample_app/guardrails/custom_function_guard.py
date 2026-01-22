@@ -55,11 +55,11 @@ async def simple_lambda_guard_example():
         )
 
     try:
-        result = await client.guardrails.run(
-            func_to_guard=generate_summary,
+        guardrail = client.guardrails.create(
             guard=lambda z: z["word_count"] < 100,
             on_failure=OnFailure.raise_exception("Summary too long"),
         )
+        result = await guardrail.run(generate_summary)
         print(f"Summary (passed guard): {result}")
     except GuardValidationError as e:
         print(f"Guard failed: {e}")
@@ -117,11 +117,11 @@ async def custom_function_guard_example():
         )
 
     try:
-        result = await client.guardrails.run(
-            func_to_guard=generate_travel_advice,
+        guardrail = client.guardrails.create(
             guard=content_safety_guard,  # Pass function reference
             on_failure=OnFailure.raise_exception("Content failed safety checks"),
         )
+        result = await guardrail.run(generate_travel_advice)
         print(f"Travel advice: {result[:100]}...")
     except GuardValidationError as e:
         print(f"Guard failed: {e}")
@@ -157,11 +157,11 @@ async def custom_handler_example():
         raise GuardValidationError("Blocked after alerting team", output)
 
     try:
-        result = await client.guardrails.run(
-            func_to_guard=generate_content,
+        guardrail = client.guardrails.create(
             guard=lambda z: "danger" not in z["text"].lower(),
             on_failure=custom_alert_handler,
         )
+        result = await guardrail.run(generate_content)
         print(f"Content: {result[:100]}...")
     except GuardValidationError:
         print("Response was blocked by custom handler")
@@ -192,14 +192,14 @@ async def fallback_value_example():
         )
 
     # Return a safe fallback instead of raising
-    result = await client.guardrails.run(
-        func_to_guard=generate_recommendation,
+    guardrail = client.guardrails.create(
         guard=lambda z: "risk" not in z["text"].lower(),
         on_failure=OnFailure.return_value(
             "I'd recommend visiting a local museum or taking a guided walking tour - "
             "both are safe and enjoyable options!"
         ),
     )
+    result = await guardrail.run(generate_recommendation)
     print(f"Recommendation: {result}")
 
 
