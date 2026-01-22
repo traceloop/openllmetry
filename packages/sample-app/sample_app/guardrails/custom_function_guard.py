@@ -57,7 +57,7 @@ async def simple_lambda_guard_example():
     try:
         result = await client.guardrails.run(
             func_to_guard=generate_summary,
-            guard=lambda z: z["word_count"] < 100,  # Max 100 words
+            guard=lambda z: z["word_count"] < 100,
             on_failure=OnFailure.raise_exception("Summary too long"),
         )
         print(f"Summary (passed guard): {result}")
@@ -154,10 +154,6 @@ async def custom_handler_example():
         """Custom handler that logs and could send alerts."""
         print(f"[ALERT] Guard failed for output: {str(output.result)[:50]}...")
         print(f"[ALERT] Guard input was: {list(output.guard_input.keys())}")
-        # In production, you might:
-        # - Send to Slack/PagerDuty
-        # - Log to monitoring system
-        # - Store for review
         raise GuardValidationError("Blocked after alerting team", output)
 
     try:
@@ -171,86 +167,8 @@ async def custom_handler_example():
         print("Response was blocked by custom handler")
 
 
-# Example 4: Shadow Mode (Evaluate but Don't Block)
-# ================================================
-@workflow(name="shadow_mode_example")
-async def shadow_mode_example():
-    """Demonstrate shadow mode for testing guards in production."""
 
-    async def generate_response() -> GuardedFunctionOutput[str, dict]:
-        """Generate a response to test with experimental guard."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": "Tell me about visa requirements for Europe."}
-            ],
-        )
-        text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
-            result=text,
-            guard_input={"text": text, "length": len(text)},
-        )
-
-    # Shadow mode: evaluate but don't block
-    result = await client.guardrails.run(
-        func_to_guard=generate_response,
-        guard=lambda z: z["length"] > 50,  # Arbitrary check
-        on_failure=OnFailure.noop(),  # Just observe, don't block
-    )
-    print(f"Response (shadow mode, always returns result): {result[:100]}...")
-
-
-# Example 5: Async Guard Function
-# ==============================
-async def async_content_validator(guard_input: dict) -> bool:
-    """
-    Async guard function that could call external services.
-
-    In a real scenario, this might:
-    - Call an external moderation API
-    - Query a database for blocklists
-    - Perform async ML inference
-    """
-    text = guard_input.get("text", "")
-
-    # Simulate async operation (e.g., external API call)
-    await asyncio.sleep(0.1)
-
-    # Simple validation
-    word_count = len(text.split())
-    return 10 <= word_count <= 500
-
-
-@workflow(name="async_guard_example")
-async def async_guard_example():
-    """Demonstrate an async guard function."""
-
-    async def generate_article() -> GuardedFunctionOutput[str, dict]:
-        """Generate a travel article."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Write a short paragraph about backpacking in Vietnam.",
-                }
-            ],
-        )
-        text = completion.choices[0].message.content
-        return GuardedFunctionOutput(
-            result=text,
-            guard_input={"text": text},
-        )
-
-    result = await client.guardrails.run(
-        func_to_guard=generate_article,
-        guard=async_content_validator,  # Async guard function
-        on_failure=OnFailure.raise_exception("Content validation failed"),
-    )
-    print(f"Article: {result[:100]}...")
-
-
-# Example 6: Guard with Return Value on Failure
+# Example 4: Guard with Return Value on Failure
 # ============================================
 @workflow(name="fallback_value_example")
 async def fallback_value_example():
@@ -304,16 +222,6 @@ async def main():
 
     print("\n" + "=" * 60)
     print("Example 4: Shadow Mode (Evaluate but Don't Block)")
-    print("=" * 60)
-    await shadow_mode_example()
-
-    print("\n" + "=" * 60)
-    print("Example 5: Async Guard Function")
-    print("=" * 60)
-    await async_guard_example()
-
-    print("\n" + "=" * 60)
-    print("Example 6: Guard with Fallback Value on Failure")
     print("=" * 60)
     await fallback_value_example()
 
