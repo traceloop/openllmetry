@@ -9,9 +9,6 @@ on:
       - "main"
 
 env:
-  POETRY_CACHE_DIR: /tmp/pypoetry-cache
-  POETRY_VENV_IN_PROJECT: false
-  POETRY_INSTALLER_MODERN_INSTALLATION: false
   PIP_NO_CACHE_DIR: 1
 
 jobs:
@@ -56,13 +53,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
 
       - uses: actions/setup-node@v4
         with:
@@ -72,7 +67,7 @@ jobs:
       - run: npm ci --cache ~/.npm --prefer-offline
       - name: Clean npm cache
         run: npm cache clean --force || true
-      - run: npx nx affected -t install --with dev
+      - run: npx nx affected -t install
       - run: npx nx affected -t lint --parallel=3
       - run: npx nx affected -t type-check --parallel=3
 
@@ -107,13 +102,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
 
       - uses: actions/setup-node@v4
         with:
@@ -126,12 +119,12 @@ jobs:
         run: npm cache clean --force || true
 
       - name: Install
-        run: npx nx affected -t install --with dev --parallel=2
+        run: npx nx affected -t install --parallel=2
 
 
       - name: Build
         run: npx nx affected -t build-release --parallel=2
-        
+
       - name: Clean build artifacts to save space
         run: |
           find packages -name "dist" -type d -exec rm -rf {} + || true
@@ -173,13 +166,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/.cache/pypoetry/virtualenvs
+          version: "latest"
 
       - uses: actions/setup-node@v4
         with:
@@ -192,14 +182,14 @@ jobs:
         run: npm cache clean --force || true
 
       - name: Install
-        run: npx nx affected -t install --exclude='sample-app' --with dev --parallel=2
+        run: npx nx affected -t install --exclude='sample-app' --parallel=2
 
 
       - name: Test
         env:
           HAYSTACK_TELEMETRY_ENABLED: False
         run: npx nx affected -t test --exclude='sample-app' --exclude='opentelemetry-instrumentation-haystack' --parallel=2
-        
+
       - name: Clean test artifacts to save space
         run: |
           find packages -name ".pytest_cache" -type d -exec rm -rf {} + || true

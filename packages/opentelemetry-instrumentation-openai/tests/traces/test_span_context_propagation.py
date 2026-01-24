@@ -1,13 +1,13 @@
 """Test span context propagation to events."""
 
 import pytest
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
 
-def assert_event_has_span_context(log: LogData, expected_trace_id: int, expected_span_id: int):
+def assert_event_has_span_context(log: ReadableLogRecord, expected_trace_id: int, expected_span_id: int):
     """Assert that an event log has the expected trace and span context."""
     log_record = log.log_record
 

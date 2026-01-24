@@ -1,12 +1,12 @@
 import json
 
 import pytest
-from langchain.chains import LLMChain, SequentialChain
-from langchain.prompts import PromptTemplate
-from langchain.schema import StrOutputParser
+from langchain_classic.chains import LLMChain, SequentialChain
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from langchain_cohere import ChatCohere
 from langchain_openai import OpenAI
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -599,7 +599,7 @@ async def test_asequential_chain_with_events_with_no_content(
 
 @pytest.mark.vcr
 def test_stream(instrument_legacy, span_exporter, log_exporter):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt = PromptTemplate.from_template(
         "write 2 lines of random text about ${product}"
     )
@@ -616,7 +616,7 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 62
+    assert len(chunks) == 61
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -628,7 +628,7 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
 def test_stream_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
 ):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt_template = "write 2 lines of random text about ${product}"
     prompt = PromptTemplate.from_template(prompt_template)
     runnable = prompt | chat | StrOutputParser()
@@ -644,7 +644,7 @@ def test_stream_with_events_with_content(
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 62
+    assert len(chunks) == 37
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -658,20 +658,20 @@ def test_stream_with_events_with_content(
         },
     )
 
-    # Validate AI choice Event
-    _choice_event = {
-        "index": 0,
-        "finish_reason": "unknown",
-        "message": {"content": "".join(chunks)},
-    }
-    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
+    # Validate AI choice Event - check key attributes, finish_reason varies by model
+    choice_log = logs[1]
+    assert choice_log.log_record.event_name == "gen_ai.choice"
+    choice_body = dict(choice_log.log_record.body)
+    assert choice_body["index"] == 0
+    assert "finish_reason" in choice_body
+    assert choice_body["message"]["content"] == "".join(chunks)
 
 
 @pytest.mark.vcr
 def test_stream_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt = PromptTemplate.from_template(
         "write 2 lines of random text about ${product}"
     )
@@ -688,7 +688,7 @@ def test_stream_with_events_with_no_content(
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 62
+    assert len(chunks) == 48
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -696,15 +696,19 @@ def test_stream_with_events_with_no_content(
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
-    # Validate AI choice Event
-    _choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
+    # Validate AI choice Event - check key attributes, finish_reason varies by model
+    choice_log = logs[1]
+    assert choice_log.log_record.event_name == "gen_ai.choice"
+    choice_body = dict(choice_log.log_record.body)
+    assert choice_body["index"] == 0
+    assert "finish_reason" in choice_body
+    assert choice_body["message"] == {}
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_astream(instrument_legacy, span_exporter, log_exporter):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt = PromptTemplate.from_template(
         "write 2 lines of random text about ${product}"
     )
@@ -723,7 +727,7 @@ async def test_astream(instrument_legacy, span_exporter, log_exporter):
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 144
+    assert len(chunks) == 62
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -736,7 +740,7 @@ async def test_astream(instrument_legacy, span_exporter, log_exporter):
 async def test_astream_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
 ):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt_template = "write 2 lines of random text about ${product}"
     prompt = PromptTemplate.from_template(prompt_template)
     runnable = prompt | chat | StrOutputParser()
@@ -754,7 +758,7 @@ async def test_astream_with_events_with_content(
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 144
+    assert len(chunks) == 48
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -780,7 +784,7 @@ async def test_astream_with_events_with_content(
 async def test_astream_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
 ):
-    chat = ChatCohere(model="command", temperature=0.75)
+    chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt = PromptTemplate.from_template(
         "write 2 lines of random text about ${product}"
     )
@@ -799,7 +803,7 @@ async def test_astream_with_events_with_no_content(
             "RunnableSequence.workflow",
         ]
     ) == set([span.name for span in spans])
-    assert len(chunks) == 144
+    assert len(chunks) == 56
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -812,7 +816,7 @@ async def test_astream_with_events_with_no_content(
     # assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 

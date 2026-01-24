@@ -9,7 +9,7 @@ from llama_index.core import (
     VectorStoreIndex,
 )
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.huggingface import HuggingFaceInferenceAPI
+from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
 from traceloop.sdk import Traceloop

@@ -1,3 +1,50 @@
+[project]
+name = "opentelemetry-instrumentation-qdrant"
+version = "0.50.2"
+description = "OpenTelemetry Qdrant instrumentation"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-qdrant"
+
+[project.optional-dependencies]
+instruments = ["qdrant-client"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+qdrant_client = "opentelemetry.instrumentation.qdrant:QdrantInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "ruff>=0.4.0",
+]
+test = [
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "qdrant-client>=1.16.1,<1.17"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/qdrant"]
@@ -6,45 +53,19 @@ source = ["opentelemetry/instrumentation/qdrant"]
 exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "opentelemetry-instrumentation-qdrant"
-version = "0.50.1"
-description = "OpenTelemetry Qdrant instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-qdrant"
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/qdrant"
+[tool.ruff.lint]
+select = ["E", "F", "W"]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.38.0"
-opentelemetry-instrumentation = ">=0.59b0"
-opentelemetry-semantic-conventions = ">=0.59b0"
-opentelemetry-semantic-conventions-ai = "^0.4.13"
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-
-[tool.poetry.group.test.dependencies]
-qdrant-client = "^1.16.1"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-opentelemetry-sdk = "^1.38.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["qdrant-client"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-qdrant_client = "opentelemetry.instrumentation.qdrant:QdrantInstrumentor"
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]

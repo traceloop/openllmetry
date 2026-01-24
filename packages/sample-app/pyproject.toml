@@ -1,3 +1,86 @@
+[project]
+name = "sample-app"
+version = "0.0.1"
+description = "Sample Application using Traceloop SDK"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  "openai>=1.52.2,<2",
+  "requests>=2.32.3,<3",
+  "pinecone-client>=3.2.2,<4",
+  "llama-index>=0.14.12,<0.15.0",
+  "ddgs>=9.0.0,<10",
+  "numexpr>=2.8.0,<3",
+  "chromadb>=0.5.15,<0.6.0",
+  "tokenizers>=0.22.0,<0.24.0",
+  "boto3>=1.35.49,<2",
+  "transformers>=4.46.0,<5",
+  "replicate>=0.22.0,<0.23.0",
+  "cohere>=5.11.1,<6",
+  "anthropic>=0.37.1,<0.38.0",
+  "google-cloud-aiplatform>=1.81.0,<2",
+  "python-dotenv>=1.0.1,<2",
+  "langchain>=1.0.0,<2.0.0",
+  "langchain-classic>=1.0.0,<2.0.0",
+  "langchain-community>=0.4.0,<0.5.0",
+  "haystack-ai>=2.6.1,<2.7.0",
+  "datasets>=2.21.0,<2.22.0",
+  "llama-index-embeddings-huggingface>=0.6.1,<0.7.0",
+  "llama-index-embeddings-openai>=0.5.0,<0.6.0",
+  "llama-index-llms-huggingface>=0.6.0,<0.7.0",
+  "llama-index-llms-huggingface-api>=0.6.0,<0.7.0",
+  "litellm>=1.51.0,<2",
+  "llama-index-vector-stores-chroma>=0.5.0,<0.6.0",
+  "langchain-openai>=1.0.0,<2.0.0",
+  "google-generativeai>=0.8.3,<0.9.0",
+  "langgraph>=1.0.0,<2.0.0",
+  "groq>=0.11.0,<0.12.0",
+  "llama-index-llms-openai>=0.6.0,<0.7.0",
+  "ibm-watson-machine-learning>=1.0.367,<2",
+  "ollama>=0.4.7,<0.5.0",
+  "mcp>=1.7.1,<2",
+  "openai-agents>=0.2.7,<0.3.0",
+  "fastmcp>=2.12.3,<3",
+  "agno>=2.2.2",
+  "opentelemetry-instrumentation-openai",
+  "opentelemetry-instrumentation-haystack",
+  "opentelemetry-instrumentation-pinecone",
+  "opentelemetry-instrumentation-replicate",
+  "opentelemetry-instrumentation-vertexai",
+  "opentelemetry-instrumentation-google-generativeai",
+  "opentelemetry-instrumentation-groq",
+  "opentelemetry-instrumentation-crewai",
+  "opentelemetry-instrumentation-openai-agents",
+  "opentelemetry-instrumentation-agno",
+  "traceloop-sdk",
+]
+
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.3.1,<3",
+  "ruff>=0.4.0",
+  "pytest>=8.3.3,<9",
+  "pytest-sugar==1.0.0",
+  "pytest-cov==4.1.0",
+  "pytest-html==4.1.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sample_app"]
+
 [tool.coverage.run]
 branch = true
 source = ["sample_app"]
@@ -6,113 +89,16 @@ source = ["sample_app"]
 exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "sample-app"
-version = "0.0.1"
-description = "Sample Application using Traceloop SDK"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "sample_app"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-openai = "^1.52.2"
-requests = "^2.32.3"
-# pinecone-datasets = "^0.7.0"
-pinecone-client = "^3.2.2"
-llama-index = "^0.12.52"
-duckduckgo-search = "^3.9.11"
-chromadb = "^0.5.15"
-tokenizers = "~0.20.1"
-boto3 = "^1.35.49"
-transformers = "^4.46.0"
-replicate = "^0.22.0"
-cohere = "^5.11.1"
-anthropic = "^0.37.1"
-google-cloud-aiplatform = "^1.81.0"
-python-dotenv = "^1.0.1"
-langchain = "^0.3.24"
-langchain-community = "^0.3.22"
-haystack-ai = "~2.6.1"
-datasets = "~2.21.0"
-llama-index-embeddings-huggingface = "^0.4.0"
-llama-index-embeddings-openai = "^0.3.1"
-llama-index-agent-openai = "^0.4.12"
-litellm = "^1.51.0"
-text-generation = "^0.7.0"
-llama-index-vector-stores-chroma = "^0.4.1"
-langchain-openai = "^0.3.14"
-google-generativeai = "^0.8.3"
-langgraph = "^0.2.39"
-groq = "^0.11.0"
-llama-index-llms-openai = "^0.4.0"
-ibm-watson-machine-learning = "^1.0.367"
-ollama = "^0.4.7"
-mcp = "^1.7.1"
-openai-agents = "^0.2.7"
-fastmcp = "^2.12.3"
-agno = ">=2.2.2"
-
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-openai]
-path = "../opentelemetry-instrumentation-openai"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-haystack]
-path = "../opentelemetry-instrumentation-haystack"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-pinecone]
-path = "../opentelemetry-instrumentation-pinecone"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-replicate]
-path = "../opentelemetry-instrumentation-replicate"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-vertexai]
-path = "../opentelemetry-instrumentation-vertexai"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-google-generativeai]
-path = "../opentelemetry-instrumentation-google-generativeai"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-groq]
-path = "../opentelemetry-instrumentation-groq"
-develop = true
-
-[tool.poetry.dependencies.traceloop-sdk]
-path = "../traceloop-sdk"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-crewai]
-path = "../opentelemetry-instrumentation-crewai"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-openai-agents]
-path = "../opentelemetry-instrumentation-openai-agents"
-develop = true
-
-[tool.poetry.dependencies.opentelemetry-instrumentation-agno]
-path = "../opentelemetry-instrumentation-agno"
-develop = true
-
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.3.1"
-flake8 = "7.1.1"
-pytest = "^8.3.3"
-pytest-sugar = "1.0.0"
-pytest-cov = "4.1.0"
-pytest-html = "4.1.1"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.ruff.lint]
+select = ["E", "F", "W"]

@@ -5,9 +5,9 @@
   "sourceRoot": "packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai",
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-semantic-conventions-ai/dist",
         "publish": false,
@@ -34,32 +36,27 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "nx:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
-      ],
+      "executor": "nx:run-commands",
       "options": {
-        "outputFile": "reports/packages/opentelemetry-semantic-conventions-ai/pylint.txt"
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     },
     "test": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/unittests",
         "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-ai"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/opentelemetry-semantic-conventions-ai"
       }
     }
