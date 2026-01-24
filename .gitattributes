@@ -1,2 +1,0 @@
-# Strip upload-time metadata from uv.lock files
-packages/*/uv.lock filter=uv-lock-clean
