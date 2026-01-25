@@ -745,7 +745,9 @@ def init_httpx_instrumentor():
 
             instrumentor = HTTPXClientInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+                # Note: HTTPXClientInstrumentor doesn't accept excluded_urls param.
+                # Use OTEL_PYTHON_HTTPX_EXCLUDED_URLS env var instead.
+                instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing HTTPX instrumentor: {e}")
