@@ -17,6 +17,7 @@ def tracer_provider():
     provider = TracerProvider()
     exporter = InMemorySpanExporter()
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     return provider, exporter
 
@@ -260,11 +261,13 @@ class TestRealtimeTracingState:
         state.start_workflow_span("Test Agent")
         state.start_agent_span("Voice Assistant")
 
-        state.record_usage({
-            "input_tokens": 100,
-            "output_tokens": 50,
-            "total_tokens": 150,
-        })
+        state.record_usage(
+            {
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "total_tokens": 150,
+            }
+        )
 
         assert state.pending_usage is not None
         assert state.pending_usage["input_tokens"] == 100
@@ -278,11 +281,13 @@ class TestRealtimeTracingState:
         state.start_agent_span("Voice Assistant")
 
         state.record_prompt("user", "Hello")
-        state.record_usage({
-            "input_tokens": 100,
-            "output_tokens": 50,
-            "total_tokens": 150,
-        })
+        state.record_usage(
+            {
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "total_tokens": 150,
+            }
+        )
         state.record_completion("assistant", "Hi there!")
 
         state.cleanup()
@@ -400,6 +405,7 @@ class TestSpanTiming:
     def test_llm_span_has_duration(self, tracer, tracer_provider):
         """Test that LLM span has non-zero duration."""
         import time
+
         _, exporter = tracer_provider
         state = RealtimeTracingState(tracer)
 

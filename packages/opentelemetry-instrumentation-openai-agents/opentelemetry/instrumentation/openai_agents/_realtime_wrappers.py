@@ -52,7 +52,7 @@ class RealtimeTracingState:
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Realtime Session",
-            }
+            },
         )
         return self.workflow_span
 
@@ -107,7 +107,7 @@ class RealtimeTracingState:
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-            }
+            },
         )
         self.agent_spans[agent_name] = span
         self.current_agent_name = agent_name
@@ -134,7 +134,7 @@ class RealtimeTracingState:
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-            }
+            },
         )
         self.tool_spans[tool_name] = span
         return span
@@ -171,7 +171,7 @@ class RealtimeTracingState:
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
                 "gen_ai.handoff.from_agent": from_agent,
                 "gen_ai.handoff.to_agent": to_agent,
-            }
+            },
         )
         span.set_status(Status(StatusCode.OK))
         span.end()
@@ -189,7 +189,7 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-            }
+            },
         )
         self.audio_spans[span_key] = span
         return span
@@ -281,20 +281,14 @@ class RealtimeTracingState:
                 SpanAttributes.LLM_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_REQUEST_MODEL: model_name_str,
-            }
+            },
         )
 
         if self.pending_usage:
             if self.pending_usage.get("input_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                    self.pending_usage["input_tokens"]
-                )
+                span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, self.pending_usage["input_tokens"])
             if self.pending_usage.get("output_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                    self.pending_usage["output_tokens"]
-                )
+                span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, self.pending_usage["output_tokens"])
             self.pending_usage = None
 
         if should_send_prompts():
@@ -346,40 +340,40 @@ def wrap_realtime_session(tracer: Tracer):
     except ImportError:
         return
 
-    _original_methods['__aenter__'] = RealtimeSession.__aenter__
-    _original_methods['__aexit__'] = RealtimeSession.__aexit__
-    _original_methods['_put_event'] = RealtimeSession._put_event
-    if hasattr(RealtimeSession, 'send_message'):
-        _original_methods['send_message'] = RealtimeSession.send_message
+    _original_methods["__aenter__"] = RealtimeSession.__aenter__
+    _original_methods["__aexit__"] = RealtimeSession.__aexit__
+    _original_methods["_put_event"] = RealtimeSession._put_event
+    if hasattr(RealtimeSession, "send_message"):
+        _original_methods["send_message"] = RealtimeSession.send_message
 
     _tracing_states: Dict[int, RealtimeTracingState] = {}
 
     @dont_throw
     async def traced_aenter(self):
         """Wrapped __aenter__ that starts the workflow span."""
-        result = await _original_methods['__aenter__'](self)
+        result = await _original_methods["__aenter__"](self)
 
         try:
             state = RealtimeTracingState(tracer)
             _tracing_states[id(self)] = state
-            agent_name = getattr(self._current_agent, 'name', 'Unknown Agent')
+            agent_name = getattr(self._current_agent, "name", "Unknown Agent")
             state.start_workflow_span(agent_name)
 
             model_name_str = None
-            model_obj = getattr(self, '_model', None) or getattr(self, 'model', None)
+            model_obj = getattr(self, "_model", None) or getattr(self, "model", None)
             if model_obj:
-                model_name_str = getattr(model_obj, 'model', None)
+                model_name_str = getattr(model_obj, "model", None)
 
             if not model_name_str:
-                config = getattr(self, '_config', None) or getattr(self, 'config', None)
+                config = getattr(self, "_config", None) or getattr(self, "config", None)
                 if config:
-                    model_settings = getattr(config, 'model_settings', None)
+                    model_settings = getattr(config, "model_settings", None)
                     if model_settings:
-                        model_name_str = getattr(model_settings, 'model_name', None) or \
-                                         getattr(model_settings, 'model', None)
+                        model_name_str = getattr(model_settings, "model_name", None) or getattr(
+                            model_settings, "model", None
+                        )
                     if not model_name_str:
-                        model_name_str = getattr(config, 'model_name', None) or \
-                                         getattr(config, 'model', None)
+                        model_name_str = getattr(config, "model_name", None) or getattr(config, "model", None)
 
             if model_name_str and isinstance(model_name_str, str):
                 state.model_name = model_name_str
@@ -391,7 +385,7 @@ def wrap_realtime_session(tracer: Tracer):
     @dont_throw
     async def traced_aexit(self, exc_type, exc_val, exc_tb):
         """Wrapped __aexit__ that ends the workflow span."""
-        result = await _original_methods['__aexit__'](self, exc_type, exc_val, exc_tb)
+        result = await _original_methods["__aexit__"](self, exc_type, exc_val, exc_tb)
 
         try:
             session_id = id(self)
@@ -409,158 +403,158 @@ def wrap_realtime_session(tracer: Tracer):
     @dont_throw
     async def traced_put_event(self, event):
         """Wrapped _put_event that creates spans for key events."""
-        result = await _original_methods['_put_event'](self, event)
+        result = await _original_methods["_put_event"](self, event)
 
         try:
             session_id = id(self)
             state = _tracing_states.get(session_id)
 
             if state:
-                event_type = getattr(event, 'type', None)
+                event_type = getattr(event, "type", None)
 
-                if event_type == 'agent_start':
-                    agent = getattr(event, 'agent', None)
-                    agent_name = getattr(agent, 'name', 'Unknown') if agent else 'Unknown'
+                if event_type == "agent_start":
+                    agent = getattr(event, "agent", None)
+                    agent_name = getattr(agent, "name", "Unknown") if agent else "Unknown"
                     state.start_agent_span(agent_name)
 
-                elif event_type == 'agent_end':
-                    agent = getattr(event, 'agent', None)
-                    agent_name = getattr(agent, 'name', 'Unknown') if agent else 'Unknown'
+                elif event_type == "agent_end":
+                    agent = getattr(event, "agent", None)
+                    agent_name = getattr(agent, "name", "Unknown") if agent else "Unknown"
                     state.end_agent_span(agent_name)
 
-                elif event_type == 'tool_start':
-                    tool = getattr(event, 'tool', None)
-                    agent = getattr(event, 'agent', None)
-                    tool_name = getattr(tool, 'name', 'unknown_tool') if tool else 'unknown_tool'
-                    agent_name = getattr(agent, 'name', None) if agent else None
+                elif event_type == "tool_start":
+                    tool = getattr(event, "tool", None)
+                    agent = getattr(event, "agent", None)
+                    tool_name = getattr(tool, "name", "unknown_tool") if tool else "unknown_tool"
+                    agent_name = getattr(agent, "name", None) if agent else None
                     state.start_tool_span(tool_name, agent_name)
 
-                elif event_type == 'tool_end':
-                    tool = getattr(event, 'tool', None)
-                    tool_name = getattr(tool, 'name', 'unknown_tool') if tool else 'unknown_tool'
-                    output = getattr(event, 'output', None)
+                elif event_type == "tool_end":
+                    tool = getattr(event, "tool", None)
+                    tool_name = getattr(tool, "name", "unknown_tool") if tool else "unknown_tool"
+                    output = getattr(event, "output", None)
                     state.end_tool_span(tool_name, output)
 
-                elif event_type == 'handoff':
-                    from_agent = getattr(event, 'from_agent', None)
-                    to_agent = getattr(event, 'to_agent', None)
-                    from_name = getattr(from_agent, 'name', 'Unknown') if from_agent else 'Unknown'
-                    to_name = getattr(to_agent, 'name', 'Unknown') if to_agent else 'Unknown'
+                elif event_type == "handoff":
+                    from_agent = getattr(event, "from_agent", None)
+                    to_agent = getattr(event, "to_agent", None)
+                    from_name = getattr(from_agent, "name", "Unknown") if from_agent else "Unknown"
+                    to_name = getattr(to_agent, "name", "Unknown") if to_agent else "Unknown"
                     state.create_handoff_span(from_name, to_name)
 
-                elif event_type == 'audio':
-                    item_id = getattr(event, 'item_id', 'unknown')
-                    content_index = getattr(event, 'content_index', 0)
+                elif event_type == "audio":
+                    item_id = getattr(event, "item_id", "unknown")
+                    content_index = getattr(event, "content_index", 0)
                     span_key = f"{item_id}:{content_index}"
                     if span_key not in state.audio_spans:
                         state.start_audio_span(item_id, content_index)
 
-                elif event_type == 'audio_end':
-                    item_id = getattr(event, 'item_id', 'unknown')
-                    content_index = getattr(event, 'content_index', 0)
+                elif event_type == "audio_end":
+                    item_id = getattr(event, "item_id", "unknown")
+                    content_index = getattr(event, "content_index", 0)
                     state.end_audio_span(item_id, content_index)
 
-                elif event_type == 'error':
-                    error = getattr(event, 'error', 'Unknown error')
+                elif event_type == "error":
+                    error = getattr(event, "error", "Unknown error")
                     state.record_error(error)
 
-                elif event_type == 'history_added':
-                    item = getattr(event, 'item', None)
+                elif event_type == "history_added":
+                    item = getattr(event, "item", None)
                     if item:
-                        role = getattr(item, 'role', None)
+                        role = getattr(item, "role", None)
                         content = None
 
-                        item_content = getattr(item, 'content', None)
+                        item_content = getattr(item, "content", None)
                         if item_content:
                             if isinstance(item_content, list):
                                 for part in item_content:
-                                    if hasattr(part, 'text'):
+                                    if hasattr(part, "text"):
                                         content = part.text
                                         break
-                                    elif hasattr(part, 'transcript'):
+                                    elif hasattr(part, "transcript"):
                                         content = part.transcript
                                         break
                             elif isinstance(item_content, str):
                                 content = item_content
 
                         if not content:
-                            content = getattr(item, 'text', None) or getattr(item, 'transcript', None)
+                            content = getattr(item, "text", None) or getattr(item, "transcript", None)
 
-                        if content and role == 'assistant':
+                        if content and role == "assistant":
                             state.record_completion(role, content)
 
-                elif event_type == 'response':
-                    output = getattr(event, 'output', None)
+                elif event_type == "response":
+                    output = getattr(event, "output", None)
                     if output and isinstance(output, list):
                         for item in output:
-                            role = getattr(item, 'role', None)
-                            if role == 'assistant':
-                                item_content = getattr(item, 'content', None)
+                            role = getattr(item, "role", None)
+                            if role == "assistant":
+                                item_content = getattr(item, "content", None)
                                 if item_content:
                                     if isinstance(item_content, list):
                                         for part in item_content:
-                                            text = getattr(part, 'text', None)
+                                            text = getattr(part, "text", None)
                                             if text:
                                                 state.record_completion(role, text)
                                                 break
                                     elif isinstance(item_content, str):
                                         state.record_completion(role, item_content)
 
-                elif event_type == 'raw_model_event':
-                    data = getattr(event, 'data', None)
+                elif event_type == "raw_model_event":
+                    data = getattr(event, "data", None)
                     if data:
                         if isinstance(data, dict):
-                            data_type = data.get('type')
-                            raw_data = data.get('data', data)
+                            data_type = data.get("type")
+                            raw_data = data.get("data", data)
                             if isinstance(raw_data, dict):
-                                nested_type = raw_data.get('type')
+                                nested_type = raw_data.get("type")
                                 if nested_type:
                                     data_type = nested_type
                         else:
-                            data_type = getattr(data, 'type', None)
-                            nested_data = getattr(data, 'data', None)
+                            data_type = getattr(data, "type", None)
+                            nested_data = getattr(data, "data", None)
                             if nested_data:
                                 if isinstance(nested_data, dict):
-                                    nested_type = nested_data.get('type')
+                                    nested_type = nested_data.get("type")
                                 else:
-                                    nested_type = getattr(nested_data, 'type', None)
+                                    nested_type = getattr(nested_data, "type", None)
                                 if nested_type:
                                     data_type = nested_type
                                     data = nested_data
 
-                        if data_type == 'response.done':
+                        if data_type == "response.done":
                             if isinstance(data, dict):
-                                response = data.get('response', {})
-                                usage = response.get('usage') if isinstance(response, dict) else None
+                                response = data.get("response", {})
+                                usage = response.get("usage") if isinstance(response, dict) else None
                             else:
-                                response = getattr(data, 'response', None)
-                                usage = getattr(response, 'usage', None) if response else None
+                                response = getattr(data, "response", None)
+                                usage = getattr(response, "usage", None) if response else None
                             if usage:
                                 state.record_usage(usage)
 
-                                output = getattr(response, 'output', None)
+                                output = getattr(response, "output", None)
                                 if output and isinstance(output, list):
                                     for item in output:
-                                        item_type = getattr(item, 'type', None)
-                                        if item_type == 'message':
-                                            role = getattr(item, 'role', None)
-                                            if role == 'assistant':
-                                                item_content = getattr(item, 'content', None)
+                                        item_type = getattr(item, "type", None)
+                                        if item_type == "message":
+                                            role = getattr(item, "role", None)
+                                            if role == "assistant":
+                                                item_content = getattr(item, "content", None)
                                                 if item_content and isinstance(item_content, list):
                                                     for part in item_content:
-                                                        text = getattr(part, 'text', None)
+                                                        text = getattr(part, "text", None)
                                                         if text:
                                                             state.record_completion(role, text)
                                                             break
 
-                        elif data_type == 'item_updated':
-                            item = getattr(data, 'item', None)
+                        elif data_type == "item_updated":
+                            item = getattr(data, "item", None)
                             if item:
-                                role = getattr(item, 'role', None)
-                                item_content = getattr(item, 'content', None)
-                                if role == 'assistant' and item_content and isinstance(item_content, list):
+                                role = getattr(item, "role", None)
+                                item_content = getattr(item, "content", None)
+                                if role == "assistant" and item_content and isinstance(item_content, list):
                                     for part in item_content:
-                                        text = getattr(part, 'text', None) or getattr(part, 'transcript', None)
+                                        text = getattr(part, "text", None) or getattr(part, "transcript", None)
                                         if text:
                                             state.record_completion(role, text)
                                             break
@@ -573,8 +567,8 @@ def wrap_realtime_session(tracer: Tracer):
     async def traced_send_message(self, message):
         """Wrapped send_message that captures user input."""
         result = None
-        if 'send_message' in _original_methods:
-            result = await _original_methods['send_message'](self, message)
+        if "send_message" in _original_methods:
+            result = await _original_methods["send_message"](self, message)
 
         try:
             session_id = id(self)
@@ -584,13 +578,13 @@ def wrap_realtime_session(tracer: Tracer):
                 if isinstance(message, str):
                     state.record_prompt("user", message)
                 else:
-                    content = getattr(message, 'content', None)
+                    content = getattr(message, "content", None)
                     if content:
                         if isinstance(content, str):
                             state.record_prompt("user", content)
                         elif isinstance(content, list):
                             for part in content:
-                                text = getattr(part, 'text', None)
+                                text = getattr(part, "text", None)
                                 if text:
                                     state.record_prompt("user", text)
                                     break
@@ -602,7 +596,7 @@ def wrap_realtime_session(tracer: Tracer):
     RealtimeSession.__aenter__ = traced_aenter
     RealtimeSession.__aexit__ = traced_aexit
     RealtimeSession._put_event = traced_put_event
-    if 'send_message' in _original_methods:
+    if "send_message" in _original_methods:
         RealtimeSession.send_message = traced_send_message
 
 
@@ -613,13 +607,13 @@ def unwrap_realtime_session():
     except ImportError:
         return
 
-    if '__aenter__' in _original_methods:
-        RealtimeSession.__aenter__ = _original_methods['__aenter__']
-    if '__aexit__' in _original_methods:
-        RealtimeSession.__aexit__ = _original_methods['__aexit__']
-    if '_put_event' in _original_methods:
-        RealtimeSession._put_event = _original_methods['_put_event']
-    if 'send_message' in _original_methods:
-        RealtimeSession.send_message = _original_methods['send_message']
+    if "__aenter__" in _original_methods:
+        RealtimeSession.__aenter__ = _original_methods["__aenter__"]
+    if "__aexit__" in _original_methods:
+        RealtimeSession.__aexit__ = _original_methods["__aexit__"]
+    if "_put_event" in _original_methods:
+        RealtimeSession._put_event = _original_methods["_put_event"]
+    if "send_message" in _original_methods:
+        RealtimeSession.send_message = _original_methods["send_message"]
 
     _original_methods.clear()

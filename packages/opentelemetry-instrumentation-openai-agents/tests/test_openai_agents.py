@@ -39,24 +39,9 @@ def test_dict_content_serialization(exporter):
     # Create a query with structured content as array of objects (multimodal format)
     # This should create dict structures that need serialization
     structured_query = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": "Hello, can you help me?"}
-            ]
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {"type": "output_text", "text": "Of course! How can I help you?"}
-            ]
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": "What is the weather like?"}
-            ]
-        }
+        {"role": "user", "content": [{"type": "input_text", "text": "Hello, can you help me?"}]},
+        {"role": "assistant", "content": [{"type": "output_text", "text": "Of course! How can I help you?"}]},
+        {"role": "user", "content": [{"type": "input_text", "text": "What is the weather like?"}]},
     ]
 
     # Run the agent with structured content
@@ -67,20 +52,16 @@ def test_dict_content_serialization(exporter):
     # Look for any spans with prompt/content attributes
     for span in spans:
         for attr_name, attr_value in span.attributes.items():
-            prompt_content_check = (
-                ("prompt" in attr_name and "content" in attr_name) or
-                ("gen_ai.prompt" in attr_name and "content" in attr_name)
+            prompt_content_check = ("prompt" in attr_name and "content" in attr_name) or (
+                "gen_ai.prompt" in attr_name and "content" in attr_name
             )
             if prompt_content_check:
                 # All content attributes should be strings, not dicts
-                error_msg = (
-                    f"Attribute {attr_name} should be a string, "
-                    f"got {type(attr_value)}: {attr_value}"
-                )
+                error_msg = f"Attribute {attr_name} should be a string, got {type(attr_value)}: {attr_value}"
                 assert isinstance(attr_value, str), error_msg
 
                 # If it looks like JSON, verify it can be parsed
-                if attr_value.startswith('{') and attr_value.endswith('}'):
+                if attr_value.startswith("{") and attr_value.endswith("}"):
                     try:
                         json.loads(attr_value)
                     except json.JSONDecodeError:
@@ -107,10 +88,7 @@ def test_agent_spans(exporter, test_agent):
     # Test agent span attributes (should NOT contain prompts/completions/usage/llm_params)
     assert agent_span.name == "testAgent.agent"
     assert agent_span.kind == agent_span.kind.CLIENT
-    assert (
-        agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-        == TraceloopSpanKindValues.AGENT.value
-    )
+    assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
     assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
     assert agent_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai_agents"
     assert agent_span.status.status_code == StatusCode.OK
@@ -187,14 +165,8 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     agent_span = next(s for s in spans if s.name == "WeatherAgent.agent")
     tool_span = next(s for s in spans if s.name == "get_weather.tool")
 
-    assert (
-        agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-        == TraceloopSpanKindValues.AGENT.value
-    )
-    assert (
-        tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-        == TraceloopSpanKindValues.TOOL.value
-    )
+    assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
+    assert tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.TOOL.value
     assert tool_span.kind == tool_span.kind.INTERNAL
 
     assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_NAME] == "get_weather"
@@ -226,10 +198,7 @@ def test_agent_with_web_search_tool_spans(exporter, web_search_tool_agent):
     agent_span = next(s for s in spans if s.name == "SearchAgent.agent")
     # WebSearchTool doesn't create a separate tool span - it's handled differently than FunctionTool
 
-    assert (
-        agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-        == TraceloopSpanKindValues.AGENT.value
-    )
+    assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
 
     # WebSearchTool attributes should be on the agent span or response span
     # For now, just verify the agent span works correctly
@@ -238,7 +207,6 @@ def test_agent_with_web_search_tool_spans(exporter, web_search_tool_agent):
 
 @pytest.mark.vcr
 def test_agent_with_handoff_spans(exporter, handoff_agent):
-
     query = "Please handle this task by delegating to another agent."
     Runner.run_sync(
         handoff_agent,
@@ -258,15 +226,11 @@ def test_agent_with_handoff_spans(exporter, handoff_agent):
 
     # Verify the agent span was created successfully
     assert agent_a_span.status.status_code == StatusCode.OK
-    assert (
-        agent_a_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-        == TraceloopSpanKindValues.AGENT.value
-    )
+    assert agent_a_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
 
 
 @pytest.mark.vcr
 def test_generate_metrics(metrics_test_context, test_agent):
-
     provider, reader = metrics_test_context
 
     query = "What is AI?"
@@ -291,7 +255,6 @@ def test_generate_metrics(metrics_test_context, test_agent):
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
-
                 if metric.name == Meters.LLM_TOKEN_USAGE:
                     found_token_metric = True
                     for data_point in metric.data.data_points:
@@ -304,12 +267,8 @@ def test_generate_metrics(metrics_test_context, test_agent):
 
                 if metric.name == Meters.LLM_OPERATION_DURATION:
                     found_duration_metric = True
-                    assert any(
-                        data_point.count > 0 for data_point in metric.data.data_points
-                    )
-                    assert any(
-                        data_point.sum > 0 for data_point in metric.data.data_points
-                    )
+                    assert any(data_point.count > 0 for data_point in metric.data.data_points)
+                    assert any(data_point.sum > 0 for data_point in metric.data.data_points)
 
         assert found_token_metric is True
         assert found_duration_metric is True
@@ -317,9 +276,7 @@ def test_generate_metrics(metrics_test_context, test_agent):
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_recipe_workflow_agent_handoffs_with_function_tools(
-    exporter, recipe_workflow_agents
-):
+async def test_recipe_workflow_agent_handoffs_with_function_tools(exporter, recipe_workflow_agents):
     """Test agent handoffs with function tools - simplified to test basic agent functionality."""
 
     main_chat_agent, recipe_editor_agent = recipe_workflow_agents
@@ -349,10 +306,7 @@ async def test_recipe_workflow_agent_handoffs_with_function_tools(
         search_tool_spans = [s for s in non_rest_spans if s.name == "search_recipes.tool"]
         if search_tool_spans:
             search_tool_span = search_tool_spans[0]
-            assert (
-                search_tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND]
-                == TraceloopSpanKindValues.TOOL.value
-            )
+            assert search_tool_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.TOOL.value
             assert search_tool_span.status.status_code == StatusCode.OK
 
     # Verify basic span structure is working
@@ -382,9 +336,7 @@ async def test_music_composer_handoff_hierarchy(exporter):
     # Create composer agent with function tools
     composer_agent = Agent(
         name="Symphony Composer",
-        instructions=(
-            "You compose and arrange symphonic music pieces using your composition tools."
-        ),
+        instructions=("You compose and arrange symphonic music pieces using your composition tools."),
         model="gpt-4o",
         tools=[compose_music],
     )
@@ -393,8 +345,7 @@ async def test_music_composer_handoff_hierarchy(exporter):
     conductor_agent = Agent(
         name="Orchestra Conductor",
         instructions=(
-            "You coordinate musical performances. When users ask for composition, "
-            "hand off to the Symphony Composer."
+            "You coordinate musical performances. When users ask for composition, hand off to the Symphony Composer."
         ),
         model="gpt-4o",
         handoffs=[composer_agent],
@@ -537,18 +488,14 @@ def test_tool_call_and_result_attributes(exporter):
             content_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.content"
             tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id"
 
-            assert content_key in second_response_span.attributes, (
-                f"Tool result content not found at {content_key}"
-            )
+            assert content_key in second_response_span.attributes, f"Tool result content not found at {content_key}"
             content = second_response_span.attributes[content_key]
             assert len(content) > 0, "Tool result content should not be empty"
             assert "London" in content or "9000000" in content or "United Kingdom" in content, (
                 f"Expected tool result to contain city info, got: {content}"
             )
 
-            assert tool_call_id_key in second_response_span.attributes, (
-                f"Tool call ID not found at {tool_call_id_key}"
-            )
+            assert tool_call_id_key in second_response_span.attributes, f"Tool call ID not found at {tool_call_id_key}"
             tool_call_id = second_response_span.attributes[tool_call_id_key]
             assert len(tool_call_id) > 0, "Tool call ID should not be empty"
 

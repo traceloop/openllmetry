@@ -97,10 +97,13 @@ class TestRealtimeSpeechSpans:
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -144,19 +147,20 @@ class TestRealtimeSpeechSpans:
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
         processor.on_trace_end(mock_trace)
 
         spans = exporter.get_finished_spans()
-        speech_span = next(
-            (s for s in spans if s.name == "openai.realtime.speech"), None
-        )
+        speech_span = next((s for s in spans if s.name == "openai.realtime.speech"), None)
 
         assert speech_span is not None
         attrs = dict(speech_span.attributes)
@@ -167,9 +171,7 @@ class TestRealtimeSpeechSpans:
 class TestRealtimeTranscriptionSpans:
     """Test transcription span instrumentation."""
 
-    def test_transcription_span_start_creates_otel_span(
-        self, tracer_provider_and_exporter
-    ):
+    def test_transcription_span_start_creates_otel_span(self, tracer_provider_and_exporter):
         """Test that TranscriptionSpanData creates an OpenTelemetry span."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             OpenTelemetryTracingProcessor,
@@ -193,10 +195,13 @@ class TestRealtimeTranscriptionSpans:
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -207,16 +212,12 @@ class TestRealtimeTranscriptionSpans:
 
         assert "openai.realtime.transcription" in span_names
 
-        transcription_span = next(
-            s for s in spans if s.name == "openai.realtime.transcription"
-        )
+        transcription_span = next(s for s in spans if s.name == "openai.realtime.transcription")
         assert transcription_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
         assert transcription_span.attributes["gen_ai.system"] == "openai"
         assert transcription_span.attributes["gen_ai.operation.name"] == "transcription"
 
-    def test_transcription_span_captures_model_and_format(
-        self, tracer_provider_and_exporter
-    ):
+    def test_transcription_span_captures_model_and_format(self, tracer_provider_and_exporter):
         """Test that transcription span captures model and input format."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             OpenTelemetryTracingProcessor,
@@ -240,19 +241,20 @@ class TestRealtimeTranscriptionSpans:
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
         processor.on_trace_end(mock_trace)
 
         spans = exporter.get_finished_spans()
-        transcription_span = next(
-            (s for s in spans if s.name == "openai.realtime.transcription"), None
-        )
+        transcription_span = next((s for s in spans if s.name == "openai.realtime.transcription"), None)
 
         assert transcription_span is not None
         attrs = dict(transcription_span.attributes)
@@ -286,10 +288,13 @@ class TestRealtimeSpeechGroupSpans:
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
@@ -300,9 +305,7 @@ class TestRealtimeSpeechGroupSpans:
 
         assert "openai.realtime.speech_group" in span_names
 
-        speech_group_span = next(
-            s for s in spans if s.name == "openai.realtime.speech_group"
-        )
+        speech_group_span = next(s for s in spans if s.name == "openai.realtime.speech_group")
         assert speech_group_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
         assert speech_group_span.attributes["gen_ai.system"] == "openai"
         assert speech_group_span.attributes["gen_ai.operation.name"] == "speech_group"
@@ -332,25 +335,24 @@ class TestRealtimeErrorHandling:
         )
         speech_data.__class__.__name__ = "SpeechSpanData"
 
-        mock_span = MockAgentSpan(
-            speech_data, trace_id="test-trace-err", error="Connection timeout"
-        )
+        mock_span = MockAgentSpan(speech_data, trace_id="test-trace-err", error="Connection timeout")
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(mock_span)
             processor.on_span_end(mock_span)
 
         processor.on_trace_end(mock_trace)
 
         spans = exporter.get_finished_spans()
-        speech_span = next(
-            (s for s in spans if s.name == "openai.realtime.speech"), None
-        )
+        speech_span = next((s for s in spans if s.name == "openai.realtime.speech"), None)
 
         if speech_span:
             assert speech_span.status.status_code == StatusCode.ERROR
@@ -380,16 +382,17 @@ class TestRealtimeSpanHierarchy:
 
         transcription_data = MockTranscriptionSpanData(model="whisper-1")
         transcription_data.__class__.__name__ = "TranscriptionSpanData"
-        transcription_span = MockAgentSpan(
-            transcription_data, trace_id="test-trace-hierarchy"
-        )
+        transcription_span = MockAgentSpan(transcription_data, trace_id="test-trace-hierarchy")
 
         # Patch the module-level variables directly
         import opentelemetry.instrumentation.openai_agents._hooks as hooks_module
-        with patch.object(hooks_module, '_has_realtime_spans', True), \
-             patch.object(hooks_module, 'SpeechSpanData', MockSpeechSpanData), \
-             patch.object(hooks_module, 'TranscriptionSpanData', MockTranscriptionSpanData), \
-             patch.object(hooks_module, 'SpeechGroupSpanData', MockSpeechGroupSpanData):
+
+        with (
+            patch.object(hooks_module, "_has_realtime_spans", True),
+            patch.object(hooks_module, "SpeechSpanData", MockSpeechSpanData),
+            patch.object(hooks_module, "TranscriptionSpanData", MockTranscriptionSpanData),
+            patch.object(hooks_module, "SpeechGroupSpanData", MockSpeechGroupSpanData),
+        ):
             processor.on_span_start(speech_span)
             processor.on_span_end(speech_span)
 
@@ -400,12 +403,8 @@ class TestRealtimeSpanHierarchy:
 
         spans = exporter.get_finished_spans()
         workflow_span = next(s for s in spans if s.name == "Agent Workflow")
-        speech_otel_span = next(
-            (s for s in spans if s.name == "openai.realtime.speech"), None
-        )
-        transcription_otel_span = next(
-            (s for s in spans if s.name == "openai.realtime.transcription"), None
-        )
+        speech_otel_span = next((s for s in spans if s.name == "openai.realtime.speech"), None)
+        transcription_otel_span = next((s for s in spans if s.name == "openai.realtime.transcription"), None)
 
         # Verify workflow is root
         assert workflow_span.parent is None

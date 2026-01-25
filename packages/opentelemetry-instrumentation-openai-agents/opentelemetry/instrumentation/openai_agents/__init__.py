@@ -43,6 +43,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         try:
             from ._realtime_wrappers import wrap_realtime_session
+
             wrap_realtime_session(tracer)
         except Exception:
             pass
@@ -50,6 +51,7 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
     def _uninstrument(self, **kwargs):
         try:
             from ._realtime_wrappers import unwrap_realtime_session
+
             unwrap_realtime_session()
         except Exception:
             pass
