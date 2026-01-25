@@ -466,7 +466,8 @@ Keep your responses concise and helpful.""",
                                             for i, part in enumerate(item_content):
                                                 part_type = getattr(part, 'type', None)
                                                 text = getattr(part, 'text', None)
-                                                print(f"    content[{i}]: type={part_type}, text={text[:50] if text else None}...")
+                                                text_preview = text[:50] if text else None
+                                                print(f"    content[{i}]: type={part_type}, text={text_preview}...")
 
                     else:
                         # Log other event types
