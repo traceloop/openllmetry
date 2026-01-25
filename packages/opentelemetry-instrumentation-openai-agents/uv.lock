@@ -1241,7 +1241,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.109.1"
+version = "2.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1253,14 +1253,14 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/a1/a303104dc55fc546a3f6914c842d3da471c64eec92043aef8f652eb6c524/openai-1.109.1.tar.gz", hash = "sha256:d173ed8dbca665892a6db099b4a2dfac624f94d20a93f46eb0b56aae940ed869", size = 564133 }
+sdist = { url = "https://files.pythonhosted.org/packages/94/f4/4690ecb5d70023ce6bfcfeabfe717020f654bde59a775058ec6ac4692463/openai-2.15.0.tar.gz", hash = "sha256:42eb8cbb407d84770633f31bf727d4ffb4138711c670565a41663d9439174fba", size = 627383 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/2a/7dd3d207ec669cacc1f186fd856a0f61dbc255d24f6fdc1a6715d6051b0f/openai-1.109.1-py3-none-any.whl", hash = "sha256:6bcaf57086cf59159b8e27447e4e7dd019db5d29a438072fbd49c290c7e65315", size = 948627 },
+    { url = "https://files.pythonhosted.org/packages/b5/df/c306f7375d42bafb379934c2df4c2fa3964656c8c782bac75ee10c102818/openai-2.15.0-py3-none-any.whl", hash = "sha256:6ae23b932cd7230f7244e52954daa6602716d6b9bf235401a107af731baea6c3", size = 1067879 },
 ]
 
 [[package]]
 name = "openai-agents"
-version = "0.2.11"
+version = "0.6.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffe" },
@@ -1271,9 +1271,9 @@ dependencies = [
     { name = "types-requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/c7/e8b588851bdbb33f16397b45d182998a01e6e57ff028a143788036a89d53/openai_agents-0.2.11.tar.gz", hash = "sha256:1a2e3fade02b3d8571560dbd121bfe0d84c80f48da04c838d9d5195966714abc", size = 1677542 }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/e3/41f4d83df6b9080ccba444b79e150aa3b57182bcc0deeb6adabe08678407/openai_agents-0.6.9.tar.gz", hash = "sha256:e55623827b4a1b11d66ec0084bd2b9ea2c6d60f233e04547803af433967e2fdb", size = 2152399 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/71/a8712a89502b95da64db6b0b31c12ac5039542ae8e31caddba369b6bd324/openai_agents-0.2.11-py3-none-any.whl", hash = "sha256:ed26f7bb2b08bd7607ae87eb7bcfcee8c8f4431da134252757b31120a68b9086", size = 179141 },
+    { url = "https://files.pythonhosted.org/packages/a7/9f/1cb6d64487c185c8e775c66314e5c047ca307b3bcd6c5edb97af6c0b5d6e/openai_agents-0.6.9-py3-none-any.whl", hash = "sha256:9e05a96b7610a7a89d6fd9ba379ff840a1aebca150eebcc4d505743ee458f50b", size = 284423 },
 ]
 
 [[package]]
@@ -1306,7 +1306,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai-agents"
-version = "0.50.1"
+version = "0.51.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1357,7 +1357,7 @@ dev = [
 ]
 test = [
     { name = "litellm", specifier = ">=1.71.2,<2" },
-    { name = "openai-agents", specifier = ">=0.2.7,<0.3.0" },
+    { name = "openai-agents", specifier = ">=0.6.9" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=1.0.0,<2" },

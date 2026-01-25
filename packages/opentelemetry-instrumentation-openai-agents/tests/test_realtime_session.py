@@ -67,15 +67,24 @@ class TestRealtimeTracingState:
         assert state.current_agent_name == "Voice Assistant"
 
     def test_end_agent_span(self, tracer, tracer_provider):
-        """Test ending an agent span."""
+        """Test ending an agent span.
+
+        Note: Agent spans are kept open across turns and only fully ended during cleanup
+        to avoid redundant spans for multi-turn conversations.
+        """
         _, exporter = tracer_provider
         state = RealtimeTracingState(tracer)
         state.start_workflow_span("Test Agent")
         state.start_agent_span("Voice Assistant")
 
         state.end_agent_span("Voice Assistant")
+        # Agent span is still active (kept open for potential continuation)
+        assert "Voice Assistant" in state.agent_spans
 
-        assert "Voice Assistant" not in state.agent_spans
+        # Cleanup properly ends all spans
+        state.cleanup()
+        state.end_workflow_span()
+
         spans = exporter.get_finished_spans()
         assert any(s.name == "Voice Assistant.agent" for s in spans)
 
@@ -244,6 +253,78 @@ class TestRealtimeTracingState:
         spans = exporter.get_finished_spans()
         assert len(spans) == 4  # workflow, agent, tool, audio
 
+    def test_record_usage_dict(self, tracer, tracer_provider):
+        """Test recording token usage from a dict."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_usage({
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "total_tokens": 150,
+        })
+
+        assert state.pending_usage is not None
+        assert state.pending_usage["input_tokens"] == 100
+        assert state.pending_usage["output_tokens"] == 50
+
+    def test_usage_attributes_on_llm_span(self, tracer, tracer_provider):
+        """Test that token usage appears on the LLM span."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Hello")
+        state.record_usage({
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "total_tokens": 150,
+        })
+        state.record_completion("assistant", "Hi there!")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_span = next(s for s in spans if s.name == "openai.realtime")
+
+        assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 100
+        assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 50
+
+    def test_usage_cleared_after_span(self, tracer, tracer_provider):
+        """Test that pending usage is cleared after being applied to a span."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Hello")
+        state.record_usage({"input_tokens": 100, "output_tokens": 50, "total_tokens": 150})
+        state.record_completion("assistant", "Hi!")
+
+        assert state.pending_usage is None
+
+    def test_duplicate_completion_ignored(self, tracer, tracer_provider):
+        """Test that duplicate completions are ignored."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Hello")
+        state.record_completion("assistant", "Hi there!")
+        state.record_completion("assistant", "Hi there!")  # Duplicate
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+
 
 class TestRealtimeSessionWrapping:
     """Tests for the session wrapping functionality."""
@@ -253,6 +334,89 @@ class TestRealtimeSessionWrapping:
         # This just tests that the functions don't raise exceptions
         wrap_realtime_session(tracer)
         unwrap_realtime_session()
+
+
+class TestSpanTiming:
+    """Tests for span timing and duration."""
+
+    def test_llm_span_starts_after_agent_span(self, tracer, tracer_provider):
+        """Test that LLM span start time is >= agent span start time."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+        state.record_prompt("user", "Hello")
+        state.record_completion("assistant", "Hi!")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        agent_span = next(s for s in spans if s.name == "Voice Assistant.agent")
+        llm_span = next(s for s in spans if s.name == "openai.realtime")
+
+        assert llm_span.start_time >= agent_span.start_time
+
+    def test_llm_span_ends_before_agent_span(self, tracer, tracer_provider):
+        """Test that LLM span ends before or when agent span ends."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+        state.record_prompt("user", "Hello")
+        state.record_completion("assistant", "Hi!")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        agent_span = next(s for s in spans if s.name == "Voice Assistant.agent")
+        llm_span = next(s for s in spans if s.name == "openai.realtime")
+
+        assert llm_span.end_time <= agent_span.end_time
+
+    def test_tool_span_within_agent_timeframe(self, tracer, tracer_provider):
+        """Test that tool span is within agent span timeframe."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+        state.start_tool_span("get_weather", "Voice Assistant")
+        state.end_tool_span("get_weather", output="Sunny")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        agent_span = next(s for s in spans if s.name == "Voice Assistant.agent")
+        tool_span = next(s for s in spans if s.name == "get_weather.tool")
+
+        assert tool_span.start_time >= agent_span.start_time
+        assert tool_span.end_time <= agent_span.end_time
+
+    def test_llm_span_has_duration(self, tracer, tracer_provider):
+        """Test that LLM span has non-zero duration."""
+        import time
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+        state.record_prompt("user", "Hello")
+        time.sleep(0.01)  # Small delay to ensure measurable duration
+        state.record_completion("assistant", "Hi!")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_span = next(s for s in spans if s.name == "openai.realtime")
+
+        duration_ns = llm_span.end_time - llm_span.start_time
+        assert duration_ns > 0
 
 
 class TestSpanHierarchy:
@@ -271,6 +435,7 @@ class TestSpanHierarchy:
         # End hierarchy
         state.end_tool_span("get_weather")
         state.end_agent_span("Voice Assistant")
+        state.cleanup()  # Agent spans are ended during cleanup
         state.end_workflow_span()
 
         spans = exporter.get_finished_spans()
@@ -295,6 +460,7 @@ class TestSpanHierarchy:
 
         state.end_audio_span("item_123", 0)
         state.end_agent_span("Voice Assistant")
+        state.cleanup()  # Agent spans are ended during cleanup
         state.end_workflow_span()
 
         spans = exporter.get_finished_spans()

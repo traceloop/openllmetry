@@ -34,7 +34,7 @@ dev = [
 ]
 test = [
   "litellm>=1.71.2,<2",
-  "openai-agents>=0.2.7,<0.3.0",
+  "openai-agents>=0.6.9",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=1.0.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",

@@ -444,9 +444,29 @@ Keep your responses concise and helpful.""",
                         print(f"\n[Error] {error}")
                         break
 
-                    elif event_type in ("history_updated", "raw_model_event"):
+                    elif event_type == "history_updated":
                         # Skip verbose events
                         pass
+
+                    elif event_type == "raw_model_event":
+                        # Debug: inspect item_updated events for assistant responses
+                        data = getattr(event, 'data', None)
+                        if data:
+                            data_type = getattr(data, 'type', None)
+                            if data_type == 'item_updated':
+                                item = getattr(data, 'item', None)
+                                if item:
+                                    role = getattr(item, 'role', None)
+                                    status = getattr(item, 'status', None)
+                                    item_type = getattr(item, 'type', None)
+                                    item_content = getattr(item, 'content', None)
+                                    if role == 'assistant':
+                                        print(f"  [item_updated] type={item_type} role={role} status={status}")
+                                        if item_content:
+                                            for i, part in enumerate(item_content):
+                                                part_type = getattr(part, 'type', None)
+                                                text = getattr(part, 'text', None)
+                                                print(f"    content[{i}]: type={part_type}, text={text[:50] if text else None}...")
 
                     else:
                         # Log other event types
