@@ -271,7 +271,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                "gen_ai.workflow.name": "Agent Workflow"
+                SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Agent Workflow"
             }
         )
         self._root_spans[trace.trace_id] = workflow_span
@@ -389,17 +389,15 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             tool_attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+                GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "FunctionTool",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True
             }
 
             if hasattr(span_data, 'description') and span_data.description:
                 # Only use description if it's not a generic class description
                 desc = span_data.description
                 if desc and not desc.startswith("Represents a Function Span"):
-                    tool_attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"] = desc
+                    tool_attributes[GenAIAttributes.GEN_AI_TOOL_DESCRIPTION] = desc
 
             otel_span = self.tracer.start_span(
                 f"{tool_name}.tool",
@@ -461,10 +459,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if model:
                 speech_attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
 
-            output_format = getattr(span_data, 'output_format', None)
-            if output_format:
-                speech_attributes["gen_ai.speech.output_format"] = output_format
-
             otel_span = self.tracer.start_span(
                 "openai.realtime.speech",
                 kind=SpanKind.CLIENT,
@@ -487,10 +481,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             model = getattr(span_data, 'model', None)
             if model:
                 transcription_attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
-
-            input_format = getattr(span_data, 'input_format', None)
-            if input_format:
-                transcription_attributes["gen_ai.transcription.input_format"] = input_format
 
             otel_span = self.tracer.start_span(
                 "openai.realtime.transcription",
@@ -594,21 +584,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                 output_audio = getattr(span_data, 'output', None)
                 if output_audio:
-                    if isinstance(output_audio, (bytes, bytearray)):
-                        otel_span.set_attribute("gen_ai.speech.output_bytes", len(output_audio))
-                    else:
+                    if not isinstance(output_audio, (bytes, bytearray)):
                         otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", str(output_audio))
-
-                first_content_at = getattr(span_data, 'first_content_at', None)
-                if first_content_at:
-                    otel_span.set_attribute("gen_ai.speech.first_content_at", first_content_at)
 
             elif _has_realtime_spans and TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
                 input_audio = getattr(span_data, 'input', None)
                 if input_audio:
-                    if isinstance(input_audio, (bytes, bytearray)):
-                        otel_span.set_attribute("gen_ai.transcription.input_bytes", len(input_audio))
-                    else:
+                    if not isinstance(input_audio, (bytes, bytearray)):
                         otel_span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", str(input_audio))
 
                 output_text = getattr(span_data, 'output', None)

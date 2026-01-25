@@ -10,7 +10,8 @@ from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
 from opentelemetry.trace import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes
+    gen_ai_attributes as GenAIAttributes,
+    error_attributes as ErrorAttributes,
 )
 from .utils import dont_throw, should_send_prompts
 
@@ -50,8 +51,7 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                "gen_ai.workflow.name": "Realtime Session",
-                "gen_ai.agent.starting_agent": agent_name,
+                SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Realtime Session",
             }
         )
         return self.workflow_span
@@ -119,7 +119,7 @@ class RealtimeTracingState:
         """Mark agent turn as ended but keep span open for multi-turn conversations."""
         if error and agent_name in self.agent_spans:
             span = self.agent_spans[agent_name]
-            span.set_attribute("gen_ai.error", str(error))
+            span.set_attribute(ErrorAttributes.ERROR_MESSAGE, str(error))
 
     def start_tool_span(self, tool_name: str, agent_name: Optional[str] = None):
         """Start a tool span."""
@@ -132,6 +132,7 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+                GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
             }
         )
@@ -143,7 +144,7 @@ class RealtimeTracingState:
         if tool_name in self.tool_spans:
             span = self.tool_spans[tool_name]
             if output is not None:
-                span.set_attribute("gen_ai.tool.output", str(output)[:4096])
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output)[:4096])
             if error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))
             else:
@@ -188,8 +189,6 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.LLM_REQUEST_TYPE: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-                "gen_ai.audio.item_id": item_id,
-                "gen_ai.audio.content_index": content_index,
             }
         )
         self.audio_spans[span_key] = span
@@ -209,9 +208,9 @@ class RealtimeTracingState:
         error_str = str(error)
         if self.current_agent_name and self.current_agent_name in self.agent_spans:
             span = self.agent_spans[self.current_agent_name]
-            span.set_attribute("gen_ai.error", error_str)
+            span.set_attribute(ErrorAttributes.ERROR_MESSAGE, error_str)
         elif self.workflow_span:
-            self.workflow_span.set_attribute("gen_ai.error", error_str)
+            self.workflow_span.set_attribute(ErrorAttributes.ERROR_MESSAGE, error_str)
 
     def record_prompt(self, role: str, content: str):
         """Record a prompt message - buffers it for the LLM span."""

@@ -112,7 +112,7 @@ class TestRealtimeTracingState:
         assert "get_weather" not in state.tool_spans
         spans = exporter.get_finished_spans()
         tool_span = next(s for s in spans if s.name == "get_weather.tool")
-        assert tool_span.attributes.get("gen_ai.tool.output") == "Sunny, 72F"
+        assert tool_span.attributes.get("gen_ai.tool.call.result") == "Sunny, 72F"
 
     def test_create_handoff_span(self, tracer, tracer_provider):
         """Test creating a handoff span."""
@@ -161,8 +161,8 @@ class TestRealtimeTracingState:
 
         state.record_error("Connection timeout")
 
-        # The error should be recorded on the agent span
-        assert state.agent_spans["Voice Assistant"].attributes.get("gen_ai.error") == "Connection timeout"
+        # The error should be recorded on the agent span using OTel semconv
+        assert state.agent_spans["Voice Assistant"].attributes.get("error.message") == "Connection timeout"
 
     def test_record_prompt(self, tracer, tracer_provider):
         """Test recording a prompt message (buffers for LLM span)."""

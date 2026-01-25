@@ -197,17 +197,15 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     )
     assert tool_span.kind == tool_span.kind.INTERNAL
 
-    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name"] == "get_weather"
-    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type"] == "FunctionTool"
+    assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_NAME] == "get_weather"
+    assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_TYPE] == "function"
 
     # Tool description is optional - only test if present
-    if f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description" in tool_span.attributes:
+    if GenAIAttributes.GEN_AI_TOOL_DESCRIPTION in tool_span.attributes:
         assert (
-            tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.description"]
+            tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_DESCRIPTION]
             == "Gets the current weather for a specified city."
         )
-
-    assert tool_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema"] is True
 
     assert agent_span.status.status_code == StatusCode.OK
     assert tool_span.status.status_code == StatusCode.OK

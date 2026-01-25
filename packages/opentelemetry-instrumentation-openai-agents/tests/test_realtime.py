@@ -162,8 +162,6 @@ class TestRealtimeSpeechSpans:
         attrs = dict(speech_span.attributes)
         # Check model was captured on span start
         assert attrs.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "tts-1-hd"
-        # Check output format was captured
-        assert attrs.get("gen_ai.speech.output_format") == "opus"
 
 
 class TestRealtimeTranscriptionSpans:
@@ -260,8 +258,6 @@ class TestRealtimeTranscriptionSpans:
         attrs = dict(transcription_span.attributes)
         # Check model was captured on span start
         assert attrs.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "whisper-1"
-        # Check input format was captured
-        assert attrs.get("gen_ai.transcription.input_format") == "mp3"
 
 
 class TestRealtimeSpeechGroupSpans:
