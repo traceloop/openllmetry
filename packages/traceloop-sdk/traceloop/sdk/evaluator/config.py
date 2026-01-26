@@ -122,4 +122,7 @@ class EvaluatorDetails(BaseModel):
             print(f"NOMI - Condition result: {condition_result}")
             return condition_result
 
+        # Set the function name to the evaluator slug for tracing
+        guard_fn.__name__ = evaluator_slug
+
         return guard_fn

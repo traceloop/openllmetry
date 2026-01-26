@@ -3,6 +3,7 @@ Guardrails class for running guarded operations through the Traceloop client.
 """
 import asyncio
 import inspect
+import json
 import time
 from typing import Callable, Awaitable, cast, Optional
 
@@ -156,6 +157,16 @@ class Guardrails:
         with tracer.start_as_current_span("guardrail.guard") as span:
             start_time = time.perf_counter()
             span.set_attribute("guardrail.guard.index", index)
+
+            # Capture guard name
+            guard_name = getattr(guard, "__name__", f"guard_{index}")
+            span.set_attribute("guardrail.guard.name", guard_name)
+
+            # Capture guard input
+            try:
+                span.set_attribute("guardrail.guard.input", json.dumps(guard_input))
+            except (TypeError, ValueError):
+                span.set_attribute("guardrail.guard.input", str(guard_input))
 
             try:
                 result = guard(guard_input)
