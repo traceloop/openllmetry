@@ -16,6 +16,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from .utils import dont_throw, should_send_prompts, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
 
 _original_methods: Dict[str, Any] = {}
+_tracing_states: Dict[int, "RealtimeTracingState"] = {}
 
 
 class RealtimeTracingState:
@@ -27,7 +28,6 @@ class RealtimeTracingState:
         self.agent_spans: Dict[str, Span] = {}
         self.tool_spans: Dict[str, Span] = {}
         self.audio_spans: Dict[str, Span] = {}
-        self.span_contexts: Dict[str, Any] = {}
         self.current_agent_name: Optional[str] = None
         self.prompt_index: int = 0
         self.completion_index: int = 0
@@ -346,8 +346,6 @@ def wrap_realtime_session(tracer: Tracer):
     if hasattr(RealtimeSession, "send_message"):
         _original_methods["send_message"] = RealtimeSession.send_message
 
-    _tracing_states: Dict[int, RealtimeTracingState] = {}
-
     @dont_throw
     async def traced_aenter(self):
         """Wrapped __aenter__ that starts the workflow span."""
@@ -617,3 +615,4 @@ def unwrap_realtime_session():
         RealtimeSession.send_message = _original_methods["send_message"]
 
     _original_methods.clear()
+    _tracing_states.clear()
