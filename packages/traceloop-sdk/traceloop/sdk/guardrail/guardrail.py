@@ -4,7 +4,7 @@ Guardrails class for running guarded operations through the Traceloop client.
 import asyncio
 import inspect
 import time
-from typing import Callable, Awaitable, cast
+from typing import Callable, Awaitable, cast, Optional
 
 import httpx
 from pydantic import TypeAdapter
@@ -152,12 +152,23 @@ class Guardrails:
         index: int,
     ) -> tuple[int, bool, Exception | None]:
         """Run a single guard and return (index, passed, exception)."""
+        # DEBUG: Log what's being passed to the guard
+        print(f"DEBUG _run_single_guard(): index={index}, guard={guard}")
+        print(f"DEBUG _run_single_guard(): guard_input type={type(guard_input).__name__}")
+        print(f"DEBUG _run_single_guard(): guard_input value={guard_input}")
+        if hasattr(guard_input, 'prompt'):
+            print(f"DEBUG _run_single_guard(): guard_input.prompt = '{guard_input.prompt}'")
+        if hasattr(guard_input, 'model_dump'):
+            print(f"DEBUG _run_single_guard(): guard_input.model_dump() = {guard_input.model_dump()}")
         try:
             result = guard(guard_input)
+            print(f"DEBUG _run_single_guard(): guard returned (before await): {result}")
             if asyncio.iscoroutine(result):
                 result = await result
+            print(f"DEBUG _run_single_guard(): guard returned (after await): {result}")
             return (index, bool(result), None)
         except Exception as e:
+            print(f"DEBUG _run_single_guard(): guard raised exception: {e}")
             return (index, False, e)
 
     async def _run_guards_parallel(
@@ -272,3 +283,92 @@ class Guardrails:
 
                 # 7. All guards passed, return result
                 return output.result
+
+    async def validate(
+        self,
+        guard_inputs: list[GuardInput],
+        on_failure: Optional[OnFailureHandler] = None,
+    ) -> bool:
+        """
+        Run guards on inputs directly, without wrapping in a function.
+
+        Must call create() first to configure guards.
+
+        Args:
+            guard_inputs: List of inputs for each guard (must match number of guards)
+            on_failure: Optional handler to override the class-configured on_failure
+
+        Returns:
+            bool: True if all guards pass, False if any guard fails
+
+        Raises:
+            GuardExecutionError: If a guard function throws an exception
+            ValueError: If create() was not called or guard_inputs length doesn't match
+
+        Example:
+            g = client.guardrails.create(
+                guards=[lambda z: z["score"] > 0.8],
+                on_failure=OnFailure.log(),
+            )
+            passed = await g.validate([{"score": 0.9}])  # Returns True
+        """
+        if not self._guards:
+            raise ValueError("Must call create() before validate()")
+
+        failure_handler = on_failure if on_failure is not None else self._on_failure
+
+        # DEBUG: Log incoming guard_inputs
+        print(f"DEBUG validate(): Received guard_inputs: {guard_inputs}")
+        for i, gi in enumerate(guard_inputs):
+            print(f"DEBUG validate(): guard_input[{i}] type={type(gi).__name__}, value={gi}")
+            if hasattr(gi, 'prompt'):
+                print(f"DEBUG validate(): guard_input[{i}].prompt = '{gi.prompt}'")
+            if hasattr(gi, 'model_dump'):
+                print(f"DEBUG validate(): guard_input[{i}].model_dump() = {gi.model_dump()}")
+
+        with get_tracer() as tracer:
+            with tracer.start_as_current_span("guardrail.validate") as span:
+                start_time = time.perf_counter()
+
+                # 1. Validate guard_inputs (length and types)
+                self._validate_inputs(guard_inputs)
+
+                # 2. Run guards
+                if self._parallel:
+                    results = await self._run_guards_parallel(guard_inputs)
+                else:
+                    results = await self._run_guards_sequential(guard_inputs)
+
+                # 3. Check for execution errors
+                for index, _, exception in results:
+                    if exception is not None:
+                        span.set_status(Status(StatusCode.ERROR, str(exception)))
+                        span.record_exception(exception)
+                        raise GuardExecutionError(
+                            message="Guard execution failed",
+                            original_exception=exception,
+                            guard_input=guard_inputs[index],
+                            guard_index=index,
+                        ) from exception
+
+                # 4. Check for failures
+                failed_indices = [i for i, passed, _ in results if not passed]
+                all_passed = len(failed_indices) == 0
+
+                duration_ms = (time.perf_counter() - start_time) * 1000
+
+                span.set_attribute("guardrail.passed", all_passed)
+                span.set_attribute("guardrail.duration_ms", duration_ms)
+                span.set_attribute("guardrail.guards_count", len(self._guards))
+                if failed_indices:
+                    span.set_attribute("guardrail.failed_indices", failed_indices)
+
+                # 5. Handle failure
+                if not all_passed and failure_handler is not None:
+                    output = GuardedOutput(result=None, guard_inputs=guard_inputs)
+                    failure_result = failure_handler(output)
+                    if asyncio.iscoroutine(failure_result):
+                        await failure_result
+
+                # 6. Return validation result
+                return all_passed

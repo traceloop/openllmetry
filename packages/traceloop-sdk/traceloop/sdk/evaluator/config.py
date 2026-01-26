@@ -96,6 +96,12 @@ class EvaluatorDetails(BaseModel):
             from traceloop.sdk import Traceloop
             from traceloop.sdk.evaluator.evaluator import Evaluator
 
+            # DEBUG: Log raw input_data
+            print(f"DEBUG guard_fn(): Received input_data type={type(input_data).__name__}")
+            print(f"DEBUG guard_fn(): Received input_data value={input_data}")
+            if hasattr(input_data, 'prompt'):
+                print(f"DEBUG guard_fn(): input_data.prompt = '{input_data.prompt}'")
+
             # Convert Pydantic model to dict, or use dict directly
             if isinstance(input_data, dict):
                 input_dict = input_data
@@ -104,6 +110,11 @@ class EvaluatorDetails(BaseModel):
             else:
                 # Fallback: try to convert to dict
                 input_dict = dict(input_data)
+
+            # DEBUG: Log converted input_dict
+            print(f"DEBUG guard_fn(): Converted input_dict = {input_dict}")
+            if 'prompt' in input_dict:
+                print(f"DEBUG guard_fn(): input_dict['prompt'] = '{input_dict['prompt']}'")
 
             # Get the SDK client
             client = Traceloop.get()
