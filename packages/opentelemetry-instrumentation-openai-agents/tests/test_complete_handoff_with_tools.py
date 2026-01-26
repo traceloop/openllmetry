@@ -83,12 +83,10 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
     assert handoff_occurred, "Handoff should have occurred"
     assert len(workflow_spans) == 1, f"Should have exactly 1 Agent Workflow span, found {len(workflow_spans)}"
     assert len(tool_spans) >= 1, (
-        f"Analytics agent should have used tools, found {len(tool_spans)}: "
-        f"{[s.name for s in tool_spans]}"
+        f"Analytics agent should have used tools, found {len(tool_spans)}: {[s.name for s in tool_spans]}"
     )
     assert len(root_spans) == 1, (
-        f"Should have exactly 1 root span (Agent Workflow), found {len(root_spans)}: "
-        f"{[s.name for s in root_spans]}"
+        f"Should have exactly 1 root span (Agent Workflow), found {len(root_spans)}: {[s.name for s in root_spans]}"
     )
 
     # Find the specific agents - Data Router might not create its own span if it immediately hands off
@@ -101,8 +99,7 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
         f"{[s.name for s in analytics_spans]}"
     )
     assert len(handoff_spans) >= 1, (
-        f"Should have at least 1 handoff span, found {len(handoff_spans)}: "
-        f"{[s.name for s in handoff_spans]}"
+        f"Should have at least 1 handoff span, found {len(handoff_spans)}: {[s.name for s in handoff_spans]}"
     )
 
     # Verify hierarchy: Analytics agent should be child of workflow span

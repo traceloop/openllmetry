@@ -6,6 +6,10 @@ import os
 import traceback
 from opentelemetry import context as context_api
 
+# Handoff span attribute names
+GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
+GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
+
 
 def set_span_attribute(span, name, value):
     if value is not None:
