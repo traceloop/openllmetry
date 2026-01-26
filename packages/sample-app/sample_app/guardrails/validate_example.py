@@ -82,7 +82,6 @@ async def secure_chat(user_prompt: str) -> str:
 
     # Validate user input BEFORE calling the LLM
     print(f"Validating user input: '{user_prompt[:50]}...'")
-    print(f"NOMI - before validate, user_prompt: {user_prompt}")
     prompt_is_safe = await prompt_guardrail.validate([PromptInjectionInput(prompt=user_prompt)])
 
     if not prompt_is_safe:

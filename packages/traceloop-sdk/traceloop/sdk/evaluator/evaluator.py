@@ -99,7 +99,6 @@ class Evaluator:
     ) -> ExecuteEvaluatorResponse:
         """Execute evaluator request and return response"""
         body = request.model_dump()
-        print(f"NOMI - in ececute single request Body: {body}")
         client = self._async_http_client
         full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-single"
         response = await client.post(
@@ -225,19 +224,9 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        # DEBUG: Log the input dict
-        print(f"DEBUG evaluator.run(): evaluator_slug={evaluator_slug}")
-        print(f"DEBUG evaluator.run(): input dict = {input}")
-        for k, v in input.items():
-            print(f"DEBUG evaluator.run(): input['{k}'] = '{v}' (type={type(v).__name__})")
-
         schema_mapping = InputSchemaMapping(
             root={k: InputExtractor(source=v) for k, v in input.items()}
         )
-
-        # DEBUG: Log the schema_mapping
-        print(f"DEBUG evaluator.run(): schema_mapping = {schema_mapping}")
-        print(f"DEBUG evaluator.run(): schema_mapping.root = {schema_mapping.root}")
 
         request = ExecuteEvaluatorRequest(
             input_schema_mapping=schema_mapping,
@@ -245,18 +234,9 @@ class Evaluator:
             evaluator_config=evaluator_config,
         )
 
-        # DEBUG: Log the request
-        print(f"DEBUG evaluator.run(): request = {request}")
-        if hasattr(request, 'model_dump'):
-            print(f"DEBUG evaluator.run(): request.model_dump() = {request.model_dump()}")
-
-        print(f"NOMI - In the evaluator run function")
-
         execute_response = await self._execute_evaluator_request(
             evaluator_slug, request, timeout_in_sec
         )
-
-        print(f"NOMI - Execute response: {execute_response}")
 
         sse_client = SSEClient(shared_client=self._async_http_client)
         return await sse_client.wait_for_result(

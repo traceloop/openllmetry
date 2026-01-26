@@ -152,23 +152,12 @@ class Guardrails:
         index: int,
     ) -> tuple[int, bool, Exception | None]:
         """Run a single guard and return (index, passed, exception)."""
-        # DEBUG: Log what's being passed to the guard
-        print(f"DEBUG _run_single_guard(): index={index}, guard={guard}")
-        print(f"DEBUG _run_single_guard(): guard_input type={type(guard_input).__name__}")
-        print(f"DEBUG _run_single_guard(): guard_input value={guard_input}")
-        if hasattr(guard_input, 'prompt'):
-            print(f"DEBUG _run_single_guard(): guard_input.prompt = '{guard_input.prompt}'")
-        if hasattr(guard_input, 'model_dump'):
-            print(f"DEBUG _run_single_guard(): guard_input.model_dump() = {guard_input.model_dump()}")
         try:
             result = guard(guard_input)
-            print(f"DEBUG _run_single_guard(): guard returned (before await): {result}")
             if asyncio.iscoroutine(result):
                 result = await result
-            print(f"DEBUG _run_single_guard(): guard returned (after await): {result}")
             return (index, bool(result), None)
         except Exception as e:
-            print(f"DEBUG _run_single_guard(): guard raised exception: {e}")
             return (index, False, e)
 
     async def _run_guards_parallel(
@@ -316,15 +305,6 @@ class Guardrails:
             raise ValueError("Must call create() before validate()")
 
         failure_handler = on_failure if on_failure is not None else self._on_failure
-
-        # DEBUG: Log incoming guard_inputs
-        print(f"DEBUG validate(): Received guard_inputs: {guard_inputs}")
-        for i, gi in enumerate(guard_inputs):
-            print(f"DEBUG validate(): guard_input[{i}] type={type(gi).__name__}, value={gi}")
-            if hasattr(gi, 'prompt'):
-                print(f"DEBUG validate(): guard_input[{i}].prompt = '{gi.prompt}'")
-            if hasattr(gi, 'model_dump'):
-                print(f"DEBUG validate(): guard_input[{i}].model_dump() = {gi.model_dump()}")
 
         with get_tracer() as tracer:
             with tracer.start_as_current_span("guardrail.validate") as span:
