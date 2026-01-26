@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.51.0"
+version = "0.51.1"
 description = "OpenTelemetry Aleph Alpha instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
