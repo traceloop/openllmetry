@@ -18,7 +18,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from agents.tracing.processors import TracingProcessor
-from .utils import dont_throw
+from .utils import dont_throw, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
 
 try:
     # Attempt to import once, so that we aren't looking for it repeatedly.
@@ -429,10 +429,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             }
 
             if from_agent and from_agent != "unknown":
-                handoff_attributes["gen_ai.handoff.from_agent"] = from_agent
+                handoff_attributes[GEN_AI_HANDOFF_FROM_AGENT] = from_agent
                 handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
             if to_agent and to_agent != "unknown":
-                handoff_attributes["gen_ai.handoff.to_agent"] = to_agent
+                handoff_attributes[GEN_AI_HANDOFF_TO_AGENT] = to_agent
 
             otel_span = self.tracer.start_span(
                 f"{from_agent} → {to_agent}.handoff",

@@ -13,7 +13,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
     error_attributes as ErrorAttributes,
 )
-from .utils import dont_throw, should_send_prompts
+from .utils import dont_throw, should_send_prompts, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
 
 _original_methods: Dict[str, Any] = {}
 
@@ -169,8 +169,8 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                "gen_ai.handoff.from_agent": from_agent,
-                "gen_ai.handoff.to_agent": to_agent,
+                GEN_AI_HANDOFF_FROM_AGENT: from_agent,
+                GEN_AI_HANDOFF_TO_AGENT: to_agent,
             },
         )
         span.set_status(Status(StatusCode.OK))
