@@ -174,8 +174,8 @@ class TestRealtimeTracingState:
 
         state.record_prompt("user", "What is the weather?")
 
-        # The prompt should be buffered
-        assert "What is the weather?" in state.pending_prompts
+        # The prompt should be buffered as (role, content) tuple
+        assert ("user", "What is the weather?") in state.pending_prompts
 
     def test_record_completion_creates_llm_span(self, tracer, tracer_provider):
         """Test that recording a completion creates a dedicated LLM span."""

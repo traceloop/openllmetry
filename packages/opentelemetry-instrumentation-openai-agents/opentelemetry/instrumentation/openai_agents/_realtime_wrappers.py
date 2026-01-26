@@ -5,7 +5,7 @@ so we need to patch the RealtimeSession class directly to add OpenTelemetry trac
 """
 
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
 from opentelemetry.trace import set_span_in_context
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
@@ -13,7 +13,12 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
     error_attributes as ErrorAttributes,
 )
-from .utils import dont_throw, should_send_prompts, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
+from .utils import (
+    dont_throw,
+    should_send_prompts,
+    GEN_AI_HANDOFF_FROM_AGENT,
+    GEN_AI_HANDOFF_TO_AGENT,
+)
 
 _original_methods: Dict[str, Any] = {}
 _tracing_states: Dict[int, "RealtimeTracingState"] = {}
@@ -31,7 +36,7 @@ class RealtimeTracingState:
         self.current_agent_name: Optional[str] = None
         self.prompt_index: int = 0
         self.completion_index: int = 0
-        self.pending_prompts: List[str] = []
+        self.pending_prompts: List[Tuple[str, str]] = []  # (role, content) tuples
         self.llm_call_index: int = 0
         self.agent_span_contexts: Dict[str, Any] = {}
         self.agent_start_times: Dict[str, int] = {}
@@ -139,12 +144,14 @@ class RealtimeTracingState:
         self.tool_spans[tool_name] = span
         return span
 
-    def end_tool_span(self, tool_name: str, output: Any = None, error: Optional[Exception] = None):
+    def end_tool_span(
+        self, tool_name: str, output: Any = None, error: Optional[Exception] = None
+    ):
         """End a tool span."""
         if tool_name in self.tool_spans:
             span = self.tool_spans[tool_name]
             if output is not None:
-                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output)[:4096])
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output))
             if error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))
             else:
@@ -219,7 +226,7 @@ class RealtimeTracingState:
         if not self.pending_prompts:
             self.prompt_start_time = time.time_ns()
             self.prompt_agent_name = self.current_agent_name or self.starting_agent_name
-        self.pending_prompts.append(content)
+        self.pending_prompts.append((role, content))
 
     def record_usage(self, usage: Any):
         """Record token usage from response.done event."""
@@ -250,7 +257,8 @@ class RealtimeTracingState:
 
     def create_llm_span(self, completion_content: str):
         """Create an LLM span pairing the first pending prompt with a completion."""
-        prompt = self.pending_prompts.pop(0) if self.pending_prompts else None
+        prompt_data = self.pending_prompts.pop(0) if self.pending_prompts else None
+        prompt_role, prompt_content = prompt_data if prompt_data else (None, None)
         prompt_time = self.prompt_start_time
         self.prompt_start_time = time.time_ns() if self.pending_prompts else None
         agent_name = self.prompt_agent_name
@@ -269,7 +277,9 @@ class RealtimeTracingState:
         else:
             start_time = time.time_ns()
 
-        model_name_str = str(self.model_name) if self.model_name else "gpt-4o-realtime-preview"
+        model_name_str = (
+            str(self.model_name) if self.model_name else "gpt-4o-realtime-preview"
+        )
 
         span = self.tracer.start_span(
             "openai.realtime",
@@ -286,19 +296,35 @@ class RealtimeTracingState:
 
         if self.pending_usage:
             if self.pending_usage.get("input_tokens"):
-                span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, self.pending_usage["input_tokens"])
+                span.set_attribute(
+                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                    self.pending_usage["input_tokens"],
+                )
             if self.pending_usage.get("output_tokens"):
-                span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, self.pending_usage["output_tokens"])
+                span.set_attribute(
+                    GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                    self.pending_usage["output_tokens"],
+                )
             self.pending_usage = None
 
         if should_send_prompts():
-            if prompt:
-                span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
-                span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", prompt[:4096])
+            if prompt_content:
+                span.set_attribute(
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", prompt_role or "user"
+                )
+                span.set_attribute(
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", prompt_content
+                )
 
-            span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant")
-            span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", completion_content[:4096])
-            span.set_attribute(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason", "stop")
+            span.set_attribute(
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
+            )
+            span.set_attribute(
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", completion_content
+            )
+            span.set_attribute(
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason", "stop"
+            )
 
         span.set_status(Status(StatusCode.OK))
         span.end()
@@ -367,11 +393,13 @@ def wrap_realtime_session(tracer: Tracer):
                 if config:
                     model_settings = getattr(config, "model_settings", None)
                     if model_settings:
-                        model_name_str = getattr(model_settings, "model_name", None) or getattr(
-                            model_settings, "model", None
-                        )
+                        model_name_str = getattr(
+                            model_settings, "model_name", None
+                        ) or getattr(model_settings, "model", None)
                     if not model_name_str:
-                        model_name_str = getattr(config, "model_name", None) or getattr(config, "model", None)
+                        model_name_str = getattr(config, "model_name", None) or getattr(
+                            config, "model", None
+                        )
 
             if model_name_str and isinstance(model_name_str, str):
                 state.model_name = model_name_str
@@ -412,32 +440,50 @@ def wrap_realtime_session(tracer: Tracer):
 
                 if event_type == "agent_start":
                     agent = getattr(event, "agent", None)
-                    agent_name = getattr(agent, "name", "Unknown") if agent else "Unknown"
+                    agent_name = (
+                        getattr(agent, "name", "Unknown") if agent else "Unknown"
+                    )
                     state.start_agent_span(agent_name)
 
                 elif event_type == "agent_end":
                     agent = getattr(event, "agent", None)
-                    agent_name = getattr(agent, "name", "Unknown") if agent else "Unknown"
+                    agent_name = (
+                        getattr(agent, "name", "Unknown") if agent else "Unknown"
+                    )
                     state.end_agent_span(agent_name)
 
                 elif event_type == "tool_start":
                     tool = getattr(event, "tool", None)
                     agent = getattr(event, "agent", None)
-                    tool_name = getattr(tool, "name", "unknown_tool") if tool else "unknown_tool"
+                    tool_name = (
+                        getattr(tool, "name", "unknown_tool")
+                        if tool
+                        else "unknown_tool"
+                    )
                     agent_name = getattr(agent, "name", None) if agent else None
                     state.start_tool_span(tool_name, agent_name)
 
                 elif event_type == "tool_end":
                     tool = getattr(event, "tool", None)
-                    tool_name = getattr(tool, "name", "unknown_tool") if tool else "unknown_tool"
+                    tool_name = (
+                        getattr(tool, "name", "unknown_tool")
+                        if tool
+                        else "unknown_tool"
+                    )
                     output = getattr(event, "output", None)
                     state.end_tool_span(tool_name, output)
 
                 elif event_type == "handoff":
                     from_agent = getattr(event, "from_agent", None)
                     to_agent = getattr(event, "to_agent", None)
-                    from_name = getattr(from_agent, "name", "Unknown") if from_agent else "Unknown"
-                    to_name = getattr(to_agent, "name", "Unknown") if to_agent else "Unknown"
+                    from_name = (
+                        getattr(from_agent, "name", "Unknown")
+                        if from_agent
+                        else "Unknown"
+                    )
+                    to_name = (
+                        getattr(to_agent, "name", "Unknown") if to_agent else "Unknown"
+                    )
                     state.create_handoff_span(from_name, to_name)
 
                 elif event_type == "audio":
@@ -476,7 +522,9 @@ def wrap_realtime_session(tracer: Tracer):
                                 content = item_content
 
                         if not content:
-                            content = getattr(item, "text", None) or getattr(item, "transcript", None)
+                            content = getattr(item, "text", None) or getattr(
+                                item, "transcript", None
+                            )
 
                         if content and role == "assistant":
                             state.record_completion(role, content)
@@ -523,10 +571,18 @@ def wrap_realtime_session(tracer: Tracer):
                         if data_type == "response.done":
                             if isinstance(data, dict):
                                 response = data.get("response", {})
-                                usage = response.get("usage") if isinstance(response, dict) else None
+                                usage = (
+                                    response.get("usage")
+                                    if isinstance(response, dict)
+                                    else None
+                                )
                             else:
                                 response = getattr(data, "response", None)
-                                usage = getattr(response, "usage", None) if response else None
+                                usage = (
+                                    getattr(response, "usage", None)
+                                    if response
+                                    else None
+                                )
                             if usage:
                                 state.record_usage(usage)
 
@@ -537,12 +593,20 @@ def wrap_realtime_session(tracer: Tracer):
                                         if item_type == "message":
                                             role = getattr(item, "role", None)
                                             if role == "assistant":
-                                                item_content = getattr(item, "content", None)
-                                                if item_content and isinstance(item_content, list):
+                                                item_content = getattr(
+                                                    item, "content", None
+                                                )
+                                                if item_content and isinstance(
+                                                    item_content, list
+                                                ):
                                                     for part in item_content:
-                                                        text = getattr(part, "text", None)
+                                                        text = getattr(
+                                                            part, "text", None
+                                                        )
                                                         if text:
-                                                            state.record_completion(role, text)
+                                                            state.record_completion(
+                                                                role, text
+                                                            )
                                                             break
 
                         elif data_type == "item_updated":
@@ -550,9 +614,15 @@ def wrap_realtime_session(tracer: Tracer):
                             if item:
                                 role = getattr(item, "role", None)
                                 item_content = getattr(item, "content", None)
-                                if role == "assistant" and item_content and isinstance(item_content, list):
+                                if (
+                                    role == "assistant"
+                                    and item_content
+                                    and isinstance(item_content, list)
+                                ):
                                     for part in item_content:
-                                        text = getattr(part, "text", None) or getattr(part, "transcript", None)
+                                        text = getattr(part, "text", None) or getattr(
+                                            part, "transcript", None
+                                        )
                                         if text:
                                             state.record_completion(role, text)
                                             break
