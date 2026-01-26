@@ -125,4 +125,7 @@ class EvaluatorDetails(BaseModel):
         # Set the function name to the evaluator slug for tracing
         guard_fn.__name__ = evaluator_slug
 
+        # Store condition info for tracing
+        guard_fn._condition = getattr(condition, "__name__", "custom")
+
         return guard_fn

@@ -39,7 +39,9 @@ class Condition:
                 condition=Condition.success()
             )
         """
-        return lambda result: _get_field(result, "success", False) is True
+        fn = lambda result: _get_field(result, "success", False) is True
+        fn.__name__ = "success()"
+        return fn
 
     @staticmethod
     def is_true(field: str) -> Callable[[Any], bool]:
@@ -52,7 +54,9 @@ class Condition:
         Example:
             condition=Condition.is_true("matched")
         """
-        return lambda result: _get_field(result, field, None) is True
+        fn = lambda result: _get_field(result, field, None) is True
+        fn.__name__ = f"is_true({field})"
+        return fn
 
     @staticmethod
     def is_false(field: str) -> Callable[[Any], bool]:
@@ -65,8 +69,9 @@ class Condition:
         Example:
             condition=Condition.is_false("contains_pii")
         """
-        return lambda result: _get_field(result, field, None) is False
-
+        fn = lambda result: _get_field(result, field, None) is False
+        fn.__name__ = f"is_false({field})"
+        return fn
 
     @staticmethod
     def between(
@@ -90,6 +95,7 @@ class Condition:
                 return False
             return bool(min_val <= value <= max_val)
 
+        check.__name__ = f"between({min_val}, {max_val}, {field})"
         return check
 
     @staticmethod
@@ -104,7 +110,9 @@ class Condition:
         Example:
             condition=Condition.equals("approved", field="status")
         """
-        return lambda result: _get_field(result, field, None) == value
+        fn = lambda result: _get_field(result, field, None) == value
+        fn.__name__ = f"equals({value}, {field})"
+        return fn
 
     @staticmethod
     def greater_than(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -118,7 +126,9 @@ class Condition:
         Example:
             condition=Condition.greater_than(10, field="count")
         """
-        return lambda result: _get_field(result, field, 0) > value
+        fn = lambda result: _get_field(result, field, 0) > value
+        fn.__name__ = f"greater_than({value}, {field})"
+        return fn
 
     @staticmethod
     def less_than(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -132,7 +142,9 @@ class Condition:
         Example:
             condition=Condition.less_than(1000, field="latency_ms")
         """
-        return lambda result: _get_field(result, field, float("inf")) < value
+        fn = lambda result: _get_field(result, field, float("inf")) < value
+        fn.__name__ = f"less_than({value}, {field})"
+        return fn
 
     @staticmethod
     def greater_than_or_equal(
@@ -148,7 +160,9 @@ class Condition:
         Example:
             condition=Condition.greater_than_or_equal(0.8, field="confidence")
         """
-        return lambda result: _get_field(result, field, 0) >= value
+        fn = lambda result: _get_field(result, field, 0) >= value
+        fn.__name__ = f"greater_than_or_equal({value}, {field})"
+        return fn
 
     @staticmethod
     def less_than_or_equal(value: float, field: str = "score") -> Callable[[Any], bool]:
@@ -162,4 +176,6 @@ class Condition:
         Example:
             condition=Condition.less_than_or_equal(0.5, field="toxicity")
         """
-        return lambda result: _get_field(result, field, float("inf")) <= value
+        fn = lambda result: _get_field(result, field, float("inf")) <= value
+        fn.__name__ = f"less_than_or_equal({value}, {field})"
+        return fn

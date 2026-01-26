@@ -162,6 +162,11 @@ class Guardrails:
             guard_name = getattr(guard, "__name__", f"guard_{index}")
             span.set_attribute("guardrail.guard.name", guard_name)
 
+            # Capture condition (for evaluator-based guards)
+            condition = getattr(guard, "_condition", None)
+            if condition:
+                span.set_attribute("guardrail.guard.condition", condition)
+
             # Capture guard input
             try:
                 span.set_attribute("guardrail.guard.input", json.dumps(guard_input))
