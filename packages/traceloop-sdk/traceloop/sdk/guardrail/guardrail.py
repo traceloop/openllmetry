@@ -150,23 +150,42 @@ class Guardrails:
         guard: Guard,
         guard_input: GuardInput,
         index: int,
+        tracer,
     ) -> tuple[int, bool, Exception | None]:
-        """Run a single guard and return (index, passed, exception)."""
-        try:
-            result = guard(guard_input)
-            if asyncio.iscoroutine(result):
-                result = await result
-            return (index, bool(result), None)
-        except Exception as e:
-            return (index, False, e)
+        """Run a single guard with its own span and return (index, passed, exception)."""
+        with tracer.start_as_current_span("guardrail.guard") as span:
+            start_time = time.perf_counter()
+            span.set_attribute("guardrail.guard.index", index)
+
+            try:
+                result = guard(guard_input)
+                if asyncio.iscoroutine(result):
+                    result = await result
+                passed = bool(result)
+
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                span.set_attribute("guardrail.guard.passed", passed)
+                span.set_attribute("guardrail.guard.duration_ms", duration_ms)
+
+                return (index, passed, None)
+            except Exception as e:
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                span.set_attribute("guardrail.guard.passed", False)
+                span.set_attribute("guardrail.guard.duration_ms", duration_ms)
+                span.set_attribute("guardrail.guard.exception.type", type(e).__name__)
+                span.set_attribute("guardrail.guard.exception.message", str(e))
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.record_exception(e)
+                return (index, False, e)
 
     async def _run_guards_parallel(
         self,
         guard_inputs: list[GuardInput],
+        tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run all guards in parallel."""
         tasks = [
-            self._run_single_guard(guard, guard_input, i)
+            self._run_single_guard(guard, guard_input, i, tracer)
             for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs))
         ]
         return await asyncio.gather(*tasks)
@@ -174,11 +193,12 @@ class Guardrails:
     async def _run_guards_sequential(
         self,
         guard_inputs: list[GuardInput],
+        tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run guards sequentially, optionally stopping at first failure."""
         results = []
         for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs)):
-            result = await self._run_single_guard(guard, guard_input, i)
+            result = await self._run_single_guard(guard, guard_input, i, tracer)
             results.append(result)
 
             _, passed, exception = result
@@ -235,9 +255,9 @@ class Guardrails:
 
                 # 3. Run guards
                 if self._parallel:
-                    results = await self._run_guards_parallel(output.guard_inputs)
+                    results = await self._run_guards_parallel(output.guard_inputs, tracer)
                 else:
-                    results = await self._run_guards_sequential(output.guard_inputs)
+                    results = await self._run_guards_sequential(output.guard_inputs, tracer)
 
                 # 4. Check for execution errors
                 for index, passed, exception in results:
@@ -315,9 +335,9 @@ class Guardrails:
 
                 # 2. Run guards
                 if self._parallel:
-                    results = await self._run_guards_parallel(guard_inputs)
+                    results = await self._run_guards_parallel(guard_inputs, tracer)
                 else:
-                    results = await self._run_guards_sequential(guard_inputs)
+                    results = await self._run_guards_sequential(guard_inputs, tracer)
 
                 # 3. Check for execution errors
                 for index, _, exception in results:
