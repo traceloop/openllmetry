@@ -41,9 +41,20 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
             # Silently handle import errors - OpenAI Agents SDK may not be available
             pass
 
+        try:
+            from ._realtime_wrappers import wrap_realtime_session
+
+            wrap_realtime_session(tracer)
+        except Exception:
+            pass
+
     def _uninstrument(self, **kwargs):
-        # Hook-based approach: cleanup happens automatically when processors are removed
-        pass
+        try:
+            from ._realtime_wrappers import unwrap_realtime_session
+
+            unwrap_realtime_session()
+        except Exception:
+            pass
 
 
 def is_metrics_enabled() -> bool:

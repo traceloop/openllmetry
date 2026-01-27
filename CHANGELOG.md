@@ -1,3 +1,9 @@
+## v0.51.1 (2026-01-26)
+
+### Fix
+
+- **openai-agents**: add support for realtime (#3533)
+
 ## v0.51.0 (2026-01-20)
 
 ### Feat
