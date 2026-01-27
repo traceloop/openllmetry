@@ -20,7 +20,7 @@ from opentelemetry.instrumentation.qdrant.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("qdrant-client >= 1.7",)
+_instruments = ("qdrant-client >= 1.16, < 1.17",)
 
 p = Path(__file__).with_name("qdrant_client_methods.json")
 with open(p, "r") as f:

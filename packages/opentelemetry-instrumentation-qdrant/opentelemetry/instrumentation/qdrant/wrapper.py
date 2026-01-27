@@ -53,21 +53,16 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_upload_attributes(span, args, kwargs, method, "documents")
         elif method == "upload_points":
             _set_upload_attributes(span, args, kwargs, method, "points")
-        elif method == "upload_records":
-            _set_upload_attributes(span, args, kwargs, method, "records")
         elif method == "upload_collection":
             _set_upload_attributes(span, args, kwargs, method, "vectors")
         elif method in [
-            "search",
-            "search_groups",
             "query",
-            "discover",
-            "recommend",
-            "recommend_groups",
+            "query_points",
+            "query_points_groups",
         ]:
-            _set_search_attributes(span, args, kwargs)
-        elif method in ["search_batch", "recommend_batch", "discover_batch"]:
-            _set_batch_search_attributes(span, args, kwargs, method)
+            _set_query_attributes(span, args, kwargs)
+        elif method in ["query_batch", "query_batch_points"]:
+            _set_batch_query_attributes(span, args, kwargs, method)
 
         response = wrapped(*args, **kwargs)
         if response:
@@ -103,12 +98,12 @@ def _set_upload_attributes(span, args, kwargs, method_name, param_name):
 
 
 @dont_throw
-def _set_search_attributes(span, args, kwargs):
+def _set_query_attributes(span, args, kwargs):
     limit = kwargs.get("limit") or 10
     _set_span_attribute(span, SpanAttributes.VECTOR_DB_QUERY_TOP_K, limit)
 
 
 @dont_throw
-def _set_batch_search_attributes(span, args, kwargs, method):
+def _set_batch_query_attributes(span, args, kwargs, method):
     requests = kwargs.get("requests") or []
     _set_span_attribute(span, f"qdrant.{method}.requests_count", len(requests))
