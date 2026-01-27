@@ -510,7 +510,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.50.2"
+version = "0.51.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -557,7 +557,7 @@ test = [
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
-    { name = "qdrant-client", specifier = ">=1.16.1,<1.17" },
+    { name = "qdrant-client", specifier = ">=1.16,<1.17" },
 ]
 
 [[package]]
