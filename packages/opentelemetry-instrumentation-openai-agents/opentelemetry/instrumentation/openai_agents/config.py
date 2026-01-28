@@ -1,5 +1,9 @@
 from typing import Optional
 
+# Note: opentelemetry._events is the official incubating Events API. The underscore
+# prefix indicates the API is experimental/not yet stable, not that it's private.
+# This is the recommended way to use OpenTelemetry events until the API stabilizes.
+# See: https://opentelemetry.io/docs/specs/otel/logs/event-api/
 from opentelemetry._events import EventLogger
 
 

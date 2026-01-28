@@ -291,9 +291,30 @@ def recipe_workflow_agents():
     return main_chat_agent, recipe_editor_agent
 
 
+def _scrub_sensitive_data(request):
+    """Scrub sensitive data from VCR recordings."""
+    # Remove cookies
+    if "cookie" in request.headers:
+        request.headers["cookie"] = "<REDACTED>"
+    return request
+
+
+def _scrub_response_headers(response):
+    """Scrub sensitive data from response headers."""
+    headers_to_redact = ["openai-organization", "openai-project"]
+    for header in headers_to_redact:
+        if header in response["headers"]:
+            response["headers"][header] = ["<REDACTED>"]
+    return response
+
+
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization", "api-key"]}
+    return {
+        "filter_headers": ["authorization", "api-key"],
+        "before_record_request": _scrub_sensitive_data,
+        "before_record_response": _scrub_response_headers,
+    }
 
 
 # =============================================================================
@@ -324,6 +345,9 @@ def fixture_event_logger_provider(log_exporter):
 @pytest.fixture(scope="function")
 def instrument_with_content(span_exporter, event_logger_provider):
     """Fixture for testing event emission with content tracing enabled."""
+    # Clear any spans from previous tests
+    span_exporter.clear()
+
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     # Create a new tracer provider for this test
@@ -349,6 +373,9 @@ def instrument_with_content(span_exporter, event_logger_provider):
 @pytest.fixture(scope="function")
 def instrument_with_no_content(span_exporter, event_logger_provider):
     """Fixture for testing event emission with content tracing disabled."""
+    # Clear any spans from previous tests
+    span_exporter.clear()
+
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     # Create a new tracer provider for this test

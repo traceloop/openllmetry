@@ -9,7 +9,6 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
@@ -49,9 +48,9 @@ def test_agent_with_legacy_attributes(exporter, test_agent):
     response_span = response_spans[0]
 
     # Should have span attributes with prompts/completions
-    assert response_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+    assert response_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
     assert (
-        response_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content") == query
+        response_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == query
     )
 
 
@@ -72,8 +71,8 @@ def test_agent_with_events_with_content(
     response_span = response_spans[0]
 
     # Should NOT have prompt/completion span attributes (events are used instead)
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in response_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in response_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in response_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in response_span.attributes
 
     # Should emit events
     logs = log_exporter.get_finished_logs()
@@ -127,8 +126,8 @@ def test_agent_with_events_with_no_content(
     response_span = response_spans[0]
 
     # Should NOT have prompt/completion span attributes
-    assert f"{SpanAttributes.LLM_PROMPTS}.0.content" not in response_span.attributes
-    assert f"{SpanAttributes.LLM_COMPLETIONS}.0.content" not in response_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in response_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in response_span.attributes
 
     # Should emit events
     logs = log_exporter.get_finished_logs()
