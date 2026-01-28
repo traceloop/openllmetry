@@ -303,7 +303,7 @@ class Guardrails:
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, all_passed)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION_MS, duration_ms)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARDS_COUNT, len(self._guards))
                 if failed_indices:
@@ -356,7 +356,7 @@ class Guardrails:
             with tracer.start_as_current_span("guardrail.validate") as span:
                 start_time = time.perf_counter()
                 if self._name:
-                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL, self._name)
+                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_NAME, self._name)
 
                 self._validate_inputs(guard_inputs)
 

@@ -33,7 +33,7 @@ from traceloop.sdk.generated.evaluators.request import (
     AnswerRelevancyInput,
     PIIDetectorInput,
     SexismDetectorInput,
-    WordCountInput,
+    ToxicityDetectorInput,
 )
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
@@ -63,8 +63,8 @@ async def generate_response(user_prompt: str) -> GuardedOutput[str, OutputGuardI
         result=response_text,
         guard_inputs=[
             AnswerRelevancyInput(answer=response_text, question=user_prompt),
-            WordCountInput(text=response_text),
-            PIIDetectorInput(text=response_text),
+            SexismDetectorInput(text=response_text),
+            ToxicityDetectorInput(text=response_text),
         ],
     )
 
@@ -107,11 +107,11 @@ async def secure_chat(user_prompt: str) -> str:
             EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
                 condition=Condition.is_true(field="is_relevant"),
             ),
-            EvaluatorMadeByTraceloop.word_count().as_guard(
-                condition=Condition.greater_than(100, field="word_count"),
+            EvaluatorMadeByTraceloop.sexism_detector().as_guard(
+                condition=Condition.is_true("is_safe"),
             ),
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false("has_pii"),
+            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
+                condition=Condition.is_true("is_safe"),
             ),
         ],
         on_failure=OnFailure.return_value(
