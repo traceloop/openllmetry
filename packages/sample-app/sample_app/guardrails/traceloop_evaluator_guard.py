@@ -51,7 +51,7 @@ async def generate_customer_response() -> GuardedOutput[str, dict]:
             },
         ],
     )
-    text = completion.choices[0].message.content
+    text = completion.choices[0].message.content or ""
     return GuardedOutput(
         result=text,
         guard_inputs=[PIIDetectorInput(text=text)],
@@ -84,7 +84,7 @@ async def generate_content() -> GuardedOutput[str, dict]:
             }
         ],
     )
-    text = completion.choices[0].message.content
+    text = completion.choices[0].message.content or ""
     return GuardedOutput(
         result=text,
         guard_inputs=[ToxicityDetectorInput(text=text)],
@@ -129,7 +129,7 @@ async def travel_planner_agent(state: TravelAgentState, query: str) -> str:
             {"role": "user", "content": query},
         ],
     )
-    response = completion.choices[0].message.content
+    response = completion.choices[0].message.content or ""
     state.completions.append(response)
     return response
 

@@ -31,14 +31,13 @@ from traceloop.sdk.guardrail import (
 from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
     AnswerRelevancyInput,
-    PIIDetectorInput,
     SexismDetectorInput,
     ToxicityDetectorInput,
 )
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Union type for multiple guard input types
-OutputGuardInputs = Union[AnswerRelevancyInput, SexismDetectorInput, PIIDetectorInput]
+OutputGuardInputs = Union[AnswerRelevancyInput, SexismDetectorInput, ToxicityDetectorInput]
 
 # Initialize Traceloop - returns client with guardrails access
 client = Traceloop.init(app_name="guardrail-validate-example", disable_batch=True)
@@ -93,7 +92,10 @@ async def secure_chat(user_prompt: str) -> str:
 
     # Validate user input BEFORE calling the LLM
     print(f"Validating user input: '{user_prompt[:50]}...'")
-    prompt_is_safe = await prompt_guardrail.validate([PromptInjectionInput(prompt=user_prompt)])
+    try:
+        prompt_is_safe = await prompt_guardrail.validate([PromptInjectionInput(prompt=user_prompt)])
+    except GuardValidationError:
+        return "I'm sorry, I can't process that request."
 
     if not prompt_is_safe:
         return "I'm sorry, I can't process that request."

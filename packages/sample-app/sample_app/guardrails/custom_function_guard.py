@@ -8,8 +8,7 @@ Examples shown:
 1. Simple lambda guard for validation
 2. Custom function with complex logic
 3. Custom on_failure handler with alerting
-4. Shadow mode (evaluate but don't block)
-5. Async guard function
+4. Guard with fallback value on failure
 """
 
 import asyncio
@@ -221,7 +220,7 @@ async def main():
     await custom_handler_example()
 
     print("\n" + "=" * 60)
-    print("Example 4: Shadow Mode (Evaluate but Don't Block)")
+    print("Example 4: Guard with Fallback Value on Failure")
     print("=" * 60)
     await fallback_value_example()
 

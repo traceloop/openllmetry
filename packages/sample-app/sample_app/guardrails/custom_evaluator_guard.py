@@ -14,15 +14,9 @@ to detect and control medical advice in AI-generated responses. The examples sho
    - Uses diagnosis-blocker evaluator with direct execution
    - Shows how to block medical diagnosis attempts
 
-3. FAIL Case: Medical safety with professional referral fallback
-   - Cancer diagnosis question blocked with safe fallback message
-   - Uses medical-safety-guard evaluator
-   - Demonstrates return_value instead of raising exception
-
 Custom evaluators help distinguish between:
 - Safe general health information (allowed)
 - Specific medical diagnoses (blocked)
-- Medical emergencies requiring professional care (blocked with referral)
 
 Requires a Traceloop API key and custom evaluators configured in your account.
 See comments in each example for required evaluator specifications.
@@ -51,18 +45,6 @@ class MedicalAdviceInput(BaseModel):
     """Input model for medical advice evaluator."""
     text: str
 
-
-class DiagnosisRequestInput(BaseModel):
-    """Input model for diagnosis blocker evaluator."""
-    text: str
-    user_question: str
-    symptoms: list[str] | None = None
-
-
-class MedicalSafetyInput(BaseModel):
-    """Input model for medical safety guard evaluator."""
-    text: str
-    query: str
 
 # Initialize Traceloop - returns client with guardrails access
 client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True)
@@ -166,7 +148,7 @@ async def diagnosis_request_blocker():
 
     guardrail = client.guardrails.create(
         guards=[diagnosis_blocker.as_guard(
-            condition=Condition.is_false(field="pass")
+            condition=Condition.is_true(field="pass")
         )],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
