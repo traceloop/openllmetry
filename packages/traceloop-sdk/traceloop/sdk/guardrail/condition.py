@@ -43,7 +43,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, "success", False) is True
 
-        check.__name__ = "success()"
         return check
 
     @staticmethod
@@ -61,7 +60,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, None) is True
 
-        check.__name__ = f"is_true({field})"
         return check
 
     @staticmethod
@@ -79,7 +77,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, None) is False
 
-        check.__name__ = f"is_false({field})"
         return check
 
     @staticmethod
@@ -104,7 +101,6 @@ class Condition:
                 return False
             return bool(min_val <= value <= max_val)
 
-        check.__name__ = f"between({min_val}, {max_val}, {field})"
         return check
 
     @staticmethod
@@ -123,7 +119,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, None) == value
 
-        check.__name__ = f"equals({value}, {field})"
         return check
 
     @staticmethod
@@ -142,7 +137,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, 0) > value
 
-        check.__name__ = f"greater_than({value}, {field})"
         return check
 
     @staticmethod
@@ -161,7 +155,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, float("inf")) < value
 
-        check.__name__ = f"less_than({value}, {field})"
         return check
 
     @staticmethod
@@ -182,7 +175,6 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, 0) >= value
 
-        check.__name__ = f"greater_than_or_equal({value}, {field})"
         return check
 
     @staticmethod
@@ -201,5 +193,4 @@ class Condition:
         def check(result: Any) -> bool:
             return _get_field(result, field, float("inf")) <= value
 
-        check.__name__ = f"less_than_or_equal({value}, {field})"
         return check

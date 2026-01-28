@@ -247,7 +247,6 @@ class SpanAttributes:
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
     # Guardrail
-    GEN_AI_GUARDRAIL = "gen_ai.guardrail"
     GEN_AI_GUARDRAIL_NAME = "gen_ai.guardrail.name"
     GEN_AI_GUARDRAIL_STATUS = "gen_ai.guardrail.status"
     GEN_AI_GUARDRAIL_DURATION_MS = "gen_ai.guardrail.duration_ms"
