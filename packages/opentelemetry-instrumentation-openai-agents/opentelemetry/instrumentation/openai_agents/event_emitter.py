@@ -70,7 +70,11 @@ def _emit_message_event(event: MessageEvent) -> None:
         # the role from the body if it is the same as in the event name.
         body.pop("role", None)
     else:
+        # Unknown role: default to user message event but keep the original role
+        # in the body per semantic conventions (role is required when it differs
+        # from the role implied by the event name).
         name = "gen_ai.user.message"
+        # Role is intentionally kept in body since it differs from "user"
 
     # According to the semantic conventions, only the assistant role has tool call
     if event.role != Roles.ASSISTANT.value and event.tool_calls is not None:
