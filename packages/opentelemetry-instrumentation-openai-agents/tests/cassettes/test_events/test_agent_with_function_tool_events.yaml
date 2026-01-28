@@ -15,8 +15,7 @@ interactions:
       content-type:
       - application/json
       cookie:
-      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
-        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      - <REDACTED_COOKIE>
       host:
       - api.openai.com
       user-agent:
@@ -80,11 +79,11 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       openai-organization:
-      - traceloop
+      - <REDACTED_ORGANIZATION>
       openai-processing-ms:
       - '1154'
       openai-project:
-      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      - <REDACTED_PROJECT_ID>
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -124,8 +123,7 @@ interactions:
       content-type:
       - application/json
       cookie:
-      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
-        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
+      - <REDACTED_COOKIE>
       host:
       - api.openai.com
       openai-beta:
@@ -153,11 +151,11 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       openai-organization:
-      - traceloop
+      - <REDACTED_ORGANIZATION>
       openai-processing-ms:
       - '201'
       openai-project:
-      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      - <REDACTED_PROJECT_ID>
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -186,8 +184,7 @@ interactions:
       content-type:
       - application/json
       cookie:
-      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
-        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      - <REDACTED_COOKIE>
       host:
       - api.openai.com
       user-agent:
@@ -252,11 +249,11 @@ interactions:
       cf-cache-status:
       - DYNAMIC
       openai-organization:
-      - traceloop
+      - <REDACTED_ORGANIZATION>
       openai-processing-ms:
       - '776'
       openai-project:
-      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      - <REDACTED_PROJECT_ID>
       openai-version:
       - '2020-10-01'
       strict-transport-security:
