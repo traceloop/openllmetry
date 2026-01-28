@@ -4,7 +4,6 @@ Unit tests for guardrail _validate_inputs method.
 Tests both pass and fail cases for length and type validation.
 """
 import pytest
-from typing import Union
 from unittest.mock import MagicMock
 from pydantic import BaseModel
 
@@ -377,30 +376,35 @@ class TestValidateInputsFail:
         assert exc_info.value.actual_type is str
 
     def test_guard_inputs_wrong_order(self):
-        """Guard inputs in wrong order should fail type validation."""
+        """Guard inputs in wrong order should fail type validation.
 
-        # Guards expect: [PIIDetectorInput, ToxicityDetectorInput]
-        guards = [
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(field="has_pii"),
-            ),
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(field="is_toxic"),
-            ),
-        ]
+        Note: Uses typed guard functions with PIIDetectorInput (text field) and
+        AnswerRelevancyInput (answer, question fields) which have different structures,
+        so structural validation can detect the mismatch.
+        """
+
+        # Typed guard functions with explicit type annotations
+        def pii_guard(input_data: PIIDetectorInput) -> bool:
+            return True
+
+        def relevancy_guard(input_data: AnswerRelevancyInput) -> bool:
+            return True
+
+        # Guards expect: [PIIDetectorInput, AnswerRelevancyInput]
+        guards = [pii_guard, relevancy_guard]
         guardrails = create_guardrails_with_guards(guards)
 
-        # Inputs provided in WRONG order: [ToxicityDetectorInput, PIIDetectorInput]
+        # Inputs provided in WRONG order: [AnswerRelevancyInput, PIIDetectorInput]
         with pytest.raises(GuardInputTypeError) as exc_info:
             guardrails._validate_inputs([
-                ToxicityDetectorInput(text="Should be second"),  # Wrong! Expected PIIDetectorInput
-                PIIDetectorInput(text="Should be first"),        # Wrong! Expected ToxicityDetectorInput
+                AnswerRelevancyInput(answer="answer", question="question"),  # Wrong! Expected PIIDetectorInput
+                PIIDetectorInput(text="Should be second"),                    # Wrong! Expected AnswerRelevancyInput
             ])
 
         # Should fail on first guard (index 0) since it expected PIIDetectorInput
         assert exc_info.value.guard_index == 0
         assert exc_info.value.expected_type is PIIDetectorInput
-        assert exc_info.value.actual_type is ToxicityDetectorInput
+        assert exc_info.value.actual_type is AnswerRelevancyInput
 
 
 class TestValidateInputsEdgeCases:

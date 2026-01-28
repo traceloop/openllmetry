@@ -1,6 +1,5 @@
 import httpx
 from typing import Dict, Optional, Any, List
-from uuid import uuid4
 from pydantic import ValidationError
 from .field_mapping import normalize_task_output, get_field_suggestions, format_field_help
 
@@ -11,7 +10,6 @@ from .model import (
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
     ExecutionResponse,
-    EvaluatorExecutionResult,
 )
 from .stream_client import SSEClient
 from .config import EvaluatorDetails

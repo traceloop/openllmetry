@@ -4,7 +4,7 @@ Unit tests for guardrail conditions.
 Tests all built-in condition methods from the Condition class.
 """
 from dataclasses import dataclass
-from traceloop.sdk.guardrail.condition import Condition, _get_field
+from traceloop.sdk.guardrail.condition import Condition
 
 
 @dataclass

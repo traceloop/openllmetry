@@ -20,7 +20,11 @@ from traceloop.sdk.guardrail import (
     Condition,
     OnFailure,
 )
-from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput, PIIDetectorInput, AgentGoalCompletenessInput
+from traceloop.sdk.generated.evaluators.request import (
+    ToxicityDetectorInput,
+    PIIDetectorInput,
+    AgentGoalCompletenessInput,
+)
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop - returns client with guardrails access

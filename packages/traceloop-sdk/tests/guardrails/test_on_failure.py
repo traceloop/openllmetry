@@ -113,7 +113,7 @@ class TestOnFailureLog:
         )
 
         with caplog.at_level(logging.INFO):
-            result = handler(output)
+            handler(output)
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.INFO
@@ -127,7 +127,7 @@ class TestOnFailureLog:
         )
 
         with caplog.at_level(logging.ERROR):
-            result = handler(output)
+            handler(output)
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.ERROR
@@ -141,7 +141,7 @@ class TestOnFailureLog:
         )
 
         with caplog.at_level(logging.WARNING):
-            result = handler(output)
+            handler(output)
 
         assert "Toxic content detected" in caplog.text
 
