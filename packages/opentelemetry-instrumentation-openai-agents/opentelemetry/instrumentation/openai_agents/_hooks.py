@@ -180,8 +180,14 @@ def _extract_prompt_attributes(otel_span, input_data):
 
         # Emit event if events mode is enabled
         if should_emit_events():
-            if role and content is not None:
-                content_str = content if isinstance(content, str) else json.dumps(content)
+            # Emit event when we have a valid message with either content OR tool_calls
+            if role and (content is not None or tool_calls):
+                if content is None:
+                    content_str = None
+                elif isinstance(content, str):
+                    content_str = content
+                else:
+                    content_str = json.dumps(content)
                 parsed_tool_calls = _parse_tool_calls_for_event(tool_calls)
                 emit_event(
                     MessageEvent(
@@ -737,8 +743,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if tool_input is not None:
             input_str = json.dumps({"inputs": tool_input})
 
-            if should_emit_events() and should_send_prompts():
-                emit_event(ToolStartEvent(message=input_str))
+            if should_emit_events():
+                # Event emitter handles content filtering internally
+                emit_event(ToolStartEvent(message=input_str if should_send_prompts() else ""))
             elif should_send_prompts():
                 otel_span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str
@@ -753,8 +760,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if tool_output is not None:
             output_str = json.dumps({"outputs": tool_output})
 
-            if should_emit_events() and should_send_prompts():
-                emit_event(ToolEndEvent(message=output_str))
+            if should_emit_events():
+                # Event emitter handles content filtering internally
+                emit_event(ToolEndEvent(message=output_str if should_send_prompts() else ""))
             elif should_send_prompts():
                 otel_span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str
