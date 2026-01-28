@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 # Note: opentelemetry._events is the official incubating Events API. The underscore
 # prefix indicates the API is experimental/not yet stable, not that it's private.
@@ -23,6 +23,6 @@ class Config:
         will override all previous ones.
     """
 
-    exception_logger = None
+    exception_logger: Optional[Any] = None
     use_legacy_attributes: bool = True
     event_logger: Optional[EventLogger] = None

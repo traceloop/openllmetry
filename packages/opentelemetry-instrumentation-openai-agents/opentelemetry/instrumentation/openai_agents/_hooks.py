@@ -744,7 +744,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             input_str = json.dumps({"inputs": tool_input})
 
             if should_emit_events():
-                # Event emitter handles content filtering internally
+                # Filter content here based on TRACELOOP_TRACE_CONTENT setting
                 emit_event(ToolStartEvent(message=input_str if should_send_prompts() else ""))
             elif should_send_prompts():
                 otel_span.set_attribute(
@@ -761,7 +761,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             output_str = json.dumps({"outputs": tool_output})
 
             if should_emit_events():
-                # Event emitter handles content filtering internally
+                # Filter content here based on TRACELOOP_TRACE_CONTENT setting
                 emit_event(ToolEndEvent(message=output_str if should_send_prompts() else ""))
             elif should_send_prompts():
                 otel_span.set_attribute(
