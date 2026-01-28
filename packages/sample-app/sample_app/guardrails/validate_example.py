@@ -31,6 +31,7 @@ from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
     ToxicityDetectorInput,
     AnswerRelevancyInput,
+    PIIDetectorInput,
 )
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
@@ -55,7 +56,11 @@ async def generate_response(user_prompt: str) -> GuardedOutput[str, ToxicityDete
 
     return GuardedOutput(
         result=response_text,
-        guard_inputs=[AnswerRelevancyInput(answer=response_text, question=user_prompt)],
+        guard_inputs=[
+            AnswerRelevancyInput(answer=response_text, question=user_prompt),
+            ToxicityDetectorInput(text=response_text),
+            PIIDetectorInput(text=response_text),
+        ],
     )
 
 @workflow(name="secure_chat")
@@ -97,7 +102,15 @@ async def secure_chat(user_prompt: str) -> str:
             EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
                 condition=Condition.is_true(field="is_relevant"),
                 timeout_in_sec=30,
-            )
+            ),
+            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
+                condition=Condition.is_true("is_safe"),
+                timeout_in_sec=30,
+            ),
+            EvaluatorMadeByTraceloop.pii_detector().as_guard(
+                condition=Condition.is_false("has_pii"),
+                timeout_in_sec=30,
+            ),
         ],
         on_failure=OnFailure.return_value(
             "I apologize, but I cannot provide that response."
