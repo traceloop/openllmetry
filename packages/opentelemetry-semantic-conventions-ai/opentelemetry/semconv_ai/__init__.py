@@ -247,19 +247,18 @@ class SpanAttributes:
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
     # Guardrail
-    GEN_AI_GUARDRAIL = "gen_ai.guardrail"
-    GEN_AI_GUARDRAIL_PASSED = "gen_ai.guardrail.passed"
-    GEN_AI_GUARDRAIL_DURATION_MS = "gen_ai.guardrail.duration_ms"
-    GEN_AI_GUARDRAIL_GUARDS_COUNT = "gen_ai.guardrail.guards_count"
-    GEN_AI_GUARDRAIL_FAILED_GUARDS_COUNT = "gen_ai.guardrail.failed_guards_count"
+    GEN_AI_GUARDRAIL_NAME = "gen_ai.guardrail.name"
+    GEN_AI_GUARDRAIL_STATUS = "gen_ai.guardrail.status"
+    GEN_AI_GUARDRAIL_DURATION = "gen_ai.guardrail.duration"
+    GEN_AI_GUARDRAIL_GUARD_COUNT = "gen_ai.guardrail.guard_count"
+    GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT = "gen_ai.guardrail.failed_guard_count"
     GEN_AI_GUARDRAIL_GUARD_INDEX = "gen_ai.guardrail.guard.index"
     GEN_AI_GUARDRAIL_GUARD_NAME = "gen_ai.guardrail.guard.name"
-    GEN_AI_GUARDRAIL_GUARD_CONDITION = "gen_ai.guardrail.guard.condition"
     GEN_AI_GUARDRAIL_GUARD_INPUT = "gen_ai.guardrail.guard.input"
-    GEN_AI_GUARDRAIL_GUARD_PASSED = "gen_ai.guardrail.guard.passed"
-    GEN_AI_GUARDRAIL_GUARD_DURATION_MS = "gen_ai.guardrail.guard.duration_ms"
-    GEN_AI_GUARDRAIL_GUARD_EXCEPTION_TYPE = "gen_ai.guardrail.guard.exception.type"
-    GEN_AI_GUARDRAIL_GUARD_EXCEPTION_MESSAGE = "gen_ai.guardrail.guard.exception.message"
+    GEN_AI_GUARDRAIL_GUARD_STATUS = "gen_ai.guardrail.guard.status"
+    GEN_AI_GUARDRAIL_GUARD_DURATION = "gen_ai.guardrail.guard.duration"
+    GEN_AI_GUARDRAIL_GUARD_ERROR_TYPE = "gen_ai.guardrail.guard.error.type"
+    GEN_AI_GUARDRAIL_GUARD_ERROR_MESSAGE = "gen_ai.guardrail.guard.error.message"
 
 
 class Events(Enum):
