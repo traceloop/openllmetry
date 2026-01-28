@@ -116,10 +116,8 @@ class EvaluatorDetails(BaseModel):
                 evaluator_config=evaluator_config,
                 timeout_in_sec=timeout_in_sec,
             )
-            print(f"NOMI - Evaluator response in the guard function: {eval_response}")
 
             condition_result = condition(eval_response.result.evaluator_result)
-            print(f"NOMI - Condition result: {condition_result}")
             return condition_result
 
         # Set the function name to the evaluator slug for tracing

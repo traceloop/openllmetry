@@ -28,8 +28,6 @@ class SSEClient:
 
             full_stream_url = f"{self.client.base_url}/v2{stream_url}"
 
-            print(f"NOMI - Full stream URL: {full_stream_url}")
-
             async with self.client.stream(
                 "GET",
                 full_stream_url,

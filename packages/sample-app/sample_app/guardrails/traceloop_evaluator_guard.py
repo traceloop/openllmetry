@@ -52,7 +52,6 @@ async def generate_customer_response() -> GuardedOutput[str, dict]:
         ],
     )
     text = completion.choices[0].message.content
-    print(f"NOMI - PII detector input: {PIIDetectorInput(text=text)}")
     return GuardedOutput(
         result=text,
         guard_inputs=[PIIDetectorInput(text=text)],
