@@ -1,6 +1,6 @@
 """Hook-based instrumentation for OpenAI Agents using the SDK's native callback system."""
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 import json
 import time
 from collections import OrderedDict
@@ -18,7 +18,22 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from agents.tracing.processors import TracingProcessor
-from .utils import dont_throw, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
+from .utils import (
+    dont_throw,
+    should_emit_events,
+    should_send_prompts,
+    GEN_AI_HANDOFF_FROM_AGENT,
+    GEN_AI_HANDOFF_TO_AGENT,
+)
+from .event_emitter import emit_event
+from .event_models import (
+    MessageEvent,
+    ChoiceEvent,
+    ToolCall,
+    CompletionMessage,
+    ToolStartEvent,
+    ToolEndEvent,
+)
 
 try:
     # Attempt to import once, so that we aren't looking for it repeatedly.
@@ -39,12 +54,71 @@ except ImportError:
     SpeechGroupSpanData = None
 
 
+def _parse_tool_calls_for_event(tool_calls_raw) -> Optional[List[ToolCall]]:
+    """Parse tool calls from various formats to event format."""
+    if not tool_calls_raw:
+        return None
+
+    parsed_tool_calls = []
+    for tool_call in tool_calls_raw:
+        # Convert to dict if needed
+        if not isinstance(tool_call, dict):
+            tc_dict = {}
+            if hasattr(tool_call, "id"):
+                tc_dict["id"] = tool_call.id
+            if hasattr(tool_call, "function"):
+                func = tool_call.function
+                if hasattr(func, "name"):
+                    tc_dict["name"] = func.name
+                if hasattr(func, "arguments"):
+                    tc_dict["arguments"] = func.arguments
+            elif hasattr(tool_call, "name"):
+                tc_dict["name"] = tool_call.name
+            if hasattr(tool_call, "arguments"):
+                tc_dict["arguments"] = tool_call.arguments
+            tool_call = tc_dict
+
+        # Extract function details if nested (standard OpenAI format)
+        if "function" in tool_call:
+            function = tool_call["function"]
+            tool_call = {
+                "id": tool_call.get("id"),
+                "name": function.get("name"),
+                "arguments": function.get("arguments"),
+            }
+
+        # Parse arguments if string
+        arguments = tool_call.get("arguments", {})
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except (json.JSONDecodeError, TypeError):
+                arguments = {}
+
+        if tool_call.get("name"):
+            parsed_tool_calls.append(
+                ToolCall(
+                    id=tool_call.get("id", ""),
+                    function={
+                        "function_name": tool_call.get("name", ""),
+                        "arguments": arguments,
+                    },
+                    type="function",
+                )
+            )
+
+    return parsed_tool_calls if parsed_tool_calls else None
+
+
 def _extract_prompt_attributes(otel_span, input_data):
     """
     Extract prompt/input data from messages and set them as span attributes.
 
     Handles both OpenAI chat format (role/content) and Agents SDK format
     (type/function_call/function_call_output).
+
+    If event emission is enabled, emits MessageEvents instead of setting
+    span attributes.
     """
     if not input_data:
         return
@@ -103,6 +177,30 @@ def _extract_prompt_attributes(otel_span, input_data):
                 role = "tool"
                 content = msg.get("output")
                 tool_call_id = msg.get("call_id")
+
+        # Emit event if events mode is enabled
+        if should_emit_events():
+            # Emit event when we have a valid message with either content OR tool_calls
+            if role and (content is not None or tool_calls):
+                if content is None:
+                    content_str = None
+                elif isinstance(content, str):
+                    content_str = content
+                else:
+                    content_str = json.dumps(content)
+                parsed_tool_calls = _parse_tool_calls_for_event(tool_calls)
+                emit_event(
+                    MessageEvent(
+                        content=content_str,
+                        role=role,
+                        tool_calls=parsed_tool_calls,
+                    )
+                )
+            continue
+
+        # Legacy mode: set span attributes
+        if not should_send_prompts():
+            continue
 
         # Set role attribute
         if role:
@@ -168,6 +266,9 @@ def _extract_response_attributes(otel_span, response):
     Extract model settings, completions, and usage from a response object
     and set them as span attributes.
 
+    If event emission is enabled, emits ChoiceEvents instead of setting
+    completion span attributes (but still sets model settings and usage).
+
     Returns a dict of model_settings for potential use by parent spans.
     """
     if not response:
@@ -175,7 +276,7 @@ def _extract_response_attributes(otel_span, response):
 
     model_settings = {}
 
-    # Extract model settings
+    # Extract model settings (always set these as span attributes)
     if hasattr(response, "temperature") and response.temperature is not None:
         model_settings["temperature"] = response.temperature
         otel_span.set_attribute(
@@ -208,28 +309,85 @@ def _extract_response_attributes(otel_span, response):
     # Extract completions from response.output
     if hasattr(response, "output") and response.output:
         for i, output in enumerate(response.output):
+            content_text = None
+            role = "assistant"
+            tool_calls = None
+            finish_reason = getattr(response, "finish_reason", None) or "stop"
+
             if hasattr(output, "content") and output.content:
                 # Text message with content array (ResponseOutputMessage)
                 content_text = ""
                 for content_item in output.content:
                     if hasattr(content_item, "text"):
                         content_text += content_item.text
-
-                if content_text:
-                    otel_span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", content_text
-                    )
-                    otel_span.set_attribute(
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role",
-                        getattr(output, "role", "assistant"),
-                    )
+                role = getattr(output, "role", "assistant")
 
             elif hasattr(output, "name"):
                 # Function/tool call (ResponseFunctionToolCall)
                 tool_name = getattr(output, "name", "unknown_tool")
                 arguments = getattr(output, "arguments", "{}")
                 tool_call_id = getattr(output, "call_id", f"call_{i}")
+                finish_reason = "tool_calls"
 
+                # Parse arguments if string
+                args_dict = arguments
+                if isinstance(arguments, str):
+                    try:
+                        args_dict = json.loads(arguments)
+                    except (json.JSONDecodeError, TypeError):
+                        args_dict = {}
+
+                tool_calls = [
+                    ToolCall(
+                        id=tool_call_id,
+                        function={
+                            "function_name": tool_name,
+                            "arguments": args_dict,
+                        },
+                        type="function",
+                    )
+                ]
+
+            elif hasattr(output, "text"):
+                # Direct text content
+                content_text = output.text
+                role = getattr(output, "role", "assistant")
+
+            # Emit event if events mode is enabled
+            if should_emit_events():
+                message: CompletionMessage = {
+                    "content": content_text,
+                    "role": role,
+                }
+                emit_event(
+                    ChoiceEvent(
+                        index=i,
+                        message=message,
+                        finish_reason=finish_reason,
+                        tool_calls=tool_calls,
+                    )
+                )
+                continue
+
+            # Legacy mode: set span attributes
+            if not should_send_prompts():
+                continue
+
+            if content_text:
+                otel_span.set_attribute(
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", content_text
+                )
+                otel_span.set_attribute(
+                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", role
+                )
+                if finish_reason and finish_reason != "tool_calls":
+                    otel_span.set_attribute(
+                        f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason",
+                        finish_reason,
+                    )
+
+            elif tool_calls:
+                # Set tool call attributes for legacy mode
                 otel_span.set_attribute(
                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant"
                 )
@@ -237,37 +395,23 @@ def _extract_response_attributes(otel_span, response):
                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason",
                     "tool_calls",
                 )
+                tc = tool_calls[0]
                 otel_span.set_attribute(
                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.name",
-                    tool_name,
+                    tc["function"]["function_name"],
                 )
                 otel_span.set_attribute(
                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.arguments",
-                    arguments,
+                    json.dumps(tc["function"]["arguments"])
+                    if isinstance(tc["function"]["arguments"], dict)
+                    else tc["function"]["arguments"],
                 )
                 otel_span.set_attribute(
                     f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.tool_calls.0.id",
-                    tool_call_id,
+                    tc["id"],
                 )
 
-            elif hasattr(output, "text"):
-                # Direct text content
-                otel_span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", output.text
-                )
-                otel_span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role",
-                    getattr(output, "role", "assistant"),
-                )
-
-            # Add finish reason if available (for non-tool-call cases)
-            if hasattr(response, "finish_reason") and not hasattr(output, "name"):
-                otel_span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.finish_reason",
-                    response.finish_reason,
-                )
-
-    # Extract usage data
+    # Extract usage data (always set these as span attributes)
     if hasattr(response, "usage") and response.usage:
         usage = response.usage
         if hasattr(usage, "input_tokens") and usage.input_tokens is not None:
@@ -592,10 +736,42 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             token = context.attach(set_span_in_context(otel_span))
             self._span_contexts[span] = token
 
+    def _handle_function_span_end(self, span_data, otel_span):
+        """Handle FunctionSpanData span end - emit tool events or set attributes."""
+        # Capture tool input
+        tool_input = getattr(span_data, "input", None)
+        if tool_input is not None:
+            input_str = json.dumps({"inputs": tool_input})
+
+            if should_emit_events():
+                # Filter content here based on TRACELOOP_TRACE_CONTENT setting
+                emit_event(ToolStartEvent(message=input_str if should_send_prompts() else ""))
+            elif should_send_prompts():
+                otel_span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str
+                )
+
+        # Capture tool output
+        tool_output = getattr(span_data, "output", None)
+        if tool_output is None:
+            # Try alternative attribute names
+            tool_output = getattr(span_data, "result", None)
+
+        if tool_output is not None:
+            output_str = json.dumps({"outputs": tool_output})
+
+            if should_emit_events():
+                # Filter content here based on TRACELOOP_TRACE_CONTENT setting
+                emit_event(ToolEndEvent(message=output_str if should_send_prompts() else ""))
+            elif should_send_prompts():
+                otel_span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str
+                )
+
     @dont_throw
     def on_span_end(self, span):
         """Called when a span ends - finish OpenTelemetry span."""
-        from agents import GenerationSpanData
+        from agents import GenerationSpanData, FunctionSpanData
 
         if not span or not hasattr(span, "span_data"):
             return
@@ -603,7 +779,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if span in self._otel_spans:
             otel_span = self._otel_spans[span]
             span_data = getattr(span, "span_data", None)
-            if span_data and (
+
+            # Handle FunctionSpanData (tool calls)
+            if isinstance(span_data, FunctionSpanData):
+                self._handle_function_span_end(span_data, otel_span)
+
+            elif span_data and (
                 type(span_data).__name__ == "ResponseSpanData"
                 or isinstance(span_data, GenerationSpanData)
             ):
