@@ -189,13 +189,13 @@ class Guardrails:
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_STATUS, "PASSED" if passed else "FAILED")
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION_MS, duration_ms)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION, duration_ms)
 
                 return (index, passed, None)
             except Exception as e:
                 duration_ms = (time.perf_counter() - start_time) * 1000
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_STATUS, "FAILED")
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION_MS, duration_ms)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION, duration_ms)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_ERROR_TYPE, type(e).__name__)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_ERROR_MESSAGE, str(e))
                 span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -304,10 +304,10 @@ class Guardrails:
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION_MS, duration_ms)
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARDS_COUNT, len(self._guards))
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION, duration_ms)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_COUNT, len(self._guards))
                 if failed_indices:
-                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_FAILED_GUARDS_COUNT, failed_indices)
+                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT, failed_indices)
 
                 # 6. Handle failure
                 if not all_passed:
@@ -385,10 +385,10 @@ class Guardrails:
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION_MS, duration_ms)
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARDS_COUNT, len(self._guards))
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION, duration_ms)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_COUNT, len(self._guards))
                 if failed_indices:
-                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_FAILED_GUARDS_COUNT, failed_indices)
+                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT, failed_indices)
 
                 # Handle failure
                 if not all_passed and failure_handler is not None:
