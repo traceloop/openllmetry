@@ -168,7 +168,7 @@ class Guardrails:
 
             # Capture guard name
             guard_name = getattr(guard, "__name__", f"guard_{index}")
-            span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL, guard_name)
+            span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_NAME, guard_name)
 
             # Capture condition (for evaluator-based guards)
             condition = getattr(guard, "_condition", None)
@@ -188,16 +188,16 @@ class Guardrails:
                 passed = bool(result)
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_PASSED, passed)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_STATUS, "PASSED" if passed else "FAILED")
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION_MS, duration_ms)
 
                 return (index, passed, None)
             except Exception as e:
                 duration_ms = (time.perf_counter() - start_time) * 1000
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_PASSED, False)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_STATUS, "FAILED")
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_DURATION_MS, duration_ms)
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_EXCEPTION_TYPE, type(e).__name__)
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_EXCEPTION_MESSAGE, str(e))
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_ERROR_TYPE, type(e).__name__)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARD_ERROR_MESSAGE, str(e))
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 return (index, False, e)
@@ -269,7 +269,7 @@ class Guardrails:
             with tracer.start_as_current_span("guardrail.run") as span:
                 start_time = time.perf_counter()
                 if self._name:
-                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL, self._name)
+                    span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_NAME, self._name)
 
                 # 1. Execute func_to_guard
                 output: GuardedOutput[
@@ -303,7 +303,7 @@ class Guardrails:
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_PASSED, all_passed)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, all_passed)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION_MS, duration_ms)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARDS_COUNT, len(self._guards))
                 if failed_indices:
@@ -384,7 +384,7 @@ class Guardrails:
 
                 duration_ms = (time.perf_counter() - start_time) * 1000
 
-                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_PASSED, all_passed)
+                span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_DURATION_MS, duration_ms)
                 span.set_attribute(SpanAttributes.GEN_AI_GUARDRAIL_GUARDS_COUNT, len(self._guards))
                 if failed_indices:

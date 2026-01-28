@@ -16,6 +16,7 @@ Requires a Traceloop API key for the evaluators.
 
 import asyncio
 import os
+from typing import Union
 
 from openai import AsyncOpenAI
 
@@ -29,18 +30,22 @@ from traceloop.sdk.guardrail import (
 )
 from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
-    ToxicityDetectorInput,
     AnswerRelevancyInput,
     PIIDetectorInput,
+    SexismDetectorInput,
+    WordCountInput,
 )
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+
+# Union type for multiple guard input types
+OutputGuardInputs = Union[AnswerRelevancyInput, SexismDetectorInput, PIIDetectorInput]
 
 # Initialize Traceloop - returns client with guardrails access
 client = Traceloop.init(app_name="guardrail-validate-example", disable_batch=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-async def generate_response(user_prompt: str) -> GuardedOutput[str, ToxicityDetectorInput]:
+async def generate_response(user_prompt: str) -> GuardedOutput[str, OutputGuardInputs]:
     """Generate LLM response and prepare it for toxicity checking."""
     completion = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -58,7 +63,7 @@ async def generate_response(user_prompt: str) -> GuardedOutput[str, ToxicityDete
         result=response_text,
         guard_inputs=[
             AnswerRelevancyInput(answer=response_text, question=user_prompt),
-            ToxicityDetectorInput(text=response_text),
+            WordCountInput(text=response_text),
             PIIDetectorInput(text=response_text),
         ],
     )
@@ -95,21 +100,18 @@ async def secure_chat(user_prompt: str) -> str:
 
     print("Input validation passed. Calling LLM...")
 
-    # Step 2: Create output guardrail (toxicity detection)
+    # Step 2: Create output guardrail
     output_guardrail = client.guardrails.create(
         name="output-guardrail",
         guards=[
             EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
                 condition=Condition.is_true(field="is_relevant"),
-                timeout_in_sec=30,
             ),
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_true("is_safe"),
-                timeout_in_sec=30,
+            EvaluatorMadeByTraceloop.word_count().as_guard(
+                condition=Condition.greater_than(100, field="word_count"),
             ),
             EvaluatorMadeByTraceloop.pii_detector().as_guard(
                 condition=Condition.is_false("has_pii"),
-                timeout_in_sec=30,
             ),
         ],
         on_failure=OnFailure.return_value(
