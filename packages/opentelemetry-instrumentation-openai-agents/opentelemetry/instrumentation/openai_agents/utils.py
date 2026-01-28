@@ -28,6 +28,20 @@ def should_send_prompts():
     return _is_truthy(env_setting) or bool(override)
 
 
+def should_emit_events() -> bool:
+    """
+    Checks if the instrumentation isn't using the legacy attributes
+    and if the event logger is not None.
+    """
+    from opentelemetry._events import EventLogger
+
+    from .config import Config
+
+    return not Config.use_legacy_attributes and isinstance(
+        Config.event_logger, EventLogger
+    )
+
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):

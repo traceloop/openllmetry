@@ -7,6 +7,8 @@ from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai_agents.version import __version__
 from opentelemetry.semconv_ai import Meters
+from opentelemetry._events import get_event_logger
+from .config import Config
 
 
 _instruments = ("openai-agents >= 0.2.0",)
@@ -14,6 +16,15 @@ _instruments = ("openai-agents >= 0.2.0",)
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
     """An instrumentor for OpenAI Agents SDK."""
+
+    def __init__(
+        self,
+        exception_logger=None,
+        use_legacy_attributes: bool = True,
+    ):
+        super().__init__()
+        Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -24,6 +35,12 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         meter_provider = kwargs.get("meter_provider")
         meter = get_meter(__name__, __version__, meter_provider)
+
+        if not Config.use_legacy_attributes:
+            event_logger_provider = kwargs.get("event_logger_provider")
+            Config.event_logger = get_event_logger(
+                __name__, __version__, event_logger_provider=event_logger_provider
+            )
 
         if is_metrics_enabled():
             _create_metrics(meter)

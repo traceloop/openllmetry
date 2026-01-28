@@ -13,17 +13,27 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
 )
+from opentelemetry.instrumentation.openai_agents.config import Config
 from opentelemetry.trace import set_tracer_provider
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry import metrics
+from opentelemetry.sdk._events import EventLoggerProvider
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    InMemoryLogExporter,
+    SimpleLogRecordProcessor,
+)
 
 from agents import Agent, function_tool, ModelSettings, WebSearchTool
 from pydantic import BaseModel
 from typing import List, Dict, Union
 
 pytest_plugins = []
+
+# Environment variable name constant
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 # Mock traceloop modules before any imports using proper ModuleType
 SET_AGENT_NAME_MOCK = MagicMock()
@@ -284,3 +294,78 @@ def recipe_workflow_agents():
 @pytest.fixture(scope="module")
 def vcr_config():
     return {"filter_headers": ["authorization", "api-key"]}
+
+
+# =============================================================================
+# Event emission test fixtures
+# =============================================================================
+
+
+@pytest.fixture(scope="session", name="span_exporter")
+def fixture_span_exporter():
+    exporter = InMemorySpanExporter()
+    yield exporter
+
+
+@pytest.fixture(scope="function", name="log_exporter")
+def fixture_log_exporter():
+    exporter = InMemoryLogExporter()
+    yield exporter
+
+
+@pytest.fixture(scope="function", name="event_logger_provider")
+def fixture_event_logger_provider(log_exporter):
+    provider = LoggerProvider()
+    provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
+    event_logger_provider = EventLoggerProvider(provider)
+    return event_logger_provider
+
+
+@pytest.fixture(scope="function")
+def instrument_with_content(span_exporter, event_logger_provider):
+    """Fixture for testing event emission with content tracing enabled."""
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
+
+    # Create a new tracer provider for this test
+    tracer_provider = TracerProvider()
+    processor = SimpleSpanProcessor(span_exporter)
+    tracer_provider.add_span_processor(processor)
+    set_tracer_provider(tracer_provider)
+
+    instrumentor = OpenAIAgentsInstrumentor(use_legacy_attributes=False)
+    instrumentor.instrument(
+        tracer_provider=tracer_provider,
+        event_logger_provider=event_logger_provider,
+    )
+
+    yield instrumentor
+
+    Config.use_legacy_attributes = True
+    Config.event_logger = None
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
+    instrumentor.uninstrument()
+
+
+@pytest.fixture(scope="function")
+def instrument_with_no_content(span_exporter, event_logger_provider):
+    """Fixture for testing event emission with content tracing disabled."""
+    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
+
+    # Create a new tracer provider for this test
+    tracer_provider = TracerProvider()
+    processor = SimpleSpanProcessor(span_exporter)
+    tracer_provider.add_span_processor(processor)
+    set_tracer_provider(tracer_provider)
+
+    instrumentor = OpenAIAgentsInstrumentor(use_legacy_attributes=False)
+    instrumentor.instrument(
+        tracer_provider=tracer_provider,
+        event_logger_provider=event_logger_provider,
+    )
+
+    yield instrumentor
+
+    Config.use_legacy_attributes = True
+    Config.event_logger = None
+    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
+    instrumentor.uninstrument()
