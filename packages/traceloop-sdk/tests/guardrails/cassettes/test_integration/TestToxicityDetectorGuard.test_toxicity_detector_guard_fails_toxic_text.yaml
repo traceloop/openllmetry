@@ -1,0 +1,90 @@
+interactions:
+- request:
+    body: '{"input_schema_mapping":{"text":{"source":"You are stupid and worthless!"}},"evaluator_version":null,"evaluator_config":null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '125'
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: POST
+    uri: https://api.traceloop.dev/v2/evaluators/slug/toxicity-detector/execute-single
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-1b88aab3-1db9-407b-b99a-cf4e6f305b8a","stream_url":"/evaluators/events/execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-1b88aab3-1db9-407b-b99a-cf4e6f305b8a"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '234'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:27 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '0'
+      X-Kong-Request-Id:
+      - 3a97654671771917170a42742b037b2a
+      X-Kong-Upstream-Latency:
+      - '17'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - text/event-stream
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: GET
+    uri: https://api.traceloop.dev/v2/evaluators/events/execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-1b88aab3-1db9-407b-b99a-cf4e6f305b8a
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-1b88aab3-1db9-407b-b99a-cf4e6f305b8a","result":{"evaluator_result":{"is_safe":false}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '157'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:27 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '1'
+      X-Kong-Request-Id:
+      - 121e466b1cbe561ab99fb964f12be92d
+      X-Kong-Upstream-Latency:
+      - '23'
+    status:
+      code: 200
+      message: OK
+version: 1

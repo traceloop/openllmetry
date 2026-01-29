@@ -1,0 +1,180 @@
+interactions:
+- request:
+    body: '{"input_schema_mapping":{"text":{"source":"Contact john.smith@company.com
+      for help."}},"evaluator_version":null,"evaluator_config":null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '136'
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: POST
+    uri: https://api.traceloop.dev/v2/evaluators/slug/pii-detector/execute-single
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-PII_DETECTOR-c66cb67b-3dad-4e0c-9093-edd24d9097b4","stream_url":"/evaluators/events/execute-made-by-traceloop-evaluator-PII_DETECTOR-c66cb67b-3dad-4e0c-9093-edd24d9097b4"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '224'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:36 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '1'
+      X-Kong-Request-Id:
+      - 891df022f95637701e86c33e5e319324
+      X-Kong-Upstream-Latency:
+      - '17'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"input_schema_mapping":{"text":{"source":"Contact john.smith@company.com
+      for help."}},"evaluator_version":null,"evaluator_config":null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '136'
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: POST
+    uri: https://api.traceloop.dev/v2/evaluators/slug/toxicity-detector/execute-single
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-bab2963b-f1ac-4cc9-bc93-6bef12908cf7","stream_url":"/evaluators/events/execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-bab2963b-f1ac-4cc9-bc93-6bef12908cf7"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '234'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:36 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '0'
+      X-Kong-Request-Id:
+      - 87397739dbf4a95398d3187ec1d0dc7f
+      X-Kong-Upstream-Latency:
+      - '19'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - text/event-stream
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: GET
+    uri: https://api.traceloop.dev/v2/evaluators/events/execute-made-by-traceloop-evaluator-PII_DETECTOR-c66cb67b-3dad-4e0c-9093-edd24d9097b4
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-PII_DETECTOR-c66cb67b-3dad-4e0c-9093-edd24d9097b4","result":{"evaluator_result":{"has_pii":true}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:36 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '0'
+      X-Kong-Request-Id:
+      - 231661499ecdfd14ee0fda47e62bde3a
+      X-Kong-Upstream-Latency:
+      - '22'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - text/event-stream
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: GET
+    uri: https://api.traceloop.dev/v2/evaluators/events/execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-bab2963b-f1ac-4cc9-bc93-6bef12908cf7
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-TOXICITY_DETECTOR-bab2963b-f1ac-4cc9-bc93-6bef12908cf7","result":{"evaluator_result":{"is_safe":true}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '156'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:36 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '0'
+      X-Kong-Request-Id:
+      - 9e9246049efefc063a2ae7373b27a200
+      X-Kong-Upstream-Latency:
+      - '21'
+    status:
+      code: 200
+      message: OK
+version: 1

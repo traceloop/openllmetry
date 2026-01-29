@@ -6,6 +6,7 @@ from .field_mapping import normalize_task_output, get_field_suggestions, format_
 from .model import (
     InputExtractor,
     InputSchemaMapping,
+    ExecuteEvaluatorInExperimentRequest,
     ExecuteEvaluatorRequest,
     ExecuteEvaluatorResponse,
     ExecutionResponse,
@@ -45,19 +46,19 @@ class Evaluator:
         self._async_http_client = async_http_client
 
     @staticmethod
-    def _build_evaluator_request(
+    def _build_evaluator_in_experiment_request(
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
         input: Dict[str, str],
         evaluator_version: Optional[str] = None,
         evaluator_config: Optional[Dict[str, Any]] = None,
-    ) -> ExecuteEvaluatorRequest:
+    ) -> ExecuteEvaluatorInExperimentRequest:
         """Build evaluator request with common parameters"""
         schema_mapping = InputSchemaMapping(
             root={k: InputExtractor(source=v) for k, v in input.items()}
         )
-        return ExecuteEvaluatorRequest(
+        return ExecuteEvaluatorInExperimentRequest(
             input_schema_mapping=schema_mapping,
             evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
@@ -65,6 +66,28 @@ class Evaluator:
             experiment_id=experiment_id,
             experiment_run_id=experiment_run_id,
         )
+
+    async def _execute_evaluator_in_experiment_request(
+        self,
+        evaluator_slug: str,
+        request: ExecuteEvaluatorInExperimentRequest,
+        timeout_in_sec: int = 120,
+    ) -> ExecuteEvaluatorResponse:
+        """Execute evaluator request and return response"""
+        body = request.model_dump()
+        client = self._async_http_client
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
+        response = await client.post(
+            full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        )
+        if response.status_code != 200:
+            error_detail = _extract_error_from_response(response)
+            raise Exception(
+                f"Failed to execute evaluator '{evaluator_slug}': "
+                f"{response.status_code} - {error_detail}"
+            )
+        result_data = response.json()
+        return ExecuteEvaluatorResponse(**result_data)
 
     async def _execute_evaluator_request(
         self,
@@ -75,7 +98,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
+        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-single"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
@@ -117,11 +140,11 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        request = self._build_evaluator_request(
+        request = self._build_evaluator_in_experiment_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
-        execute_response = await self._execute_evaluator_request(
+        execute_response = await self._execute_evaluator_in_experiment_request(
             evaluator_slug, request, timeout_in_sec
         )
 
@@ -161,16 +184,64 @@ class Evaluator:
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        request = self._build_evaluator_request(
+        request = self._build_evaluator_in_experiment_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
-        execute_response = await self._execute_evaluator_request(
+        execute_response = await self._execute_evaluator_in_experiment_request(
             evaluator_slug, request, 120
         )
 
         # Return execution_id without waiting for SSE result
         return execute_response.execution_id
+
+    async def run(
+        self,
+        evaluator_slug: str,
+        input: Dict[str, Any],
+        timeout_in_sec: int = 120,
+        evaluator_version: Optional[str] = None,
+        evaluator_config: Optional[Dict[str, Any]] = None,
+    ) -> ExecutionResponse:
+        """
+        Execute an evaluator without experiment context.
+
+        This is a simpler interface for running evaluators standalone,
+        without associating results with experiments.
+
+        Args:
+            evaluator_slug: Slug of the evaluator to execute
+            input: Dict mapping evaluator input field names to their values.
+                   Values can be any type (str, int, dict, etc.)
+            timeout_in_sec: Timeout in seconds for execution
+            evaluator_version: Version of the evaluator to execute (optional)
+            evaluator_config: Configuration for the evaluator (optional)
+
+        Returns:
+            ExecutionResponse: The evaluation result
+        """
+        _validate_evaluator_input(evaluator_slug, input)
+
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+
+        request = ExecuteEvaluatorRequest(
+            input_schema_mapping=schema_mapping,
+            evaluator_version=evaluator_version,
+            evaluator_config=evaluator_config,
+        )
+
+        execute_response = await self._execute_evaluator_request(
+            evaluator_slug, request, timeout_in_sec
+        )
+
+        sse_client = SSEClient(shared_client=self._async_http_client)
+        return await sse_client.wait_for_result(
+            execute_response.execution_id,
+            execute_response.stream_url,
+            timeout_in_sec,
+        )
 
 
 def validate_and_normalize_task_output(
