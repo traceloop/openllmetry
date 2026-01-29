@@ -245,6 +245,64 @@ class Guardrails:
 
         return results
 
+    async def _execute_guards_with_tracing(
+        self,
+        guard_inputs: list[GuardInput],
+        tracer,
+        span=None,
+        start_time: Optional[float] = None,
+    ) -> tuple[bool, list[int]]:
+        """
+        Execute guards with tracing, handling validation, execution, and error checking.
+
+        Args:
+            guard_inputs: List of inputs for each guard
+            tracer: The tracer instance
+            span: The current tracing span (optional, for aggregated tracing)
+            start_time: Start time for duration calculation (optional)
+
+        Returns:
+            tuple[bool, list[int]]: (all_passed, failed_indices)
+
+        Raises:
+            GuardExecutionError: If a guard function throws an exception
+        """
+        # Validate inputs
+        self._validate_inputs(guard_inputs)
+
+        # Run guards
+        if self._parallel:
+            results = await self._run_guards_parallel(guard_inputs, tracer)
+        else:
+            results = await self._run_guards_sequential(guard_inputs, tracer)
+
+        # Check for execution errors
+        for index, _, exception in results:
+            if exception is not None:
+                if span is not None:
+                    span.set_status(Status(StatusCode.ERROR, str(exception)))
+                    span.record_exception(exception)
+                raise GuardExecutionError(
+                    message="Guard execution failed",
+                    original_exception=exception,
+                    guard_input=guard_inputs[index],
+                    guard_index=index,
+                ) from exception
+
+        # Check for failures
+        failed_indices = [i for i, passed, _ in results if not passed]
+        all_passed = len(failed_indices) == 0
+
+        if span is not None and start_time is not None:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            span.set_attribute(GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
+            span.set_attribute(GEN_AI_GUARDRAIL_DURATION, duration_ms)
+            span.set_attribute(GEN_AI_GUARDRAIL_GUARD_COUNT, len(self._guards))
+            if failed_indices:
+                span.set_attribute(GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT, len(failed_indices))
+
+        return all_passed, failed_indices
+
     async def run(
         self,
         func_to_guard: Callable[
@@ -289,47 +347,19 @@ class Guardrails:
                     GuardedFunctionResult, GuardInput
                 ] = await func_to_guard()
 
-                # 2. Validate guard_inputs (length and types)
-                self._validate_inputs(output.guard_inputs)
+                # 2. Execute guards with tracing
+                all_passed, _ = await self._execute_guards_with_tracing(
+                    output.guard_inputs, tracer, span, start_time
+                )
 
-                # 3. Run guards
-                if self._parallel:
-                    results = await self._run_guards_parallel(output.guard_inputs, tracer)
-                else:
-                    results = await self._run_guards_sequential(output.guard_inputs, tracer)
-
-                # 4. Check for execution errors
-                for index, passed, exception in results:
-                    if exception is not None:
-                        span.set_status(Status(StatusCode.ERROR, str(exception)))
-                        span.record_exception(exception)
-                        raise GuardExecutionError(
-                            message="Guard execution failed",
-                            original_exception=exception,
-                            guard_input=output.guard_inputs[index],
-                            guard_index=index,
-                        ) from exception
-
-                # 5. Check for failures
-                failed_indices = [i for i, passed, _ in results if not passed]
-                all_passed = len(failed_indices) == 0
-
-                duration_ms = (time.perf_counter() - start_time) * 1000
-
-                span.set_attribute(GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
-                span.set_attribute(GEN_AI_GUARDRAIL_DURATION, duration_ms)
-                span.set_attribute(GEN_AI_GUARDRAIL_GUARD_COUNT, len(self._guards))
-                if failed_indices:
-                    span.set_attribute(GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT, len(failed_indices))
-
-                # 6. Handle failure
+                # 3. Handle failure
                 if not all_passed:
                     failure_result = self._on_failure(output)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
                     return cast(FailureResult, failure_result)
 
-                # 7. All guards passed, return result
+                # 4. All guards passed, return result
                 return output.result
 
     async def validate(
@@ -366,48 +396,15 @@ class Guardrails:
         failure_handler = on_failure if on_failure is not None else self._on_failure
 
         with get_tracer() as tracer:
-            with tracer.start_as_current_span("guardrail.validate") as span:
-                start_time = time.perf_counter()
-                if self._name:
-                    span.set_attribute(GEN_AI_GUARDRAIL_NAME, self._name)
+            all_passed, _ = await self._execute_guards_with_tracing(
+                guard_inputs, tracer
+            )
 
-                self._validate_inputs(guard_inputs)
+            # Handle failure
+            if not all_passed and failure_handler is not None:
+                output = GuardedOutput(result=None, guard_inputs=guard_inputs)
+                failure_result = failure_handler(output)
+                if asyncio.iscoroutine(failure_result):
+                    await failure_result
 
-                # Run guards
-                if self._parallel:
-                    results = await self._run_guards_parallel(guard_inputs, tracer)
-                else:
-                    results = await self._run_guards_sequential(guard_inputs, tracer)
-
-                # Check for execution errors
-                for index, _, exception in results:
-                    if exception is not None:
-                        span.set_status(Status(StatusCode.ERROR, str(exception)))
-                        span.record_exception(exception)
-                        raise GuardExecutionError(
-                            message="Guard execution failed",
-                            original_exception=exception,
-                            guard_input=guard_inputs[index],
-                            guard_index=index,
-                        ) from exception
-
-                # Check for failures
-                failed_indices = [i for i, passed, _ in results if not passed]
-                all_passed = len(failed_indices) == 0
-
-                duration_ms = (time.perf_counter() - start_time) * 1000
-
-                span.set_attribute(GEN_AI_GUARDRAIL_STATUS, "PASSED" if all_passed else "FAILED")
-                span.set_attribute(GEN_AI_GUARDRAIL_DURATION, duration_ms)
-                span.set_attribute(GEN_AI_GUARDRAIL_GUARD_COUNT, len(self._guards))
-                if failed_indices:
-                    span.set_attribute(GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT, len(failed_indices))
-
-                # Handle failure
-                if not all_passed and failure_handler is not None:
-                    output = GuardedOutput(result=None, guard_inputs=guard_inputs)
-                    failure_result = failure_handler(output)
-                    if asyncio.iscoroutine(failure_result):
-                        await failure_result
-
-                return all_passed
+            return all_passed
