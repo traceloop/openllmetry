@@ -1,0 +1,8 @@
+GEN_AI_GUARDRAIL_NAME = "gen_ai.guardrail.name"
+GEN_AI_GUARDRAIL_STATUS = "gen_ai.guardrail.status"
+GEN_AI_GUARDRAIL_DURATION = "gen_ai.guardrail.duration"
+GEN_AI_GUARDRAIL_GUARD_COUNT = "gen_ai.guardrail.guard_count"
+GEN_AI_GUARDRAIL_FAILED_GUARD_COUNT = "gen_ai.guardrail.failed_guard_count"
+GEN_AI_GUARDRAIL_INPUT = "gen_ai.guardrail.input"
+GEN_AI_GUARDRAIL_ERROR_TYPE = "gen_ai.guardrail.error.type"
+GEN_AI_GUARDRAIL_ERROR_MESSAGE = "gen_ai.guardrail.error.message"

@@ -1,0 +1,91 @@
+interactions:
+- request:
+    body: '{"input_schema_mapping":{"text":{"source":"Contact me at john.doe@example.com
+      for more details."}},"evaluator_version":null,"evaluator_config":null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '148'
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: POST
+    uri: https://api.traceloop.dev/v2/evaluators/slug/pii-detector/execute-single
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-PII_DETECTOR-fda09a4c-7d05-412c-9a4b-6189631dfd55","stream_url":"/evaluators/events/execute-made-by-traceloop-evaluator-PII_DETECTOR-fda09a4c-7d05-412c-9a4b-6189631dfd55"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '224'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:25 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '0'
+      X-Kong-Request-Id:
+      - ef708b19c36f96126929a63cd09d3248
+      X-Kong-Upstream-Latency:
+      - '21'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - text/event-stream
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Host:
+      - api.traceloop.dev
+      User-Agent:
+      - traceloop-sdk/0.51.1
+    method: GET
+    uri: https://api.traceloop.dev/v2/evaluators/events/execute-made-by-traceloop-evaluator-PII_DETECTOR-fda09a4c-7d05-412c-9a4b-6189631dfd55
+  response:
+    body:
+      string: '{"execution_id":"execute-made-by-traceloop-evaluator-PII_DETECTOR-fda09a4c-7d05-412c-9a4b-6189631dfd55","result":{"evaluator_result":{"has_pii":true}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 28 Jan 2026 11:03:25 GMT
+      Server:
+      - kong/3.9.1
+      Via:
+      - 1.1 kong/3.9.1
+      X-Kong-Proxy-Latency:
+      - '1'
+      X-Kong-Request-Id:
+      - beb2c9547d11ae5eafc9b825f8ba5906
+      X-Kong-Upstream-Latency:
+      - '22'
+    status:
+      code: 200
+      message: OK
+version: 1
