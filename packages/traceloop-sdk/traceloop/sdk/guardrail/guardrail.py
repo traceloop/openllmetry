@@ -174,19 +174,11 @@ class Guardrails:
         tracer,
     ) -> tuple[int, bool, Exception | None]:
         """Run a single guard with its own span and return (index, passed, exception)."""
-        span_name = f"{self._name}.guard" if self._name else "guard"
-        with tracer.start_as_current_span(span_name) as span:
+        guard_name = getattr(guard, "__name__", f"guard_{index}")
+        with tracer.start_as_current_span(f"{guard_name}.guard") as span:
             start_time = time.perf_counter()
             span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "guard")
-
-            # Capture guard name
-            guard_name = getattr(guard, "__name__", f"guard_{index}")
             span.set_attribute(GEN_AI_GUARDRAIL_NAME, guard_name)
-
-            # Capture condition (for evaluator-based guards)
-            condition = getattr(guard, "_condition", None)
-            if condition:
-                span.set_attribute(GEN_AI_GUARDRAIL_INPUT, condition)
 
             # Capture guard input
             try:
