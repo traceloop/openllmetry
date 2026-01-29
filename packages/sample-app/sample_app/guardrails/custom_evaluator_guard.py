@@ -83,7 +83,7 @@ async def medical_advice_quality_check():
                 },
             ],
         )
-        text = completion.choices[0].message.content
+        text = completion.choices[0].message.content or ""
         return GuardedOutput(
             result=text,
             guard_inputs=[MedicalAdviceInput(
