@@ -18,7 +18,13 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from agents.tracing.processors import TracingProcessor
-from .utils import dont_throw, GEN_AI_HANDOFF_FROM_AGENT, GEN_AI_HANDOFF_TO_AGENT
+
+from .utils import (
+    should_send_prompts,
+    dont_throw,
+    GEN_AI_HANDOFF_FROM_AGENT,
+    GEN_AI_HANDOFF_TO_AGENT,
+)
 
 try:
     # Attempt to import once, so that we aren't looking for it repeatedly.
@@ -603,6 +609,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if span in self._otel_spans:
             otel_span = self._otel_spans[span]
             span_data = getattr(span, "span_data", None)
+            trace_content = should_send_prompts()
             if span_data and (
                 type(span_data).__name__ == "ResponseSpanData"
                 or isinstance(span_data, GenerationSpanData)
@@ -613,7 +620,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, "response", None)
-                if response and hasattr(response, "tools") and response.tools:
+                if (
+                    response
+                    and hasattr(response, "tools")
+                    and response.tools
+                ):
                     # Extract tool specifications
                     for i, tool in enumerate(response.tools):
                         if hasattr(tool, "function"):
@@ -666,6 +677,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 _has_realtime_spans
                 and SpeechSpanData
                 and isinstance(span_data, SpeechSpanData)
+                and trace_content
             ):
                 input_text = getattr(span_data, "input", None)
                 if input_text:
@@ -688,6 +700,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 _has_realtime_spans
                 and TranscriptionSpanData
                 and isinstance(span_data, TranscriptionSpanData)
+                and trace_content
             ):
                 input_audio = getattr(span_data, "input", None)
                 if input_audio:
@@ -710,6 +723,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 _has_realtime_spans
                 and SpeechGroupSpanData
                 and isinstance(span_data, SpeechGroupSpanData)
+                and trace_content
             ):
                 input_text = getattr(span_data, "input", None)
                 if input_text:
