@@ -125,7 +125,7 @@ class TestValidateInputsPass:
         """Guard with PIIDetectorInput type annotation should validate correctly."""
 
         guardrails = create_guardrails_with_guards(
-            [EvaluatorMadeByTraceloop.pii_detector().as_guard(condition=Condition.is_false(field="has_pii"))])
+            [EvaluatorMadeByTraceloop.pii_detector().as_guard(condition=Condition.is_false())])
 
         # With Pydantic model instance
         guardrails._validate_inputs([PIIDetectorInput(text="Hello world")])
@@ -137,7 +137,7 @@ class TestValidateInputsPass:
         """Guard using EvaluatorMadeByTraceloop.toxicity_detector() should validate correctly."""
         guardrails = create_guardrails_with_guards([
             EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(field="is_toxic"),
+                condition=Condition.is_false(),
                 timeout_in_sec=30,
             )
         ])
@@ -152,7 +152,7 @@ class TestValidateInputsPass:
         """Guard with AnswerRelevancyInput type annotation should validate correctly."""
         guardrails = create_guardrails_with_guards([
             EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-                condition=Condition.is_false(field="is_relevant"),
+                condition=Condition.is_false(),
                 timeout_in_sec=30,
             )
         ])
@@ -175,11 +175,11 @@ class TestValidateInputsPass:
         """Multiple guards using EvaluatorMadeByTraceloop evaluators."""
         guards = [
             EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(field="has_pii"),
+                condition=Condition.is_false(),
                 timeout_in_sec=30,
             ),
             EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(field="is_toxic"),
+                condition=Condition.is_false(),
                 timeout_in_sec=30,
             ),
         ]
@@ -196,7 +196,7 @@ class TestValidateInputsPass:
         guards = [
             lambda z: z["score"] > 0.5,  # Lambda guard
             EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(field="has_pii"),
+                condition=Condition.is_false(),
                 timeout_in_sec=30,
             ),
         ]
@@ -317,10 +317,10 @@ class TestValidateInputsFail:
         """Traceloop evaluator guards with fewer inputs raises ValueError."""
         guards = [
             EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(field="has_pii"),
+                condition=Condition.is_false(),
             ),
             EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(field="is_toxic"),
+                condition=Condition.is_false(),
             ),
         ]
         guardrails = create_guardrails_with_guards(guards)
@@ -336,7 +336,7 @@ class TestValidateInputsFail:
         """Traceloop evaluator guards with more inputs raises ValueError."""
         guards = [
             EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(field="has_pii"),
+                condition=Condition.is_false(),
             ),
         ]
         guardrails = create_guardrails_with_guards(guards)
@@ -359,7 +359,7 @@ class TestValidateInputsFail:
 
         guards = [
             EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(field="is_toxic"),
+                condition=Condition.is_false(),
             ),
             typed_guard,  # This has type annotation
         ]

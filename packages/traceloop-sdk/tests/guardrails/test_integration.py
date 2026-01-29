@@ -71,7 +71,7 @@ class TestPIIDetectorGuard:
     ):
         """PII detector guard passes when text has no PII."""
         guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false("has_pii")
+            condition=Condition.is_false()
         )
 
         g = guardrails.create(
@@ -94,7 +94,7 @@ class TestPIIDetectorGuard:
     ):
         """PII detector guard fails when text contains email."""
         guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false("has_pii")
+            condition=Condition.is_false()
         )
 
         g = guardrails.create(
@@ -121,7 +121,7 @@ class TestToxicityDetectorGuard:
     ):
         """Toxicity detector guard passes for friendly text."""
         guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true("is_safe")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
@@ -144,7 +144,7 @@ class TestToxicityDetectorGuard:
     ):
         """Toxicity detector guard fails for toxic text."""
         guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true("is_safe")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
@@ -171,7 +171,7 @@ class TestAnswerRelevancyGuard:
     ):
         """Answer relevancy guard passes for relevant answer."""
         guard = EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-            condition=Condition.is_true("is_relevant")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
@@ -197,7 +197,7 @@ class TestAnswerRelevancyGuard:
     ):
         """Answer relevancy guard fails for irrelevant answer."""
         guard = EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-            condition=Condition.is_true("is_relevant")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
@@ -227,10 +227,10 @@ class TestMultipleGuardsValidation:
     ):
         """Multiple guards all pass validation."""
         pii_guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false("has_pii")
+            condition=Condition.is_false()
         )
         toxicity_guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true("is_safe")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
@@ -255,10 +255,10 @@ class TestMultipleGuardsValidation:
     ):
         """Multiple guards where one fails validation."""
         pii_guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false("has_pii")
+            condition=Condition.is_false()
         )
         toxicity_guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true("is_safe")
+            condition=Condition.is_true()
         )
 
         g = guardrails.create(
