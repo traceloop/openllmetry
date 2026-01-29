@@ -117,7 +117,7 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            return _get_field(result, field, None) == value
+            return bool(_get_field(result, field, None) == value)
 
         return check
 
@@ -135,7 +135,7 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            return _get_field(result, field, 0) > value
+            return bool(_get_field(result, field, 0) > value)
 
         return check
 
@@ -153,7 +153,7 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            return _get_field(result, field, float("inf")) < value
+            return bool(_get_field(result, field, float("inf")) < value)
 
         return check
 
@@ -173,7 +173,7 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            return _get_field(result, field, 0) >= value
+            return bool(_get_field(result, field, 0) >= value)
 
         return check
 
@@ -191,6 +191,6 @@ class Condition:
         """
 
         def check(result: Any) -> bool:
-            return _get_field(result, field, float("inf")) <= value
+            return bool(_get_field(result, field, float("inf")) <= value)
 
         return check

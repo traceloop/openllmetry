@@ -9,6 +9,7 @@ from typing import Callable, Awaitable, cast, Optional
 
 import httpx
 from pydantic import TypeAdapter
+from opentelemetry.trace import Tracer, Span
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -60,7 +61,7 @@ class Guardrails:
     _evaluator: Evaluator
     _async_http: httpx.AsyncClient
     _guards: list[Guard]
-    _on_failure: OnFailureHandler
+    _on_failure: Optional[OnFailureHandler]
     _run_all: bool
     _parallel: bool
     _name: str
@@ -171,7 +172,7 @@ class Guardrails:
         guard: Guard,
         guard_input: GuardInput,
         index: int,
-        tracer,
+        tracer: Tracer,
     ) -> tuple[int, bool, Exception | None]:
         """Run a single guard with its own span and return (index, passed, exception)."""
         guard_name = getattr(guard, "__name__", f"guard_{index}")
@@ -210,7 +211,7 @@ class Guardrails:
     async def _run_guards_parallel(
         self,
         guard_inputs: list[GuardInput],
-        tracer,
+        tracer: Tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run all guards in parallel."""
         tasks = [
@@ -222,7 +223,7 @@ class Guardrails:
     async def _run_guards_sequential(
         self,
         guard_inputs: list[GuardInput],
-        tracer,
+        tracer: Tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run guards sequentially, optionally stopping at first failure."""
         results = []
@@ -240,8 +241,8 @@ class Guardrails:
     async def _execute_guards_with_tracing(
         self,
         guard_inputs: list[GuardInput],
-        tracer,
-        span=None,
+        tracer: Tracer,
+        span: Optional[Span] = None,
         start_time: Optional[float] = None,
     ) -> tuple[bool, list[int]]:
         """

@@ -66,4 +66,4 @@ class ExecutionResponse(BaseModel):
             pii = result.typed_result(PIIDetectorResponse)
             print(pii.has_pii)  # IDE autocomplete works!
         """
-        return model(**self.result)
+        return model(**self.result.evaluator_result)

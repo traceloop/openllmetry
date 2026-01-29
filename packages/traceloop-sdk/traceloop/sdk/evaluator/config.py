@@ -91,7 +91,7 @@ class EvaluatorDetails(BaseModel):
         evaluator_version = self.version
         evaluator_config = self.config
 
-        async def guard_fn(input_data) -> bool:
+        async def guard_fn(input_data: Any) -> bool:
             # Lazy import to avoid circular dependencies
             from traceloop.sdk import Traceloop
             from traceloop.sdk.evaluator.evaluator import Evaluator

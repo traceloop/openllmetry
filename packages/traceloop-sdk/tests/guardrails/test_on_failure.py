@@ -159,7 +159,7 @@ class TestOnFailureLog:
         assert result == {"data": "complex result", "nested": {"value": 42}}
 
     def test_log_includes_guard_inputs_in_message(self, caplog):
-        """Test that log message includes guard_inputs."""
+        """Test that log message includes guard_inputs count."""
         handler = OnFailure.log(message="Security check failed")
         output = GuardedOutput(
             result="result",
@@ -170,10 +170,10 @@ class TestOnFailureLog:
             handler(output)
 
         assert "Security check failed" in caplog.text
-        assert "guard_inputs" in caplog.text
-        # Check that guard_inputs content is logged
+        assert "guard_inputs_count" in caplog.text
+        # Check that guard_inputs count is logged (not content for privacy)
         log_message = caplog.records[0].getMessage()
-        assert "ip" in log_message or "192.168.1.1" in log_message
+        assert "guard_inputs_count=1" in log_message
 
 
 class TestOnFailureNoop:
