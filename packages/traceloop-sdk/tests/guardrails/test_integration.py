@@ -11,6 +11,7 @@ To playback without API key:
     uv run pytest tests/guardrails/test_integration.py -v
 """
 
+import os
 import pytest
 from traceloop.sdk import Traceloop
 from traceloop.sdk.guardrail import Guardrails, OnFailure
@@ -25,11 +26,33 @@ from traceloop.sdk.generated.evaluators.request import (
 
 @pytest.fixture
 def traceloop_client(async_http_client):
-    """Initialize Traceloop client for tests."""
-    return Traceloop.init(
+    """Initialize Traceloop client for tests.
+
+    Uses environment variables for recording, fake values for VCR playback.
+    """
+    # Save the original client to restore later (Traceloop is a singleton)
+    original_client = getattr(Traceloop, '_Traceloop__client', None)
+
+    # Reset the client to allow re-initialization
+    Traceloop._Traceloop__client = None
+
+    api_key = os.environ.get("TRACELOOP_API_KEY", "fake-key-for-vcr-playback")
+    base_url = os.environ.get(
+        "TRACELOOP_BASE_URL",
+        "https://api.traceloop.dev"
+    )
+
+    client = Traceloop.init(
         app_name="guardrail-integration-tests",
+        api_key=api_key,
+        api_endpoint=base_url,
         disable_batch=True,
     )
+
+    yield client
+
+    # Restore the original client
+    Traceloop._Traceloop__client = original_client
 
 
 @pytest.fixture

@@ -26,7 +26,7 @@ async def async_http_client():
     api_key = os.environ.get("TRACELOOP_API_KEY", "fake-key-for-vcr-playback")
     base_url = os.environ.get(
         "TRACELOOP_BASE_URL",
-        "https://api-staging.traceloop.com"
+        "https://api.traceloop.dev"
     )
 
     client = httpx.AsyncClient(
