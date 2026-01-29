@@ -1,5 +1,5 @@
-from typing import Dict, Any, Optional, List, Callable, Awaitable
-from pydantic import BaseModel
+from typing import Dict, Any, Optional, List, Callable, Awaitable, Type
+from pydantic import BaseModel, ConfigDict
 
 
 class EvaluatorDetails(BaseModel):
@@ -18,9 +18,13 @@ class EvaluatorDetails(BaseModel):
         >>> EvaluatorDetails(slug="my-custom-evaluator", version="v2")
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     slug: str
+    condition_field: Optional[str] = None
     version: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
+    output_schema: Optional[Type[BaseModel]] = None
     required_input_fields: Optional[List[str]] = None
 
     def as_guard(
@@ -117,7 +121,12 @@ class EvaluatorDetails(BaseModel):
                 timeout_in_sec=timeout_in_sec,
             )
 
-            condition_result = condition(eval_response.result.evaluator_result)
+            if self.condition_field:
+                result_to_validate = eval_response.result.evaluator_result[self.condition_field]
+            else:
+                result_to_validate = eval_response.result.evaluator_result
+
+            condition_result = condition(result_to_validate)
             return condition_result
 
         # Set the function name to the evaluator slug for tracing

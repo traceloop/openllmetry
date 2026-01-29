@@ -94,11 +94,12 @@ async def medical_advice_quality_check():
     # Configure custom evaluator for medical advice detection
     medical_evaluator = EvaluatorDetails(
         slug="medical-advice-given",
+        condition_field="pass",
     )
 
     guardrail = client.guardrails.create(
         guards=[medical_evaluator.as_guard(
-            condition=Condition.is_true(field="pass")
+            condition=Condition.is_true()
         )],
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
@@ -144,11 +145,12 @@ async def diagnosis_request_blocker():
         )
     diagnosis_blocker = EvaluatorDetails(
         slug="diagnosis-blocker",
+        condition_field="pass",
     )
 
     guardrail = client.guardrails.create(
         guards=[diagnosis_blocker.as_guard(
-            condition=Condition.is_true(field="pass")
+            condition=Condition.is_true()
         )],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "

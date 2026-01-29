@@ -148,7 +148,7 @@ async def mixed_guard_types_example():
     guardrail = client.guardrails.create(
         guards=[
             EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7).as_guard(
-                condition=Condition.is_false(field="has_pii"),
+                condition=Condition.is_false(),
             ),
             business_rules_guard,
         ],

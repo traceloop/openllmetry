@@ -9,6 +9,43 @@ DO NOT EDIT MANUALLY - Regenerate with:
 from __future__ import annotations
 
 from ...evaluator.config import EvaluatorDetails
+from traceloop.sdk.generated.evaluators.response import (
+    AgentEfficiencyResponse,
+    AgentFlowQualityResponse,
+    AgentGoalAccuracyResponse,
+    AgentGoalCompletenessResponse,
+    AgentToolErrorDetectorResponse,
+    AgentToolTrajectoryResponse,
+    AnswerCompletenessResponse,
+    AnswerCorrectnessResponse,
+    AnswerRelevancyResponse,
+    CharCountRatioResponse,
+    CharCountResponse,
+    ContextRelevanceResponse,
+    ConversationQualityResponse,
+    FaithfulnessResponse,
+    HtmlComparisonResponse,
+    InstructionAdherenceResponse,
+    IntentChangeResponse,
+    JSONValidatorResponse,
+    PerplexityResponse,
+    PIIDetectorResponse,
+    PlaceholderRegexResponse,
+    ProfanityDetectorResponse,
+    PromptInjectionResponse,
+    PromptPerplexityResponse,
+    RegexValidatorResponse,
+    SQLValidatorResponse,
+    SecretsDetectorResponse,
+    SemanticSimilarityResponse,
+    SexismDetectorResponse,
+    ToneDetectionResponse,
+    TopicAdherenceResponse,
+    ToxicityDetectorResponse,
+    UncertaintyDetectorResponse,
+    WordCountRatioResponse,
+    WordCountResponse,
+)
 
 
 class EvaluatorMadeByTraceloop:
@@ -36,6 +73,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="agent-efficiency",
+            condition_field="task_completion_score",
+            output_schema=AgentEfficiencyResponse,
             required_input_fields=['trajectory_completions', 'trajectory_prompts'],
         )
 
@@ -58,6 +97,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="agent-flow-quality",
+            condition_field="success",
+            output_schema=AgentFlowQualityResponse,
             config=config if config else None,
             required_input_fields=['trajectory_completions', 'trajectory_prompts'],
         )
@@ -70,6 +111,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="agent-goal-accuracy",
+            condition_field="accuracy_score",
+            output_schema=AgentGoalAccuracyResponse,
             required_input_fields=['completion', 'question', 'reference'],
         )
 
@@ -90,6 +133,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="agent-goal-completeness",
+            condition_field="success",
+            output_schema=AgentGoalCompletenessResponse,
             config=config if config else None,
             required_input_fields=['trajectory_completions', 'trajectory_prompts'],
         )
@@ -102,6 +147,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="agent-tool-error-detector",
+            condition_field="success",
+            output_schema=AgentToolErrorDetectorResponse,
             required_input_fields=['tool_input', 'tool_output'],
         )
 
@@ -133,6 +180,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="agent-tool-trajectory",
+            condition_field="success",
+            output_schema=AgentToolTrajectoryResponse,
             config=config if config else None,
             required_input_fields=['executed_tool_calls', 'expected_tool_calls'],
         )
@@ -145,6 +194,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="answer-completeness",
+            condition_field="answer_completeness_score",
+            output_schema=AnswerCompletenessResponse,
             required_input_fields=['completion', 'context', 'question'],
         )
 
@@ -156,6 +207,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="answer-correctness",
+            condition_field="correctness_score",
+            output_schema=AnswerCorrectnessResponse,
             required_input_fields=['completion', 'ground_truth', 'question'],
         )
 
@@ -167,6 +220,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="answer-relevancy",
+            condition_field="is_relevant",
+            output_schema=AnswerRelevancyResponse,
             required_input_fields=['answer', 'question'],
         )
 
@@ -178,6 +233,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="char-count",
+            condition_field="char_count",
+            output_schema=CharCountResponse,
             required_input_fields=['text'],
         )
 
@@ -189,6 +246,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="char-count-ratio",
+            condition_field="char_ratio",
+            output_schema=CharCountRatioResponse,
             required_input_fields=['denominator_text', 'numerator_text'],
         )
 
@@ -209,6 +268,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="context-relevance",
+            condition_field="relevance_score",
+            output_schema=ContextRelevanceResponse,
             config=config if config else None,
             required_input_fields=['context', 'query'],
         )
@@ -221,6 +282,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="conversation-quality",
+            condition_field="conversation_quality_score",
+            output_schema=ConversationQualityResponse,
             required_input_fields=['completions', 'prompts'],
         )
 
@@ -232,6 +295,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="faithfulness",
+            condition_field="is_faithful",
+            output_schema=FaithfulnessResponse,
             required_input_fields=['completion', 'context', 'question'],
         )
 
@@ -243,6 +308,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="html-comparison",
+            condition_field="similarity_score",
+            output_schema=HtmlComparisonResponse,
             required_input_fields=['html1', 'html2'],
         )
 
@@ -254,6 +321,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="instruction-adherence",
+            condition_field="instruction_adherence_score",
+            output_schema=InstructionAdherenceResponse,
             required_input_fields=['instructions', 'response'],
         )
 
@@ -265,6 +334,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="intent-change",
+            condition_field="success",
+            output_schema=IntentChangeResponse,
             required_input_fields=['completions', 'prompts'],
         )
 
@@ -290,6 +361,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="json-validator",
+            condition_field="is_valid_json",
+            output_schema=JSONValidatorResponse,
             config=config if config else None,
             required_input_fields=['text'],
         )
@@ -302,6 +375,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="perplexity",
+            condition_field="perplexity_score",
+            output_schema=PerplexityResponse,
             required_input_fields=['logprobs'],
         )
 
@@ -322,6 +397,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="pii-detector",
+            condition_field="has_pii",
+            output_schema=PIIDetectorResponse,
             config=config if config else None,
             required_input_fields=['text'],
         )
@@ -354,6 +431,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="placeholder-regex",
+            condition_field="is_valid_regex",
+            output_schema=PlaceholderRegexResponse,
             config=config if config else None,
             required_input_fields=['placeholder_value', 'text'],
         )
@@ -366,6 +445,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="profanity-detector",
+            condition_field="is_safe",
+            output_schema=ProfanityDetectorResponse,
             required_input_fields=['text'],
         )
 
@@ -386,6 +467,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="prompt-injection",
+            condition_field="has_injection",
+            output_schema=PromptInjectionResponse,
             config=config if config else None,
             required_input_fields=['prompt'],
         )
@@ -398,6 +481,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="prompt-perplexity",
+            condition_field="perplexity_score",
+            output_schema=PromptPerplexityResponse,
             required_input_fields=['prompt'],
         )
 
@@ -432,6 +517,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="regex-validator",
+            condition_field="is_valid_regex",
+            output_schema=RegexValidatorResponse,
             config=config if config else None,
             required_input_fields=['text'],
         )
@@ -444,6 +531,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="secrets-detector",
+            condition_field="has_secret",
+            output_schema=SecretsDetectorResponse,
             required_input_fields=['text'],
         )
 
@@ -455,6 +544,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="semantic-similarity",
+            condition_field="similarity_score",
+            output_schema=SemanticSimilarityResponse,
             required_input_fields=['completion', 'reference'],
         )
 
@@ -475,6 +566,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="sexism-detector",
+            condition_field="is_safe",
+            output_schema=SexismDetectorResponse,
             config=config if config else None,
             required_input_fields=['text'],
         )
@@ -487,6 +580,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="sql-validator",
+            condition_field="is_valid_sql",
+            output_schema=SQLValidatorResponse,
             required_input_fields=['text'],
         )
 
@@ -498,6 +593,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="tone-detection",
+            condition_field="tone",
+            output_schema=ToneDetectionResponse,
             required_input_fields=['text'],
         )
 
@@ -509,6 +606,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="topic-adherence",
+            condition_field="adherence_score",
+            output_schema=TopicAdherenceResponse,
             required_input_fields=['completion', 'question', 'reference_topics'],
         )
 
@@ -529,6 +628,8 @@ class EvaluatorMadeByTraceloop:
         }
         return EvaluatorDetails(
             slug="toxicity-detector",
+            condition_field="is_safe",
+            output_schema=ToxicityDetectorResponse,
             config=config if config else None,
             required_input_fields=['text'],
         )
@@ -541,6 +642,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="uncertainty-detector",
+            condition_field="uncertainty",
+            output_schema=UncertaintyDetectorResponse,
             required_input_fields=['prompt'],
         )
 
@@ -552,6 +655,8 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="word-count",
+            condition_field="word_count",
+            output_schema=WordCountResponse,
             required_input_fields=['text'],
         )
 
@@ -563,5 +668,7 @@ class EvaluatorMadeByTraceloop:
         """
         return EvaluatorDetails(
             slug="word-count-ratio",
+            condition_field="word_ratio",
+            output_schema=WordCountRatioResponse,
             required_input_fields=['denominator_text', 'numerator_text'],
         )

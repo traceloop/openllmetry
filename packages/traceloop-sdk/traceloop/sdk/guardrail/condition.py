@@ -1,102 +1,64 @@
 """
 Built-in conditions for evaluating guard results.
 
-Conditions are functions that take an evaluator result and return a boolean
+Conditions are functions that take an evaluator result value and return a boolean
 indicating whether the guard should pass (True) or fail (False).
+
+The condition_field is extracted by the evaluator's as_guard method before
+passing to these conditions, so conditions receive the field value directly.
 """
 from typing import Any, Callable
-
-
-def _get_field(result: Any, field: str, default: Any = None) -> Any:
-    """
-    Get a field from result, supporting both dict and object attribute access.
-
-    Args:
-        result: The result object or dict
-        field: The field name to access
-        default: Default value if field not found
-
-    Returns:
-        The field value, or default if not found
-    """
-    # Try dict access first
-    if isinstance(result, dict):
-        return result.get(field, default)
-    # Fall back to attribute access
-    return getattr(result, field, default)
 
 
 class Condition:
     """Built-in conditions for common evaluator result patterns."""
 
     @staticmethod
-    def success() -> Callable[[Any], bool]:
+    def is_true() -> Callable[[Any], bool]:
         """
-        Pass if result.success is True.
+        Pass if value is True.
 
         Example:
             guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.success()
+                condition=Condition.is_true()
             )
         """
 
-        def check(result: Any) -> bool:
-            return _get_field(result, "success", False) is True
+        def check(value: Any) -> bool:
+            return value is True
 
         return check
 
     @staticmethod
-    def is_true(field: str) -> Callable[[Any], bool]:
+    def is_false() -> Callable[[Any], bool]:
         """
-        Pass if specified field is True.
-
-        Args:
-            field: The attribute name to check
+        Pass if value is False.
 
         Example:
-            condition=Condition.is_true("matched")
+            guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
+                condition=Condition.is_false()
+            )
         """
 
-        def check(result: Any) -> bool:
-            return _get_field(result, field, None) is True
+        def check(value: Any) -> bool:
+            return value is False
 
         return check
 
     @staticmethod
-    def is_false(field: str) -> Callable[[Any], bool]:
+    def between(min_val: float, max_val: float) -> Callable[[Any], bool]:
         """
-        Pass if specified field is False.
-
-        Args:
-            field: The attribute name to check
-
-        Example:
-            condition=Condition.is_false("contains_pii")
-        """
-
-        def check(result: Any) -> bool:
-            return _get_field(result, field, None) is False
-
-        return check
-
-    @staticmethod
-    def between(
-        min_val: float, max_val: float, field: str = "score"
-    ) -> Callable[[Any], bool]:
-        """
-        Pass if min_val <= field <= max_val.
+        Pass if min_val <= value <= max_val.
 
         Args:
             min_val: Minimum acceptable value (inclusive)
             max_val: Maximum acceptable value (inclusive)
-            field: The attribute name to check (default: "score")
 
         Example:
-            condition=Condition.between(50, 200, field="count")
+            condition=Condition.between(50, 200)
         """
 
-        def check(result: Any) -> bool:
-            value = _get_field(result, field, None)
+        def check(value: Any) -> bool:
             if value is None:
                 return False
             return bool(min_val <= value <= max_val)
@@ -104,93 +66,94 @@ class Condition:
         return check
 
     @staticmethod
-    def equals(value: Any, field: str) -> Callable[[Any], bool]:
+    def equals(expected: Any) -> Callable[[Any], bool]:
         """
-        Pass if field == value.
+        Pass if value == expected.
 
         Args:
-            value: The expected value
-            field: The attribute name to check
+            expected: The expected value
 
         Example:
-            condition=Condition.equals("approved", field="status")
+            condition=Condition.equals("approved")
         """
 
-        def check(result: Any) -> bool:
-            return bool(_get_field(result, field, None) == value)
+        def check(value: Any) -> bool:
+            return bool(value == expected)
 
         return check
 
     @staticmethod
-    def greater_than(value: float, field: str = "score") -> Callable[[Any], bool]:
+    def greater_than(threshold: float) -> Callable[[Any], bool]:
         """
-        Pass if field > value.
+        Pass if value > threshold.
 
         Args:
-            value: The threshold (exclusive)
-            field: The attribute name to check (default: "score")
+            threshold: The threshold (exclusive)
 
         Example:
-            condition=Condition.greater_than(10, field="count")
+            condition=Condition.greater_than(0.8)
         """
 
-        def check(result: Any) -> bool:
-            return bool(_get_field(result, field, 0) > value)
+        def check(value: Any) -> bool:
+            if value is None:
+                return False
+            return bool(value > threshold)
 
         return check
 
     @staticmethod
-    def less_than(value: float, field: str = "score") -> Callable[[Any], bool]:
+    def less_than(threshold: float) -> Callable[[Any], bool]:
         """
-        Pass if field < value.
+        Pass if value < threshold.
 
         Args:
-            value: The threshold (exclusive)
-            field: The attribute name to check (default: "score")
+            threshold: The threshold (exclusive)
 
         Example:
-            condition=Condition.less_than(1000, field="latency_ms")
+            condition=Condition.less_than(0.5)
         """
 
-        def check(result: Any) -> bool:
-            return bool(_get_field(result, field, float("inf")) < value)
+        def check(value: Any) -> bool:
+            if value is None:
+                return False
+            return bool(value < threshold)
 
         return check
 
     @staticmethod
-    def greater_than_or_equal(
-        value: float, field: str = "score"
-    ) -> Callable[[Any], bool]:
+    def greater_than_or_equal(threshold: float) -> Callable[[Any], bool]:
         """
-        Pass if field >= value.
+        Pass if value >= threshold.
 
         Args:
-            value: The threshold (inclusive)
-            field: The attribute name to check (default: "score")
+            threshold: The threshold (inclusive)
 
         Example:
-            condition=Condition.greater_than_or_equal(0.8, field="confidence")
+            condition=Condition.greater_than_or_equal(0.8)
         """
 
-        def check(result: Any) -> bool:
-            return bool(_get_field(result, field, 0) >= value)
+        def check(value: Any) -> bool:
+            if value is None:
+                return False
+            return bool(value >= threshold)
 
         return check
 
     @staticmethod
-    def less_than_or_equal(value: float, field: str = "score") -> Callable[[Any], bool]:
+    def less_than_or_equal(threshold: float) -> Callable[[Any], bool]:
         """
-        Pass if field <= value.
+        Pass if value <= threshold.
 
         Args:
-            value: The threshold (inclusive)
-            field: The attribute name to check (default: "score")
+            threshold: The threshold (inclusive)
 
         Example:
-            condition=Condition.less_than_or_equal(0.5, field="toxicity")
+            condition=Condition.less_than_or_equal(0.5)
         """
 
-        def check(result: Any) -> bool:
-            return bool(_get_field(result, field, float("inf")) <= value)
+        def check(value: Any) -> bool:
+            if value is None:
+                return False
+            return bool(value <= threshold)
 
         return check

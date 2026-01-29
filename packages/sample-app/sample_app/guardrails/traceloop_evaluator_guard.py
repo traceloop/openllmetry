@@ -64,7 +64,7 @@ async def pii_guard_example():
     guardrail = client.guardrails.create(
         guards=[EvaluatorMadeByTraceloop.pii_detector(
             probability_threshold=0.7
-        ).as_guard(condition=Condition.is_false(field="has_pii"), timeout_in_sec=45)],
+        ).as_guard(condition=Condition.is_false(), timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
     result = await guardrail.run(generate_customer_response)
@@ -96,7 +96,7 @@ async def toxicity_guard_example():
 
     guardrail = client.guardrails.create(
         guards=[EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
-            condition=Condition.equals("pass", field="is_safe")
+            condition=Condition.is_true()
         )],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
@@ -167,7 +167,7 @@ async def agent_trajectory_example():
 
     guardrail = client.guardrails.create(
         guards=[EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.7).as_guard(
-            condition=Condition.greater_than_or_equal(0.8, field="score")
+            condition=Condition.is_true()
         )],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
