@@ -33,7 +33,7 @@ npx nx affected -t test
 At the package directory, you can run `nx` without specifying the package.
 ```shell
 cd packages/opentelemetry-instrumentation-openai
-npx nx run install
-npx nx run lint
-npx nx run test
+npx nx install
+npx nx lint
+npx nx test
 ```
