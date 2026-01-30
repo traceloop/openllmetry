@@ -3,6 +3,7 @@ from traceloop.sdk.client import Client
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.annotation.user_feedback import UserFeedback
 from traceloop.sdk.datasets.datasets import Datasets
+from traceloop.sdk.experiment import Experiment
 
 
 def test_client_initialization():
@@ -70,3 +71,15 @@ def test_datasets_deprecation_warnings():
         client.datasets = Datasets(client._http)
     with pytest.deprecated_call():
         del client.datasets
+
+def test_client_lazy_loads_experiment():
+    """Test cilent.experiment is only initialized lazy."""
+    client = Client(api_key="test-key", app_name="test-app")
+    assert client._experiment is None  # Initial state is None
+
+    experiment = client.experiment
+
+    assert isinstance(experiment, Experiment)
+    assert client._experiment is not None  # Then it's loaded
+    assert client.experiment is experiment  # And always returns same instance
+

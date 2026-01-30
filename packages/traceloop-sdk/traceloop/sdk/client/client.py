@@ -3,7 +3,6 @@ import os
 from deprecated import deprecated
 
 from traceloop.sdk.annotation.user_feedback import UserFeedback
-from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
 from traceloop.sdk.associations.associations import Associations
@@ -25,7 +24,6 @@ class Client:
     api_endpoint: str
     api_key: str
     user_feedback: UserFeedback
-    experiment: Experiment
     associations: Associations
     guardrails: Guardrails
     _http: HTTPClient
@@ -65,15 +63,22 @@ class Client:
         )
         self.user_feedback = UserFeedback(self._http, self.app_name)
         self._datasets = None
-        experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
+        self._experiment = None
         # TODO: Fix type - Experiment constructor should accept Optional[str]
-        self.experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]
         self.associations = Associations()
         self.guardrails = Guardrails(self._async_http)
 
     @property
-    @deprecated(
+    def experiment(self):
+        # Lazy load only if accessed.
+        if self._experiment is None:
+            from traceloop.sdk.experiment.experiment import Experiment
+            experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
+            self._experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]
+        return self._experiment
 
+    @property
+    @deprecated(
         reason="datasets as client attribute is deprecated. Use a dedicated instance "
                "of Datasets from traceloop.sdk.datasets"
     )
