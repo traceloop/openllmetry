@@ -1,8 +1,8 @@
 import sys
 import os
+from deprecated import deprecated
 
 from traceloop.sdk.annotation.user_feedback import UserFeedback
-from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
@@ -25,7 +25,6 @@ class Client:
     api_endpoint: str
     api_key: str
     user_feedback: UserFeedback
-    datasets: Datasets
     experiment: Experiment
     associations: Associations
     guardrails: Guardrails
@@ -65,9 +64,38 @@ class Client:
             timeout=httpx.Timeout(120.0),
         )
         self.user_feedback = UserFeedback(self._http, self.app_name)
-        self.datasets = Datasets(self._http)
+        self._datasets = None
         experiment_slug = os.getenv("TRACELOOP_EXP_SLUG")
         # TODO: Fix type - Experiment constructor should accept Optional[str]
         self.experiment = Experiment(self._http, self._async_http, experiment_slug)  # type: ignore[arg-type]
         self.associations = Associations()
         self.guardrails = Guardrails(self._async_http)
+
+    @property
+    @deprecated(
+
+        reason="datasets as client attribute is deprecated. Use a dedicated instance "
+               "of Datasets from traceloop.sdk.datasets"
+    )
+    def datasets(self):
+        # Lazy load only if accessed.
+        if self._datasets is None:
+            from traceloop.sdk.datasets.datasets import Datasets
+            self._datasets = Datasets(self._http)
+        return self._datasets
+
+    @datasets.setter
+    @deprecated(
+        reason="datasets as client attribute is deprecated. Use a dedicated instance "
+               "of Datasets from traceloop.sdk.datasets"
+    )
+    def datasets(self, datasets: "Datasets"):
+        self._datasets = datasets
+
+    @datasets.deleter
+    @deprecated(
+        reason="datasets as client attribute is deprecated. Use a dedicated instance "
+               "of Datasets from traceloop.sdk.datasets"
+    )
+    def datasets(self):
+        self._datasets = None
