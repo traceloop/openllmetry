@@ -1,0 +1,52 @@
+interactions:
+- request:
+    body: '{"value": [{"id": "test-1", "name": "Test Hotel 1", "description": "A test
+      hotel", "rating": 4.0, "@search.action": "upload"}, {"id": "test-2", "name":
+      "Test Hotel 2", "description": "Another test hotel", "rating": 3.5, "@search.action":
+      "upload"}]}'
+    headers:
+      Accept:
+      - application/json;odata.metadata=none
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '249'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - azsdk-python-search-documents/11.6.0 Python/3.12.8 (macOS-26.1-arm64-arm-64bit)
+      x-ms-client-request-id:
+      - aba0e2b4-da0e-11f0-aeda-e28538e5e7a1
+    method: POST
+    uri: https://traceloop-otel-os.search.windows.net/indexes('otel-integration-test')/docs/search.index?api-version=2025-09-01
+  response:
+    body:
+      string: '{"value":[{"key":"test-1","status":true,"errorMessage":null,"statusCode":201},{"key":"test-2","status":true,"errorMessage":null,"statusCode":201}]}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=none; odata.streaming=true; charset=utf-8
+      Date:
+      - Mon, 15 Dec 2025 23:34:59 GMT
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '44'
+      request-id:
+      - aba0e2b4-da0e-11f0-aeda-e28538e5e7a1
+    status:
+      code: 200
+      message: OK
+version: 1

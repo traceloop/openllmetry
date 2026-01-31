@@ -1,0 +1,47 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - azsdk-python-search-documents/11.6.0 Python/3.12.8 (macOS-26.1-arm64-arm-64bit)
+      x-ms-client-request-id:
+      - b0e20b2c-da0e-11f0-aeda-e28538e5e7a1
+    method: GET
+    uri: https://traceloop-otel-os.search.windows.net/indexes('otel-integration-test')?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#indexes/$entity","@odata.etag":"\"0x8DE3C3294F42A52\"","name":"otel-integration-test","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":false,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"name","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"description","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"rating","type":"Edm.Double","searchable":false,"filterable":true,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[{"name":"sg","searchMode":"analyzingInfixMatching","sourceFields":["name"]}],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Mon, 15 Dec 2025 23:35:08 GMT
+      ETag:
+      - '"0x8DE3C3294F42A52"'
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '18'
+      request-id:
+      - b0e20b2c-da0e-11f0-aeda-e28538e5e7a1
+    status:
+      code: 200
+      message: OK
+version: 1
