@@ -1691,3 +1691,500 @@ class TestSyncWrapDispatch:
         assert spans[0].attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
 
 
+class TestAttributeFunctionEdgeCases:
+    """Tests for edge cases in individual attribute setter functions."""
+
+    def test_set_span_attribute_skips_none(self, exporter):
+        """_set_span_attribute does not set attribute when value is None."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_span_attribute
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_span_attribute(span, "test.attr", None)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get("test.attr") is None
+
+    def test_set_span_attribute_skips_empty_string(self, exporter):
+        """_set_span_attribute does not set attribute when value is empty string."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_span_attribute
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_span_attribute(span, "test.attr", "")
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get("test.attr") is None
+
+    def test_set_span_attribute_sets_valid_value(self, exporter):
+        """_set_span_attribute sets attribute when value is valid."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_span_attribute
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_span_attribute(span, "test.attr", "hello")
+            _set_span_attribute(span, "test.int", 42)
+            _set_span_attribute(span, "test.bool", True)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get("test.attr") == "hello"
+        assert spans[0].attributes.get("test.int") == 42
+        assert spans[0].attributes.get("test.bool") is True
+
+    def test_index_name_from_instance(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_name_attribute
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            instance = MagicMock()
+            instance._index_name = "hotels"
+            _set_index_name_attribute(span, instance, (), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "hotels"
+
+    def test_index_name_not_present(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_name_attribute
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            instance = MagicMock(spec=[])
+            _set_index_name_attribute(span, instance, (), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) is None
+
+    def test_search_text_from_positional_arg(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_search_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_search_attributes(span, ("positional query",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "positional query"
+
+    def test_search_query_type_string(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_search_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_search_attributes(span, (), {"query_type": "full"})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_QUERY_TYPE) == "full"
+
+    def test_search_top_sets_vector_db_top_k(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_search_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_search_attributes(span, (), {"top": 10})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_K) == 10
+
+    def test_get_document_key_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_get_document_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_get_document_attributes(span, ("key-123",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_KEY) == "key-123"
+
+    def test_document_batch_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_document_batch_attributes(span, ([{"id": "1"}, {"id": "2"}],), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
+
+    def test_document_batch_from_generator(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
+        from opentelemetry import trace
+
+        def doc_generator():
+            yield {"id": "1"}
+            yield {"id": "2"}
+            yield {"id": "3"}
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_document_batch_attributes(span, (), {"documents": doc_generator()})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 3
+
+    def test_document_batch_no_documents(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_document_batch_attributes(span, (), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) is None
+
+    def test_index_documents_batch_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_attributes
+        from opentelemetry import trace
+
+        batch = MagicMock()
+        batch.actions = [{"id": "1"}]
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_documents_attributes(span, (batch,), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 1
+
+    def test_index_documents_no_batch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_documents_attributes(span, (), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) is None
+
+    def test_suggestion_attrs_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_suggestion_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_suggestion_attributes(span, ("hel", "sg1"), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "hel"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME) == "sg1"
+
+    def test_index_management_delete_with_object(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            index_obj = MagicMock()
+            index_obj.name = "obj-index"
+            _set_index_management_attributes(span, "delete_index", (), {"index": index_obj})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "obj-index"
+
+    def test_index_management_get_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_management_attributes(span, "get_index", ("pos-index",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "pos-index"
+
+    def test_index_management_create_no_index(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_management_attributes(span, "create_index", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) is None
+
+    def test_analyze_text_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_analyze_text_attributes
+        from opentelemetry import trace
+
+        req = MagicMock()
+        req.analyzer_name = "en.lucene"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_analyze_text_attributes(span, ("idx", req), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "idx"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_ANALYZER_NAME) == "en.lucene"
+
+    def test_analyze_text_enum_analyzer(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_analyze_text_attributes
+        from opentelemetry import trace
+
+        enum_analyzer = MagicMock()
+        enum_analyzer.value = "standard.lucene"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_analyze_text_attributes(span, (), {"index_name": "idx", "analyzer_name": enum_analyzer})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_ANALYZER_NAME) == "standard.lucene"
+
+    def test_analyze_text_direct_kwargs_fallback(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_analyze_text_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_analyze_text_attributes(span, (), {"index_name": "idx", "analyzer": "keyword"})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_ANALYZER_NAME) == "keyword"
+
+    def test_indexer_create_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_management_attributes
+        from opentelemetry import trace
+
+        indexer = MagicMock()
+        indexer.name = "pos-indexer"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_indexer_management_attributes(span, "create_indexer", (indexer,), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "pos-indexer"
+
+    def test_indexer_get_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_indexer_management_attributes(span, "get_indexer", ("pos-indexer",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "pos-indexer"
+
+    def test_create_or_update_indexer_dispatch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_management_attributes
+        from opentelemetry import trace
+
+        indexer = MagicMock()
+        indexer.name = "updated-indexer"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_indexer_management_attributes(span, "create_or_update_indexer", (), {"indexer": indexer})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "updated-indexer"
+
+    def test_data_source_create_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_data_source_attributes
+        from opentelemetry import trace
+
+        ds = MagicMock()
+        ds.name = "sql-ds"
+        ds.type = "azuresql"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_data_source_attributes(span, "create_data_source_connection", (ds,), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "sql-ds"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_TYPE) == "azuresql"
+
+    def test_data_source_get_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_data_source_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_data_source_attributes(span, "get_data_source_connection", ("my-ds",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "my-ds"
+
+    def test_create_or_update_data_source_dispatch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_data_source_attributes
+        from opentelemetry import trace
+
+        ds = MagicMock()
+        ds.name = "cosmos-ds"
+        ds.type = "cosmosdb"
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            kwargs = {"data_source_connection": ds}
+            _set_data_source_attributes(span, "create_or_update_data_source_connection", (), kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "cosmos-ds"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_TYPE) == "cosmosdb"
+
+    def test_skillset_create_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        ss = MagicMock()
+        ss.name = "my-ss"
+        ss.skills = [MagicMock(), MagicMock()]
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "create_skillset", (ss,), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-ss"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT) == 2
+
+    def test_skillset_get_from_positional(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "get_skillset", ("my-ss",), {})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-ss"
+
+    def test_create_or_update_skillset_dispatch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        ss = MagicMock()
+        ss.name = "updated-ss"
+        ss.skills = [MagicMock()]
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "create_or_update_skillset", (), {"skillset": ss})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "updated-ss"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT) == 1
+
+    def test_indexer_status_no_last_result(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_status_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            resp = MagicMock()
+            resp.status = "running"
+            resp.last_result = None
+            _set_indexer_status_attributes(span, (), {}, resp)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_STATUS) == "running"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENTS_PROCESSED) is None
+
+    def test_indexer_status_no_status(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_status_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            resp = MagicMock(spec=[])
+            _set_indexer_status_attributes(span, (), {}, resp)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_STATUS) is None
+
+    def test_document_count_response_non_int(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_document_count_response_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_document_count_response_attributes(span, "not-an-int")
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) is None
+
+    def test_autocomplete_response_non_list(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_autocomplete_response_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_autocomplete_response_attributes(span, "not-a-list")
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT) is None
+
+    def test_suggest_response_non_list(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_suggest_response_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_suggest_response_attributes(span, "not-a-list")
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT) is None
+
+    def test_index_documents_response_no_results_attr(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_response_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            resp = MagicMock(spec=[])
+            _set_index_documents_response_attributes(span, resp)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT) is None
+
+    def test_search_response_no_get_count(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_search_response_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            resp = MagicMock(spec=[])
+            _set_search_response_attributes(span, resp)
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT) is None
+
+    def test_search_fields_as_string(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_search_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_search_attributes(span, (), {"search_fields": "title,content"})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_FIELDS) == "title,content"
+
+    def test_delete_skillset_dispatch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "delete_skillset", (), {"name": "old-ss"})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "old-ss"
+
+    def test_delete_data_source_dispatch(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_data_source_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_data_source_attributes(span, "delete_data_source_connection", (), {"name": "old-ds"})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "old-ds"
+
+
