@@ -63,9 +63,67 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_index_management_attributes(span, method, args, kwargs)
         elif method == "analyze_text":
             _set_analyze_text_attributes(span, args, kwargs)
+        # Indexer management operations
+        elif method in [
+            "create_indexer",
+            "create_or_update_indexer",
+            "delete_indexer",
+            "get_indexer",
+            "get_indexers",
+            "run_indexer",
+            "reset_indexer",
+            "get_indexer_status",
+        ]:
+            _set_indexer_management_attributes(span, method, args, kwargs)
+        # Data source operations
+        elif method in [
+            "create_data_source_connection",
+            "create_or_update_data_source_connection",
+            "delete_data_source_connection",
+            "get_data_source_connection",
+            "get_data_source_connections",
+        ]:
+            _set_data_source_attributes(span, method, args, kwargs)
+        # Skillset operations
+        elif method in [
+            "create_skillset",
+            "create_or_update_skillset",
+            "delete_skillset",
+            "get_skillset",
+            "get_skillsets",
+        ]:
+            _set_skillset_attributes(span, method, args, kwargs)
 
         response = wrapped(*args, **kwargs)
+
+        # Capture response attributes
         if response is not None:
+            if method == "search":
+                _set_search_response_attributes(span, response)
+            elif method == "get_document_count":
+                _set_document_count_response_attributes(span, response)
+            elif method in [
+                "upload_documents",
+                "merge_documents",
+                "delete_documents",
+                "merge_or_upload_documents",
+            ]:
+                _set_document_batch_response_attributes(
+                    span, response
+                )
+            elif method == "index_documents":
+                _set_index_documents_response_attributes(
+                    span, response
+                )
+            elif method == "autocomplete":
+                _set_autocomplete_response_attributes(span, response)
+            elif method == "suggest":
+                _set_suggest_response_attributes(span, response)
+            elif method == "get_indexer_status":
+                _set_indexer_status_attributes(
+                    span, args, kwargs, response
+                )
+
             span.set_status(Status(StatusCode.OK))
         return response
 
@@ -182,3 +240,181 @@ def _set_analyze_text_attributes(span, args, kwargs):
         if hasattr(analyzer_name, "value"):
             analyzer_name = analyzer_name.value
         _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_ANALYZER_NAME, str(analyzer_name))
+
+
+@dont_throw
+def _set_indexer_management_attributes(span, method, args, kwargs):
+    """Set attributes for indexer management operations."""
+    # Extract indexer name from various sources
+    indexer_name = None
+
+    # For create/update operations: first arg is indexer object
+    if method in ["create_indexer", "create_or_update_indexer"]:
+        indexer = kwargs.get("indexer") or (args[0] if args else None)
+        if indexer:
+            indexer_name = getattr(indexer, "name", None)
+
+    # For other operations: first arg is indexer_name string
+    else:
+        indexer_name = kwargs.get("name") or kwargs.get("indexer_name") or (args[0] if args else None)
+
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_INDEXER_NAME, indexer_name)
+
+
+@dont_throw
+def _set_indexer_status_attributes(span, args, kwargs, response):
+    """Set attributes for get_indexer_status response."""
+    if response:
+        # Extract status information from response
+        status = getattr(response, "status", None)
+        if status:
+            _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_INDEXER_STATUS, str(status))
+
+        # Extract execution counts if available
+        last_result = getattr(response, "last_result", None)
+        if last_result:
+            items_processed = getattr(last_result, "items_processed", None)
+            items_failed = getattr(last_result, "items_failed", None)
+            _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENTS_PROCESSED, items_processed)
+            _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENTS_FAILED, items_failed)
+
+
+@dont_throw
+def _set_data_source_attributes(span, method, args, kwargs):
+    """Set attributes for data source operations."""
+    data_source_name = None
+    data_source_type = None
+
+    # For create/update operations: first arg is data source object
+    if method in ["create_data_source_connection", "create_or_update_data_source_connection"]:
+        data_source = kwargs.get("data_source_connection") or (args[0] if args else None)
+        if data_source:
+            data_source_name = getattr(data_source, "name", None)
+            # Get data source type (e.g., azureblob, azuresql, cosmosdb)
+            data_source_type = getattr(data_source, "type", None)
+
+    # For other operations: first arg is data_source_name string
+    else:
+        data_source_name = kwargs.get("name") or kwargs.get("data_source_name") or (args[0] if args else None)
+
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME, data_source_name)
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DATA_SOURCE_TYPE, data_source_type)
+
+
+@dont_throw
+def _set_skillset_attributes(span, method, args, kwargs):
+    """Set attributes for skillset operations."""
+    skillset_name = None
+    skill_count = None
+
+    # For create/update operations: first arg is skillset object
+    if method in ["create_skillset", "create_or_update_skillset"]:
+        skillset = kwargs.get("skillset") or (args[0] if args else None)
+        if skillset:
+            skillset_name = getattr(skillset, "name", None)
+            # Count skills in skillset
+            skills = getattr(skillset, "skills", None)
+            if skills and hasattr(skills, "__len__"):
+                skill_count = len(skills)
+
+    # For other operations: first arg is skillset_name string
+    else:
+        skillset_name = kwargs.get("name") or kwargs.get("skillset_name") or (args[0] if args else None)
+
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SKILLSET_NAME, skillset_name)
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT, skill_count)
+
+
+# --- Response attribute extraction functions ---
+
+
+@dont_throw
+def _set_search_response_attributes(span, response):
+    """Set attributes from search response (SearchItemPaged)."""
+    # get_count() returns total count when include_total_count=True
+    count = getattr(response, "get_count", None)
+    if callable(count):
+        total = count()
+        if total is not None:
+            _set_span_attribute(
+                span,
+                SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT,
+                total,
+            )
+
+
+@dont_throw
+def _set_document_count_response_attributes(span, response):
+    """Set attributes from get_document_count response (int)."""
+    if isinstance(response, int):
+        _set_span_attribute(
+            span, SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT, response
+        )
+
+
+@dont_throw
+def _set_document_batch_response_attributes(span, response):
+    """Set attributes from document batch response (List[IndexingResult])."""
+    if isinstance(response, list) and len(response) > 0:
+        succeeded = sum(
+            1
+            for r in response
+            if getattr(r, "succeeded", False)
+        )
+        failed = len(response) - succeeded
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT,
+            succeeded,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT,
+            failed,
+        )
+
+
+@dont_throw
+def _set_index_documents_response_attributes(span, response):
+    """Set attributes from index_documents response."""
+    # index_documents returns an IndexDocumentsResult with a .results list
+    results = getattr(response, "results", None)
+    if results and isinstance(results, list):
+        succeeded = sum(
+            1
+            for r in results
+            if getattr(r, "succeeded", False)
+        )
+        failed = len(results) - succeeded
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT,
+            succeeded,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT,
+            failed,
+        )
+
+
+@dont_throw
+def _set_autocomplete_response_attributes(span, response):
+    """Set attributes from autocomplete response (list)."""
+    if isinstance(response, list):
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT,
+            len(response),
+        )
+
+
+@dont_throw
+def _set_suggest_response_attributes(span, response):
+    """Set attributes from suggest response (list)."""
+    if isinstance(response, list):
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT,
+            len(response),
+        )

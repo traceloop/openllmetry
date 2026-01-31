@@ -237,11 +237,243 @@ ASYNC_SEARCH_INDEX_CLIENT_METHODS = [
     },
 ]
 
+# SearchIndexerClient methods (azure.search.documents.indexes)
+SEARCH_INDEXER_CLIENT_METHODS = [
+    # Indexer Management (8 methods)
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_indexer",
+        "span_name": "azure_search.create_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_indexer",
+        "span_name": "azure_search.create_or_update_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "delete_indexer",
+        "span_name": "azure_search.delete_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_indexer",
+        "span_name": "azure_search.get_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_indexers",
+        "span_name": "azure_search.get_indexers",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "run_indexer",
+        "span_name": "azure_search.run_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "reset_indexer",
+        "span_name": "azure_search.reset_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_indexer_status",
+        "span_name": "azure_search.get_indexer_status",
+    },
+    # Data Source Management (5 methods)
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_data_source_connection",
+        "span_name": "azure_search.create_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_data_source_connection",
+        "span_name": "azure_search.create_or_update_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "delete_data_source_connection",
+        "span_name": "azure_search.delete_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_data_source_connection",
+        "span_name": "azure_search.get_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_data_source_connections",
+        "span_name": "azure_search.get_data_source_connections",
+    },
+    # Skillset Management (5 methods)
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_skillset",
+        "span_name": "azure_search.create_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_skillset",
+        "span_name": "azure_search.create_or_update_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "delete_skillset",
+        "span_name": "azure_search.delete_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_skillset",
+        "span_name": "azure_search.get_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes",
+        "object": "SearchIndexerClient",
+        "method": "get_skillsets",
+        "span_name": "azure_search.get_skillsets",
+    },
+]
+
+# Async SearchIndexerClient methods (azure.search.documents.indexes.aio)
+ASYNC_SEARCH_INDEXER_CLIENT_METHODS = [
+    # Indexer Management (8 methods)
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_indexer",
+        "span_name": "azure_search.create_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_indexer",
+        "span_name": "azure_search.create_or_update_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "delete_indexer",
+        "span_name": "azure_search.delete_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_indexer",
+        "span_name": "azure_search.get_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_indexers",
+        "span_name": "azure_search.get_indexers",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "run_indexer",
+        "span_name": "azure_search.run_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "reset_indexer",
+        "span_name": "azure_search.reset_indexer",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_indexer_status",
+        "span_name": "azure_search.get_indexer_status",
+    },
+    # Data Source Management (5 methods)
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_data_source_connection",
+        "span_name": "azure_search.create_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_data_source_connection",
+        "span_name": "azure_search.create_or_update_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "delete_data_source_connection",
+        "span_name": "azure_search.delete_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_data_source_connection",
+        "span_name": "azure_search.get_data_source_connection",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_data_source_connections",
+        "span_name": "azure_search.get_data_source_connections",
+    },
+    # Skillset Management (5 methods)
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_skillset",
+        "span_name": "azure_search.create_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "create_or_update_skillset",
+        "span_name": "azure_search.create_or_update_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "delete_skillset",
+        "span_name": "azure_search.delete_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_skillset",
+        "span_name": "azure_search.get_skillset",
+    },
+    {
+        "module": "azure.search.documents.indexes.aio",
+        "object": "SearchIndexerClient",
+        "method": "get_skillsets",
+        "span_name": "azure_search.get_skillsets",
+    },
+]
+
 WRAPPED_METHODS = (
     SEARCH_CLIENT_METHODS
     + SEARCH_INDEX_CLIENT_METHODS
+    + SEARCH_INDEXER_CLIENT_METHODS
     + ASYNC_SEARCH_CLIENT_METHODS
     + ASYNC_SEARCH_INDEX_CLIENT_METHODS
+    + ASYNC_SEARCH_INDEXER_CLIENT_METHODS
 )
 
 
