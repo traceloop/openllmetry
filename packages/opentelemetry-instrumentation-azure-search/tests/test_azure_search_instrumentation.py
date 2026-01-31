@@ -1403,3 +1403,291 @@ class TestAsyncWrapper:
 
         assert asyncio.iscoroutinefunction(async_fn) is True
         assert asyncio.iscoroutinefunction(sync_fn) is False
+
+
+class TestSyncWrapDispatch:
+    """Tests that _sync_wrap dispatches to the correct attribute setters for each method."""
+
+    def _run_sync_wrap(self, exporter, method, span_name, wrapped_return=None, instance_attrs=None, kwargs=None):
+        from opentelemetry.instrumentation.azure_search.wrapper import _sync_wrap
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        mock_instance = MagicMock()
+        if instance_attrs:
+            for k, v in instance_attrs.items():
+                setattr(mock_instance, k, v)
+
+        def wrapped_fn(*a, **kw):
+            return wrapped_return
+
+        to_wrap = {"span_name": span_name, "method": method}
+        result = _sync_wrap(tracer, to_wrap, wrapped_fn, mock_instance, (), kwargs or {})
+        spans = exporter.get_finished_spans()
+        return result, spans
+
+    def test_search_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "search", "azure_search.search",
+            instance_attrs={"_index_name": "idx"},
+            kwargs={"search_text": "hello", "top": 5},
+        )
+        assert len(spans) == 1
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "hello"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TOP) == 5
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "idx"
+
+    def test_get_document_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_document", "azure_search.get_document",
+            kwargs={"key": "doc-1"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_KEY) == "doc-1"
+
+    def test_upload_documents_dispatch(self, exporter):
+        docs = [{"id": "1"}, {"id": "2"}]
+        mock_result = [MagicMock(succeeded=True), MagicMock(succeeded=False)]
+        result, spans = self._run_sync_wrap(
+            exporter, "upload_documents", "azure_search.upload_documents",
+            wrapped_return=mock_result,
+            kwargs={"documents": docs},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT) == 1
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT) == 1
+
+    def test_merge_documents_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "merge_documents", "azure_search.merge_documents",
+            wrapped_return=[MagicMock(succeeded=True)],
+            kwargs={"documents": [{"id": "1"}]},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 1
+
+    def test_delete_documents_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "delete_documents", "azure_search.delete_documents",
+            wrapped_return=[MagicMock(succeeded=True)],
+            kwargs={"documents": [{"id": "1"}, {"id": "2"}]},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
+
+    def test_merge_or_upload_documents_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "merge_or_upload_documents", "azure_search.merge_or_upload_documents",
+            wrapped_return=[MagicMock(succeeded=True)],
+            kwargs={"documents": [{"id": "1"}]},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 1
+
+    def test_index_documents_dispatch(self, exporter):
+        batch = MagicMock()
+        batch.actions = [{"id": "1"}, {"id": "2"}]
+        mock_response = MagicMock()
+        mock_response.results = [MagicMock(succeeded=True), MagicMock(succeeded=True)]
+        result, spans = self._run_sync_wrap(
+            exporter, "index_documents", "azure_search.index_documents",
+            wrapped_return=mock_response,
+            kwargs={"batch": batch},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT) == 2
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT) == 0
+
+    def test_autocomplete_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "autocomplete", "azure_search.autocomplete",
+            wrapped_return=[{"text": "a"}, {"text": "b"}],
+            kwargs={"search_text": "he", "suggester_name": "sg"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "he"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME) == "sg"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT) == 2
+
+    def test_suggest_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "suggest", "azure_search.suggest",
+            wrapped_return=[{"text": "suggestion"}],
+            kwargs={"search_text": "ho", "suggester_name": "sg"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "ho"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT) == 1
+
+    def test_get_document_count_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_document_count", "azure_search.get_document_count",
+            wrapped_return=500,
+        )
+        assert result == 500
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 500
+
+    def test_create_index_dispatch(self, exporter):
+        index = MagicMock()
+        index.name = "my-index"
+        result, spans = self._run_sync_wrap(
+            exporter, "create_index", "azure_search.create_index",
+            wrapped_return=index,
+            kwargs={"index": index},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "my-index"
+
+    def test_create_or_update_index_dispatch(self, exporter):
+        index = MagicMock()
+        index.name = "upsert-index"
+        result, spans = self._run_sync_wrap(
+            exporter, "create_or_update_index", "azure_search.create_or_update_index",
+            kwargs={"index": index},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "upsert-index"
+
+    def test_delete_index_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "delete_index", "azure_search.delete_index",
+            kwargs={"index": "old-index"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "old-index"
+
+    def test_get_index_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_index", "azure_search.get_index",
+            kwargs={"index": "my-index"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "my-index"
+
+    def test_get_index_statistics_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_index_statistics", "azure_search.get_index_statistics",
+            kwargs={"index_name": "stats-index"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "stats-index"
+
+    def test_analyze_text_dispatch(self, exporter):
+        req = MagicMock()
+        req.analyzer_name = "standard.lucene"
+        result, spans = self._run_sync_wrap(
+            exporter, "analyze_text", "azure_search.analyze_text",
+            kwargs={"index_name": "my-index", "analyze_request": req},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == "my-index"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_ANALYZER_NAME) == "standard.lucene"
+
+    def test_create_indexer_dispatch(self, exporter):
+        indexer = MagicMock()
+        indexer.name = "my-indexer"
+        result, spans = self._run_sync_wrap(
+            exporter, "create_indexer", "azure_search.create_indexer",
+            kwargs={"indexer": indexer},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "my-indexer"
+
+    def test_get_indexer_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_indexer", "azure_search.get_indexer",
+            kwargs={"name": "my-indexer"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "my-indexer"
+
+    def test_get_indexers_dispatch(self, exporter):
+        """Tests the list/get_indexers branch that just sets indexer_name from kwargs."""
+        result, spans = self._run_sync_wrap(
+            exporter, "get_indexers", "azure_search.get_indexers",
+        )
+        assert len(spans) == 1
+
+    def test_run_indexer_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "run_indexer", "azure_search.run_indexer",
+            kwargs={"name": "my-indexer"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "my-indexer"
+
+    def test_reset_indexer_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "reset_indexer", "azure_search.reset_indexer",
+            kwargs={"name": "my-indexer"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "my-indexer"
+
+    def test_get_indexer_status_dispatch(self, exporter):
+        mock_response = MagicMock()
+        mock_response.status = "running"
+        mock_response.last_result.items_processed = 100
+        mock_response.last_result.items_failed = 2
+        result, spans = self._run_sync_wrap(
+            exporter, "get_indexer_status", "azure_search.get_indexer_status",
+            wrapped_return=mock_response,
+            kwargs={"name": "my-indexer"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_NAME) == "my-indexer"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_INDEXER_STATUS) == "running"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENTS_PROCESSED) == 100
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENTS_FAILED) == 2
+
+    def test_create_data_source_dispatch(self, exporter):
+        ds = MagicMock()
+        ds.name = "blob-ds"
+        ds.type = "azureblob"
+        result, spans = self._run_sync_wrap(
+            exporter, "create_data_source_connection", "azure_search.create_data_source_connection",
+            kwargs={"data_source_connection": ds},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "blob-ds"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_TYPE) == "azureblob"
+
+    def test_get_data_source_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_data_source_connection", "azure_search.get_data_source_connection",
+            kwargs={"name": "blob-ds"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "blob-ds"
+
+    def test_get_data_source_connections_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_data_source_connections", "azure_search.get_data_source_connections",
+        )
+        assert len(spans) == 1
+
+    def test_create_skillset_dispatch(self, exporter):
+        skillset = MagicMock()
+        skillset.name = "my-skillset"
+        skillset.skills = [MagicMock(), MagicMock(), MagicMock()]
+        result, spans = self._run_sync_wrap(
+            exporter, "create_skillset", "azure_search.create_skillset",
+            kwargs={"skillset": skillset},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-skillset"
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT) == 3
+
+    def test_get_skillset_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_skillset", "azure_search.get_skillset",
+            kwargs={"name": "my-skillset"},
+        )
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-skillset"
+
+    def test_get_skillsets_dispatch(self, exporter):
+        result, spans = self._run_sync_wrap(
+            exporter, "get_skillsets", "azure_search.get_skillsets",
+        )
+        assert len(spans) == 1
+
+    def test_none_response_does_not_set_ok(self, exporter):
+        """When wrapped returns None, response attrs are skipped but OK is still set."""
+        from opentelemetry.trace.status import StatusCode
+        result, spans = self._run_sync_wrap(
+            exporter, "search", "azure_search.search",
+            wrapped_return=None,
+        )
+        assert result is None
+        assert spans[0].status.status_code == StatusCode.OK
+
+    def test_unknown_method_still_creates_span(self, exporter):
+        """Unknown methods still get a span with vendor attribute."""
+        result, spans = self._run_sync_wrap(
+            exporter, "some_future_method", "azure_search.some_future_method",
+            wrapped_return="ok",
+        )
+        assert len(spans) == 1
+        assert spans[0].attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+
