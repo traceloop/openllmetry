@@ -28,6 +28,7 @@ dependencies = [
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-ollama",
   "opentelemetry-instrumentation-anthropic",
+  "opentelemetry-instrumentation-azure-search",
   "opentelemetry-instrumentation-cohere",
   "opentelemetry-instrumentation-crewai",
   "opentelemetry-instrumentation-google-generativeai",
