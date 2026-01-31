@@ -1,3 +1,55 @@
+[project]
+name = "opentelemetry-instrumentation-azure-search"
+version = "0.51.1"
+description = "OpenTelemetry Azure AI Search instrumentation"
+authors = [
+  { name = "Gal Kleinman", email = "gal@traceloop.com" },
+  { name = "Nir Gazit", email = "nir@traceloop.com" },
+  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
+  { name = "Mahesh Babu Gorantla", email = "maheshbabugorantla@gmail.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-azure-search"
+
+[project.optional-dependencies]
+instruments = ["azure-search-documents"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+azure_search = "opentelemetry.instrumentation.azure_search:AzureSearchInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "ruff>=0.4.0",
+]
+test = [
+  "azure-search-documents>=11.4.0,<12",
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-recording>=0.13.1,<0.14.0",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "pytest-asyncio>=0.23.7,<0.24.0",
+  "vcrpy>=8.0.0,<9",
+]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/azure_search"]
@@ -6,50 +58,22 @@ source = ["opentelemetry/instrumentation/azure_search"]
 exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
-[tool.poetry]
-name = "opentelemetry-instrumentation-azure-search"
-version = "0.49.6"
-description = "OpenTelemetry Azure AI Search instrumentation"
-authors = [
-  "Gal Kleinman <gal@traceloop.com>",
-  "Nir Gazit <nir@traceloop.com>",
-  "Tomer Friedman <tomer@traceloop.com>",
-  "Mahesh Babu Gorantla <maheshbabugorantla@gmail.com>",
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
 ]
-repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-azure-search"
-license = "Apache-2.0"
-readme = "README.md"
 
-[[tool.poetry.packages]]
-include = "opentelemetry/instrumentation/azure_search"
+[tool.ruff.lint]
+select = ["E", "F", "W"]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
-opentelemetry-api = "^1.38.0"
-opentelemetry-instrumentation = ">=0.59b0"
-opentelemetry-semantic-conventions = ">=0.59b0"
-opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai", develop = true }
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
 
-[tool.poetry.group.dev.dependencies]
-autopep8 = "^2.2.0"
-flake8 = "7.0.0"
-python-dotenv = "^1.2.1"
-
-[tool.poetry.group.test.dependencies]
-azure-search-documents = "^11.4.0"
-pytest = "^8.2.2"
-pytest-sugar = "1.0.0"
-opentelemetry-sdk = "^1.38.0"
-vcrpy = { version = ">=7.0.0", markers = "python_version >= '3.10'" }
-pytest-recording = "^0.13.1"
-pytest-asyncio = "^0.23.7"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-instruments = ["azure-search-documents"]
-
-[tool.poetry.plugins."opentelemetry_instrumentor"]
-azure_search = "opentelemetry.instrumentation.azure_search:AzureSearchInstrumentor"
+[tool.uv.sources]
+opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai" }

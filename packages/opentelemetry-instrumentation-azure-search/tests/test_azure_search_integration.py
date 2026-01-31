@@ -94,7 +94,7 @@ class TestSearchClientIntegration:
     @pytest.mark.vcr
     def test_search(self, exporter, search_client):
         """Test that search() creates a span with correct attributes."""
-        results = list(search_client.search(
+        list(search_client.search(
             search_text="hotel",
             top=5,
             filter="rating ge 3",
@@ -115,7 +115,7 @@ class TestSearchClientIntegration:
     @pytest.mark.vcr
     def test_search_with_skip(self, exporter, search_client):
         """Test that search() captures skip parameter."""
-        results = list(search_client.search(
+        list(search_client.search(
             search_text="*",
             top=10,
             skip=5,
@@ -140,7 +140,7 @@ class TestSearchClientIntegration:
         time.sleep(1)
 
         try:
-            doc = search_client.get_document(key="doc-1")
+            search_client.get_document(key="doc-1")
         except Exception:
             pass  # Document may not be indexed yet, but span should still be created
 
@@ -159,7 +159,7 @@ class TestSearchClientIntegration:
     @pytest.mark.vcr
     def test_get_document_count(self, exporter, search_client):
         """Test that get_document_count() creates a span."""
-        count = search_client.get_document_count()
+        search_client.get_document_count()
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -176,7 +176,7 @@ class TestSearchClientIntegration:
             {"id": "test-1", "name": "Test Hotel 1", "description": "A test hotel", "rating": 4.0},
             {"id": "test-2", "name": "Test Hotel 2", "description": "Another test hotel", "rating": 3.5},
         ]
-        result = search_client.upload_documents(documents=documents)
+        search_client.upload_documents(documents=documents)
 
         spans = exporter.get_finished_spans()
         upload_spans = [s for s in spans if s.name == "azure_search.upload_documents"]
@@ -196,7 +196,7 @@ class TestSearchClientIntegration:
         documents = [
             {"id": "merge-1", "rating": 4.8},
         ]
-        result = search_client.merge_documents(documents=documents)
+        search_client.merge_documents(documents=documents)
 
         spans = exporter.get_finished_spans()
         merge_spans = [s for s in spans if s.name == "azure_search.merge_documents"]
@@ -213,7 +213,7 @@ class TestSearchClientIntegration:
             {"id": "test-1"},
             {"id": "test-2"},
         ]
-        result = search_client.delete_documents(documents=documents)
+        search_client.delete_documents(documents=documents)
 
         spans = exporter.get_finished_spans()
         delete_spans = [s for s in spans if s.name == "azure_search.delete_documents"]
@@ -229,7 +229,7 @@ class TestSearchClientIntegration:
         documents = [
             {"id": "upsert-1", "name": "Upsert Hotel", "description": "A test upsert", "rating": 4.2},
         ]
-        result = search_client.merge_or_upload_documents(documents=documents)
+        search_client.merge_or_upload_documents(documents=documents)
 
         spans = exporter.get_finished_spans()
         upsert_spans = [s for s in spans if s.name == "azure_search.merge_or_upload_documents"]
@@ -246,7 +246,7 @@ class TestSearchClientIntegration:
         batch.add_upload_actions([
             {"id": "batch-1", "name": "Batch Hotel", "description": "A batch test", "rating": 3.9},
         ])
-        result = search_client.index_documents(batch=batch)
+        search_client.index_documents(batch=batch)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -269,7 +269,7 @@ class TestSearchClientIntegration:
         time.sleep(2)  # Wait for indexing
 
         try:
-            results = list(search_client.autocomplete(
+            list(search_client.autocomplete(
                 search_text="lux",
                 suggester_name="sg",
             ))
@@ -298,7 +298,7 @@ class TestSearchClientIntegration:
         time.sleep(2)  # Wait for indexing
 
         try:
-            results = list(search_client.suggest(
+            list(search_client.suggest(
                 search_text="hot",
                 suggester_name="sg",
             ))
@@ -378,7 +378,7 @@ class TestSearchIndexClientIntegration:
     @pytest.mark.vcr
     def test_list_indexes(self, exporter, index_client):
         """Test that list_indexes() creates a span."""
-        indexes = list(index_client.list_indexes())
+        list(index_client.list_indexes())
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -391,7 +391,7 @@ class TestSearchIndexClientIntegration:
     @pytest.mark.vcr
     def test_get_index(self, exporter, index_client):
         """Test that get_index() creates a span with index name."""
-        index = index_client.get_index(INTEGRATION_TEST_INDEX)
+        index_client.get_index(INTEGRATION_TEST_INDEX)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -404,7 +404,7 @@ class TestSearchIndexClientIntegration:
     @pytest.mark.vcr
     def test_get_index_statistics(self, exporter, index_client):
         """Test that get_index_statistics() creates a span with index name."""
-        stats = index_client.get_index_statistics(INTEGRATION_TEST_INDEX)
+        index_client.get_index_statistics(INTEGRATION_TEST_INDEX)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -431,7 +431,7 @@ class TestSearchIndexClientIntegration:
             SearchableField(name="content", type=SearchFieldDataType.String),
         ]
         index = SearchIndex(name=test_index_name, fields=fields)
-        result = index_client.create_index(index)
+        index_client.create_index(index)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -457,7 +457,7 @@ class TestSearchIndexClientIntegration:
             SearchableField(name="content", type=SearchFieldDataType.String),
         ]
         index = SearchIndex(name=test_index_name, fields=fields)
-        result = index_client.create_or_update_index(index)
+        index_client.create_or_update_index(index)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -506,7 +506,7 @@ class TestSearchIndexClientIntegration:
             text="The quick brown fox",
             analyzer_name="standard.lucene",
         )
-        result = index_client.analyze_text(
+        index_client.analyze_text(
             index_name=INTEGRATION_TEST_INDEX,
             analyze_request=analyze_request,
         )

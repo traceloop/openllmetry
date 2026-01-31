@@ -111,7 +111,6 @@ class TestSearchClientInstrumentation:
         )
 
         # Manually wrap for testing since we're using mocks
-        from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
         from opentelemetry import trace
 
         tracer = trace.get_tracer(__name__)
@@ -242,7 +241,7 @@ class TestSearchClientInstrumentation:
                 index_name="test-index",
                 credential=MagicMock()
             )
-            count = client.get_document_count()
+            client.get_document_count()
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -449,7 +448,7 @@ class TestSearchIndexClientInstrumentation:
                 endpoint="https://test.search.windows.net",
                 credential=MagicMock()
             )
-            indexes = list(client.list_indexes())
+            list(client.list_indexes())
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -474,7 +473,7 @@ class TestSearchIndexClientInstrumentation:
                 endpoint="https://test.search.windows.net",
                 credential=MagicMock()
             )
-            index = client.get_index(index_name="hotels-index")
+            client.get_index(index_name="hotels-index")
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -914,5 +913,5 @@ class TestInstrumentorLifecycle:
         def custom_logger(e):
             pass
 
-        instrumentor = AzureSearchInstrumentor(exception_logger=custom_logger)
+        AzureSearchInstrumentor(exception_logger=custom_logger)
         assert Config.exception_logger == custom_logger

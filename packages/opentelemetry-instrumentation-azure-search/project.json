@@ -5,9 +5,9 @@
   "sourceRoot": "packages/opentelemetry-instrumentation-azure-search/opentelemetry/instrumentation/azure_search",
   "targets": {
     "lock": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
-        "command": "poetry lock",
+        "command": "uv lock",
         "cwd": "packages/opentelemetry-instrumentation-azure-search"
       }
     },
@@ -25,7 +25,9 @@
     },
     "build": {
       "executor": "@nxlv/python:build",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "outputPath": "packages/opentelemetry-instrumentation-azure-search/dist",
         "publish": false,
@@ -34,37 +36,32 @@
       }
     },
     "install": {
-      "executor": "@nxlv/python:install",
+      "executor": "nx:run-commands",
       "options": {
-        "silent": false,
-        "args": "",
-        "cacheDir": ".cache/pypoetry",
-        "verbose": false,
-        "debug": false
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-azure-search"
       }
     },
     "lint": {
-      "executor": "@nxlv/python:flake8",
-      "outputs": [
-        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-azure-search/pylint.txt"
-      ],
+      "executor": "nx:run-commands",
       "options": {
-        "outputFile": "reports/packages/opentelemetry-instrumentation-azure-search/pylint.txt"
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-azure-search"
       }
     },
     "test": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-azure-search/unittests",
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-azure-search"
       ],
       "options": {
-        "command": "poetry run pytest tests/",
+        "command": "uv run pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-azure-search"
       }
     },
     "build-release": {
-      "executor": "@nxlv/python:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "chmod +x ../../scripts/build-release.sh",
@@ -74,5 +71,7 @@
       }
     }
   },
-  "tags": ["instrumentation"]
+  "tags": [
+    "instrumentation"
+  ]
 }
