@@ -246,6 +246,18 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # Azure AI Search
+    AZURE_SEARCH_INDEX_NAME = "azure_search.index_name"
+    AZURE_SEARCH_SEARCH_TEXT = "azure_search.search.text"
+    AZURE_SEARCH_SEARCH_TOP = "azure_search.search.top"
+    AZURE_SEARCH_SEARCH_SKIP = "azure_search.search.skip"
+    AZURE_SEARCH_SEARCH_FILTER = "azure_search.search.filter"
+    AZURE_SEARCH_SEARCH_QUERY_TYPE = "azure_search.search.query_type"
+    AZURE_SEARCH_DOCUMENT_COUNT = "azure_search.document.count"
+    AZURE_SEARCH_DOCUMENT_KEY = "azure_search.document.key"
+    AZURE_SEARCH_SUGGESTER_NAME = "azure_search.suggester_name"
+    AZURE_SEARCH_ANALYZER_NAME = "azure_search.analyzer_name"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
