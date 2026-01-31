@@ -275,6 +275,22 @@ class SpanAttributes:
     AZURE_SEARCH_DATA_SOURCE_TYPE = "azure_search.data_source.type"
     AZURE_SEARCH_SKILLSET_SKILL_COUNT = "azure_search.skillset.skill_count"
 
+    # Azure AI Search - Vector Search Attributes
+    AZURE_SEARCH_VECTOR_QUERIES_COUNT = "azure_search.search.vector_queries_count"
+    AZURE_SEARCH_VECTOR_FIELDS = "azure_search.search.vector_fields"
+    AZURE_SEARCH_VECTOR_K_NEAREST_NEIGHBORS = "azure_search.search.k_nearest_neighbors"
+    AZURE_SEARCH_VECTOR_EXHAUSTIVE = "azure_search.search.vector_exhaustive"
+    AZURE_SEARCH_VECTOR_FILTER_MODE = "azure_search.search.vector_filter_mode"
+
+    # Azure AI Search - Semantic Search Attributes
+    AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME = "azure_search.search.semantic_configuration_name"
+    AZURE_SEARCH_QUERY_CAPTION = "azure_search.search.query_caption"
+    AZURE_SEARCH_QUERY_ANSWER = "azure_search.search.query_answer"
+    AZURE_SEARCH_SEARCH_MODE = "azure_search.search.search_mode"
+    AZURE_SEARCH_SCORING_PROFILE = "azure_search.search.scoring_profile"
+    AZURE_SEARCH_SELECT = "azure_search.search.select"
+    AZURE_SEARCH_SEARCH_FIELDS = "azure_search.search.search_fields"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"

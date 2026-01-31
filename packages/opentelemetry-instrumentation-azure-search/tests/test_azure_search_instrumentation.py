@@ -915,3 +915,491 @@ class TestInstrumentorLifecycle:
 
         AzureSearchInstrumentor(exception_logger=custom_logger)
         assert Config.exception_logger == custom_logger
+
+
+class TestVectorSearchAttributes:
+    """Tests for vector search attribute capturing."""
+
+    def test_vector_search_attributes(self, exporter):
+        """Test that vector search attributes are captured."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_vector_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_vq = MagicMock()
+            mock_vq.k_nearest_neighbors = 5
+            mock_vq.fields = "content_vector"
+            mock_vq.exhaustive = False
+
+            kwargs = {
+                "vector_queries": [mock_vq],
+                "vector_filter_mode": "preFilter",
+            }
+            _set_vector_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_QUERIES_COUNT
+        ) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_K_NEAREST_NEIGHBORS
+        ) == 5
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_FIELDS
+        ) == "content_vector"
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_EXHAUSTIVE
+        ) is False
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_FILTER_MODE
+        ) == "preFilter"
+
+    def test_vector_search_multiple_queries(self, exporter):
+        """Test that multiple vector queries are counted correctly."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_vector_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_vq1 = MagicMock()
+            mock_vq1.k_nearest_neighbors = 5
+            mock_vq1.fields = "title_vector"
+            mock_vq1.exhaustive = None
+
+            mock_vq2 = MagicMock()
+            mock_vq2.k_nearest_neighbors = 3
+            mock_vq2.fields = "content_vector"
+            mock_vq2.exhaustive = None
+
+            kwargs = {"vector_queries": [mock_vq1, mock_vq2]}
+            _set_vector_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_QUERIES_COUNT
+        ) == 2
+        # First vector query's fields are captured
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_FIELDS
+        ) == "title_vector"
+
+    def test_vector_search_list_fields(self, exporter):
+        """Test that list fields are joined with commas."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_vector_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_vq = MagicMock()
+            mock_vq.k_nearest_neighbors = 5
+            mock_vq.fields = ["title_vector", "content_vector"]
+            mock_vq.exhaustive = None
+
+            kwargs = {"vector_queries": [mock_vq]}
+            _set_vector_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_FIELDS
+        ) == "title_vector,content_vector"
+
+    def test_no_vector_queries_sets_nothing(self, exporter):
+        """Test that no vector_queries kwarg sets no attributes."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_vector_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_vector_search_attributes(span, {})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_QUERIES_COUNT
+        ) is None
+
+    def test_vector_filter_mode_enum(self, exporter):
+        """Test that enum vector_filter_mode values are converted to string."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_vector_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_vq = MagicMock()
+            mock_vq.k_nearest_neighbors = 5
+            mock_vq.fields = "vec"
+            mock_vq.exhaustive = None
+
+            mock_enum = MagicMock()
+            mock_enum.value = "postFilter"
+
+            kwargs = {
+                "vector_queries": [mock_vq],
+                "vector_filter_mode": mock_enum,
+            }
+            _set_vector_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_VECTOR_FILTER_MODE
+        ) == "postFilter"
+
+
+class TestSemanticSearchAttributes:
+    """Tests for semantic search attribute capturing."""
+
+    def test_semantic_search_attributes(self, exporter):
+        """Test that semantic search attributes are captured."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_semantic_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            kwargs = {
+                "semantic_configuration_name": "my-semantic-config",
+                "query_caption": "extractive",
+                "query_answer": "extractive",
+            }
+            _set_semantic_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME
+        ) == "my-semantic-config"
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_QUERY_CAPTION
+        ) == "extractive"
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_QUERY_ANSWER
+        ) == "extractive"
+
+    def test_semantic_search_enum_values(self, exporter):
+        """Test that enum values for query_caption/query_answer are converted."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_semantic_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_caption = MagicMock()
+            mock_caption.value = "extractive"
+            mock_answer = MagicMock()
+            mock_answer.value = "extractive"
+
+            kwargs = {
+                "semantic_configuration_name": "config-1",
+                "query_caption": mock_caption,
+                "query_answer": mock_answer,
+            }
+            _set_semantic_search_attributes(span, kwargs)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_QUERY_CAPTION
+        ) == "extractive"
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_QUERY_ANSWER
+        ) == "extractive"
+
+    def test_no_semantic_config_sets_nothing(self, exporter):
+        """Test that missing semantic kwargs set no attributes."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_semantic_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_semantic_search_attributes(span, {})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME
+        ) is None
+
+
+class TestSearchAttributeExtras:
+    """Tests for additional search attributes (select, search_fields, etc.)."""
+
+    def test_search_mode_attribute(self, exporter):
+        """Test that search_mode is captured."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_search_attributes(span, (), {"search_mode": "all"})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEARCH_MODE
+        ) == "all"
+
+    def test_scoring_profile_attribute(self, exporter):
+        """Test that scoring_profile is captured."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_search_attributes(span, (), {"scoring_profile": "boost-by-freshness"})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SCORING_PROFILE
+        ) == "boost-by-freshness"
+
+    def test_select_as_list(self, exporter):
+        """Test that select list is joined with commas."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_search_attributes(span, (), {"select": ["id", "name", "rating"]})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SELECT
+        ) == "id,name,rating"
+
+    def test_select_as_string(self, exporter):
+        """Test that select string is passed through."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_search_attributes(span, (), {"select": "id,name"})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SELECT
+        ) == "id,name"
+
+    def test_search_fields_as_list(self, exporter):
+        """Test that search_fields list is joined with commas."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            _set_search_attributes(span, (), {"search_fields": ["title", "description"]})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEARCH_FIELDS
+        ) == "title,description"
+
+    def test_query_type_enum(self, exporter):
+        """Test that query_type enum is converted to string."""
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_attributes,
+        )
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_qt = MagicMock()
+            mock_qt.value = "semantic"
+            _set_search_attributes(span, (), {"query_type": mock_qt})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEARCH_QUERY_TYPE
+        ) == "semantic"
+
+
+class TestErrorHandling:
+    """Tests for error handling in the wrapper."""
+
+    def test_sync_error_sets_error_status(self, exporter):
+        """Test that sync exceptions set StatusCode.ERROR on the span."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _sync_wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+
+        def failing_method(*args, **kwargs):
+            raise ValueError("Search index not found")
+
+        to_wrap = {"span_name": "azure_search.search", "method": "search"}
+
+        with pytest.raises(ValueError, match="Search index not found"):
+            _sync_wrap(tracer, to_wrap, failing_method, MagicMock(), (), {})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.ERROR
+        assert "Search index not found" in spans[0].status.description
+
+    def test_sync_error_records_exception(self, exporter):
+        """Test that sync exceptions are recorded as span events."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _sync_wrap
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+
+        def failing_method(*args, **kwargs):
+            raise ConnectionError("Service unavailable")
+
+        to_wrap = {"span_name": "azure_search.get_document", "method": "get_document"}
+
+        with pytest.raises(ConnectionError, match="Service unavailable"):
+            _sync_wrap(tracer, to_wrap, failing_method, MagicMock(), (), {})
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        events = spans[0].events
+        assert len(events) == 1
+        assert events[0].name == "exception"
+        assert events[0].attributes["exception.type"] == "ConnectionError"
+        assert "Service unavailable" in events[0].attributes["exception.message"]
+
+    def test_sync_success_sets_ok_status(self, exporter):
+        """Test that successful sync calls set StatusCode.OK."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _sync_wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+
+        def ok_method(*args, **kwargs):
+            return 42
+
+        to_wrap = {"span_name": "azure_search.get_document_count", "method": "get_document_count"}
+
+        result = _sync_wrap(tracer, to_wrap, ok_method, MagicMock(), (), {})
+        assert result == 42
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.OK
+
+
+class TestAsyncWrapper:
+    """Tests for async wrapping behavior."""
+
+    @pytest.mark.asyncio
+    async def test_async_wrap_awaits_coroutine(self, exporter):
+        """Test that async methods are properly awaited."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _async_wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+
+        async def async_search(*args, **kwargs):
+            return [{"id": "1", "name": "Test"}]
+
+        to_wrap = {"span_name": "azure_search.search", "method": "search"}
+        mock_instance = MagicMock()
+        mock_instance._index_name = "test-index"
+
+        result = await _async_wrap(
+            tracer, to_wrap, async_search, mock_instance, (), {"search_text": "test"}
+        )
+        assert result == [{"id": "1", "name": "Test"}]
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.OK
+
+    @pytest.mark.asyncio
+    async def test_async_error_sets_error_status(self, exporter):
+        """Test that async exceptions set StatusCode.ERROR on the span."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _async_wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+
+        async def failing_async(*args, **kwargs):
+            raise RuntimeError("Async operation failed")
+
+        to_wrap = {"span_name": "azure_search.search", "method": "search"}
+
+        with pytest.raises(RuntimeError, match="Async operation failed"):
+            await _async_wrap(
+                tracer, to_wrap, failing_async, MagicMock(), (), {}
+            )
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.ERROR
+        assert "Async operation failed" in spans[0].status.description
+
+    @pytest.mark.asyncio
+    async def test_async_error_records_exception(self, exporter):
+        """Test that async exceptions are recorded as span events."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _async_wrap
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+
+        async def failing_async(*args, **kwargs):
+            raise TimeoutError("Request timed out")
+
+        to_wrap = {"span_name": "azure_search.search", "method": "search"}
+
+        with pytest.raises(TimeoutError, match="Request timed out"):
+            await _async_wrap(
+                tracer, to_wrap, failing_async, MagicMock(), (), {}
+            )
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        events = spans[0].events
+        assert len(events) == 1
+        assert events[0].name == "exception"
+
+    def test_wrap_detects_async_function(self):
+        """Test that _wrap correctly identifies async functions."""
+        import asyncio
+
+        async def async_fn():
+            pass
+
+        def sync_fn():
+            pass
+
+        assert asyncio.iscoroutinefunction(async_fn) is True
+        assert asyncio.iscoroutinefunction(sync_fn) is False
