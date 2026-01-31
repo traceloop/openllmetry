@@ -2293,3 +2293,321 @@ class TestUtilsAndLifecycle:
         instrumentor.instrument()
 
 
+class TestRemainingCoverageGaps:
+    """Tests targeting specific uncovered branches to reach 100% coverage."""
+
+    # --- wrapper.py: _set_document_batch_attributes lines 310-311 ---
+    # Documents that are not len-able and list() raises TypeError
+
+    def test_document_batch_unconvertible_documents(self, exporter):
+        """Documents that can't be converted to list should be silently ignored."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            # Object that has no __len__ and list() raises TypeError
+            bad_docs = 12345  # int is not iterable
+            _set_document_batch_attributes(span, (), {"documents": bad_docs})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT not in spans[0].attributes
+
+    # --- wrapper.py: branch 255->260 (fields is falsy) ---
+
+    def test_vector_search_fields_empty(self, exporter):
+        """Empty fields attribute should not set vector fields span attribute."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_vector_search_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        vq = MagicMock()
+        vq.k_nearest_neighbors = 5
+        vq.fields = None  # falsy fields
+        vq.exhaustive = None
+
+        with tracer.start_as_current_span("test") as span:
+            _set_vector_search_attributes(span, {"vector_queries": [vq]})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_VECTOR_FIELDS not in spans[0].attributes
+
+    # --- wrapper.py: branch 321->exit (actions without __len__) ---
+
+    def test_index_documents_actions_no_len(self, exporter):
+        """Batch with actions that lack __len__ should not set document count."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        batch = MagicMock()
+        # actions is an iterator (no __len__)
+        batch.actions = iter([1, 2, 3])
+
+        with tracer.start_as_current_span("test") as span:
+            _set_index_documents_attributes(span, (), {"batch": batch})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT not in spans[0].attributes
+
+    def test_index_documents_actions_none(self, exporter):
+        """Batch with None actions should not set document count."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        batch = MagicMock()
+        batch.actions = None
+
+        with tracer.start_as_current_span("test") as span:
+            _set_index_documents_attributes(span, (), {"batch": batch})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT not in spans[0].attributes
+
+    # --- wrapper.py: branch 344->exit (index is falsy for create_index) ---
+
+    def test_index_management_create_index_no_index_arg(self, exporter):
+        """create_index with no index argument should not set index name."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_management_attributes(span, "create_index", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEX_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 349->exit (index_name is not string and no .name) ---
+
+    def test_index_management_delete_with_non_string_non_object(self, exporter):
+        """delete_index with non-string, non-object arg should not set index name."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            # Pass an integer - not a string, no .name attribute
+            _set_index_management_attributes(span, "delete_index", (42,), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEX_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 371->exit (analyzer_name is falsy after all checks) ---
+
+    def test_analyze_text_no_analyzer(self, exporter):
+        """analyze_text with no analyzer anywhere should not set analyzer name."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_analyze_text_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            # No analyze_request, no analyzer_name, no analyzer in kwargs
+            _set_analyze_text_attributes(span, ("my-index",), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEX_NAME in spans[0].attributes
+        assert SpanAttributes.AZURE_SEARCH_ANALYZER_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 387->394 (indexer is falsy for create_indexer) ---
+
+    def test_indexer_management_create_no_indexer(self, exporter):
+        """create_indexer with no indexer should still call _set_span_attribute with None."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_indexer_management_attributes(span, "create_indexer", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEXER_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 400->exit (response is falsy for indexer status) ---
+
+    def test_indexer_status_none_response(self, exporter):
+        """get_indexer_status with None response should not set any attributes."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_indexer_status_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_indexer_status_attributes(span, (), {}, None)
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEXER_STATUS not in spans[0].attributes
+
+    # --- wrapper.py: branch 424->433 (data_source is falsy for create) ---
+
+    def test_data_source_create_no_data_source(self, exporter):
+        """create_data_source_connection with no data source should handle gracefully."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_data_source_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_data_source_attributes(span, "create_data_source_connection", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 446->457 (skillset is falsy for create) ---
+
+    def test_skillset_create_no_skillset(self, exporter):
+        """create_skillset with no skillset should handle gracefully."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "create_skillset", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_SKILLSET_NAME not in spans[0].attributes
+
+    # --- wrapper.py: branch 450->457 (skills no __len__ or falsy) ---
+
+    def test_skillset_create_skills_not_countable(self, exporter):
+        """Skillset with skills that lack __len__ should not set skill count."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        skillset = MagicMock()
+        skillset.name = "my-skillset"
+        # skills is an iterator (no __len__)
+        skillset.skills = iter(["skill1", "skill2"])
+
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "create_skillset", (), {"skillset": skillset})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-skillset"
+        assert SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT not in spans[0].attributes
+
+    def test_skillset_create_skills_none(self, exporter):
+        """Skillset with None skills should not set skill count."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_skillset_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        skillset = MagicMock()
+        skillset.name = "my-skillset"
+        skillset.skills = None
+
+        with tracer.start_as_current_span("test") as span:
+            _set_skillset_attributes(span, "create_skillset", (), {"skillset": skillset})
+
+        spans = exporter.get_finished_spans()
+        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SKILLSET_NAME) == "my-skillset"
+        assert SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT not in spans[0].attributes
+
+    # --- __init__.py: lines 508-511 (ImportError during _instrument) ---
+
+    def test_instrument_handles_import_error(self):
+        """_instrument should gracefully handle ImportError for missing async modules."""
+        from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
+        import builtins
+
+        instrumentor = AzureSearchInstrumentor()
+        instrumentor.uninstrument()
+
+        original_import = builtins.__import__
+
+        def failing_import(name, *args, **kwargs):
+            if "azure.search.documents" in name:
+                raise ImportError(f"No module named '{name}'")
+            return original_import(name, *args, **kwargs)
+
+        try:
+            builtins.__import__ = failing_import
+            # Should not raise - ImportError is caught
+            instrumentor._instrument()
+        finally:
+            builtins.__import__ = original_import
+            # Re-instrument normally for other tests
+            instrumentor.uninstrument()
+            instrumentor.instrument()
+
+    # --- __init__.py: lines 521-523 (Exception during _uninstrument) ---
+
+    def test_uninstrument_handles_exception(self):
+        """_uninstrument should gracefully handle exceptions from unwrap."""
+        from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
+        from unittest.mock import patch
+
+        instrumentor = AzureSearchInstrumentor()
+
+        # Mock unwrap to raise an exception
+        with patch("opentelemetry.instrumentation.azure_search.unwrap", side_effect=Exception("unwrap failed")):
+            # Should not raise - Exception is caught
+            instrumentor._uninstrument()
+
+        # Re-instrument for other tests
+        instrumentor.instrument()
+
+    # --- __init__.py: branch 502->494 (wrap_object not found on module) ---
+
+    def test_instrument_skips_missing_class(self):
+        """_instrument should skip wrapping when the class is not found on the module."""
+        from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
+        import types
+
+        instrumentor = AzureSearchInstrumentor()
+        instrumentor.uninstrument()
+
+        # Create a module that exists but doesn't have the expected class
+        fake_module = types.ModuleType("fake_module")
+
+        original_import = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
+
+        def selective_import(name, *args, **kwargs):
+            if "azure.search.documents" in name:
+                return fake_module  # Module exists but class doesn't
+            return original_import(name, *args, **kwargs)
+
+        import builtins
+        try:
+            builtins.__import__ = selective_import
+            # Should not raise - missing class is handled via getattr check
+            instrumentor._instrument()
+        finally:
+            builtins.__import__ = original_import
+            instrumentor.uninstrument()
+            instrumentor.instrument()
+
+    # --- wrapper.py: branch 344->exit (method not in either index management branch) ---
+
+    def test_index_management_unknown_method(self, exporter):
+        """Unknown method passed to _set_index_management_attributes should be a no-op."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_management_attributes
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("test") as span:
+            _set_index_management_attributes(span, "unknown_method", (), {})
+
+        spans = exporter.get_finished_spans()
+        assert SpanAttributes.AZURE_SEARCH_INDEX_NAME not in spans[0].attributes
+
+    # --- utils.py: branch 25->exit (Config.exception_logger is None) ---
+
+    def test_dont_throw_no_exception_logger(self, exporter):
+        """dont_throw should not call exception_logger when it's None."""
+        from opentelemetry.instrumentation.azure_search.utils import dont_throw
+        from opentelemetry.instrumentation.azure_search.config import Config
+
+        original_logger = Config.exception_logger
+        Config.exception_logger = None
+
+        @dont_throw
+        def failing_fn():
+            raise ValueError("test error")
+
+        try:
+            # Should not raise, and should not fail on None logger
+            result = failing_fn()
+            assert result is None
+        finally:
+            Config.exception_logger = original_logger
