@@ -258,6 +258,23 @@ class SpanAttributes:
     AZURE_SEARCH_SUGGESTER_NAME = "azure_search.suggester_name"
     AZURE_SEARCH_ANALYZER_NAME = "azure_search.analyzer_name"
 
+    # Azure AI Search - Response Attributes
+    AZURE_SEARCH_SEARCH_RESULTS_COUNT = "azure_search.search.results_count"
+    AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT = "azure_search.document.succeeded_count"
+    AZURE_SEARCH_DOCUMENT_FAILED_COUNT = "azure_search.document.failed_count"
+    AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT = "azure_search.autocomplete.results_count"
+    AZURE_SEARCH_SUGGEST_RESULTS_COUNT = "azure_search.suggest.results_count"
+
+    # Azure AI Search - Indexer Operations
+    AZURE_SEARCH_INDEXER_NAME = "azure_search.indexer_name"
+    AZURE_SEARCH_DATA_SOURCE_NAME = "azure_search.data_source_name"
+    AZURE_SEARCH_SKILLSET_NAME = "azure_search.skillset_name"
+    AZURE_SEARCH_INDEXER_STATUS = "azure_search.indexer.status"
+    AZURE_SEARCH_DOCUMENTS_PROCESSED = "azure_search.indexer.documents_processed"
+    AZURE_SEARCH_DOCUMENTS_FAILED = "azure_search.indexer.documents_failed"
+    AZURE_SEARCH_DATA_SOURCE_TYPE = "azure_search.data_source.type"
+    AZURE_SEARCH_SKILLSET_SKILL_COUNT = "azure_search.skillset.skill_count"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
