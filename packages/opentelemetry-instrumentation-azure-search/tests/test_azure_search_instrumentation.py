@@ -651,6 +651,244 @@ class TestSpanAttributes:
         assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_QUERY_TYPE) == "semantic"
 
 
+class TestResponseAttributes:
+    """Tests for response attribute capturing."""
+
+    def test_search_response_count(self, exporter):
+        """Test that search response captures result count."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_response = MagicMock()
+            mock_response.get_count.return_value = 42
+            _set_search_response_attributes(span, mock_response)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT
+        ) == 42
+
+    def test_search_response_count_none(self, exporter):
+        """Test that search response with no count does not set attribute."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_search_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.search") as span:
+            mock_response = MagicMock()
+            mock_response.get_count.return_value = None
+            _set_search_response_attributes(span, mock_response)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT
+        ) is None
+
+    def test_document_count_response(self, exporter):
+        """Test that get_document_count response captures count."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_document_count_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.get_document_count"
+        ) as span:
+            _set_document_count_response_attributes(span, 500)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT
+        ) == 500
+
+    def test_upload_documents_response_all_succeeded(self, exporter):
+        """Test document batch response with all docs succeeding."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_document_batch_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.upload_documents"
+        ) as span:
+            results = [
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=True),
+            ]
+            _set_document_batch_response_attributes(span, results)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT
+        ) == 3
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT
+        ) == 0
+
+    def test_upload_documents_response_with_failures(self, exporter):
+        """Test document batch response with some docs failing."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_document_batch_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.upload_documents"
+        ) as span:
+            results = [
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=False),
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=False),
+            ]
+            _set_document_batch_response_attributes(span, results)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT
+        ) == 2
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT
+        ) == 2
+
+    def test_index_documents_response(self, exporter):
+        """Test index_documents response captures succeeded/failed."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_index_documents_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.index_documents"
+        ) as span:
+            mock_response = MagicMock()
+            mock_response.results = [
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=True),
+                MagicMock(succeeded=False),
+            ]
+            _set_index_documents_response_attributes(span, mock_response)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT
+        ) == 2
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT
+        ) == 1
+
+    def test_autocomplete_response_count(self, exporter):
+        """Test that autocomplete response captures result count."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_autocomplete_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.autocomplete"
+        ) as span:
+            results = [
+                {"text": "hotel"},
+                {"text": "hostel"},
+                {"text": "house"},
+            ]
+            _set_autocomplete_response_attributes(span, results)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT
+        ) == 3
+
+    def test_suggest_response_count(self, exporter):
+        """Test that suggest response captures result count."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_suggest_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("azure_search.suggest") as span:
+            results = [
+                {"text": "Luxury Hotel"},
+                {"text": "Luxury Resort"},
+            ]
+            _set_suggest_response_attributes(span, results)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT
+        ) == 2
+
+    def test_empty_batch_response(self, exporter):
+        """Test document batch response with empty list."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_document_batch_response_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.upload_documents"
+        ) as span:
+            _set_document_batch_response_attributes(span, [])
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        # Empty list should not set attributes
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT
+        ) is None
+
+    def test_indexer_status_response(self, exporter):
+        """Test indexer status response captures status and counts."""
+        from opentelemetry import trace
+        from opentelemetry.instrumentation.azure_search.wrapper import (
+            _set_indexer_status_attributes,
+        )
+
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span(
+            "azure_search.get_indexer_status"
+        ) as span:
+            mock_response = MagicMock()
+            mock_response.status = "running"
+            mock_response.last_result.items_processed = 1500
+            mock_response.last_result.items_failed = 3
+            _set_indexer_status_attributes(span, (), {}, mock_response)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_INDEXER_STATUS
+        ) == "running"
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENTS_PROCESSED
+        ) == 1500
+        assert spans[0].attributes.get(
+            SpanAttributes.AZURE_SEARCH_DOCUMENTS_FAILED
+        ) == 3
+
+
 class TestInstrumentorLifecycle:
     """Tests for instrumentor lifecycle."""
 

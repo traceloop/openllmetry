@@ -24,8 +24,14 @@ def environment():
 def vcr_config():
     """VCR configuration for recording/replaying API calls."""
     return {
-        "filter_headers": ["api-key", "authorization"],
+        "filter_headers": [
+            "api-key",
+            "authorization",
+            "User-Agent",
+            "x-ms-client-request-id",
+        ],
         "match_on": ["method", "scheme", "host", "port", "path", "query"],
+        "allow_playback_repeats": True,
     }
 
 
