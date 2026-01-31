@@ -2188,3 +2188,108 @@ class TestAttributeFunctionEdgeCases:
         assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME) == "old-ds"
 
 
+class TestUtilsAndLifecycle:
+    """Tests for dont_throw utility and instrumentor lifecycle."""
+
+    def test_dont_throw_catches_exceptions(self):
+        from opentelemetry.instrumentation.azure_search.utils import dont_throw
+
+        @dont_throw
+        def failing_function():
+            raise RuntimeError("boom")
+
+        result = failing_function()
+        assert result is None
+
+    def test_dont_throw_calls_exception_logger(self):
+        from opentelemetry.instrumentation.azure_search.utils import dont_throw
+        from opentelemetry.instrumentation.azure_search.config import Config
+
+        logged = []
+        original = Config.exception_logger
+        Config.exception_logger = lambda e: logged.append(e)
+        try:
+            @dont_throw
+            def failing_function():
+                raise ValueError("test error")
+
+            failing_function()
+            assert len(logged) == 1
+            assert isinstance(logged[0], ValueError)
+        finally:
+            Config.exception_logger = original
+
+    def test_dont_throw_passes_through_on_success(self):
+        from opentelemetry.instrumentation.azure_search.utils import dont_throw
+
+        @dont_throw
+        def ok_function():
+            return 42
+
+        assert ok_function() == 42
+
+    def test_suppression_key_bypasses_instrumentation(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _wrap
+        from opentelemetry import trace, context as context_api
+        from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+
+        tracer = trace.get_tracer(__name__)
+        wrapper_fn = _wrap(tracer, {"span_name": "azure_search.search", "method": "search"})
+
+        def wrapped_fn(*args, **kwargs):
+            return "result"
+
+        token = context_api.attach(context_api.set_value(_SUPPRESS_INSTRUMENTATION_KEY, True))
+        try:
+            result = wrapper_fn(wrapped_fn, MagicMock(), (), {})
+        finally:
+            context_api.detach(token)
+
+        assert result == "result"
+        assert len(exporter.get_finished_spans()) == 0
+
+    def test_wrap_delegates_to_sync(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        wrapper_fn = _wrap(tracer, {"span_name": "azure_search.search", "method": "search"})
+
+        def sync_fn(*args, **kwargs):
+            return "sync-result"
+
+        result = wrapper_fn(sync_fn, MagicMock(), (), {"search_text": "test"})
+        assert result == "sync-result"
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.OK
+
+    @pytest.mark.asyncio
+    async def test_wrap_delegates_to_async(self, exporter):
+        from opentelemetry.instrumentation.azure_search.wrapper import _wrap
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        wrapper_fn = _wrap(tracer, {"span_name": "azure_search.search", "method": "search"})
+
+        async def async_fn(*args, **kwargs):
+            return "async-result"
+
+        result = await wrapper_fn(async_fn, MagicMock(), (), {"search_text": "test"})
+        assert result == "async-result"
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+        assert spans[0].status.status_code == StatusCode.OK
+
+    def test_instrumentor_uninstrument_and_reinstrument(self):
+        from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
+
+        instrumentor = AzureSearchInstrumentor()
+        instrumentor.uninstrument()
+        instrumentor.instrument()
+
+
