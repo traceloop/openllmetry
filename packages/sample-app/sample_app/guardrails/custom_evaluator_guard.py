@@ -29,8 +29,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow
-from traceloop.sdk.decorators import aguardrail as guardrail
+from traceloop.sdk.decorators import workflow, guardrail
 from traceloop.sdk.guardrail import (
     OnFailure,
     Guards,

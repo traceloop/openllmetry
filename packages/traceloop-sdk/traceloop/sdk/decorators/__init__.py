@@ -1,4 +1,5 @@
-from typing import Any, Optional, TypeVar, Callable, Awaitable, ParamSpec
+from typing import Any, Optional, TypeVar, Callable, ParamSpec, Union
+import asyncio
 import warnings
 from functools import wraps
 
@@ -161,53 +162,93 @@ def atool(
     )
 
 
-def aguardrail(
-    guards: list[Guard],
+def guardrail(
+    *guards: Guard,
     input_mapper: InputMapper | None = None,
-    on_failure: OnFailureHandler = OnFailure.raise_exception(),
+    on_failure: Union[OnFailureHandler, str, None] = None,
     name: str = "",
-) -> Callable[[Callable[_P, Awaitable[_R]]], Callable[_P, Awaitable[_R]]]:
+) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
     """
-    Decorator to protect an async function with guardrails.
+    Decorator to protect a function with guardrails.
+
+    Works with both sync and async functions.
 
     Uses the global Traceloop client (from Traceloop.init()).
 
     Args:
-        guards: List of guard functions to run on the output.
+        *guards: Guard functions to run on the output (positional args).
         input_mapper: Function to convert output to guard inputs.
-        on_failure: Handler called when any guard fails.
+        on_failure: Handler called when any guard fails. Can be:
+            - OnFailure handler (e.g., OnFailure.raise_exception())
+            - String (shorthand for OnFailure.return_value(string))
+            - None (defaults to OnFailure.raise_exception())
         name: Optional name for the guardrail (defaults to function name).
 
     Example:
-        @guardrail(
-            guards=[Guards.toxicity_detector()],
-            input_mapper=lambda r: [ToxicityDetectorInput(text=r)],
-            on_failure=OnFailure.return_value("Blocked"),
-        )
+        @guardrail(Guards.toxicity_detector())
         async def generate_response(prompt: str) -> str:
             return await llm.complete(prompt)
+
+        @guardrail(Guards.pii_detector(), Guards.toxicity_detector())
+        async def safe_generate(prompt: str) -> str:
+            return await llm.complete(prompt)
+
+        @guardrail(Guards.json_validator(), on_failure="Invalid JSON")
+        def generate_json(prompt: str) -> str:
+            return llm.complete_sync(prompt)
 
         # Call directly - guardrail runs automatically
         result = await generate_response("Hello!")
     """
+    # Convert string on_failure to OnFailure.return_value
+    if isinstance(on_failure, str):
+        failure_handler = OnFailure.return_value(on_failure)
+    elif on_failure is None:
+        failure_handler = OnFailure.raise_exception()
+    else:
+        failure_handler = on_failure
 
-    def decorator(func: Callable[_P, Awaitable[_R]]) -> Callable[_P, Awaitable[_R]]:
-        @wraps(func)
-        async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-            from traceloop.sdk import Traceloop
+    guards_list = list(guards)
 
-            client = Traceloop.get()
+    def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
+        is_async = asyncio.iscoroutinefunction(func)
 
-            g = client.guardrails.create(
-                guards=guards,
-                on_failure=on_failure,
-                name=name or func.__name__,
-            )
-            return await g.run(
-                lambda: func(*args, **kwargs),
-                input_mapper=input_mapper,
-            )
+        if is_async:
+            @wraps(func)
+            async def async_wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+                from traceloop.sdk import Traceloop
 
-        return wrapper
+                client = Traceloop.get()
+                g = client.guardrails.create(
+                    guards=guards_list,
+                    on_failure=failure_handler,
+                    name=name or func.__name__,
+                )
+                return await g.run(
+                    lambda: func(*args, **kwargs),
+                    input_mapper=input_mapper,
+                )
+
+            return async_wrapper  # type: ignore[return-value]
+        else:
+            @wraps(func)
+            def sync_wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+                from traceloop.sdk import Traceloop
+
+                client = Traceloop.get()
+                g = client.guardrails.create(
+                    guards=guards_list,
+                    on_failure=failure_handler,
+                    name=name or func.__name__,
+                )
+                # Run async guardrail in event loop for sync functions
+                return asyncio.run(
+                    g.run(
+                        lambda: asyncio.to_thread(func, *args, **kwargs),
+                        input_mapper=input_mapper,
+                    )
+                )
+
+            return sync_wrapper  # type: ignore[return-value]
 
     return decorator
