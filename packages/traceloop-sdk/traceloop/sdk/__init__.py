@@ -48,7 +48,7 @@ class Traceloop:
     @staticmethod
     def init(
         app_name: str = sys.argv[0],
-        api_endpoint: str = "https://api.traceloop.com",
+        api_endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
         enabled: bool = True,
         headers: Dict[str, str] = {},
@@ -79,8 +79,8 @@ class Traceloop:
             )
             return
 
-        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
-        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
+        api_endpoint = api_endpoint or os.getenv("TRACELOOP_BASE_URL") or "https://api.traceloop.com"
+        api_key = api_key or os.getenv("TRACELOOP_API_KEY")
         Traceloop.__app_name = app_name
 
         if not is_tracing_enabled():
@@ -180,7 +180,7 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            api_endpoint.find("traceloop.com") != -1
+            api_endpoint.find("traceloop") != -1
             and api_key
             and (exporter is None)
             and (processor is None)
