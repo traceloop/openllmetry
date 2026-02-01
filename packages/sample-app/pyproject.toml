@@ -48,6 +48,7 @@ dependencies = [
   "openai-agents>=0.2.7,<0.3.0",
   "fastmcp>=2.12.3,<3",
   "agno>=2.2.2",
+  "voyageai>=0.3.7",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-haystack",
   "opentelemetry-instrumentation-pinecone",
@@ -58,15 +59,24 @@ dependencies = [
   "opentelemetry-instrumentation-crewai",
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
-  "traceloop-sdk",
-  "voyageai>=0.3.7",
   "opentelemetry-instrumentation-voyageai",
+  "traceloop-sdk",
 ]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
 
 [tool.uv.sources]
+opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
+opentelemetry-instrumentation-haystack = { path = "../opentelemetry-instrumentation-haystack", editable = true }
+opentelemetry-instrumentation-pinecone = { path = "../opentelemetry-instrumentation-pinecone", editable = true }
+opentelemetry-instrumentation-replicate = { path = "../opentelemetry-instrumentation-replicate", editable = true }
+opentelemetry-instrumentation-vertexai = { path = "../opentelemetry-instrumentation-vertexai", editable = true }
+opentelemetry-instrumentation-google-generativeai = { path = "../opentelemetry-instrumentation-google-generativeai", editable = true }
+opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-groq", editable = true }
+opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentation-crewai", editable = true }
+opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
+opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
 opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
 traceloop-sdk = { path = "../traceloop-sdk", editable = true }
 

@@ -4,8 +4,6 @@ version = "0.51.1"
 description = "OpenTelemetry Voyage AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
-  { name = "Nir Gazit", email = "nir@traceloop.com" },
-  { name = "Tomer Friedman", email = "tomer@traceloop.com" },
 ]
 license = "Apache-2.0"
 readme = "README.md"
