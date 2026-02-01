@@ -29,6 +29,7 @@ def default_input_mapper(output: Any, num_guards: int) -> list[dict]:
         input_dict = {
             "text": output,
             "prompt": output,
+            "completion": output
         }
         return [input_dict] * num_guards
 

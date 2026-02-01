@@ -30,13 +30,11 @@ from pydantic import BaseModel
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
+from traceloop.sdk.decorators import aguardrail as guardrail
 from traceloop.sdk.guardrail import (
-    Condition,
     OnFailure,
     Guards,
-    guard,
 )
-from traceloop.sdk.evaluator import EvaluatorDetails
 
 
 # Input models for custom evaluators
@@ -53,48 +51,44 @@ client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=Tru
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-# Example 1: Medical Advice Quality Check (PASS Case)
-# ===================================================
-@workflow(name="medical_advice_quality_check")
-async def medical_advice_quality_check():
+# Example 1: Medical Advice Quality Check (PASS Case) - Using Decorator
+# ======================================================================
+@guardrail(
+    guards=[Guards.custom_evaluator_guard(evaluator_slug="medicaladvice")],
+    on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
+    name="medical_advice_quality_check",
+)
+async def generate_health_info() -> str:
     """
-    Demonstrate safe general health information that passes the guard.
+    Generate general health information about hypertension.
 
     This example shows content that SHOULD pass - general educational health
     information that doesn't provide specific medical diagnoses.
 
-    Custom Evaluator Required: 'medical-advice-detector'
+    Custom Evaluator Required: 'medicaladvice'
     Expected Input Fields:
       - text: The AI-generated response
     """
-
-    async def generate_health_info() -> str:
-        """Generate general health information about hypertension."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a health educator. Provide general educational "
-                               "information only. Never diagnose or prescribe.",
-                },
-                {
-                    "role": "user",
-                    "content": "What is hypertension and how can I maintain healthy blood pressure?",
-                },
-            ],
-        )
-        return completion.choices[0].message.content or ""
-
-
-    guardrail = client.guardrails.create(
-        guards=[Guards.custom_evaluator_guard(evaluator_slug="medicaladvice")],
-        on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
+    completion = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a health educator. Provide general educational "
+                           "information only. Do not give any medical advice",
+            },
+            {
+                "role": "user",
+                "content": "What is hypertension and how can I maintain healthy blood pressure?",
+            },
+        ],
     )
-    result = await guardrail.run(
-        generate_health_info,
-        input_mapper=lambda text: [MedicalAdviceInput(text=text)],
-    )
+    return completion.choices[0].message.content or ""
+
+
+async def medical_advice_quality_check():
+    """Run the decorated function and print result."""
+    result = await generate_health_info()
     print(f"Health information (passed guard): {result[:200]}...")
 
 
@@ -137,7 +131,6 @@ async def diagnosis_request_blocker():
     )
     result = await guardrail.run(
         attempt_diagnosis_request,
-        input_mapper=lambda text: [{"text": text}],
     )
     print(f"Response: {result[:200]}...")
 
@@ -155,15 +148,15 @@ async def main():
     except Exception as e:
         print(f"Skipped: {e}")
 
-    # print("\n" + "=" * 70)
-    # print("Example 2: Diagnosis Request Blocker (FAIL Case)")
-    # print("=" * 70)
-    # print("Note: Requires custom evaluator 'diagnosis-blocker' in Traceloop")
-    # print("Tests: Specific diagnosis request that SHOULD fail the guard\n")
-    # try:
-    #     await diagnosis_request_blocker()
-    # except Exception as e:
-    #     print(f"Expected failure - guard blocked diagnosis request: {e}")
+    print("\n" + "=" * 70)
+    print("Example 2: Diagnosis Request Blocker (FAIL Case)")
+    print("=" * 70)
+    print("Note: Requires custom evaluator 'diagnosis-blocker' in Traceloop")
+    print("Tests: Specific diagnosis request that SHOULD fail the guard\n")
+    try:
+        await diagnosis_request_blocker()
+    except Exception as e:
+        print(f"Expected failure - guard blocked diagnosis request: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

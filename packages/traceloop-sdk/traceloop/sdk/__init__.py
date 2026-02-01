@@ -70,8 +70,6 @@ class Traceloop:
         image_uploader: Optional[ImageUploader] = None,
         span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
     ) -> Optional[Client]:
-        print(f"api_endpoint in init: {api_endpoint}")
-        print(f"api_key: {api_key}")
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -81,9 +79,8 @@ class Traceloop:
             )
             return
 
-        api_endpoint = api_endpoint
-        print(f"api_endpoint: {api_endpoint}")
-        api_key = api_key
+        api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
+        api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
 
         if not is_tracing_enabled():
@@ -183,7 +180,7 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            api_endpoint.find("traceloop") != -1
+            api_endpoint.find("traceloop.com") != -1
             and api_key
             and (exporter is None)
             and (processor is None)
@@ -196,7 +193,6 @@ class Traceloop:
                     + "Traceloop syncing configuration and prompts"
                     + Fore.RESET
                 )
-            print("api key to client: ", api_key)
             Traceloop.__client = Client(
                 api_key=api_key, app_name=app_name, api_endpoint=api_endpoint
             )
