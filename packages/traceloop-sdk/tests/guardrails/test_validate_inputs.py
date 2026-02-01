@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import GuardInputTypeError
-from traceloop.sdk.guardrail import Guards
+from traceloop.sdk.guardrail import pii_guard, toxicity_guard, answer_relevancy_guard
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -124,7 +124,7 @@ class TestValidateInputsPass:
         """Guard with PIIDetectorInput type annotation should validate correctly."""
 
         guardrails = create_guardrails_with_guards(
-            [Guards.pii_detector()])
+            [pii_guard()])
 
         # With Pydantic model instance
         guardrails._validate_inputs([PIIDetectorInput(text="Hello world")])
@@ -133,9 +133,9 @@ class TestValidateInputsPass:
         guardrails._validate_inputs([{"text": "Hello world"}])
 
     def test_traceloop_toxicity_detector_input(self):
-        """Guard using Guards.toxicity_detector() should validate correctly."""
+        """Guard using toxicity_guard() should validate correctly."""
         guardrails = create_guardrails_with_guards([
-            Guards.toxicity_detector(timeout_in_sec=30)
+            toxicity_guard(timeout_in_sec=30)
         ])
 
         # With Pydantic model instance
@@ -147,7 +147,7 @@ class TestValidateInputsPass:
     def test_traceloop_answer_relevancy_input(self):
         """Guard with AnswerRelevancyInput type annotation should validate correctly."""
         guardrails = create_guardrails_with_guards([
-            Guards.answer_relevancy(timeout_in_sec=30)
+            answer_relevancy_guard(timeout_in_sec=30)
         ])
 
         # With Pydantic model instance
@@ -165,10 +165,10 @@ class TestValidateInputsPass:
 
 
     def test_multiple_traceloop_evaluator_guards(self):
-        """Multiple guards using Guards class."""
+        """Multiple guards using guard functions."""
         guards = [
-            Guards.pii_detector(timeout_in_sec=30),
-            Guards.toxicity_detector(timeout_in_sec=30),
+            pii_guard(timeout_in_sec=30),
+            toxicity_guard(timeout_in_sec=30),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -179,10 +179,10 @@ class TestValidateInputsPass:
         guardrails._validate_inputs(guard_inputs)
 
     def test_mixed_lambda_and_traceloop_evaluator_guards(self):
-        """Mix of lambda guards and Guards class guards."""
+        """Mix of lambda guards and guard functions."""
         guards = [
             lambda z: z["score"] > 0.5,  # Lambda guard
-            Guards.pii_detector(timeout_in_sec=30),
+            pii_guard(timeout_in_sec=30),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -298,10 +298,10 @@ class TestValidateInputsFail:
         assert "must match number of guards (2)" in str(exc_info.value)
 
     def test_traceloop_evaluator_length_mismatch_fewer_inputs(self):
-        """Guards class guards with fewer inputs raises ValueError."""
+        """Guard functions with fewer inputs raises ValueError."""
         guards = [
-            Guards.pii_detector(),
-            Guards.toxicity_detector(),
+            pii_guard(),
+            toxicity_guard(),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -313,9 +313,9 @@ class TestValidateInputsFail:
         assert "must match number of guards (2)" in str(exc_info.value)
 
     def test_traceloop_evaluator_length_mismatch_more_inputs(self):
-        """Guards class guards with more inputs raises ValueError."""
+        """Guard functions with more inputs raises ValueError."""
         guards = [
-            Guards.pii_detector(),
+            pii_guard(),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -331,12 +331,12 @@ class TestValidateInputsFail:
         assert "must match number of guards (1)" in str(exc_info.value)
 
     def test_mixed_evaluator_and_typed_guard_type_mismatch(self):
-        """Mixed Guards class + typed guard where typed guard fails type check."""
+        """Mixed guard function + typed guard where typed guard fails type check."""
         def typed_guard(data: PIIDetectorInput) -> bool:
             return True
 
         guards = [
-            Guards.toxicity_detector(),
+            toxicity_guard(),
             typed_guard,  # This has type annotation
         ]
         guardrails = create_guardrails_with_guards(guards)

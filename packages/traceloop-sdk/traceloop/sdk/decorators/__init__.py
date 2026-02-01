@@ -185,15 +185,15 @@ def guardrail(
         name: Optional name for the guardrail (defaults to function name).
 
     Example:
-        @guardrail(Guards.toxicity_detector())
+        @guardrail(toxicity_guard())
         async def generate_response(prompt: str) -> str:
             return await llm.complete(prompt)
 
-        @guardrail(Guards.pii_detector(), Guards.toxicity_detector())
+        @guardrail(pii_guard(), toxicity_guard())
         async def safe_generate(prompt: str) -> str:
             return await llm.complete(prompt)
 
-        @guardrail(Guards.json_validator(), on_failure="Invalid JSON")
+        @guardrail(json_validator_guard(), on_failure="Invalid JSON")
         def generate_json(prompt: str) -> str:
             return llm.complete_sync(prompt)
 

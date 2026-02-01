@@ -19,7 +19,7 @@ class Condition:
         Pass if value is True.
 
         Example:
-            Guards.toxicity_detector(condition=Condition.is_true())
+            toxicity_guard(condition=Condition.is_true())
         """
 
         def check(value: Any) -> bool:
@@ -33,7 +33,7 @@ class Condition:
         Pass if value is False.
 
         Example:
-            Guards.pii_detector(condition=Condition.is_false())
+            pii_guard(condition=Condition.is_false())
         """
 
         def check(value: Any) -> bool:

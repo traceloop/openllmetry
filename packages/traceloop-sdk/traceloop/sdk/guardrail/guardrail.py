@@ -51,7 +51,7 @@ class Guardrails:
         g = client.guardrails.create(
             guards=[
                 lambda z: z["score"] > 0.8,
-                Guards.pii_detector(),
+                pii_guard(),
             ],
             on_failure=OnFailure.raise_exception("Guard failed"),
         )
@@ -105,7 +105,7 @@ class Guardrails:
                 name="quality-check",
                 guards=[
                     lambda z: z["score"] > 0.8,
-                    Guards.pii_detector(),
+                    pii_guard(),
                 ],
                 on_failure=OnFailure.raise_exception("Guard failed"),
                 parallel=True,
@@ -316,7 +316,7 @@ class Guardrails:
 
         Example:
             g = client.guardrails.create(
-                guards=[Guards.toxicity_detector()],
+                guards=[toxicity_guard()],
                 on_failure=OnFailure.raise_exception("Quality check failed"),
             )
             result = await g.run(generate_email)

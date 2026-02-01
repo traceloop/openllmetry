@@ -14,7 +14,7 @@ To playback without API key:
 import os
 import pytest
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrail import Guardrails, OnFailure, Guards
+from traceloop.sdk.guardrail import Guardrails, OnFailure, pii_guard, toxicity_guard, answer_relevancy_guard
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -68,7 +68,7 @@ class TestPIIDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """PII detector guard passes when text has no PII."""
-        guard = Guards.pii_detector()
+        guard = pii_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -89,7 +89,7 @@ class TestPIIDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """PII detector guard fails when text contains email."""
-        guard = Guards.pii_detector()
+        guard = pii_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -114,7 +114,7 @@ class TestToxicityDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """Toxicity detector guard passes for friendly text."""
-        guard = Guards.toxicity_detector()
+        guard = toxicity_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -135,7 +135,7 @@ class TestToxicityDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """Toxicity detector guard fails for toxic text."""
-        guard = Guards.toxicity_detector()
+        guard = toxicity_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -160,7 +160,7 @@ class TestAnswerRelevancyGuard:
         self, guardrails, traceloop_client
     ):
         """Answer relevancy guard passes for relevant answer."""
-        guard = Guards.answer_relevancy()
+        guard = answer_relevancy_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -184,7 +184,7 @@ class TestAnswerRelevancyGuard:
         self, guardrails, traceloop_client
     ):
         """Answer relevancy guard fails for irrelevant answer."""
-        guard = Guards.answer_relevancy()
+        guard = answer_relevancy_guard()
 
         g = guardrails.create(
             guards=[guard],
@@ -212,11 +212,11 @@ class TestMultipleGuardsValidation:
         self, guardrails, traceloop_client
     ):
         """Multiple guards all pass validation."""
-        pii_guard = Guards.pii_detector()
-        toxicity_guard = Guards.toxicity_detector()
+        pii_g = pii_guard()
+        toxicity_g = toxicity_guard()
 
         g = guardrails.create(
-            guards=[pii_guard, toxicity_guard],
+            guards=[pii_g, toxicity_g],
             on_failure=OnFailure.raise_exception("Guard failed"),
             name="content-safety",
             parallel=True,
@@ -236,11 +236,11 @@ class TestMultipleGuardsValidation:
         self, guardrails, traceloop_client
     ):
         """Multiple guards where one fails validation."""
-        pii_guard = Guards.pii_detector()
-        toxicity_guard = Guards.toxicity_detector()
+        pii_g = pii_guard()
+        toxicity_g = toxicity_guard()
 
         g = guardrails.create(
-            guards=[pii_guard, toxicity_guard],
+            guards=[pii_g, toxicity_g],
             on_failure=OnFailure.log(),
             name="content-safety",
             parallel=True,
