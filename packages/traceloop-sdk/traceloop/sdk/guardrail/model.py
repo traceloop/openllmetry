@@ -44,7 +44,21 @@ OnFailureHandler = Union[
 ]
 
 
-class GuardValidationError(Exception):
+class GuardrailError(Exception):
+    """
+    Base exception for all guardrail-related errors.
+
+    Use this to catch any guardrail error:
+        try:
+            result = await guardrail.run(my_func)
+        except GuardrailError as e:
+            # Handles GuardValidationError, GuardExecutionError, GuardInputTypeError
+            pass
+    """
+    pass
+
+
+class GuardValidationError(GuardrailError):
     """
     Raised when guard fails and on_failure handler raises.
 
@@ -61,7 +75,7 @@ class GuardValidationError(Exception):
         return f"{self.args[0]} (guard_inputs: {self.output.guard_inputs})"
 
 
-class GuardExecutionError(Exception):
+class GuardExecutionError(GuardrailError):
     """
     Raised when the guard function itself throws an exception during execution.
 
@@ -95,7 +109,7 @@ class GuardExecutionError(Exception):
         )
 
 
-class GuardInputTypeError(Exception):
+class GuardInputTypeError(GuardrailError):
     """
     Raised when a guard_input doesn't match the expected type of its guard function.
 

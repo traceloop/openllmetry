@@ -159,8 +159,13 @@ class Guardrails:
             try:
                 TypeAdapter(expected_type).validate_python(guard_input)
             except Exception as e:
+                guard_name = getattr(guard, "__name__", f"guard_{i}")
+                error_detail = str(e).split('\n')[0] if str(e) else ""
                 raise GuardInputTypeError(
-                    message=f"Guard {i} expected {expected_type}, but got {type(guard_input).__name__}",
+                    message=(
+                        f"Guard '{guard_name}' (index {i}) expected {expected_type}, "
+                        f"but got {type(guard_input).__name__}. {error_detail}"
+                    ),
                     guard_index=i,
                     expected_type=expected_type,
                     actual_type=type(guard_input),

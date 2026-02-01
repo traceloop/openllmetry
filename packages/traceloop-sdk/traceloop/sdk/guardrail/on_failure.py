@@ -21,17 +21,22 @@ class OnFailure:
         exception_type: Type[Exception] = GuardValidationError
     ) -> Callable[["GuardedResult[Any, Any]"], None]:
         """
-        Raise GuardValidationError on failure.
+        Raise an exception on failure.
 
         Args:
             message: Error message to include in the exception
+            exception_type: The exception class to raise (default: GuardValidationError)
 
         Example:
             on_failure=OnFailure.raise_exception("PII detected in response")
+            on_failure=OnFailure.raise_exception("Invalid input", exception_type=ValueError)
         """
 
         def handler(output: "GuardedResult[Any, Any]") -> None:
-            raise exception_type(message, output)
+            if exception_type is GuardValidationError:
+                raise exception_type(message, output)
+            else:
+                raise exception_type(message)
 
         return handler
 

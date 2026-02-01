@@ -30,6 +30,7 @@ Example:
 from .guardrail import Guardrails
 from .model import (
     GuardedResult,
+    GuardrailError,
     GuardValidationError,
     GuardExecutionError,
     GuardInputTypeError,
@@ -47,6 +48,7 @@ from .default_mapper import default_input_mapper
 __all__ = [
     "Guardrails",
     "GuardedResult",
+    "GuardrailError",
     "GuardValidationError",
     "GuardExecutionError",
     "GuardInputTypeError",

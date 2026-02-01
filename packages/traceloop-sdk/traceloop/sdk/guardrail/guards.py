@@ -424,26 +424,28 @@ class Guards:
     @staticmethod
     def answer_correctness(
         threshold: float = 0.8,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when answer correctness score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.answer_correctness(),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
     @staticmethod
     def answer_completeness(
         threshold: float = 0.8,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when answer completeness score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.answer_completeness(),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
@@ -451,52 +453,56 @@ class Guards:
     def context_relevance(
         threshold: float = 0.8,
         model: str | None = None,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when context relevance score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.context_relevance(model=model),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
     @staticmethod
     def conversation_quality(
         threshold: float = 0.7,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when conversation quality score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.conversation_quality(),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
     @staticmethod
     def html_comparison(
         threshold: float = 0.9,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when HTML similarity score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.html_comparison(),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
     @staticmethod
     def instruction_adherence(
         threshold: float = 0.8,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] | None = None,
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when instruction adherence score meets threshold."""
+        effective_condition = condition if condition is not None else Condition.greater_than_or_equal(threshold)
         return guard(
             EvaluatorMadeByTraceloop.instruction_adherence(),
-            condition=condition,
+            condition=effective_condition,
             timeout_in_sec=timeout_in_sec,
         )
 
