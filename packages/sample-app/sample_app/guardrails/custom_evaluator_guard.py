@@ -34,6 +34,7 @@ from traceloop.sdk.guardrail import (
     GuardedOutput,
     Condition,
     OnFailure,
+    guard,
 )
 from traceloop.sdk.evaluator import EvaluatorDetails
 
@@ -98,9 +99,7 @@ async def medical_advice_quality_check():
     )
 
     guardrail = client.guardrails.create(
-        guards=[medical_evaluator.as_guard(
-            condition=Condition.is_true()
-        )],
+        guards=[guard(medical_evaluator, condition=Condition.is_true())],
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
     result = await guardrail.run(generate_health_info)
@@ -149,9 +148,7 @@ async def diagnosis_request_blocker():
     )
 
     guardrail = client.guardrails.create(
-        guards=[diagnosis_blocker.as_guard(
-            condition=Condition.is_true()
-        )],
+        guards=[guard(diagnosis_blocker, condition=Condition.is_true())],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
             "Please consult a qualified healthcare professional for symptoms that concern you."

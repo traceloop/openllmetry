@@ -9,8 +9,7 @@ from pydantic import BaseModel
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import GuardInputTypeError
-from traceloop.sdk.guardrail import Condition
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
+from traceloop.sdk.guardrail import Condition, Guards
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -125,7 +124,7 @@ class TestValidateInputsPass:
         """Guard with PIIDetectorInput type annotation should validate correctly."""
 
         guardrails = create_guardrails_with_guards(
-            [EvaluatorMadeByTraceloop.pii_detector().as_guard(condition=Condition.is_false())])
+            [Guards.pii_detector()])
 
         # With Pydantic model instance
         guardrails._validate_inputs([PIIDetectorInput(text="Hello world")])
@@ -134,12 +133,9 @@ class TestValidateInputsPass:
         guardrails._validate_inputs([{"text": "Hello world"}])
 
     def test_traceloop_toxicity_detector_input(self):
-        """Guard using EvaluatorMadeByTraceloop.toxicity_detector() should validate correctly."""
+        """Guard using Guards.toxicity_detector() should validate correctly."""
         guardrails = create_guardrails_with_guards([
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(),
-                timeout_in_sec=30,
-            )
+            Guards.toxicity_detector(timeout_in_sec=30)
         ])
 
         # With Pydantic model instance
@@ -151,10 +147,7 @@ class TestValidateInputsPass:
     def test_traceloop_answer_relevancy_input(self):
         """Guard with AnswerRelevancyInput type annotation should validate correctly."""
         guardrails = create_guardrails_with_guards([
-            EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-                condition=Condition.is_false(),
-                timeout_in_sec=30,
-            )
+            Guards.answer_relevancy(timeout_in_sec=30)
         ])
 
         # With Pydantic model instance
@@ -172,16 +165,10 @@ class TestValidateInputsPass:
 
 
     def test_multiple_traceloop_evaluator_guards(self):
-        """Multiple guards using EvaluatorMadeByTraceloop evaluators."""
+        """Multiple guards using Guards class."""
         guards = [
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(),
-                timeout_in_sec=30,
-            ),
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(),
-                timeout_in_sec=30,
-            ),
+            Guards.pii_detector(timeout_in_sec=30),
+            Guards.toxicity_detector(timeout_in_sec=30),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -192,13 +179,10 @@ class TestValidateInputsPass:
         guardrails._validate_inputs(guard_inputs)
 
     def test_mixed_lambda_and_traceloop_evaluator_guards(self):
-        """Mix of lambda guards and EvaluatorMadeByTraceloop evaluator guards."""
+        """Mix of lambda guards and Guards class guards."""
         guards = [
             lambda z: z["score"] > 0.5,  # Lambda guard
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(),
-                timeout_in_sec=30,
-            ),
+            Guards.pii_detector(timeout_in_sec=30),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -314,14 +298,10 @@ class TestValidateInputsFail:
         assert "must match number of guards (2)" in str(exc_info.value)
 
     def test_traceloop_evaluator_length_mismatch_fewer_inputs(self):
-        """Traceloop evaluator guards with fewer inputs raises ValueError."""
+        """Guards class guards with fewer inputs raises ValueError."""
         guards = [
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(),
-            ),
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(),
-            ),
+            Guards.pii_detector(),
+            Guards.toxicity_detector(),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -333,11 +313,9 @@ class TestValidateInputsFail:
         assert "must match number of guards (2)" in str(exc_info.value)
 
     def test_traceloop_evaluator_length_mismatch_more_inputs(self):
-        """Traceloop evaluator guards with more inputs raises ValueError."""
+        """Guards class guards with more inputs raises ValueError."""
         guards = [
-            EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false(),
-            ),
+            Guards.pii_detector(),
         ]
         guardrails = create_guardrails_with_guards(guards)
 
@@ -353,14 +331,12 @@ class TestValidateInputsFail:
         assert "must match number of guards (1)" in str(exc_info.value)
 
     def test_mixed_evaluator_and_typed_guard_type_mismatch(self):
-        """Mixed evaluator + typed guard where typed guard fails type check."""
+        """Mixed Guards class + typed guard where typed guard fails type check."""
         def typed_guard(data: PIIDetectorInput) -> bool:
             return True
 
         guards = [
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_false(),
-            ),
+            Guards.toxicity_detector(),
             typed_guard,  # This has type annotation
         ]
         guardrails = create_guardrails_with_guards(guards)

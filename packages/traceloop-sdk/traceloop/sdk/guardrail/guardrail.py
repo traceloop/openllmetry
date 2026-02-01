@@ -5,7 +5,7 @@ import asyncio
 import inspect
 import json
 import time
-from typing import Callable, Awaitable, cast, Optional
+from typing import Any, Callable, Awaitable, cast, Optional
 
 import httpx
 from pydantic import TypeAdapter
@@ -27,7 +27,7 @@ from .span_attributes import (
     GEN_AI_GUARDRAIL_ERROR_MESSAGE,
 )
 from traceloop.sdk.evaluator.evaluator import Evaluator
-
+from .on_failure import OnFailure
 from .model import (
     GuardedOutput,
     Guard,
@@ -51,7 +51,7 @@ class Guardrails:
         g = client.guardrails.create(
             guards=[
                 lambda z: z["score"] > 0.8,
-                EvaluatorMadeByTraceloop.pii_detector().as_guard(...),
+                Guards.pii_detector(),
             ],
             on_failure=OnFailure.raise_exception("Guard failed"),
         )
@@ -78,7 +78,7 @@ class Guardrails:
     def create(
         self,
         guards: list[Guard],
-        on_failure: OnFailureHandler,
+        on_failure: OnFailureHandler = OnFailure.raise_exception(),
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
@@ -105,7 +105,7 @@ class Guardrails:
                 name="quality-check",
                 guards=[
                     lambda z: z["score"] > 0.8,
-                    EvaluatorMadeByTraceloop.pii_detector().as_guard(...),
+                    Guards.pii_detector(),
                 ],
                 on_failure=OnFailure.raise_exception("Guard failed"),
                 parallel=True,
@@ -152,8 +152,8 @@ class Guardrails:
             first_param = params[0]
             expected_type = first_param.annotation
 
-            # Skip if no type annotation (e.g., lambdas)
-            if expected_type is inspect.Parameter.empty:
+            # Skip if no type annotation (e.g., lambdas) or if type is Any
+            if expected_type is inspect.Parameter.empty or expected_type is Any:
                 continue
 
             try:

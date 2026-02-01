@@ -24,9 +24,9 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
     GuardedOutput,
-    Condition,
     OnFailure,
     GuardValidationError,
+    Guards,
 )
 from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
@@ -34,7 +34,6 @@ from traceloop.sdk.generated.evaluators.request import (
     SexismDetectorInput,
     ToxicityDetectorInput,
 )
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Union type for multiple guard input types
 OutputGuardInputs = Union[AnswerRelevancyInput, SexismDetectorInput, ToxicityDetectorInput]
@@ -82,12 +81,8 @@ async def secure_chat(user_prompt: str) -> str:
     prompt_guardrail = client.guardrails.create(
         name="prompt-injection-guardrail",
         guards=[
-            EvaluatorMadeByTraceloop.prompt_injection(threshold=0.7).as_guard(
-                condition=Condition.equals(expected=False),
-                timeout_in_sec=30,
-            )
+            Guards.prompt_injection(threshold=0.7, timeout_in_sec=30),
         ],
-        on_failure=OnFailure.raise_exception("Potential prompt injection detected"),
     )
 
     # Validate user input BEFORE calling the LLM
@@ -106,19 +101,10 @@ async def secure_chat(user_prompt: str) -> str:
     output_guardrail = client.guardrails.create(
         name="output-guardrail",
         guards=[
-            EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-                condition=Condition.is_true(),
-            ),
-            EvaluatorMadeByTraceloop.sexism_detector().as_guard(
-                condition=Condition.is_true(),
-            ),
-            EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-                condition=Condition.is_true(),
-            ),
+            Guards.answer_relevancy(),
+            Guards.sexism_detector(threshold=0.9),
+            Guards.toxicity_detector(),
         ],
-        on_failure=OnFailure.return_value(
-            "I apologize, but I cannot provide that response."
-        ),
     )
 
     # Run LLM and guard the output

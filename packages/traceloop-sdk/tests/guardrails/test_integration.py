@@ -14,9 +14,7 @@ To playback without API key:
 import os
 import pytest
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrail import Guardrails, OnFailure
-from traceloop.sdk.guardrail.condition import Condition
-from traceloop.sdk.generated.evaluators import EvaluatorMadeByTraceloop
+from traceloop.sdk.guardrail import Guardrails, OnFailure, Guards
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -70,9 +68,7 @@ class TestPIIDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """PII detector guard passes when text has no PII."""
-        guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false()
-        )
+        guard = Guards.pii_detector()
 
         g = guardrails.create(
             guards=[guard],
@@ -93,9 +89,7 @@ class TestPIIDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """PII detector guard fails when text contains email."""
-        guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false()
-        )
+        guard = Guards.pii_detector()
 
         g = guardrails.create(
             guards=[guard],
@@ -120,9 +114,7 @@ class TestToxicityDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """Toxicity detector guard passes for friendly text."""
-        guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true()
-        )
+        guard = Guards.toxicity_detector()
 
         g = guardrails.create(
             guards=[guard],
@@ -143,9 +135,7 @@ class TestToxicityDetectorGuard:
         self, guardrails, traceloop_client
     ):
         """Toxicity detector guard fails for toxic text."""
-        guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true()
-        )
+        guard = Guards.toxicity_detector()
 
         g = guardrails.create(
             guards=[guard],
@@ -170,9 +160,7 @@ class TestAnswerRelevancyGuard:
         self, guardrails, traceloop_client
     ):
         """Answer relevancy guard passes for relevant answer."""
-        guard = EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-            condition=Condition.is_true()
-        )
+        guard = Guards.answer_relevancy()
 
         g = guardrails.create(
             guards=[guard],
@@ -196,9 +184,7 @@ class TestAnswerRelevancyGuard:
         self, guardrails, traceloop_client
     ):
         """Answer relevancy guard fails for irrelevant answer."""
-        guard = EvaluatorMadeByTraceloop.answer_relevancy().as_guard(
-            condition=Condition.is_true()
-        )
+        guard = Guards.answer_relevancy()
 
         g = guardrails.create(
             guards=[guard],
@@ -226,12 +212,8 @@ class TestMultipleGuardsValidation:
         self, guardrails, traceloop_client
     ):
         """Multiple guards all pass validation."""
-        pii_guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false()
-        )
-        toxicity_guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true()
-        )
+        pii_guard = Guards.pii_detector()
+        toxicity_guard = Guards.toxicity_detector()
 
         g = guardrails.create(
             guards=[pii_guard, toxicity_guard],
@@ -254,12 +236,8 @@ class TestMultipleGuardsValidation:
         self, guardrails, traceloop_client
     ):
         """Multiple guards where one fails validation."""
-        pii_guard = EvaluatorMadeByTraceloop.pii_detector().as_guard(
-            condition=Condition.is_false()
-        )
-        toxicity_guard = EvaluatorMadeByTraceloop.toxicity_detector().as_guard(
-            condition=Condition.is_true()
-        )
+        pii_guard = Guards.pii_detector()
+        toxicity_guard = Guards.toxicity_detector()
 
         g = guardrails.create(
             guards=[pii_guard, toxicity_guard],

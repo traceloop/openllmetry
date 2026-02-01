@@ -17,15 +17,14 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
     GuardedOutput,
-    Condition,
     OnFailure,
+    Guards,
 )
 from traceloop.sdk.generated.evaluators.request import (
     ToxicityDetectorInput,
     PIIDetectorInput,
     AgentGoalCompletenessInput,
 )
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop - returns client with guardrails access
 client = Traceloop.init(app_name="guardrail-traceloop-evaluator", disable_batch=True)
@@ -62,9 +61,7 @@ async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
     guardrail = client.guardrails.create(
-        guards=[EvaluatorMadeByTraceloop.pii_detector(
-            probability_threshold=0.7
-        ).as_guard(condition=Condition.is_false(), timeout_in_sec=45)],
+        guards=[Guards.pii_detector(probability_threshold=0.7, timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
     result = await guardrail.run(generate_customer_response)
@@ -95,9 +92,7 @@ async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
     guardrail = client.guardrails.create(
-        guards=[EvaluatorMadeByTraceloop.toxicity_detector(threshold=0.7).as_guard(
-            condition=Condition.is_true()
-        )],
+        guards=[Guards.toxicity_detector(threshold=0.7)],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
     result = await guardrail.run(generate_content)
@@ -166,9 +161,7 @@ async def agent_trajectory_example():
         )
 
     guardrail = client.guardrails.create(
-        guards=[EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.7).as_guard(
-            condition=Condition.is_true()
-        )],
+        guards=[Guards.agent_goal_completeness(threshold=0.7)],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
     result = await guardrail.run(run_travel_agent)

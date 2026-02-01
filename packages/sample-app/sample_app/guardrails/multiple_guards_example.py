@@ -25,9 +25,8 @@ from traceloop.sdk.guardrail import (
     GuardedOutput,
     OnFailure,
     GuardValidationError,
-    Condition,
+    Guards,
 )
-from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 from traceloop.sdk.generated.evaluators.request import PIIDetectorInput
 
 # Initialize Traceloop
@@ -147,9 +146,7 @@ async def mixed_guard_types_example():
 
     guardrail = client.guardrails.create(
         guards=[
-            EvaluatorMadeByTraceloop.pii_detector(probability_threshold=0.7).as_guard(
-                condition=Condition.is_false(),
-            ),
+            Guards.pii_detector(probability_threshold=0.7),
             business_rules_guard,
         ],
         on_failure=OnFailure.raise_exception("Response failed safety or business rules"),

@@ -4,8 +4,8 @@ Built-in conditions for evaluating guard results.
 Conditions are functions that take an evaluator result value and return a boolean
 indicating whether the guard should pass (True) or fail (False).
 
-The condition_field is extracted by the evaluator's as_guard method before
-passing to these conditions, so conditions receive the field value directly.
+The condition_field is extracted by the guard function before passing to these
+conditions, so conditions receive the field value directly.
 """
 from typing import Any, Callable
 
@@ -19,9 +19,7 @@ class Condition:
         Pass if value is True.
 
         Example:
-            guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_true()
-            )
+            Guards.toxicity_detector(condition=Condition.is_true())
         """
 
         def check(value: Any) -> bool:
@@ -35,9 +33,7 @@ class Condition:
         Pass if value is False.
 
         Example:
-            guard=EvaluatorMadeByTraceloop.pii_detector().as_guard(
-                condition=Condition.is_false()
-            )
+            Guards.pii_detector(condition=Condition.is_false())
         """
 
         def check(value: Any) -> bool:

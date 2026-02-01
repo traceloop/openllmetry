@@ -382,24 +382,21 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def pii_detector(
-        probability_threshold: float | None = None,
+        probability_threshold: float = 0.7,
     ) -> EvaluatorDetails:
         """Create pii-detector evaluator.
 
         Args:
-            probability_threshold: float
+            probability_threshold: float (default: 0.7)
 
         Required input fields: text
         """
-        config = {
-            k: v for k, v in {"probability_threshold": probability_threshold}.items()
-            if v is not None
-        }
+        config = {"probability_threshold": probability_threshold}
         return EvaluatorDetails(
             slug="pii-detector",
             condition_field="has_pii",
             output_schema=PIIDetectorResponse,
-            config=config if config else None,
+            config=config,
             required_input_fields=['text'],
         )
 
@@ -452,24 +449,21 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def prompt_injection(
-        threshold: float | None = None,
+        threshold: float = 0.7,
     ) -> EvaluatorDetails:
         """Create prompt-injection evaluator.
 
         Args:
-            threshold: float
+            threshold: float (default: 0.7)
 
         Required input fields: prompt
         """
-        config = {
-            k: v for k, v in {"threshold": threshold}.items()
-            if v is not None
-        }
+        config = {"threshold": threshold}
         return EvaluatorDetails(
             slug="prompt-injection",
             condition_field="has_injection",
             output_schema=PromptInjectionResponse,
-            config=config if config else None,
+            config=config,
             required_input_fields=['prompt'],
         )
 
@@ -551,24 +545,21 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def sexism_detector(
-        threshold: float | None = None,
+        threshold: float = 0.7,
     ) -> EvaluatorDetails:
         """Create sexism-detector evaluator.
 
         Args:
-            threshold: float
+            threshold: float (default: 0.7)
 
         Required input fields: text
         """
-        config = {
-            k: v for k, v in {"threshold": threshold}.items()
-            if v is not None
-        }
+        config = {"threshold": threshold}
         return EvaluatorDetails(
             slug="sexism-detector",
             condition_field="is_safe",
             output_schema=SexismDetectorResponse,
-            config=config if config else None,
+            config=config,
             required_input_fields=['text'],
         )
 
@@ -613,24 +604,21 @@ class EvaluatorMadeByTraceloop:
 
     @staticmethod
     def toxicity_detector(
-        threshold: float | None = None,
+        threshold: float = 0.7,
     ) -> EvaluatorDetails:
         """Create toxicity-detector evaluator.
 
         Args:
-            threshold: float
+            threshold: float (default: 0.7)
 
         Required input fields: text
         """
-        config = {
-            k: v for k, v in {"threshold": threshold}.items()
-            if v is not None
-        }
+        config = {"threshold": threshold}
         return EvaluatorDetails(
             slug="toxicity-detector",
             condition_field="is_safe",
             output_schema=ToxicityDetectorResponse,
-            config=config if config else None,
+            config=config,
             required_input_fields=['text'],
         )
 
