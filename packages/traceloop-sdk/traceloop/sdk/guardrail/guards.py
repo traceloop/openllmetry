@@ -172,7 +172,7 @@ class Guards:
     @staticmethod
     def pii_detector(
         probability_threshold: float | None = None,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] = Condition.is_false(),
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when no PII is detected."""
@@ -186,7 +186,7 @@ class Guards:
 
     @staticmethod
     def secrets_detector(
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] = Condition.is_false(),
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when no secrets are detected."""
@@ -199,7 +199,7 @@ class Guards:
     @staticmethod
     def prompt_injection(
         threshold: float | None = None,
-        condition: Callable[[Any], bool] = Condition.is_true(),
+        condition: Callable[[Any], bool] = Condition.is_false(),
         timeout_in_sec: int = 60,
     ) -> Guard:
         """Guard that passes when no prompt injection is detected."""
