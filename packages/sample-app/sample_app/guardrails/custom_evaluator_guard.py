@@ -33,6 +33,7 @@ from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
     Condition,
     OnFailure,
+    Guards,
     guard,
 )
 from traceloop.sdk.evaluator import EvaluatorDetails
@@ -85,14 +86,9 @@ async def medical_advice_quality_check():
         )
         return completion.choices[0].message.content or ""
 
-    # Configure custom evaluator for medical advice detection
-    medical_evaluator = EvaluatorDetails(
-        slug="medical-advice-given",
-        condition_field="pass",
-    )
 
     guardrail = client.guardrails.create(
-        guards=[guard(medical_evaluator, condition=Condition.is_true())],
+        guards=[Guards.custom_evaluator_guard(evaluator_slug="medicaladvice")],
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
     result = await guardrail.run(
@@ -132,13 +128,8 @@ async def diagnosis_request_blocker():
         )
         return completion.choices[0].message.content
 
-    diagnosis_blocker = EvaluatorDetails(
-        slug="diagnosis-blocker",
-        condition_field="pass",
-    )
-
     guardrail = client.guardrails.create(
-        guards=[guard(diagnosis_blocker, condition=Condition.is_true())],
+        guards=[Guards.custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
             "Please consult a qualified healthcare professional for symptoms that concern you."
@@ -164,15 +155,15 @@ async def main():
     except Exception as e:
         print(f"Skipped: {e}")
 
-    print("\n" + "=" * 70)
-    print("Example 2: Diagnosis Request Blocker (FAIL Case)")
-    print("=" * 70)
-    print("Note: Requires custom evaluator 'diagnosis-blocker' in Traceloop")
-    print("Tests: Specific diagnosis request that SHOULD fail the guard\n")
-    try:
-        await diagnosis_request_blocker()
-    except Exception as e:
-        print(f"Expected failure - guard blocked diagnosis request: {e}")
+    # print("\n" + "=" * 70)
+    # print("Example 2: Diagnosis Request Blocker (FAIL Case)")
+    # print("=" * 70)
+    # print("Note: Requires custom evaluator 'diagnosis-blocker' in Traceloop")
+    # print("Tests: Specific diagnosis request that SHOULD fail the guard\n")
+    # try:
+    #     await diagnosis_request_blocker()
+    # except Exception as e:
+    #     print(f"Expected failure - guard blocked diagnosis request: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

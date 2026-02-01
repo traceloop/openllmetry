@@ -50,8 +50,6 @@ def guard(
     Returns:
         Async function suitable for client.guardrails.create(guards=[...])
     """
-    if condition is None:
-        condition = Condition.is_true()
 
     evaluator_slug = evaluator_details.slug
     evaluator_version = evaluator_details.version
@@ -106,6 +104,24 @@ class Guards:
     - Quality evaluators (answer_relevancy, faithfulness): pass when is_* == True
     - Score-based evaluators: pass when score >= threshold (default 0.8)
     """
+
+    @staticmethod
+    def custom_evaluator_guard(
+        evaluator_slug: str,
+        evaluator_version: str | None = None,
+        evaluator_config: dict[str, Any] | None = None,
+        condition_field: str = "pass",
+        condition: Callable[[Any], bool] = Condition.is_true(),
+        timeout_in_sec: int = 60,
+    ) -> Guard:
+        """Guard that passes when the custom evaluator passes."""
+        evaluator_details = EvaluatorDetails(
+            slug=evaluator_slug,
+            condition_field=condition_field,
+            version=evaluator_version,
+            config=evaluator_config,
+        )
+        return guard(evaluator_details, condition, timeout_in_sec)
 
     # =========================================================================
     # Safety Detectors - pass when content is safe (is_safe = True)
