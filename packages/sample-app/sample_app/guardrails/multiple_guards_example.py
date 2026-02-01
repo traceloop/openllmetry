@@ -8,8 +8,8 @@ This example demonstrates how to use multiple guards together:
 4. Sequential execution for dependent guards
 
 Key concepts:
-- guard_inputs list length must match guards list length
-- Each guard receives its corresponding guard_input (index-matched)
+- input_mapper returns a list matching the number of guards
+- Each guard receives its corresponding input (index-matched)
 - parallel=True (default) runs guards concurrently
 - run_all=True continues after failures to collect all errors
 """
@@ -22,9 +22,9 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    GuardedOutput,
     OnFailure,
     GuardValidationError,
+    GuardedResult,
     Guards,
 )
 from traceloop.sdk.generated.evaluators.request import PIIDetectorInput
@@ -37,8 +37,8 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Example 1: Multiple Lambda Guards (Parallel)
 # ============================================
-async def generate_content() -> GuardedOutput[str, dict]:
-    """Generate content with multiple validation inputs."""
+async def generate_content() -> str:
+    """Generate content."""
     completion = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -48,29 +48,30 @@ async def generate_content() -> GuardedOutput[str, dict]:
             }
         ],
     )
-    text = completion.choices[0].message.content
-    word_count = len(text.split())
-    caps_count = sum(1 for c in text if c.isupper())
-    caps_ratio = caps_count / max(len(text), 1)
+    return completion.choices[0].message.content
 
-    # Each guard gets its own input - order must match guards list
-    return GuardedOutput(
-        result=text,
-        guard_inputs=[
-            {"word_count": word_count},  # For length guard
-            {"text": text},               # For forbidden words guard
-            {"caps_ratio": caps_ratio},   # For capitalization guard
-        ],
-    )
 
 @workflow(name="multiple_lambda_guards")
 async def multiple_lambda_guards_example():
     """
     Demonstrate multiple lambda guards running in parallel.
 
-    Each guard gets its own input from the guard_inputs list.
+    Each guard gets its own input from the input_mapper return list.
     Guards run concurrently by default (parallel=True).
     """
+
+    def create_guard_inputs(text: str) -> list[dict]:
+        """Create inputs for each guard."""
+        word_count = len(text.split())
+        caps_count = sum(1 for c in text if c.isupper())
+        caps_ratio = caps_count / max(len(text), 1)
+
+        # Each guard gets its own input - order must match guards list
+        return [
+            {"word_count": word_count},  # For length guard
+            {"text": text},               # For forbidden words guard
+            {"caps_ratio": caps_ratio},   # For capitalization guard
+        ]
 
     guardrail = client.guardrails.create(
         guards=[
@@ -83,7 +84,7 @@ async def multiple_lambda_guards_example():
     )
 
     try:
-        result = await guardrail.run(generate_content)
+        result = await guardrail.run(generate_content, input_mapper=create_guard_inputs)
         print(f"Content passed all 3 guards: {result[:100]}...")
     except GuardValidationError as e:
         print(f"Guard failed: {e}")
@@ -109,7 +110,7 @@ def business_rules_guard(guard_input: dict) -> bool:
     return True
 
 
-async def generate_customer_response() -> GuardedOutput[str, dict]:
+async def generate_customer_response() -> str:
     """Generate a customer service response."""
     completion = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -124,16 +125,8 @@ async def generate_customer_response() -> GuardedOutput[str, dict]:
             },
         ],
     )
-    text = completion.choices[0].message.content
+    return completion.choices[0].message.content
 
-    # Different input types for different guards
-    return GuardedOutput(
-        result=text,
-        guard_inputs=[
-            PIIDetectorInput(text=text),  # Guard 0: Evaluator input (Pydantic)
-            {"text": text},                # Guard 1: Custom function input (dict)
-        ],
-    )
 
 @workflow(name="mixed_guard_types")
 async def mixed_guard_types_example():
@@ -144,6 +137,13 @@ async def mixed_guard_types_example():
     Guard 1: Custom business rules (function-based)
     """
 
+    def create_mixed_inputs(text: str) -> list:
+        """Create inputs for mixed guard types."""
+        return [
+            PIIDetectorInput(text=text),  # Guard 0: Evaluator input (Pydantic)
+            {"text": text},                # Guard 1: Custom function input (dict)
+        ]
+
     guardrail = client.guardrails.create(
         guards=[
             Guards.pii_detector(probability_threshold=0.7),
@@ -153,7 +153,7 @@ async def mixed_guard_types_example():
     )
 
     try:
-        result = await guardrail.run(generate_customer_response)
+        result = await guardrail.run(generate_customer_response, input_mapper=create_mixed_inputs)
         print(f"Response passed PII + business rules: {result[:100]}...")
     except GuardValidationError as e:
         print(f"Guard failed: {e}")
@@ -171,21 +171,19 @@ async def run_all_guards_example():
     Useful for providing comprehensive feedback to users.
     """
 
-    async def generate_problematic_content() -> GuardedOutput[str, dict]:
+    async def generate_problematic_content() -> str:
         """Generate content that might fail multiple guards."""
         # Simulate content that fails multiple checks
-        text = "VISIT DANGEROUS PLACES! It's guaranteed to be exciting!"
+        return "VISIT DANGEROUS PLACES! It's guaranteed to be exciting!"
 
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[
-                {"word_count": len(text.split())},
-                {"text": text},
-                {"has_caps_issues": text.isupper()},
-            ],
-        )
+    def create_inputs(text: str) -> list[dict]:
+        return [
+            {"word_count": len(text.split())},
+            {"text": text},
+            {"has_caps_issues": text.isupper()},
+        ]
 
-    def custom_handler(output: GuardedOutput) -> str:
+    def custom_handler(output: GuardedResult) -> str:
         """Custom handler that could inspect which guards failed."""
         print(f"[Handler] Content failed validation: {output.result[:50]}...")
         return "Content did not meet our quality standards. Please try again."
@@ -201,7 +199,7 @@ async def run_all_guards_example():
         parallel=True,
     )
 
-    result = await guardrail.run(generate_problematic_content)
+    result = await guardrail.run(generate_problematic_content, input_mapper=create_inputs)
     print(f"Fallback result: {result}")
 
 
@@ -218,7 +216,7 @@ async def sequential_guards_example():
     Use case: When you want to fail fast or when guards have dependencies.
     """
 
-    async def generate_content() -> GuardedOutput[str, dict]:
+    async def generate_content() -> str:
         """Generate content for sequential validation."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -229,16 +227,14 @@ async def sequential_guards_example():
                 }
             ],
         )
-        text = completion.choices[0].message.content
+        return completion.choices[0].message.content
 
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[
-                {"text": text, "step": "pre-check"},   # Step 1: Basic validation
-                {"text": text, "step": "main"},        # Step 2: Main check
-                {"text": text, "step": "post-check"},  # Step 3: Final check
-            ],
-        )
+    def create_sequential_inputs(text: str) -> list[dict]:
+        return [
+            {"text": text, "step": "pre-check"},   # Step 1: Basic validation
+            {"text": text, "step": "main"},        # Step 2: Main check
+            {"text": text, "step": "post-check"},  # Step 3: Final check
+        ]
 
     def pre_check(z: dict) -> bool:
         """First guard: Basic format validation."""
@@ -263,7 +259,7 @@ async def sequential_guards_example():
     )
 
     try:
-        result = await guardrail.run(generate_content)
+        result = await guardrail.run(generate_content, input_mapper=create_sequential_inputs)
         print(f"All sequential guards passed: {result[:100]}...")
     except GuardValidationError as e:
         print(f"Guard failed: {e}")

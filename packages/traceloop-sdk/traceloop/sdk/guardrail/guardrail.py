@@ -28,12 +28,12 @@ from .span_attributes import (
 )
 from traceloop.sdk.evaluator.evaluator import Evaluator
 from .on_failure import OnFailure
+from .default_mapper import default_input_mapper
 from .model import (
-    GuardedOutput,
+    GuardedResult,
     Guard,
     OnFailureHandler,
-    GuardedFunctionResult,
-    GuardInput,
+    InputMapper,
     FailureResult,
     GuardExecutionError,
     GuardInputTypeError,
@@ -119,7 +119,7 @@ class Guardrails:
         instance._parallel = parallel
         return instance
 
-    def _validate_inputs(self, guard_inputs: list[GuardInput]) -> None:
+    def _validate_inputs(self, guard_inputs: list[Any]) -> None:
         """
         Validate guard_inputs match guards in count and type.
 
@@ -170,7 +170,7 @@ class Guardrails:
     async def _run_single_guard(
         self,
         guard: Guard,
-        guard_input: GuardInput,
+        guard_input: Any,
         index: int,
         tracer: Tracer,
     ) -> tuple[int, bool, Exception | None]:
@@ -210,7 +210,7 @@ class Guardrails:
 
     async def _run_guards_parallel(
         self,
-        guard_inputs: list[GuardInput],
+        guard_inputs: list[Any],
         tracer: Tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run all guards in parallel."""
@@ -222,7 +222,7 @@ class Guardrails:
 
     async def _run_guards_sequential(
         self,
-        guard_inputs: list[GuardInput],
+        guard_inputs: list[Any],
         tracer: Tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
         """Run guards sequentially, optionally stopping at first failure."""
@@ -240,7 +240,7 @@ class Guardrails:
 
     async def _execute_guards_with_tracing(
         self,
-        guard_inputs: list[GuardInput],
+        guard_inputs: list[Any],
         tracer: Tracer,
         span: Optional[Span] = None,
         start_time: Optional[float] = None,
@@ -298,21 +298,21 @@ class Guardrails:
 
     async def run(
         self,
-        func_to_guard: Callable[
-            [], Awaitable[GuardedOutput[GuardedFunctionResult, GuardInput]]
-        ],
-    ) -> GuardedFunctionResult | FailureResult:
+        func_to_guard: Callable[[], Awaitable[Any]],
+        input_mapper: InputMapper | None = None,
+    ) -> Any | FailureResult:
         """
         Execute a function with guardrail protection.
 
         Must call create() first to configure guards and on_failure.
 
         Args:
-            func_to_guard: Async function that returns GuardedOutput[T, Z].
-                           The guard_inputs list must match the number of guards.
+            func_to_guard: Async function that returns any type.
+            input_mapper: Optional function to convert output to guard inputs.
+                          If not provided, default mapper handles str and dict.
 
         Returns:
-            T | F: The result from GuardedOutput.result, or the on_failure return value
+            The result from func_to_guard, or the on_failure return value.
 
         Raises:
             GuardValidationError: If any guard returns False and on_failure raises
@@ -321,10 +321,16 @@ class Guardrails:
 
         Example:
             g = client.guardrails.create(
-                guards=[lambda z: z["score"] > 0.8],
+                guards=[Guards.toxicity_detector()],
                 on_failure=OnFailure.raise_exception("Quality check failed"),
             )
             result = await g.run(generate_email)
+
+            # With custom mapper
+            result = await g.run(
+                generate_custom_response,
+                input_mapper=lambda r: [{"text": r.content}]
+            )
         """
         if not self._guards or self._on_failure is None:
             raise ValueError("Must call create() before run()")
@@ -338,28 +344,33 @@ class Guardrails:
                     span.set_attribute(GEN_AI_GUARDRAIL_NAME, self._name)
 
                 # 1. Execute func_to_guard
-                output: GuardedOutput[
-                    GuardedFunctionResult, GuardInput
-                ] = await func_to_guard()
+                result = await func_to_guard()
 
-                # 2. Execute guards with tracing
+                # 2. Convert result to guard inputs
+                if input_mapper:
+                    guard_inputs = input_mapper(result)
+                else:
+                    guard_inputs = default_input_mapper(result, len(self._guards))
+
+                # 3. Execute guards with tracing
                 all_passed, _ = await self._execute_guards_with_tracing(
-                    output.guard_inputs, tracer, span, start_time
+                    guard_inputs, tracer, span, start_time
                 )
 
-                # 3. Handle failure
+                # 4. Handle failure
                 if not all_passed:
-                    failure_result = self._on_failure(output)
+                    guarded_result = GuardedResult(result=result, guard_inputs=guard_inputs)
+                    failure_result = self._on_failure(guarded_result)
                     if asyncio.iscoroutine(failure_result):
                         failure_result = await failure_result
                     return cast(FailureResult, failure_result)
 
-                # 4. All guards passed, return result
-                return output.result
+                # 5. All guards passed, return result
+                return result
 
     async def validate(
         self,
-        guard_inputs: list[GuardInput],
+        guard_inputs: list[Any],
         on_failure: Optional[OnFailureHandler] = None,
     ) -> bool:
         """
@@ -397,8 +408,8 @@ class Guardrails:
 
             # Handle failure
             if not all_passed and failure_handler is not None:
-                output = GuardedOutput(result=None, guard_inputs=guard_inputs)
-                failure_result = failure_handler(output)
+                guarded_result = GuardedResult(result=None, guard_inputs=guard_inputs)
+                failure_result = failure_handler(guarded_result)
                 if asyncio.iscoroutine(failure_result):
                     await failure_result
 

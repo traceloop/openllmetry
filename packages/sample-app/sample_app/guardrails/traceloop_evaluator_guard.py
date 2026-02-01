@@ -16,7 +16,6 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
-    GuardedOutput,
     OnFailure,
     Guards,
 )
@@ -35,7 +34,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Example 1: PII Detection Guard
 # ==============================
 
-async def generate_customer_response() -> GuardedOutput[str, dict]:
+async def generate_customer_response() -> str:
     """Generate a customer service response."""
     completion = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -50,11 +49,8 @@ async def generate_customer_response() -> GuardedOutput[str, dict]:
             },
         ],
     )
-    text = completion.choices[0].message.content or ""
-    return GuardedOutput(
-        result=text,
-        guard_inputs=[PIIDetectorInput(text=text)],
-    )
+    return completion.choices[0].message.content or ""
+
 
 @workflow(name="pii_guard_example")
 async def pii_guard_example():
@@ -64,13 +60,16 @@ async def pii_guard_example():
         guards=[Guards.pii_detector(probability_threshold=0.7, timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
-    result = await guardrail.run(generate_customer_response)
+    result = await guardrail.run(
+        generate_customer_response,
+        input_mapper=lambda text: [PIIDetectorInput(text=text)],
+    )
     print(f"Customer response: {result[:100]}...")
 
 
 # Example 2: Toxicity Detection Guard
 # ===================================
-async def generate_content() -> GuardedOutput[str, dict]:
+async def generate_content() -> str:
     """Generate travel content that should be family-friendly."""
     completion = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -81,11 +80,8 @@ async def generate_content() -> GuardedOutput[str, dict]:
             }
         ],
     )
-    text = completion.choices[0].message.content or ""
-    return GuardedOutput(
-        result=text,
-        guard_inputs=[ToxicityDetectorInput(text=text)],
-    )
+    return completion.choices[0].message.content or ""
+
 
 @workflow(name="toxicity_guard_example")
 async def toxicity_guard_example():
@@ -95,7 +91,10 @@ async def toxicity_guard_example():
         guards=[Guards.toxicity_detector(threshold=0.7)],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
-    result = await guardrail.run(generate_content)
+    result = await guardrail.run(
+        generate_content,
+        input_mapper=lambda text: [ToxicityDetectorInput(text=text)],
+    )
     print(f"Family-friendly content: {result[:100]}...")
 
 
@@ -134,14 +133,17 @@ async def agent_trajectory_example():
     """Demonstrate agent trajectory evaluation for goal completeness."""
     state = TravelAgentState()
 
-    async def run_travel_agent() -> GuardedOutput[str, dict]:
-        """Run the travel agent and prepare trajectory for evaluation."""
+    async def run_travel_agent() -> str:
+        """Run the travel agent and return final response."""
         # Run the agent through multiple turns
         await travel_planner_agent(state, "I want to plan a 5-day trip to Japan.")
         final_response = await travel_planner_agent(
             state, "What are the must-see attractions in Tokyo?"
         )
+        return final_response
 
+    def create_trajectory_input(final_response: str) -> list:
+        """Create trajectory input for evaluation."""
         # Format trajectory in the flattened dictionary format expected by the evaluator
         trajectory_prompts = {}
         for i, prompt in enumerate(state.prompts):
@@ -152,19 +154,16 @@ async def agent_trajectory_example():
         for i, completion in enumerate(state.completions):
             trajectory_completions[f"llm.completions.{i}.content"] = completion
 
-        return GuardedOutput(
-            result=final_response,
-            guard_inputs=[AgentGoalCompletenessInput(
-                trajectory_prompts=json.dumps(trajectory_prompts),
-                trajectory_completions=json.dumps(trajectory_completions)
-            )],
-        )
+        return [AgentGoalCompletenessInput(
+            trajectory_prompts=json.dumps(trajectory_prompts),
+            trajectory_completions=json.dumps(trajectory_completions)
+        )]
 
     guardrail = client.guardrails.create(
         guards=[Guards.agent_goal_completeness(threshold=0.7)],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
-    result = await guardrail.run(run_travel_agent)
+    result = await guardrail.run(run_travel_agent, input_mapper=create_trajectory_input)
     print(f"Agent final response: {result[:100]}...")
 
 

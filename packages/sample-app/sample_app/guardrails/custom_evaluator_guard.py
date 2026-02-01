@@ -31,7 +31,6 @@ from pydantic import BaseModel
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    GuardedOutput,
     Condition,
     OnFailure,
     guard,
@@ -68,7 +67,7 @@ async def medical_advice_quality_check():
       - text: The AI-generated response
     """
 
-    async def generate_health_info() -> GuardedOutput[str, MedicalAdviceInput]:
+    async def generate_health_info() -> str:
         """Generate general health information about hypertension."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -84,13 +83,7 @@ async def medical_advice_quality_check():
                 },
             ],
         )
-        text = completion.choices[0].message.content or ""
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[MedicalAdviceInput(
-                text=text,
-            )],
-        )
+        return completion.choices[0].message.content or ""
 
     # Configure custom evaluator for medical advice detection
     medical_evaluator = EvaluatorDetails(
@@ -102,7 +95,10 @@ async def medical_advice_quality_check():
         guards=[guard(medical_evaluator, condition=Condition.is_true())],
         on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     )
-    result = await guardrail.run(generate_health_info)
+    result = await guardrail.run(
+        generate_health_info,
+        input_mapper=lambda text: [MedicalAdviceInput(text=text)],
+    )
     print(f"Health information (passed guard): {result[:200]}...")
 
 
@@ -121,7 +117,7 @@ async def diagnosis_request_blocker():
       - text: The AI-generated response
     """
 
-    async def attempt_diagnosis_request() -> GuardedOutput[str, dict]:
+    async def attempt_diagnosis_request() -> str:
         """Generate response to diagnosis request (will be blocked)."""
         user_question = "I have chest pain, shortness of breath, and dizziness. Do I have a heart attack?"
 
@@ -134,14 +130,8 @@ async def diagnosis_request_blocker():
                 }
             ],
         )
-        text = completion.choices[0].message.content
+        return completion.choices[0].message.content
 
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[{
-                "text": text,
-            }],
-        )
     diagnosis_blocker = EvaluatorDetails(
         slug="diagnosis-blocker",
         condition_field="pass",
@@ -154,7 +144,10 @@ async def diagnosis_request_blocker():
             "Please consult a qualified healthcare professional for symptoms that concern you."
         ),
     )
-    result = await guardrail.run(attempt_diagnosis_request)
+    result = await guardrail.run(
+        attempt_diagnosis_request,
+        input_mapper=lambda text: [{"text": text}],
+    )
     print(f"Response: {result[:200]}...")
 
 

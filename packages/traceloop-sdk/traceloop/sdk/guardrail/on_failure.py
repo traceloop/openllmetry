@@ -2,12 +2,12 @@
 Built-in failure handlers for guardrails.
 
 On failure handlers are called when a guard returns False.
-They receive the full GuardedOutput and can raise, log, or perform custom actions.
+They receive the full GuardedResult and can raise, log, or perform custom actions.
 """
 import logging
 from typing import Any, Callable, Type
 
-from .model import GuardedOutput, GuardValidationError, FailureResult
+from .model import GuardedResult, GuardValidationError
 
 logger = logging.getLogger("traceloop.guardrail")
 
@@ -19,7 +19,7 @@ class OnFailure:
     def raise_exception(
         message: str = "Guard validation failed",
         exception_type: Type[Exception] = GuardValidationError
-    ) -> Callable[[GuardedOutput[Any, Any]], None]:
+    ) -> Callable[["GuardedResult[Any, Any]"], None]:
         """
         Raise GuardValidationError on failure.
 
@@ -30,7 +30,7 @@ class OnFailure:
             on_failure=OnFailure.raise_exception("PII detected in response")
         """
 
-        def handler(output: GuardedOutput[Any, Any]) -> None:
+        def handler(output: "GuardedResult[Any, Any]") -> None:
             raise exception_type(message, output)
 
         return handler
@@ -39,7 +39,7 @@ class OnFailure:
     def log(
         level: int = logging.WARNING,
         message: str = "Guard validation failed",
-    ) -> Callable[[GuardedOutput[Any, Any]], Any]:
+    ) -> Callable[["GuardedResult[Any, Any]"], Any]:
         """
         Log failure and continue (return the result anyway).
 
@@ -51,14 +51,14 @@ class OnFailure:
             on_failure=OnFailure.log(message="Toxic content detected")
         """
 
-        def handler(output: GuardedOutput[Any, Any]) -> Any:
+        def handler(output: "GuardedResult[Any, Any]") -> Any:
             logger.log(level, f"{message}: guard_inputs_count={len(output.guard_inputs)}")
             return output.result
 
         return handler
 
     @staticmethod
-    def noop() -> Callable[[GuardedOutput[Any, Any]], Any]:
+    def noop() -> Callable[["GuardedResult[Any, Any]"], Any]:
         """
         Do nothing on failure (shadow mode).
 
@@ -68,15 +68,15 @@ class OnFailure:
             on_failure=OnFailure.noop()  # Just observe, don't block
         """
 
-        def handler(output: GuardedOutput[Any, Any]) -> Any:
+        def handler(output: "GuardedResult[Any, Any]") -> Any:
             return output.result
 
         return handler
 
     @staticmethod
     def return_value(
-        value: FailureResult,
-    ) -> Callable[[GuardedOutput[Any, Any]], FailureResult]:
+        value: Any,
+    ) -> Callable[["GuardedResult[Any, Any]"], Any]:
         """
         Return a fallback value on failure.
 
@@ -88,7 +88,7 @@ class OnFailure:
             on_failure=OnFailure.return_value({"error": "blocked", "reason": "PII"})
         """
 
-        def handler(output: GuardedOutput[Any, Any]) -> FailureResult:
+        def handler(output: "GuardedResult[Any, Any]") -> Any:
             return value
 
         return handler

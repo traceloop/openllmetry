@@ -2,46 +2,46 @@
 Data models and type definitions for the guardrail system.
 """
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Any, Union, Callable, Awaitable
+from typing import TypeVar, Any, Union, Callable, Awaitable, Generic
 
-T = TypeVar("T")
+# Type variables for generic typing
 GuardInput = TypeVar("GuardInput")
-FailureResult = TypeVar("FailureResult")
 GuardedFunctionResult = TypeVar("GuardedFunctionResult")
+FailureResult = TypeVar("FailureResult")
 
 # Type aliases for guards and handlers
-Guard = Union[Callable[[GuardInput], bool], Callable[[GuardInput], Awaitable[bool]]]
-OnFailureHandler = Union[
-    Callable[
-        ["GuardedOutput[T, GuardInput]"], FailureResult
-    ],
-    Callable[
-        ["GuardedOutput[T, GuardInput]"],
-        Awaitable[FailureResult],
-    ],
-]
+Guard = Union[Callable[[Any], bool], Callable[[Any], Awaitable[bool]]]
+
+# Type for input mapper: takes function result, returns list of guard inputs (one per guard)
+InputMapper = Callable[[GuardedFunctionResult], list[GuardInput]]
 
 
 @dataclass
-class GuardedOutput(Generic[T, GuardInput]):
+class GuardedResult(Generic[GuardedFunctionResult, GuardInput]):
     """
-    Container that separates what to return from what to evaluate.
+    Container passed to on_failure handler with result and guard inputs.
 
     Attributes:
         result: The original value returned by the guarded function
-        guard_inputs: List of inputs for each guard (must match number of guards)
+        guard_inputs: List of inputs that were passed to each guard
 
     Example:
-        async def generate_email() -> GuardedOutput[str, dict]:
-            text = await llm.complete("Write a customer email...")
-            return GuardedOutput(
-                result=text,
-                guard_inputs=[{"text": text, "word_count": len(text.split())}],
-            )
+        def my_failure_handler(output: GuardedResult[str, dict]) -> str:
+            # Access the original result
+            original = output.result
+            # Access what was checked
+            inputs = output.guard_inputs
+            return "Fallback response"
     """
 
-    result: T
+    result: GuardedFunctionResult
     guard_inputs: list[GuardInput]
+
+
+OnFailureHandler = Union[
+    Callable[["GuardedResult[Any, Any]"], FailureResult],
+    Callable[["GuardedResult[Any, Any]"], Awaitable[FailureResult]],
+]
 
 
 class GuardValidationError(Exception):
@@ -50,10 +50,10 @@ class GuardValidationError(Exception):
 
     Attributes:
         message: Error description
-        output: The full GuardedOutput that failed validation
+        output: The GuardedResult containing result and guard inputs
     """
 
-    def __init__(self, message: str, output: GuardedOutput[Any, Any]):
+    def __init__(self, message: str, output: "GuardedResult[Any, Any]"):
         self.output = output
         super().__init__(message)
 
