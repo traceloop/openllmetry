@@ -1,19 +1,34 @@
 """
-Deprecated module - use traceloop.sdk.guardrail instead.
+Guardrail module for the Traceloop SDK.
 
-This module provides backwards compatibility for the old import path.
+Provides a simple function-based guardrail system for running protected operations
+with evaluation and failure handling.
+
+Example:
+    from traceloop.sdk import Traceloop
+    from traceloop.sdk.guardrail import pii_guard, OnFailure
+
+    # Initialize and get client
+    client = Traceloop.init(api_key="...")
+
+    async def generate_email() -> str:
+        return await llm.complete("Write a customer email...")
+
+    guardrail = client.guardrails.create(
+        guards=[pii_guard()],
+        on_failure=OnFailure.raise_exception("PII detected in response"),
+    )
+    result = await guardrail.run(generate_email)
+
+    # With custom input mapper
+    result = await guardrail.run(
+        generate_email,
+        input_mapper=lambda text: [{"text": text}]
+    )
 """
-import warnings
 
-warnings.warn(
-    "traceloop.sdk.guardrails is deprecated. Use traceloop.sdk.guardrail instead.",
-    DeprecationWarning,
-    stacklevel=2
-)
-
-# Re-export everything from the new module for backwards compatibility
-from traceloop.sdk.guardrail import (  # noqa: E402
-    Guardrails,
+from .guardrail import Guardrails
+from .model import (
     GuardedResult,
     GuardrailError,
     GuardValidationError,
@@ -24,10 +39,10 @@ from traceloop.sdk.guardrail import (  # noqa: E402
     InputMapper,
     GuardInput,
     GuardedFunctionResult,
-    Condition,
-    OnFailure,
-    default_input_mapper,
-    # Guard functions
+)
+from .condition import Condition
+from .on_failure import OnFailure
+from .guards import (
     custom_evaluator_guard,
     toxicity_guard,
     profanity_guard,
@@ -65,6 +80,7 @@ from traceloop.sdk.guardrail import (  # noqa: E402
     char_count_ratio_guard,
     tone_detection_guard,
 )
+from .default_mapper import default_input_mapper
 
 __all__ = [
     "Guardrails",

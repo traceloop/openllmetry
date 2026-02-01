@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Type
 from pydantic import BaseModel
 
 
@@ -17,7 +17,10 @@ class EvaluatorDetails(BaseModel):
         >>> EvaluatorDetails(slug="pii-detector", config={"probability_threshold": 0.8}, required_input_fields=["text"])
         >>> EvaluatorDetails(slug="my-custom-evaluator", version="v2")
     """
+
     slug: str
+    condition_field: Optional[str] = None
     version: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
+    output_schema: Optional[Type[BaseModel]] = None
     required_input_fields: Optional[List[str]] = None

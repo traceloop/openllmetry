@@ -199,7 +199,7 @@ class Experiment:
                                         timeout_in_sec=120,
                                     )
                                 )
-                                eval_results[evaluator_slug] = eval_result.result
+                                eval_results[evaluator_slug] = eval_result.result.evaluator_result
                             else:
                                 await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
