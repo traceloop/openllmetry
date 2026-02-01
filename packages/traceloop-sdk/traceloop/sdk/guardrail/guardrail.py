@@ -208,34 +208,27 @@ class Guardrails:
                 span.record_exception(e)
                 return (index, False, e)
 
-    async def _run_guards_parallel(
+    async def _run_guards(
         self,
         guard_inputs: list[Any],
         tracer: Tracer,
     ) -> list[tuple[int, bool, Exception | None]]:
-        """Run all guards in parallel."""
-        tasks = [
-            self._run_single_guard(guard, guard_input, i, tracer)
-            for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs))
-        ]
-        return await asyncio.gather(*tasks)
+        """Run guards either in parallel or sequentially based on configuration."""
+        if self._parallel:
+            tasks = [
+                self._run_single_guard(guard, guard_input, i, tracer)
+                for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs))
+            ]
+            return await asyncio.gather(*tasks)
 
-    async def _run_guards_sequential(
-        self,
-        guard_inputs: list[Any],
-        tracer: Tracer,
-    ) -> list[tuple[int, bool, Exception | None]]:
-        """Run guards sequentially, optionally stopping at first failure."""
+        # Sequential execution
         results = []
         for i, (guard, guard_input) in enumerate(zip(self._guards, guard_inputs)):
             result = await self._run_single_guard(guard, guard_input, i, tracer)
             results.append(result)
-
             _, passed, exception = result
             if (not passed or exception) and not self._run_all:
-                # Stop at first failure
                 break
-
         return results
 
     async def _execute_guards_with_tracing(
@@ -264,10 +257,7 @@ class Guardrails:
         self._validate_inputs(guard_inputs)
 
         # Run guards
-        if self._parallel:
-            results = await self._run_guards_parallel(guard_inputs, tracer)
-        else:
-            results = await self._run_guards_sequential(guard_inputs, tracer)
+        results = await self._run_guards(guard_inputs, tracer)
 
         # Check for execution errors
         for index, _, exception in results:

@@ -19,7 +19,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    GuardedOutput,
+    GuardedResult,
     OnFailure,
     GuardValidationError,
 )
@@ -36,7 +36,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def simple_lambda_guard_example():
     """Demonstrate a simple lambda-based guard for length validation."""
 
-    async def generate_summary() -> GuardedOutput[str, dict]:
+    async def generate_summary() -> str:
         """Generate a travel summary with length constraints."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -47,11 +47,8 @@ async def simple_lambda_guard_example():
                 }
             ],
         )
-        text = completion.choices[0].message.content
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[{"text": text, "word_count": len(text.split())}],
-        )
+        return completion.choices[0].message.content
+
 
     try:
         guardrail = client.guardrails.create(
@@ -98,7 +95,7 @@ def content_safety_guard(guard_input: dict) -> bool:
 async def custom_function_guard_example():
     """Demonstrate a custom function guard with complex logic."""
 
-    async def generate_travel_advice() -> GuardedOutput[str, dict]:
+    async def generate_travel_advice() -> str:
         """Generate travel advice."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -109,17 +106,14 @@ async def custom_function_guard_example():
                 }
             ],
         )
-        text = completion.choices[0].message.content
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[{"text": text}],
-        )
+        return completion.choices[0].message.content
 
     try:
         guardrail = client.guardrails.create(
             guards=[content_safety_guard],  # Pass function reference
             on_failure=OnFailure.raise_exception("Content failed safety checks"),
         )
+        # Default mapper handles str -> {"text": text, "prompt": text, "completion": text}
         result = await guardrail.run(generate_travel_advice)
         print(f"Travel advice: {result[:100]}...")
     except GuardValidationError as e:
@@ -132,7 +126,7 @@ async def custom_function_guard_example():
 async def custom_handler_example():
     """Demonstrate custom on_failure handler with logging and alerting."""
 
-    async def generate_content() -> GuardedOutput[str, dict]:
+    async def generate_content() -> str:
         """Generate content that might need review."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -143,13 +137,9 @@ async def custom_handler_example():
                 }
             ],
         )
-        text = completion.choices[0].message.content
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[{"text": text}],
-        )
+        return completion.choices[0].message.content
 
-    def custom_alert_handler(output: GuardedOutput) -> None:
+    def custom_alert_handler(output: GuardedResult) -> None:
         """Custom handler that logs and could send alerts."""
         print(f"[ALERT] Guard failed for output: {str(output.result)[:50]}...")
         print(f"[ALERT] Guard inputs was: {output.guard_inputs}")
@@ -173,7 +163,7 @@ async def custom_handler_example():
 async def fallback_value_example():
     """Demonstrate returning a fallback value instead of raising on failure."""
 
-    async def generate_recommendation() -> GuardedOutput[str, dict]:
+    async def generate_recommendation() -> str:
         """Generate a recommendation that might fail the guard."""
         completion = await openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -184,11 +174,7 @@ async def fallback_value_example():
                 }
             ],
         )
-        text = completion.choices[0].message.content
-        return GuardedOutput(
-            result=text,
-            guard_inputs=[{"text": text}],
-        )
+        return completion.choices[0].message.content
 
     # Return a safe fallback instead of raising
     guardrail = client.guardrails.create(
