@@ -66,22 +66,22 @@ async def secure_chat(user_prompt: str) -> str:
     """
 
     # Step 1: Create input validation guardrail (prompt injection detection)
-    # prompt_guardrail = client.guardrails.create(
-    #     name="prompt-injection-guardrail",
-    #     guards=[
-    #         Guards.prompt_injection(threshold=0.7, timeout_in_sec=30),
-    #     ],
-    # )
+    prompt_guardrail = client.guardrails.create(
+        name="prompt-injection-guardrail",
+        guards=[
+            Guards.prompt_injection(threshold=0.7, timeout_in_sec=30),
+        ],
+    )
 
     # Validate user input BEFORE calling the LLM
-    # print(f"Validating user input: '{user_prompt[:50]}...'")
-    # try:
-    #     prompt_is_safe = await prompt_guardrail.validate([PromptInjectionInput(prompt=user_prompt)])
-    # except GuardValidationError:
-    #     return "I'm sorry, I can't process that request."
+    print(f"Validating user input: '{user_prompt[:50]}...'")
+    try:
+        prompt_is_safe = await prompt_guardrail.validate([PromptInjectionInput(prompt=user_prompt)])
+    except GuardValidationError:
+        return "I'm sorry, I can't process that request."
 
-    # if not prompt_is_safe:
-    #     return "I'm sorry, I can't process that request."
+    if not prompt_is_safe:
+        return "I'm sorry, I can't process that request."
 
     # print("Input validation passed. Calling LLM...")
 
@@ -89,25 +89,22 @@ async def secure_chat(user_prompt: str) -> str:
     output_guardrail = client.guardrails.create(
         name="output-guardrail",
         guards=[
-            # Guards.answer_relevancy(),
+            Guards.answer_relevancy(),
             Guards.sexism_detector(threshold=0.9),
             Guards.toxicity_detector(),
         ],
     )
 
 
-    # result = await output_guardrail.run(
-    #     lambda: generate_response(user_prompt),
-    #     input_mapper=lambda response_text: [
-    #         AnswerRelevancyInput(answer=response_text, question=user_prompt),
-    #         SexismDetectorInput(text=response_text),
-    #         ToxicityDetectorInput(text=response_text),
-    #     ],
-    # )
-
     result = await output_guardrail.run(
-        lambda: generate_response(user_prompt)
+        lambda: generate_response(user_prompt),
+        input_mapper=lambda response_text: [
+            AnswerRelevancyInput(answer=response_text, question=user_prompt),
+            SexismDetectorInput(text=response_text),
+            ToxicityDetectorInput(text=response_text),
+        ],
     )
+
     print("Output validation passed.")
 
     return result
