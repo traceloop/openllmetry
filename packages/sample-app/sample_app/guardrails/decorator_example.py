@@ -16,7 +16,6 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.decorators import aguardrail as guardrail
 from traceloop.sdk.guardrail import OnFailure, Guards
-from traceloop.sdk.generated.evaluators.request import ToxicityDetectorInput
 
 # Initialize Traceloop (required for @guardrail decorator)
 Traceloop.init(app_name="guardrail-decorator-example", disable_batch=True)

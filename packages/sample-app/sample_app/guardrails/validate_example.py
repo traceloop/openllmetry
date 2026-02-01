@@ -22,7 +22,6 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    OnFailure,
     GuardValidationError,
     Guards,
 )

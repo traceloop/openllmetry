@@ -36,10 +36,11 @@ def default_input_mapper(output: Any, num_guards: int) -> list[dict]:
     if isinstance(output, dict):
         # Enrich dict with aliases for compatibility with various evaluators
         enriched = {**output}
+        if "text" in output:
+            enriched.setdefault("prompt", output["text"])
+            enriched.setdefault("completion", output["text"])
         if "question" in output:
             enriched.setdefault("query", output["question"])
-            enriched.setdefault("question", output["question"])
-
         if "answer" in output:
             enriched.setdefault("answer", output["answer"])
             enriched.setdefault("completion", output["answer"])

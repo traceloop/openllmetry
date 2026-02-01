@@ -136,8 +136,12 @@ class TestAguardrailDecoratorGuards:
     @pytest.mark.asyncio
     async def test_decorator_passes_guards_to_create(self):
         """Decorator passes guards list to guardrails.create()."""
-        guard1 = lambda z: z["score"] > 0.5
-        guard2 = lambda z: "bad" not in z["text"]
+
+        def guard1(z):
+            return z["score"] > 0.5
+
+        def guard2(z):
+            return "bad" not in z["text"]
 
         mock_guardrails = MagicMock()
         mock_guardrails.create.return_value = mock_guardrails
@@ -164,7 +168,9 @@ class TestAguardrailDecoratorGuards:
     @pytest.mark.asyncio
     async def test_decorator_passes_input_mapper_to_run(self):
         """Decorator passes input_mapper to guardrails.run()."""
-        input_mapper = lambda r: [{"text": r}]
+
+        def input_mapper(r):
+            return [{"text": r}]
 
         mock_guardrails = MagicMock()
         mock_guardrails.create.return_value = mock_guardrails

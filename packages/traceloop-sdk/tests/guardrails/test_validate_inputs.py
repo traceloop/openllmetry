@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import GuardInputTypeError
-from traceloop.sdk.guardrail import Condition, Guards
+from traceloop.sdk.guardrail import Guards
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
