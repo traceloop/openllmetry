@@ -59,10 +59,16 @@ dependencies = [
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
   "traceloop-sdk",
+  "voyageai>=0.3.7",
+  "opentelemetry-instrumentation-voyageai",
 ]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
+
+[tool.uv.sources]
+opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
+traceloop-sdk = { path = "../traceloop-sdk", editable = true }
 
 [dependency-groups]
 dev = [

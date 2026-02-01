@@ -45,6 +45,7 @@ dependencies = [
   "opentelemetry-instrumentation-sagemaker",
   "opentelemetry-instrumentation-replicate",
   "opentelemetry-instrumentation-vertexai",
+  "opentelemetry-instrumentation-voyageai",
   "opentelemetry-instrumentation-watsonx",
   "opentelemetry-instrumentation-weaviate",
   "opentelemetry-instrumentation-writer",
@@ -152,3 +153,6 @@ select = ["E", "F", "W"]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+
+[tool.uv.sources]
+opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
