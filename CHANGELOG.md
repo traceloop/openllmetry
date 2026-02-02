@@ -1,3 +1,9 @@
+## v0.52.1 (2026-02-02)
+
+### Fix
+
+- **voyageai**: add to commitizen to bump on release (#3660)
+
 ## v0.52.0 (2026-02-02)
 
 ### Feat
