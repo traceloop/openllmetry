@@ -42,7 +42,7 @@ def test_conversation_decorator_sync(exporter):
     def inner_task(message: str):
         return f"Response to: {message}"
 
-    result = chat_session("Hello")
+    chat_session("Hello")
 
     spans = exporter.get_finished_spans()
     assert len(spans) == 2
@@ -69,7 +69,7 @@ async def test_conversation_decorator_async(exporter):
     async def async_inner_task(message: str):
         return f"Response to: {message}"
 
-    result = await async_chat_session("Hello")
+    await async_chat_session("Hello")
 
     spans = exporter.get_finished_spans()
 
