@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-sagemaker"
-version = "0.51.1"
+version = "0.52.1"
 description = "OpenTelemetry SageMaker instrumentation"
 authors = [
   { name = "Bobby Lindsey", email = "bwlind@amazon.com" },
