@@ -50,6 +50,7 @@ EXCLUDED_URLS = """
     openai.azure.com,
     api.anthropic.com,
     api.cohere.ai,
+    api.voyageai.com,
     pinecone.io,
     traceloop.com,
     posthog.com,
@@ -585,6 +586,9 @@ def init_instrumentations(
         elif instrument == Instruments.VERTEXAI:
             if init_vertexai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
+        elif instrument == Instruments.VOYAGEAI:
+            if init_voyageai_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.WATSONX:
             if init_watsonx_instrumentor():
                 instrument_set = True
@@ -952,6 +956,20 @@ def init_vertexai_instrumentor(
             return True
     except Exception as e:
         logging.warning(f"Error initializing Vertex AI instrumentor: {e}")
+    return False
+
+
+def init_voyageai_instrumentor():
+    try:
+        if is_package_installed("voyageai"):
+            from opentelemetry.instrumentation.voyageai import VoyageAIInstrumentor
+
+            instrumentor = VoyageAIInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.warning(f"Error initializing Voyage AI instrumentor: {e}")
     return False
 
 
