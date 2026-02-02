@@ -1,3 +1,14 @@
+## v0.52.0 (2026-02-02)
+
+### Feat
+
+- **voyage-ai**: add voyage-ai instrumentation (#3653)
+
+### Fix
+
+- **openai-agents**: apply content tracing flag to content (#3487)
+- **traceloop-sdk**: Align evals output schema (#3643)
+
 ## v0.51.1 (2026-01-26)
 
 ### Fix

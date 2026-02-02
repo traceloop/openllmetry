@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.51.1"
+version = "0.52.0"
 description = "OpenTelemetry Google Generative AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
