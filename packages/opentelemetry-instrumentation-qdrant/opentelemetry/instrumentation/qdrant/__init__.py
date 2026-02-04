@@ -51,23 +51,18 @@ class QdrantInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            target_class = getattr(qdrant_client, wrap_object, None)
-            if target_class and hasattr(target_class, wrap_method):
-                try:
-                    wrap_function_wrapper(
-                        MODULE,
-                        f"{wrap_object}.{wrap_method}",
-                        _wrap(tracer, wrapped_method),
-                    )
-                except Exception as e:
-                    logger.warning(
-                        "Failed to instrument %s.%s: %s",
-                        wrap_object,
-                        wrap_method,
-                        str(e),
-                    )
+            obj = getattr(qdrant_client, wrap_object, None)
+            if obj and hasattr(obj, wrap_method):
+                wrap_function_wrapper(
+                    MODULE,
+                    f"{wrap_object}.{wrap_method}",
+                    _wrap(tracer, wrapped_method),
+                )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
-            unwrap(f"{MODULE}.{wrap_object}", wrapped_method.get("method"))
+            wrap_method = wrapped_method.get("method")
+            obj = getattr(qdrant_client, wrap_object, None)
+            if obj and hasattr(obj, wrap_method):
+                unwrap(f"{MODULE}.{wrap_object}", wrap_method)

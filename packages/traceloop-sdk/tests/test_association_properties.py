@@ -1,6 +1,6 @@
 import pytest
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow

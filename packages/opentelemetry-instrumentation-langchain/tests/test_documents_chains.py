@@ -1,10 +1,10 @@
 import json
 
 import pytest
-from langchain.chains.summarize import load_summarize_chain
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_classic.chains.summarize import load_summarize_chain
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_cohere import ChatCohere
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -41,7 +41,7 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
             INPUT_TEXT,
         ]
     )
-    llm = ChatCohere(model="command", temperature=0.75)
+    llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
     chain = load_summarize_chain(llm, chain_type="stuff").with_config(
         run_name="stuff_chain"
     )
@@ -78,7 +78,7 @@ def test_sequential_chain_with_events_with_content(
             INPUT_TEXT,
         ]
     )
-    llm = ChatCohere(model="command", temperature=0.75)
+    llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
     chain = load_summarize_chain(llm, chain_type="stuff").with_config(
         run_name="stuff_chain"
     )
@@ -106,13 +106,13 @@ def test_sequential_chain_with_events_with_content(
         },
     )
 
-    # Validate AI choice Event
-    _choice_event = {
-        "index": 0,
-        "finish_reason": "unknown",
-        "message": {"content": response["output_text"]},
-    }
-    assert_message_in_logs(logs[1], "gen_ai.choice", _choice_event)
+    # Validate AI choice Event - check key attributes, finish_reason varies by model
+    choice_log = logs[1]
+    assert choice_log.log_record.event_name == "gen_ai.choice"
+    choice_body = dict(choice_log.log_record.body)
+    assert choice_body["index"] == 0
+    assert "finish_reason" in choice_body
+    assert choice_body["message"]["content"] == response["output_text"]
 
 
 @pytest.mark.vcr
@@ -124,7 +124,7 @@ def test_sequential_chain_with_events_with_no_content(
             INPUT_TEXT,
         ]
     )
-    llm = ChatCohere(model="command", temperature=0.75)
+    llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
     chain = load_summarize_chain(llm, chain_type="stuff").with_config(
         run_name="stuff_chain"
     )
@@ -144,12 +144,16 @@ def test_sequential_chain_with_events_with_no_content(
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
-    # Validate AI choice Event
-    choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+    # Validate AI choice Event - check key attributes, finish_reason varies by model
+    choice_log = logs[1]
+    assert choice_log.log_record.event_name == "gen_ai.choice"
+    choice_body = dict(choice_log.log_record.body)
+    assert choice_body["index"] == 0
+    assert "finish_reason" in choice_body
+    assert choice_body["message"] == {}
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
 

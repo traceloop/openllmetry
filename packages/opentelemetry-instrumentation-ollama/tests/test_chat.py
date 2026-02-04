@@ -4,7 +4,7 @@ import pytest
 from opentelemetry.instrumentation.ollama.span_utils import (
     set_model_response_attributes,
 )
-from opentelemetry.sdk._logs import LogData
+from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -817,7 +817,7 @@ def test_token_histogram_recording():
     )
 
 
-def assert_message_in_logs(log: LogData, event_name: str, expected_content: dict):
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "ollama"
 

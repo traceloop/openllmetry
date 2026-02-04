@@ -123,7 +123,12 @@ class EvaluatorMadeByTraceloop:
         Required input fields: executed_tool_calls, expected_tool_calls
         """
         config = {
-            k: v for k, v in {"input_params_sensitive": input_params_sensitive, "mismatch_sensitive": mismatch_sensitive, "order_sensitive": order_sensitive, "threshold": threshold}.items()
+            k: v for k, v in {
+                "input_params_sensitive": input_params_sensitive,
+                "mismatch_sensitive": mismatch_sensitive,
+                "order_sensitive": order_sensitive,
+                "threshold": threshold,
+            }.items()
             if v is not None
         }
         return EvaluatorDetails(
@@ -277,7 +282,10 @@ class EvaluatorMadeByTraceloop:
         Required input fields: text
         """
         config = {
-            k: v for k, v in {"enable_schema_validation": enable_schema_validation, "schema_string": schema_string}.items()
+            k: v for k, v in {
+                "enable_schema_validation": enable_schema_validation,
+                "schema_string": schema_string,
+            }.items()
             if v is not None
         }
         return EvaluatorDetails(
@@ -336,7 +344,12 @@ class EvaluatorMadeByTraceloop:
         Required input fields: placeholder_value, text
         """
         config = {
-            k: v for k, v in {"case_sensitive": case_sensitive, "dot_include_nl": dot_include_nl, "multi_line": multi_line, "should_match": should_match}.items()
+            k: v for k, v in {
+                "case_sensitive": case_sensitive,
+                "dot_include_nl": dot_include_nl,
+                "multi_line": multi_line,
+                "should_match": should_match,
+            }.items()
             if v is not None
         }
         return EvaluatorDetails(
@@ -408,7 +421,13 @@ class EvaluatorMadeByTraceloop:
         Required input fields: text
         """
         config = {
-            k: v for k, v in {"case_sensitive": case_sensitive, "dot_include_nl": dot_include_nl, "multi_line": multi_line, "regex": regex, "should_match": should_match}.items()
+            k: v for k, v in {
+                "case_sensitive": case_sensitive,
+                "dot_include_nl": dot_include_nl,
+                "multi_line": multi_line,
+                "regex": regex,
+                "should_match": should_match,
+            }.items()
             if v is not None
         }
         return EvaluatorDetails(

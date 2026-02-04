@@ -1,3 +1,41 @@
+## v0.52.1 (2026-02-02)
+
+### Fix
+
+- **voyageai**: add to commitizen to bump on release (#3660)
+
+## v0.52.0 (2026-02-02)
+
+### Feat
+
+- **voyage-ai**: add voyage-ai instrumentation (#3653)
+
+### Fix
+
+- **openai-agents**: apply content tracing flag to content (#3487)
+- **traceloop-sdk**: Align evals output schema (#3643)
+
+## v0.51.1 (2026-01-26)
+
+### Fix
+
+- **openai-agents**: add support for realtime (#3533)
+
+## v0.51.0 (2026-01-20)
+
+### Feat
+
+- **google-generativeai**: Add metrics support (#3506)
+
+### Fix
+
+- **traceloop-sdk**: Add csv and json support to experiment (#3537)
+- **evals**: evals API supports input + config, generate mbt functions (#3534)
+- **langchain**: correct unknown role in completion spans (#3532)
+- **evals**: auto generate evals (#3529)
+- **tracing**: Add association property (#3524)
+- **openai-agents**: optional import of optional deps (#3488)
+
 ## v0.50.1 (2025-12-16)
 
 ### Fix
