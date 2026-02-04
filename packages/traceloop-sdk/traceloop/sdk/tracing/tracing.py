@@ -37,6 +37,7 @@ from traceloop.sdk.utils.package_check import is_package_installed
 from typing import Callable, Dict, List, Optional, Set, Union
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_AGENT_NAME,
+    GEN_AI_CONVERSATION_ID,
 )
 
 
@@ -252,6 +253,19 @@ def set_agent_name(agent_name: str) -> None:
     attach(set_value("agent_name", agent_name))
 
 
+def set_conversation_id(conversation_id: str) -> None:
+    """
+    Set the conversation ID for the current context.
+
+    This ID will be applied to all spans within the conversation context,
+    following the OpenTelemetry GenAI semantic convention for gen_ai.conversation.id.
+
+    Args:
+        conversation_id: Unique identifier for the conversation/session
+    """
+    attach(set_value("conversation_id", conversation_id))
+
+
 def set_entity_path(entity_path: str) -> None:
     attach(set_value("entity_path", entity_path))
 
@@ -345,6 +359,10 @@ def default_span_processor_on_start(span: Span, parent_context: Context | None =
     agent_name = get_value("agent_name")
     if agent_name is not None:
         span.set_attribute(GEN_AI_AGENT_NAME, str(agent_name))
+
+    conversation_id = get_value("conversation_id")
+    if conversation_id is not None:
+        span.set_attribute(GEN_AI_CONVERSATION_ID, str(conversation_id))
 
     entity_path = get_value("entity_path")
     if entity_path is not None:

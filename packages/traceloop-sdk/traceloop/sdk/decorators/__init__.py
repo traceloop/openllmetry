@@ -1,5 +1,7 @@
 from typing import Any, Optional, TypeVar, Callable
 import warnings
+import inspect
+from functools import wraps
 
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
 
@@ -9,6 +11,57 @@ from traceloop.sdk.decorators.base import (
 )
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+__all__ = [
+    "conversation",
+    "task",
+    "workflow",
+    "agent",
+    "tool",
+    "atask",
+    "aworkflow",
+    "aagent",
+    "atool",
+]
+
+
+def conversation(conversation_id: str) -> Callable[[F], F]:
+    """
+    Decorator to set the conversation ID for all spans within the decorated function.
+
+    Args:
+        conversation_id: Unique identifier for the conversation
+
+    Example:
+        @conversation(conversation_id="conv-123")
+        def handle_chat(user_message: str):
+            response = llm.chat(user_message)
+            return response
+
+        # Can be combined with @workflow:
+        @workflow(name="chat_session")
+        @conversation(conversation_id="conv-456")
+        def handle_chat_with_workflow(user_message: str):
+            response = llm.chat(user_message)
+            return response
+    """
+    from traceloop.sdk.tracing.tracing import set_conversation_id
+
+    def decorator(fn: F) -> F:
+        if inspect.iscoroutinefunction(fn):
+            @wraps(fn)
+            async def async_wrapper(*args, **kwargs):
+                set_conversation_id(conversation_id)
+                return await fn(*args, **kwargs)
+            return async_wrapper
+        else:
+            @wraps(fn)
+            def sync_wrapper(*args, **kwargs):
+                set_conversation_id(conversation_id)
+                return fn(*args, **kwargs)
+            return sync_wrapper
+
+    return decorator
 
 
 def task(
