@@ -11,10 +11,19 @@ jobs:
       new_version: ${{ steps.cz.outputs.version }}
 
     steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CI_BOT_APP_ID }}
+          private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -30,7 +39,7 @@ jobs:
         name: Bump Version, Create Tag and Changelog
         uses: commitizen-tools/commitizen-action@master
         with:
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
           changelog_increment_filename: body.md
 
       - name: Create Release
@@ -39,7 +48,7 @@ jobs:
           body_path: "body.md"
           tag_name: ${{ env.REVISION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
