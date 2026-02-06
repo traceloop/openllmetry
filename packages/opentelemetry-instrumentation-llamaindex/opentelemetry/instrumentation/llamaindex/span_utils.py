@@ -63,10 +63,11 @@ def set_llm_chat_response(event, span) -> None:
             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
             response.message.role.value,
         )
-        span.set_attribute(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            response.message.content,
-        )
+        if response.message.content is not None:
+            span.set_attribute(
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
+                response.message.content,
+            )
 
 
 @dont_throw
@@ -158,10 +159,11 @@ def set_llm_predict_response(event, span) -> None:
             f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
             MessageRole.ASSISTANT.value,
         )
-        span.set_attribute(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
-            event.output,
-        )
+        if event.output is not None:
+            span.set_attribute(
+                f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
+                event.output,
+            )
 
 
 @dont_throw
