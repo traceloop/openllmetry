@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import traceback
@@ -42,23 +43,29 @@ def max_content_items() -> int:
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
-
-    @param func: The function to wrap
-    @return: The wrapper function
+    Works for both synchronous and asynchronous functions.
     """
-    # Obtain a logger specific to the function's module
     logger = logging.getLogger(func.__module__)
 
-    def wrapper(*args, **kwargs):
+    def _handle_exception(e, func, logger):
+        logger.debug(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            func.__name__,
+            traceback.format_exc(),
+        )
+        if Config.exception_logger:
+            Config.exception_logger(e)
+
+    async def async_wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e, func, logger)
+
+    def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s",
-                func.__name__,
-                traceback.format_exc(),
-            )
-            if Config.exception_logger:
-                Config.exception_logger(e)
+            _handle_exception(e, func, logger)
 
-    return wrapper
+    return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper

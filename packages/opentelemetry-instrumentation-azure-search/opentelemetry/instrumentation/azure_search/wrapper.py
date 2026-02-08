@@ -239,7 +239,10 @@ def _set_search_attributes(span, args, kwargs):
     _set_semantic_search_attributes(span, kwargs)
 
     # Additional search parameters
-    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SEARCH_MODE, kwargs.get("search_mode"))
+    search_mode = kwargs.get("search_mode")
+    if search_mode is not None:
+        sm_str = search_mode.value if hasattr(search_mode, "value") else str(search_mode)
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SEARCH_MODE, sm_str)
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SCORING_PROFILE, kwargs.get("scoring_profile"))
 
     select = kwargs.get("select")
@@ -557,25 +560,23 @@ def _set_search_response_attributes(span, response):
         )
 
 
+@dont_throw
 async def _set_search_response_attributes_async(span, response):
     """Set attributes from async search response (AsyncSearchItemPaged)."""
     count_fn = getattr(response, "get_count", None)
     if not callable(count_fn):
         return
 
-    try:
-        if asyncio.iscoroutinefunction(count_fn):
-            total = await count_fn()
-        else:
-            total = count_fn()
-        if total is not None:
-            _set_span_attribute(
-                span,
-                SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT,
-                total,
-            )
-    except Exception:
-        logger.debug("Failed to get async search result count")
+    if asyncio.iscoroutinefunction(count_fn):
+        total = await count_fn()
+    else:
+        total = count_fn()
+    if total is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT,
+            total,
+        )
 
 
 @dont_throw
