@@ -2129,7 +2129,7 @@ class TestAttributeFunctionEdgeCases:
         spans = exporter.get_finished_spans()
         assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
 
-    def test_document_batch_from_generator(self, exporter):
+    def test_document_batch_from_generator_skips_count(self, exporter):
         from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
         from opentelemetry import trace
 
@@ -2138,12 +2138,16 @@ class TestAttributeFunctionEdgeCases:
             yield {"id": "2"}
             yield {"id": "3"}
 
+        gen = doc_generator()
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("test") as span:
-            _set_document_batch_attributes(span, (), {"documents": doc_generator()})
+            _set_document_batch_attributes(span, (), {"documents": gen})
 
         spans = exporter.get_finished_spans()
-        assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 3
+        # Generators lack __len__, so count is skipped to avoid consuming the iterator
+        assert SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT not in spans[0].attributes
+        # Verify the generator was NOT consumed
+        assert len(list(gen)) == 3
 
     def test_document_batch_no_documents(self, exporter):
         from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
@@ -2614,19 +2618,21 @@ class TestAttributeExtractionEdgeCases:
     # --- wrapper.py: _set_document_batch_attributes lines 310-311 ---
     # Documents that are not len-able and list() raises TypeError
 
-    def test_document_batch_unconvertible_documents(self, exporter):
-        """Documents that can't be converted to list should be silently ignored."""
+    def test_document_batch_without_len_skips_count(self, exporter):
+        """Documents without __len__ are skipped to avoid consuming iterators."""
         from opentelemetry.instrumentation.azure_search.wrapper import _set_document_batch_attributes
         from opentelemetry import trace
 
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("test") as span:
-            # Object that has no __len__ and list() raises TypeError
-            bad_docs = 12345  # int is not iterable
-            _set_document_batch_attributes(span, (), {"documents": bad_docs})
+            # Generator has no __len__ — should be skipped, not consumed
+            gen_docs = (x for x in [{"id": "1"}, {"id": "2"}])
+            _set_document_batch_attributes(span, (), {"documents": gen_docs})
 
         spans = exporter.get_finished_spans()
         assert SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT not in spans[0].attributes
+        # Verify the generator was NOT consumed
+        assert list(gen_docs) == [{"id": "1"}, {"id": "2"}]
 
     # --- wrapper.py: branch 255->260 (fields is falsy) ---
 

@@ -341,16 +341,8 @@ def _set_get_document_attributes(span, args, kwargs):
 def _set_document_batch_attributes(span, args, kwargs):
     """Set attributes for document batch operations (upload, merge, delete)."""
     documents = kwargs.get("documents") or (args[0] if args else None)
-    if documents:
-        if hasattr(documents, "__len__"):
-            _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT, len(documents))
-        else:
-            # Try to convert to list for generators
-            try:
-                docs_list = list(documents)
-                _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT, len(docs_list))
-            except (TypeError, ValueError):
-                pass
+    if documents and hasattr(documents, "__len__"):
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT, len(documents))
 
 
 @dont_throw
