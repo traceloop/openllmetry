@@ -1,6 +1,23 @@
 import logging
+import os
 import traceback
+
+from opentelemetry import context as context_api
 from opentelemetry.instrumentation.azure_search.config import Config
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+
+def _is_truthy(value):
+    return str(value).strip().lower() in ("true", "1", "yes", "on")
+
+
+def should_send_content() -> bool:
+    env_setting = os.getenv(TRACELOOP_TRACE_CONTENT, "true")
+    override = context_api.get_value("override_enable_content_tracing")
+    if override is not None:
+        return _is_truthy(override)
+    return _is_truthy(env_setting)
 
 
 def dont_throw(func):
