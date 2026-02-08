@@ -246,6 +246,41 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # GenAI Operation Attributes (OpenTelemetry GenAI Semantic Conventions)
+    GEN_AI_OPERATION_NAME = "gen_ai.operation.name"
+    GEN_AI_PROVIDER_NAME = "gen_ai.provider.name"
+    GEN_AI_CONVERSATION_ID = "gen_ai.conversation.id"
+
+    # GenAI Agent Attributes
+    GEN_AI_AGENT_ID = "gen_ai.agent.id"
+    GEN_AI_AGENT_NAME = "gen_ai.agent.name"
+    GEN_AI_SYSTEM_INSTRUCTIONS = "gen_ai.system_instructions"
+
+    # GenAI Task Attributes
+    GEN_AI_TASK_ID = "gen_ai.task.id"
+    GEN_AI_TASK_NAME = "gen_ai.task.name"
+    GEN_AI_TASK_PARENT_ID = "gen_ai.task.parent.id"
+    GEN_AI_TASK_INPUT = "gen_ai.task.input"
+    GEN_AI_TASK_OUTPUT = "gen_ai.task.output"
+    GEN_AI_TASK_STATUS = "gen_ai.task.status"
+    GEN_AI_TASK_KIND = "gen_ai.task.kind"
+
+    # GenAI Tool Attributes
+    GEN_AI_TOOL_NAME = "gen_ai.tool.name"
+    GEN_AI_TOOL_DESCRIPTION = "gen_ai.tool.description"
+    GEN_AI_TOOL_TYPE = "gen_ai.tool.type"
+    GEN_AI_TOOL_DEFINITIONS = "gen_ai.tool.definitions"
+    GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
+    GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
+
+    # GenAI Workflow Attributes
+    GEN_AI_WORKFLOW_STRUCTURE = "gen_ai.workflow.structure"
+
+    # LangGraph-specific Attributes (vendor namespace)
+    LANGGRAPH_COMMAND_SOURCE_NODE = "langgraph.command.source_node"
+    LANGGRAPH_COMMAND_GOTO_NODE = "langgraph.command.goto_node"
+    LANGGRAPH_COMMAND_GOTO_NODES = "langgraph.command.goto_nodes"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
@@ -290,3 +325,24 @@ class TraceloopSpanKindValues(Enum):
     AGENT = "agent"
     TOOL = "tool"
     UNKNOWN = "unknown"
+
+
+class GenAIOperationName(Enum):
+    """
+    Operation names for GenAI spans following OpenTelemetry GenAI semantic conventions.
+    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/
+    """
+
+    CREATE_AGENT = "create_agent"
+    INVOKE_AGENT = "invoke_agent"
+    EXECUTE_TASK = "execute_task"
+    EXECUTE_TOOL = "execute_tool"
+    LLM_REQUEST = "llm_request"
+    VECTOR_DB_RETRIEVE = "vector_db_retrieve"
+
+
+class GenAITaskStatus(Enum):
+    """Task execution status values for gen_ai.task.status attribute."""
+
+    SUCCESS = "success"
+    FAILURE = "failure"
