@@ -3,7 +3,7 @@ import json
 import logging
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.azure_search.utils import dont_throw, should_send_content
+from opentelemetry.instrumentation.azure_search.utils import dont_throw, max_content_items, should_send_content
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -421,9 +421,11 @@ def _set_indexer_management_attributes(span, method, args, kwargs):
         if indexer:
             indexer_name = getattr(indexer, "name", None)
 
-    # For other operations: first arg is indexer_name string
+    # For other operations: first arg is indexer_name string or object
     else:
         indexer_name = kwargs.get("name") or kwargs.get("indexer_name") or (args[0] if args else None)
+        if indexer_name and not isinstance(indexer_name, str):
+            indexer_name = getattr(indexer_name, "name", None)
 
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_INDEXER_NAME, indexer_name)
 
@@ -465,9 +467,11 @@ def _set_data_source_attributes(span, method, args, kwargs):
                 else:
                     data_source_type = str(data_source_type)
 
-    # For other operations: first arg is data_source_name string
+    # For other operations: first arg is data_source_name string or object
     else:
         data_source_name = kwargs.get("name") or kwargs.get("data_source_name") or (args[0] if args else None)
+        if data_source_name and not isinstance(data_source_name, str):
+            data_source_name = getattr(data_source_name, "name", None)
 
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DATA_SOURCE_NAME, data_source_name)
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DATA_SOURCE_TYPE, data_source_type)
@@ -489,9 +493,11 @@ def _set_skillset_attributes(span, method, args, kwargs):
             if skills and hasattr(skills, "__len__"):
                 skill_count = len(skills)
 
-    # For other operations: first arg is skillset_name string
+    # For other operations: first arg is skillset_name string or object
     else:
         skillset_name = kwargs.get("name") or kwargs.get("skillset_name") or (args[0] if args else None)
+        if skillset_name and not isinstance(skillset_name, str):
+            skillset_name = getattr(skillset_name, "name", None)
 
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SKILLSET_NAME, skillset_name)
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT, skill_count)
@@ -651,6 +657,7 @@ def _set_service_statistics_response_attributes(span, response):
 # instead of span events, because APM backends (e.g. Elastic) drop span events.
 
 
+
 def _safe_json_dumps(obj):
     """Serialize obj to JSON string, falling back to str() for non-serializable objects."""
     try:
@@ -711,6 +718,8 @@ def _set_search_vector_embeddings_attributes(span, kwargs):
         return
 
     for i, vq in enumerate(vector_queries):
+        if i >= max_content_items():
+            break
         prefix = f"{EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value}.{i}"
         vector = getattr(vq, "vector", None)
         text = getattr(vq, "text", None)
@@ -728,6 +737,8 @@ def _set_document_batch_request_content_attributes(span, args, kwargs):
         return
 
     for i, doc in enumerate(documents):
+        if i >= max_content_items():
+            break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
@@ -747,6 +758,8 @@ def _set_index_documents_request_content_attributes(span, args, kwargs):
         return
 
     for i, action in enumerate(actions):
+        if i >= max_content_items():
+            break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
@@ -771,6 +784,8 @@ def _set_autocomplete_content_attributes(span, response):
         return
 
     for i, item in enumerate(response):
+        if i >= max_content_items():
+            break
         text = _deep_get(item, "text")
         query_plus_text = _deep_get(item, "query_plus_text")
         entity = _safe_json_dumps({"text": text, "query_plus_text": query_plus_text})
@@ -788,6 +803,8 @@ def _set_suggest_content_attributes(span, response):
         return
 
     for i, item in enumerate(response):
+        if i >= max_content_items():
+            break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.{i}",
@@ -795,13 +812,11 @@ def _set_suggest_content_attributes(span, response):
         )
 
 
-@dont_throw
-def _set_document_batch_response_content_attributes(span, response):
-    """Set indexed response attributes for each IndexingResult in batch response."""
-    if not isinstance(response, list):
-        return
-
-    for i, result in enumerate(response):
+def _set_indexing_results_content(span, results):
+    """Shared helper: set indexed content attributes for a list of IndexingResult."""
+    for i, result in enumerate(results):
+        if i >= max_content_items():
+            break
         key = _deep_get(result, "key")
         succeeded = _deep_get(result, "succeeded")
         status_code = _deep_get(result, "status_code")
@@ -819,6 +834,14 @@ def _set_document_batch_response_content_attributes(span, response):
                 "error_message": error_message,
             }),
         )
+
+
+@dont_throw
+def _set_document_batch_response_content_attributes(span, response):
+    """Set indexed response attributes for each IndexingResult in batch response."""
+    if not isinstance(response, list):
+        return
+    _set_indexing_results_content(span, response)
 
 
 @dont_throw
@@ -831,22 +854,4 @@ def _set_index_documents_response_content_attributes(span, response):
         results = getattr(response, "results", None)
     if not results or not isinstance(results, list):
         return
-
-    for i, result in enumerate(results):
-        key = _deep_get(result, "key")
-        succeeded = _deep_get(result, "succeeded")
-        status_code = _deep_get(result, "status_code")
-        error_message = _deep_get(result, "error_message")
-        if key is not None:
-            _set_span_attribute(
-                span, f"{EventAttributes.DB_QUERY_RESULT_ID.value}.{i}", str(key)
-            )
-        _set_span_attribute(
-            span,
-            f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}",
-            _safe_json_dumps({
-                "succeeded": succeeded,
-                "status_code": status_code,
-                "error_message": error_message,
-            }),
-        )
+    _set_indexing_results_content(span, results)

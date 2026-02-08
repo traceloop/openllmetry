@@ -6,6 +6,8 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.azure_search.config import Config
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+TRACELOOP_TRACE_CONTENT_MAX_ITEMS = "TRACELOOP_TRACE_CONTENT_MAX_ITEMS"
+_DEFAULT_MAX_CONTENT_ITEMS = 100
 
 
 def _is_truthy(value):
@@ -18,6 +20,23 @@ def should_send_content() -> bool:
     if override is not None:
         return _is_truthy(override)
     return _is_truthy(env_setting)
+
+
+def max_content_items() -> int:
+    """Return the configured maximum number of per-item content attributes.
+
+    Reads from TRACELOOP_TRACE_CONTENT_MAX_ITEMS env var.
+    Falls back to _DEFAULT_MAX_CONTENT_ITEMS (100) when unset or invalid.
+    """
+    raw = os.getenv(TRACELOOP_TRACE_CONTENT_MAX_ITEMS)
+    if raw is not None:
+        try:
+            val = int(raw)
+            if val > 0:
+                return val
+        except (TypeError, ValueError):
+            pass
+    return _DEFAULT_MAX_CONTENT_ITEMS
 
 
 def dont_throw(func):

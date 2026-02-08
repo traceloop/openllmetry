@@ -575,15 +575,11 @@ def _set_<operation>_attributes(span, args, kwargs):
 @dont_throw
 def _set_document_batch_attributes(span, args, kwargs):
     documents = kwargs.get("documents") or (args[0] if args else None)
-    if documents:
-        if hasattr(documents, "__len__"):
-            count = len(documents)
-        else:
-            try:
-                count = len(list(documents))
-            except (TypeError, ValueError):
-                return
-        _set_span_attribute(span, ATTR_DOCUMENT_COUNT, count)
+    # Only count if the object supports len() — never consume
+    # generators/iterators, as that would exhaust them before
+    # the actual SDK call.
+    if documents and hasattr(documents, "__len__"):
+        _set_span_attribute(span, ATTR_DOCUMENT_COUNT, len(documents))
 ```
 
 ### Pattern 3: Index Management Methods
