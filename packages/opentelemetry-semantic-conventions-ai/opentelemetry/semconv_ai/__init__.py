@@ -275,12 +275,23 @@ class SpanAttributes:
     AZURE_SEARCH_DATA_SOURCE_TYPE = "azure_search.data_source.type"
     AZURE_SEARCH_SKILLSET_SKILL_COUNT = "azure_search.skillset.skill_count"
 
+    # Azure AI Search - Synonym Map Operations
+    AZURE_SEARCH_SYNONYM_MAP_NAME = "azure_search.synonym_map.name"
+    AZURE_SEARCH_SYNONYM_MAP_SYNONYMS_COUNT = "azure_search.synonym_map.synonyms_count"
+
+    # Azure AI Search - Service Statistics
+    AZURE_SEARCH_SERVICE_DOCUMENT_COUNT = "azure_search.service.document_count"
+    AZURE_SEARCH_SERVICE_INDEX_COUNT = "azure_search.service.index_count"
+
     # Azure AI Search - Vector Search Attributes
     AZURE_SEARCH_VECTOR_QUERIES_COUNT = "azure_search.search.vector_queries_count"
     AZURE_SEARCH_VECTOR_FIELDS = "azure_search.search.vector_fields"
     AZURE_SEARCH_VECTOR_K_NEAREST_NEIGHBORS = "azure_search.search.k_nearest_neighbors"
     AZURE_SEARCH_VECTOR_EXHAUSTIVE = "azure_search.search.vector_exhaustive"
     AZURE_SEARCH_VECTOR_FILTER_MODE = "azure_search.search.vector_filter_mode"
+    AZURE_SEARCH_VECTOR_QUERY_KIND = "azure_search.search.vector_query_kind"
+    AZURE_SEARCH_VECTOR_WEIGHT = "azure_search.search.vector_weight"
+    AZURE_SEARCH_VECTOR_OVERSAMPLING = "azure_search.search.vector_oversampling"
 
     # Azure AI Search - Semantic Search Attributes
     AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME = "azure_search.search.semantic_configuration_name"
@@ -290,6 +301,8 @@ class SpanAttributes:
     AZURE_SEARCH_SCORING_PROFILE = "azure_search.search.scoring_profile"
     AZURE_SEARCH_SELECT = "azure_search.search.select"
     AZURE_SEARCH_SEARCH_FIELDS = "azure_search.search.search_fields"
+    AZURE_SEARCH_FACETS = "azure_search.search.facets"
+    AZURE_SEARCH_ORDER_BY = "azure_search.search.order_by"
 
 
 class Events(Enum):
