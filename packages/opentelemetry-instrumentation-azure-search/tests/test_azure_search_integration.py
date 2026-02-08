@@ -353,7 +353,7 @@ class TestSearchClientIntegration:
         """Test that no content attributes are set when TRACELOOP_TRACE_CONTENT=false."""
         monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
 
-        search_client.get_document_count()
+        search_client.get_document(key="1")
 
         content_attr_prefixes = (
             EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
@@ -878,25 +878,25 @@ class TestSearchIndexerClientIntegration:
         except Exception:
             exporter.clear()
 
-        list(indexer_client.get_indexer_names())
-
-        spans = exporter.get_finished_spans()
-        assert len(spans) == 1
-
-        span = spans[0]
-        assert span.name == "azure_search.get_indexer_names"
-        assert span.kind == SpanKind.CLIENT
-        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
-
-        # Cleanup
         try:
-            indexer_client.delete_indexer(indexer_name)
-        except Exception:
-            pass
-        try:
-            indexer_client.delete_data_source_connection(ds_name)
-        except Exception:
-            pass
+            list(indexer_client.get_indexer_names())
+
+            spans = exporter.get_finished_spans()
+            assert len(spans) == 1
+
+            span = spans[0]
+            assert span.name == "azure_search.get_indexer_names"
+            assert span.kind == SpanKind.CLIENT
+            assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+        finally:
+            for cleanup in [
+                lambda: indexer_client.delete_indexer(indexer_name),
+                lambda: indexer_client.delete_data_source_connection(ds_name),
+            ]:
+                try:
+                    cleanup()
+                except Exception:
+                    pass
 
     @pytest.mark.vcr
     def test_get_data_source_connection_names(self, exporter, indexer_client):
@@ -919,21 +919,21 @@ class TestSearchIndexerClientIntegration:
         except Exception:
             exporter.clear()
 
-        list(indexer_client.get_data_source_connection_names())
-
-        spans = exporter.get_finished_spans()
-        assert len(spans) == 1
-
-        span = spans[0]
-        assert span.name == "azure_search.get_data_source_connection_names"
-        assert span.kind == SpanKind.CLIENT
-        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
-
-        # Cleanup
         try:
-            indexer_client.delete_data_source_connection(ds_name)
-        except Exception:
-            pass
+            list(indexer_client.get_data_source_connection_names())
+
+            spans = exporter.get_finished_spans()
+            assert len(spans) == 1
+
+            span = spans[0]
+            assert span.name == "azure_search.get_data_source_connection_names"
+            assert span.kind == SpanKind.CLIENT
+            assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+        finally:
+            try:
+                indexer_client.delete_data_source_connection(ds_name)
+            except Exception:
+                pass
 
     @pytest.mark.vcr
     def test_get_skillset_names(self, exporter, indexer_client):
@@ -958,18 +958,18 @@ class TestSearchIndexerClientIntegration:
         except Exception:
             exporter.clear()
 
-        list(indexer_client.get_skillset_names())
-
-        spans = exporter.get_finished_spans()
-        assert len(spans) == 1
-
-        span = spans[0]
-        assert span.name == "azure_search.get_skillset_names"
-        assert span.kind == SpanKind.CLIENT
-        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
-
-        # Cleanup
         try:
-            indexer_client.delete_skillset(skillset_name)
-        except Exception:
-            pass
+            list(indexer_client.get_skillset_names())
+
+            spans = exporter.get_finished_spans()
+            assert len(spans) == 1
+
+            span = spans[0]
+            assert span.name == "azure_search.get_skillset_names"
+            assert span.kind == SpanKind.CLIENT
+            assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+        finally:
+            try:
+                indexer_client.delete_skillset(skillset_name)
+            except Exception:
+                pass
