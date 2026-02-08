@@ -15,8 +15,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ secrets.CI_BOT_APP_ID }}
-          private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
+          app-id: ${{ secrets.OSS_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.OSS_CI_BOT_PRIVATE_KEY }}
           repositories: ${{ github.event.repository.name }}
 
       - uses: actions/checkout@v4
