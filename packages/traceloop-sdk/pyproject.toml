@@ -160,6 +160,7 @@ opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conv
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
 opentelemetry-instrumentation-alephalpha = { path = "../opentelemetry-instrumentation-alephalpha", editable = true }
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", editable = true }
+opentelemetry-instrumentation-azure-search = { path = "../opentelemetry-instrumentation-azure-search", editable = true }
 opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", editable = true }
 opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", editable = true }
 opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", editable = true }
