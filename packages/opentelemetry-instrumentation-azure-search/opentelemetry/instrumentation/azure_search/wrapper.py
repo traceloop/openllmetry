@@ -1,14 +1,15 @@
 import asyncio
+import json
 import logging
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.azure_search.utils import dont_throw
+from opentelemetry.instrumentation.azure_search.utils import dont_throw, should_send_content
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.trace import SpanKind
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes, EventAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,17 @@ def _set_request_attributes(span, method, instance, args, kwargs):
         "get_skillsets",
     ]:
         _set_skillset_attributes(span, method, args, kwargs)
+    elif method in [
+        "create_synonym_map",
+        "create_or_update_synonym_map",
+        "delete_synonym_map",
+        "get_synonym_map",
+        "get_synonym_maps",
+        "get_synonym_map_names",
+    ]:
+        _set_synonym_map_attributes(span, method, args, kwargs)
+    # Name-only listing methods, flush, and get_service_statistics
+    # need no special request attributes (just span creation)
 
 
 def _set_response_attributes(span, method, response, args, kwargs):
@@ -114,6 +126,8 @@ def _set_response_attributes(span, method, response, args, kwargs):
         _set_suggest_response_attributes(span, response)
     elif method == "get_indexer_status":
         _set_indexer_status_attributes(span, args, kwargs, response)
+    elif method == "get_service_statistics":
+        _set_service_statistics_response_attributes(span, response)
 
 
 @_with_tracer_wrapper
@@ -142,6 +156,7 @@ def _sync_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         set_status_on_exception=False,
     ) as span:
         _set_request_attributes(span, method, instance, args, kwargs)
+        _set_request_content_attributes(span, method, instance, args, kwargs)
 
         try:
             response = wrapped(*args, **kwargs)
@@ -150,6 +165,7 @@ def _sync_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             raise
 
         _set_response_attributes(span, method, response, args, kwargs)
+        _set_response_content_attributes(span, method, response, args, kwargs)
         span.set_status(Status(StatusCode.OK))
         return response
 
@@ -168,6 +184,7 @@ async def _async_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         set_status_on_exception=False,
     ) as span:
         _set_request_attributes(span, method, instance, args, kwargs)
+        _set_request_content_attributes(span, method, instance, args, kwargs)
 
         try:
             response = await wrapped(*args, **kwargs)
@@ -176,6 +193,7 @@ async def _async_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             raise
 
         _set_response_attributes(span, method, response, args, kwargs)
+        _set_response_content_attributes(span, method, response, args, kwargs)
         span.set_status(Status(StatusCode.OK))
         return response
 
@@ -233,6 +251,18 @@ def _set_search_attributes(span, args, kwargs):
             search_fields = ",".join(search_fields)
         _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SEARCH_FIELDS, search_fields)
 
+    facets = kwargs.get("facets")
+    if facets:
+        if isinstance(facets, (list, tuple)):
+            facets = ",".join(str(f) for f in facets)
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_FACETS, facets)
+
+    order_by = kwargs.get("order_by")
+    if order_by:
+        if isinstance(order_by, (list, tuple)):
+            order_by = ",".join(str(o) for o in order_by)
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_ORDER_BY, order_by)
+
 
 @dont_throw
 def _set_vector_search_attributes(span, kwargs):
@@ -260,6 +290,18 @@ def _set_vector_search_attributes(span, kwargs):
     exhaustive = getattr(first_vq, "exhaustive", None)
     if exhaustive is not None:
         _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_VECTOR_EXHAUSTIVE, exhaustive)
+
+    kind = getattr(first_vq, "kind", None)
+    if kind is not None:
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_VECTOR_QUERY_KIND, str(kind))
+
+    weight = getattr(first_vq, "weight", None)
+    if weight is not None:
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_VECTOR_WEIGHT, weight)
+
+    oversampling = getattr(first_vq, "oversampling", None)
+    if oversampling is not None:
+        _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_VECTOR_OVERSAMPLING, oversampling)
 
     # Vector filter mode is a top-level search param, not per-query
     vector_filter_mode = kwargs.get("vector_filter_mode")
@@ -458,6 +500,31 @@ def _set_skillset_attributes(span, method, args, kwargs):
     _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SKILLSET_SKILL_COUNT, skill_count)
 
 
+@dont_throw
+def _set_synonym_map_attributes(span, method, args, kwargs):
+    """Set attributes for synonym map operations."""
+    synonym_map_name = None
+    synonyms_count = None
+
+    if method in ["create_synonym_map", "create_or_update_synonym_map"]:
+        synonym_map = kwargs.get("synonym_map") or (args[0] if args else None)
+        if synonym_map:
+            synonym_map_name = getattr(synonym_map, "name", None)
+            synonyms = getattr(synonym_map, "synonyms", None)
+            if synonyms:
+                if isinstance(synonyms, list):
+                    synonyms_count = len(synonyms)
+                elif isinstance(synonyms, str):
+                    synonyms_count = len(synonyms.strip().split("\n"))
+    elif method in ["delete_synonym_map", "get_synonym_map"]:
+        synonym_map_name = kwargs.get("name") or kwargs.get("synonym_map_name") or (args[0] if args else None)
+        if synonym_map_name and not isinstance(synonym_map_name, str):
+            synonym_map_name = getattr(synonym_map_name, "name", None)
+
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_NAME, synonym_map_name)
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_SYNONYMS_COUNT, synonyms_count)
+
+
 # --- Response attribute extraction functions ---
 
 
@@ -550,4 +617,231 @@ def _set_suggest_response_attributes(span, response):
             span,
             SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT,
             len(response),
+        )
+
+
+def _deep_get(obj, key):
+    """Get a value from an object that may be a dict or an object with attributes."""
+    if isinstance(obj, dict):
+        return obj.get(key)
+    return getattr(obj, key, None)
+
+
+@dont_throw
+def _set_service_statistics_response_attributes(span, response):
+    """Set attributes from get_service_statistics response."""
+    counters = _deep_get(response, "counters")
+    if counters:
+        doc_counter = _deep_get(counters, "document_counter")
+        if doc_counter:
+            usage = _deep_get(doc_counter, "usage")
+            if usage is not None:
+                _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SERVICE_DOCUMENT_COUNT, usage)
+
+        index_counter = _deep_get(counters, "index_counter")
+        if index_counter:
+            usage = _deep_get(index_counter, "usage")
+            if usage is not None:
+                _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_SERVICE_INDEX_COUNT, usage)
+
+
+# --- Content attribute functions (gated by TRACELOOP_TRACE_CONTENT) ---
+# Content is stored as indexed span attributes (like gen_ai_prompt.0.content)
+# instead of span events, because APM backends (e.g. Elastic) drop span events.
+
+
+def _safe_json_dumps(obj):
+    """Serialize obj to JSON string, falling back to str() for non-serializable objects."""
+    try:
+        return json.dumps(obj)
+    except (TypeError, ValueError):
+        return str(obj)
+
+
+@dont_throw
+def _set_request_content_attributes(span, method, instance, args, kwargs):
+    """Set content attributes for request-side data (gated by content toggle)."""
+    if not should_send_content():
+        return
+
+    if method == "search":
+        _set_search_vector_embeddings_attributes(span, kwargs)
+    elif method in [
+        "upload_documents",
+        "merge_documents",
+        "delete_documents",
+        "merge_or_upload_documents",
+    ]:
+        _set_document_batch_request_content_attributes(span, args, kwargs)
+    elif method == "index_documents":
+        _set_index_documents_request_content_attributes(span, args, kwargs)
+
+
+@dont_throw
+def _set_response_content_attributes(span, method, response, args, kwargs):
+    """Set content attributes for response-side data (gated by content toggle)."""
+    if not should_send_content():
+        return
+    if response is None:
+        return
+
+    if method == "get_document":
+        _set_get_document_content_attribute(span, response)
+    elif method == "autocomplete":
+        _set_autocomplete_content_attributes(span, response)
+    elif method == "suggest":
+        _set_suggest_content_attributes(span, response)
+    elif method in [
+        "upload_documents",
+        "merge_documents",
+        "delete_documents",
+        "merge_or_upload_documents",
+    ]:
+        _set_document_batch_response_content_attributes(span, response)
+    elif method == "index_documents":
+        _set_index_documents_response_content_attributes(span, response)
+
+
+@dont_throw
+def _set_search_vector_embeddings_attributes(span, kwargs):
+    """Set indexed db.search.embeddings.N.vector attributes for vector queries."""
+    vector_queries = kwargs.get("vector_queries")
+    if not vector_queries:
+        return
+
+    for i, vq in enumerate(vector_queries):
+        prefix = f"{EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value}.{i}"
+        vector = getattr(vq, "vector", None)
+        text = getattr(vq, "text", None)
+        if vector is not None:
+            _set_span_attribute(span, prefix, str(vector))
+        elif text is not None:
+            _set_span_attribute(span, prefix, text)
+
+
+@dont_throw
+def _set_document_batch_request_content_attributes(span, args, kwargs):
+    """Set indexed db.query.result.N.document attributes for each input document."""
+    documents = kwargs.get("documents") or (args[0] if args else None)
+    if not documents:
+        return
+
+    for i, doc in enumerate(documents):
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
+            _safe_json_dumps(doc),
+        )
+
+
+@dont_throw
+def _set_index_documents_request_content_attributes(span, args, kwargs):
+    """Set indexed db.query.result.N.document attributes for each batch action."""
+    batch = kwargs.get("batch") or (args[0] if args else None)
+    if not batch:
+        return
+
+    actions = getattr(batch, "actions", None)
+    if not actions:
+        return
+
+    for i, action in enumerate(actions):
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
+            _safe_json_dumps(action),
+        )
+
+
+@dont_throw
+def _set_get_document_content_attribute(span, response):
+    """Set db.query.result.document attribute for get_document response."""
+    _set_span_attribute(
+        span,
+        EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+        _safe_json_dumps(response),
+    )
+
+
+@dont_throw
+def _set_autocomplete_content_attributes(span, response):
+    """Set indexed db.search.result.N.entity attributes for autocomplete results."""
+    if not isinstance(response, list):
+        return
+
+    for i, item in enumerate(response):
+        text = _deep_get(item, "text")
+        query_plus_text = _deep_get(item, "query_plus_text")
+        entity = _safe_json_dumps({"text": text, "query_plus_text": query_plus_text})
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.{i}",
+            entity,
+        )
+
+
+@dont_throw
+def _set_suggest_content_attributes(span, response):
+    """Set indexed db.search.result.N.entity attributes for suggest results."""
+    if not isinstance(response, list):
+        return
+
+    for i, item in enumerate(response):
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.{i}",
+            _safe_json_dumps(item),
+        )
+
+
+@dont_throw
+def _set_document_batch_response_content_attributes(span, response):
+    """Set indexed response attributes for each IndexingResult in batch response."""
+    if not isinstance(response, list):
+        return
+
+    for i, result in enumerate(response):
+        key = _deep_get(result, "key")
+        succeeded = _deep_get(result, "succeeded")
+        status_code = _deep_get(result, "status_code")
+        error_message = _deep_get(result, "error_message")
+        if key is not None:
+            _set_span_attribute(
+                span, f"{EventAttributes.DB_QUERY_RESULT_ID.value}.{i}", str(key)
+            )
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}",
+            _safe_json_dumps({
+                "succeeded": succeeded,
+                "status_code": status_code,
+                "error_message": error_message,
+            }),
+        )
+
+
+@dont_throw
+def _set_index_documents_response_content_attributes(span, response):
+    """Set indexed response attributes for each result in index_documents response."""
+    results = getattr(response, "results", None)
+    if not results or not isinstance(results, list):
+        return
+
+    for i, result in enumerate(results):
+        key = _deep_get(result, "key")
+        succeeded = _deep_get(result, "succeeded")
+        status_code = _deep_get(result, "status_code")
+        error_message = _deep_get(result, "error_message")
+        if key is not None:
+            _set_span_attribute(
+                span, f"{EventAttributes.DB_QUERY_RESULT_ID.value}.{i}", str(key)
+            )
+        _set_span_attribute(
+            span,
+            f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}",
+            _safe_json_dumps({
+                "succeeded": succeeded,
+                "status_code": status_code,
+                "error_message": error_message,
+            }),
         )
