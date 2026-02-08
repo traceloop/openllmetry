@@ -3791,3 +3791,951 @@ class TestContentCapture:
         doc_key_1 = f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.1"
         assert doc_key_0 in attrs
         assert doc_key_1 in attrs
+
+
+# ---------------------------------------------------------------------------
+# Multi-step workflow tests — "Can these traces debug a 2am production issue?"
+# ---------------------------------------------------------------------------
+# Unlike the single-operation tests above, workflow tests chain multiple
+# instrumented calls within a shared trace context and verify:
+#   1. Trace correlation — all spans share one trace_id
+#   2. Cross-span consistency — upload count matches doc count, etc.
+#   3. Content reconstruction — content attributes tell the full data story
+#   4. Error diagnosis — failure spans carry actionable detail
+# ---------------------------------------------------------------------------
+
+
+def _call_sync(tracer, method, mock_fn, instance, args=(), kwargs=None):
+    """Call _sync_wrap directly — produces a real instrumented span."""
+    from opentelemetry.instrumentation.azure_search.wrapper import _sync_wrap
+
+    to_wrap = {"span_name": f"azure_search.{method}", "method": method}
+    return _sync_wrap(tracer, to_wrap, mock_fn, instance, args, kwargs or {})
+
+
+async def _call_async(tracer, method, mock_fn, instance, args=(), kwargs=None):
+    """Call _async_wrap directly — produces a real instrumented span."""
+    from opentelemetry.instrumentation.azure_search.wrapper import _async_wrap
+
+    to_wrap = {"span_name": f"azure_search.{method}", "method": method}
+    return await _async_wrap(tracer, to_wrap, mock_fn, instance, args, kwargs or {})
+
+
+def _get_spans(exporter, name=None):
+    """Return all finished spans, optionally filtered by name."""
+    spans = exporter.get_finished_spans()
+    if name is None:
+        return spans
+    return [s for s in spans if s.name == name]
+
+
+def _assert_all_same_trace(spans):
+    """Assert every span belongs to the same trace."""
+    trace_ids = {s.context.trace_id for s in spans}
+    assert len(trace_ids) == 1, (
+        f"Expected all spans to share one trace_id, got {len(trace_ids)}: {trace_ids}"
+    )
+
+
+def _find_span(spans, name):
+    """Find at least one span by name, return the first match."""
+    matching = [s for s in spans if s.name == name]
+    assert len(matching) >= 1, (
+        f"No span named '{name}' in {[s.name for s in spans]}"
+    )
+    return matching[0]
+
+
+def _make_instance(index_name="test-index"):
+    """Create a mock instance with _index_name, like a SearchClient."""
+    inst = MagicMock()
+    inst._index_name = index_name
+    return inst
+
+
+def _make_index_instance():
+    """Create a mock instance without _index_name, like a SearchIndexClient."""
+    inst = MagicMock()
+    inst._index_name = None
+    return inst
+
+
+def _mock_indexing_result(key, succeeded=True, status_code=200, error_message=None):
+    """Create a mock IndexingResult object with the expected attributes."""
+    r = MagicMock()
+    r.key = key
+    r.succeeded = succeeded
+    r.status_code = status_code
+    r.error_message = error_message
+    return r
+
+
+class TestSyncWorkflows:
+    """Multi-step sync workflow tests that validate traces tell a debuggable story.
+
+    Each test simulates a real production scenario and verifies the resulting
+    trace has enough information to diagnose the problem at 2am.
+    """
+
+    def test_search_pipeline(self, exporter):
+        """Upload docs, then search — trace must show why search returned nothing.
+
+        2am scenario: "Users report search returns no results."
+        Trace must show: upload succeeded for all docs, search query params visible.
+        """
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace import SpanKind
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        docs = [
+            {"id": "h1", "name": "Grand Hotel", "rating": 4.5},
+            {"id": "h2", "name": "Budget Inn", "rating": 2.0},
+            {"id": "h3", "name": "Cozy Motel", "rating": 3.8},
+        ]
+        upload_response = [
+            _mock_indexing_result("h1"),
+            _mock_indexing_result("h2"),
+            _mock_indexing_result("h3"),
+        ]
+
+        with tracer.start_as_current_span("app.ingest_and_search"):
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: upload_response, instance,
+                kwargs={"documents": docs},
+            )
+            _call_sync(
+                tracer, "search",
+                lambda *a, **kw: iter([]), instance,
+                kwargs={"search_text": "hotel", "top": 5, "filter": "rating ge 4"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 2
+        _assert_all_same_trace(azure_spans)
+
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        assert upload_span.kind == SpanKind.CLIENT
+        assert upload_span.status.status_code == StatusCode.OK
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 3
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT] == 3
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT] == 0
+
+        attrs = dict(upload_span.attributes)
+        doc0 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.0"])
+        assert doc0["id"] == "h1"
+        doc2 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.2"])
+        assert doc2["name"] == "Cozy Motel"
+
+        search_span = _find_span(azure_spans, "azure_search.search")
+        assert search_span.kind == SpanKind.CLIENT
+        assert search_span.status.status_code == StatusCode.OK
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TEXT] == "hotel"
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TOP] == 5
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_FILTER] == "rating ge 4"
+
+    def test_document_lifecycle(self, exporter):
+        """Full CRUD lifecycle: upload -> get -> merge -> get -> delete.
+
+        2am scenario: "A document disappeared -- when was it last modified?"
+        Trace must show every mutation with content so we can reconstruct history.
+        """
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        initial_doc = {"id": "lc-1", "name": "Lifecycle Hotel", "rating": 3.0}
+        updated_doc = {"id": "lc-1", "name": "Lifecycle Hotel", "rating": 4.5}
+
+        with tracer.start_as_current_span("app.document_lifecycle"):
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: [_mock_indexing_result("lc-1", status_code=201)],
+                instance, kwargs={"documents": [initial_doc]},
+            )
+            _call_sync(
+                tracer, "get_document",
+                lambda *a, **kw: dict(initial_doc), instance,
+                kwargs={"key": "lc-1"},
+            )
+            _call_sync(
+                tracer, "merge_documents",
+                lambda *a, **kw: [_mock_indexing_result("lc-1")],
+                instance, kwargs={"documents": [{"id": "lc-1", "rating": 4.5}]},
+            )
+            _call_sync(
+                tracer, "get_document",
+                lambda *a, **kw: dict(updated_doc), instance,
+                kwargs={"key": "lc-1"},
+            )
+            _call_sync(
+                tracer, "delete_documents",
+                lambda *a, **kw: [_mock_indexing_result("lc-1")],
+                instance, kwargs={"documents": [{"id": "lc-1"}]},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 5
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+
+        # Upload content shows initial rating
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        attrs = dict(upload_span.attributes)
+        doc = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.0"])
+        assert doc["rating"] == 3.0
+
+        # First get_document shows the retrieved document
+        get_spans = [s for s in azure_spans if s.name == "azure_search.get_document"]
+        assert len(get_spans) == 2
+        first_get_doc = json.loads(
+            dict(get_spans[0].attributes)[EventAttributes.DB_QUERY_RESULT_DOCUMENT.value]
+        )
+        assert first_get_doc["rating"] == 3.0
+
+        # Second get_document shows updated rating
+        second_get_doc = json.loads(
+            dict(get_spans[1].attributes)[EventAttributes.DB_QUERY_RESULT_DOCUMENT.value]
+        )
+        assert second_get_doc["rating"] == 4.5
+
+        # Merge content shows the delta
+        merge_span = _find_span(azure_spans, "azure_search.merge_documents")
+        merge_doc = json.loads(
+            dict(merge_span.attributes)[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.0"]
+        )
+        assert merge_doc["rating"] == 4.5
+
+        # Delete confirms 1 doc removed
+        delete_span = _find_span(azure_spans, "azure_search.delete_documents")
+        assert delete_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 1
+        assert delete_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT] == 1
+
+    def test_typeahead_pipeline(self, exporter):
+        """Upload -> autocomplete -> suggest -- typeahead debugging.
+
+        2am scenario: "Autocomplete is returning empty results."
+        Trace must show: what was uploaded, autocomplete/suggest results + counts.
+        """
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        autocomplete_results = [
+            MagicMock(text="luxury", query_plus_text="luxury hotel"),
+            MagicMock(text="luxurious", query_plus_text="luxurious resort"),
+        ]
+        suggest_results = [
+            {"@search.text": "Luxury Hotel Downtown", "id": "s1"},
+        ]
+
+        with tracer.start_as_current_span("app.typeahead_pipeline"):
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: [_mock_indexing_result("th-1")],
+                instance,
+                kwargs={"documents": [{"id": "th-1", "name": "Luxury Hotel Downtown"}]},
+            )
+            _call_sync(
+                tracer, "autocomplete",
+                lambda *a, **kw: autocomplete_results, instance,
+                kwargs={"search_text": "lux", "suggester_name": "sg"},
+            )
+            _call_sync(
+                tracer, "suggest",
+                lambda *a, **kw: suggest_results, instance,
+                kwargs={"search_text": "lux", "suggester_name": "sg"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 3
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+
+        ac_span = _find_span(azure_spans, "azure_search.autocomplete")
+        assert ac_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TEXT] == "lux"
+        assert ac_span.attributes[SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME] == "sg"
+        assert ac_span.attributes[SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT] == 2
+
+        ac_attrs = dict(ac_span.attributes)
+        entity_0 = json.loads(ac_attrs[f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.0"])
+        assert entity_0["text"] == "luxury"
+        entity_1 = json.loads(ac_attrs[f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.1"])
+        assert entity_1["text"] == "luxurious"
+
+        sg_span = _find_span(azure_spans, "azure_search.suggest")
+        assert sg_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TEXT] == "lux"
+        assert sg_span.attributes[SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT] == 1
+
+    def test_bulk_ingestion_partial_failure(self, exporter):
+        """Upload 5 docs where 2 fail -- trace shows which docs failed and why.
+
+        2am scenario: "ETL pipeline uploaded 5 docs but only 3 are searchable."
+        Trace must show: per-document success/failure metadata with error messages.
+        """
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        docs = [
+            {"id": f"bulk-{i}", "name": f"Hotel {i}", "rating": float(i)}
+            for i in range(5)
+        ]
+        response = [
+            _mock_indexing_result("bulk-0"),
+            _mock_indexing_result("bulk-1"),
+            _mock_indexing_result("bulk-2"),
+            _mock_indexing_result(
+                "bulk-3", succeeded=False, status_code=400,
+                error_message="Invalid field 'rating'",
+            ),
+            _mock_indexing_result(
+                "bulk-4", succeeded=False, status_code=400,
+                error_message="Document too large",
+            ),
+        ]
+
+        with tracer.start_as_current_span("app.etl_ingestion"):
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: response, instance,
+                kwargs={"documents": docs},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 1
+
+        span = azure_spans[0]
+        assert span.status.status_code == StatusCode.OK
+        assert span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 5
+        assert span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT] == 3
+        assert span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT] == 2
+
+        attrs = dict(span.attributes)
+
+        # Request content: all 5 input docs are captured
+        for i in range(5):
+            raw = attrs[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}"]
+            doc = json.loads(raw)
+            assert doc["id"] == f"bulk-{i}"
+
+        # Response metadata: succeeded docs
+        for i in range(3):
+            meta = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}"])
+            assert meta["succeeded"] is True
+
+        # Response metadata: failed docs with actionable error messages
+        meta_3 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.3"])
+        assert meta_3["succeeded"] is False
+        assert meta_3["status_code"] == 400
+        assert meta_3["error_message"] == "Invalid field 'rating'"
+
+        meta_4 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.4"])
+        assert meta_4["succeeded"] is False
+        assert meta_4["error_message"] == "Document too large"
+
+    def test_index_management_pipeline(self, exporter):
+        """create_index -> upload -> count -> search -> delete_index.
+
+        2am scenario: "Deployment created the index but search returns 404."
+        Trace must show: index created, docs uploaded, count matches, search ran.
+        """
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        search_instance = _make_instance("pipeline-test")
+        index_instance = _make_index_instance()
+
+        mock_index = MagicMock()
+        mock_index.name = "pipeline-test"
+
+        with tracer.start_as_current_span("app.deployment_pipeline"):
+            _call_sync(
+                tracer, "create_index",
+                lambda *a, **kw: mock_index, index_instance,
+                kwargs={"index": mock_index},
+            )
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: [_mock_indexing_result("p1"), _mock_indexing_result("p2")],
+                search_instance,
+                kwargs={"documents": [{"id": "p1"}, {"id": "p2"}]},
+            )
+            _call_sync(
+                tracer, "get_document_count",
+                lambda *a, **kw: 2, search_instance,
+            )
+            _call_sync(
+                tracer, "search",
+                lambda *a, **kw: iter([{"id": "p1"}, {"id": "p2"}]),
+                search_instance,
+                kwargs={"search_text": "*"},
+            )
+            _call_sync(
+                tracer, "delete_index",
+                lambda *a, **kw: None, index_instance,
+                kwargs={"index": "pipeline-test"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 5
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+
+        create_span = _find_span(azure_spans, "azure_search.create_index")
+        assert create_span.attributes[SpanAttributes.AZURE_SEARCH_INDEX_NAME] == "pipeline-test"
+
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 2
+
+        count_span = _find_span(azure_spans, "azure_search.get_document_count")
+        assert count_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 2
+
+        search_span = _find_span(azure_spans, "azure_search.search")
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_INDEX_NAME] == "pipeline-test"
+
+        delete_span = _find_span(azure_spans, "azure_search.delete_index")
+        assert delete_span.attributes[SpanAttributes.AZURE_SEARCH_INDEX_NAME] == "pipeline-test"
+
+    def test_content_privacy_across_pipeline(self, exporter, monkeypatch):
+        """Full pipeline with content disabled -- verify no PII leaks.
+
+        2am scenario: "Compliance audit -- are we leaking PII in traces?"
+        Trace must show: operational metadata present, ZERO content attributes.
+        """
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        content_prefixes = (
+            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+            EventAttributes.DB_SEARCH_RESULT_ENTITY.value,
+            EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value,
+            EventAttributes.DB_QUERY_RESULT_METADATA.value,
+            EventAttributes.DB_QUERY_RESULT_ID.value,
+        )
+
+        with tracer.start_as_current_span("app.privacy_pipeline"):
+            _call_sync(
+                tracer, "upload_documents",
+                lambda *a, **kw: [_mock_indexing_result("priv-1")],
+                instance,
+                kwargs={"documents": [{"id": "priv-1", "ssn": "123-45-6789"}]},
+            )
+            _call_sync(
+                tracer, "get_document",
+                lambda *a, **kw: {"id": "priv-1", "ssn": "123-45-6789"},
+                instance, kwargs={"key": "priv-1"},
+            )
+            _call_sync(
+                tracer, "autocomplete",
+                lambda *a, **kw: [MagicMock(text="secret", query_plus_text="secret data")],
+                instance,
+                kwargs={"search_text": "sec", "suggester_name": "sg"},
+            )
+            _call_sync(
+                tracer, "suggest",
+                lambda *a, **kw: [{"@search.text": "Secret Doc", "id": "s1"}],
+                instance,
+                kwargs={"search_text": "sec", "suggester_name": "sg"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 4
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+            attrs = dict(s.attributes)
+            content_keys = [
+                k for k in attrs
+                if any(k.startswith(p) for p in content_prefixes)
+            ]
+            assert content_keys == [], (
+                f"Content leaked in span '{s.name}': {content_keys}"
+            )
+
+        # But operational metadata IS still present
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 1
+
+        get_span = _find_span(azure_spans, "azure_search.get_document")
+        assert get_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_KEY] == "priv-1"
+
+        ac_span = _find_span(azure_spans, "azure_search.autocomplete")
+        assert ac_span.attributes[SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME] == "sg"
+
+    def test_error_then_retry_success(self, exporter):
+        """First call fails, retry succeeds -- trace shows both for diagnosis.
+
+        2am scenario: "Was this a transient failure? Did the retry work?"
+        Trace must show: error span with exception detail, then OK span.
+        """
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        call_count = 0
+
+        def flaky_search(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise ConnectionError("ServiceUnavailable: retry later")
+            return iter([{"id": "1"}])
+
+        with tracer.start_as_current_span("app.search_with_retry"):
+            try:
+                _call_sync(
+                    tracer, "search", flaky_search, instance,
+                    kwargs={"search_text": "hotel"},
+                )
+            except ConnectionError:
+                pass  # App catches and retries
+            _call_sync(
+                tracer, "search", flaky_search, instance,
+                kwargs={"search_text": "hotel"},
+            )
+
+        spans = _get_spans(exporter)
+        search_spans = [s for s in spans if s.name == "azure_search.search"]
+        assert len(search_spans) == 2
+        _assert_all_same_trace(search_spans)
+
+        assert search_spans[0].status.status_code == StatusCode.ERROR
+        assert "ServiceUnavailable" in search_spans[0].status.description
+
+        assert search_spans[1].status.status_code == StatusCode.OK
+
+
+class TestAsyncWorkflows:
+    """Async mirrors of all sync workflow tests.
+
+    Validates that _async_wrap produces identical trace structures as _sync_wrap.
+    """
+
+    @pytest.mark.asyncio
+    async def test_search_pipeline(self, exporter):
+        """Async: upload -> search -- trace correlation and query visibility."""
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace import SpanKind
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        docs = [
+            {"id": "h1", "name": "Grand Hotel", "rating": 4.5},
+            {"id": "h2", "name": "Budget Inn", "rating": 2.0},
+            {"id": "h3", "name": "Cozy Motel", "rating": 3.8},
+        ]
+        upload_response = [
+            _mock_indexing_result("h1"),
+            _mock_indexing_result("h2"),
+            _mock_indexing_result("h3"),
+        ]
+
+        async def mock_upload(*a, **kw):
+            return upload_response
+
+        async def mock_search(*a, **kw):
+            return iter([])
+
+        with tracer.start_as_current_span("app.async_ingest_and_search"):
+            await _call_async(
+                tracer, "upload_documents", mock_upload, instance,
+                kwargs={"documents": docs},
+            )
+            await _call_async(
+                tracer, "search", mock_search, instance,
+                kwargs={"search_text": "hotel", "top": 5, "filter": "rating ge 4"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 2
+        _assert_all_same_trace(azure_spans)
+
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        assert upload_span.kind == SpanKind.CLIENT
+        assert upload_span.status.status_code == StatusCode.OK
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 3
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT] == 3
+
+        attrs = dict(upload_span.attributes)
+        doc0 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.0"])
+        assert doc0["id"] == "h1"
+
+        search_span = _find_span(azure_spans, "azure_search.search")
+        assert search_span.status.status_code == StatusCode.OK
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TEXT] == "hotel"
+        assert search_span.attributes[SpanAttributes.AZURE_SEARCH_SEARCH_TOP] == 5
+
+    @pytest.mark.asyncio
+    async def test_document_lifecycle(self, exporter):
+        """Async: upload -> get -> merge -> get -> delete -- CRUD audit trail."""
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        initial_doc = {"id": "lc-1", "name": "Lifecycle Hotel", "rating": 3.0}
+        updated_doc = {"id": "lc-1", "name": "Lifecycle Hotel", "rating": 4.5}
+
+        async def upload(*a, **kw):
+            return [_mock_indexing_result("lc-1", status_code=201)]
+
+        async def get_initial(*a, **kw):
+            return dict(initial_doc)
+
+        async def merge(*a, **kw):
+            return [_mock_indexing_result("lc-1")]
+
+        async def get_updated(*a, **kw):
+            return dict(updated_doc)
+
+        async def delete(*a, **kw):
+            return [_mock_indexing_result("lc-1")]
+
+        with tracer.start_as_current_span("app.async_document_lifecycle"):
+            await _call_async(
+                tracer, "upload_documents", upload, instance,
+                kwargs={"documents": [initial_doc]},
+            )
+            await _call_async(
+                tracer, "get_document", get_initial, instance,
+                kwargs={"key": "lc-1"},
+            )
+            await _call_async(
+                tracer, "merge_documents", merge, instance,
+                kwargs={"documents": [{"id": "lc-1", "rating": 4.5}]},
+            )
+            await _call_async(
+                tracer, "get_document", get_updated, instance,
+                kwargs={"key": "lc-1"},
+            )
+            await _call_async(
+                tracer, "delete_documents", delete, instance,
+                kwargs={"documents": [{"id": "lc-1"}]},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 5
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+
+        get_spans = [s for s in azure_spans if s.name == "azure_search.get_document"]
+        first_doc = json.loads(
+            dict(get_spans[0].attributes)[EventAttributes.DB_QUERY_RESULT_DOCUMENT.value]
+        )
+        assert first_doc["rating"] == 3.0
+        second_doc = json.loads(
+            dict(get_spans[1].attributes)[EventAttributes.DB_QUERY_RESULT_DOCUMENT.value]
+        )
+        assert second_doc["rating"] == 4.5
+
+    @pytest.mark.asyncio
+    async def test_typeahead_pipeline(self, exporter):
+        """Async: upload -> autocomplete -> suggest -- typeahead debugging."""
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        autocomplete_results = [
+            MagicMock(text="luxury", query_plus_text="luxury hotel"),
+        ]
+        suggest_results = [
+            {"@search.text": "Luxury Hotel", "id": "s1"},
+        ]
+
+        async def mock_upload(*a, **kw):
+            return [_mock_indexing_result("th-1")]
+
+        async def mock_ac(*a, **kw):
+            return autocomplete_results
+
+        async def mock_sg(*a, **kw):
+            return suggest_results
+
+        with tracer.start_as_current_span("app.async_typeahead"):
+            await _call_async(
+                tracer, "upload_documents", mock_upload, instance,
+                kwargs={"documents": [{"id": "th-1", "name": "Luxury Hotel"}]},
+            )
+            await _call_async(
+                tracer, "autocomplete", mock_ac, instance,
+                kwargs={"search_text": "lux", "suggester_name": "sg"},
+            )
+            await _call_async(
+                tracer, "suggest", mock_sg, instance,
+                kwargs={"search_text": "lux", "suggester_name": "sg"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 3
+        _assert_all_same_trace(azure_spans)
+
+        ac_span = _find_span(azure_spans, "azure_search.autocomplete")
+        assert ac_span.attributes[SpanAttributes.AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT] == 1
+        entity_0 = json.loads(
+            dict(ac_span.attributes)[f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.0"]
+        )
+        assert entity_0["text"] == "luxury"
+
+        sg_span = _find_span(azure_spans, "azure_search.suggest")
+        assert sg_span.attributes[SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT] == 1
+
+    @pytest.mark.asyncio
+    async def test_bulk_ingestion_partial_failure(self, exporter):
+        """Async: upload 5 docs, 2 fail -- per-document failure metadata."""
+        import json
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        docs = [{"id": f"bulk-{i}", "name": f"Hotel {i}"} for i in range(5)]
+        response = [
+            _mock_indexing_result("bulk-0"),
+            _mock_indexing_result("bulk-1"),
+            _mock_indexing_result("bulk-2"),
+            _mock_indexing_result("bulk-3", succeeded=False, status_code=400, error_message="Bad format"),
+            _mock_indexing_result("bulk-4", succeeded=False, status_code=400, error_message="Too large"),
+        ]
+
+        async def mock_upload(*a, **kw):
+            return response
+
+        with tracer.start_as_current_span("app.async_etl"):
+            await _call_async(
+                tracer, "upload_documents", mock_upload, instance,
+                kwargs={"documents": docs},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 1
+
+        span = azure_spans[0]
+        assert span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT] == 3
+        assert span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT] == 2
+
+        attrs = dict(span.attributes)
+        meta_3 = json.loads(attrs[f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.3"])
+        assert meta_3["succeeded"] is False
+        assert meta_3["error_message"] == "Bad format"
+
+    @pytest.mark.asyncio
+    async def test_index_management_pipeline(self, exporter):
+        """Async: create_index -> upload -> count -> search -> delete_index."""
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        search_instance = _make_instance("pipeline-test")
+        index_instance = _make_index_instance()
+
+        mock_index = MagicMock()
+        mock_index.name = "pipeline-test"
+
+        async def create_idx(*a, **kw):
+            return mock_index
+
+        async def upload(*a, **kw):
+            return [_mock_indexing_result("p1")]
+
+        async def count(*a, **kw):
+            return 1
+
+        async def search(*a, **kw):
+            return iter([])
+
+        async def delete_idx(*a, **kw):
+            return None
+
+        with tracer.start_as_current_span("app.async_deployment"):
+            await _call_async(
+                tracer, "create_index", create_idx, index_instance,
+                kwargs={"index": mock_index},
+            )
+            await _call_async(
+                tracer, "upload_documents", upload, search_instance,
+                kwargs={"documents": [{"id": "p1"}]},
+            )
+            await _call_async(tracer, "get_document_count", count, search_instance)
+            await _call_async(
+                tracer, "search", search, search_instance,
+                kwargs={"search_text": "*"},
+            )
+            await _call_async(
+                tracer, "delete_index", delete_idx, index_instance,
+                kwargs={"index": "pipeline-test"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 5
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+
+        create_span = _find_span(azure_spans, "azure_search.create_index")
+        assert create_span.attributes[SpanAttributes.AZURE_SEARCH_INDEX_NAME] == "pipeline-test"
+
+    @pytest.mark.asyncio
+    async def test_content_privacy_across_pipeline(self, exporter, monkeypatch):
+        """Async: full pipeline with content disabled -- no PII leaks."""
+        from opentelemetry import trace
+        from opentelemetry.semconv_ai import EventAttributes
+        from opentelemetry.trace.status import StatusCode
+
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        content_prefixes = (
+            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+            EventAttributes.DB_SEARCH_RESULT_ENTITY.value,
+            EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value,
+            EventAttributes.DB_QUERY_RESULT_METADATA.value,
+            EventAttributes.DB_QUERY_RESULT_ID.value,
+        )
+
+        async def upload(*a, **kw):
+            return [_mock_indexing_result("priv-1")]
+
+        async def get_doc(*a, **kw):
+            return {"id": "priv-1", "secret": "classified"}
+
+        async def autocomplete(*a, **kw):
+            return [MagicMock(text="secret", query_plus_text="secret data")]
+
+        async def suggest(*a, **kw):
+            return [{"@search.text": "Secret", "id": "s1"}]
+
+        with tracer.start_as_current_span("app.async_privacy"):
+            await _call_async(
+                tracer, "upload_documents", upload, instance,
+                kwargs={"documents": [{"id": "priv-1", "secret": "classified"}]},
+            )
+            await _call_async(
+                tracer, "get_document", get_doc, instance,
+                kwargs={"key": "priv-1"},
+            )
+            await _call_async(
+                tracer, "autocomplete", autocomplete, instance,
+                kwargs={"search_text": "sec", "suggester_name": "sg"},
+            )
+            await _call_async(
+                tracer, "suggest", suggest, instance,
+                kwargs={"search_text": "sec", "suggester_name": "sg"},
+            )
+
+        spans = _get_spans(exporter)
+        azure_spans = [s for s in spans if s.name.startswith("azure_search.")]
+        assert len(azure_spans) == 4
+        _assert_all_same_trace(azure_spans)
+
+        for s in azure_spans:
+            assert s.status.status_code == StatusCode.OK
+            attrs = dict(s.attributes)
+            content_keys = [
+                k for k in attrs
+                if any(k.startswith(p) for p in content_prefixes)
+            ]
+            assert content_keys == [], f"Content leaked in '{s.name}': {content_keys}"
+
+        upload_span = _find_span(azure_spans, "azure_search.upload_documents")
+        assert upload_span.attributes[SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT] == 1
+
+    @pytest.mark.asyncio
+    async def test_error_then_retry_success(self, exporter):
+        """Async: first call fails, retry succeeds -- transient failure diagnosis."""
+        from opentelemetry import trace
+        from opentelemetry.trace.status import StatusCode
+
+        tracer = trace.get_tracer(__name__)
+        instance = _make_instance()
+
+        call_count = 0
+
+        async def flaky_search(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise ConnectionError("ServiceUnavailable: retry later")
+            return iter([{"id": "1"}])
+
+        with tracer.start_as_current_span("app.async_retry"):
+            try:
+                await _call_async(
+                    tracer, "search", flaky_search, instance,
+                    kwargs={"search_text": "hotel"},
+                )
+            except ConnectionError:
+                pass
+            await _call_async(
+                tracer, "search", flaky_search, instance,
+                kwargs={"search_text": "hotel"},
+            )
+
+        spans = _get_spans(exporter)
+        search_spans = [s for s in spans if s.name == "azure_search.search"]
+        assert len(search_spans) == 2
+        _assert_all_same_trace(search_spans)
+
+        assert search_spans[0].status.status_code == StatusCode.ERROR
+        assert "ServiceUnavailable" in search_spans[0].status.description
+        assert search_spans[1].status.status_code == StatusCode.OK
