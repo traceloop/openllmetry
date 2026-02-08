@@ -256,29 +256,29 @@ def _set_vector_search_attributes(span, args, kwargs):
 
 **File:** `packages/opentelemetry-instrumentation-azure-search/opentelemetry/instrumentation/azure_search/wrapper.py`
 
-In the `_wrap()` function, add routing logic:
+In the `_set_request_attributes()` dispatcher function, add routing logic:
 
 ```python
-@_with_tracer_wrapper
-def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
-    """Instruments and calls every function defined in WRAPPED_METHODS."""
-    # ... existing code ...
+@dont_throw
+def _set_request_attributes(span, method, instance, args, kwargs):
+    """Dispatch to the appropriate attribute setter based on method name."""
+    _set_index_name_attribute(span, instance, args, kwargs)
 
-    with tracer.start_as_current_span(name, kind=SpanKind.CLIENT, attributes={...}) as span:
-        _set_index_name_attribute(span, instance, args, kwargs)
-
-        # Add new routing
-        if method == "search":
-            _set_search_attributes(span, args, kwargs)
-        elif method == "vector_search":  # NEW
-            _set_vector_search_attributes(span, args, kwargs)  # NEW
-        elif method == "get_document":
-            _set_get_document_attributes(span, args, kwargs)
-        # ... rest of routing ...
+    if method == "search":
+        _set_search_attributes(span, args, kwargs)
+    elif method == "vector_search":  # NEW
+        _set_vector_search_attributes(span, args, kwargs)  # NEW
+    elif method == "get_document":
+        _set_get_document_attributes(span, args, kwargs)
+    # ... rest of routing ...
 ```
 
+Similarly, if the new method has response attributes, add routing in `_set_response_attributes()`.
+
 **Checklist:**
-- [ ] Add to appropriate location in if/elif chain
+- [ ] Add to appropriate location in the if/elif chain in `_set_request_attributes()`
+- [ ] If response attributes exist, also add to `_set_response_attributes()`
+- [ ] If content capture is needed, add to `_set_request_content_attributes()` and/or `_set_response_content_attributes()`
 - [ ] Use exact method name from Step 2
 - [ ] Call the extraction function created in Step 3
 
@@ -509,12 +509,12 @@ def _set_span_attribute(span, name, value):
 ```bash
 AZURE_SEARCH_ENDPOINT="https://your-service.search.windows.net" \
 AZURE_SEARCH_ADMIN_KEY="your-key" \
-poetry run pytest tests/test_azure_search_integration.py --record-mode=all
+uv run pytest tests/test_azure_search_integration.py --record-mode=all
 ```
 
 **Subsequent runs (playback mode):**
 ```bash
-poetry run pytest tests/test_azure_search_integration.py --record-mode=none
+uv run pytest tests/test_azure_search_integration.py --record-mode=none
 ```
 
 **Setup/Teardown Pattern:**
@@ -655,7 +655,7 @@ When adding support for a new SDK method:
 - [ ] **Step 7:** Update `MockSearchClient` with new method
 - [ ] **Step 8:** Record VCR cassettes with real Azure credentials
 - [ ] **Step 9:** Verify tests pass in playback mode
-- [ ] **Step 10:** Run linting: `poetry run flake8`
+- [ ] **Step 10:** Run linting: `uv run ruff check opentelemetry/instrumentation/azure_search/ tests/`
 
 ---
 
@@ -713,8 +713,8 @@ def _set_<operation>_attributes(span, args, kwargs):
 
 ## Document Metadata
 
-- **Created:** 2024-12-15
-- **Last Updated:** 2024-12-15
+- **Created:** 2025-12-15
+- **Last Updated:** 2026-02-08
 - **Maintainer:** OpenLLMetry Team
 - **Related Packages:**
   - `opentelemetry-instrumentation-azure-search`
