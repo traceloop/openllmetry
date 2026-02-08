@@ -575,8 +575,11 @@ def _set_document_batch_response_attributes(span, response):
 @dont_throw
 def _set_index_documents_response_attributes(span, response):
     """Set attributes from index_documents response."""
-    # index_documents returns an IndexDocumentsResult with a .results list
-    results = getattr(response, "results", None)
+    # SDK returns a plain list of IndexingResult, same as upload_documents
+    if isinstance(response, list):
+        results = response
+    else:
+        results = getattr(response, "results", None)
     if results and isinstance(results, list):
         succeeded = sum(
             1
@@ -821,7 +824,11 @@ def _set_document_batch_response_content_attributes(span, response):
 @dont_throw
 def _set_index_documents_response_content_attributes(span, response):
     """Set indexed response attributes for each result in index_documents response."""
-    results = getattr(response, "results", None)
+    # SDK returns a plain list of IndexingResult, same as upload_documents
+    if isinstance(response, list):
+        results = response
+    else:
+        results = getattr(response, "results", None)
     if not results or not isinstance(results, list):
         return
 
