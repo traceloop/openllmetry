@@ -801,6 +801,40 @@ class TestSynonymMapIntegration:
 class TestSearchIndexerClientIntegration:
     """Integration tests for SearchIndexerClient name-only listing methods."""
 
+    @pytest.fixture(scope="class")
+    def index_client_setup(self):
+        """Create a SearchIndexClient for setting up test index."""
+        return SearchIndexClient(
+            endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
+            credential=AzureKeyCredential(os.environ["AZURE_SEARCH_ADMIN_KEY"]),
+        )
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_test_index(self, index_client_setup):
+        """Ensure the target index exists before indexer tests, tear down after."""
+        is_playback_mode = os.environ.get("AZURE_SEARCH_ADMIN_KEY") == "test-api-key"
+
+        if not is_playback_mode:
+            fields = [
+                SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+                SearchableField(name="name", type=SearchFieldDataType.String),
+            ]
+            index = SearchIndex(name=INTEGRATION_TEST_INDEX, fields=fields)
+
+            try:
+                index_client_setup.delete_index(INTEGRATION_TEST_INDEX)
+            except Exception:
+                pass
+            index_client_setup.create_index(index)
+
+        yield
+
+        if not is_playback_mode:
+            try:
+                index_client_setup.delete_index(INTEGRATION_TEST_INDEX)
+            except Exception:
+                pass
+
     @pytest.fixture
     def indexer_client(self, exporter):
         """Create a SearchIndexerClient for testing."""
