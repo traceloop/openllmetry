@@ -459,6 +459,11 @@ def _set_data_source_attributes(span, method, args, kwargs):
             data_source_name = getattr(data_source, "name", None)
             # Get data source type (e.g., azureblob, azuresql, cosmosdb)
             data_source_type = getattr(data_source, "type", None)
+            if data_source_type is not None:
+                if hasattr(data_source_type, "value"):
+                    data_source_type = data_source_type.value
+                else:
+                    data_source_type = str(data_source_type)
 
     # For other operations: first arg is data_source_name string
     else:
@@ -507,7 +512,8 @@ def _set_synonym_map_attributes(span, method, args, kwargs):
                 if isinstance(synonyms, list):
                     synonyms_count = len(synonyms)
                 elif isinstance(synonyms, str):
-                    synonyms_count = len(synonyms.strip().split("\n"))
+                    stripped = synonyms.strip()
+                    synonyms_count = len(stripped.split("\n")) if stripped else 0
     elif method in ["delete_synonym_map", "get_synonym_map"]:
         synonym_map_name = kwargs.get("name") or kwargs.get("synonym_map_name") or (args[0] if args else None)
         if synonym_map_name and not isinstance(synonym_map_name, str):
