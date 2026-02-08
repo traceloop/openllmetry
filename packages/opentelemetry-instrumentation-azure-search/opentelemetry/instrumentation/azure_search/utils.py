@@ -8,7 +8,9 @@ from opentelemetry.instrumentation.azure_search.config import Config
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 TRACELOOP_TRACE_CONTENT_MAX_ITEMS = "TRACELOOP_TRACE_CONTENT_MAX_ITEMS"
+TRACELOOP_TRACE_CONTENT_MAX_LENGTH = "TRACELOOP_TRACE_CONTENT_MAX_LENGTH"
 _DEFAULT_MAX_CONTENT_ITEMS = 100
+_DEFAULT_MAX_CONTENT_LENGTH = 16384
 
 
 def _is_truthy(value):
@@ -38,6 +40,24 @@ def max_content_items() -> int:
         except (TypeError, ValueError):
             pass
     return _DEFAULT_MAX_CONTENT_ITEMS
+
+
+def max_content_length() -> int:
+    """Return the configured maximum length for serialized content attributes.
+
+    Reads from TRACELOOP_TRACE_CONTENT_MAX_LENGTH env var.
+    Falls back to _DEFAULT_MAX_CONTENT_LENGTH (16384) when unset or invalid.
+    Set to 0 to disable truncation.
+    """
+    raw = os.getenv(TRACELOOP_TRACE_CONTENT_MAX_LENGTH)
+    if raw is not None:
+        try:
+            val = int(raw)
+            if val >= 0:
+                return val
+        except (TypeError, ValueError):
+            pass
+    return _DEFAULT_MAX_CONTENT_LENGTH
 
 
 def dont_throw(func):

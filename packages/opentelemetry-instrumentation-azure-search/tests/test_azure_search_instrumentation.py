@@ -1,5 +1,6 @@
 """Tests for Azure AI Search instrumentation using mocks."""
 
+import json
 import pytest
 from unittest.mock import MagicMock, patch
 from opentelemetry.semconv_ai import SpanAttributes
@@ -761,7 +762,7 @@ class TestResponseAttributes:
         """Test document batch response with all docs succeeding."""
         from opentelemetry import trace
         from opentelemetry.instrumentation.azure_search.wrapper import (
-            _set_document_batch_response_attributes,
+            _set_document_batch_response_all,
         )
 
         tracer = trace.get_tracer(__name__)
@@ -773,7 +774,7 @@ class TestResponseAttributes:
                 MagicMock(succeeded=True),
                 MagicMock(succeeded=True),
             ]
-            _set_document_batch_response_attributes(span, results)
+            _set_document_batch_response_all(span, results, False, 0, 0)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -788,7 +789,7 @@ class TestResponseAttributes:
         """Test document batch response with some docs failing."""
         from opentelemetry import trace
         from opentelemetry.instrumentation.azure_search.wrapper import (
-            _set_document_batch_response_attributes,
+            _set_document_batch_response_all,
         )
 
         tracer = trace.get_tracer(__name__)
@@ -801,7 +802,7 @@ class TestResponseAttributes:
                 MagicMock(succeeded=True),
                 MagicMock(succeeded=False),
             ]
-            _set_document_batch_response_attributes(span, results)
+            _set_document_batch_response_all(span, results, False, 0, 0)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -816,7 +817,7 @@ class TestResponseAttributes:
         """Test index_documents response captures succeeded/failed."""
         from opentelemetry import trace
         from opentelemetry.instrumentation.azure_search.wrapper import (
-            _set_index_documents_response_attributes,
+            _set_index_documents_response_all,
         )
 
         tracer = trace.get_tracer(__name__)
@@ -829,7 +830,7 @@ class TestResponseAttributes:
                 MagicMock(succeeded=True),
                 MagicMock(succeeded=False),
             ]
-            _set_index_documents_response_attributes(span, mock_response)
+            _set_index_documents_response_all(span, mock_response, False, 0, 0)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -889,14 +890,14 @@ class TestResponseAttributes:
         """Test document batch response with empty list."""
         from opentelemetry import trace
         from opentelemetry.instrumentation.azure_search.wrapper import (
-            _set_document_batch_response_attributes,
+            _set_document_batch_response_all,
         )
 
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span(
             "azure_search.upload_documents"
         ) as span:
-            _set_document_batch_response_attributes(span, [])
+            _set_document_batch_response_all(span, [], False, 0, 0)
 
         spans = exporter.get_finished_spans()
         assert len(spans) == 1
@@ -2450,13 +2451,13 @@ class TestAttributeFunctionEdgeCases:
         assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_SUGGEST_RESULTS_COUNT) is None
 
     def test_index_documents_response_no_results_attr(self, exporter):
-        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_response_attributes
+        from opentelemetry.instrumentation.azure_search.wrapper import _set_index_documents_response_all
         from opentelemetry import trace
 
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("test") as span:
             resp = MagicMock(spec=[])
-            _set_index_documents_response_attributes(span, resp)
+            _set_index_documents_response_all(span, resp, False, 0, 0)
 
         spans = exporter.get_finished_spans()
         assert spans[0].attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT) is None
@@ -3465,6 +3466,67 @@ class TestShouldSendContent:
         for val in ["false", "0", "no", "off", "False", "NO", "OFF", "random"]:
             monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", val)
             assert should_send_content() is False, f"Expected False for {val!r}"
+
+
+class TestMaxContentLength:
+    """Tests for the max_content_length() function and content truncation."""
+
+    def test_default_returns_16384(self, exporter, monkeypatch):
+        """Default (no env var) should return 16384."""
+        monkeypatch.delenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", raising=False)
+        from opentelemetry.instrumentation.azure_search.utils import max_content_length
+        assert max_content_length() == 16384
+
+    def test_env_var_set_returns_value(self, exporter, monkeypatch):
+        """TRACELOOP_TRACE_CONTENT_MAX_LENGTH=1024 should return 1024."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", "1024")
+        from opentelemetry.instrumentation.azure_search.utils import max_content_length
+        assert max_content_length() == 1024
+
+    def test_env_var_zero_disables_truncation(self, exporter, monkeypatch):
+        """TRACELOOP_TRACE_CONTENT_MAX_LENGTH=0 should return 0 (no truncation)."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", "0")
+        from opentelemetry.instrumentation.azure_search.utils import max_content_length
+        assert max_content_length() == 0
+
+    def test_invalid_value_returns_default(self, exporter, monkeypatch):
+        """Invalid value should fall back to default."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", "not_a_number")
+        from opentelemetry.instrumentation.azure_search.utils import max_content_length
+        assert max_content_length() == 16384
+
+    def test_negative_value_returns_default(self, exporter, monkeypatch):
+        """Negative value should fall back to default."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", "-1")
+        from opentelemetry.instrumentation.azure_search.utils import max_content_length
+        assert max_content_length() == 16384
+
+    def test_truncation_applied_to_content(self, exporter, monkeypatch):
+        """When max length is 50, a 100-char JSON doc should be truncated."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT_MAX_LENGTH", "50")
+        monkeypatch.delenv("TRACELOOP_TRACE_CONTENT", raising=False)
+        from opentelemetry.instrumentation.azure_search.wrapper import _safe_json_dumps
+        large_obj = {"data": "x" * 100}
+        result = _safe_json_dumps(large_obj, max_length=50)
+        assert len(result) == 50 + len("...[truncated]")
+        assert result.endswith("...[truncated]")
+        assert result[:50] in json.dumps(large_obj)
+
+    def test_no_truncation_when_disabled(self, exporter, monkeypatch):
+        """When max length is 0, no truncation should occur."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _safe_json_dumps
+        large_obj = {"data": "x" * 100}
+        result = _safe_json_dumps(large_obj, max_length=0)
+        assert result == json.dumps(large_obj)
+        assert "...[truncated]" not in result
+
+    def test_no_truncation_when_under_limit(self, exporter, monkeypatch):
+        """When content is shorter than max_length, no truncation should occur."""
+        from opentelemetry.instrumentation.azure_search.wrapper import _safe_json_dumps
+        small_obj = {"id": "1"}
+        result = _safe_json_dumps(small_obj, max_length=1000)
+        assert result == json.dumps(small_obj)
+        assert "...[truncated]" not in result
 
 
 class TestContentCapture:

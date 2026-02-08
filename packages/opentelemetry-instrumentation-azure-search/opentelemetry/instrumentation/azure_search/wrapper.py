@@ -3,7 +3,12 @@ import json
 import logging
 
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.azure_search.utils import dont_throw, max_content_items, should_send_content
+from opentelemetry.instrumentation.azure_search.utils import (
+    dont_throw,
+    max_content_items,
+    max_content_length,
+    should_send_content,
+)
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -12,6 +17,60 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.semconv_ai import SpanAttributes, EventAttributes
 
 logger = logging.getLogger(__name__)
+
+# Module-level frozensets for O(1) method dispatch
+_DOCUMENT_BATCH_METHODS = frozenset({
+    "upload_documents",
+    "merge_documents",
+    "delete_documents",
+    "merge_or_upload_documents",
+})
+
+_SUGGESTION_METHODS = frozenset({"autocomplete", "suggest"})
+
+_INDEX_MANAGEMENT_METHODS = frozenset({
+    "create_index",
+    "create_or_update_index",
+    "delete_index",
+    "get_index",
+    "get_index_statistics",
+})
+
+_INDEXER_MANAGEMENT_METHODS = frozenset({
+    "create_indexer",
+    "create_or_update_indexer",
+    "delete_indexer",
+    "get_indexer",
+    "get_indexers",
+    "run_indexer",
+    "reset_indexer",
+    "get_indexer_status",
+})
+
+_DATA_SOURCE_METHODS = frozenset({
+    "create_data_source_connection",
+    "create_or_update_data_source_connection",
+    "delete_data_source_connection",
+    "get_data_source_connection",
+    "get_data_source_connections",
+})
+
+_SKILLSET_METHODS = frozenset({
+    "create_skillset",
+    "create_or_update_skillset",
+    "delete_skillset",
+    "get_skillset",
+    "get_skillsets",
+})
+
+_SYNONYM_MAP_METHODS = frozenset({
+    "create_synonym_map",
+    "create_or_update_synonym_map",
+    "delete_synonym_map",
+    "get_synonym_map",
+    "get_synonym_maps",
+    "get_synonym_map_names",
+})
 
 
 def _set_span_attribute(span, name, value):
@@ -42,62 +101,23 @@ def _set_request_attributes(span, method, instance, args, kwargs):
         _set_search_attributes(span, args, kwargs)
     elif method == "get_document":
         _set_get_document_attributes(span, args, kwargs)
-    elif method in [
-        "upload_documents",
-        "merge_documents",
-        "delete_documents",
-        "merge_or_upload_documents",
-    ]:
+    elif method in _DOCUMENT_BATCH_METHODS:
         _set_document_batch_attributes(span, args, kwargs)
     elif method == "index_documents":
         _set_index_documents_attributes(span, args, kwargs)
-    elif method in ["autocomplete", "suggest"]:
+    elif method in _SUGGESTION_METHODS:
         _set_suggestion_attributes(span, args, kwargs)
-    elif method in [
-        "create_index",
-        "create_or_update_index",
-        "delete_index",
-        "get_index",
-        "get_index_statistics",
-    ]:
+    elif method in _INDEX_MANAGEMENT_METHODS:
         _set_index_management_attributes(span, method, args, kwargs)
     elif method == "analyze_text":
         _set_analyze_text_attributes(span, args, kwargs)
-    elif method in [
-        "create_indexer",
-        "create_or_update_indexer",
-        "delete_indexer",
-        "get_indexer",
-        "get_indexers",
-        "run_indexer",
-        "reset_indexer",
-        "get_indexer_status",
-    ]:
+    elif method in _INDEXER_MANAGEMENT_METHODS:
         _set_indexer_management_attributes(span, method, args, kwargs)
-    elif method in [
-        "create_data_source_connection",
-        "create_or_update_data_source_connection",
-        "delete_data_source_connection",
-        "get_data_source_connection",
-        "get_data_source_connections",
-    ]:
+    elif method in _DATA_SOURCE_METHODS:
         _set_data_source_attributes(span, method, args, kwargs)
-    elif method in [
-        "create_skillset",
-        "create_or_update_skillset",
-        "delete_skillset",
-        "get_skillset",
-        "get_skillsets",
-    ]:
+    elif method in _SKILLSET_METHODS:
         _set_skillset_attributes(span, method, args, kwargs)
-    elif method in [
-        "create_synonym_map",
-        "create_or_update_synonym_map",
-        "delete_synonym_map",
-        "get_synonym_map",
-        "get_synonym_maps",
-        "get_synonym_map_names",
-    ]:
+    elif method in _SYNONYM_MAP_METHODS:
         _set_synonym_map_attributes(span, method, args, kwargs)
     # Name-only listing methods, flush, and get_service_statistics
     # need no special request attributes (just span creation)
@@ -113,15 +133,8 @@ def _set_response_attributes(span, method, response, args, kwargs):
         _set_search_response_attributes(span, response)
     elif method == "get_document_count":
         _set_document_count_response_attributes(span, response)
-    elif method in [
-        "upload_documents",
-        "merge_documents",
-        "delete_documents",
-        "merge_or_upload_documents",
-    ]:
-        _set_document_batch_response_attributes(span, response)
-    elif method == "index_documents":
-        _set_index_documents_response_attributes(span, response)
+    # document batch and index_documents are handled by single-pass functions
+    # called directly from _sync_wrap/_async_wrap
     elif method == "autocomplete":
         _set_autocomplete_response_attributes(span, response)
     elif method == "suggest":
@@ -158,7 +171,13 @@ def _sync_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         set_status_on_exception=False,
     ) as span:
         _set_request_attributes(span, method, instance, args, kwargs)
-        _set_request_content_attributes(span, method, instance, args, kwargs)
+
+        # Compute content toggle, max items, and max length once per span
+        content_enabled = should_send_content()
+        if content_enabled:
+            max_items = max_content_items()
+            max_length = max_content_length()
+            _set_request_content_attributes(span, method, instance, args, kwargs, max_items, max_length)
 
         try:
             response = wrapped(*args, **kwargs)
@@ -167,7 +186,23 @@ def _sync_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             raise
 
         _set_response_attributes(span, method, response, args, kwargs)
-        _set_response_content_attributes(span, method, response, args, kwargs)
+
+        # Single-pass for batch methods: counts + content in one loop
+        if method in _DOCUMENT_BATCH_METHODS:
+            _set_document_batch_response_all(
+                span, response, content_enabled,
+                max_items if content_enabled else 0,
+                max_length if content_enabled else 0,
+            )
+        elif method == "index_documents":
+            _set_index_documents_response_all(
+                span, response, content_enabled,
+                max_items if content_enabled else 0,
+                max_length if content_enabled else 0,
+            )
+        elif content_enabled:
+            _set_response_content_attributes(span, method, response, args, kwargs, max_items, max_length)
+
         span.set_status(Status(StatusCode.OK))
         return response
 
@@ -186,7 +221,13 @@ async def _async_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         set_status_on_exception=False,
     ) as span:
         _set_request_attributes(span, method, instance, args, kwargs)
-        _set_request_content_attributes(span, method, instance, args, kwargs)
+
+        # Compute content toggle, max items, and max length once per span
+        content_enabled = should_send_content()
+        if content_enabled:
+            max_items = max_content_items()
+            max_length = max_content_length()
+            _set_request_content_attributes(span, method, instance, args, kwargs, max_items, max_length)
 
         try:
             response = await wrapped(*args, **kwargs)
@@ -198,7 +239,23 @@ async def _async_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         # For search, get_count() is async on AsyncSearchItemPaged
         if method == "search":
             await _set_search_response_attributes_async(span, response)
-        _set_response_content_attributes(span, method, response, args, kwargs)
+
+        # Single-pass for batch methods: counts + content in one loop
+        if method in _DOCUMENT_BATCH_METHODS:
+            _set_document_batch_response_all(
+                span, response, content_enabled,
+                max_items if content_enabled else 0,
+                max_length if content_enabled else 0,
+            )
+        elif method == "index_documents":
+            _set_index_documents_response_all(
+                span, response, content_enabled,
+                max_items if content_enabled else 0,
+                max_length if content_enabled else 0,
+            )
+        elif content_enabled:
+            _set_response_content_attributes(span, method, response, args, kwargs, max_items, max_length)
+
         span.set_status(Status(StatusCode.OK))
         return response
 
@@ -590,54 +647,6 @@ def _set_document_count_response_attributes(span, response):
         )
 
 
-@dont_throw
-def _set_document_batch_response_attributes(span, response):
-    """Set attributes from document batch response (List[IndexingResult])."""
-    if isinstance(response, list) and len(response) > 0:
-        succeeded = sum(
-            1
-            for r in response
-            if getattr(r, "succeeded", False)
-        )
-        failed = len(response) - succeeded
-        _set_span_attribute(
-            span,
-            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT,
-            succeeded,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT,
-            failed,
-        )
-
-
-@dont_throw
-def _set_index_documents_response_attributes(span, response):
-    """Set attributes from index_documents response."""
-    # SDK returns a plain list of IndexingResult, same as upload_documents
-    if isinstance(response, list):
-        results = response
-    else:
-        results = getattr(response, "results", None)
-    if results and isinstance(results, list):
-        succeeded = sum(
-            1
-            for r in results
-            if getattr(r, "succeeded", False)
-        )
-        failed = len(results) - succeeded
-        _set_span_attribute(
-            span,
-            SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT,
-            succeeded,
-        )
-        _set_span_attribute(
-            span,
-            SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT,
-            failed,
-        )
-
 
 @dont_throw
 def _set_autocomplete_response_attributes(span, response):
@@ -692,68 +701,57 @@ def _set_service_statistics_response_attributes(span, response):
 
 
 
-def _safe_json_dumps(obj):
-    """Serialize obj to JSON string, falling back to str() for non-serializable objects."""
+def _safe_json_dumps(obj, max_length=0):
+    """Serialize obj to JSON string, falling back to str() for non-serializable objects.
+
+    When max_length > 0, truncates the result to that length and appends
+    '...[truncated]' suffix.
+    """
     try:
-        return json.dumps(obj)
+        result = json.dumps(obj)
     except (TypeError, ValueError):
-        return str(obj)
+        result = str(obj)
+    if max_length > 0 and len(result) > max_length:
+        return result[:max_length] + "...[truncated]"
+    return result
 
 
 @dont_throw
-def _set_request_content_attributes(span, method, instance, args, kwargs):
-    """Set content attributes for request-side data (gated by content toggle)."""
-    if not should_send_content():
-        return
-
+def _set_request_content_attributes(span, method, instance, args, kwargs, max_items, max_length):
+    """Set content attributes for request-side data."""
     if method == "search":
-        _set_search_vector_embeddings_attributes(span, kwargs)
-    elif method in [
-        "upload_documents",
-        "merge_documents",
-        "delete_documents",
-        "merge_or_upload_documents",
-    ]:
-        _set_document_batch_request_content_attributes(span, args, kwargs)
+        _set_search_vector_embeddings_attributes(span, kwargs, max_items)
+    elif method in _DOCUMENT_BATCH_METHODS:
+        _set_document_batch_request_content_attributes(span, args, kwargs, max_items, max_length)
     elif method == "index_documents":
-        _set_index_documents_request_content_attributes(span, args, kwargs)
+        _set_index_documents_request_content_attributes(span, args, kwargs, max_items, max_length)
 
 
 @dont_throw
-def _set_response_content_attributes(span, method, response, args, kwargs):
-    """Set content attributes for response-side data (gated by content toggle)."""
-    if not should_send_content():
-        return
+def _set_response_content_attributes(span, method, response, args, kwargs, max_items, max_length):
+    """Set content attributes for response-side data."""
     if response is None:
         return
 
     if method == "get_document":
-        _set_get_document_content_attribute(span, response)
+        _set_get_document_content_attribute(span, response, max_length)
     elif method == "autocomplete":
-        _set_autocomplete_content_attributes(span, response)
+        _set_autocomplete_content_attributes(span, response, max_items, max_length)
     elif method == "suggest":
-        _set_suggest_content_attributes(span, response)
-    elif method in [
-        "upload_documents",
-        "merge_documents",
-        "delete_documents",
-        "merge_or_upload_documents",
-    ]:
-        _set_document_batch_response_content_attributes(span, response)
-    elif method == "index_documents":
-        _set_index_documents_response_content_attributes(span, response)
+        _set_suggest_content_attributes(span, response, max_items, max_length)
+    # document batch and index_documents response content is handled by
+    # single-pass functions called directly from _sync_wrap/_async_wrap
 
 
 @dont_throw
-def _set_search_vector_embeddings_attributes(span, kwargs):
+def _set_search_vector_embeddings_attributes(span, kwargs, max_items):
     """Set indexed db.search.embeddings.N.vector attributes for vector queries."""
     vector_queries = kwargs.get("vector_queries")
     if not vector_queries:
         return
 
-    max_items_limit = max_content_items()
     for i, vq in enumerate(vector_queries):
-        if i >= max_items_limit:
+        if i >= max_items:
             break
         prefix = f"{EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value}.{i}"
         vector = getattr(vq, "vector", None)
@@ -765,25 +763,24 @@ def _set_search_vector_embeddings_attributes(span, kwargs):
 
 
 @dont_throw
-def _set_document_batch_request_content_attributes(span, args, kwargs):
+def _set_document_batch_request_content_attributes(span, args, kwargs, max_items, max_length):
     """Set indexed db.query.result.N.document attributes for each input document."""
     documents = kwargs.get("documents") or (args[0] if args else None)
     if not documents:
         return
 
-    max_items_limit = max_content_items()
     for i, doc in enumerate(documents):
-        if i >= max_items_limit:
+        if i >= max_items:
             break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
-            _safe_json_dumps(doc),
+            _safe_json_dumps(doc, max_length),
         )
 
 
 @dont_throw
-def _set_index_documents_request_content_attributes(span, args, kwargs):
+def _set_index_documents_request_content_attributes(span, args, kwargs, max_items, max_length):
     """Set indexed db.query.result.N.document attributes for each batch action."""
     batch = kwargs.get("batch") or (args[0] if args else None)
     if not batch:
@@ -793,40 +790,38 @@ def _set_index_documents_request_content_attributes(span, args, kwargs):
     if not actions:
         return
 
-    max_items_limit = max_content_items()
     for i, action in enumerate(actions):
-        if i >= max_items_limit:
+        if i >= max_items:
             break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.{i}",
-            _safe_json_dumps(action),
+            _safe_json_dumps(action, max_length),
         )
 
 
 @dont_throw
-def _set_get_document_content_attribute(span, response):
+def _set_get_document_content_attribute(span, response, max_length):
     """Set db.query.result.document attribute for get_document response."""
     _set_span_attribute(
         span,
         EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
-        _safe_json_dumps(response),
+        _safe_json_dumps(response, max_length),
     )
 
 
 @dont_throw
-def _set_autocomplete_content_attributes(span, response):
+def _set_autocomplete_content_attributes(span, response, max_items, max_length):
     """Set indexed db.search.result.N.entity attributes for autocomplete results."""
     if not isinstance(response, list):
         return
 
-    max_items_limit = max_content_items()
     for i, item in enumerate(response):
-        if i >= max_items_limit:
+        if i >= max_items:
             break
         text = _deep_get(item, "text")
         query_plus_text = _deep_get(item, "query_plus_text")
-        entity = _safe_json_dumps({"text": text, "query_plus_text": query_plus_text})
+        entity = _safe_json_dumps({"text": text, "query_plus_text": query_plus_text}, max_length)
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.{i}",
@@ -835,63 +830,67 @@ def _set_autocomplete_content_attributes(span, response):
 
 
 @dont_throw
-def _set_suggest_content_attributes(span, response):
+def _set_suggest_content_attributes(span, response, max_items, max_length):
     """Set indexed db.search.result.N.entity attributes for suggest results."""
     if not isinstance(response, list):
         return
 
-    max_items_limit = max_content_items()
     for i, item in enumerate(response):
-        if i >= max_items_limit:
+        if i >= max_items:
             break
         _set_span_attribute(
             span,
             f"{EventAttributes.DB_SEARCH_RESULT_ENTITY.value}.{i}",
-            _safe_json_dumps(item),
+            _safe_json_dumps(item, max_length),
         )
 
 
-def _set_indexing_results_content(span, results):
-    """Shared helper: set indexed content attributes for a list of IndexingResult."""
-    max_items_limit = max_content_items()
+def _set_indexing_response_single_pass(span, results, content_enabled, max_items, max_length):
+    """Single-pass helper: count succeeded/failed AND set content attributes.
+
+    Iterates the results list once instead of twice, setting both the
+    succeeded/failed count span attributes and per-item content attributes
+    (when content_enabled is True).
+    """
+    succeeded = 0
     for i, result in enumerate(results):
-        if i >= max_items_limit:
-            break
-        key = _deep_get(result, "key")
-        succeeded = _deep_get(result, "succeeded")
-        status_code = _deep_get(result, "status_code")
-        error_message = _deep_get(result, "error_message")
-        if key is not None:
+        if getattr(result, "succeeded", False):
+            succeeded += 1
+        if content_enabled and i < max_items:
+            key = _deep_get(result, "key")
+            if key is not None:
+                _set_span_attribute(
+                    span, f"{EventAttributes.DB_QUERY_RESULT_ID.value}.{i}", str(key)
+                )
             _set_span_attribute(
-                span, f"{EventAttributes.DB_QUERY_RESULT_ID.value}.{i}", str(key)
+                span,
+                f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}",
+                _safe_json_dumps({
+                    "succeeded": _deep_get(result, "succeeded"),
+                    "status_code": _deep_get(result, "status_code"),
+                    "error_message": _deep_get(result, "error_message"),
+                }, max_length),
             )
-        _set_span_attribute(
-            span,
-            f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.{i}",
-            _safe_json_dumps({
-                "succeeded": succeeded,
-                "status_code": status_code,
-                "error_message": error_message,
-            }),
-        )
+    failed = len(results) - succeeded
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT, succeeded)
+    _set_span_attribute(span, SpanAttributes.AZURE_SEARCH_DOCUMENT_FAILED_COUNT, failed)
 
 
 @dont_throw
-def _set_document_batch_response_content_attributes(span, response):
-    """Set indexed response attributes for each IndexingResult in batch response."""
-    if not isinstance(response, list):
+def _set_document_batch_response_all(span, response, content_enabled, max_items, max_length):
+    """Single-pass: set counts + content for document batch response."""
+    if not isinstance(response, list) or len(response) == 0:
         return
-    _set_indexing_results_content(span, response)
+    _set_indexing_response_single_pass(span, response, content_enabled, max_items, max_length)
 
 
 @dont_throw
-def _set_index_documents_response_content_attributes(span, response):
-    """Set indexed response attributes for each result in index_documents response."""
-    # SDK returns a plain list of IndexingResult, same as upload_documents
+def _set_index_documents_response_all(span, response, content_enabled, max_items, max_length):
+    """Single-pass: set counts + content for index_documents response."""
     if isinstance(response, list):
         results = response
     else:
         results = getattr(response, "results", None)
     if not results or not isinstance(results, list):
         return
-    _set_indexing_results_content(span, results)
+    _set_indexing_response_single_pass(span, results, content_enabled, max_items, max_length)
