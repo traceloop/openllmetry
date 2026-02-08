@@ -193,6 +193,9 @@ async def _async_wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             raise
 
         _set_response_attributes(span, method, response, args, kwargs)
+        # For search, get_count() is async on AsyncSearchItemPaged
+        if method == "search":
+            await _set_search_response_attributes_async(span, response)
         _set_response_content_attributes(span, method, response, args, kwargs)
         span.set_status(Status(StatusCode.OK))
         return response
@@ -534,17 +537,45 @@ def _set_synonym_map_attributes(span, method, args, kwargs):
 
 @dont_throw
 def _set_search_response_attributes(span, response):
-    """Set attributes from search response (SearchItemPaged)."""
+    """Set attributes from search response (SearchItemPaged) — sync only."""
     # get_count() returns total count when include_total_count=True
-    count = getattr(response, "get_count", None)
-    if callable(count):
-        total = count()
+    count_fn = getattr(response, "get_count", None)
+    if not callable(count_fn):
+        return
+
+    # For AsyncSearchItemPaged, get_count is a coroutine function — skip here,
+    # handled separately in _async_wrap via _set_search_response_attributes_async.
+    if asyncio.iscoroutinefunction(count_fn):
+        return
+
+    total = count_fn()
+    if total is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT,
+            total,
+        )
+
+
+async def _set_search_response_attributes_async(span, response):
+    """Set attributes from async search response (AsyncSearchItemPaged)."""
+    count_fn = getattr(response, "get_count", None)
+    if not callable(count_fn):
+        return
+
+    try:
+        if asyncio.iscoroutinefunction(count_fn):
+            total = await count_fn()
+        else:
+            total = count_fn()
         if total is not None:
             _set_span_attribute(
                 span,
                 SpanAttributes.AZURE_SEARCH_SEARCH_RESULTS_COUNT,
                 total,
             )
+    except Exception:
+        logger.debug("Failed to get async search result count")
 
 
 @dont_throw
