@@ -749,8 +749,9 @@ def _set_search_vector_embeddings_attributes(span, kwargs):
     if not vector_queries:
         return
 
+    max_items_limit = max_content_items()
     for i, vq in enumerate(vector_queries):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         prefix = f"{EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value}.{i}"
         vector = getattr(vq, "vector", None)
@@ -768,8 +769,9 @@ def _set_document_batch_request_content_attributes(span, args, kwargs):
     if not documents:
         return
 
+    max_items_limit = max_content_items()
     for i, doc in enumerate(documents):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         _set_span_attribute(
             span,
@@ -789,8 +791,9 @@ def _set_index_documents_request_content_attributes(span, args, kwargs):
     if not actions:
         return
 
+    max_items_limit = max_content_items()
     for i, action in enumerate(actions):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         _set_span_attribute(
             span,
@@ -815,8 +818,9 @@ def _set_autocomplete_content_attributes(span, response):
     if not isinstance(response, list):
         return
 
+    max_items_limit = max_content_items()
     for i, item in enumerate(response):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         text = _deep_get(item, "text")
         query_plus_text = _deep_get(item, "query_plus_text")
@@ -834,8 +838,9 @@ def _set_suggest_content_attributes(span, response):
     if not isinstance(response, list):
         return
 
+    max_items_limit = max_content_items()
     for i, item in enumerate(response):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         _set_span_attribute(
             span,
@@ -846,8 +851,9 @@ def _set_suggest_content_attributes(span, response):
 
 def _set_indexing_results_content(span, results):
     """Shared helper: set indexed content attributes for a list of IndexingResult."""
+    max_items_limit = max_content_items()
     for i, result in enumerate(results):
-        if i >= max_content_items():
+        if i >= max_items_limit:
             break
         key = _deep_get(result, "key")
         succeeded = _deep_get(result, "succeeded")
