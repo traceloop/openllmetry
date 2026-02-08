@@ -18,7 +18,7 @@ This document explains how span attributes are extracted from Azure AI Search SD
 
 ### File Structure
 
-```
+```text
 packages/opentelemetry-instrumentation-azure-search/
 ├── opentelemetry/instrumentation/azure_search/
 │   ├── __init__.py          # Method definitions and instrumentor
@@ -625,6 +625,7 @@ def _set_analyze_text_attributes(span, args, kwargs):
     # Extract from complex object
     analyze_request = kwargs.get("analyze_request") or (args[1] if len(args) > 1 else None)
 
+    analyzer_name = None
     if analyze_request:
         # Try to get from object property
         analyzer_name = getattr(analyze_request, "analyzer_name", None)

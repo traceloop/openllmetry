@@ -1,7 +1,7 @@
 # OpenTelemetry Azure AI Search Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-azure-search/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-azure-search.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-azure-search.svg" alt="PyPI version">
 </a>
 
 This library provides automatic instrumentation for the [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/) Python SDK (`azure-search-documents`).
