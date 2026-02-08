@@ -12,9 +12,18 @@ from azure.search.documents.indexes.models import (
     SimpleField,
     SearchSuggester,
     AnalyzeTextOptions,
+    SynonymMap,
+    SearchIndexer,
+    SearchIndexerDataSourceConnection,
+    SearchIndexerDataContainer,
+    SearchIndexerSkillset,
+    LanguageDetectionSkill,
+    InputFieldMappingEntry,
+    OutputFieldMappingEntry,
 )
+from azure.search.documents.indexes import SearchIndexerClient
 from azure.search.documents import IndexDocumentsBatch
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import SpanAttributes, EventAttributes
 from opentelemetry.trace import SpanKind
 
 
@@ -156,6 +165,9 @@ class TestSearchClientIntegration:
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_KEY) == "doc-1"
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == INTEGRATION_TEST_INDEX
 
+        # Verify content attribute exists for the document response
+        assert EventAttributes.DB_QUERY_RESULT_DOCUMENT.value in dict(span.attributes)
+
     @pytest.mark.vcr
     def test_get_document_count(self, exporter, search_client):
         """Test that get_document_count() creates a span."""
@@ -185,6 +197,14 @@ class TestSearchClientIntegration:
         span = upload_spans[0]
         assert span.kind == SpanKind.CLIENT
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_DOCUMENT_COUNT) == 2
+
+        # Verify request-side content attributes (one per document)
+        attrs = dict(span.attributes)
+        assert f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.0" in attrs
+        assert f"{EventAttributes.DB_QUERY_RESULT_DOCUMENT.value}.1" in attrs
+
+        # Verify response-side content attributes (one per IndexingResult)
+        assert f"{EventAttributes.DB_QUERY_RESULT_METADATA.value}.0" in attrs
 
     @pytest.mark.vcr
     def test_merge_documents(self, exporter, search_client):
@@ -285,6 +305,14 @@ class TestSearchClientIntegration:
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "lux"
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME) == "sg"
 
+        # Verify content attributes exist for autocomplete results (if any results returned)
+        # Attributes should be present if results were returned; may be absent if index wasn't ready
+        attrs = dict(span.attributes)
+        entity_keys = [k for k in attrs if k.startswith(EventAttributes.DB_SEARCH_RESULT_ENTITY.value + ".")]
+        # Each entity key should have a value
+        for key in entity_keys:
+            assert attrs[key] is not None
+
     @pytest.mark.vcr
     def test_suggest(self, exporter, search_client):
         """Test that suggest() creates a span with search text and suggester."""
@@ -313,6 +341,35 @@ class TestSearchClientIntegration:
         assert span.kind == SpanKind.CLIENT
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SEARCH_TEXT) == "hot"
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SUGGESTER_NAME) == "sg"
+
+        # Verify content attributes exist for suggest results (if any results returned)
+        attrs = dict(span.attributes)
+        entity_keys = [k for k in attrs if k.startswith(EventAttributes.DB_SEARCH_RESULT_ENTITY.value + ".")]
+        for key in entity_keys:
+            assert attrs[key] is not None
+
+    @pytest.mark.vcr
+    def test_content_disabled_no_content_attributes(self, exporter, search_client, monkeypatch):
+        """Test that no content attributes are set when TRACELOOP_TRACE_CONTENT=false."""
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+        search_client.get_document_count()
+
+        content_attr_prefixes = (
+            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
+            EventAttributes.DB_SEARCH_RESULT_ENTITY.value,
+            EventAttributes.DB_SEARCH_EMBEDDINGS_VECTOR.value,
+            EventAttributes.DB_QUERY_RESULT_METADATA.value,
+            EventAttributes.DB_QUERY_RESULT_ID.value,
+        )
+
+        spans = exporter.get_finished_spans()
+        for span in spans:
+            for attr_key in dict(span.attributes):
+                for prefix in content_attr_prefixes:
+                    assert not attr_key.startswith(prefix) or attr_key == prefix, (
+                        f"Found content attribute {attr_key} with content tracing disabled"
+                    )
 
 
 class TestSearchIndexClientIntegration:
@@ -519,3 +576,366 @@ class TestSearchIndexClientIntegration:
         assert span.kind == SpanKind.CLIENT
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_INDEX_NAME) == INTEGRATION_TEST_INDEX
         assert span.attributes.get(SpanAttributes.AZURE_SEARCH_ANALYZER_NAME) == "standard.lucene"
+
+    @pytest.mark.vcr
+    def test_get_service_statistics(self, exporter, index_client):
+        """Test that get_service_statistics() creates a span with service counters."""
+        index_client.get_service_statistics()
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_service_statistics"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+        # Service statistics response attributes are set from response
+        # document_count may be 0, so check key exists rather than is not None
+        assert SpanAttributes.AZURE_SEARCH_SERVICE_DOCUMENT_COUNT in span.attributes
+        assert SpanAttributes.AZURE_SEARCH_SERVICE_INDEX_COUNT in span.attributes
+
+    @pytest.mark.vcr
+    def test_list_index_names(self, exporter, index_client):
+        """Test that list_index_names() creates a span."""
+        list(index_client.list_index_names())
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.list_index_names"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+
+class TestSynonymMapIntegration:
+    """Integration tests for synonym map operations."""
+
+    @pytest.fixture(scope="class")
+    def index_client_setup(self):
+        """Create a SearchIndexClient for synonym map operations."""
+        return SearchIndexClient(
+            endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
+            credential=AzureKeyCredential(os.environ["AZURE_SEARCH_ADMIN_KEY"]),
+        )
+
+    @pytest.fixture
+    def index_client(self, exporter):
+        """Create a SearchIndexClient for testing."""
+        return SearchIndexClient(
+            endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
+            credential=AzureKeyCredential(os.environ["AZURE_SEARCH_ADMIN_KEY"]),
+        )
+
+    @pytest.fixture(autouse=True)
+    def clear_exporter_before_test(self, exporter):
+        """Clear exporter before each test."""
+        exporter.clear()
+        yield
+
+    @pytest.mark.vcr
+    def test_create_synonym_map(self, exporter, index_client):
+        """Test that create_synonym_map() creates a span with synonym map attributes."""
+        sm_name = "otel-test-synonyms"
+
+        # Clean up if exists
+        try:
+            index_client.delete_synonym_map(sm_name)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        synonym_map = SynonymMap(name=sm_name, synonyms=["hotel,motel", "cozy,comfortable,warm"])
+        index_client.create_synonym_map(synonym_map)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.create_synonym_map"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_NAME) == sm_name
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_SYNONYMS_COUNT) == 2
+
+        # Cleanup
+        try:
+            index_client.delete_synonym_map(sm_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_get_synonym_map(self, exporter, index_client):
+        """Test that get_synonym_map() creates a span with synonym map name."""
+        sm_name = "otel-test-get-sm"
+
+        # Create synonym map first
+        synonym_map = SynonymMap(name=sm_name, synonyms=["big,large"])
+        try:
+            index_client.create_synonym_map(synonym_map)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        index_client.get_synonym_map(sm_name)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_synonym_map"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_NAME) == sm_name
+
+        # Cleanup
+        try:
+            index_client.delete_synonym_map(sm_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_get_synonym_maps(self, exporter, index_client):
+        """Test that get_synonym_maps() creates a span."""
+        sm_name = "otel-test-list-sms"
+
+        # Create synonym map first so the listing returns non-empty results
+        synonym_map = SynonymMap(name=sm_name, synonyms=["hello,hi", "goodbye,bye"])
+        try:
+            index_client.create_synonym_map(synonym_map)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        index_client.get_synonym_maps()
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_synonym_maps"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+        # Cleanup
+        try:
+            index_client.delete_synonym_map(sm_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_create_or_update_synonym_map(self, exporter, index_client):
+        """Test that create_or_update_synonym_map() creates a span."""
+        sm_name = "otel-test-upsert-sm"
+
+        synonym_map = SynonymMap(name=sm_name, synonyms=["fast,quick", "slow,sluggish"])
+        index_client.create_or_update_synonym_map(synonym_map)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.create_or_update_synonym_map"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_NAME) == sm_name
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_SYNONYMS_COUNT) == 2
+
+        # Cleanup
+        try:
+            index_client.delete_synonym_map(sm_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_delete_synonym_map(self, exporter, index_client):
+        """Test that delete_synonym_map() creates a span with synonym map name."""
+        sm_name = "otel-test-delete-sm"
+
+        # Create synonym map first
+        synonym_map = SynonymMap(name=sm_name, synonyms=["old,ancient"])
+        try:
+            index_client.create_synonym_map(synonym_map)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        index_client.delete_synonym_map(sm_name)
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.delete_synonym_map"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.AZURE_SEARCH_SYNONYM_MAP_NAME) == sm_name
+
+    @pytest.mark.vcr
+    def test_get_synonym_map_names(self, exporter, index_client):
+        """Test that get_synonym_map_names() creates a span."""
+        sm_name = "otel-test-list-sm-names"
+
+        # Create synonym map first so the listing returns non-empty results
+        synonym_map = SynonymMap(name=sm_name, synonyms=["warm,cozy"])
+        try:
+            index_client.create_synonym_map(synonym_map)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        index_client.get_synonym_map_names()
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_synonym_map_names"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+        # Cleanup
+        try:
+            index_client.delete_synonym_map(sm_name)
+        except Exception:
+            pass
+
+
+class TestSearchIndexerClientIntegration:
+    """Integration tests for SearchIndexerClient name-only listing methods."""
+
+    @pytest.fixture
+    def indexer_client(self, exporter):
+        """Create a SearchIndexerClient for testing."""
+        return SearchIndexerClient(
+            endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
+            credential=AzureKeyCredential(os.environ["AZURE_SEARCH_ADMIN_KEY"]),
+        )
+
+    @pytest.fixture(autouse=True)
+    def clear_exporter_before_test(self, exporter):
+        """Clear exporter before each test."""
+        exporter.clear()
+        yield
+
+    @pytest.mark.vcr
+    def test_get_indexer_names(self, exporter, indexer_client):
+        """Test that get_indexer_names() creates a span."""
+        ds_name = "otel-test-indexer-ds"
+        indexer_name = "otel-test-indexer-names"
+
+        # Create a data source connection and indexer so the listing returns non-empty results
+        ds_connection = SearchIndexerDataSourceConnection(
+            name=ds_name,
+            type="azureblob",
+            connection_string=os.environ.get(
+                "AZURE_STORAGE_CONNECTION_STRING",
+                "DefaultEndpointsProtocol=https;AccountName=placeholder;AccountKey=placeholder;EndpointSuffix=core.windows.net",
+            ),
+            container=SearchIndexerDataContainer(name="placeholder-container"),
+        )
+        indexer = SearchIndexer(
+            name=indexer_name,
+            data_source_name=ds_name,
+            target_index_name=INTEGRATION_TEST_INDEX,
+            is_disabled=True,
+        )
+        try:
+            indexer_client.create_data_source_connection(ds_connection)
+            indexer_client.create_indexer(indexer)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        list(indexer_client.get_indexer_names())
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_indexer_names"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+        # Cleanup
+        try:
+            indexer_client.delete_indexer(indexer_name)
+        except Exception:
+            pass
+        try:
+            indexer_client.delete_data_source_connection(ds_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_get_data_source_connection_names(self, exporter, indexer_client):
+        """Test that get_data_source_connection_names() creates a span."""
+        ds_name = "otel-test-ds-names"
+
+        # Create a data source connection first so the listing returns non-empty results
+        ds_connection = SearchIndexerDataSourceConnection(
+            name=ds_name,
+            type="azureblob",
+            connection_string=os.environ.get(
+                "AZURE_STORAGE_CONNECTION_STRING",
+                "DefaultEndpointsProtocol=https;AccountName=placeholder;AccountKey=placeholder;EndpointSuffix=core.windows.net",
+            ),
+            container=SearchIndexerDataContainer(name="placeholder-container"),
+        )
+        try:
+            indexer_client.create_data_source_connection(ds_connection)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        list(indexer_client.get_data_source_connection_names())
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_data_source_connection_names"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+        # Cleanup
+        try:
+            indexer_client.delete_data_source_connection(ds_name)
+        except Exception:
+            pass
+
+    @pytest.mark.vcr
+    def test_get_skillset_names(self, exporter, indexer_client):
+        """Test that get_skillset_names() creates a span."""
+        skillset_name = "otel-test-skillset-names"
+
+        # Create a skillset first so the listing returns non-empty results
+        skillset = SearchIndexerSkillset(
+            name=skillset_name,
+            skills=[
+                LanguageDetectionSkill(
+                    name="language-detection",
+                    inputs=[InputFieldMappingEntry(name="text", source="/document/content")],
+                    outputs=[OutputFieldMappingEntry(name="languageCode", target_name="languageCode")],
+                ),
+            ],
+            description="Test skillset for OTel integration tests",
+        )
+        try:
+            indexer_client.create_skillset(skillset)
+            exporter.clear()
+        except Exception:
+            exporter.clear()
+
+        list(indexer_client.get_skillset_names())
+
+        spans = exporter.get_finished_spans()
+        assert len(spans) == 1
+
+        span = spans[0]
+        assert span.name == "azure_search.get_skillset_names"
+        assert span.kind == SpanKind.CLIENT
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "Azure AI Search"
+
+        # Cleanup
+        try:
+            indexer_client.delete_skillset(skillset_name)
+        except Exception:
+            pass

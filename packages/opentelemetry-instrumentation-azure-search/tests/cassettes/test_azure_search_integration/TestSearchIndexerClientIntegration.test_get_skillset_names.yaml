@@ -1,0 +1,120 @@
+interactions:
+- request:
+    body: '{"name": "otel-test-skillset-names", "description": "Test skillset for
+      OTel integration tests", "skills": [{"@odata.type": "#Microsoft.Skills.Text.LanguageDetectionSkill",
+      "name": "language-detection", "inputs": [{"name": "text", "source": "/document/content"}],
+      "outputs": [{"name": "languageCode", "targetName": "languageCode"}]}]}'
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '333'
+      Content-Type:
+      - application/json
+    method: POST
+    uri: https://traceloop-otel-os.search.windows.net/skillsets?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#skillsets/$entity","@odata.etag":"\"0x8DE66A7256235A6\"","name":"otel-test-skillset-names","description":"Test
+        skillset for OTel integration tests","skills":[{"@odata.type":"#Microsoft.Skills.Text.LanguageDetectionSkill","name":"language-detection","description":null,"context":null,"defaultCountryHint":null,"modelVersion":null,"inputs":[{"name":"text","source":"/document/content","sourceContext":null,"inputs":[]}],"outputs":[{"name":"languageCode","targetName":"languageCode"}]}],"cognitiveServices":null,"knowledgeStore":null,"indexProjections":null,"encryptionKey":null}'
+    headers:
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Sun, 08 Feb 2026 00:15:20 GMT
+      ETag:
+      - '"0x8DE66A7256235A6"'
+      Location:
+      - https://traceloop-otel-os.search.windows.net:443/skillsets('otel-test-skillset-names')?api-version=2025-09-01
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      elapsed-time:
+      - '54'
+      request-id:
+      - 40fce558-0483-11f1-9cf9-333e1cb7199c
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://traceloop-otel-os.search.windows.net/skillsets?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#skillsets","value":[{"@odata.etag":"\"0x8DE66A7256235A6\"","name":"otel-test-skillset-names","description":"Test
+        skillset for OTel integration tests","skills":[{"@odata.type":"#Microsoft.Skills.Text.LanguageDetectionSkill","name":"language-detection","description":null,"context":"/document","defaultCountryHint":null,"modelVersion":null,"inputs":[{"name":"text","source":"/document/content","sourceContext":null,"inputs":[]}],"outputs":[{"name":"languageCode","targetName":"languageCode"}]}],"cognitiveServices":null,"knowledgeStore":null,"indexProjections":null,"encryptionKey":null}]}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Sun, 08 Feb 2026 00:15:20 GMT
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '26'
+      request-id:
+      - 41254d22-0483-11f1-9cf9-333e1cb7199c
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+    method: DELETE
+    uri: https://traceloop-otel-os.search.windows.net/skillsets('otel-test-skillset-names')?api-version=2025-09-01
+  response:
+    body:
+      string: ''
+    headers:
+      Date:
+      - Sun, 08 Feb 2026 00:15:20 GMT
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      elapsed-time:
+      - '36'
+      request-id:
+      - 4146215a-0483-11f1-9cf9-333e1cb7199c
+    status:
+      code: 204
+      message: No Content
+version: 1
