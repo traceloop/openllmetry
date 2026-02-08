@@ -18,7 +18,7 @@ This document explains how span attributes are extracted from Azure AI Search SD
 
 ### File Structure
 
-```text
+```bash
 packages/opentelemetry-instrumentation-azure-search/
 ├── opentelemetry/instrumentation/azure_search/
 │   ├── __init__.py          # Method definitions and instrumentor
@@ -125,16 +125,12 @@ Handle different parameter types gracefully:
 
 ```python
 documents = kwargs.get("documents") or (args[0] if args else None)
-if documents:
-    if hasattr(documents, "__len__"):
-        count = len(documents)
-    else:
-        # Handle generators or iterables
-        try:
-            docs_list = list(documents)
-            count = len(docs_list)
-        except (TypeError, ValueError):
-            pass  # Can't determine count
+# Only count when the object supports len() — never consume
+# generators/iterators, as that would exhaust them before
+# the actual SDK call.
+if documents and hasattr(documents, "__len__"):
+    count = len(documents)
+    _set_span_attribute(span, ATTR_DOCUMENT_COUNT, count)
 ```
 
 #### 5. **Error Resilience**
@@ -431,17 +427,14 @@ _set_span_attribute(span, ATTR_NAME, param)  # None values set
 Use duck typing to handle different types:
 
 ```python
-# ✅ Good - flexible type handling
+# ✅ Good - safe type handling that doesn't consume iterators
 if hasattr(documents, "__len__"):
     count = len(documents)
 else:
-    try:
-        count = len(list(documents))
-    except (TypeError, ValueError):
-        count = None
+    count = None  # Skip counting for generators/iterators
 
-# ❌ Bad - assumes specific type
-count = len(documents)  # Fails for generators
+# ❌ Bad - consumes generators/iterators, exhausting them before the SDK call
+count = len(list(documents))  # Breaks the actual API call
 ```
 
 ### 4. **Error Resilience**
