@@ -2608,8 +2608,8 @@ class TestUtilsAndLifecycle:
         instrumentor.instrument()
 
 
-class TestRemainingCoverageGaps:
-    """Tests targeting specific uncovered branches to reach 100% coverage."""
+class TestAttributeExtractionEdgeCases:
+    """Tests for defensive edge cases in attribute extraction (missing args, bad types, etc.)."""
 
     # --- wrapper.py: _set_document_batch_attributes lines 310-311 ---
     # Documents that are not len-able and list() raises TypeError
