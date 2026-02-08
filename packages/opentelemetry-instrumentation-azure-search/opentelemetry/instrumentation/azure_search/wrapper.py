@@ -33,6 +33,7 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
+@dont_throw
 def _set_request_attributes(span, method, instance, args, kwargs):
     """Set all pre-call span attributes based on the method being called."""
     _set_index_name_attribute(span, instance, args, kwargs)
@@ -102,6 +103,7 @@ def _set_request_attributes(span, method, instance, args, kwargs):
     # need no special request attributes (just span creation)
 
 
+@dont_throw
 def _set_response_attributes(span, method, response, args, kwargs):
     """Set all post-call span attributes from the response."""
     if response is None:
