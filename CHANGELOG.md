@@ -1,3 +1,10 @@
+## v0.52.2 (2026-02-08)
+
+### Fix
+
+- **traceloop-sdk**: Add conversation decorator (#3659)
+- **traceloop-sdk**: Add endpoint_is_traceloop attribute (#3650)
+
 ## v0.52.1 (2026-02-02)
 
 ### Fix
