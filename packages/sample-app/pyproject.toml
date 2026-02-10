@@ -49,6 +49,7 @@ dependencies = [
   "fastmcp>=2.12.3,<3",
   "agno>=2.4.0,<3",
   "voyageai>=0.3.7",
+  "azure-search-documents>=11.4.0,<12",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-haystack",
   "opentelemetry-instrumentation-pinecone",
@@ -60,6 +61,7 @@ dependencies = [
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
   "opentelemetry-instrumentation-voyageai",
+  "opentelemetry-instrumentation-azure-search",
   "traceloop-sdk",
 ]
 
@@ -78,6 +80,7 @@ opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentatio
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
 opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
+opentelemetry-instrumentation-azure-search = { path = "../opentelemetry-instrumentation-azure-search", editable = true }
 traceloop-sdk = { path = "../traceloop-sdk", editable = true }
 
 [dependency-groups]

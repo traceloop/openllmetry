@@ -1,0 +1,45 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=none
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - azsdk-python-search-documents/11.6.0 Python/3.12.8 (macOS-26.1-arm64-arm-64bit)
+      x-ms-client-request-id:
+      - content-disabled-test-001
+    method: GET
+    uri: https://traceloop-otel-os.search.windows.net/indexes('otel-integration-test')/docs('1')?api-version=2025-09-01
+  response:
+    body:
+      string: '{"id":"1","name":"Test Hotel","description":"A test hotel","rating":4.5}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=none; odata.streaming=true; charset=utf-8
+      Date:
+      - Mon, 15 Dec 2025 23:35:00 GMT
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '12'
+      request-id:
+      - content-disabled-test-001
+    status:
+      code: 200
+      message: OK
+version: 1

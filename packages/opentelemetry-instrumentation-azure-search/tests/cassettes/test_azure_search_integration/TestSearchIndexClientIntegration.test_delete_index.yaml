@@ -1,0 +1,86 @@
+interactions:
+- request:
+    body: '{"name": "test-delete-index", "fields": [{"name": "id", "type": "Edm.String",
+      "key": true, "retrievable": true, "searchable": false, "filterable": false,
+      "sortable": false, "facetable": false}]}'
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '194'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - azsdk-python-search-documents/11.6.0 Python/3.12.8 (macOS-26.1-arm64-arm-64bit)
+      x-ms-client-request-id:
+      - b36781ba-da0e-11f0-aeda-e28538e5e7a1
+    method: POST
+    uri: https://traceloop-otel-os.search.windows.net/indexes?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#indexes/$entity","@odata.etag":"\"0x8DE3C32985B4794\"","name":"test-delete-index","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":false,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null}'
+    headers:
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Mon, 15 Dec 2025 23:35:13 GMT
+      ETag:
+      - '"0x8DE3C32985B4794"'
+      Location:
+      - https://traceloop-otel-os.search.windows.net:443/indexes('test-delete-index')?api-version=2025-09-01
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      elapsed-time:
+      - '923'
+      request-id:
+      - b36781ba-da0e-11f0-aeda-e28538e5e7a1
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - azsdk-python-search-documents/11.6.0 Python/3.12.8 (macOS-26.1-arm64-arm-64bit)
+      x-ms-client-request-id:
+      - b4150fec-da0e-11f0-aeda-e28538e5e7a1
+    method: DELETE
+    uri: https://traceloop-otel-os.search.windows.net/indexes('test-delete-index')?api-version=2025-09-01
+  response:
+    body:
+      string: ''
+    headers:
+      Date:
+      - Mon, 15 Dec 2025 23:35:13 GMT
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      elapsed-time:
+      - '373'
+      request-id:
+      - b4150fec-da0e-11f0-aeda-e28538e5e7a1
+    status:
+      code: 204
+      message: No Content
+version: 1
