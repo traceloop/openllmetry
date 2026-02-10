@@ -1,3 +1,9 @@
+## v0.52.3 (2026-02-10)
+
+### Fix
+
+- **openai-agents**: add clear flag to support two instrumentation modes (#3489)
+
 ## v0.52.2 (2026-02-08)
 
 ### Fix

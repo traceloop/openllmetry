@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.52.2"
+version = "0.52.3"
 description = "OpenTelemetry Vertex AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
