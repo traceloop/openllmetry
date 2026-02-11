@@ -868,10 +868,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(
             span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.VECTOR_DB_RETRIEVE.value
         )
+        # Set provider name based on LangGraph flow context
+        langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
+        provider_name = "LangGraph" if langgraph_flow else "langchain"
+        _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TASK.value)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, name)
-        _set_span_attribute(span, SpanAttributes.TRACELOOP_WORKFLOW_NAME, workflow_name)
-        _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_PATH, entity_path)
 
         # Set task input (query and parameters)
         if should_send_prompts():
