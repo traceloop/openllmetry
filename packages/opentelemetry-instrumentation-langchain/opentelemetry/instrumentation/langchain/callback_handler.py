@@ -61,11 +61,18 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    GenAIOperationName,
     LLMRequestTypeValues,
     SpanAttributes,
     TraceloopSpanKindValues,
 )
 from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
+from opentelemetry.instrumentation.langchain.patch import (
+    LANGGRAPH_FLOW_KEY,
+    LANGGRAPH_GRAPH_SPAN_KEY,
+    LANGGRAPH_FIRST_CHILD_PENDING_KEY,
+    LANGGRAPH_CURRENT_NODE_KEY,
+)
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -159,7 +166,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
     @staticmethod
     def _get_name_from_callback(
-        serialized: dict[str, Any],
+        serialized: Optional[dict[str, Any]],
         _tags: Optional[list[str]] = None,
         _metadata: Optional[dict[str, Any]] = None,
         **kwargs: Any,
@@ -169,9 +176,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return serialized["kwargs"]["name"]
         if kwargs.get("name"):
             return kwargs["name"]
-        if serialized.get("name"):
+        if serialized and serialized.get("name"):
             return serialized["name"]
-        if "id" in serialized:
+        if serialized and "id" in serialized:
             return serialized["id"][-1]
 
         return "unknown"
@@ -279,7 +286,24 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 kind=kind,
             )
         else:
-            span = self.tracer.start_span(span_name, kind=kind)
+            # Check if we're in a LangGraph flow and this is the first child
+            graph_span = context_api.get_value(LANGGRAPH_GRAPH_SPAN_KEY)
+            first_child_pending = context_api.get_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY)
+
+            if graph_span is not None and first_child_pending and first_child_pending[0]:
+                # This is the first child of the graph span - parent it explicitly
+                span = self.tracer.start_span(
+                    span_name,
+                    context=set_span_in_context(graph_span),
+                    kind=kind,
+                )
+                # Flip the flag so subsequent spans use normal parenting.
+                # Note: This mutable list pattern is intentional. LangGraph callbacks
+                # are single-threaded per graph invocation, so this is safe.
+                # The mutable list is used because OTel context values are immutable.
+                first_child_pending[0] = False
+            else:
+                span = self.tracer.start_span(span_name, kind=kind)
 
         token = self._safe_attach_context(span)
 
@@ -314,8 +338,25 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_name: str = "",
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
+        serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
-        span_name = f"{name}.{kind.value}"
+        # Determine span type
+        is_agent = kind in (
+            TraceloopSpanKindValues.WORKFLOW,
+            TraceloopSpanKindValues.AGENT,
+        )
+        is_tool = kind == TraceloopSpanKindValues.TOOL
+
+        if is_agent:
+            # Keep existing workflow span naming
+            span_name = f"{name}.{kind.value}"
+        elif is_tool:
+            # Use OpenTelemetry GenAI spec naming for tools
+            span_name = f"execute_tool {name}"
+        else:
+            # Use OpenTelemetry GenAI spec naming for tasks
+            span_name = f"execute_task {name}"
+
         span = self._create_span(
             run_id,
             parent_run_id,
@@ -326,8 +367,52 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
+        # Set traceloop attributes for backwards compatibility
         _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, kind.value)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+
+        # Set GenAI semantic convention attributes
+        # Check LangGraph flow context to set appropriate provider
+        langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
+        provider_name = "LangGraph" if langgraph_flow else "langchain"
+        _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
+
+        if is_agent:
+            # Set agent-specific attributes
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIOperationName.INVOKE_AGENT.value,
+            )
+            _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_NAME, name)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_ID, str(run_id))
+        elif is_tool:
+            # Set tool-specific attributes
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIOperationName.EXECUTE_TOOL.value,
+            )
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_NAME, name)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_TYPE, "function")
+
+            # Extract tool description if available
+            description = (serialized or {}).get("description", "")
+            if description:
+                _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_DESCRIPTION, description)
+        else:
+            # Set task-specific attributes
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIOperationName.EXECUTE_TASK.value,
+            )
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_NAME, name)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_ID, str(run_id))
+            if parent_run_id:
+                _set_span_attribute(
+                    span, SpanAttributes.GEN_AI_TASK_PARENT_ID, str(parent_run_id)
+                )
 
         return span
 
@@ -359,6 +444,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+        _set_span_attribute(
+            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.LLM_REQUEST.value
+        )
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
@@ -418,21 +506,42 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path,
             metadata,
         )
-        if not should_emit_events() and should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                json.dumps(
-                    {
-                        "inputs": inputs,
-                        "tags": tags,
-                        "metadata": metadata,
-                        "kwargs": kwargs,
-                    },
-                    cls=CallbackFilteredJSONEncoder,
-                ),
-            )
 
-        # The start_time is now automatically set when creating the SpanHolder
+        # Extract conversation ID from config (LangGraph thread_id)
+        config = kwargs.get("config") or (metadata.get("config", {}) if metadata else {})
+        if config:
+            configurable = config.get("configurable", {}) if isinstance(config, dict) else {}
+            thread_id = configurable.get("thread_id")
+            if thread_id:
+                _set_span_attribute(
+                    span, SpanAttributes.GEN_AI_CONVERSATION_ID, str(thread_id)
+                )
+
+        # Set current node in context for Command source tracking.
+        # Note: We intentionally don't store/detach this token because in async
+        # scenarios, detaching tokens created in a different context causes errors.
+        # The context is automatically cleaned up when the graph execution completes.
+        if metadata and metadata.get("langgraph_node") == name:
+            try:
+                context_api.attach(
+                    context_api.set_value(LANGGRAPH_CURRENT_NODE_KEY, name)
+                )
+            except Exception:
+                pass
+
+        if not should_emit_events() and should_send_prompts():
+            input_json = json.dumps(
+                {
+                    "inputs": inputs,
+                    "tags": tags,
+                    "metadata": metadata,
+                    "kwargs": kwargs,
+                },
+                cls=CallbackFilteredJSONEncoder,
+            )
+            # Set both for backwards compatibility
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
+            span.set_attribute(SpanAttributes.GEN_AI_TASK_INPUT, input_json)
 
     @dont_throw
     def on_chain_end(
@@ -449,14 +558,18 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         span_holder = self.spans[run_id]
         span = span_holder.span
+
+        # Set task status to success
+        _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "success")
+
         if not should_emit_events() and should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps(
-                    {"outputs": outputs, "kwargs": kwargs},
-                    cls=CallbackFilteredJSONEncoder,
-                ),
+            output_json = json.dumps(
+                {"outputs": outputs, "kwargs": kwargs},
+                cls=CallbackFilteredJSONEncoder,
             )
+            # Set both for backwards compatibility
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
+            span.set_attribute(SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
 
         self._end_span(span, run_id)
         if parent_run_id is None:
@@ -673,21 +786,23 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             workflow_name,
             name,
             entity_path,
+            metadata=metadata,
+            serialized=serialized,
         )
         if not should_emit_events() and should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT,
-                json.dumps(
-                    {
-                        "input_str": input_str,
-                        "tags": tags,
-                        "metadata": metadata,
-                        "inputs": inputs,
-                        "kwargs": kwargs,
-                    },
-                    cls=CallbackFilteredJSONEncoder,
-                ),
+            input_json = json.dumps(
+                {
+                    "input_str": input_str,
+                    "tags": tags,
+                    "metadata": metadata,
+                    "inputs": inputs,
+                    "kwargs": kwargs,
+                },
+                cls=CallbackFilteredJSONEncoder,
             )
+            # Set both for backwards compatibility
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
+            span.set_attribute(SpanAttributes.GEN_AI_TOOL_CALL_ARGUMENTS, input_json)
 
     @dont_throw
     def on_tool_end(
@@ -703,14 +818,116 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
+
+        # Set task status to success
+        _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "success")
+
         if not should_emit_events() and should_send_prompts():
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                json.dumps(
-                    {"output": output, "kwargs": kwargs},
-                    cls=CallbackFilteredJSONEncoder,
-                ),
+            output_json = json.dumps(
+                {"output": output, "kwargs": kwargs},
+                cls=CallbackFilteredJSONEncoder,
             )
+            # Set both for backwards compatibility
+            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
+            span.set_attribute(SpanAttributes.GEN_AI_TOOL_CALL_RESULT, output_json)
+        self._end_span(span, run_id)
+
+    @dont_throw
+    def on_retriever_start(
+        self,
+        serialized: dict[str, Any],
+        query: str,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        tags: Optional[list[str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when retriever starts running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
+        name = self._get_name_from_callback(serialized, **kwargs)
+        workflow_name = self.get_workflow_name(parent_run_id)
+        entity_path = self.get_entity_path(parent_run_id)
+
+        # Create span with vector_db_retrieve naming convention
+        span_name = f"vector_db_retrieve {name}"
+        span = self._create_span(
+            run_id,
+            parent_run_id,
+            span_name,
+            SpanKind.CLIENT,
+            workflow_name=workflow_name,
+            entity_name=name,
+            entity_path=entity_path,
+            metadata=metadata,
+        )
+
+        # Set GenAI semantic convention attributes
+        _set_span_attribute(
+            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.VECTOR_DB_RETRIEVE.value
+        )
+        # Set provider name based on LangGraph flow context
+        langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
+        provider_name = "LangGraph" if langgraph_flow else "langchain"
+        _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TASK.value)
+        _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, name)
+
+        # Set task input (query and parameters)
+        if not should_emit_events() and should_send_prompts():
+            input_json = json.dumps(
+                {
+                    "query": query,
+                    "tags": tags,
+                    "metadata": metadata,
+                    "kwargs": kwargs,
+                },
+                cls=CallbackFilteredJSONEncoder,
+            )
+            _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_INPUT, input_json)
+
+    @dont_throw
+    def on_retriever_end(
+        self,
+        documents: list,
+        *,
+        run_id: UUID,
+        parent_run_id: Optional[UUID] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Run when retriever ends running."""
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return
+
+        span = self._get_span(run_id)
+
+        # Set task status to success
+        _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "success")
+
+        # Set task output (documents)
+        if not should_emit_events() and should_send_prompts():
+            # Extract document content for output
+            docs_output = []
+            for doc in documents:
+                if hasattr(doc, 'page_content'):
+                    docs_output.append({
+                        "page_content": doc.page_content,
+                        "metadata": getattr(doc, 'metadata', {})
+                    })
+                else:
+                    docs_output.append(str(doc))
+
+            output_json = json.dumps(
+                {"documents": docs_output, "count": len(documents)},
+                cls=CallbackFilteredJSONEncoder,
+            )
+            _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
+
         self._end_span(span, run_id)
 
     def get_parent_span(self, parent_run_id: Optional[str] = None):
@@ -753,6 +970,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
+        # Set task status to failure
+        _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "failure")
         span.set_status(Status(StatusCode.ERROR), str(error))
         span.record_exception(error)
         self._end_span(span, run_id)
