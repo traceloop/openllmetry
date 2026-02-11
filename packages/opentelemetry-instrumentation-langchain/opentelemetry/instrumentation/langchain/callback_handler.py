@@ -801,6 +801,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             workflow_name,
             name,
             entity_path,
+            metadata=metadata,
             serialized=serialized,
         )
         if not should_emit_events() and should_send_prompts():
@@ -893,7 +894,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 
         # Set task input (query and parameters)
-        if should_send_prompts():
+        if not should_emit_events() and should_send_prompts():
             input_json = json.dumps(
                 {
                     "query": query,
@@ -925,7 +926,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "success")
 
         # Set task output (documents)
-        if should_send_prompts():
+        if not should_emit_events() and should_send_prompts():
             # Extract document content for output
             docs_output = []
             for doc in documents:
