@@ -25,6 +25,8 @@ LANGGRAPH_FLOW_KEY = "langgraph_flow"
 LANGGRAPH_GRAPH_SPAN_KEY = "langgraph_graph_span"
 # Context key for tracking if first child of graph span is pending (mutable list [bool])
 LANGGRAPH_FIRST_CHILD_PENDING_KEY = "langgraph_first_child_pending"
+# Context key for tracking current node (for Command source tracking)
+LANGGRAPH_CURRENT_NODE_KEY = "langgraph_current_node"
 
 
 def _set_graph_span_attributes(
@@ -92,8 +94,8 @@ def _get_graph_name(instance, args, kwargs) -> str:
     if config is None:
         config = kwargs.get('config')
 
-    # Try run_name from config first
-    if config:
+    # Try run_name from config first (config could be RunnableConfig object, not dict)
+    if config and isinstance(config, dict):
         run_name = config.get('run_name')
         if run_name:
             return run_name
@@ -200,7 +202,7 @@ def create_command_init_wrapper(tracer: Tracer):
         if instance.goto:
             # Get source node from context
             current_context = context_api.get_current()
-            source_node = context_api.get_value("langgraph_current_node", current_context)
+            source_node = context_api.get_value(LANGGRAPH_CURRENT_NODE_KEY, current_context)
 
             # Extract goto destination(s)
             goto_destinations = _extract_goto_destinations(instance.goto)
