@@ -71,6 +71,7 @@ from opentelemetry.instrumentation.langchain.patch import (
     LANGGRAPH_FLOW_KEY,
     LANGGRAPH_GRAPH_SPAN_KEY,
     LANGGRAPH_FIRST_CHILD_PENDING_KEY,
+    LANGGRAPH_CURRENT_NODE_KEY,
 )
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
@@ -296,7 +297,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     context=set_span_in_context(graph_span),
                     kind=kind,
                 )
-                # Flip the flag so subsequent spans use normal parenting
+                # Flip the flag so subsequent spans use normal parenting.
+                # Note: This mutable list pattern is intentional. LangGraph callbacks
+                # are single-threaded per graph invocation, so this is safe.
+                # The mutable list is used because OTel context values are immutable.
                 first_child_pending[0] = False
             else:
                 span = self.tracer.start_span(span_name, kind=kind)
@@ -513,11 +517,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     span, SpanAttributes.GEN_AI_CONVERSATION_ID, str(thread_id)
                 )
 
-        # Set current node in context for Command source tracking
+        # Set current node in context for Command source tracking.
+        # Note: We intentionally don't store/detach this token because in async
+        # scenarios, detaching tokens created in a different context causes errors.
+        # The context is automatically cleaned up when the graph execution completes.
         if metadata and metadata.get("langgraph_node") == name:
             try:
                 context_api.attach(
-                    context_api.set_value("langgraph_current_node", name)
+                    context_api.set_value(LANGGRAPH_CURRENT_NODE_KEY, name)
                 )
             except Exception:
                 pass
@@ -876,10 +883,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_INPUT, input_json)
 
-        self.spans[run_id] = SpanHolder(
-            span=span, workflow_name=workflow_name, entity_name=name, entity_path=entity_path
-        )
-
     @dont_throw
     def on_retriever_end(
         self,
@@ -918,20 +921,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
 
-        self._end_span(span, run_id)
-
-    @dont_throw
-    def on_retriever_error(
-        self,
-        error: BaseException,
-        *,
-        run_id: UUID,
-        parent_run_id: Optional[UUID] = None,
-        **kwargs: Any,
-    ) -> None:
-        """Run when retriever errors."""
-        self._handle_error(error, run_id, parent_run_id, **kwargs)
-        span = self._get_span(run_id)
         self._end_span(span, run_id)
 
     def get_parent_span(self, parent_run_id: Optional[str] = None):

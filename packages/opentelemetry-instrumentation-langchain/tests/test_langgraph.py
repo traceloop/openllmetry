@@ -768,8 +768,14 @@ async def test_async_middleware_hook(instrument_legacy, span_exporter):
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_KIND] == "AsyncTestMiddleware"
 
 
-def test_middleware_failure_status(instrument_legacy, span_exporter):
-    """Test middleware hook failure sets gen_ai.task.status to failure."""
+def test_middleware_super_call_succeeds_despite_outer_failure(instrument_legacy, span_exporter):
+    """Test that wrapper records super() call as success even when outer method raises.
+
+    The instrumentation wraps AgentMiddleware.before_model (the base class method).
+    When a subclass calls super().before_model(), that wrapped call succeeds.
+    Even if the subclass's own before_model() then raises an exception, the span
+    for the super() call correctly records status="success".
+    """
 
     class FailingMiddleware(AgentMiddleware):
         def before_model(self, state, runtime):

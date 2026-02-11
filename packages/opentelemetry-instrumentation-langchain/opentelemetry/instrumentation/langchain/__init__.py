@@ -217,10 +217,12 @@ class LangchainInstrumentor(BaseInstrumentor):
             except Exception as e:
                 logger.debug("Failed to wrap Command.__init__: %s", e)
 
-        # Wrap AgentMiddleware hooks if available
+        # Wrap AgentMiddleware hooks if langchain is available
         if is_package_available("langchain"):
             self._wrap_middleware_hooks(tracer)
-            self._wrap_agent_factories(tracer)
+
+        # Wrap agent factories (method checks langgraph/langchain availability internally)
+        self._wrap_agent_factories(tracer)
 
     def _wrap_agent_factories(self, tracer):
         """Wrap agent factory functions for instrumentation."""
