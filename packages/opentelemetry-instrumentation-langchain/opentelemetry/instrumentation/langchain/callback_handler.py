@@ -858,6 +858,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             parent_run_id,
             span_name,
             SpanKind.CLIENT,
+            workflow_name=workflow_name,
+            entity_name=name,
+            entity_path=entity_path,
+            metadata=metadata,
         )
 
         # Set GenAI semantic convention attributes

@@ -5,7 +5,7 @@ import json
 import logging
 from opentelemetry import context as context_api
 from opentelemetry import trace
-from opentelemetry.trace import Tracer, Span, SpanKind
+from opentelemetry.trace import Tracer, Span, SpanKind, Status, StatusCode
 from opentelemetry.semconv_ai import GenAIOperationName, SpanAttributes
 from typing import Any
 
@@ -143,6 +143,10 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         try:
             for item in wrapped(*args, **kwargs):
                 yield item
+        except BaseException as e:
+            graph_span.set_status(Status(StatusCode.ERROR, str(e)))
+            graph_span.record_exception(e)
+            raise
         finally:
             graph_span.end()
             context_api.detach(graph_span_ctx)
@@ -172,6 +176,10 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         try:
             async for item in wrapped(*args, **kwargs):
                 yield item
+        except BaseException as e:
+            graph_span.set_status(Status(StatusCode.ERROR, str(e)))
+            graph_span.record_exception(e)
+            raise
         finally:
             graph_span.end()
             context_api.detach(graph_span_ctx)
@@ -233,7 +241,7 @@ def create_command_init_wrapper(tracer: Tracer):
                         )
                     else:
                         span.set_attribute(
-                            SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODES, str(goto_destinations)
+                            SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODES, json.dumps(goto_destinations)
                         )
 
         return result
