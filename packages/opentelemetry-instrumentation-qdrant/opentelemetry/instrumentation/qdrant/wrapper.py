@@ -61,12 +61,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             "search",
             "search_groups",
             "query",
+            "query_points",
             "discover",
             "recommend",
             "recommend_groups",
         ]:
             _set_search_attributes(span, args, kwargs)
-        elif method in ["search_batch", "recommend_batch", "discover_batch"]:
+        elif method in ["search_batch", "query_batch_points", "recommend_batch", "discover_batch"]:
             _set_batch_search_attributes(span, args, kwargs, method)
 
         response = wrapped(*args, **kwargs)
@@ -77,9 +78,15 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _set_collection_name_attribute(span, method, args, kwargs):
+    attribute_method = method
+    if method == "query_points":
+        attribute_method = "search"
+    elif method == "query_batch_points":
+        attribute_method = "search_batch"
+
     _set_span_attribute(
         span,
-        f"qdrant.{method}.collection_name",
+        f"qdrant.{attribute_method}.collection_name",
         kwargs.get("collection_name") or args[0],
     )
 
@@ -111,4 +118,6 @@ def _set_search_attributes(span, args, kwargs):
 @dont_throw
 def _set_batch_search_attributes(span, args, kwargs, method):
     requests = kwargs.get("requests") or []
-    _set_span_attribute(span, f"qdrant.{method}.requests_count", len(requests))
+    # Map query_batch_points to search_batch for backward compatibility
+    attribute_method = "search_batch" if method == "query_batch_points" else method
+    _set_span_attribute(span, f"qdrant.{attribute_method}.requests_count", len(requests))
