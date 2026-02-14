@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.52.1"
+version = "0.52.3"
 description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },

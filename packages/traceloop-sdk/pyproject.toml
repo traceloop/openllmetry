@@ -1,6 +1,6 @@
 [project]
 name = "traceloop-sdk"
-version = "0.52.1"
+version = "0.52.3"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },

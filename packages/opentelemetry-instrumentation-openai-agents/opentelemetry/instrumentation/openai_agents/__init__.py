@@ -15,10 +15,35 @@ _instruments = ("openai-agents >= 0.2.0",)
 class OpenAIAgentsInstrumentor(BaseInstrumentor):
     """An instrumentor for OpenAI Agents SDK."""
 
+    def __init__(self, *, replace_existing_processors: bool = False) -> None:
+        """Initialize the instrumentor.
+
+        Args:
+            replace_existing_processors:
+                If enabled, any existing trace processors
+                will be cleared before this processor is added as the only one.
+                By default, the openai-agents library has
+                a built-in tracing processor that is always active,
+                and this processor will be added alongside it,
+                resulting in traces being sent to multiple backends.
+        """
+        super().__init__()
+        self._replace_existing_processors: bool = replace_existing_processors
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
 
-    def _instrument(self, **kwargs):
+    def _instrument(self, **kwargs) -> None:
+        """Override the abstract base method and instrument openai-agents.
+
+        Args:
+            tracer_provider: An optional TracerProvider to use
+                when creating a Tracer.
+            meter_provider: An optional MeterProvider to use
+                when creating a Meter.
+
+            Additional kwargs are ignored.
+        """
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -30,12 +55,15 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
 
         # Use hook-based approach with OpenAI Agents SDK callbacks
         try:
-            from agents import add_trace_processor
+            from agents import add_trace_processor, set_trace_processors
             from ._hooks import OpenTelemetryTracingProcessor
 
             # Create and add our OpenTelemetry processor
             otel_processor = OpenTelemetryTracingProcessor(tracer)
-            add_trace_processor(otel_processor)
+            if self._replace_existing_processors:
+                set_trace_processors([otel_processor])
+            else:
+                add_trace_processor(otel_processor)
 
         except Exception:
             # Silently handle import errors - OpenAI Agents SDK may not be available

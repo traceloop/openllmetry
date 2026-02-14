@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.52.1"
+version = "0.52.3"
 description = "OpenTelemetry IBM Watsonx Instrumentation"
 authors = [
   { name = "Guangya Liu", email = "gyliu@ibm.com" },
