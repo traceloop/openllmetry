@@ -7,6 +7,38 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.instrumentation.bedrock import PromptCaching
+
+
+def get_metric(resource_metrics, name):
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == name:
+                    return metric
+    raise Exception(f"No metric found with name {name}")
+
+
+def assert_metric(reader, usage, is_read=False):
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    m = get_metric(resource_metrics, PromptCaching.LLM_BEDROCK_PROMPT_CACHING)
+    found_read = False
+    found_write = False
+    for data_point in m.data.data_points:
+        if data_point.attributes[CacheSpanAttrs.TYPE] == "read":
+            found_read = True
+            assert data_point.value == usage["cache_read_input_tokens"]
+        elif data_point.attributes[CacheSpanAttrs.TYPE] == "write":
+            found_write = True
+            assert data_point.value == usage["cache_creation_input_tokens"]
+    
+    if is_read:
+        assert found_read
+    else:
+        assert found_write
 
 
 @pytest.mark.vcr
@@ -1072,3 +1104,65 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.vcr
+def test_anthropic_converse_with_caching(instrument_legacy, brt, span_exporter, reader):
+    response_write = brt.converse(
+        modelId="anthropic.claude-3-haiku-20240307-v1:0",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"text": "Hello, this is a test prompt for caching."},
+                    {"cachePoint": {"type": "default"}},
+                ],
+            }
+        ],
+        inferenceConfig={"maxTokens": 50},
+    )
+
+    usage_write = response_write["usage"]
+    assert usage_write["cache_read_input_tokens"] == 0
+    assert usage_write["cache_creation_input_tokens"] > 0
+
+    response_read = brt.converse(
+        modelId="anthropic.claude-3-haiku-20240307-v1:0",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"text": "Hello, this is a test prompt for caching."},
+                    {"cachePoint": {"type": "default"}},
+                ],
+            }
+        ],
+        inferenceConfig={"maxTokens": 50},
+    )
+    usage_read = response_read["usage"]
+    assert usage_read["cache_read_input_tokens"] > 0
+    assert usage_read["cache_creation_input_tokens"] == 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 2
+
+    span_write = spans[0]
+    assert span_write.name == "bedrock.converse"
+    attributes_write = span_write.attributes
+    assert attributes_write[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
+    assert attributes_write[CacheSpanAttrs.CACHED] == "write"
+    assert attributes_write["gen_ai.usage.cache_creation_input_tokens"] == usage_write["cache_creation_input_tokens"]
+
+    span_read = spans[1]
+    assert span_read.name == "bedrock.converse"
+    attributes_read = span_read.attributes
+    assert attributes_read[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-3-haiku-20240307-v1:0"
+    assert attributes_read[CacheSpanAttrs.CACHED] == "read"
+    assert attributes_read["gen_ai.usage.cache_read_input_tokens"] == usage_read["cache_read_input_tokens"]
+
+    cumulative_usage = {
+        "cache_creation_input_tokens": usage_write["cache_creation_input_tokens"],
+        "cache_read_input_tokens": usage_read["cache_read_input_tokens"],
+    }
+    assert_metric(reader, cumulative_usage, is_read=False)
+    assert_metric(reader, cumulative_usage, is_read=True)
