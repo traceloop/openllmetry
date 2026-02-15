@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import functools
 import json
 import logging
 import os
@@ -59,12 +60,14 @@ def dont_throw(func):
     """
     logger = logging.getLogger(func.__module__)
 
+    @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
             _handle_exception(e, func, logger)
 
+    @functools.wraps(func)
     def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
