@@ -21,6 +21,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         ] = lambda *args: "",
         enable_trace_context_propagation: bool = True,
         use_legacy_attributes: bool = True,
+        use_messages_attributes: bool = False,
     ):
         super().__init__()
         Config.enrich_assistant = enrich_assistant
@@ -29,6 +30,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         Config.upload_base64_image = upload_base64_image
         Config.enable_trace_context_propagation = enable_trace_context_propagation
         Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_messages_attributes = use_messages_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

@@ -440,6 +440,58 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
 
 @dont_throw
 async def _set_prompts(span, messages):
+    if Config.use_messages_attributes:
+        _set_input_messages(span, messages)
+    else:
+        await _legacy_set_prompts(span, messages)
+
+def _set_input_messages(span, messages):
+    if not span.is_recording() or messages is None:
+        return
+
+    attr_messages = []
+    for msg in messages:
+        role = msg.get("role")
+        if role == "tool":
+            id = msg.get("tool_call_id")
+            content = msg.get("content")
+            attr_messages.append({
+                "role": role,
+                "parts": [{"type": "tool_call_response", "id": id, "response": content}],
+            })
+        elif role == "user":
+            content = msg.get("content")
+            content = [{"text": content, "type": "text"}] if isinstance(content, str) else content
+            # TODO: convert image_url parts to uri parts, process image parts and add the new uri parts
+            attr_messages.append({
+                "role": role,
+                "parts": content,
+            })
+        elif role in ["system", "developer"]:
+            content = msg.get("content")
+            content = [{"text": content, "type": "text"}] if isinstance(content, str) else content
+            attr_messages.append({
+                "role": "system",
+                "parts": content,
+            })
+        elif role == "assistant":
+            content = msg.get("content")
+            parts = [{"text": content, "type": "text"}] if isinstance(content, str) else content
+            tool_calls = _parse_tool_calls(msg.get("tool_calls")) or []
+            for tool_call in tool_calls:
+                parts.append({
+                    "type": "tool_call_request",
+                    "name": tool_call.function.get("function_name"),
+                    "id": tool_call.id,
+                    "arguments": tool_call.function.get("arguments"),
+                })
+            attr_messages.append({
+                "role": "assistant",
+                "parts": parts,
+            })
+    _set_span_attribute(span, "gen_ai.input.messages", json.dumps(attr_messages))
+
+async def _legacy_set_prompts(span, messages):
     if not span.is_recording() or messages is None:
         return
 
@@ -492,7 +544,36 @@ async def _set_prompts(span, messages):
 
 
 def _set_completions(span, choices):
-    if choices is None:
+    if Config.use_messages_attributes:
+        _set_output_messages(span, choices)
+    else:
+        _legacy_set_completions(span, choices)
+
+def _set_output_messages(span, choices):
+    if not span.is_recording() or choices is None:
+        return
+
+    messages = []
+    for choice in choices:
+        message = choice.get("message")
+        content = message.get("content")
+        parts = [{"text": content, "type": "text"}] if isinstance(content, str) else content
+        tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
+        for tool_call in tool_calls:
+            parts.append({
+                "type": "tool_call_response",
+                "id": tool_call.id,
+                "response": tool_call.function.get("arguments"),
+            })
+        messages.append({
+            "role": "assistant",
+            "parts": parts,
+            "finish_reason": message.get("finish_reason") or "stop",
+        })
+    _set_span_attribute(span, "gen_ai.output.messages", json.dumps(messages))
+
+def _legacy_set_completions(span, choices):
+    if not span.is_recording() or choices is None:
         return
 
     for choice in choices:

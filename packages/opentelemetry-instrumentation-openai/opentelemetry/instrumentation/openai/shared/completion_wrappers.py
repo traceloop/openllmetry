@@ -1,3 +1,4 @@
+import json
 import logging
 
 from opentelemetry import context as context_api
@@ -158,6 +159,25 @@ def _handle_response(response, span, instance=None):
 
 
 def _set_prompts(span, prompt):
+    if Config.use_messages_attributes:
+        _set_input_messages(span, prompt)
+    else:
+        _legacy_set_prompts(span, prompt)
+
+def _set_input_messages(span, prompt):
+    if not span.is_recording() or not prompt:
+        return
+
+    prompt = prompt[0] if isinstance(prompt, list) else prompt
+
+    _set_span_attribute(
+        span,
+        "gen_ai.input.messages",
+        # f"{SpanAttributes.GEN_AI_INPUT_MESSAGES}",
+        json.dumps([{"role": "user", "parts": [{"text": prompt, "type": "text"}]}]),
+    )
+
+def _legacy_set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
@@ -170,6 +190,32 @@ def _set_prompts(span, prompt):
 
 @dont_throw
 def _set_completions(span, choices):
+    if Config.use_messages_attributes:
+        _set_output_messages(span, choices)
+    else:
+        _legacy_set_completions(span, choices)
+
+
+def _set_output_messages(span, choices):
+    if not span.is_recording() or not choices:
+        return
+
+    messages = []
+    for choice in choices:
+        messages.append({
+            "role": "assistant",
+            "parts": [{"text": choice.get("text"), "type": "text"}],
+            "finish_reason": choice.get("finish_reason") or "stop",
+        })
+    _set_span_attribute(
+        span,
+        "gen_ai.output.messages",
+        # f"{SpanAttributes.GEN_AI_OUTPUT_MESSAGES}",
+        json.dumps(messages),
+    )
+
+
+def _legacy_set_completions(span, choices):
     if not span.is_recording() or not choices:
         return
 
