@@ -12,4 +12,7 @@ class Config:
     )
     enable_trace_context_propagation: bool = True
     use_legacy_attributes = True
+    # Whether to report inputs and outputs as `gen_ai.input.messages`
+    # and `gen_ai.output.messages` attributes.
+    use_messages_attributes = False
     event_logger: Optional[Logger] = None
