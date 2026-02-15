@@ -475,3 +475,175 @@ class TestSpanHierarchy:
         audio_span = next(s for s in spans if s.name == "openai.realtime")
 
         assert audio_span.parent.span_id == agent_span.context.span_id
+
+
+class TestDontThrowWraps:
+    """Tests that dont_throw preserves function metadata via functools.wraps."""
+
+    def test_sync_function_preserves_name(self):
+        """Test that dont_throw preserves __name__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        def my_sync_function():
+            pass
+
+        assert my_sync_function.__name__ == "my_sync_function"
+
+    def test_async_function_preserves_name(self):
+        """Test that dont_throw preserves __name__ for async functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        async def my_async_function():
+            pass
+
+        assert my_async_function.__name__ == "my_async_function"
+
+    def test_sync_function_preserves_wrapped(self):
+        """Test that dont_throw sets __wrapped__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        def original():
+            pass
+
+        wrapped = dont_throw(original)
+        assert hasattr(wrapped, "__wrapped__")
+        assert wrapped.__wrapped__ is original
+
+    def test_async_function_preserves_wrapped(self):
+        """Test that dont_throw sets __wrapped__ for async functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        async def original():
+            pass
+
+        wrapped = dont_throw(original)
+        assert hasattr(wrapped, "__wrapped__")
+        assert wrapped.__wrapped__ is original
+
+    def test_sync_function_preserves_docstring(self):
+        """Test that dont_throw preserves __doc__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        def my_func():
+            """My docstring."""
+            pass
+
+        assert my_func.__doc__ == "My docstring."
+
+
+class TestTracedPutEventHandlers:
+    """Tests for event handling in traced_put_event via RealtimeTracingState."""
+
+    def test_history_updated_captures_assistant_completion(self, tracer, tracer_provider):
+        """Test that history_updated events capture assistant completions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Hello")
+
+        # Simulate what history_updated handler does: scan history for assistant content
+        # Using Pydantic-like mock objects matching SDK's RealtimeItem structure
+        class MockContent:
+            def __init__(self, text=None, transcript=None):
+                self.text = text
+                self.transcript = transcript
+
+        class MockItem:
+            def __init__(self, role, content):
+                self.role = role
+                self.content = content
+
+        history = [
+            MockItem("user", [MockContent(text="Hello")]),
+            MockItem("assistant", [MockContent(transcript="Hi there!")]),
+        ]
+
+        # Replicate the history_updated handler logic
+        for item in reversed(history):
+            role = getattr(item, "role", None)
+            if role == "assistant":
+                item_content = getattr(item, "content", None)
+                if item_content and isinstance(item_content, list):
+                    for part in item_content:
+                        text = getattr(part, "text", None) or getattr(
+                            part, "transcript", None
+                        )
+                        if text:
+                            state.record_completion(role, text)
+                            break
+                break
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+
+    def test_response_done_dict_captures_usage_and_completion(self, tracer, tracer_provider):
+        """Test that response.done with dict data captures usage and completions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "What is the weather?")
+
+        # Simulate dict-based response.done data (as sent by OpenAI raw API)
+        response_done_data = {
+            "type": "response.done",
+            "response": {
+                "usage": {
+                    "input_tokens": 42,
+                    "output_tokens": 18,
+                    "total_tokens": 60,
+                },
+                "output": [
+                    {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "text", "text": "It is sunny today."}
+                        ],
+                    }
+                ],
+            },
+        }
+
+        # Extract usage from dict
+        response = response_done_data.get("response", {})
+        usage = response.get("usage") if isinstance(response, dict) else None
+        if usage:
+            state.record_usage(usage)
+
+        # Extract completion from dict
+        output = response.get("output") if isinstance(response, dict) else None
+        if output and isinstance(output, list):
+            for item in output:
+                if isinstance(item, dict):
+                    if item.get("type") == "message" and item.get("role") == "assistant":
+                        item_content = item.get("content")
+                        if item_content and isinstance(item_content, list):
+                            for part in item_content:
+                                text = part.get("text") if isinstance(part, dict) else None
+                                if text:
+                                    state.record_completion("assistant", text)
+                                    break
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+
+        llm_span = llm_spans[0]
+        assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 42
+        assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 18
+        assert llm_span.attributes.get("gen_ai.completion.0.content") == "It is sunny today."
