@@ -4,6 +4,7 @@ The openai-agents SDK's realtime functionality doesn't use its native tracing sy
 so we need to patch the RealtimeSession class directly to add OpenTelemetry tracing.
 """
 
+import logging
 import time
 from typing import Dict, Any, Optional, List, Tuple
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
@@ -19,6 +20,8 @@ from .utils import (
     GEN_AI_HANDOFF_FROM_AGENT,
     GEN_AI_HANDOFF_TO_AGENT,
 )
+
+logger = logging.getLogger(__name__)
 
 _original_methods: Dict[str, Any] = {}
 _tracing_states: Dict[int, "RealtimeTracingState"] = {}
@@ -372,7 +375,6 @@ def wrap_realtime_session(tracer: Tracer):
     if hasattr(RealtimeSession, "send_message"):
         _original_methods["send_message"] = RealtimeSession.send_message
 
-    @dont_throw
     async def traced_aenter(self):
         """Wrapped __aenter__ that starts the workflow span."""
         result = await _original_methods["__aenter__"](self)
@@ -404,11 +406,13 @@ def wrap_realtime_session(tracer: Tracer):
             if model_name_str and isinstance(model_name_str, str):
                 state.model_name = model_name_str
         except Exception:
-            pass
+            logger.debug(
+                "Failed to initialize realtime tracing in traced_aenter",
+                exc_info=True,
+            )
 
         return result
 
-    @dont_throw
     async def traced_aexit(self, exc_type, exc_val, exc_tb):
         """Wrapped __aexit__ that ends the workflow span."""
         result = await _original_methods["__aexit__"](self, exc_type, exc_val, exc_tb)
@@ -422,7 +426,10 @@ def wrap_realtime_session(tracer: Tracer):
                 state.end_workflow_span(error=exc_val if exc_type else None)
                 del _tracing_states[session_id]
         except Exception:
-            pass
+            logger.debug(
+                "Failed to clean up realtime tracing in traced_aexit",
+                exc_info=True,
+            )
 
         return result
 
