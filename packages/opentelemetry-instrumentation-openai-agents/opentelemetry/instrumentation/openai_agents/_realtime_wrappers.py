@@ -536,33 +536,34 @@ def wrap_realtime_session(tracer: Tracer):
                         if content and role == "assistant":
                             state.record_completion(role, content)
 
-                elif event_type == "response":
-                    output = getattr(event, "output", None)
-                    if output and isinstance(output, list):
-                        for item in output:
+                elif event_type == "history_updated":
+                    history = getattr(event, "history", None)
+                    if history and isinstance(history, list):
+                        for item in reversed(history):
                             role = getattr(item, "role", None)
                             if role == "assistant":
                                 item_content = getattr(item, "content", None)
-                                if item_content:
-                                    if isinstance(item_content, list):
-                                        for part in item_content:
-                                            text = getattr(part, "text", None)
-                                            if text:
-                                                state.record_completion(role, text)
-                                                break
-                                    elif isinstance(item_content, str):
-                                        state.record_completion(role, item_content)
+                                if item_content and isinstance(item_content, list):
+                                    for part in item_content:
+                                        text = getattr(part, "text", None) or getattr(
+                                            part, "transcript", None
+                                        )
+                                        if text:
+                                            state.record_completion(role, text)
+                                            break
+                                break
 
                 elif event_type == "raw_model_event":
                     data = getattr(event, "data", None)
                     if data:
                         if isinstance(data, dict):
                             data_type = data.get("type")
-                            raw_data = data.get("data", data)
-                            if isinstance(raw_data, dict):
+                            raw_data = data.get("data")
+                            if raw_data and isinstance(raw_data, dict):
                                 nested_type = raw_data.get("type")
                                 if nested_type:
                                     data_type = nested_type
+                                    data = raw_data
                         else:
                             data_type = getattr(data, "type", None)
                             nested_data = getattr(data, "data", None)
@@ -593,28 +594,38 @@ def wrap_realtime_session(tracer: Tracer):
                             if usage:
                                 state.record_usage(usage)
 
-                                output = getattr(response, "output", None)
+                                if isinstance(response, dict):
+                                    output = response.get("output")
+                                else:
+                                    output = getattr(response, "output", None)
                                 if output and isinstance(output, list):
                                     for item in output:
-                                        item_type = getattr(item, "type", None)
-                                        if item_type == "message":
+                                        if isinstance(item, dict):
+                                            item_type = item.get("type")
+                                            role = item.get("role")
+                                            item_content = item.get("content")
+                                        else:
+                                            item_type = getattr(item, "type", None)
                                             role = getattr(item, "role", None)
-                                            if role == "assistant":
-                                                item_content = getattr(
-                                                    item, "content", None
-                                                )
-                                                if item_content and isinstance(
-                                                    item_content, list
-                                                ):
-                                                    for part in item_content:
+                                            item_content = getattr(
+                                                item, "content", None
+                                            )
+                                        if item_type == "message" and role == "assistant":
+                                            if item_content and isinstance(
+                                                item_content, list
+                                            ):
+                                                for part in item_content:
+                                                    if isinstance(part, dict):
+                                                        text = part.get("text")
+                                                    else:
                                                         text = getattr(
                                                             part, "text", None
                                                         )
-                                                        if text:
-                                                            state.record_completion(
-                                                                role, text
-                                                            )
-                                                            break
+                                                    if text:
+                                                        state.record_completion(
+                                                            role, text
+                                                        )
+                                                        break
 
                         elif data_type == "item_updated":
                             item = getattr(data, "item", None)

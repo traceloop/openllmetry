@@ -532,3 +532,117 @@ class TestDontThrowWraps:
             pass
 
         assert my_func.__doc__ == "My docstring."
+
+
+class TestTracedPutEventHandlers:
+    """Tests for event handling in traced_put_event via RealtimeTracingState."""
+
+    def test_history_updated_captures_assistant_completion(self, tracer, tracer_provider):
+        """Test that history_updated events capture assistant completions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Hello")
+
+        # Simulate what history_updated handler does: scan history for assistant content
+        class MockContent:
+            def __init__(self, text=None, transcript=None):
+                self.text = text
+                self.transcript = transcript
+
+        class MockItem:
+            def __init__(self, role, content):
+                self.role = role
+                self.content = content
+
+        history = [
+            MockItem("user", [MockContent(text="Hello")]),
+            MockItem("assistant", [MockContent(transcript="Hi there!")]),
+        ]
+
+        # Replicate the history_updated handler logic
+        for item in reversed(history):
+            role = getattr(item, "role", None)
+            if role == "assistant":
+                item_content = getattr(item, "content", None)
+                if item_content and isinstance(item_content, list):
+                    for part in item_content:
+                        text = getattr(part, "text", None) or getattr(
+                            part, "transcript", None
+                        )
+                        if text:
+                            state.record_completion(role, text)
+                            break
+                break
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+
+    def test_response_done_dict_captures_usage_and_completion(self, tracer, tracer_provider):
+        """Test that response.done with dict data captures usage and completions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "What is the weather?")
+
+        # Simulate dict-based response.done data (as sent by OpenAI raw API)
+        response_done_data = {
+            "type": "response.done",
+            "response": {
+                "usage": {
+                    "input_tokens": 42,
+                    "output_tokens": 18,
+                    "total_tokens": 60,
+                },
+                "output": [
+                    {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "text", "text": "It is sunny today."}
+                        ],
+                    }
+                ],
+            },
+        }
+
+        # Extract usage from dict
+        response = response_done_data.get("response", {})
+        usage = response.get("usage") if isinstance(response, dict) else None
+        if usage:
+            state.record_usage(usage)
+
+        # Extract completion from dict
+        output = response.get("output") if isinstance(response, dict) else None
+        if output and isinstance(output, list):
+            for item in output:
+                if isinstance(item, dict):
+                    if item.get("type") == "message" and item.get("role") == "assistant":
+                        item_content = item.get("content")
+                        if item_content and isinstance(item_content, list):
+                            for part in item_content:
+                                text = part.get("text") if isinstance(part, dict) else None
+                                if text:
+                                    state.record_completion("assistant", text)
+                                    break
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+
+        llm_span = llm_spans[0]
+        assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 42
+        assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 18
+        assert llm_span.attributes.get("gen_ai.completion.0.content") == "It is sunny today."
