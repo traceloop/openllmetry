@@ -28,6 +28,7 @@ class GenAISystem(Enum):
     AWS = "AWS"
     GOOGLE = "Google"
     OPENROUTER = "OpenRouter"
+    FORGE = "Forge"
 
     LANGCHAIN = "Langchain"
     CREWAI = "crewai"
