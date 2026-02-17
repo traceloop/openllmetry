@@ -475,3 +475,60 @@ class TestSpanHierarchy:
         audio_span = next(s for s in spans if s.name == "openai.realtime")
 
         assert audio_span.parent.span_id == agent_span.context.span_id
+
+
+class TestDontThrowWraps:
+    """Tests that dont_throw preserves function metadata via functools.wraps."""
+
+    def test_sync_function_preserves_name(self):
+        """Test that dont_throw preserves __name__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        def my_sync_function():
+            pass
+
+        assert my_sync_function.__name__ == "my_sync_function"
+
+    def test_async_function_preserves_name(self):
+        """Test that dont_throw preserves __name__ for async functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        async def my_async_function():
+            pass
+
+        assert my_async_function.__name__ == "my_async_function"
+
+    def test_sync_function_preserves_wrapped(self):
+        """Test that dont_throw sets __wrapped__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        def original():
+            pass
+
+        wrapped = dont_throw(original)
+        assert hasattr(wrapped, "__wrapped__")
+        assert wrapped.__wrapped__ is original
+
+    def test_async_function_preserves_wrapped(self):
+        """Test that dont_throw sets __wrapped__ for async functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        async def original():
+            pass
+
+        wrapped = dont_throw(original)
+        assert hasattr(wrapped, "__wrapped__")
+        assert wrapped.__wrapped__ is original
+
+    def test_sync_function_preserves_docstring(self):
+        """Test that dont_throw preserves __doc__ for sync functions."""
+        from opentelemetry.instrumentation.openai_agents.utils import dont_throw
+
+        @dont_throw
+        def my_func():
+            """My docstring."""
+            pass
+
+        assert my_func.__doc__ == "My docstring."
