@@ -27,6 +27,67 @@ _original_methods: Dict[str, Any] = {}
 _tracing_states: Dict[int, "RealtimeTracingState"] = {}
 
 
+def _extract_content_text(item_content) -> Optional[str]:
+    """Extract text or transcript from content parts list.
+
+    Handles both dict-based and object-based content parts,
+    as well as plain string content.
+    """
+    if isinstance(item_content, str):
+        return item_content
+    if not item_content or not isinstance(item_content, list):
+        return None
+    for part in item_content:
+        if isinstance(part, dict):
+            text = part.get("text") or part.get("transcript")
+        else:
+            text = getattr(part, "text", None) or getattr(part, "transcript", None)
+        if text:
+            return text
+    return None
+
+
+def _unwrap_raw_event_data(data) -> Tuple[Optional[str], Any]:
+    """Extract type and unwrap nested data from raw_model_event.
+
+    The SDK sometimes double-wraps events as data.data.type.
+    Returns (data_type, unwrapped_data).
+    """
+    if isinstance(data, dict):
+        data_type = data.get("type")
+        raw_data = data.get("data")
+        if raw_data and isinstance(raw_data, dict):
+            nested_type = raw_data.get("type")
+            if nested_type:
+                return nested_type, raw_data
+        return data_type, data
+    else:
+        data_type = getattr(data, "type", None)
+        nested_data = getattr(data, "data", None)
+        if nested_data:
+            if isinstance(nested_data, dict):
+                nested_type = nested_data.get("type")
+            else:
+                nested_type = getattr(nested_data, "type", None)
+            if nested_type:
+                return nested_type, nested_data
+        return data_type, data
+
+
+def _extract_response_and_usage(data) -> Tuple[Any, Optional[dict]]:
+    """Extract response object and usage dict from response.done data.
+
+    Returns (response, usage).
+    """
+    if isinstance(data, dict):
+        response = data.get("response", {})
+        usage = response.get("usage") if isinstance(response, dict) else None
+    else:
+        response = getattr(data, "response", None)
+        usage = getattr(response, "usage", None) if response else None
+    return response, usage
+
+
 class RealtimeTracingState:
     """Tracks OpenTelemetry spans for a realtime session."""
 
@@ -513,20 +574,8 @@ def wrap_realtime_session(tracer: Tracer):
                     item = getattr(event, "item", None)
                     if item:
                         role = getattr(item, "role", None)
-                        content = None
-
                         item_content = getattr(item, "content", None)
-                        if item_content:
-                            if isinstance(item_content, list):
-                                for part in item_content:
-                                    if hasattr(part, "text"):
-                                        content = part.text
-                                        break
-                                    elif hasattr(part, "transcript"):
-                                        content = part.transcript
-                                        break
-                            elif isinstance(item_content, str):
-                                content = item_content
+                        content = _extract_content_text(item_content)
 
                         if not content:
                             content = getattr(item, "text", None) or getattr(
@@ -543,107 +592,52 @@ def wrap_realtime_session(tracer: Tracer):
                             role = getattr(item, "role", None)
                             if role == "assistant":
                                 item_content = getattr(item, "content", None)
-                                if item_content and isinstance(item_content, list):
-                                    for part in item_content:
-                                        text = getattr(part, "text", None) or getattr(
-                                            part, "transcript", None
-                                        )
-                                        if text:
-                                            state.record_completion(role, text)
-                                            break
+                                text = _extract_content_text(item_content)
+                                if text:
+                                    state.record_completion(role, text)
                                 break
 
                 elif event_type == "raw_model_event":
                     data = getattr(event, "data", None)
                     if data:
-                        if isinstance(data, dict):
-                            data_type = data.get("type")
-                            raw_data = data.get("data")
-                            if raw_data and isinstance(raw_data, dict):
-                                nested_type = raw_data.get("type")
-                                if nested_type:
-                                    data_type = nested_type
-                                    data = raw_data
-                        else:
-                            data_type = getattr(data, "type", None)
-                            nested_data = getattr(data, "data", None)
-                            if nested_data:
-                                if isinstance(nested_data, dict):
-                                    nested_type = nested_data.get("type")
-                                else:
-                                    nested_type = getattr(nested_data, "type", None)
-                                if nested_type:
-                                    data_type = nested_type
-                                    data = nested_data
+                        data_type, data = _unwrap_raw_event_data(data)
 
                         if data_type == "response.done":
-                            if isinstance(data, dict):
-                                response = data.get("response", {})
-                                usage = (
-                                    response.get("usage")
-                                    if isinstance(response, dict)
-                                    else None
-                                )
-                            else:
-                                response = getattr(data, "response", None)
-                                usage = (
-                                    getattr(response, "usage", None)
-                                    if response
-                                    else None
-                                )
+                            response, usage = _extract_response_and_usage(data)
                             if usage:
                                 state.record_usage(usage)
 
-                                if isinstance(response, dict):
-                                    output = response.get("output")
-                                else:
-                                    output = getattr(response, "output", None)
-                                if output and isinstance(output, list):
-                                    for item in output:
-                                        if isinstance(item, dict):
-                                            item_type = item.get("type")
-                                            role = item.get("role")
-                                            item_content = item.get("content")
-                                        else:
-                                            item_type = getattr(item, "type", None)
-                                            role = getattr(item, "role", None)
-                                            item_content = getattr(
-                                                item, "content", None
-                                            )
-                                        if item_type == "message" and role == "assistant":
-                                            if item_content and isinstance(
-                                                item_content, list
-                                            ):
-                                                for part in item_content:
-                                                    if isinstance(part, dict):
-                                                        text = part.get("text")
-                                                    else:
-                                                        text = getattr(
-                                                            part, "text", None
-                                                        )
-                                                    if text:
-                                                        state.record_completion(
-                                                            role, text
-                                                        )
-                                                        break
+                            if isinstance(response, dict):
+                                output = response.get("output")
+                            else:
+                                output = getattr(response, "output", None)
+                            if output and isinstance(output, list):
+                                for item in output:
+                                    if isinstance(item, dict):
+                                        item_type = item.get("type")
+                                        role = item.get("role")
+                                        item_content = item.get("content")
+                                    else:
+                                        item_type = getattr(item, "type", None)
+                                        role = getattr(item, "role", None)
+                                        item_content = getattr(
+                                            item, "content", None
+                                        )
+                                    if item_type == "message" and role == "assistant":
+                                        text = _extract_content_text(item_content)
+                                        if text:
+                                            state.record_completion(role, text)
+                                            break
 
                         elif data_type == "item_updated":
                             item = getattr(data, "item", None)
                             if item:
                                 role = getattr(item, "role", None)
                                 item_content = getattr(item, "content", None)
-                                if (
-                                    role == "assistant"
-                                    and item_content
-                                    and isinstance(item_content, list)
-                                ):
-                                    for part in item_content:
-                                        text = getattr(part, "text", None) or getattr(
-                                            part, "transcript", None
-                                        )
-                                        if text:
-                                            state.record_completion(role, text)
-                                            break
+                                if role == "assistant":
+                                    text = _extract_content_text(item_content)
+                                    if text:
+                                        state.record_completion(role, text)
         except Exception:
             pass
 

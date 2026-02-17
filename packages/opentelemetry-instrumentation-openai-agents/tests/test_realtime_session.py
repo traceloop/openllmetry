@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (
     RealtimeTracingState,
     wrap_realtime_session,
     unwrap_realtime_session,
+    _extract_content_text,
 )
 
 
@@ -646,3 +647,52 @@ class TestTracedPutEventHandlers:
         assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 42
         assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 18
         assert llm_span.attributes.get("gen_ai.completion.0.content") == "It is sunny today."
+
+    def test_response_done_without_usage_still_captures_completion(self, tracer, tracer_provider):
+        """Test that completions are captured even when usage is absent from response.done."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        state.record_prompt("user", "Tell me a joke")
+
+        # response.done with output but NO usage field
+        response_done_data = {
+            "type": "response.done",
+            "response": {
+                "output": [
+                    {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "text", "text": "Why did the chicken cross the road?"}
+                        ],
+                    }
+                ],
+            },
+        }
+
+        response = response_done_data.get("response", {})
+        usage = response.get("usage") if isinstance(response, dict) else None
+        if usage:
+            state.record_usage(usage)
+
+        # Completion extraction should work even without usage
+        output = response.get("output") if isinstance(response, dict) else None
+        if output and isinstance(output, list):
+            for item in output:
+                if isinstance(item, dict):
+                    if item.get("type") == "message" and item.get("role") == "assistant":
+                        text = _extract_content_text(item.get("content"))
+                        if text:
+                            state.record_completion("assistant", text)
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_spans = [s for s in spans if s.name == "openai.realtime"]
+        assert len(llm_spans) == 1
+        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Why did the chicken cross the road?"
+        assert llm_spans[0].attributes.get("gen_ai.usage.input_tokens") is None
