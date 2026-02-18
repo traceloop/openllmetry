@@ -109,7 +109,7 @@ def set_llm_chat_response_model_attributes(event, span):
     if (input_tokens is None or output_tokens is None) and usage and isinstance(usage, dict):
         input_tokens = input_tokens or usage.get("inputTokens")
         output_tokens = output_tokens or usage.get("outputTokens")
-        total_tokens = total_tokens or usage.get("totaltTokens")
+        total_tokens = total_tokens or usage.get("totalTokens")
 
     # Try response.additional_kwargs (LlamaIndex normalizes tokens here for some providers)
     if input_tokens is None or output_tokens is None:
