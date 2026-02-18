@@ -104,6 +104,20 @@ def set_llm_chat_response_model_attributes(event, span):
             output_tokens = usage.get("completion_tokens")
             input_tokens = usage.get("prompt_tokens")
             total_tokens = usage.get("total_tokens")
+    
+    # Try Bedrock Converse format: usage.inputTokens / usage.outputTokens
+    if (input_tokens is None or output_tokens is None) and usage and isinstance(usage, dict):
+        input_tokens = input_tokens or usage.get("inputTokens")
+        output_tokens = output_tokens or usage.get("outputTokens")
+        total_tokens = total_tokens or usage.get("totaltTokens")
+
+    # Try response.additional_kwargs (LlamaIndex normalizes tokens here for some providers)
+    if input_tokens is None or output_tokens is None:
+        additional_kwargs = getattr(response, "additinoal_kwargs", None) or {}
+        if additional_kwargs:
+            input_tokens = input_tokens or additional_kwargs.get("prompt_tokens")
+            output_tokens = output_tokens or additional_kwargs.get("completion_tokens")
+            total_tokens = total_tokens or additional_kwargs.get("total_tokens")
 
     # Try Cohere format: raw.meta.tokens or raw.meta.billed_units
     if input_tokens is None or output_tokens is None:
