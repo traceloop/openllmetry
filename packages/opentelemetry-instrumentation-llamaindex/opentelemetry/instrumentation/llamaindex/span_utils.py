@@ -113,7 +113,7 @@ def set_llm_chat_response_model_attributes(event, span):
 
     # Try response.additional_kwargs (LlamaIndex normalizes tokens here for some providers)
     if input_tokens is None or output_tokens is None:
-        additional_kwargs = getattr(response, "additinoal_kwargs", None) or {}
+        additional_kwargs = getattr(response, "additional_kwargs", None) or {}
         if additional_kwargs:
             input_tokens = input_tokens or additional_kwargs.get("prompt_tokens")
             output_tokens = output_tokens or additional_kwargs.get("completion_tokens")
