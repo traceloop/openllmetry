@@ -1,3 +1,4 @@
+import contextvars
 import json
 import time
 from typing import Any, Dict, List, Optional, Type, Union
@@ -71,11 +72,17 @@ from opentelemetry.instrumentation.langchain.patch import (
     LANGGRAPH_FLOW_KEY,
     LANGGRAPH_GRAPH_SPAN_KEY,
     LANGGRAPH_FIRST_CHILD_PENDING_KEY,
-    LANGGRAPH_CURRENT_NODE_KEY,
 )
 from opentelemetry.trace.span import Span
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+
+# Context variable for tracking current LangGraph node (for Command source tracking)
+# Using ContextVar instead of OTel context to avoid detach issues in async scenarios
+_langgraph_current_node: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    'langgraph_current_node',
+    default=None
+)
 
 
 def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) -> str:
@@ -374,7 +381,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # Set GenAI semantic convention attributes
         # Check LangGraph flow context to set appropriate provider
         langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
-        provider_name = "LangGraph" if langgraph_flow else "langchain"
+        provider_name = "langgraph" if langgraph_flow else "langchain"
         _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
 
         if is_agent:
@@ -518,14 +525,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
         # Set current node in context for Command source tracking.
-        # Note: We intentionally don't store/detach this token because in async
-        # scenarios, detaching tokens created in a different context causes errors.
-        # The context is automatically cleaned up when the graph execution completes.
+        # Using ContextVar instead of OTel context to avoid detach issues in async scenarios.
+        # ContextVars are automatically scoped to the current context.
         if metadata and metadata.get("langgraph_node") == name:
             try:
-                context_api.attach(
-                    context_api.set_value(LANGGRAPH_CURRENT_NODE_KEY, name)
-                )
+                _langgraph_current_node.set(name)
             except Exception:
                 pass
 
@@ -871,7 +875,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
         # Set provider name based on LangGraph flow context
         langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
-        provider_name = "LangGraph" if langgraph_flow else "langchain"
+        provider_name = "langgraph" if langgraph_flow else "langchain"
         _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TASK.value)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, name)
