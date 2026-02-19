@@ -11,6 +11,13 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Import ContextVar for reading current node (set by callback_handler)
+# Importing at runtime to avoid circular import issues
+def _get_current_node_contextvar():
+    """Lazy import to avoid circular dependency."""
+    from opentelemetry.instrumentation.langchain.callback_handler import _langgraph_current_node
+    return _langgraph_current_node
+
 
 def _generate_agent_id(name: str, instance: Any) -> str:
     """Generate a unique agent ID by hashing the instance memory address."""
@@ -25,8 +32,6 @@ LANGGRAPH_FLOW_KEY = "langgraph_flow"
 LANGGRAPH_GRAPH_SPAN_KEY = "langgraph_graph_span"
 # Context key for tracking if first child of graph span is pending (mutable list [bool])
 LANGGRAPH_FIRST_CHILD_PENDING_KEY = "langgraph_first_child_pending"
-# Context key for tracking current node (for Command source tracking)
-LANGGRAPH_CURRENT_NODE_KEY = "langgraph_current_node"
 
 
 def _set_graph_span_attributes(
@@ -49,10 +54,10 @@ def _set_graph_span_attributes(
         kwargs: Keyword arguments passed to the graph invocation
         args: Positional arguments passed to the graph invocation
     """
-    from opentelemetry.instrumentation.langchain.langgraph_utils import extract_graph_json
+    from opentelemetry.instrumentation.langchain.langgraph_utils import extract_graph_structure
 
     # Set GenAI semantic convention attributes
-    graph_span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, "LangGraph")
+    graph_span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, "langgraph")
     graph_span.set_attribute(
         SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.INVOKE_AGENT.value
     )
@@ -71,8 +76,11 @@ def _set_graph_span_attributes(
 
     # Extract workflow structure (best-effort with debug logging)
     try:
-        graph_structure = extract_graph_json(instance)
-        graph_span.set_attribute(SpanAttributes.GEN_AI_WORKFLOW_STRUCTURE, graph_structure)
+        nodes, edges = extract_graph_structure(instance)
+        if nodes:
+            graph_span.set_attribute(SpanAttributes.GEN_AI_WORKFLOW_NODES, nodes)
+        if edges:
+            graph_span.set_attribute(SpanAttributes.GEN_AI_WORKFLOW_EDGES, edges)
     except Exception as e:
         logger.debug("Failed to extract LangGraph workflow structure: %s", e)
 
@@ -208,9 +216,8 @@ def create_command_init_wrapper(tracer: Tracer):
 
         # Only create span if goto is specified (indicates routing)
         if instance.goto:
-            # Get source node from context
-            current_context = context_api.get_current()
-            source_node = context_api.get_value(LANGGRAPH_CURRENT_NODE_KEY, current_context)
+            # Get source node from ContextVar (set by callback_handler)
+            source_node = _get_current_node_contextvar().get()
 
             # Extract goto destination(s)
             goto_destinations = _extract_goto_destinations(instance.goto)

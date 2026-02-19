@@ -1,29 +1,23 @@
 """Utilities for extracting LangGraph graph structure."""
 
-import json
 from typing import Any
 
 
-def extract_graph_json(graph_instance: Any) -> str:
+def extract_graph_structure(graph_instance: Any) -> tuple[list[str], list[str]]:
     """
-    Extract the graph structure (nodes and edges) from a LangGraph instance.
+    Extract graph nodes and edges as separate lists.
 
-    This extracts the workflow topology to populate the gen_ai.workflow.structure
-    attribute as specified in the OpenTelemetry GenAI semantic conventions.
+    This extracts the workflow topology to populate the gen_ai.workflow.nodes
+    and gen_ai.workflow.edges attributes as specified in the OpenTelemetry
+    GenAI semantic conventions.
 
     Args:
         graph_instance: A LangGraph Pregel or CompiledGraph instance
 
     Returns:
-        JSON string representing the graph structure with format:
-        {
-            "nodes": ["node1", "node2", ...],
-            "edges": [
-                [["source1"], ["target1"]],
-                [["source2"], ["target2", "target3"]],
-                ...
-            ]
-        }
+        Tuple of (nodes, edges) where:
+        - nodes: List of node names (excluding __start__/__end__)
+        - edges: List of "source -> target" strings
 
     Raises:
         Exception: If graph structure cannot be extracted
@@ -42,36 +36,23 @@ def extract_graph_json(graph_instance: Any) -> str:
                 if node_id not in ("__start__", "__end__"):
                     nodes.append(node_id)
 
-        # Extract edges
+        # Extract edges as "source -> target" strings
         edges = []
         if hasattr(graph, "edges"):
-            # Group edges by source for cleaner representation
-            edge_map: dict[str, list[str]] = {}
             for edge in graph.edges:
                 # Handle different edge formats
                 if hasattr(edge, "source") and hasattr(edge, "target"):
-                    source = edge.source
-                    target = edge.target
+                    source, target = edge.source, edge.target
                 elif isinstance(edge, tuple) and len(edge) >= 2:
                     source, target = edge[0], edge[1]
                 else:
                     continue
 
-                if source not in edge_map:
-                    edge_map[source] = []
-                if target not in edge_map[source]:
-                    edge_map[source].append(target)
+                # Skip special nodes
+                if source not in ("__start__", "__end__") and target not in ("__start__", "__end__"):
+                    edges.append(f"{source} -> {target}")
 
-            # Convert to list format [[sources], [targets]]
-            for source, targets in edge_map.items():
-                edges.append([[source], targets])
-
-        structure = {
-            "nodes": nodes,
-            "edges": edges,
-        }
-
-        return json.dumps(structure)
+        return nodes, edges
 
     except Exception as e:
         # Re-raise to let caller handle

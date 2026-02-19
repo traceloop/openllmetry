@@ -273,8 +273,9 @@ class SpanAttributes:
     GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
     GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
 
-    # GenAI Workflow Attributes
-    GEN_AI_WORKFLOW_STRUCTURE = "gen_ai.workflow.structure"
+    # GenAI Workflow Attributes (using string arrays for nodes and edges)
+    GEN_AI_WORKFLOW_NODES = "gen_ai.workflow.nodes"
+    GEN_AI_WORKFLOW_EDGES = "gen_ai.workflow.edges"
 
     # LangGraph-specific Attributes (vendor namespace)
     LANGGRAPH_COMMAND_SOURCE_NODE = "langgraph.command.source_node"
