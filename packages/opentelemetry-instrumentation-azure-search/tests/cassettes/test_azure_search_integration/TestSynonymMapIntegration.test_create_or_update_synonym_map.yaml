@@ -1,0 +1,78 @@
+interactions:
+- request:
+    body: '{"name": "otel-test-upsert-sm", "format": "solr", "synonyms": "fast,quick\nslow,sluggish"}'
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '90'
+      Content-Type:
+      - application/json
+      Prefer:
+      - return=representation
+    method: PUT
+    uri: https://traceloop-otel-os.search.windows.net/synonymmaps('otel-test-upsert-sm')?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#synonymmaps/$entity","@odata.etag":"\"0x8DE66A723727CEE\"","name":"otel-test-upsert-sm","format":"solr","synonyms":"fast,quick\nslow,sluggish","encryptionKey":null}'
+    headers:
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Sun, 08 Feb 2026 00:15:17 GMT
+      ETag:
+      - '"0x8DE66A723727CEE"'
+      Location:
+      - https://traceloop-otel-os.search.windows.net:443/synonymmaps('otel-test-upsert-sm')?api-version=2025-09-01
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      elapsed-time:
+      - '23'
+      request-id:
+      - 3f0c5e40-0483-11f1-9cf9-333e1cb7199c
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+    method: DELETE
+    uri: https://traceloop-otel-os.search.windows.net/synonymmaps('otel-test-upsert-sm')?api-version=2025-09-01
+  response:
+    body:
+      string: ''
+    headers:
+      Date:
+      - Sun, 08 Feb 2026 00:15:16 GMT
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      elapsed-time:
+      - '13'
+      request-id:
+      - 3f339820-0483-11f1-9cf9-333e1cb7199c
+    status:
+      code: 204
+      message: No Content
+version: 1

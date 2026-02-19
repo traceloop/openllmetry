@@ -5,6 +5,7 @@ class Instruments(Enum):
     AGNO = "agno"
     ALEPHALPHA = "alephalpha"
     ANTHROPIC = "anthropic"
+    AZURE_SEARCH = "azure_search"
     BEDROCK = "bedrock"
     CHROMA = "chroma"
     COHERE = "cohere"

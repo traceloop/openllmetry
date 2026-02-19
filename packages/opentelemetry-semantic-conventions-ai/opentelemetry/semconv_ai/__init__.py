@@ -246,6 +246,64 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # Azure AI Search
+    AZURE_SEARCH_INDEX_NAME = "azure_search.index_name"
+    AZURE_SEARCH_SEARCH_TEXT = "azure_search.search.text"
+    AZURE_SEARCH_SEARCH_TOP = "azure_search.search.top"
+    AZURE_SEARCH_SEARCH_SKIP = "azure_search.search.skip"
+    AZURE_SEARCH_SEARCH_FILTER = "azure_search.search.filter"
+    AZURE_SEARCH_SEARCH_QUERY_TYPE = "azure_search.search.query_type"
+    AZURE_SEARCH_DOCUMENT_COUNT = "azure_search.document.count"
+    AZURE_SEARCH_DOCUMENT_KEY = "azure_search.document.key"
+    AZURE_SEARCH_SUGGESTER_NAME = "azure_search.suggester_name"
+    AZURE_SEARCH_ANALYZER_NAME = "azure_search.analyzer_name"
+
+    # Azure AI Search - Response Attributes
+    AZURE_SEARCH_SEARCH_RESULTS_COUNT = "azure_search.search.results_count"
+    AZURE_SEARCH_DOCUMENT_SUCCEEDED_COUNT = "azure_search.document.succeeded_count"
+    AZURE_SEARCH_DOCUMENT_FAILED_COUNT = "azure_search.document.failed_count"
+    AZURE_SEARCH_AUTOCOMPLETE_RESULTS_COUNT = "azure_search.autocomplete.results_count"
+    AZURE_SEARCH_SUGGEST_RESULTS_COUNT = "azure_search.suggest.results_count"
+
+    # Azure AI Search - Indexer Operations
+    AZURE_SEARCH_INDEXER_NAME = "azure_search.indexer_name"
+    AZURE_SEARCH_DATA_SOURCE_NAME = "azure_search.data_source_name"
+    AZURE_SEARCH_SKILLSET_NAME = "azure_search.skillset_name"
+    AZURE_SEARCH_INDEXER_STATUS = "azure_search.indexer.status"
+    AZURE_SEARCH_DOCUMENTS_PROCESSED = "azure_search.indexer.documents_processed"
+    AZURE_SEARCH_DOCUMENTS_FAILED = "azure_search.indexer.documents_failed"
+    AZURE_SEARCH_DATA_SOURCE_TYPE = "azure_search.data_source.type"
+    AZURE_SEARCH_SKILLSET_SKILL_COUNT = "azure_search.skillset.skill_count"
+
+    # Azure AI Search - Synonym Map Operations
+    AZURE_SEARCH_SYNONYM_MAP_NAME = "azure_search.synonym_map.name"
+    AZURE_SEARCH_SYNONYM_MAP_SYNONYMS_COUNT = "azure_search.synonym_map.synonyms_count"
+
+    # Azure AI Search - Service Statistics
+    AZURE_SEARCH_SERVICE_DOCUMENT_COUNT = "azure_search.service.document_count"
+    AZURE_SEARCH_SERVICE_INDEX_COUNT = "azure_search.service.index_count"
+
+    # Azure AI Search - Vector Search Attributes
+    AZURE_SEARCH_VECTOR_QUERIES_COUNT = "azure_search.search.vector_queries_count"
+    AZURE_SEARCH_VECTOR_FIELDS = "azure_search.search.vector_fields"
+    AZURE_SEARCH_VECTOR_K_NEAREST_NEIGHBORS = "azure_search.search.k_nearest_neighbors"
+    AZURE_SEARCH_VECTOR_EXHAUSTIVE = "azure_search.search.vector_exhaustive"
+    AZURE_SEARCH_VECTOR_FILTER_MODE = "azure_search.search.vector_filter_mode"
+    AZURE_SEARCH_VECTOR_QUERY_KIND = "azure_search.search.vector_query_kind"
+    AZURE_SEARCH_VECTOR_WEIGHT = "azure_search.search.vector_weight"
+    AZURE_SEARCH_VECTOR_OVERSAMPLING = "azure_search.search.vector_oversampling"
+
+    # Azure AI Search - Semantic Search Attributes
+    AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME = "azure_search.search.semantic_configuration_name"
+    AZURE_SEARCH_QUERY_CAPTION = "azure_search.search.query_caption"
+    AZURE_SEARCH_QUERY_ANSWER = "azure_search.search.query_answer"
+    AZURE_SEARCH_SEARCH_MODE = "azure_search.search.search_mode"
+    AZURE_SEARCH_SCORING_PROFILE = "azure_search.search.scoring_profile"
+    AZURE_SEARCH_SELECT = "azure_search.search.select"
+    AZURE_SEARCH_SEARCH_FIELDS = "azure_search.search.search_fields"
+    AZURE_SEARCH_FACETS = "azure_search.search.facets"
+    AZURE_SEARCH_ORDER_BY = "azure_search.search.order_by"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
