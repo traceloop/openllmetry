@@ -64,6 +64,37 @@ LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
 logger = logging.getLogger(__name__)
 
 
+def _sanitize_attributes_for_metrics(attributes):
+    """
+    Sanitize attributes to ensure they are hashable for metric recording.
+    OpenTelemetry metrics require hashable attributes for aggregation keys.
+    
+    Args:
+        attributes (dict): Dictionary of attributes to sanitize
+        
+    Returns:
+        dict: Dictionary with all values converted to hashable types
+    """
+    if not isinstance(attributes, dict):
+        return attributes
+        
+    sanitized = {}
+    for key, value in attributes.items():
+        try:
+            # Test if the value is hashable by creating a frozenset
+            frozenset({key: value}.items())
+            sanitized[key] = value
+        except TypeError:
+            # Value is not hashable, convert to JSON string
+            try:
+                sanitized[key] = json.dumps(value, sort_keys=True)
+            except (TypeError, ValueError):
+                # If JSON serialization fails, convert to string
+                sanitized[key] = str(value)
+    
+    return sanitized
+
+
 @_with_chat_telemetry_wrapper
 def chat_wrapper(
     tracer: Tracer,
@@ -375,6 +406,8 @@ def _set_chat_metrics(
         server_address=_get_openai_base_url(instance),
         is_streaming=is_streaming,
     )
+    # Sanitize attributes to ensure they are hashable for metric recording
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -727,7 +760,7 @@ class ChatStream(ObjectProxy):
         _accumulate_stream_items(item, self._complete_response)
 
     def _shared_attributes(self):
-        return metric_shared_attributes(
+        attributes = metric_shared_attributes(
             response_model=self._complete_response.get("model")
             or self._request_kwargs.get("model")
             or None,
@@ -735,6 +768,8 @@ class ChatStream(ObjectProxy):
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
         )
+        # Sanitize attributes to ensure they are hashable for metric recording
+        return _sanitize_attributes_for_metrics(attributes)
 
     @dont_throw
     def _process_complete_response(self):
@@ -894,6 +929,8 @@ def _build_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    # Sanitize attributes to ensure they are hashable for metric recording
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
@@ -965,6 +1002,8 @@ async def _abuild_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    # Sanitize attributes to ensure they are hashable for metric recording
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
