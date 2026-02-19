@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.52.3"
+version = "0.52.4"
 description = "OpenTelemetry Langchain instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },

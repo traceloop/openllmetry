@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.52.3"
+version = "0.52.4"
 description = "OpenTelemetry Chroma DB instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },

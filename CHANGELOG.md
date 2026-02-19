@@ -1,3 +1,11 @@
+## v0.52.4 (2026-02-19)
+
+### Fix
+
+- **openai-agents**: fix realtime session event handling for prompts, completions, and usage (#3688)
+- preserve return values for RealtimeSession context manager methods (#3681)
+- **openai-agents**: add functools.wraps to dont_throw decorator (#3687)
+
 ## v0.52.3 (2026-02-10)
 
 ### Fix
