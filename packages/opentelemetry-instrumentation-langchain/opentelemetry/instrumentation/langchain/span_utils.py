@@ -119,7 +119,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
-            json.dumps(tool_function.get("parameters", tool.get("input_schema")), ensure_ascii=False),
+            json.dumps(tool_function.get("parameters", tool.get("input_schema")), cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
         )
 
 
@@ -178,7 +178,7 @@ def set_chat_request(
                 span, f"{prefix}.description", function.get("description")
             )
             _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"), ensure_ascii=False)
+                span, f"{prefix}.parameters", json.dumps(function.get("parameters"), cls=CallbackFilteredJSONEncoder, ensure_ascii=False)
             )
 
         i = 0
@@ -225,8 +225,8 @@ def set_chat_request(
 def set_chat_response(span: Span, response: LLMResult) -> None:
     """Set chat response attributes on the span from a LangChain LLMResult.
 
-    Records generated message content, tool calls, finish reason, and token
-    usage as span attributes when prompt capture is enabled.
+    Records generated message content, tool calls, and finish reason as span
+    attributes when prompt capture is enabled.
 
     Args:
         span: The OpenTelemetry span to annotate.
@@ -432,8 +432,9 @@ def _set_chat_tool_calls(
 
     Args:
         span: The OpenTelemetry span to annotate.
-        prefix: Attribute key prefix (e.g. ``llm.completions.0.role``).
-        tool_calls: List of tool call dicts containing ``id``, ``name``, and ``arguments``.
+        prefix: Attribute key prefix (e.g. ``gen_ai.completion.0``).
+        tool_calls: List of tool call dicts containing ``id``, ``name``, and ``args``
+            (with optional ``function.arguments`` fallback).
     """
     for idx, tool_call in enumerate(tool_calls):
         tool_call_prefix = f"{prefix}.tool_calls.{idx}"
