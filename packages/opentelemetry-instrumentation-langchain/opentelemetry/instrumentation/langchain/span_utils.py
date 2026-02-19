@@ -112,7 +112,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         _set_span_attribute(
             span,
             f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
-            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
+            json.dumps(tool_function.get("parameters", tool.get("input_schema")), ensure_ascii=False),
         )
 
 
@@ -159,7 +159,7 @@ def set_chat_request(
                 span, f"{prefix}.description", function.get("description")
             )
             _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+                span, f"{prefix}.parameters", json.dumps(function.get("parameters"), ensure_ascii=False)
             )
 
         i = 0
@@ -185,7 +185,7 @@ def set_chat_request(
                 content = (
                     msg.content
                     if isinstance(msg.content, str)
-                    else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                    else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder, ensure_ascii=False)
                 )
                 _set_span_attribute(
                     span,
@@ -232,7 +232,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                 if isinstance(generation.message.content, str):
                     content = generation.message.content
                 else:
-                    content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
+                    content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder, ensure_ascii=False)
 
             if content:
                 _set_span_attribute(
@@ -420,5 +420,5 @@ def _set_chat_tool_calls(
         _set_span_attribute(
             span,
             f"{tool_call_prefix}.arguments",
-            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
+            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
         )
