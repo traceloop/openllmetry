@@ -50,7 +50,7 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
 
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
-    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "LangGraph"
+    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
     assert graph_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "LangGraph"
     assert SpanAttributes.GEN_AI_AGENT_ID in graph_span.attributes
 
@@ -118,7 +118,7 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
 
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
-    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "LangGraph"
+    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
 
 @pytest.mark.vcr
@@ -155,7 +155,7 @@ def test_langgraph_double_invoke(instrument_legacy, span_exporter):
     # Verify GenAI attributes on graph span
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
     assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
-    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "LangGraph"
+    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
     graph.invoke({"result": "init"})
     assert trace.get_current_span() == INVALID_SPAN
@@ -203,7 +203,7 @@ async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
     # Verify GenAI attributes on graph span
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
     assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
-    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "LangGraph"
+    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
     await graph.ainvoke({"result": "init"})
 
@@ -357,7 +357,7 @@ def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_pro
 
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
-    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "LangGraph"
+    assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
     assert graph_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "LangGraph"
     assert SpanAttributes.GEN_AI_AGENT_ID in graph_span.attributes
 
