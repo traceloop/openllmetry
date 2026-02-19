@@ -429,6 +429,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "kwargs": kwargs,
                     },
                     cls=CallbackFilteredJSONEncoder,
+                    ensure_ascii=False,
                 ),
             )
 
@@ -455,6 +456,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 json.dumps(
                     {"outputs": outputs, "kwargs": kwargs},
                     cls=CallbackFilteredJSONEncoder,
+                    ensure_ascii=False,
                 ),
             )
 
@@ -686,6 +688,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "kwargs": kwargs,
                     },
                     cls=CallbackFilteredJSONEncoder,
+                    ensure_ascii=False,
                 ),
             )
 
@@ -709,6 +712,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 json.dumps(
                     {"output": output, "kwargs": kwargs},
                     cls=CallbackFilteredJSONEncoder,
+                    ensure_ascii=False,
                 ),
             )
         self._end_span(span, run_id)
