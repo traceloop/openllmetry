@@ -60,6 +60,13 @@ def _set_span_attribute(span: Span, key: str, value: Any) -> None:
 
 
 def set_request_params(span, kwargs, span_holder: SpanHolder):
+    """Set LLM request parameters (model, temperature, tokens, tools) as span attributes.
+
+    Args:
+        span: The OpenTelemetry span to annotate.
+        kwargs: Keyword arguments from the LangChain invocation containing model config.
+        span_holder: Holder object tracking request model and token usage.
+    """
     if not span.is_recording():
         return
 
@@ -146,6 +153,18 @@ def set_chat_request(
     kwargs: Any,
     span_holder: SpanHolder,
 ) -> None:
+    """Set chat request attributes on the span from serialized LangChain messages.
+
+    Populates model parameters, prompt messages, and tool definitions as span
+    attributes when prompt capture is enabled.
+
+    Args:
+        span: The OpenTelemetry span to annotate.
+        serialized: Serialized LangChain LLM/ChatModel configuration dict.
+        messages: Nested list of chat messages passed to the model.
+        kwargs: Additional keyword arguments from the LangChain invocation.
+        span_holder: Holder object tracking request model and token usage.
+    """
     set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
     if should_send_prompts():
@@ -204,6 +223,15 @@ def set_chat_request(
 
 
 def set_chat_response(span: Span, response: LLMResult) -> None:
+    """Set chat response attributes on the span from a LangChain LLMResult.
+
+    Records generated message content, tool calls, finish reason, and token
+    usage as span attributes when prompt capture is enabled.
+
+    Args:
+        span: The OpenTelemetry span to annotate.
+        response: The LLMResult returned by the LangChain model invocation.
+    """
     if not should_send_prompts():
         return
 
@@ -400,6 +428,13 @@ def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, A
 def _set_chat_tool_calls(
     span: Span, prefix: str, tool_calls: list[dict[str, Any]]
 ) -> None:
+    """Set tool call attributes on the span for a list of tool invocations.
+
+    Args:
+        span: The OpenTelemetry span to annotate.
+        prefix: Attribute key prefix (e.g. ``llm.completions.0.role``).
+        tool_calls: List of tool call dicts containing ``id``, ``name``, and ``arguments``.
+    """
     for idx, tool_call in enumerate(tool_calls):
         tool_call_prefix = f"{prefix}.tool_calls.{idx}"
         tool_call_dict = dict(tool_call)
