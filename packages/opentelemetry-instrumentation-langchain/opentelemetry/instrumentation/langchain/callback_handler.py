@@ -34,6 +34,10 @@ from opentelemetry.instrumentation.langchain.event_models import (
     MessageEvent,
     ToolCall,
 )
+from opentelemetry.instrumentation.langchain.langgraph_helper import (
+    is_langgraph_task,
+    get_graph_structure,
+)
 from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
     _set_span_attribute,
@@ -431,6 +435,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
+
+        # Add graph structure
+        if is_langgraph_task(name):
+            graph_structure = get_graph_structure()
+            span.set_attribute("graph_structure", graph_structure)
 
         # The start_time is now automatically set when creating the SpanHolder
 
