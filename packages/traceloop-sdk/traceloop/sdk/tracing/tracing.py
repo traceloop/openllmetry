@@ -976,7 +976,7 @@ def init_voyageai_instrumentor():
 def init_watsonx_instrumentor():
     try:
         if is_package_installed("ibm-watsonx-ai") or is_package_installed(
-            "ibm-watson-machine-learning"
+            "ibm_watson_machine_learning"
         ):
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
