@@ -226,13 +226,17 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
 
             # Try to get content from various sources
             content = None
-            if hasattr(generation, "text") and generation.text:
+            if hasattr(generation, "message") and generation.message:
+                if hasattr(generation.message, "text") and generation.message.text:
+                    content = generation.message.text
+                elif generation.message.content:
+                    if isinstance(generation.message.content, str):
+                        content = generation.message.content
+                    else:
+                        content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
+            elif hasattr(generation, "text") and generation.text:
+                # Non-chat completions (plain Generation objects)
                 content = generation.text
-            elif hasattr(generation, "message") and generation.message and generation.message.content:
-                if isinstance(generation.message.content, str):
-                    content = generation.message.content
-                else:
-                    content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
 
             if content:
                 _set_span_attribute(
