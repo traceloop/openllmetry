@@ -33,7 +33,7 @@ def test_team_discussion(instrument, span_exporter, reader):
 
     discussion_team = Team(
         name="DiscussionTeam",
-        delegate_task_to_all_members=True,
+        delegate_to_all_members=True,
         model=OpenAIChat(id="gpt-4o-mini"),
         members=[technical_expert, business_expert],
         instructions=[

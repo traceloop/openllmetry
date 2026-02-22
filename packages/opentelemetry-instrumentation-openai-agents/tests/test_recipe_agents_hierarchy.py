@@ -36,6 +36,7 @@ class EditResponse(BaseModel):
 @dataclass
 class ChatContext:
     """Standalone context for the chat application."""
+
     conversation_history: List[Dict[str, str]] = None
 
     def __post_init__(self):
@@ -75,9 +76,7 @@ SAMPLE_RECIPE_DATA = {
 
 
 @function_tool
-async def search_recipes(
-    cw: RunContextWrapper[ChatContext], query: str = ""
-) -> SearchResponse:
+async def search_recipes(cw: RunContextWrapper[ChatContext], query: str = "") -> SearchResponse:
     """Search and browse recipes in the database."""
     # Simulate finding the carbonara recipe
     if "carbonara" in query.lower():
@@ -104,8 +103,9 @@ async def plan_and_apply_recipe_modifications(
 ) -> EditResponse:
     """Plan modifications to a recipe based on user request and apply them."""
     # Mock implementation - simulate making the recipe vegetarian
-    modified_ingredients = [ing.replace("pancetta", "mushrooms").replace("guanciale", "mushrooms")
-                            for ing in recipe.ingredients]
+    modified_ingredients = [
+        ing.replace("pancetta", "mushrooms").replace("guanciale", "mushrooms") for ing in recipe.ingredients
+    ]
 
     modified_recipe = Recipe(
         id=recipe.id,
@@ -221,8 +221,9 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
     # Main Chat Agent might not create its own span if it immediately hands off
     # The important thing is that we have the handoff span and recipe editor spans
-    assert len(
-        recipe_editor_spans) >= 1, f"Should have at least 1 Recipe Editor Agent span, found {len(recipe_editor_spans)}"
+    assert len(recipe_editor_spans) >= 1, (
+        f"Should have at least 1 Recipe Editor Agent span, found {len(recipe_editor_spans)}"
+    )
 
     recipe_editor_span = recipe_editor_spans[0]
 
@@ -233,8 +234,7 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
     if recipe_editor_parent:
         assert recipe_editor_parent.name == "Agent Workflow", (
-            f"Recipe Editor Agent parent should be Agent Workflow, got "
-            f"{recipe_editor_parent.name}"
+            f"Recipe Editor Agent parent should be Agent Workflow, got {recipe_editor_parent.name}"
         )
 
     # Verify handoff span exists and is properly parented
@@ -250,8 +250,7 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
         # Handoff should be child of Main Chat Agent if it exists, otherwise workflow
         expected_parents = ["Main Chat Agent.agent", "Agent Workflow"]
         assert handoff_parent.name in expected_parents, (
-            f"Handoff span parent should be Main Chat Agent or Agent Workflow, got "
-            f"{handoff_parent.name}"
+            f"Handoff span parent should be Main Chat Agent or Agent Workflow, got {handoff_parent.name}"
         )
 
     # If Main Chat Agent span exists, verify its hierarchy
@@ -263,8 +262,7 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
         if main_chat_parent:
             assert main_chat_parent.name == "Agent Workflow", (
-                f"Main Chat Agent parent should be Agent Workflow, got "
-                f"{main_chat_parent.name}"
+                f"Main Chat Agent parent should be Agent Workflow, got {main_chat_parent.name}"
             )
 
     # Test openai.response spans - these should contain prompts, completions, and usage
@@ -274,27 +272,24 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
     # Verify each response span has prompts, completions, and usage
     for i, response_span in enumerate(response_spans):
-
         # Check for prompts
         has_prompt = any(key.startswith("gen_ai.prompt.") for key in response_span.attributes.keys())
         assert has_prompt, (
-            f"Response span {i} should have prompt attributes, attributes: "
-            f"{dict(response_span.attributes)}"
+            f"Response span {i} should have prompt attributes, attributes: {dict(response_span.attributes)}"
         )
 
         # Check for completions
         has_completion = any(key.startswith("gen_ai.completion.") for key in response_span.attributes.keys())
         assert has_completion, (
-            f"Response span {i} should have completion attributes, attributes: "
-            f"{dict(response_span.attributes)}"
+            f"Response span {i} should have completion attributes, attributes: {dict(response_span.attributes)}"
         )
 
         # Check for usage
-        has_usage = any(key.startswith("gen_ai.usage.") or key.startswith("llm.usage.")
-                        for key in response_span.attributes.keys())
+        has_usage = any(
+            key.startswith("gen_ai.usage.") or key.startswith("llm.usage.") for key in response_span.attributes.keys()
+        )
         assert has_usage, (
-            f"Response span {i} should have usage attributes, attributes: "
-            f"{dict(response_span.attributes)}"
+            f"Response span {i} should have usage attributes, attributes: {dict(response_span.attributes)}"
         )
 
         # Check specific expected attributes

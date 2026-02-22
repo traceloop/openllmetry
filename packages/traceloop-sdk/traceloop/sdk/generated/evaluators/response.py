@@ -21,8 +21,8 @@ class AgentFlowQualityResponse(BaseModel):
     reason: str | None = Field(
         None, examples=['Agent followed the expected flow correctly']
     )
-    result: str | None = Field(None, examples=['pass'])
     score: float | None = Field(None, examples=[0.89])
+    success: bool | None = Field(None, examples=[True])
 
 
 class AgentGoalAccuracyResponse(BaseModel):
@@ -31,23 +31,23 @@ class AgentGoalAccuracyResponse(BaseModel):
 
 class AgentGoalCompletenessResponse(BaseModel):
     reason: str | None = Field(None, examples=['All user goals were accomplished'])
-    result: str | None = Field(None, examples=['complete'])
     score: float | None = Field(None, examples=[0.95])
+    success: bool | None = Field(None, examples=[True])
 
 
 class AgentToolErrorDetectorResponse(BaseModel):
     reason: str | None = Field(
         None, examples=['Tool executed successfully without errors']
     )
-    result: str | None = Field(None, examples=['success'])
+    success: bool | None = Field(None, examples=[True])
 
 
 class AgentToolTrajectoryResponse(BaseModel):
     reason: str | None = Field(
         None, examples=['Tool calls match the expected trajectory']
     )
-    result: str | None = Field(None, examples=['pass'])
     score: float | None = Field(None, examples=[0.85])
+    success: bool | None = Field(None, examples=[True])
 
 
 class AnswerCompletenessResponse(BaseModel):
@@ -95,11 +95,11 @@ class InstructionAdherenceResponse(BaseModel):
 
 
 class IntentChangeResponse(BaseModel):
-    pass_: bool | None = Field(None, alias='pass', examples=[True])
     reason: str | None = Field(
         None, examples=['User intent remained consistent throughout the conversation']
     )
     score: int | None = Field(None, examples=[1])
+    success: bool | None = Field(None, examples=[True])
 
 
 class JSONValidatorResponse(BaseModel):
@@ -119,11 +119,11 @@ class PlaceholderRegexResponse(BaseModel):
 
 
 class ProfanityDetectorResponse(BaseModel):
-    has_profanity: bool | None = Field(None, examples=[False])
+    is_safe: bool | None = Field(None, examples=[False])
 
 
 class PromptInjectionResponse(BaseModel):
-    has_injection: str | None = Field(None, examples=['safe'])
+    has_injection: bool | None = Field(None, examples=[False])
 
 
 class PromptPerplexityResponse(BaseModel):
@@ -146,8 +146,8 @@ class SemanticSimilarityResponse(HtmlComparisonResponse):
     pass
 
 
-class SexismDetectorResponse(BaseModel):
-    is_safe: str | None = Field(None, examples=['safe'])
+class SexismDetectorResponse(ProfanityDetectorResponse):
+    pass
 
 
 class ToneDetectionResponse(BaseModel):
@@ -159,7 +159,7 @@ class TopicAdherenceResponse(BaseModel):
     adherence_score: float | None = Field(None, examples=[0.95])
 
 
-class ToxicityDetectorResponse(SexismDetectorResponse):
+class ToxicityDetectorResponse(ProfanityDetectorResponse):
     pass
 
 

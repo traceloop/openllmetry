@@ -29,9 +29,9 @@ pytest_plugins = []
 SET_AGENT_NAME_MOCK = MagicMock()
 
 # Create proper module mocks using types.ModuleType for better type safety
-mock_traceloop = types.ModuleType('traceloop')
-mock_sdk = types.ModuleType('traceloop.sdk')
-mock_tracing = types.ModuleType('traceloop.sdk.tracing')
+mock_traceloop = types.ModuleType("traceloop")
+mock_sdk = types.ModuleType("traceloop.sdk")
+mock_tracing = types.ModuleType("traceloop.sdk.tracing")
 
 # Set up the module hierarchy and add our mock function
 mock_tracing.set_agent_name = SET_AGENT_NAME_MOCK
@@ -39,9 +39,9 @@ mock_sdk.tracing = mock_tracing
 mock_traceloop.sdk = mock_sdk
 
 # Install mocks in sys.modules before any imports occur
-sys.modules['traceloop'] = mock_traceloop
-sys.modules['traceloop.sdk'] = mock_sdk
-sys.modules['traceloop.sdk.tracing'] = mock_tracing
+sys.modules["traceloop"] = mock_traceloop
+sys.modules["traceloop.sdk"] = mock_sdk
+sys.modules["traceloop.sdk.tracing"] = mock_tracing
 
 
 @pytest.fixture
@@ -102,9 +102,7 @@ def test_agent():
         name="testAgent",
         instructions="You are a helpful assistant that answers all questions",
         model="gpt-4.1",
-        model_settings=ModelSettings(
-            temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3
-        ),
+        model_settings=ModelSettings(temperature=0.3, max_tokens=1024, top_p=0.2, frequency_penalty=1.3),
     )
     return test_agent
 
@@ -138,13 +136,8 @@ def web_search_tool_agent():
 
 @pytest.fixture(scope="session")
 def handoff_agent():
-
-    agent_a = Agent(
-        name="AgentA", instructions="Agent A does something.", model="gpt-4.1"
-    )
-    agent_b = Agent(
-        name="AgentB", instructions="Agent B does something else.", model="gpt-4.1"
-    )
+    agent_a = Agent(name="AgentA", instructions="Agent A does something.", model="gpt-4.1")
+    agent_b = Agent(name="AgentB", instructions="Agent B does something else.", model="gpt-4.1")
 
     class HandoffExample(BaseModel):
         message: str
@@ -239,15 +232,10 @@ def recipe_workflow_agents():
         )
 
     @function_tool
-    async def plan_and_apply_recipe_modifications(
-        recipe: Recipe, modification_request: str
-    ) -> EditResponse:
+    async def plan_and_apply_recipe_modifications(recipe: Recipe, modification_request: str) -> EditResponse:
         """Plan modifications to a recipe based on user request and apply them."""
 
-        if (
-            "vegetarian" in modification_request.lower()
-            and "carbonara" in recipe.name.lower()
-        ):
+        if "vegetarian" in modification_request.lower() and "carbonara" in recipe.name.lower():
             modified_recipe = Recipe(
                 id=recipe.id,
                 name="Vegetarian Carbonara",

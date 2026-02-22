@@ -34,6 +34,7 @@ class Instruments(Enum):
     TRANSFORMERS = "transformers"
     URLLIB3 = "urllib3"
     VERTEXAI = "vertexai"
+    VOYAGEAI = "voyageai"
     WATSONX = "watsonx"
     WEAVIATE = "weaviate"
     WRITER = "writer"
