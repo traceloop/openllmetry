@@ -2,11 +2,49 @@ from pathlib import Path
 
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
+from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
 from .utils import verify_metrics
+
+
+def _verify_caching_attributes(
+    cache_creation_span: ReadableSpan,
+    cache_read_span: ReadableSpan,
+    input_tokens: int,
+    cache_creation_span_output_tokens: int,
+    cache_read_span_output_tokens: int,
+    cached_tokens: int,
+):
+    assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
+    )
+
+    # first check that cache_creation_span only wrote to cache, but not read from it,
+    assert cache_creation_span.attributes["gen_ai.usage.cache_read_input_tokens"] == 0
+    assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"] != 0
+    )
+
+    # then check for exact figures for the fixture/cassette
+    assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cached_tokens
+    )
+    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == input_tokens
+    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == cache_creation_span_output_tokens
+
+    # first check that cache_read_span only read from cache, but not wrote to it,
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] != 0
+    assert cache_read_span.attributes["gen_ai.usage.cache_creation_input_tokens"] == 0
+
+    # then check for exact figures for the fixture/cassette
+    assert cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"] == cached_tokens
+    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == input_tokens
+    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == cache_read_span_output_tokens
 
 
 @pytest.mark.vcr
@@ -71,6 +109,11 @@ def test_anthropic_prompt_caching_legacy(
     assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
 
     assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
+    )
+
+    assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
         == "msg_01EF3r8zYyZntM4Sg9a5kc6k"
     )
@@ -82,11 +125,7 @@ def test_anthropic_prompt_caching_legacy(
     assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
-    # assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 187
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 202
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -150,11 +189,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 187
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 202
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -316,11 +351,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 187
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1167
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 202
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -426,11 +457,7 @@ async def test_anthropic_prompt_caching_async_legacy(
     assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 207
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 224
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -495,11 +522,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 207
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 224
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -667,11 +690,12 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 207
+    assert (
+        cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
+        == cache_read_span.attributes["gen_ai.usage.cache_read_input_tokens"]
+    )
 
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 224
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -780,11 +804,7 @@ def test_anthropic_prompt_caching_stream_legacy(
     assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
     assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 202
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 222
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 202, 222, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -852,11 +872,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 202
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 222
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 202, 222, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -1029,11 +1045,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 202
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1169
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 222
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 202, 222, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -1142,11 +1154,7 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
     assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
     assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 290
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 257
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1171, 290, 257, 1167)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -1215,11 +1223,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 290
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 257
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1171, 290, 257, 1167)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -1403,11 +1407,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_creation_span.attributes["gen_ai.usage.output_tokens"] == 290
-
-    assert cache_read_span.attributes["gen_ai.usage.input_tokens"] == 1171
-    assert cache_read_span.attributes["gen_ai.usage.output_tokens"] == 257
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 1171, 290, 257, 1167)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
