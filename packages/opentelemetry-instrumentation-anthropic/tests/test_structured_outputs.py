@@ -4,7 +4,6 @@ import pytest
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 
 JOKE_SCHEMA = {
@@ -65,9 +64,9 @@ def test_anthropic_structured_outputs_legacy(
         == "assistant"
     )
 
-    assert SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA in anthropic_span.attributes
+    assert "gen_ai.request.structured_output_schema" in anthropic_span.attributes
     schema_attr = json.loads(
-        anthropic_span.attributes[SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA]
+        anthropic_span.attributes["gen_ai.request.structured_output_schema"]
     )
     assert "properties" in schema_attr
     assert "joke" in schema_attr["properties"]
