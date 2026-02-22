@@ -224,6 +224,34 @@ def exporters_with_multiple_span_processors():
 
 
 @pytest.fixture
+def exporter_with_trace_content_override():
+    # Clear singleton if existed
+    _trace_wrapper_instance = None
+    if hasattr(TracerWrapper, "instance"):
+        _trace_wrapper_instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    # Set environment variable to false
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+
+    # Create exporter with trace_content=True to override env var
+    exporter = InMemorySpanExporter()
+    Traceloop.init(
+        exporter=exporter,
+        disable_batch=True,
+        trace_content=True  # This should override the env var
+    )
+
+    yield exporter
+
+    # Restore singleton if any
+    if _trace_wrapper_instance:
+        TracerWrapper.instance = _trace_wrapper_instance
+    # Clean up environment
+    del os.environ["TRACELOOP_TRACE_CONTENT"]
+
+
+@pytest.fixture
 def datasets():
     """Create a Datasets instance with HTTP client for VCR recording/playback"""
     api_key = os.environ.get("TRACELOOP_API_KEY", "fake-key-for-vcr-playback")
