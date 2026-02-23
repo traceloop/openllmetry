@@ -137,7 +137,10 @@ async def run_agents_experiment():
     evaluators = [
         EvaluatorMadeByTraceloop.agent_goal_accuracy(),
         EvaluatorMadeByTraceloop.agent_tool_error_detector(),
-        EvaluatorMadeByTraceloop.agent_flow_quality(conditions=["create_itinerary tool should be called last"], threshold=0.8),
+        EvaluatorMadeByTraceloop.agent_flow_quality(
+            conditions=["create_itinerary tool should be called last"],
+            threshold=0.8,
+        ),
         EvaluatorMadeByTraceloop.agent_efficiency(),
         EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.8),
     ]
