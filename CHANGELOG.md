@@ -1,3 +1,10 @@
+## v0.52.5 (2026-02-23)
+
+### Fix
+
+- **traceloop-sdk**: Add evaluator config to the evaluator validator (#3706)
+- **anthropic**: restore accidentally lost cache tokens attributes (#3648)
+
 ## v0.52.4 (2026-02-19)
 
 ### Fix

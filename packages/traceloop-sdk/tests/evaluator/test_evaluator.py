@@ -1,5 +1,8 @@
 import pytest
-from traceloop.sdk.evaluator.evaluator import validate_and_normalize_task_output
+from traceloop.sdk.evaluator.evaluator import (
+    validate_and_normalize_task_output,
+    _validate_evaluator_input,
+)
 from traceloop.sdk.evaluator.config import EvaluatorDetails
 
 
@@ -221,3 +224,106 @@ class TestValidateTaskOutput:
         assert "pii-detector requires:" in error_message
         assert "tone-analyzer requires:" in error_message
         assert "sentiment-analyzer requires:" in error_message
+
+
+class TestValidateEvaluatorInput:
+    """Tests for _validate_evaluator_input function"""
+
+    def test_validate_input_no_request_model(self):
+        """Validation passes for unknown slugs (no request model registered)."""
+        # Should not raise - unknown slug has no model to validate against
+        _validate_evaluator_input("unknown-evaluator", {"text": "hello"})
+
+    def test_validate_input_valid_input_only(self):
+        """Validation passes for evaluators that only require input (no config)."""
+        _validate_evaluator_input(
+            "pii-detector",
+            {"text": "Please contact John at john@email.com"},
+        )
+
+    def test_validate_input_missing_required_input_field(self):
+        """Validation fails when a required input field is missing."""
+        with pytest.raises(ValueError, match="Invalid input for 'pii-detector'"):
+            _validate_evaluator_input("pii-detector", {"wrong_field": "value"})
+
+    def test_validate_input_with_optional_config(self):
+        """Validation passes for evaluators with optional config when config is provided."""
+        _validate_evaluator_input(
+            "pii-detector",
+            {"text": "Some text"},
+            evaluator_config={"probability_threshold": 0.8},
+        )
+
+    def test_validate_input_with_optional_config_omitted(self):
+        """Validation passes for evaluators with optional config when config is omitted."""
+        _validate_evaluator_input(
+            "toxicity-detector",
+            {"text": "Some text"},
+        )
+
+    def test_validate_agent_flow_quality_with_required_config(self):
+        """Validation passes for agent-flow-quality when config is provided."""
+        _validate_evaluator_input(
+            "agent-flow-quality",
+            {
+                "trajectory_completions": '["Found 5 flights"]',
+                "trajectory_prompts": '["Search for flights"]',
+            },
+            evaluator_config={
+                "conditions": ["no tools called"],
+                "threshold": 0.5,
+            },
+        )
+
+    def test_validate_agent_flow_quality_missing_config_fails(self):
+        """Validation fails for agent-flow-quality when required config is missing."""
+        with pytest.raises(ValueError, match="Invalid input for 'agent-flow-quality'"):
+            _validate_evaluator_input(
+                "agent-flow-quality",
+                {
+                    "trajectory_completions": '["Found 5 flights"]',
+                    "trajectory_prompts": '["Search for flights"]',
+                },
+            )
+
+    def test_validate_agent_flow_quality_missing_input_fields(self):
+        """Validation fails for agent-flow-quality when required input fields are missing."""
+        with pytest.raises(ValueError, match="Invalid input for 'agent-flow-quality'"):
+            _validate_evaluator_input(
+                "agent-flow-quality",
+                {"wrong_field": "value"},
+                evaluator_config={
+                    "conditions": ["no tools called"],
+                    "threshold": 0.5,
+                },
+            )
+
+    def test_validate_agent_goal_completeness_optional_config(self):
+        """agent-goal-completeness has optional config - passes with or without it."""
+        input_data = {
+            "trajectory_completions": '["Account created"]',
+            "trajectory_prompts": '["Create new account"]',
+        }
+        # Without config
+        _validate_evaluator_input("agent-goal-completeness", input_data)
+        # With config
+        _validate_evaluator_input(
+            "agent-goal-completeness",
+            input_data,
+            evaluator_config={"threshold": 0.5},
+        )
+
+    def test_validate_agent_tool_trajectory_optional_config(self):
+        """agent-tool-trajectory has optional config - passes with or without it."""
+        input_data = {
+            "executed_tool_calls": '[{"name": "search", "input": {"query": "weather"}}]',
+            "expected_tool_calls": '[{"name": "search", "input": {"query": "weather"}}]',
+        }
+        # Without config
+        _validate_evaluator_input("agent-tool-trajectory", input_data)
+        # With config
+        _validate_evaluator_input(
+            "agent-tool-trajectory",
+            input_data,
+            evaluator_config={"order_sensitive": True, "threshold": 0.5},
+        )
