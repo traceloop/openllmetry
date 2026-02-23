@@ -58,7 +58,7 @@ async def generate_customer_response() -> str:
 async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[pii_guard(probability_threshold=0.7, timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
@@ -89,7 +89,7 @@ async def generate_content() -> str:
 async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[toxicity_guard(threshold=0.7)],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
@@ -161,7 +161,7 @@ async def agent_trajectory_example():
             trajectory_completions=json.dumps(trajectory_completions)
         )]
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[agent_goal_completeness_guard(threshold=0.7)],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )

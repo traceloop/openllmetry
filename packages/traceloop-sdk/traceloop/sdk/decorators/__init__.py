@@ -271,7 +271,7 @@ def guardrail(
                 from traceloop.sdk import Traceloop
 
                 client = Traceloop.get()
-                g = client.guardrails.create(
+                g = client.create_guardrail(
                     guards=guards_list,
                     on_failure=failure_handler,
                     name=name or func.__name__,
@@ -288,7 +288,7 @@ def guardrail(
                 from traceloop.sdk import Traceloop
 
                 client = Traceloop.get()
-                g = client.guardrails.create(
+                g = client.create_guardrail(
                     guards=guards_list,
                     on_failure=failure_handler,
                     name=name or func.__name__,

@@ -14,7 +14,7 @@ Example:
     async def generate_email() -> str:
         return await llm.complete("Write a customer email...")
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[pii_guard()],
         on_failure=OnFailure.raise_exception("PII detected in response"),
     )

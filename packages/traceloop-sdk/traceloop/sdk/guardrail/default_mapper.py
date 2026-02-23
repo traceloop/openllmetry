@@ -31,7 +31,7 @@ def default_input_mapper(output: Any, num_guards: int) -> list[dict]:
             "prompt": output,
             "completion": output
         }
-        return [input_dict] * num_guards
+        return [dict(input_dict) for _ in range(num_guards)]
 
     if isinstance(output, dict):
         # Enrich dict with aliases for compatibility with various evaluators
@@ -46,7 +46,7 @@ def default_input_mapper(output: Any, num_guards: int) -> list[dict]:
             enriched.setdefault("completion", output["answer"])
         if "context" in output:
             enriched.setdefault("context", [output["context"]])
-        return [enriched] * num_guards
+        return [dict(enriched) for _ in range(num_guards)]
 
     raise ValueError(
         f"Default mapper cannot handle type {type(output).__name__}. "

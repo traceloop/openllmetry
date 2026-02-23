@@ -18,11 +18,10 @@ class TestGuardrailDecoratorBasic:
     async def test_decorator_passes_through_result_when_guards_pass(self):
         """Decorator returns function result when all guards pass."""
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="guarded result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -34,7 +33,7 @@ class TestGuardrailDecoratorBasic:
             result = await my_function("Hello")
 
         assert result == "guarded result"
-        mock_guardrails.create.assert_called_once()
+        mock_client.create_guardrail.assert_called_once()
         mock_guardrails.run.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -44,7 +43,6 @@ class TestGuardrailDecoratorBasic:
         captured_kwargs = []
 
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
 
         # Capture the func_to_guard and execute it
         async def run_side_effect(func_to_guard, input_mapper=None):
@@ -54,7 +52,7 @@ class TestGuardrailDecoratorBasic:
         mock_guardrails.run = AsyncMock(side_effect=run_side_effect)
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -75,11 +73,10 @@ class TestGuardrailDecoratorBasic:
     async def test_decorator_uses_default_function_name(self):
         """Decorator uses function name when name not provided."""
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -91,18 +88,17 @@ class TestGuardrailDecoratorBasic:
             await my_named_function()
 
         # Check that create was called with the function name
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         assert create_call.kwargs.get("name") == "my_named_function"
 
     @pytest.mark.asyncio
     async def test_decorator_uses_custom_name_when_provided(self):
         """Decorator uses custom name when provided."""
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -117,7 +113,7 @@ class TestGuardrailDecoratorBasic:
 
             await my_function()
 
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         assert create_call.kwargs.get("name") == "custom-guardrail-name"
 
 
@@ -126,7 +122,7 @@ class TestGuardrailDecoratorGuards:
 
     @pytest.mark.asyncio
     async def test_decorator_passes_guards_to_create(self):
-        """Decorator passes guards list to guardrails.create()."""
+        """Decorator passes guards list to create_guardrail()."""
 
         def guard1(z):
             return z["score"] > 0.5
@@ -135,11 +131,10 @@ class TestGuardrailDecoratorGuards:
             return "bad" not in z["text"]
 
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -150,7 +145,7 @@ class TestGuardrailDecoratorGuards:
 
             await my_function()
 
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         assert create_call.kwargs.get("guards") == [guard1, guard2]
 
     @pytest.mark.asyncio
@@ -161,11 +156,10 @@ class TestGuardrailDecoratorGuards:
             return [{"text": r}]
 
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -189,15 +183,14 @@ class TestGuardrailDecoratorOnFailure:
 
     @pytest.mark.asyncio
     async def test_decorator_passes_on_failure_to_create(self):
-        """Decorator passes on_failure handler to guardrails.create()."""
+        """Decorator passes on_failure handler to create_guardrail()."""
         on_failure_handler = OnFailure.return_value("fallback")
 
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -208,18 +201,17 @@ class TestGuardrailDecoratorOnFailure:
 
             await my_function()
 
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         assert create_call.kwargs.get("on_failure") == on_failure_handler
 
     @pytest.mark.asyncio
     async def test_decorator_uses_default_raise_exception_on_failure(self):
         """Decorator uses raise_exception as default on_failure."""
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -230,7 +222,7 @@ class TestGuardrailDecoratorOnFailure:
 
             await my_function()
 
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         on_failure = create_call.kwargs.get("on_failure")
         # Default should be a callable (OnFailure.raise_exception())
         assert callable(on_failure)
@@ -239,11 +231,10 @@ class TestGuardrailDecoratorOnFailure:
     async def test_decorator_converts_string_on_failure_to_return_value(self):
         """Decorator converts string on_failure to OnFailure.return_value()."""
         mock_guardrails = MagicMock()
-        mock_guardrails.create.return_value = mock_guardrails
         mock_guardrails.run = AsyncMock(return_value="result")
 
         mock_client = MagicMock()
-        mock_client.guardrails = mock_guardrails
+        mock_client.create_guardrail.return_value = mock_guardrails
 
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
@@ -254,7 +245,7 @@ class TestGuardrailDecoratorOnFailure:
 
             await my_function()
 
-        create_call = mock_guardrails.create.call_args
+        create_call = mock_client.create_guardrail.call_args
         on_failure = create_call.kwargs.get("on_failure")
         # Should be a callable that returns the string
         assert callable(on_failure)

@@ -54,9 +54,9 @@ def traceloop_client(async_http_client):
 
 
 @pytest.fixture
-def guardrails(async_http_client):
-    """Create guardrails instance with async HTTP client."""
-    return Guardrails(async_http_client)
+def async_http(async_http_client):
+    """Provide async HTTP client for creating guardrails."""
+    return async_http_client
 
 
 class TestPIIDetectorGuard:
@@ -65,12 +65,12 @@ class TestPIIDetectorGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_pii_detector_guard_passes_clean_text(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """PII detector guard passes when text has no PII."""
         guard = pii_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.raise_exception("PII detected"),
             name="pii-check",
@@ -86,12 +86,12 @@ class TestPIIDetectorGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_pii_detector_guard_fails_with_email(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """PII detector guard fails when text contains email."""
         guard = pii_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.log(),
             name="pii-check",
@@ -111,12 +111,12 @@ class TestToxicityDetectorGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_toxicity_detector_guard_passes_friendly_text(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Toxicity detector guard passes for friendly text."""
         guard = toxicity_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.raise_exception("Toxic content"),
             name="toxicity-check",
@@ -132,12 +132,12 @@ class TestToxicityDetectorGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_toxicity_detector_guard_fails_toxic_text(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Toxicity detector guard fails for toxic text."""
         guard = toxicity_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.log(),
             name="toxicity-check",
@@ -157,12 +157,12 @@ class TestAnswerRelevancyGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_answer_relevancy_passes_relevant_answer(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Answer relevancy guard passes for relevant answer."""
         guard = answer_relevancy_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.raise_exception("Answer not relevant"),
             name="relevancy-check",
@@ -181,12 +181,12 @@ class TestAnswerRelevancyGuard:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_answer_relevancy_fails_irrelevant_answer(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Answer relevancy guard fails for irrelevant answer."""
         guard = answer_relevancy_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[guard],
             on_failure=OnFailure.log(),
             name="relevancy-check",
@@ -209,13 +209,13 @@ class TestMultipleGuardsValidation:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_validate_multiple_guards_all_pass(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Multiple guards all pass validation."""
         pii_g = pii_guard()
         toxicity_g = toxicity_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[pii_g, toxicity_g],
             on_failure=OnFailure.raise_exception("Guard failed"),
             name="content-safety",
@@ -233,13 +233,13 @@ class TestMultipleGuardsValidation:
     @pytest.mark.vcr
     @pytest.mark.anyio
     async def test_validate_multiple_guards_one_fails(
-        self, guardrails, traceloop_client
+        self, async_http, traceloop_client
     ):
         """Multiple guards where one fails validation."""
         pii_g = pii_guard()
         toxicity_g = toxicity_guard()
 
-        g = guardrails.create(
+        g = Guardrails(async_http,
             guards=[pii_g, toxicity_g],
             on_failure=OnFailure.log(),
             name="content-safety",

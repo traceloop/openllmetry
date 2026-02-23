@@ -73,7 +73,7 @@ async def multiple_lambda_guards_example():
             {"caps_ratio": caps_ratio},   # For capitalization guard
         ]
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[
             lambda z: z["word_count"] < 200,           # Guard 0: Length check
             lambda z: "danger" not in z["text"].lower(),  # Guard 1: Forbidden words
@@ -144,7 +144,7 @@ async def mixed_guard_types_example():
             {"text": text},                # Guard 1: Custom function input (dict)
         ]
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[
             pii_guard(probability_threshold=0.7),
             business_rules_guard,
@@ -188,7 +188,7 @@ async def run_all_guards_example():
         print(f"[Handler] Content failed validation: {output.result[:50]}...")
         return "Content did not meet our quality standards. Please try again."
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[
             lambda z: z["word_count"] > 5,                    # Min length
             lambda z: "dangerous" not in z["text"].lower(),   # No dangerous
@@ -251,7 +251,7 @@ async def sequential_guards_example():
         print(f"  Running {z['step']}...")
         return len(z["text"].split()) >= 3
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[pre_check, main_check, post_check],
         on_failure=OnFailure.raise_exception("Sequential validation failed"),
         parallel=False,  # Run guards one at a time, in order

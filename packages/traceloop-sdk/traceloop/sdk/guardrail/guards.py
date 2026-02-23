@@ -1,7 +1,7 @@
 """
 Simplified guard factory with sensible defaults.
 
-Provides pre-configured guards ready for use with client.guardrails.create().
+Provides pre-configured guards ready for use with client.create_guardrail().
 
 Example:
     from traceloop.sdk import Traceloop
@@ -9,7 +9,7 @@ Example:
 
     client = Traceloop.init(api_key="...")
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[
             toxicity_guard(),
             pii_guard(),
@@ -48,7 +48,7 @@ def _create_guard(
         timeout_in_sec: Maximum time to wait for evaluator execution
 
     Returns:
-        Async function suitable for client.guardrails.create(guards=[...])
+        Async function suitable for client.create_guardrail(guards=[...])
     """
 
     evaluator_slug = evaluator_details.slug

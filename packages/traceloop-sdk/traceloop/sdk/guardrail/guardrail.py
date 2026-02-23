@@ -26,7 +26,6 @@ from .span_attributes import (
     GEN_AI_GUARDRAIL_ERROR_TYPE,
     GEN_AI_GUARDRAIL_ERROR_MESSAGE,
 )
-from traceloop.sdk.evaluator.evaluator import Evaluator
 from .on_failure import OnFailure
 from .default_mapper import default_input_mapper
 from .model import (
@@ -44,11 +43,11 @@ class Guardrails:
     """
     Guardrails class for running guarded operations.
 
-    Access via the Traceloop client:
+    Create via the Traceloop client:
         client = Traceloop.init(api_key="...")
 
     Usage:
-        g = client.guardrails.create(
+        g = client.create_guardrail(
             guards=[
                 lambda z: z["score"] > 0.8,
                 pii_guard(),
@@ -58,66 +57,43 @@ class Guardrails:
         result = await g.run(my_function)
     """
 
-    _evaluator: Evaluator
     _async_http: httpx.AsyncClient
     _guards: list[Guard]
-    _on_failure: Optional[OnFailureHandler]
+    _on_failure: OnFailureHandler
     _run_all: bool
     _parallel: bool
     _name: str
 
-    def __init__(self, async_http_client: httpx.AsyncClient):
-        self._async_http = async_http_client
-        self._evaluator = Evaluator(async_http_client)
-        self._guards = []
-        self._on_failure = None
-        self._run_all = False
-        self._parallel = True
-        self._name = ""
-
-    def create(
+    def __init__(
         self,
+        async_http_client: httpx.AsyncClient,
         guards: list[Guard],
         on_failure: OnFailureHandler = OnFailure.raise_exception(),
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
-    ) -> "Guardrails":
+    ):
         """
-        Create a new guardrail instance with the given guards and failure handler.
+        Create a new guardrail instance.
 
         Args:
-            name: Identifier for this guardrail configuration. Used as the
-                  gen_ai.guardrail span attribute.
+            async_http_client: HTTP client for evaluator API calls.
             guards: List of guard functions. Each receives its corresponding
                     guard_input and returns bool. True = pass, False = fail.
             on_failure: Called when any guard returns False.
+            name: Identifier for this guardrail configuration. Used as the
+                  gen_ai.guardrail span attribute.
             run_all: If True, run all guards before handling failures.
                      If False (default), stop at first failure.
             parallel: If True (default), run guards in parallel.
                       If False, run guards sequentially.
-
-        Returns:
-            Guardrails: A new instance configured with the given guards.
-
-        Example:
-            g = client.guardrails.create(
-                name="quality-check",
-                guards=[
-                    lambda z: z["score"] > 0.8,
-                    pii_guard(),
-                ],
-                on_failure=OnFailure.raise_exception("Guard failed"),
-                parallel=True,
-            )
         """
-        instance = Guardrails(self._async_http)
-        instance._name = name
-        instance._guards = guards
-        instance._on_failure = on_failure
-        instance._run_all = run_all
-        instance._parallel = parallel
-        return instance
+        self._async_http = async_http_client
+        self._guards = guards
+        self._on_failure = on_failure
+        self._name = name
+        self._run_all = run_all
+        self._parallel = parallel
 
     def _validate_inputs(self, guard_inputs: list[Any]) -> None:
         """
@@ -299,8 +275,6 @@ class Guardrails:
         """
         Execute a function with guardrail protection.
 
-        Must call create() first to configure guards and on_failure.
-
         Args:
             func_to_guard: Async function that returns any type.
             input_mapper: Optional function to convert output to guard inputs.
@@ -312,10 +286,9 @@ class Guardrails:
         Raises:
             GuardValidationError: If any guard returns False and on_failure raises
             GuardExecutionError: If a guard function throws an exception
-            ValueError: If create() was not called or guard_inputs length doesn't match
 
         Example:
-            g = client.guardrails.create(
+            g = client.create_guardrail(
                 guards=[toxicity_guard()],
                 on_failure=OnFailure.raise_exception("Quality check failed"),
             )
@@ -327,8 +300,6 @@ class Guardrails:
                 input_mapper=lambda r: [{"text": r.content}]
             )
         """
-        if not self._guards or self._on_failure is None:
-            raise ValueError("Must call create() before run()")
 
         with get_tracer() as tracer:
             span_name = f"{self._name}.guardrail" if self._name else "guardrail"
@@ -371,28 +342,23 @@ class Guardrails:
         """
         Run guards on inputs directly, without wrapping in a function.
 
-        Must call create() first to configure guards.
-
         Args:
             guard_inputs: List of inputs for each guard (must match number of guards)
-            on_failure: Optional handler to override the class-configured on_failure
+            on_failure: Optional handler to override the configured on_failure
 
         Returns:
             bool: True if all guards pass, False if any guard fails
 
         Raises:
             GuardExecutionError: If a guard function throws an exception
-            ValueError: If create() was not called or guard_inputs length doesn't match
 
         Example:
-            g = client.guardrails.create(
+            g = client.create_guardrail(
                 guards=[lambda z: z["score"] > 0.8],
                 on_failure=OnFailure.log(),
             )
             passed = await g.validate([{"score": 0.9}])  # Returns True
         """
-        if not self._guards:
-            raise ValueError("Must call create() before validate()")
 
         failure_handler = on_failure if on_failure is not None else self._on_failure
 

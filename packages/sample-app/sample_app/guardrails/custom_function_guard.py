@@ -25,7 +25,7 @@ from traceloop.sdk.guardrail import (
 )
 
 # Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-custom-function", disable_batch=True)
+client = Traceloop.init(app_name="guardrail-custom-function", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -51,7 +51,7 @@ async def simple_lambda_guard_example():
 
 
     try:
-        guardrail = client.guardrails.create(
+        guardrail = client.create_guardrail(
             guards=[lambda z: z["word_count"] < 100],
             on_failure=OnFailure.raise_exception("Summary too long"),
         )
@@ -109,7 +109,7 @@ async def custom_function_guard_example():
         return completion.choices[0].message.content
 
     try:
-        guardrail = client.guardrails.create(
+        guardrail = client.create_guardrail(
             guards=[content_safety_guard],  # Pass function reference
             on_failure=OnFailure.raise_exception("Content failed safety checks"),
         )
@@ -146,7 +146,7 @@ async def custom_handler_example():
         raise GuardValidationError("Blocked after alerting team", output)
 
     try:
-        guardrail = client.guardrails.create(
+        guardrail = client.create_guardrail(
             guards=[lambda z: "danger" not in z["text"].lower()],
             on_failure=custom_alert_handler,
         )
@@ -177,7 +177,7 @@ async def fallback_value_example():
         return completion.choices[0].message.content
 
     # Return a safe fallback instead of raising
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[lambda z: "risk" not in z["text"].lower()],
         on_failure=OnFailure.return_value(
             "I'd recommend visiting a local museum or taking a guided walking tour - "

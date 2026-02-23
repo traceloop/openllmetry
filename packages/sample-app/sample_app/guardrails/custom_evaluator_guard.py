@@ -121,7 +121,7 @@ async def diagnosis_request_blocker():
         )
         return completion.choices[0].message.content
 
-    guardrail = client.guardrails.create(
+    guardrail = client.create_guardrail(
         guards=[custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
