@@ -8,16 +8,17 @@ from unittest.mock import MagicMock, AsyncMock
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import GuardExecutionError
-from traceloop.sdk.guardrail.on_failure import OnFailure
+from traceloop.sdk.guardrail.on_failure import noop
 
 
 def create_guardrails_with_guards(guards: list, on_failure=None) -> Guardrails:
     """Helper to create a Guardrails instance with specified guards."""
     mock_client = MagicMock()
-    guardrails = Guardrails(mock_client)
-    guardrails._guards = guards
-    guardrails._on_failure = on_failure or OnFailure.noop()
-    return guardrails
+    return Guardrails(
+        mock_client,
+        guards=guards,
+        on_failure=on_failure or noop(),
+    )
 
 
 class TestValidateReturnsTrue:
@@ -166,18 +167,6 @@ class TestValidateErrors:
     """Tests for error handling in validate."""
 
     @pytest.mark.asyncio
-    async def test_raises_value_error_without_create(self):
-        """Validate raises ValueError if create() was not called."""
-        mock_client = MagicMock()
-        guardrails = Guardrails(mock_client)
-        # _guards is empty since create() was not called
-
-        with pytest.raises(ValueError) as exc_info:
-            await guardrails.validate([{"score": 0.8}])
-
-        assert "Must call create() before validate()" in str(exc_info.value)
-
-    @pytest.mark.asyncio
     async def test_raises_value_error_on_input_length_mismatch(self):
         """Validate raises ValueError when input count doesn't match guards."""
         guardrails = create_guardrails_with_guards(
@@ -222,8 +211,11 @@ class TestValidateParallelSequential:
             call_order.append(2)
             return True
 
-        guardrails = create_guardrails_with_guards(guards=[guard1, guard2])
-        guardrails._parallel = True
+        mock_client = MagicMock()
+        guardrails = Guardrails(
+            mock_client, guards=[guard1, guard2],
+            on_failure=noop(), parallel=True,
+        )
 
         result = await guardrails.validate([{"a": 1}, {"b": 2}])
 
@@ -233,13 +225,12 @@ class TestValidateParallelSequential:
     @pytest.mark.asyncio
     async def test_sequential_execution(self):
         """Validate runs guards sequentially when parallel=False."""
-        guardrails = create_guardrails_with_guards(
-            guards=[
-                lambda z: z["pass"],
-                lambda z: z["pass"],
-            ]
+        mock_client = MagicMock()
+        guardrails = Guardrails(
+            mock_client,
+            guards=[lambda z: z["pass"], lambda z: z["pass"]],
+            on_failure=noop(), parallel=False,
         )
-        guardrails._parallel = False
 
         result = await guardrails.validate([
             {"pass": True},
@@ -257,11 +248,12 @@ class TestValidateParallelSequential:
             call_count[0] += 1
             return data.get("pass", False)
 
-        guardrails = create_guardrails_with_guards(
-            guards=[counting_guard, counting_guard, counting_guard]
+        mock_client = MagicMock()
+        guardrails = Guardrails(
+            mock_client,
+            guards=[counting_guard, counting_guard, counting_guard],
+            on_failure=noop(), parallel=False, run_all=False,
         )
-        guardrails._parallel = False
-        guardrails._run_all = False
 
         result = await guardrails.validate([
             {"pass": False},  # First guard fails

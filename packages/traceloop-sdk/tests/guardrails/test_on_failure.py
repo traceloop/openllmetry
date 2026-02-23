@@ -1,11 +1,11 @@
 """
 Unit tests for guardrail failure handlers.
 
-Tests all built-in failure handlers from the OnFailure class.
+Tests all built-in failure handler functions.
 """
 import logging
 import pytest
-from traceloop.sdk.guardrail.on_failure import OnFailure
+from traceloop.sdk.guardrail.on_failure import raise_exception, log, noop, return_value
 from traceloop.sdk.guardrail.model import GuardedResult, GuardValidationError
 
 
@@ -15,11 +15,11 @@ class CustomException(Exception):
 
 
 class TestOnFailureRaiseException:
-    """Tests for OnFailure.raise_exception()."""
+    """Tests for raise_exception()."""
 
     def test_raise_exception_with_default_message(self):
         """Test raise_exception with default message."""
-        handler = OnFailure.raise_exception()
+        handler = raise_exception()
         output = GuardedResult(
             result="test result",
             guard_inputs=[{"text": "test input"}]
@@ -33,7 +33,7 @@ class TestOnFailureRaiseException:
 
     def test_raise_exception_with_custom_message(self):
         """Test raise_exception with custom message."""
-        handler = OnFailure.raise_exception("PII detected in response")
+        handler = raise_exception("PII detected in response")
         output = GuardedResult(
             result="email@example.com",
             guard_inputs=[{"text": "email@example.com"}]
@@ -46,7 +46,7 @@ class TestOnFailureRaiseException:
 
     def test_raise_exception_with_custom_exception_type(self):
         """Test raise_exception with custom exception type."""
-        handler = OnFailure.raise_exception(
+        handler = raise_exception(
             message="Custom error",
             exception_type=CustomException
         )
@@ -62,7 +62,7 @@ class TestOnFailureRaiseException:
 
     def test_raise_exception_includes_guard_inputs(self):
         """Test that exception includes guard_inputs in string representation."""
-        handler = OnFailure.raise_exception("Validation failed")
+        handler = raise_exception("Validation failed")
         output = GuardedResult(
             result="result",
             guard_inputs=[{"score": 0.3, "threshold": 0.5}]
@@ -77,16 +77,16 @@ class TestOnFailureRaiseException:
 
     def test_raise_exception_handler_callable(self):
         """Test that raise_exception returns a callable handler."""
-        handler = OnFailure.raise_exception()
+        handler = raise_exception()
         assert callable(handler)
 
 
 class TestOnFailureLog:
-    """Tests for OnFailure.log()."""
+    """Tests for log()."""
 
     def test_log_with_default_level(self, caplog):
         """Test log with default WARNING level."""
-        handler = OnFailure.log()
+        handler = log()
         output = GuardedResult(
             result="test result",
             guard_inputs=[{"text": "test input"}]
@@ -106,7 +106,7 @@ class TestOnFailureLog:
 
     def test_log_with_custom_level_info(self, caplog):
         """Test log with custom INFO level."""
-        handler = OnFailure.log(level=logging.INFO)
+        handler = log(level=logging.INFO)
         output = GuardedResult(
             result="test result",
             guard_inputs=[{"text": "test input"}]
@@ -120,7 +120,7 @@ class TestOnFailureLog:
 
     def test_log_with_custom_level_error(self, caplog):
         """Test log with custom ERROR level."""
-        handler = OnFailure.log(level=logging.ERROR)
+        handler = log(level=logging.ERROR)
         output = GuardedResult(
             result="test result",
             guard_inputs=[{"text": "test input"}]
@@ -134,7 +134,7 @@ class TestOnFailureLog:
 
     def test_log_with_custom_message(self, caplog):
         """Test log with custom message."""
-        handler = OnFailure.log(message="Toxic content detected")
+        handler = log(message="Toxic content detected")
         output = GuardedResult(
             result="bad content",
             guard_inputs=[{"text": "bad content", "score": 0.9}]
@@ -147,7 +147,7 @@ class TestOnFailureLog:
 
     def test_log_returns_original_result(self, caplog):
         """Test that log returns the original result unchanged."""
-        handler = OnFailure.log()
+        handler = log()
         output = GuardedResult(
             result={"data": "complex result", "nested": {"value": 42}},
             guard_inputs=[{"input": "test"}]
@@ -160,7 +160,7 @@ class TestOnFailureLog:
 
     def test_log_includes_guard_inputs_in_message(self, caplog):
         """Test that log message includes guard_inputs count."""
-        handler = OnFailure.log(message="Security check failed")
+        handler = log(message="Security check failed")
         output = GuardedResult(
             result="result",
             guard_inputs=[{"ip": "192.168.1.1", "user": "admin"}]
@@ -177,11 +177,11 @@ class TestOnFailureLog:
 
 
 class TestOnFailureNoop:
-    """Tests for OnFailure.noop()."""
+    """Tests for noop()."""
 
     def test_noop_returns_original_result(self):
         """Test that noop returns the original result."""
-        handler = OnFailure.noop()
+        handler = noop()
         output = GuardedResult(
             result="original result",
             guard_inputs=[{"text": "input"}]
@@ -192,7 +192,7 @@ class TestOnFailureNoop:
 
     def test_noop_returns_complex_result(self):
         """Test that noop returns complex results unchanged."""
-        handler = OnFailure.noop()
+        handler = noop()
         complex_result = {
             "data": [1, 2, 3],
             "nested": {"key": "value"},
@@ -209,7 +209,7 @@ class TestOnFailureNoop:
 
     def test_noop_no_side_effects(self, caplog):
         """Test that noop has no side effects (no logging, no exceptions)."""
-        handler = OnFailure.noop()
+        handler = noop()
         output = GuardedResult(
             result="result",
             guard_inputs=[{"text": "input"}]
@@ -225,16 +225,16 @@ class TestOnFailureNoop:
 
     def test_noop_handler_callable(self):
         """Test that noop returns a callable handler."""
-        handler = OnFailure.noop()
+        handler = noop()
         assert callable(handler)
 
 
 class TestOnFailureReturnValue:
-    """Tests for OnFailure.return_value()."""
+    """Tests for return_value()."""
 
     def test_return_value_with_string(self):
         """Test return_value with string fallback."""
-        handler = OnFailure.return_value("Sorry, I can't help with that.")
+        handler = return_value("Sorry, I can't help with that.")
         output = GuardedResult(
             result="original result",
             guard_inputs=[{"text": "blocked content"}]
@@ -246,7 +246,7 @@ class TestOnFailureReturnValue:
     def test_return_value_with_dict(self):
         """Test return_value with dict fallback."""
         fallback = {"error": "blocked", "reason": "PII detected"}
-        handler = OnFailure.return_value(fallback)
+        handler = return_value(fallback)
         output = GuardedResult(
             result="original result",
             guard_inputs=[{"text": "email@example.com"}]
@@ -257,7 +257,7 @@ class TestOnFailureReturnValue:
 
     def test_return_value_with_none(self):
         """Test return_value with None fallback."""
-        handler = OnFailure.return_value(None)
+        handler = return_value(None)
         output = GuardedResult(
             result="original result",
             guard_inputs=[{"text": "input"}]
@@ -277,7 +277,7 @@ class TestOnFailureReturnValue:
                 "severity": "high"
             }
         }
-        handler = OnFailure.return_value(fallback)
+        handler = return_value(fallback)
         output = GuardedResult(
             result="original result",
             guard_inputs=[{"text": "sensitive data"}]
@@ -291,7 +291,7 @@ class TestOnFailureReturnValue:
     def test_return_value_ignores_original_result(self):
         """Test that return_value ignores the original result completely."""
         fallback = "fallback value"
-        handler = OnFailure.return_value(fallback)
+        handler = return_value(fallback)
 
         # Test with various original results
         output1 = GuardedResult(result="ignored", guard_inputs=[{}])
@@ -305,7 +305,7 @@ class TestOnFailureReturnValue:
     def test_return_value_with_list(self):
         """Test return_value with list fallback."""
         fallback = ["error", "blocked", "retry"]
-        handler = OnFailure.return_value(fallback)
+        handler = return_value(fallback)
         output = GuardedResult(
             result="original",
             guard_inputs=[{"text": "input"}]
@@ -317,7 +317,7 @@ class TestOnFailureReturnValue:
 
     def test_return_value_with_number(self):
         """Test return_value with numeric fallback."""
-        handler = OnFailure.return_value(0)
+        handler = return_value(0)
         output = GuardedResult(
             result=100,
             guard_inputs=[{"score": 0.3}]

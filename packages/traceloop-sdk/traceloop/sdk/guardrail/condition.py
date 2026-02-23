@@ -10,146 +10,142 @@ conditions, so conditions receive the field value directly.
 from typing import Any, Callable
 
 
-class Condition:
-    """Built-in conditions for common evaluator result patterns."""
+def is_true() -> Callable[[Any], bool]:
+    """
+    Pass if value is True.
 
-    @staticmethod
-    def is_true() -> Callable[[Any], bool]:
-        """
-        Pass if value is True.
+    Example:
+        toxicity_guard(condition=is_true())
+    """
 
-        Example:
-            toxicity_guard(condition=Condition.is_true())
-        """
+    def check(value: Any) -> bool:
+        return value is True
 
-        def check(value: Any) -> bool:
-            return value is True
+    return check
 
-        return check
 
-    @staticmethod
-    def is_false() -> Callable[[Any], bool]:
-        """
-        Pass if value is False.
+def is_false() -> Callable[[Any], bool]:
+    """
+    Pass if value is False.
 
-        Example:
-            pii_guard(condition=Condition.is_false())
-        """
+    Example:
+        pii_guard(condition=is_false())
+    """
 
-        def check(value: Any) -> bool:
-            return value is False
+    def check(value: Any) -> bool:
+        return value is False
 
-        return check
+    return check
 
-    @staticmethod
-    def between(min_val: float, max_val: float) -> Callable[[Any], bool]:
-        """
-        Pass if min_val <= value <= max_val.
 
-        Args:
-            min_val: Minimum acceptable value (inclusive)
-            max_val: Maximum acceptable value (inclusive)
+def between(min_val: float, max_val: float) -> Callable[[Any], bool]:
+    """
+    Pass if min_val <= value <= max_val.
 
-        Example:
-            condition=Condition.between(50, 200)
-        """
+    Args:
+        min_val: Minimum acceptable value (inclusive)
+        max_val: Maximum acceptable value (inclusive)
 
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(min_val <= value <= max_val)
+    Example:
+        condition=between(50, 200)
+    """
 
-        return check
+    def check(value: Any) -> bool:
+        if value is None:
+            return False
+        return bool(min_val <= value <= max_val)
 
-    @staticmethod
-    def equals(expected: Any) -> Callable[[Any], bool]:
-        """
-        Pass if value == expected.
+    return check
 
-        Args:
-            expected: The expected value
 
-        Example:
-            condition=Condition.equals("approved")
-        """
+def equals(expected: Any) -> Callable[[Any], bool]:
+    """
+    Pass if value == expected.
 
-        def check(value: Any) -> bool:
-            return bool(value == expected)
+    Args:
+        expected: The expected value
 
-        return check
+    Example:
+        condition=equals("approved")
+    """
 
-    @staticmethod
-    def greater_than(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value > threshold.
+    def check(value: Any) -> bool:
+        return bool(value == expected)
 
-        Args:
-            threshold: The threshold (exclusive)
+    return check
 
-        Example:
-            condition=Condition.greater_than(0.8)
-        """
 
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value > threshold)
+def greater_than(threshold: float) -> Callable[[Any], bool]:
+    """
+    Pass if value > threshold.
 
-        return check
+    Args:
+        threshold: The threshold (exclusive)
 
-    @staticmethod
-    def less_than(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value < threshold.
+    Example:
+        condition=greater_than(0.8)
+    """
 
-        Args:
-            threshold: The threshold (exclusive)
+    def check(value: Any) -> bool:
+        if value is None:
+            return False
+        return bool(value > threshold)
 
-        Example:
-            condition=Condition.less_than(0.5)
-        """
+    return check
 
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value < threshold)
 
-        return check
+def less_than(threshold: float) -> Callable[[Any], bool]:
+    """
+    Pass if value < threshold.
 
-    @staticmethod
-    def greater_than_or_equal(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value >= threshold.
+    Args:
+        threshold: The threshold (exclusive)
 
-        Args:
-            threshold: The threshold (inclusive)
+    Example:
+        condition=less_than(0.5)
+    """
 
-        Example:
-            condition=Condition.greater_than_or_equal(0.8)
-        """
+    def check(value: Any) -> bool:
+        if value is None:
+            return False
+        return bool(value < threshold)
 
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value >= threshold)
+    return check
 
-        return check
 
-    @staticmethod
-    def less_than_or_equal(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value <= threshold.
+def greater_than_or_equal(threshold: float) -> Callable[[Any], bool]:
+    """
+    Pass if value >= threshold.
 
-        Args:
-            threshold: The threshold (inclusive)
+    Args:
+        threshold: The threshold (inclusive)
 
-        Example:
-            condition=Condition.less_than_or_equal(0.5)
-        """
+    Example:
+        condition=greater_than_or_equal(0.8)
+    """
 
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value <= threshold)
+    def check(value: Any) -> bool:
+        if value is None:
+            return False
+        return bool(value >= threshold)
 
-        return check
+    return check
+
+
+def less_than_or_equal(threshold: float) -> Callable[[Any], bool]:
+    """
+    Pass if value <= threshold.
+
+    Args:
+        threshold: The threshold (inclusive)
+
+    Example:
+        condition=less_than_or_equal(0.5)
+    """
+
+    def check(value: Any) -> bool:
+        if value is None:
+            return False
+        return bool(value <= threshold)
+
+    return check

@@ -14,7 +14,7 @@ from openai import AsyncOpenAI
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, guardrail
-from traceloop.sdk.guardrail import OnFailure, toxicity_guard
+from traceloop.sdk.guardrail import return_value, toxicity_guard
 
 # Initialize Traceloop (required for @guardrail decorator)
 Traceloop.init(app_name="guardrail-decorator-example", disable_batch=True, endpoint_is_traceloop=True)
@@ -25,7 +25,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_KEY"))
 @guardrail(
     toxicity_guard(),
     name="toxicity-response-guard",
-    on_failure=OnFailure.return_value("Sorry, I cannot provide that response."),
+    on_failure=return_value("Sorry, I cannot provide that response."),
 )
 async def generate_response(user_prompt: str) -> str:
     """Generate LLM response - automatically guarded by decorator."""

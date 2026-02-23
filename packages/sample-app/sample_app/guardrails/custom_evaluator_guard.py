@@ -31,7 +31,8 @@ from pydantic import BaseModel
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, guardrail
 from traceloop.sdk.guardrail import (
-    OnFailure,
+    raise_exception,
+    return_value,
     custom_evaluator_guard,
 )
 
@@ -54,7 +55,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ======================================================================
 @guardrail(
     custom_evaluator_guard(evaluator_slug="medicaladvice"),
-    on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
+    on_failure=return_value(value="Sorry, I can't help you with that."),
     name="medical_advice_quality_check",
 )
 async def generate_health_info() -> str:
@@ -123,7 +124,7 @@ async def diagnosis_request_blocker():
 
     guardrail = client.create_guardrail(
         guards=[custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
-        on_failure=OnFailure.raise_exception(
+        on_failure=raise_exception(
             "This appears to be a request for medical diagnosis. "
             "Please consult a qualified healthcare professional for symptoms that concern you."
         ),

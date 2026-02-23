@@ -14,7 +14,7 @@ To playback without API key:
 import os
 import pytest
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrail import Guardrails, OnFailure, pii_guard, toxicity_guard, answer_relevancy_guard
+from traceloop.sdk.guardrail import Guardrails, raise_exception, log, pii_guard, toxicity_guard, answer_relevancy_guard
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -72,7 +72,7 @@ class TestPIIDetectorGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.raise_exception("PII detected"),
+            on_failure=raise_exception("PII detected"),
             name="pii-check",
         )
 
@@ -93,7 +93,7 @@ class TestPIIDetectorGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.log(),
+            on_failure=log(),
             name="pii-check",
         )
 
@@ -118,7 +118,7 @@ class TestToxicityDetectorGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.raise_exception("Toxic content"),
+            on_failure=raise_exception("Toxic content"),
             name="toxicity-check",
         )
 
@@ -139,7 +139,7 @@ class TestToxicityDetectorGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.log(),
+            on_failure=log(),
             name="toxicity-check",
         )
 
@@ -164,7 +164,7 @@ class TestAnswerRelevancyGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.raise_exception("Answer not relevant"),
+            on_failure=raise_exception("Answer not relevant"),
             name="relevancy-check",
         )
 
@@ -188,7 +188,7 @@ class TestAnswerRelevancyGuard:
 
         g = Guardrails(async_http,
             guards=[guard],
-            on_failure=OnFailure.log(),
+            on_failure=log(),
             name="relevancy-check",
         )
 
@@ -217,7 +217,7 @@ class TestMultipleGuardsValidation:
 
         g = Guardrails(async_http,
             guards=[pii_g, toxicity_g],
-            on_failure=OnFailure.raise_exception("Guard failed"),
+            on_failure=raise_exception("Guard failed"),
             name="content-safety",
             parallel=True,
         )
@@ -241,7 +241,7 @@ class TestMultipleGuardsValidation:
 
         g = Guardrails(async_http,
             guards=[pii_g, toxicity_g],
-            on_failure=OnFailure.log(),
+            on_failure=log(),
             name="content-safety",
             parallel=True,
         )
