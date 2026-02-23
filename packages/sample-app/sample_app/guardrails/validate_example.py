@@ -23,7 +23,10 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
     GuardValidationError,
-    Guards,
+    prompt_injection_guard,
+    answer_relevancy_guard,
+    sexism_guard,
+    toxicity_guard,
 )
 from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
@@ -33,7 +36,7 @@ from traceloop.sdk.generated.evaluators.request import (
 )
 
 # Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-validate-example", disable_batch=True)
+client = Traceloop.init(app_name="guardrail-validate-example", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_KEY"))
 
@@ -68,7 +71,7 @@ async def secure_chat(user_prompt: str) -> str:
     prompt_guardrail = client.guardrails.create(
         name="prompt-injection-guardrail",
         guards=[
-            Guards.prompt_injection(threshold=0.7, timeout_in_sec=30),
+            prompt_injection_guard(threshold=0.7, timeout_in_sec=30),
         ],
     )
 
@@ -88,9 +91,9 @@ async def secure_chat(user_prompt: str) -> str:
     output_guardrail = client.guardrails.create(
         name="output-guardrail",
         guards=[
-            Guards.answer_relevancy(),
-            Guards.sexism_detector(threshold=0.9),
-            Guards.toxicity_detector(),
+            answer_relevancy_guard(),
+            sexism_guard(threshold=0.9),
+            toxicity_guard(),
         ],
     )
 

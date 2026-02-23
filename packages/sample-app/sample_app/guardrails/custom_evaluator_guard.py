@@ -32,7 +32,7 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, guardrail
 from traceloop.sdk.guardrail import (
     OnFailure,
-    Guards,
+    custom_evaluator_guard,
 )
 
 
@@ -45,7 +45,7 @@ class MedicalAdviceInput(BaseModel):
 
 
 # Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True)
+client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -53,7 +53,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Example 1: Medical Advice Quality Check (PASS Case) - Using Decorator
 # ======================================================================
 @guardrail(
-    guards=[Guards.custom_evaluator_guard(evaluator_slug="medicaladvice")],
+    custom_evaluator_guard(evaluator_slug="medicaladvice"),
     on_failure=OnFailure.return_value(value="Sorry, I can't help you with that."),
     name="medical_advice_quality_check",
 )
@@ -122,7 +122,7 @@ async def diagnosis_request_blocker():
         return completion.choices[0].message.content
 
     guardrail = client.guardrails.create(
-        guards=[Guards.custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
+        guards=[custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
         on_failure=OnFailure.raise_exception(
             "This appears to be a request for medical diagnosis. "
             "Please consult a qualified healthcare professional for symptoms that concern you."

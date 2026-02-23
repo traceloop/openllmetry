@@ -17,7 +17,9 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
     OnFailure,
-    Guards,
+    pii_guard,
+    toxicity_guard,
+    agent_goal_completeness_guard,
 )
 from traceloop.sdk.generated.evaluators.request import (
     ToxicityDetectorInput,
@@ -26,7 +28,7 @@ from traceloop.sdk.generated.evaluators.request import (
 )
 
 # Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-traceloop-evaluator", disable_batch=True)
+client = Traceloop.init(app_name="guardrail-traceloop-evaluator", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -57,7 +59,7 @@ async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
     guardrail = client.guardrails.create(
-        guards=[Guards.pii_detector(probability_threshold=0.7, timeout_in_sec=45)],
+        guards=[pii_guard(probability_threshold=0.7, timeout_in_sec=45)],
         on_failure=OnFailure.raise_exception(message="PII detected in response"),
     )
     result = await guardrail.run(
@@ -88,7 +90,7 @@ async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
     guardrail = client.guardrails.create(
-        guards=[Guards.toxicity_detector(threshold=0.7)],
+        guards=[toxicity_guard(threshold=0.7)],
         on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
     )
     result = await guardrail.run(
@@ -160,7 +162,7 @@ async def agent_trajectory_example():
         )]
 
     guardrail = client.guardrails.create(
-        guards=[Guards.agent_goal_completeness(threshold=0.7)],
+        guards=[agent_goal_completeness_guard(threshold=0.7)],
         on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
     )
     result = await guardrail.run(run_travel_agent, input_mapper=create_trajectory_input)

@@ -25,12 +25,12 @@ from traceloop.sdk.guardrail import (
     OnFailure,
     GuardValidationError,
     GuardedResult,
-    Guards,
+    pii_guard,
 )
 from traceloop.sdk.generated.evaluators.request import PIIDetectorInput
 
 # Initialize Traceloop
-client = Traceloop.init(app_name="guardrail-multiple-guards", disable_batch=True)
+client = Traceloop.init(app_name="guardrail-multiple-guards", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -146,7 +146,7 @@ async def mixed_guard_types_example():
 
     guardrail = client.guardrails.create(
         guards=[
-            Guards.pii_detector(probability_threshold=0.7),
+            pii_guard(probability_threshold=0.7),
             business_rules_guard,
         ],
         on_failure=OnFailure.raise_exception("Response failed safety or business rules"),
