@@ -1,0 +1,42 @@
+interactions:
+- request:
+    body: '{"query": "What is the capital of France?", "documents": ["Paris is the
+      capital of France and is known for the Eiffel Tower.", "London is the capital
+      of England and has Big Ben.", "Berlin is the capital of Germany."], "model":
+      "rerank-2-lite", "top_k": 2, "truncation": true}'
+    headers:
+      Content-Type:
+      - application/json
+    method: post
+    uri: https://api.voyageai.com/v1/rerank
+  response:
+    body:
+      string: '{"object":"list","data":[{"relevance_score":0.69140625,"index":0},{"relevance_score":0.494140625,"index":2}],"model":"rerank-2-lite","usage":{"total_tokens":43}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '161'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 29 Jan 2026 09:08:24 GMT
+      Server:
+      - uvicorn
+      Via:
+      - 1.1 google
+      x-api-warning:
+      - You have not yet added your payment method in the billing page and will have
+        reduced rate limits of 3 RPM and 10K TPM. To unlock our standard rate limits,
+        please add a payment method in the billing page for the appropriate organization
+        in the user dashboard (https://dashboard.voyageai.com/). Even with payment
+        methods entered, the free tokens (200M tokens for Voyage series 3) will still
+        apply. After adding a payment method, you should see your rate limits increase
+        after several minutes. See our pricing docs (https://docs.voyageai.com/docs/pricing)
+        for the free tokens for your model.
+      x-request-id:
+      - a3b8cb22c96286209d427a8ce8b0ea9a
+    status:
+      code: 200
+      message: OK
+version: 1
