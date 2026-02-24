@@ -1,5 +1,6 @@
-from typing import Any, Optional, TypeVar, Callable, ParamSpec, Union
+from typing import Any, Optional, TypeVar, Callable, ParamSpec
 import asyncio
+import concurrent.futures
 import warnings
 import inspect
 from functools import wraps
@@ -217,7 +218,7 @@ def atool(
 def guardrail(
     *guards: Guard,
     input_mapper: InputMapper | None = None,
-    on_failure: Union[OnFailureHandler, str, None] = None,
+    on_failure: OnFailureHandler | str | None = None,
     name: str = "",
 ) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
     """
@@ -294,12 +295,20 @@ def guardrail(
                     name=name or func.__name__,
                 )
                 # Run async guardrail in event loop for sync functions
-                return asyncio.run(
-                    g.run(
-                        lambda: asyncio.to_thread(func, *args, **kwargs),
-                        input_mapper=input_mapper,
-                    )
+                to_run = g.run(
+                    lambda: asyncio.to_thread(func, *args, **kwargs),
+                    input_mapper=input_mapper,
                 )
+
+                try:
+                    asyncio.get_running_loop()
+                    # Inside an existing event loop (Jupyter, Django, etc.)
+                    # Run in a separate thread with its own event loop
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                        return pool.submit(asyncio.run, to_run).result()
+                except RuntimeError:
+                    # No event loop running — safe to use asyncio.run()
+                    return asyncio.run(to_run)
 
             return sync_wrapper  # type: ignore[return-value]
 

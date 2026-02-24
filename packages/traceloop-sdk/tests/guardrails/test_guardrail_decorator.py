@@ -320,3 +320,46 @@ class TestGuardrailDecoratorSyncSupport:
 
         # Check that docstring is preserved
         assert sync_documented_function.__doc__ == "This is a sync function docstring."
+
+    def test_sync_wrapper_runs_without_event_loop(self):
+        """Sync wrapper works when no event loop is running."""
+        mock_guardrails = MagicMock()
+        mock_guardrails.run = AsyncMock(return_value="sync result")
+
+        mock_client = MagicMock()
+        mock_client.create_guardrail.return_value = mock_guardrails
+
+        with patch("traceloop.sdk.Traceloop") as mock_traceloop:
+            mock_traceloop.get.return_value = mock_client
+
+            @guardrail(lambda z: True, on_failure=OnFailure.noop())
+            def my_sync_function(x: int) -> str:
+                return f"value: {x}"
+
+            result = my_sync_function(42)
+
+        assert result == "sync result"
+        mock_guardrails.run.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_sync_wrapper_runs_inside_existing_event_loop(self):
+        """Sync wrapper works when called from within a running event loop."""
+        mock_guardrails = MagicMock()
+        mock_guardrails.run = AsyncMock(return_value="sync result from loop")
+
+        mock_client = MagicMock()
+        mock_client.create_guardrail.return_value = mock_guardrails
+
+        with patch("traceloop.sdk.Traceloop") as mock_traceloop:
+            mock_traceloop.get.return_value = mock_client
+
+            @guardrail(lambda z: True, on_failure=OnFailure.noop())
+            def my_sync_function(x: int) -> str:
+                return f"value: {x}"
+
+            # We're inside an async test, so there IS a running event loop.
+            # This would crash with the old asyncio.run() approach.
+            result = my_sync_function(42)
+
+        assert result == "sync result from loop"
+        mock_guardrails.run.assert_awaited_once()
