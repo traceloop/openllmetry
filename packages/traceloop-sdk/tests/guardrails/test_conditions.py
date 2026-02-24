@@ -64,6 +64,62 @@ class TestConditionIsFalse:
         assert condition([]) is False
 
 
+class TestConditionIsTruthy:
+    """Tests for Condition.is_truthy()."""
+
+    def test_is_truthy_with_true(self):
+        condition = Condition.is_truthy()
+        assert condition(True) is True
+
+    def test_is_truthy_with_false(self):
+        condition = Condition.is_truthy()
+        assert condition(False) is False
+
+    def test_is_truthy_with_none(self):
+        condition = Condition.is_truthy()
+        assert condition(None) is False
+
+    def test_is_truthy_with_truthy_values(self):
+        condition = Condition.is_truthy()
+        assert condition(1) is True
+        assert condition("yes") is True
+        assert condition([1, 2]) is True
+
+    def test_is_truthy_with_falsy_values(self):
+        condition = Condition.is_truthy()
+        assert condition(0) is False
+        assert condition("") is False
+        assert condition([]) is False
+
+
+class TestConditionIsFalsy:
+    """Tests for Condition.is_falsy()."""
+
+    def test_is_falsy_with_false(self):
+        condition = Condition.is_falsy()
+        assert condition(False) is True
+
+    def test_is_falsy_with_true(self):
+        condition = Condition.is_falsy()
+        assert condition(True) is False
+
+    def test_is_falsy_with_none(self):
+        condition = Condition.is_falsy()
+        assert condition(None) is True
+
+    def test_is_falsy_with_falsy_values(self):
+        condition = Condition.is_falsy()
+        assert condition(0) is True
+        assert condition("") is True
+        assert condition([]) is True
+
+    def test_is_falsy_with_truthy_values(self):
+        condition = Condition.is_falsy()
+        assert condition(1) is False
+        assert condition("yes") is False
+        assert condition([1, 2]) is False
+
+
 class TestConditionEquals:
     """Tests for Condition.equals()."""
 

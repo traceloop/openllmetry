@@ -16,28 +16,68 @@ class Condition:
     @staticmethod
     def is_true() -> Callable[[Any], bool]:
         """
-        Pass if value is True.
+        Pass if value is exactly True (must be a bool).
+
+        Rejects non-boolean types like 1 or "yes".
+        For truthy checking, use is_truthy() instead.
 
         Example:
             toxicity_guard(condition=Condition.is_true())
         """
 
-        def check(value: Any) -> bool:
-            return value is True
+        def check(value: bool) -> bool:
+            return isinstance(value, bool) and value is True
 
         return check
 
     @staticmethod
     def is_false() -> Callable[[Any], bool]:
         """
-        Pass if value is False.
+        Pass if value is exactly False (must be a bool).
+
+        Rejects non-boolean types like 0 or "".
+        For falsy checking, use is_falsy() instead.
 
         Example:
             pii_guard(condition=Condition.is_false())
         """
 
+        def check(value: bool) -> bool:
+            return isinstance(value, bool) and value is False
+
+        return check
+
+    @staticmethod
+    def is_truthy() -> Callable[[Any], bool]:
+        """
+        Pass if value is truthy (bool(value) is True).
+
+        Unlike is_true(), this accepts truthy values like 1, "yes",
+        non-empty lists.
+
+        Example:
+            guard(condition=Condition.is_truthy())
+        """
+
         def check(value: Any) -> bool:
-            return value is False
+            return bool(value)
+
+        return check
+
+    @staticmethod
+    def is_falsy() -> Callable[[Any], bool]:
+        """
+        Pass if value is falsy (bool(value) is False).
+
+        Unlike is_false(), this accepts falsy values like 0, "",
+        empty lists.
+
+        Example:
+            guard(condition=Condition.is_falsy())
+        """
+
+        def check(value: Any) -> bool:
+            return not bool(value)
 
         return check
 

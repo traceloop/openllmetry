@@ -99,7 +99,7 @@ async def secure_chat(user_prompt: str) -> str:
 
 
     result = await output_guardrail.run(
-        lambda: generate_response(user_prompt),
+        generate_response, user_prompt,
         input_mapper=lambda response_text: [
             AnswerRelevancyInput(answer=response_text, question=user_prompt),
             SexismDetectorInput(text=response_text),

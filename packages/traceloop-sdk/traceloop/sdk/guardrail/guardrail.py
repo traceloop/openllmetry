@@ -269,16 +269,20 @@ class Guardrails:
 
     async def run(
         self,
-        func_to_guard: Callable[[], Awaitable[Any]],
+        func_to_guard: Callable[..., Awaitable[Any]],
+        *args: Any,
         input_mapper: InputMapper | None = None,
+        **kwargs: Any,
     ) -> Any | FailureResult:
         """
         Execute a function with guardrail protection.
 
         Args:
             func_to_guard: Async function that returns any type.
+            *args: Positional arguments to pass to func_to_guard.
             input_mapper: Optional function to convert output to guard inputs.
                           If not provided, default mapper handles str and dict.
+            **kwargs: Keyword arguments to pass to func_to_guard.
 
         Returns:
             The result from func_to_guard, or the on_failure return value.
@@ -293,6 +297,9 @@ class Guardrails:
                 on_failure=OnFailure.raise_exception("Quality check failed"),
             )
             result = await g.run(generate_email)
+
+            # With arguments
+            result = await g.run(generate_response, user_prompt)
 
             # With custom mapper
             result = await g.run(
@@ -310,7 +317,7 @@ class Guardrails:
                     span.set_attribute(GEN_AI_GUARDRAIL_NAME, self._name)
 
                 # 1. Execute func_to_guard
-                result = await func_to_guard()
+                result = await func_to_guard(*args, **kwargs)
 
                 # 2. Convert result to guard inputs
                 if input_mapper:

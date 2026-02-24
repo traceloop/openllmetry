@@ -20,6 +20,9 @@ Example:
     )
     result = await guardrail.run(generate_email)
 
+    # With arguments
+    result = await guardrail.run(generate_response, user_prompt)
+
     # With custom input mapper
     result = await guardrail.run(
         generate_email,
