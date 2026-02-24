@@ -22,7 +22,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
-    raise_exception,
+    OnFailure,
     GuardValidationError,
     GuardedResult,
     pii_guard,
@@ -79,7 +79,7 @@ async def multiple_lambda_guards_example():
             lambda z: "danger" not in z["text"].lower(),  # Guard 1: Forbidden words
             lambda z: z["caps_ratio"] < 0.3,           # Guard 2: No excessive caps
         ],
-        on_failure=raise_exception("Content failed validation checks"),
+        on_failure=OnFailure.raise_exception("Content failed validation checks"),
         parallel=True,
     )
 
@@ -149,7 +149,7 @@ async def mixed_guard_types_example():
             pii_guard(probability_threshold=0.7),
             business_rules_guard,
         ],
-        on_failure=raise_exception("Response failed safety or business rules"),
+        on_failure=OnFailure.raise_exception("Response failed safety or business rules"),
     )
 
     try:
@@ -253,7 +253,7 @@ async def sequential_guards_example():
 
     guardrail = client.create_guardrail(
         guards=[pre_check, main_check, post_check],
-        on_failure=raise_exception("Sequential validation failed"),
+        on_failure=OnFailure.raise_exception("Sequential validation failed"),
         parallel=False,  # Run guards one at a time, in order
         run_all=False,   # Stop at first failure (default)
     )

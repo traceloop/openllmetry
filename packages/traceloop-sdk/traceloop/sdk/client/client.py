@@ -6,7 +6,7 @@ from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import Guard, OnFailureHandler
-from traceloop.sdk.guardrail import on_failure as on_failure_handlers
+from traceloop.sdk.guardrail.on_failure import OnFailure
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
 from traceloop.sdk.associations.associations import Associations
@@ -75,7 +75,7 @@ class Client:
     def create_guardrail(
         self,
         guards: list[Guard],
-        on_failure: OnFailureHandler = on_failure_handlers.raise_exception(),
+        on_failure: OnFailureHandler = OnFailure.raise_exception(),
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
@@ -99,7 +99,7 @@ class Client:
         Example:
             g = client.create_guardrail(
                 guards=[toxicity_guard(), pii_guard()],
-                on_failure=raise_exception("Guard failed"),
+                on_failure=OnFailure.raise_exception("Guard failed"),
             )
             result = await g.run(my_function)
         """

@@ -11,7 +11,7 @@ from traceloop.sdk.decorators.base import (
     entity_method,
 )
 from traceloop.sdk.guardrail.model import Guard, OnFailureHandler, InputMapper
-from traceloop.sdk.guardrail import on_failure as on_failure_handlers
+from traceloop.sdk.guardrail.on_failure import OnFailure
 
 F = TypeVar("F", bound=Callable[..., Any])
 _P = ParamSpec("_P")
@@ -231,9 +231,9 @@ def guardrail(
         *guards: Guard functions to run on the output (positional args).
         input_mapper: Function to convert output to guard inputs.
         on_failure: Handler called when any guard fails. Can be:
-            - on_failure handler (e.g., raise_exception())
-            - String (shorthand for return_value(string))
-            - None (defaults to raise_exception())
+            - OnFailure handler (e.g., OnFailure.raise_exception())
+            - String (shorthand for OnFailure.return_value(string))
+            - None (defaults to OnFailure.raise_exception())
         name: Optional name for the guardrail (defaults to function name).
 
     Example:
@@ -252,11 +252,11 @@ def guardrail(
         # Call directly - guardrail runs automatically
         result = await generate_response("Hello!")
     """
-    # Convert string on_failure to return_value
+    # Convert string on_failure to OnFailure.return_value
     if isinstance(on_failure, str):
-        failure_handler = on_failure_handlers.return_value(on_failure)
+        failure_handler = OnFailure.return_value(on_failure)
     elif on_failure is None:
-        failure_handler = on_failure_handlers.raise_exception()
+        failure_handler = OnFailure.raise_exception()
     else:
         failure_handler = on_failure
 

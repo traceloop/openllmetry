@@ -26,7 +26,7 @@ from .span_attributes import (
     GEN_AI_GUARDRAIL_ERROR_TYPE,
     GEN_AI_GUARDRAIL_ERROR_MESSAGE,
 )
-from .on_failure import raise_exception as _default_raise_exception
+from .on_failure import OnFailure
 from .default_mapper import default_input_mapper
 from .model import (
     GuardedResult,
@@ -52,7 +52,7 @@ class Guardrails:
                 lambda z: z["score"] > 0.8,
                 pii_guard(),
             ],
-            on_failure=raise_exception("Guard failed"),
+            on_failure=OnFailure.raise_exception("Guard failed"),
         )
         result = await g.run(my_function)
     """
@@ -68,7 +68,7 @@ class Guardrails:
         self,
         async_http_client: httpx.AsyncClient,
         guards: list[Guard],
-        on_failure: OnFailureHandler = _default_raise_exception(),
+        on_failure: OnFailureHandler = OnFailure.raise_exception(),
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
@@ -290,7 +290,7 @@ class Guardrails:
         Example:
             g = client.create_guardrail(
                 guards=[toxicity_guard()],
-                on_failure=raise_exception("Quality check failed"),
+                on_failure=OnFailure.raise_exception("Quality check failed"),
             )
             result = await g.run(generate_email)
 
@@ -355,7 +355,7 @@ class Guardrails:
         Example:
             g = client.create_guardrail(
                 guards=[lambda z: z["score"] > 0.8],
-                on_failure=log(),
+                on_failure=OnFailure.log(),
             )
             passed = await g.validate([{"score": 0.9}])  # Returns True
         """

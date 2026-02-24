@@ -5,8 +5,7 @@ Provides pre-configured guards ready for use with client.create_guardrail().
 
 Example:
     from traceloop.sdk import Traceloop
-    from traceloop.sdk.guardrail import toxicity_guard, pii_guard, answer_relevancy_guard
-    from traceloop.sdk.guardrail.on_failure import raise_exception
+    from traceloop.sdk.guardrail import toxicity_guard, pii_guard, answer_relevancy_guard, OnFailure
 
     client = Traceloop.init(api_key="...")
 
@@ -16,7 +15,7 @@ Example:
             pii_guard(),
             answer_relevancy_guard(),
         ],
-        on_failure=raise_exception("Content policy violation"),
+        on_failure=OnFailure.raise_exception("Content policy violation"),
     )
 
     result = await guardrail.run(generate_content)
@@ -26,7 +25,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Awaitable
 
-from .condition import is_true, is_false, greater_than_or_equal
+from .condition import Condition
 from ..generated.evaluators.definitions import EvaluatorMadeByTraceloop
 from ..evaluator.config import EvaluatorDetails
 
@@ -96,7 +95,7 @@ def custom_evaluator_guard(
     evaluator_version: str | None = None,
     evaluator_config: dict[str, Any] | None = None,
     condition_field: str = "pass",
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the custom evaluator passes."""
@@ -116,7 +115,7 @@ def custom_evaluator_guard(
 
 def toxicity_guard(
     threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when content is safe from toxicity."""
@@ -133,7 +132,7 @@ def toxicity_guard(
 
 
 def profanity_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when content is free from profanity."""
@@ -146,7 +145,7 @@ def profanity_guard(
 
 def sexism_guard(
     threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when content is free from sexism."""
@@ -169,7 +168,7 @@ def sexism_guard(
 
 def pii_guard(
     probability_threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_false(),
+    condition: Callable[[Any], bool] = Condition.is_false(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when no PII is detected."""
@@ -188,7 +187,7 @@ def pii_guard(
 
 
 def secrets_guard(
-    condition: Callable[[Any], bool] = is_false(),
+    condition: Callable[[Any], bool] = Condition.is_false(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when no secrets are detected."""
@@ -201,7 +200,7 @@ def secrets_guard(
 
 def prompt_injection_guard(
     threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_false(),
+    condition: Callable[[Any], bool] = Condition.is_false(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when no prompt injection is detected."""
@@ -223,7 +222,7 @@ def prompt_injection_guard(
 
 
 def answer_relevancy_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the answer is relevant to the question."""
@@ -235,7 +234,7 @@ def answer_relevancy_guard(
 
 
 def faithfulness_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the response is faithful to the context."""
@@ -254,7 +253,7 @@ def faithfulness_guard(
 def json_validator_guard(
     enable_schema_validation: bool | None = None,
     schema_string: str | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the text is valid JSON."""
@@ -269,7 +268,7 @@ def json_validator_guard(
 
 
 def sql_validator_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the text is valid SQL."""
@@ -286,7 +285,7 @@ def regex_validator_guard(
     dot_include_nl: bool | None = None,
     multi_line: bool | None = None,
     should_match: bool | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when the text matches the regex pattern."""
@@ -308,7 +307,7 @@ def placeholder_regex_guard(
     dot_include_nl: bool | None = None,
     multi_line: bool | None = None,
     should_match: bool | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when placeholder regex validation succeeds."""
@@ -330,7 +329,7 @@ def placeholder_regex_guard(
 
 
 def agent_efficiency_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when agent efficiency score meets threshold."""
@@ -344,7 +343,7 @@ def agent_efficiency_guard(
 def agent_flow_quality_guard(
     conditions: list[str],
     threshold: float,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when agent flow meets quality conditions."""
@@ -359,7 +358,7 @@ def agent_flow_quality_guard(
 
 
 def agent_goal_accuracy_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when agent goal accuracy score meets threshold."""
@@ -372,7 +371,7 @@ def agent_goal_accuracy_guard(
 
 def agent_goal_completeness_guard(
     threshold: float,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when agent completes its goal."""
@@ -384,7 +383,7 @@ def agent_goal_completeness_guard(
 
 
 def agent_tool_error_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when no tool errors are detected."""
@@ -400,7 +399,7 @@ def agent_tool_trajectory_guard(
     mismatch_sensitive: bool | None = None,
     order_sensitive: bool | None = None,
     threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when agent tool trajectory matches expected."""
@@ -417,7 +416,7 @@ def agent_tool_trajectory_guard(
 
 
 def intent_change_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when intent remains consistent."""
@@ -440,7 +439,7 @@ def answer_correctness_guard(
 ) -> Guard:
     """Guard that passes when answer correctness score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.answer_correctness(),
@@ -456,7 +455,7 @@ def answer_completeness_guard(
 ) -> Guard:
     """Guard that passes when answer completeness score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.answer_completeness(),
@@ -473,7 +472,7 @@ def context_relevance_guard(
 ) -> Guard:
     """Guard that passes when context relevance score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.context_relevance(model=model),
@@ -489,7 +488,7 @@ def conversation_quality_guard(
 ) -> Guard:
     """Guard that passes when conversation quality score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.conversation_quality(),
@@ -505,7 +504,7 @@ def html_comparison_guard(
 ) -> Guard:
     """Guard that passes when HTML similarity score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.html_comparison(),
@@ -521,7 +520,7 @@ def instruction_adherence_guard(
 ) -> Guard:
     """Guard that passes when instruction adherence score meets threshold."""
     effective_condition = (
-        condition if condition is not None else greater_than_or_equal(threshold)
+        condition if condition is not None else Condition.greater_than_or_equal(threshold)
     )
     return _create_guard(
         EvaluatorMadeByTraceloop.instruction_adherence(),
@@ -531,7 +530,7 @@ def instruction_adherence_guard(
 
 
 def semantic_similarity_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when semantic similarity score meets threshold."""
@@ -543,7 +542,7 @@ def semantic_similarity_guard(
 
 
 def topic_adherence_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when topic adherence score meets threshold."""
@@ -560,7 +559,7 @@ def topic_adherence_guard(
 
 
 def perplexity_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when perplexity score is below threshold."""
@@ -572,7 +571,7 @@ def perplexity_guard(
 
 
 def prompt_perplexity_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when prompt perplexity score is below threshold."""
@@ -584,7 +583,7 @@ def prompt_perplexity_guard(
 
 
 def uncertainty_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when uncertainty is below threshold."""
@@ -601,7 +600,7 @@ def uncertainty_guard(
 
 
 def word_count_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when word count is within specified bounds."""
@@ -613,7 +612,7 @@ def word_count_guard(
 
 
 def char_count_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when character count is within specified bounds."""
@@ -625,7 +624,7 @@ def char_count_guard(
 
 
 def word_count_ratio_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when word count ratio is within specified bounds."""
@@ -637,7 +636,7 @@ def word_count_ratio_guard(
 
 
 def char_count_ratio_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when character count ratio is within specified bounds."""
@@ -654,7 +653,7 @@ def char_count_ratio_guard(
 
 
 def tone_detection_guard(
-    condition: Callable[[Any], bool] = is_true(),
+    condition: Callable[[Any], bool] = Condition.is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when detected tone matches expected."""

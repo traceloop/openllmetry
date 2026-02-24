@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from traceloop.sdk.decorators import guardrail
-from traceloop.sdk.guardrail.on_failure import raise_exception, noop, return_value
+from traceloop.sdk.guardrail.on_failure import OnFailure
 
 
 class TestGuardrailDecoratorBasic:
@@ -26,7 +26,7 @@ class TestGuardrailDecoratorBasic:
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
 
-            @guardrail(lambda z: True, on_failure=raise_exception())
+            @guardrail(lambda z: True, on_failure=OnFailure.raise_exception())
             async def my_function(prompt: str) -> str:
                 return f"Response to: {prompt}"
 
@@ -57,7 +57,7 @@ class TestGuardrailDecoratorBasic:
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
 
-            @guardrail(lambda z: True, on_failure=noop())
+            @guardrail(lambda z: True, on_failure=OnFailure.noop())
             async def my_function(arg1: str, arg2: int, kwarg1: str = "default") -> str:
                 captured_args.append((arg1, arg2))
                 captured_kwargs.append(kwarg1)
@@ -81,7 +81,7 @@ class TestGuardrailDecoratorBasic:
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
 
-            @guardrail(lambda z: True, on_failure=noop())
+            @guardrail(lambda z: True, on_failure=OnFailure.noop())
             async def my_named_function() -> str:
                 return "result"
 
@@ -105,7 +105,7 @@ class TestGuardrailDecoratorBasic:
 
             @guardrail(
                 lambda z: True,
-                on_failure=noop(),
+                on_failure=OnFailure.noop(),
                 name="custom-guardrail-name",
             )
             async def my_function() -> str:
@@ -139,7 +139,7 @@ class TestGuardrailDecoratorGuards:
         with patch("traceloop.sdk.Traceloop") as mock_traceloop:
             mock_traceloop.get.return_value = mock_client
 
-            @guardrail(guard1, guard2, on_failure=noop())
+            @guardrail(guard1, guard2, on_failure=OnFailure.noop())
             async def my_function() -> str:
                 return "result"
 
@@ -167,7 +167,7 @@ class TestGuardrailDecoratorGuards:
             @guardrail(
                 lambda z: True,
                 input_mapper=input_mapper,
-                on_failure=noop(),
+                on_failure=OnFailure.noop(),
             )
             async def my_function() -> str:
                 return "result"
@@ -184,7 +184,7 @@ class TestGuardrailDecoratorOnFailure:
     @pytest.mark.asyncio
     async def test_decorator_passes_on_failure_to_create(self):
         """Decorator passes on_failure handler to create_guardrail()."""
-        on_failure_handler = return_value("fallback")
+        on_failure_handler = OnFailure.return_value("fallback")
 
         mock_guardrails = MagicMock()
         mock_guardrails.run = AsyncMock(return_value="result")
@@ -224,7 +224,7 @@ class TestGuardrailDecoratorOnFailure:
 
         create_call = mock_client.create_guardrail.call_args
         on_failure = create_call.kwargs.get("on_failure")
-        # Default should be a callable (raise_exception())
+        # Default should be a callable (OnFailure.raise_exception())
         assert callable(on_failure)
 
     @pytest.mark.asyncio
@@ -262,7 +262,7 @@ class TestGuardrailDecoratorErrors:
                 "Client not initialized, you should call Traceloop.init() first."
             )
 
-            @guardrail(lambda z: True, on_failure=noop())
+            @guardrail(lambda z: True, on_failure=OnFailure.noop())
             async def my_function() -> str:
                 return "result"
 
@@ -278,7 +278,7 @@ class TestGuardrailDecoratorPreservesMetadata:
     def test_decorator_preserves_function_name(self):
         """Decorator preserves the original function name."""
 
-        @guardrail(lambda z: True, on_failure=noop())
+        @guardrail(lambda z: True, on_failure=OnFailure.noop())
         async def original_function_name() -> str:
             return "result"
 
@@ -288,7 +288,7 @@ class TestGuardrailDecoratorPreservesMetadata:
     def test_decorator_preserves_function_docstring(self):
         """Decorator preserves the original function docstring."""
 
-        @guardrail(lambda z: True, on_failure=noop())
+        @guardrail(lambda z: True, on_failure=OnFailure.noop())
         async def documented_function() -> str:
             """This is the original docstring."""
             return "result"
@@ -303,7 +303,7 @@ class TestGuardrailDecoratorSyncSupport:
     def test_decorator_preserves_sync_function_name(self):
         """Decorator preserves the original sync function name."""
 
-        @guardrail(lambda z: True, on_failure=noop())
+        @guardrail(lambda z: True, on_failure=OnFailure.noop())
         def sync_function_name() -> str:
             return "result"
 
@@ -313,7 +313,7 @@ class TestGuardrailDecoratorSyncSupport:
     def test_decorator_preserves_sync_function_docstring(self):
         """Decorator preserves the original sync function docstring."""
 
-        @guardrail(lambda z: True, on_failure=noop())
+        @guardrail(lambda z: True, on_failure=OnFailure.noop())
         def sync_documented_function() -> str:
             """This is a sync function docstring."""
             return "result"

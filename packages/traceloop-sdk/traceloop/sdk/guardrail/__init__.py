@@ -6,7 +6,7 @@ with evaluation and failure handling.
 
 Example:
     from traceloop.sdk import Traceloop
-    from traceloop.sdk.guardrail import pii_guard, raise_exception
+    from traceloop.sdk.guardrail import pii_guard, OnFailure
 
     # Initialize and get client
     client = Traceloop.init(api_key="...")
@@ -16,7 +16,7 @@ Example:
 
     guardrail = client.create_guardrail(
         guards=[pii_guard()],
-        on_failure=raise_exception("PII detected in response"),
+        on_failure=OnFailure.raise_exception("PII detected in response"),
     )
     result = await guardrail.run(generate_email)
 
@@ -40,22 +40,8 @@ from .model import (
     GuardInput,
     GuardedFunctionResult,
 )
-from .condition import (
-    is_true,
-    is_false,
-    between,
-    equals,
-    greater_than,
-    less_than,
-    greater_than_or_equal,
-    less_than_or_equal,
-)
-from .on_failure import (
-    raise_exception,
-    log,
-    noop,
-    return_value,
-)
+from .condition import Condition
+from .on_failure import OnFailure
 from .guards import (
     custom_evaluator_guard,
     toxicity_guard,
@@ -108,20 +94,8 @@ __all__ = [
     "InputMapper",
     "GuardInput",
     "GuardedFunctionResult",
-    # Conditions
-    "is_true",
-    "is_false",
-    "between",
-    "equals",
-    "greater_than",
-    "less_than",
-    "greater_than_or_equal",
-    "less_than_or_equal",
-    # On failure handlers
-    "raise_exception",
-    "log",
-    "noop",
-    "return_value",
+    "Condition",
+    "OnFailure",
     "default_input_mapper",
     # Guard functions
     "custom_evaluator_guard",
