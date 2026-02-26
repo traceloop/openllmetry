@@ -174,7 +174,7 @@ async def aset_input_attributes(span, kwargs):
                 if schema:
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                        "gen_ai.request.structured_output_schema",
                         json.dumps(schema),
                     )
 

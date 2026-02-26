@@ -1,3 +1,76 @@
+## v0.52.6 (2026-02-26)
+
+### Fix
+
+- **dataset**: Add versions to dataset metadata  (#3732)
+- **qdrant**: support all versions of qdrant package (#3500)
+
+## v0.52.5 (2026-02-23)
+
+### Fix
+
+- **traceloop-sdk**: Add evaluator config to the evaluator validator (#3706)
+- **anthropic**: restore accidentally lost cache tokens attributes (#3648)
+
+## v0.52.4 (2026-02-19)
+
+### Fix
+
+- **openai-agents**: fix realtime session event handling for prompts, completions, and usage (#3688)
+- preserve return values for RealtimeSession context manager methods (#3681)
+- **openai-agents**: add functools.wraps to dont_throw decorator (#3687)
+
+## v0.52.3 (2026-02-10)
+
+### Fix
+
+- **openai-agents**: add clear flag to support two instrumentation modes (#3489)
+
+## v0.52.2 (2026-02-08)
+
+### Fix
+
+- **traceloop-sdk**: Add conversation decorator (#3659)
+- **traceloop-sdk**: Add endpoint_is_traceloop attribute (#3650)
+
+## v0.52.1 (2026-02-02)
+
+### Fix
+
+- **voyageai**: add to commitizen to bump on release (#3660)
+
+## v0.52.0 (2026-02-02)
+
+### Feat
+
+- **voyage-ai**: add voyage-ai instrumentation (#3653)
+
+### Fix
+
+- **openai-agents**: apply content tracing flag to content (#3487)
+- **traceloop-sdk**: Align evals output schema (#3643)
+
+## v0.51.1 (2026-01-26)
+
+### Fix
+
+- **openai-agents**: add support for realtime (#3533)
+
+## v0.51.0 (2026-01-20)
+
+### Feat
+
+- **google-generativeai**: Add metrics support (#3506)
+
+### Fix
+
+- **traceloop-sdk**: Add csv and json support to experiment (#3537)
+- **evals**: evals API supports input + config, generate mbt functions (#3534)
+- **langchain**: correct unknown role in completion spans (#3532)
+- **evals**: auto generate evals (#3529)
+- **tracing**: Add association property (#3524)
+- **openai-agents**: optional import of optional deps (#3488)
+
 ## v0.50.1 (2025-12-16)
 
 ### Fix

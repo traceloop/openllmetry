@@ -1,10 +1,16 @@
 import asyncio
 import dataclasses
+import functools
 import json
 import logging
 import os
 import traceback
 from opentelemetry import context as context_api
+
+# Handoff span attribute names
+GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
+GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
+_TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def set_span_attribute(span, name, value):
@@ -18,10 +24,14 @@ def _is_truthy(value):
     return str(value).strip().lower() in ("true", "1", "yes", "on")
 
 
-def should_send_prompts():
-    env_setting = os.getenv("TRACELOOP_TRACE_CONTENT", "true")
+def should_send_prompts() -> bool:
+    """Determine if LLM content tracing should be enabled.
+
+    Content includes not only prompts, but also responses.
+    """
+    env_setting = os.getenv(_TRACELOOP_TRACE_CONTENT, "true")
     override = context_api.get_value("override_enable_content_tracing")
-    return _is_truthy(env_setting) or bool(override)
+    return _is_truthy(env_setting) or _is_truthy(override)
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -50,12 +60,14 @@ def dont_throw(func):
     """
     logger = logging.getLogger(func.__module__)
 
+    @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
             _handle_exception(e, func, logger)
 
+    @functools.wraps(func)
     def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
