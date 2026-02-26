@@ -1,3 +1,10 @@
+## v0.52.6 (2026-02-26)
+
+### Fix
+
+- **dataset**: Add versions to dataset metadata  (#3732)
+- **qdrant**: support all versions of qdrant package (#3500)
+
 ## v0.52.5 (2026-02-23)
 
 ### Fix
