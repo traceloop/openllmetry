@@ -69,6 +69,7 @@ class Traceloop:
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: Optional[ImageUploader] = None,
         span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
+        endpoint_is_traceloop: Optional[bool] = False,
     ) -> Optional[Client]:
         if not enabled:
             TracerWrapper.set_disabled(True)
@@ -180,7 +181,7 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            api_endpoint.find("traceloop.com") != -1
+            (api_endpoint.find("traceloop.com") != -1 or endpoint_is_traceloop)
             and api_key
             and (exporter is None)
             and (processor is None)

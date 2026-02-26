@@ -18,7 +18,7 @@ from traceloop.sdk import Traceloop
 from traceloop.sdk.evaluator import EvaluatorMadeByTraceloop
 
 # Initialize Traceloop
-client = Traceloop.init()
+client = Traceloop.init(endpoint_is_traceloop=True)
 
 
 async def generate_agent_trace(task_description: str) -> dict:
@@ -137,9 +137,12 @@ async def run_agents_experiment():
     evaluators = [
         EvaluatorMadeByTraceloop.agent_goal_accuracy(),
         EvaluatorMadeByTraceloop.agent_tool_error_detector(),
-        EvaluatorMadeByTraceloop.agent_flow_quality(),
+        EvaluatorMadeByTraceloop.agent_flow_quality(
+            conditions=["create_itinerary tool should be called last"],
+            threshold=0.8,
+        ),
         EvaluatorMadeByTraceloop.agent_efficiency(),
-        EvaluatorMadeByTraceloop.agent_goal_completeness(),
+        EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=0.8),
     ]
 
     print("Running experiment with evaluators:")
