@@ -12,7 +12,6 @@ import pandas as pd
 import openai
 
 
-# Initialize Traceloop
 client = Traceloop.init()
 
 
