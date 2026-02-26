@@ -223,23 +223,26 @@ class PineconeInstrumentor(BaseInstrumentor):
             wrap_method = wrapped_method.get("method")
 
             if wrap_object == "Index":
-                if importlib.util.find_spec("pinecone.db_data.index") is not None:
-                    try:
-                        wrap_function_wrapper(
-                            "pinecone.db_data.index",
-                            f"{wrap_object}.{wrap_method}",
-                            _wrap(
-                                tracer,
-                                query_duration_metric,
-                                read_units_metric,
-                                write_units_metric,
-                                scores_metric,
-                                wrapped_method,
-                            ),
-                        )
-                        continue
-                    except (ImportError, AttributeError):
-                        pass
+                try:
+                    if importlib.util.find_spec("pinecone.db_data.index") is not None:
+                        try:
+                            wrap_function_wrapper(
+                                "pinecone.db_data.index",
+                                f"{wrap_object}.{wrap_method}",
+                                _wrap(
+                                    tracer,
+                                    query_duration_metric,
+                                    read_units_metric,
+                                    write_units_metric,
+                                    scores_metric,
+                                    wrapped_method,
+                                ),
+                            )
+                            continue
+                        except (ImportError, AttributeError):
+                            pass
+                except (ModuleNotFoundError, ImportError):
+                    pass
 
                 if getattr(pinecone, wrap_object, None):
                     wrap_function_wrapper(
