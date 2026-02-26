@@ -46,8 +46,18 @@
     },
     {
         "object": "QdrantClient",
+        "method": "query_points",
+        "span_name": "qdrant.query_points"
+    },
+    {
+        "object": "QdrantClient",
         "method": "query_batch",
         "span_name": "qdrant.query_batch"
+    },
+    {
+        "object": "QdrantClient",
+        "method": "query_batch_points",
+        "span_name": "qdrant.query_batch_points"
     },
     {
         "object": "QdrantClient",
