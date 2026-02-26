@@ -15,12 +15,17 @@ from .config import EvaluatorDetails
 from ..generated.evaluators import get_request_model
 
 
-def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:
+def _validate_evaluator_input(
+    slug: str,
+    input: Dict[str, str],
+    evaluator_config: Optional[Dict[str, Any]] = None,
+) -> None:
     """Validate input against the evaluator's request model if available.
 
     Args:
         slug: The evaluator slug (e.g., "pii-detector")
         input: Dictionary of input field names to values
+        evaluator_config: Optional configuration for the evaluator
 
     Raises:
         ValueError: If input fails validation against the request model
@@ -28,8 +33,11 @@ def _validate_evaluator_input(slug: str, input: Dict[str, str]) -> None:
     request_model = get_request_model(slug)
     if request_model:
         try:
-            # Request models expect data nested under 'input' field
-            request_model(input=input)
+            # Build kwargs for request model validation
+            kwargs: Dict[str, Any] = {"input": input}
+            if evaluator_config is not None:
+                kwargs["config"] = evaluator_config
+            request_model(**kwargs)
         except ValidationError as e:
             raise ValueError(f"Invalid input for '{slug}': {e}") from e
 
@@ -115,7 +123,7 @@ class Evaluator:
         Returns:
             ExecutionResponse: The evaluation result from SSE stream
         """
-        _validate_evaluator_input(evaluator_slug, input)
+        _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
@@ -159,7 +167,7 @@ class Evaluator:
         Returns:
             str: The execution_id that can be used to check results later
         """
-        _validate_evaluator_input(evaluator_slug, input)
+        _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_request(
             task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
