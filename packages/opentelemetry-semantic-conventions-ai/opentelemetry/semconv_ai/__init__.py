@@ -328,16 +328,18 @@ class TraceloopSpanKindValues(Enum):
     UNKNOWN = "unknown"
 
 
-class GenAIOperationName(Enum):
+class GenAICustomOperationName(Enum):
     """
-    Operation names for GenAI spans following OpenTelemetry GenAI semantic conventions.
-    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/
+    Custom operation names extending the official OpenTelemetry GenAI semantic conventions.
+
+    For standard operations (create_agent, invoke_agent, execute_tool, chat, embeddings),
+    use the official GenAiOperationNameValues from:
+    opentelemetry.semconv._incubating.attributes.gen_ai_attributes
+
+    These are agent workflow extensions not yet in the official spec.
     """
 
-    CREATE_AGENT = "create_agent"
-    INVOKE_AGENT = "invoke_agent"
     EXECUTE_TASK = "execute_task"
-    EXECUTE_TOOL = "execute_tool"
     LLM_REQUEST = "llm_request"
     VECTOR_DB_RETRIEVE = "vector_db_retrieve"
 

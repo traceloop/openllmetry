@@ -1,12 +1,13 @@
 """Patching utilities for LangGraph instrumentation."""
 
-import hashlib
 import json
 import logging
 from opentelemetry import context as context_api
 from opentelemetry import trace
 from opentelemetry.trace import Tracer, Span, SpanKind, Status, StatusCode
-from opentelemetry.semconv_ai import GenAIOperationName, SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
+from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
+from opentelemetry.instrumentation.langchain.span_utils import SpanHolder
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -18,17 +19,9 @@ def _get_current_node_contextvar():
     from opentelemetry.instrumentation.langchain.callback_handler import _langgraph_current_node
     return _langgraph_current_node
 
-
-def _generate_agent_id(name: str, instance: Any) -> str:
-    """Generate a unique agent ID by hashing the instance memory address."""
-    instance_id = str(id(instance))
-    hash_input = f"{name}_{instance_id}"
-    hashed = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
-    return f"{name}_{hashed}"
-
 # Context key for marking LangGraph flow
 LANGGRAPH_FLOW_KEY = "langgraph_flow"
-# Context key for storing the graph span as parent for callback-created spans
+# Context key for storing the graph SpanHolder as parent for callback-created spans
 LANGGRAPH_GRAPH_SPAN_KEY = "langgraph_graph_span"
 # Context key for tracking if first child of graph span is pending (mutable list [bool])
 LANGGRAPH_FIRST_CHILD_PENDING_KEY = "langgraph_first_child_pending"
@@ -59,12 +52,9 @@ def _set_graph_span_attributes(
     # Set GenAI semantic convention attributes
     graph_span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, "langgraph")
     graph_span.set_attribute(
-        SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.INVOKE_AGENT.value
+        SpanAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value
     )
     graph_span.set_attribute(SpanAttributes.GEN_AI_AGENT_NAME, graph_name)
-    graph_span.set_attribute(
-        SpanAttributes.GEN_AI_AGENT_ID, _generate_agent_id(graph_name, instance)
-    )
 
     # Extract conversation ID from config
     config = kwargs.get('config') or (args[1] if len(args) > 1 else None)
@@ -142,9 +132,18 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         # Set all graph span attributes using helper function
         _set_graph_span_attributes(graph_span, instance, graph_name, kwargs, args)
 
-        # Attach span to context for parent-child linking
+        # Attach span to context for parent-child linking, wrapped in SpanHolder
         ctx_with_span = trace.set_span_in_context(graph_span)
-        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span, ctx_with_span)
+        graph_span_holder = SpanHolder(
+            span=graph_span,
+            token=None,
+            context=ctx_with_span,
+            children=[],
+            workflow_name=graph_name,
+            entity_name=graph_name,
+            entity_path=graph_name,
+        )
+        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, ctx_with_span)
         ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
         graph_span_ctx = context_api.attach(ctx_with_span)
 
@@ -175,9 +174,18 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         # Set all graph span attributes using helper function
         _set_graph_span_attributes(graph_span, instance, graph_name, kwargs, args)
 
-        # Attach span to context for parent-child linking
+        # Attach span to context for parent-child linking, wrapped in SpanHolder
         ctx_with_span = trace.set_span_in_context(graph_span)
-        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span, ctx_with_span)
+        graph_span_holder = SpanHolder(
+            span=graph_span,
+            token=None,
+            context=ctx_with_span,
+            children=[],
+            workflow_name=graph_name,
+            entity_name=graph_name,
+            entity_path=graph_name,
+        )
+        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, ctx_with_span)
         ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
         graph_span_ctx = context_api.attach(ctx_with_span)
 
@@ -306,7 +314,7 @@ def _set_middleware_span_attributes(
     """
     span.set_attribute(
         SpanAttributes.GEN_AI_OPERATION_NAME,
-        GenAIOperationName.EXECUTE_TASK.value,
+        GenAICustomOperationName.EXECUTE_TASK.value,
     )
     span.set_attribute(SpanAttributes.GEN_AI_TASK_KIND, middleware_name)
     span.set_attribute(
@@ -453,7 +461,7 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
         with tracer.start_as_current_span(span_name, kind=SpanKind.INTERNAL) as span:
             span.set_attribute(
                 SpanAttributes.GEN_AI_OPERATION_NAME,
-                GenAIOperationName.CREATE_AGENT.value,
+                GenAiOperationNameValues.CREATE_AGENT.value,
             )
             span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
             span.set_attribute(SpanAttributes.GEN_AI_AGENT_NAME, agent_name)
@@ -488,11 +496,6 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                     )
 
             result = wrapped(*args, **kwargs)
-
-            # Set agent ID as name + hashed instance ID
-            span.set_attribute(
-                SpanAttributes.GEN_AI_AGENT_ID, _generate_agent_id(agent_name, result)
-            )
 
             return result
 

@@ -60,9 +60,10 @@ from opentelemetry.metrics import Histogram
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    GenAIOperationName,
+    GenAICustomOperationName,
     LLMRequestTypeValues,
     SpanAttributes,
     TraceloopSpanKindValues,
@@ -294,14 +295,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
         else:
             # Check if we're in a LangGraph flow and this is the first child
-            graph_span = context_api.get_value(LANGGRAPH_GRAPH_SPAN_KEY)
+            graph_span_holder = context_api.get_value(LANGGRAPH_GRAPH_SPAN_KEY)
             first_child_pending = context_api.get_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY)
 
-            if graph_span is not None and first_child_pending and first_child_pending[0]:
-                # This is the first child of the graph span - parent it explicitly
+            if graph_span_holder is not None and first_child_pending and first_child_pending[0]:
+                # This is the first child of the graph span - parent it using
+                # the SpanHolder's stored context for correct span parenting
                 span = self.tracer.start_span(
                     span_name,
-                    context=set_span_in_context(graph_span),
+                    context=graph_span_holder.context,
                     kind=kind,
                 )
                 # Flip the flag so subsequent spans use normal parenting.
@@ -389,7 +391,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(
                 span,
                 SpanAttributes.GEN_AI_OPERATION_NAME,
-                GenAIOperationName.INVOKE_AGENT.value,
+                GenAiOperationNameValues.INVOKE_AGENT.value,
             )
             _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_NAME, name)
             _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_ID, str(run_id))
@@ -398,7 +400,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(
                 span,
                 SpanAttributes.GEN_AI_OPERATION_NAME,
-                GenAIOperationName.EXECUTE_TOOL.value,
+                GenAiOperationNameValues.EXECUTE_TOOL.value,
             )
             _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_NAME, name)
             _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_TYPE, "function")
@@ -412,7 +414,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(
                 span,
                 SpanAttributes.GEN_AI_OPERATION_NAME,
-                GenAIOperationName.EXECUTE_TASK.value,
+                GenAICustomOperationName.EXECUTE_TASK.value,
             )
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_NAME, name)
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_ID, str(run_id))
@@ -452,7 +454,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.LLM_REQUEST.value
+            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
         )
 
         # we already have an LLM span by this point,
@@ -888,7 +890,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Set GenAI semantic convention attributes
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAIOperationName.VECTOR_DB_RETRIEVE.value
+            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.VECTOR_DB_RETRIEVE.value
         )
         # Set provider name based on LangGraph flow context
         langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)

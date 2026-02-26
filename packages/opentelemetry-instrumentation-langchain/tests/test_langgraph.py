@@ -8,7 +8,8 @@ from opentelemetry import trace
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import GenAIOperationName, SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
+from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
 from opentelemetry.trace import INVALID_SPAN
 
 
@@ -49,10 +50,10 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
 
     # Verify GenAI semantic convention attributes on graph span
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
     assert graph_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "LangGraph"
-    assert SpanAttributes.GEN_AI_AGENT_ID in graph_span.attributes
+    # agent_id removed per maintainer feedback - rely on agent name only
 
     assert openai_span.parent.span_id == calculate_task_span.context.span_id
     assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
@@ -117,7 +118,7 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     assert openai_span.parent.span_id == calculate_task_span.context.span_id
 
     # Verify GenAI semantic convention attributes on graph span
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
 
@@ -154,7 +155,7 @@ def test_langgraph_double_invoke(instrument_legacy, span_exporter):
 
     # Verify GenAI attributes on graph span
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
     graph.invoke({"result": "init"})
@@ -202,7 +203,7 @@ async def test_langgraph_double_ainvoke(instrument_legacy, span_exporter):
 
     # Verify GenAI attributes on graph span
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
 
     await graph.ainvoke({"result": "init"})
@@ -356,10 +357,10 @@ def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_pro
     graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
 
     # Verify GenAI semantic convention attributes on graph span
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[SpanAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
     assert graph_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "LangGraph"
-    assert SpanAttributes.GEN_AI_AGENT_ID in graph_span.attributes
+    # agent_id removed per maintainer feedback - rely on agent name only
 
     print("\nHierarchy check:")
     print(f"POST parent: {post_span.parent.span_id if post_span.parent else 'None'}")
@@ -552,9 +553,8 @@ def test_create_react_agent_span(instrument_legacy, span_exporter):
     spans = span_exporter.get_finished_spans()
     create_span = next(s for s in spans if "create_agent" in s.name)
 
-    assert create_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.CREATE_AGENT.value
+    assert create_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CREATE_AGENT.value
     assert create_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "TestAgent"
-    assert SpanAttributes.GEN_AI_AGENT_ID in create_span.attributes
     assert SpanAttributes.GEN_AI_TOOL_DEFINITIONS in create_span.attributes
 
 
@@ -577,7 +577,7 @@ def test_retriever_span_attributes(instrument_legacy, span_exporter):
 
     assert (
         retriever_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME]
-        == GenAIOperationName.VECTOR_DB_RETRIEVE.value
+        == GenAICustomOperationName.VECTOR_DB_RETRIEVE.value
     )
     assert SpanAttributes.GEN_AI_TASK_INPUT in retriever_span.attributes
     assert retriever_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "success"
@@ -597,7 +597,7 @@ def test_middleware_hook_span_attributes(instrument_legacy, span_exporter):
 
     assert (
         middleware_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME]
-        == GenAIOperationName.EXECUTE_TASK.value
+        == GenAICustomOperationName.EXECUTE_TASK.value
     )
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_KIND] == "TestMiddleware"
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "success"
@@ -629,7 +629,7 @@ def test_langgraph_custom_name(instrument_legacy, span_exporter):
     # Get the graph span and verify attributes
     graph_span = next(span for span in spans if span.name == "invoke_agent MyCustomAgent")
     assert graph_span.attributes[SpanAttributes.GEN_AI_AGENT_NAME] == "MyCustomAgent"
-    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAIOperationName.INVOKE_AGENT.value
+    assert graph_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
 
 
 def test_command_with_goto(instrument_legacy, span_exporter):
@@ -763,7 +763,7 @@ async def test_async_middleware_hook(instrument_legacy, span_exporter):
     middleware_span = middleware_spans[0]
     assert (
         middleware_span.attributes[SpanAttributes.GEN_AI_OPERATION_NAME]
-        == GenAIOperationName.EXECUTE_TASK.value
+        == GenAICustomOperationName.EXECUTE_TASK.value
     )
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_KIND] == "AsyncTestMiddleware"
 
