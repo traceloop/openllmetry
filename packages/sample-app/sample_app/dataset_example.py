@@ -13,7 +13,7 @@ import openai
 
 
 # Initialize Traceloop
-client = Traceloop.init()
+client = Traceloop.init(endpoint_is_traceloop=True)
 
 
 def create_sample_csv():
@@ -508,4 +508,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    all_dataset = client.datasets.get_all()
+    d1 = all_dataset[0]
+    print(d1.versions)
+    d3 = all_dataset[2]
+    print(d3.versions)
+    print(all_dataset)
+    # main()
