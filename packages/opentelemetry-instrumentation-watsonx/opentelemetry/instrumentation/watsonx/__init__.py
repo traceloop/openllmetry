@@ -514,7 +514,17 @@ def _handle_input(span, event_logger, name, instance, args, kwargs):
                     )
 
     if should_emit_events() and event_logger:
-        _emit_input_events(args, kwargs, event_logger)
+        if "chat" in name and isinstance(kwargs.get("messages"), list):
+            for msg in kwargs["messages"]:
+                emit_event(
+                    MessageEvent(
+                        content=msg.get("content"),
+                        role=msg.get("role", "user"),
+                    ),
+                    event_logger,
+                )
+        else:
+            _emit_input_events(args, kwargs, event_logger)
 
 
 @dont_throw
@@ -589,7 +599,16 @@ def _handle_chat_response(
         content = message.get("content")
         finish_reason = choice.get("finish_reason")
 
-        if content and should_send_prompts():
+        if should_emit_events() and event_logger:
+            emit_event(
+                ChoiceEvent(
+                    index=index,
+                    message=message,
+                    finish_reason=finish_reason or "unknown",
+                ),
+                event_logger,
+            )
+        elif content and should_send_prompts():
             _set_span_attribute(
                 span,
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}.content",
@@ -660,7 +679,6 @@ def _wrap(
         },
     )
 
-    _handle_input(span, event_logger, name, instance, args, kwargs)
 
     if "generate" in name or "chat" in name:
         if to_wrap.get("method") == "generate_text_stream":
@@ -675,6 +693,7 @@ def _wrap(
                 kwargs["messages"] = [
                     {"role": "user", "content": prompt}
                 ]
+    _handle_input(span, event_logger, name, instance, args, kwargs)
 
     try:
         start_time = time.time()
