@@ -121,6 +121,8 @@ class RealtimeTracingState:
         self.audio_spans: Dict[str, Span] = {}
         self.turn_spans: Dict[str, Span] = {}
         self.current_response_id: Optional[str] = None
+        # Pre-registered attributes keyed by response_id, flushed in end_turn_span before span.end()
+        self.pending_turn_attributes: Dict[str, Dict[str, Any]] = {}
         self.current_agent_name: Optional[str] = None
         self.prompt_index: int = 0
         self.completion_index: int = 0
@@ -167,8 +169,19 @@ class RealtimeTracingState:
         self.current_response_id = response_id
         return span
 
+    def register_turn_attributes(self, response_id: str, attrs: Dict[str, Any]) -> None:
+        """Pre-register attributes to be flushed onto the turn span when it ends.
+
+        Call this before response.done is processed to inject application-level
+        attributes (e.g. audio transcript, TTFT) that Traceloop cannot auto-capture.
+        The attributes are merged into the span just before span.end() in end_turn_span.
+        """
+        if response_id not in self.pending_turn_attributes:
+            self.pending_turn_attributes[response_id] = {}
+        self.pending_turn_attributes[response_id].update(attrs)
+
     def end_turn_span(self, response_id: str) -> None:
-        """End the turn span, flushing any pending token usage onto it."""
+        """End the turn span, flushing any pending token usage and pre-registered attrs."""
         span = self.turn_spans.pop(response_id, None)
         if not span:
             return
@@ -184,6 +197,9 @@ class RealtimeTracingState:
                     self.pending_usage["output_tokens"],
                 )
             self.pending_usage = None
+        # Flush any pre-registered application attributes
+        for k, v in self.pending_turn_attributes.pop(response_id, {}).items():
+            span.set_attribute(k, v)
         span.set_status(Status(StatusCode.OK))
         span.end()
         if self.current_response_id == response_id:
@@ -743,7 +759,9 @@ def wrap_realtime_session(tracer: Tracer, turn_spans_enabled: bool = False):
                                             state.record_completion(role, text)
                                             break
 
-                            # End turn span after flushing usage onto it
+                            # End turn span after flushing usage and any pre-registered attrs onto it.
+                            # Application code pre-registers attrs via state.register_turn_attributes()
+                            # at earlier events (e.g. first audio transcript delta) before response.done.
                             if response_id:
                                 state.end_turn_span(response_id)
 
