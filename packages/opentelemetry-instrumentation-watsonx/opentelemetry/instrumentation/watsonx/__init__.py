@@ -707,19 +707,32 @@ class WatsonxInstrumentor(BaseInstrumentor):
                 wrap_module = wrapped_method.get("module")
                 wrap_object = wrapped_method.get("object")
                 wrap_method = wrapped_method.get("method")
-                wrap_function_wrapper(
-                    wrap_module,
-                    f"{wrap_object}.{wrap_method}",
-                    _wrap(
-                        tracer,
-                        wrapped_method,
-                        token_histogram,
-                        response_counter,
-                        duration_histogram,
-                        exception_counter,
-                        event_logger,
-                    ),
-                )
+
+                if not wrap_module:
+                    continue
+
+                try:
+                    # Try to import the module first to check if it exists
+                    __import__(wrap_module)
+                    wrap_function_wrapper(
+                        wrap_module,
+                        f"{wrap_object}.{wrap_method}",
+                        _wrap(
+                            tracer,
+                            wrapped_method,
+                            token_histogram,
+                            response_counter,
+                            duration_histogram,
+                            exception_counter,
+                            event_logger,
+                        ),
+                    )
+                except ImportError:
+                    # Module not installed, skip instrumentation for this module
+                    logger.debug(
+                        f"Module {wrap_module} not found, skipping instrumentation"
+                    )
+                    continue
 
     def _uninstrument(self, **kwargs):
         for wrapped_methods in WATSON_MODULES:
