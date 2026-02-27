@@ -95,6 +95,17 @@ def _unwrap_raw_event_data(data) -> Tuple[Optional[str], Any]:
         return data_type, data
 
 
+def _extract_response_id(data) -> Optional[str]:
+    """Extract the response id from event data containing a response object.
+
+    Works for both response.created and response.done payloads.
+    """
+    if isinstance(data, dict):
+        return data.get("response", {}).get("id")
+    response_obj = getattr(data, "response", None)
+    return getattr(response_obj, "id", None) if response_obj else None
+
+
 def _extract_response_and_usage(data) -> Tuple[Any, Optional[dict]]:
     """Extract response object and usage dict from response.done data.
 
@@ -176,27 +187,30 @@ class RealtimeTracingState:
         attributes (e.g. audio transcript, TTFT) that Traceloop cannot auto-capture.
         The attributes are merged into the span just before span.end() in end_turn_span.
         """
-        if response_id not in self.pending_turn_attributes:
-            self.pending_turn_attributes[response_id] = {}
-        self.pending_turn_attributes[response_id].update(attrs)
+        self.pending_turn_attributes.setdefault(response_id, {}).update(attrs)
+
+    def _flush_usage_to_span(self, span: Span) -> None:
+        """Set pending token usage on a span and clear the usage buffer."""
+        if not self.pending_usage:
+            return
+        if self.pending_usage.get("input_tokens"):
+            span.set_attribute(
+                GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                self.pending_usage["input_tokens"],
+            )
+        if self.pending_usage.get("output_tokens"):
+            span.set_attribute(
+                GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                self.pending_usage["output_tokens"],
+            )
+        self.pending_usage = None
 
     def end_turn_span(self, response_id: str) -> None:
         """End the turn span, flushing any pending token usage and pre-registered attrs."""
         span = self.turn_spans.pop(response_id, None)
         if not span:
             return
-        if self.pending_usage:
-            if self.pending_usage.get("input_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                    self.pending_usage["input_tokens"],
-                )
-            if self.pending_usage.get("output_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                    self.pending_usage["output_tokens"],
-                )
-            self.pending_usage = None
+        self._flush_usage_to_span(span)
         # Flush any pre-registered application attributes
         for k, v in self.pending_turn_attributes.pop(response_id, {}).items():
             span.set_attribute(k, v)
@@ -458,18 +472,7 @@ class RealtimeTracingState:
             },
         )
 
-        if self.pending_usage:
-            if self.pending_usage.get("input_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                    self.pending_usage["input_tokens"],
-                )
-            if self.pending_usage.get("output_tokens"):
-                span.set_attribute(
-                    GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                    self.pending_usage["output_tokens"],
-                )
-            self.pending_usage = None
+        self._flush_usage_to_span(span)
 
         if should_send_prompts():
             if prompt_content:
@@ -720,11 +723,7 @@ def wrap_realtime_session(tracer: Tracer, turn_spans_enabled: bool = False):
 
                         if data_type == "response.created":
                             # Start a per-turn span (only when turn_spans_enabled)
-                            if isinstance(data, dict):
-                                response_id = data.get("response", {}).get("id")
-                            else:
-                                response_obj = getattr(data, "response", None)
-                                response_id = getattr(response_obj, "id", None) if response_obj else None
+                            response_id = _extract_response_id(data)
                             if response_id:
                                 state.start_turn_span(response_id)
 
@@ -733,12 +732,10 @@ def wrap_realtime_session(tracer: Tracer, turn_spans_enabled: bool = False):
                             if usage:
                                 state.record_usage(usage)
 
-                            # Extract response_id for ending the turn span
+                            response_id = _extract_response_id(data)
                             if isinstance(response, dict):
-                                response_id = response.get("id")
                                 output = response.get("output")
                             else:
-                                response_id = getattr(response, "id", None)
                                 output = getattr(response, "output", None)
 
                             if output and isinstance(output, list):
