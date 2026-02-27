@@ -7,6 +7,9 @@ from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.openai_agents.version import __version__
 from opentelemetry.semconv_ai import Meters
+from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (  # noqa: F401
+    get_session_state,
+)
 
 
 _instruments = ("openai-agents >= 0.2.0",)
@@ -72,7 +75,8 @@ class OpenAIAgentsInstrumentor(BaseInstrumentor):
         try:
             from ._realtime_wrappers import wrap_realtime_session
 
-            wrap_realtime_session(tracer)
+            turn_spans_enabled = bool(kwargs.get("realtime_turn_spans", False))
+            wrap_realtime_session(tracer, turn_spans_enabled=turn_spans_enabled)
         except Exception:
             pass
 

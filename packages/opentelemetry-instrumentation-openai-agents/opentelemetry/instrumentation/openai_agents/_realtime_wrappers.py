@@ -27,6 +27,27 @@ _original_methods: Dict[str, Any] = {}
 _tracing_states: Dict[int, "RealtimeTracingState"] = {}
 
 
+def get_session_state(session) -> Optional["RealtimeTracingState"]:
+    """Return the RealtimeTracingState for a session.
+
+    Provides access to the current turn span for custom attribute injection.
+    Call this from application code that needs to add business-level attributes
+    to the active turn span created by Traceloop instrumentation.
+
+    Usage::
+
+        state = get_session_state(session)
+        if state and state.current_turn_span:
+            state.current_turn_span.set_attribute("my.custom.attr", value)
+            # Or create a child span within the turn:
+            with tracer.start_as_current_span("my.child", context=set_span_in_context(state.current_turn_span)):
+                ...
+
+    Returns None if the session is not instrumented or has no active state.
+    """
+    return _tracing_states.get(id(session))
+
+
 def _extract_content_text(item_content) -> Optional[str]:
     """Extract text or transcript from content parts list.
 
@@ -91,12 +112,15 @@ def _extract_response_and_usage(data) -> Tuple[Any, Optional[dict]]:
 class RealtimeTracingState:
     """Tracks OpenTelemetry spans for a realtime session."""
 
-    def __init__(self, tracer: Tracer):
+    def __init__(self, tracer: Tracer, turn_spans_enabled: bool = False):
         self.tracer = tracer
+        self._turn_spans_enabled = turn_spans_enabled
         self.workflow_span: Optional[Span] = None
         self.agent_spans: Dict[str, Span] = {}
         self.tool_spans: Dict[str, Span] = {}
         self.audio_spans: Dict[str, Span] = {}
+        self.turn_spans: Dict[str, Span] = {}
+        self.current_response_id: Optional[str] = None
         self.current_agent_name: Optional[str] = None
         self.prompt_index: int = 0
         self.completion_index: int = 0
@@ -110,6 +134,60 @@ class RealtimeTracingState:
         self.model_name: str = "gpt-4o-realtime-preview"
         self.seen_completions: set = set()
         self.pending_usage: Optional[Dict[str, int]] = None
+
+    @property
+    def current_turn_span(self) -> Optional[Span]:
+        """The active turn span, if turn_spans_enabled and a response is in-flight.
+
+        Use this to inject custom attributes onto the current turn::
+
+            state = get_session_state(session)
+            if state and state.current_turn_span:
+                state.current_turn_span.set_attribute("my.attr", value)
+        """
+        if self.current_response_id:
+            return self.turn_spans.get(self.current_response_id)
+        return None
+
+    def start_turn_span(self, response_id: str) -> Optional[Span]:
+        """Create a turn span for this response cycle (only when turn_spans_enabled)."""
+        if not self._turn_spans_enabled:
+            return None
+        parent_context = self._get_parent_context()
+        span = self.tracer.start_span(
+            "openai.realtime.turn",
+            kind=SpanKind.CLIENT,
+            context=parent_context,
+            attributes={
+                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+            },
+        )
+        self.turn_spans[response_id] = span
+        self.current_response_id = response_id
+        return span
+
+    def end_turn_span(self, response_id: str) -> None:
+        """End the turn span, flushing any pending token usage onto it."""
+        span = self.turn_spans.pop(response_id, None)
+        if not span:
+            return
+        if self.pending_usage:
+            if self.pending_usage.get("input_tokens"):
+                span.set_attribute(
+                    GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                    self.pending_usage["input_tokens"],
+                )
+            if self.pending_usage.get("output_tokens"):
+                span.set_attribute(
+                    GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                    self.pending_usage["output_tokens"],
+                )
+            self.pending_usage = None
+        span.set_status(Status(StatusCode.OK))
+        span.end()
+        if self.current_response_id == response_id:
+            self.current_response_id = None
 
     def start_workflow_span(self, agent_name: str):
         """Start the root workflow span for the session."""
@@ -136,14 +214,20 @@ class RealtimeTracingState:
             self.workflow_span = None
 
     def _get_parent_context(self, agent_name: Optional[str] = None):
-        """Get parent context from agent spans or workflow span.
+        """Get parent context from turn span, agent spans, or workflow span.
 
         Looks up the parent context in this order:
-        1. Specified agent_name in active agent_spans
-        2. Specified agent_name in agent_span_contexts
-        3. Current agent in agent_span_contexts
-        4. Workflow span
+        1. Active turn span (only when turn_spans_enabled and a turn is in-flight)
+        2. Specified agent_name in active agent_spans
+        3. Specified agent_name in agent_span_contexts
+        4. Current agent in agent_span_contexts
+        5. Workflow span
         """
+        if self._turn_spans_enabled and self.current_response_id:
+            turn_span = self.turn_spans.get(self.current_response_id)
+            if turn_span:
+                return set_span_in_context(turn_span)
+
         target = agent_name or self.current_agent_name
         if target:
             if target in self.agent_spans:
@@ -408,6 +492,12 @@ class RealtimeTracingState:
             span.end()
         self.audio_spans.clear()
 
+        for span in list(self.turn_spans.values()):
+            span.set_status(Status(StatusCode.OK))
+            span.end()
+        self.turn_spans.clear()
+        self.current_response_id = None
+
         for span in list(self.agent_spans.values()):
             span.set_status(Status(StatusCode.OK))
             span.end()
@@ -420,8 +510,18 @@ class RealtimeTracingState:
             self.workflow_span = None
 
 
-def wrap_realtime_session(tracer: Tracer):
-    """Wrap the RealtimeSession class to add OpenTelemetry tracing."""
+def wrap_realtime_session(tracer: Tracer, turn_spans_enabled: bool = False):
+    """Wrap the RealtimeSession class to add OpenTelemetry tracing.
+
+    Args:
+        tracer: The OpenTelemetry tracer to use for creating spans.
+        turn_spans_enabled: When True, creates an ``openai.realtime.turn`` span for
+            each response cycle (``response.created`` → ``response.done``). Tool spans
+            and audio spans are parented to the turn span instead of the agent span,
+            giving a per-turn view of all activity. Token usage is set on the turn span.
+            Exposes ``get_session_state(session).current_turn_span`` for custom
+            attribute injection. Defaults to False to preserve existing behavior.
+    """
     if _original_methods:
         return
 
@@ -441,7 +541,7 @@ def wrap_realtime_session(tracer: Tracer):
         result = await _original_methods["__aenter__"](self)
 
         try:
-            state = RealtimeTracingState(tracer)
+            state = RealtimeTracingState(tracer, turn_spans_enabled=turn_spans_enabled)
             _tracing_states[id(self)] = state
             agent_name = getattr(self._current_agent, "name", "Unknown Agent")
             state.start_workflow_span(agent_name)
@@ -602,15 +702,29 @@ def wrap_realtime_session(tracer: Tracer):
                     if data:
                         data_type, data = _unwrap_raw_event_data(data)
 
-                        if data_type == "response.done":
+                        if data_type == "response.created":
+                            # Start a per-turn span (only when turn_spans_enabled)
+                            if isinstance(data, dict):
+                                response_id = data.get("response", {}).get("id")
+                            else:
+                                response_obj = getattr(data, "response", None)
+                                response_id = getattr(response_obj, "id", None) if response_obj else None
+                            if response_id:
+                                state.start_turn_span(response_id)
+
+                        elif data_type == "response.done":
                             response, usage = _extract_response_and_usage(data)
                             if usage:
                                 state.record_usage(usage)
 
+                            # Extract response_id for ending the turn span
                             if isinstance(response, dict):
+                                response_id = response.get("id")
                                 output = response.get("output")
                             else:
+                                response_id = getattr(response, "id", None)
                                 output = getattr(response, "output", None)
+
                             if output and isinstance(output, list):
                                 for item in output:
                                     if isinstance(item, dict):
@@ -628,6 +742,10 @@ def wrap_realtime_session(tracer: Tracer):
                                         if text:
                                             state.record_completion(role, text)
                                             break
+
+                            # End turn span after flushing usage onto it
+                            if response_id:
+                                state.end_turn_span(response_id)
 
                         elif data_type == "item_updated":
                             item = getattr(data, "item", None)
