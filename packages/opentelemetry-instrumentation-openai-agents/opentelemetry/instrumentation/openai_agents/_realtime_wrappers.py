@@ -193,12 +193,12 @@ class RealtimeTracingState:
         """Set pending token usage on a span and clear the usage buffer."""
         if not self.pending_usage:
             return
-        if self.pending_usage.get("input_tokens"):
+        if self.pending_usage.get("input_tokens") is not None:
             span.set_attribute(
                 GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
                 self.pending_usage["input_tokens"],
             )
-        if self.pending_usage.get("output_tokens"):
+        if self.pending_usage.get("output_tokens") is not None:
             span.set_attribute(
                 GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
                 self.pending_usage["output_tokens"],
