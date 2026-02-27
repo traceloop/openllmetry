@@ -310,6 +310,19 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
     return model_settings
 
 
+def _prepend_system_instruction(input_data, response, trace_content: bool):
+    """Prepend response.instructions as a system message to input data if available."""
+    if not (
+        trace_content
+        and response
+        and hasattr(response, "instructions")
+        and response.instructions
+    ):
+        return input_data
+    system_msg = {"role": "system", "content": response.instructions}
+    return [system_msg] + (input_data if input_data else [])
+
+
 class OpenTelemetryTracingProcessor(TracingProcessor):
     """
     A tracing processor that creates OpenTelemetry spans for OpenAI Agents.
@@ -622,10 +635,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             ):
                 # Extract prompt data from input
                 input_data = getattr(span_data, "input", [])
-                _extract_prompt_attributes(otel_span, input_data, trace_content)
 
-                # Add function/tool specifications to the request using OpenAI semantic conventions
+                # Prepend system instructions from the response if available
+                # (the vanilla openai instrumentor already does this in responses_wrappers.py)
                 response = getattr(span_data, "response", None)
+                input_data = _prepend_system_instruction(input_data, response, trace_content)
+
+                _extract_prompt_attributes(otel_span, input_data, trace_content)
                 if (
                     response
                     and hasattr(response, "tools")
@@ -672,9 +688,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             # Legacy fallback for other span types
             elif span_data:
                 input_data = getattr(span_data, "input", [])
-                _extract_prompt_attributes(otel_span, input_data, trace_content)
 
                 response = getattr(span_data, "response", None)
+                input_data = _prepend_system_instruction(input_data, response, trace_content)
+
+                _extract_prompt_attributes(otel_span, input_data, trace_content)
                 if response:
                     model_settings = _extract_response_attributes(otel_span, response, trace_content)
                     self._last_model_settings = model_settings
