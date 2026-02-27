@@ -33,7 +33,7 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone >= 2.2.2",)
+_instruments = ("pinecone >= 5.1.0",)
 
 
 WRAPPED_METHODS = [
@@ -258,6 +258,27 @@ class PineconeInstrumentor(BaseInstrumentor):
                         ),
                     )
             elif wrap_object == "GRPCIndex":
+                try:
+                    if importlib.util.find_spec("pinecone.db_data.index") is not None:
+                        try:
+                            wrap_function_wrapper(
+                                "pinecone.db_data.index",
+                                f"{wrap_object}.{wrap_method}",
+                                _wrap(
+                                    tracer,
+                                    query_duration_metric,
+                                    read_units_metric,
+                                    write_units_metric,
+                                    scores_metric,
+                                    wrapped_method,
+                                ),
+                            )
+                            continue
+                        except (ImportError, AttributeError):
+                            pass
+                except (ModuleNotFoundError, ImportError):
+                    pass
+
                 if getattr(pinecone, wrap_object, None):
                     wrap_function_wrapper(
                         "pinecone",
@@ -280,10 +301,22 @@ class PineconeInstrumentor(BaseInstrumentor):
             if wrap_object == "Index":
                 try:
                     unwrap("pinecone.db_data.index.Index", wrap_method_name)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to unwrap pinecone.db_data.index.Index.{wrap_method_name}: {e}"
+                    )
+
+            if wrap_object == "GRPCIndex":
+                try:
+                    unwrap("pinecone.db_data.index.GRPCIndex", wrap_method_name)
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to unwrap pinecone.db_data.index.GRPCIndex.{wrap_method_name}: {e}"
+                    )
 
             try:
                 unwrap(f"pinecone.{wrap_object}", wrap_method_name)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(
+                    f"Failed to unwrap pinecone.{wrap_object}.{wrap_method_name}: {e}"
+                )

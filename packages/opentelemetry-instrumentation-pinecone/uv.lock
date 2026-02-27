@@ -599,7 +599,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-    { name = "pinecone", marker = "extra == 'instruments'", specifier = ">=2.2.2" },
+    { name = "pinecone", marker = "extra == 'instruments'", specifier = ">=5.1.0" },
 ]
 provides-extras = ["instruments"]
 
@@ -614,7 +614,7 @@ test = [
     { name = "openai", extras = ["datalib"], specifier = ">=1.31.1,<2" },
     { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pinecone", specifier = ">=2.2.2" },
+    { name = "pinecone", specifier = ">=5.1.0" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
