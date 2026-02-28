@@ -101,7 +101,12 @@ def _extract_response_id(data) -> Optional[str]:
     Works for both response.created and response.done payloads.
     """
     if isinstance(data, dict):
-        return data.get("response", {}).get("id")
+        response = data.get("response")
+        if isinstance(response, dict):
+            return response.get("id")
+        if response is not None:
+            return getattr(response, "id", None)
+        return None
     response_obj = getattr(data, "response", None)
     return getattr(response_obj, "id", None) if response_obj else None
 
@@ -472,7 +477,9 @@ class RealtimeTracingState:
             },
         )
 
-        self._flush_usage_to_span(span)
+        # In per-turn mode, keep usage buffered until end_turn_span(response_id).
+        if not (self._turn_spans_enabled and self.current_turn_span):
+            self._flush_usage_to_span(span)
 
         if should_send_prompts():
             if prompt_content:
