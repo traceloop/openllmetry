@@ -2912,3 +2912,42 @@ def test_anthropic_sync_streaming_helper_methods_legacy(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_beta_message_stream_manager_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    async with async_anthropic_client.beta.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    assert response_content != ""
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert (
+        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+        == "Tell me a joke about OpenTelemetry"
+    )
+    assert anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
