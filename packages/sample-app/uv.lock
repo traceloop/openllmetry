@@ -4278,14 +4278,13 @@ provides-extras = ["instruments"]
 [package.metadata.requires-dev]
 dev = [
     { name = "autopep8", specifier = ">=2.2.0,<3" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
-    { name = "pytest-sugar", specifier = "==1.1.1" },
+    { name = "pytest", specifier = ">=8.2.2,<10" },
     { name = "ruff", specifier = ">=0.4.0" },
 ]
 test = [
     { name = "mistralai", specifier = ">=1.0.0,<2" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest", specifier = ">=8.2.2,<10" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<1.4.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.1.1" },
@@ -4423,7 +4422,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
-    { name = "pinecone", marker = "extra == 'instruments'", specifier = ">=5.1.0" },
+    { name = "pinecone", marker = "extra == 'instruments'", specifier = ">=5.1.0,<9" },
 ]
 provides-extras = ["instruments"]
 
@@ -4438,7 +4437,7 @@ test = [
     { name = "openai", extras = ["datalib"], specifier = ">=1.31.1,<2" },
     { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "pinecone", specifier = ">=5.1.0" },
+    { name = "pinecone", specifier = ">=5.1.0,<9" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
@@ -6276,7 +6275,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-replicate", editable = "../opentelemetry-instrumentation-replicate" },
     { name = "opentelemetry-instrumentation-vertexai", editable = "../opentelemetry-instrumentation-vertexai" },
     { name = "opentelemetry-instrumentation-voyageai", editable = "../opentelemetry-instrumentation-voyageai" },
-    { name = "pinecone", specifier = ">=5.1.0" },
+    { name = "pinecone", specifier = ">=5.1.0,<9" },
     { name = "python-dotenv", specifier = ">=1.0.1,<2" },
     { name = "replicate", specifier = ">=0.22.0,<0.23.0" },
     { name = "requests", specifier = ">=2.32.3,<3" },
