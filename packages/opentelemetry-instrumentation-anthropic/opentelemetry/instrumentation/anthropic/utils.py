@@ -168,11 +168,14 @@ async def ashared_metrics_attributes(response):
 
     common_attributes = Config.get_common_metrics_attributes()
 
-    return {
+    attrs = {
         **common_attributes,
         GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
+    # Only include model if not None — OTLP encoder rejects None attribute values
+    if model is not None:
+        attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
+    return attrs
 
 
 @dont_throw
