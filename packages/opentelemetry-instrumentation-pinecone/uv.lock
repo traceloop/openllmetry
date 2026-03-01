@@ -561,7 +561,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.52.5"
+version = "0.52.6"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },

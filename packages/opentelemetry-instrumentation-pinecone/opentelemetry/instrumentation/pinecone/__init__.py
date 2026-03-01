@@ -33,8 +33,7 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone >= 5.1.0",)
-
+_instruments = ("pinecone >= 5.1.0, <9",)
 
 WRAPPED_METHODS = [
     {
