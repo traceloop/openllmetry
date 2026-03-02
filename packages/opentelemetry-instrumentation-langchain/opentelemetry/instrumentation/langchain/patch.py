@@ -5,6 +5,7 @@ import logging
 from opentelemetry import context as context_api
 from opentelemetry import trace
 from opentelemetry.trace import Tracer, Span, SpanKind, Status, StatusCode
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
 from opentelemetry.instrumentation.langchain.span_utils import SpanHolder
@@ -50,11 +51,11 @@ def _set_graph_span_attributes(
     from opentelemetry.instrumentation.langchain.langgraph_utils import extract_graph_structure
 
     # Set GenAI semantic convention attributes
-    graph_span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, "langgraph")
+    graph_span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langgraph")
     graph_span.set_attribute(
-        SpanAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value
+        GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value
     )
-    graph_span.set_attribute(SpanAttributes.GEN_AI_AGENT_NAME, graph_name)
+    graph_span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, graph_name)
 
     # Extract conversation ID from config
     config = kwargs.get('config') or (args[1] if len(args) > 1 else None)
@@ -62,7 +63,7 @@ def _set_graph_span_attributes(
         configurable = config.get("configurable", {})
         thread_id = configurable.get("thread_id")
         if thread_id:
-            graph_span.set_attribute(SpanAttributes.GEN_AI_CONVERSATION_ID, str(thread_id))
+            graph_span.set_attribute(GenAIAttributes.GEN_AI_CONVERSATION_ID, str(thread_id))
 
     # Extract workflow structure (best-effort with debug logging)
     try:
@@ -244,7 +245,7 @@ def create_command_init_wrapper(tracer: Tracer):
                     kind=SpanKind.INTERNAL
                 ) as span:
                     # Set GenAI operation name
-                    span.set_attribute(SpanAttributes.GEN_AI_OPERATION_NAME, "goto")
+                    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "goto")
 
                     span.set_attribute(
                         SpanAttributes.LANGGRAPH_COMMAND_SOURCE_NODE, source_node
@@ -313,14 +314,14 @@ def _set_middleware_span_attributes(
         hook_name: Name of the hook being executed
     """
     span.set_attribute(
-        SpanAttributes.GEN_AI_OPERATION_NAME,
+        GenAIAttributes.GEN_AI_OPERATION_NAME,
         GenAICustomOperationName.EXECUTE_TASK.value,
     )
     span.set_attribute(SpanAttributes.GEN_AI_TASK_KIND, middleware_name)
     span.set_attribute(
         SpanAttributes.GEN_AI_TASK_NAME, f"{middleware_name}.{hook_name}"
     )
-    span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, "langchain")
+    span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
 
 
 def create_middleware_hook_wrapper(tracer: Tracer, hook_name: str):
@@ -460,22 +461,22 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
 
         with tracer.start_as_current_span(span_name, kind=SpanKind.INTERNAL) as span:
             span.set_attribute(
-                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 GenAiOperationNameValues.CREATE_AGENT.value,
             )
-            span.set_attribute(SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
-            span.set_attribute(SpanAttributes.GEN_AI_AGENT_NAME, agent_name)
+            span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, provider_name)
+            span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, agent_name)
 
             # Extract system instructions from prompt/system_prompt parameter
             # LangGraph uses "prompt", LangChain uses "system_prompt"
             system_instructions = kwargs.get("prompt") or kwargs.get("system_prompt")
             if system_instructions:
                 if isinstance(system_instructions, str):
-                    span.set_attribute(SpanAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, system_instructions)
+                    span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, system_instructions)
                 elif hasattr(system_instructions, 'content'):
                     # SystemMessage or similar object with content attribute
                     span.set_attribute(
-                        SpanAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, str(system_instructions.content)
+                        GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, str(system_instructions.content)
                     )
 
             # Extract tool definitions in OpenAI function format
@@ -491,7 +492,7 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                         tool_definitions.append(tool_def)
                 if tool_definitions:
                     span.set_attribute(
-                        SpanAttributes.GEN_AI_TOOL_DEFINITIONS,
+                        GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
                         json.dumps(tool_definitions)
                     )
 

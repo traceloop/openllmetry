@@ -384,36 +384,36 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # Check LangGraph flow context to set appropriate provider
         langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
         provider_name = "langgraph" if langgraph_flow else "langchain"
-        _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider_name)
 
         if is_agent:
             # Set agent-specific attributes
             _set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 GenAiOperationNameValues.INVOKE_AGENT.value,
             )
-            _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_NAME, name)
-            _set_span_attribute(span, SpanAttributes.GEN_AI_AGENT_ID, str(run_id))
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_NAME, name)
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_ID, str(run_id))
         elif is_tool:
             # Set tool-specific attributes
             _set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 GenAiOperationNameValues.EXECUTE_TOOL.value,
             )
-            _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_NAME, name)
-            _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_TYPE, "function")
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_NAME, name)
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_TYPE, "function")
 
             # Extract tool description if available
             description = (serialized or {}).get("description", "")
             if description:
-                _set_span_attribute(span, SpanAttributes.GEN_AI_TOOL_DESCRIPTION, description)
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_DESCRIPTION, description)
         else:
             # Set task-specific attributes
             _set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_OPERATION_NAME,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 GenAICustomOperationName.EXECUTE_TASK.value,
             )
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_NAME, name)
@@ -454,7 +454,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
+            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
         )
 
         # we already have an LLM span by this point,
@@ -537,7 +537,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             thread_id = configurable.get("thread_id")
             if thread_id:
                 _set_span_attribute(
-                    span, SpanAttributes.GEN_AI_CONVERSATION_ID, str(thread_id)
+                    span, GenAIAttributes.GEN_AI_CONVERSATION_ID, str(thread_id)
                 )
 
         # Set current node in context for Command source tracking.
@@ -825,7 +825,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
             # Set both for backwards compatibility
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
-            span.set_attribute(SpanAttributes.GEN_AI_TOOL_CALL_ARGUMENTS, input_json)
+            span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS, input_json)
 
     @dont_throw
     def on_tool_end(
@@ -853,7 +853,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
             # Set both for backwards compatibility
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
-            span.set_attribute(SpanAttributes.GEN_AI_TOOL_CALL_RESULT, output_json)
+            span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, output_json)
         self._end_span(span, run_id)
 
     @dont_throw
@@ -891,12 +891,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Set GenAI semantic convention attributes
         _set_span_attribute(
-            span, SpanAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.VECTOR_DB_RETRIEVE.value
+            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.VECTOR_DB_RETRIEVE.value
         )
         # Set provider name based on LangGraph flow context
         langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
         provider_name = "langgraph" if langgraph_flow else "langchain"
-        _set_span_attribute(span, SpanAttributes.GEN_AI_PROVIDER_NAME, provider_name)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider_name)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TASK.value)
         _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_NAME, name)
 

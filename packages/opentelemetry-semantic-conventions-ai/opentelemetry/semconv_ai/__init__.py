@@ -246,17 +246,7 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
-    # GenAI Operation Attributes (OpenTelemetry GenAI Semantic Conventions)
-    GEN_AI_OPERATION_NAME = "gen_ai.operation.name"
-    GEN_AI_PROVIDER_NAME = "gen_ai.provider.name"
-    GEN_AI_CONVERSATION_ID = "gen_ai.conversation.id"
-
-    # GenAI Agent Attributes
-    GEN_AI_AGENT_ID = "gen_ai.agent.id"
-    GEN_AI_AGENT_NAME = "gen_ai.agent.name"
-    GEN_AI_SYSTEM_INSTRUCTIONS = "gen_ai.system_instructions"
-
-    # GenAI Task Attributes
+    # GenAI Task Attributes (custom - not yet in official OTel semconv)
     GEN_AI_TASK_ID = "gen_ai.task.id"
     GEN_AI_TASK_NAME = "gen_ai.task.name"
     GEN_AI_TASK_PARENT_ID = "gen_ai.task.parent.id"
@@ -265,15 +255,7 @@ class SpanAttributes:
     GEN_AI_TASK_STATUS = "gen_ai.task.status"
     GEN_AI_TASK_KIND = "gen_ai.task.kind"
 
-    # GenAI Tool Attributes
-    GEN_AI_TOOL_NAME = "gen_ai.tool.name"
-    GEN_AI_TOOL_DESCRIPTION = "gen_ai.tool.description"
-    GEN_AI_TOOL_TYPE = "gen_ai.tool.type"
-    GEN_AI_TOOL_DEFINITIONS = "gen_ai.tool.definitions"
-    GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
-    GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
-
-    # GenAI Workflow Attributes (using string arrays for nodes and edges)
+    # GenAI Workflow Attributes (custom - not yet in official OTel semconv)
     GEN_AI_WORKFLOW_NODES = "gen_ai.workflow.nodes"
     GEN_AI_WORKFLOW_EDGES = "gen_ai.workflow.edges"
 
