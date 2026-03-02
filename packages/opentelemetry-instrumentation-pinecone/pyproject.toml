@@ -21,7 +21,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-pinecone"
 
 [project.optional-dependencies]
-instruments = ["pinecone-client"]
+instruments = ["pinecone>=5.1.0,<9"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 pinecone_client = "opentelemetry.instrumentation.pinecone:PineconeInstrumentor"
@@ -37,7 +37,7 @@ test = [
   "openai[datalib]>=1.31.1,<2",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-sdk>=1.38.0,<2",
-  "pinecone-client>=5.0.0,<6",
+  "pinecone>=5.1.0,<9",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
