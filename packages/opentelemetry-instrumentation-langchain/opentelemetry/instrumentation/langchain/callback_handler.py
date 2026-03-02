@@ -428,6 +428,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "metadata": metadata,
                         "kwargs": kwargs,
                     },
+                    ensure_ascii=False,
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
@@ -454,6 +455,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
                     {"outputs": outputs, "kwargs": kwargs},
+                    ensure_ascii=False,
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
@@ -685,6 +687,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         "inputs": inputs,
                         "kwargs": kwargs,
                     },
+                    ensure_ascii=False,
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
@@ -708,6 +711,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 json.dumps(
                     {"output": output, "kwargs": kwargs},
+                    ensure_ascii=False,
                     cls=CallbackFilteredJSONEncoder,
                 ),
             )
