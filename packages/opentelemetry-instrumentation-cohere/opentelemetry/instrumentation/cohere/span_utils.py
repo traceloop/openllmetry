@@ -180,12 +180,12 @@ def set_span_response_attributes(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
 
@@ -204,12 +204,12 @@ def set_span_response_attributes(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
 
@@ -229,12 +229,12 @@ def set_span_response_attributes(span, response):
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             output_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             input_tokens,
         )
 

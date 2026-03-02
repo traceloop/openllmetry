@@ -65,12 +65,12 @@ def test_cohere_chat_legacy(
         cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res.text
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 58
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 58
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "440f51f4-3e47-44b6-a5d7-5ba33edcfc58"
@@ -93,15 +93,15 @@ def test_cohere_v2_chat_legacy(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        json.loads(cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [
             {
                 "type": "text",
@@ -109,12 +109,12 @@ def test_cohere_v2_chat_legacy(
             }
         ]
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "83e3e297-264b-478e-9b22-5058386292ed"
@@ -140,23 +140,23 @@ def test_cohere_chat_legacy_with_streaming(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "12c00d26-e3bb-48c0-8c49-262155b57d64"
@@ -184,15 +184,15 @@ def test_cohere_v2_chat_legacy_with_streaming(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        json.loads(cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [
             {
                 "type": "text",
@@ -201,12 +201,12 @@ def test_cohere_v2_chat_legacy_with_streaming(
             }
         ]
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "6cd6ce61-bb3b-46f6-907e-fcfab45e51b6"
@@ -258,19 +258,19 @@ def test_cohere_v2_chat_legacy_with_tool_calls_and_history(
     span2 = sorted_spans[1]
     assert span1.name == "cohere.chat"
     assert span2.name == "cohere.chat"
-    assert span1.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
-    assert span2.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert span1.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
     assert span2.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert span1.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r"
-    assert span2.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r"
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r"
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r"
 
     for span in [span1, span2]:
         assert (
-            span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+            span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
             == user_prompt
         )
-        assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+        assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
         assert (
             span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
             == TOOLS[0].get("function").get("name")
@@ -301,104 +301,104 @@ def test_cohere_v2_chat_legacy_with_tool_calls_and_history(
         )
 
     assert (
-        json.loads(span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [{
             "type": "text",
             "text": res1.message.tool_plan
         }]
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
         == "assistant"
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id")
         == res1.message.tool_calls[0].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name")
         == res1.message.tool_calls[0].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments")
         == res1.message.tool_calls[0].function.arguments
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id")
         == res1.message.tool_calls[1].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name")
         == res1.message.tool_calls[1].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments")
         == res1.message.tool_calls[1].function.arguments
     )
 
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name")
         == res1.message.tool_calls[1].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments")
         == res1.message.tool_calls[1].function.arguments
     )
 
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id")
         == res1.message.tool_calls[0].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name")
         == res1.message.tool_calls[0].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments")
         == res1.message.tool_calls[0].function.arguments
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id")
         == res1.message.tool_calls[1].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name")
         == res1.message.tool_calls[1].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments")
         == res1.message.tool_calls[1].function.arguments
     )
 
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content") == res1.message.content
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.role") == "assistant"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.2.content") == "4:20 PM"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.2.role") == "tool"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.3.content") == "Sunny 20 degrees Celsius"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.3.role") == "tool"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content") == res1.message.content
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.role") == "assistant"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.2.content") == "4:20 PM"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.2.role") == "tool"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.3.content") == "Sunny 20 degrees Celsius"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.3.role") == "tool"
 
-    assert span2.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role") == "assistant"
-    assert json.loads(span2.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")) == [{
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
+    assert json.loads(span2.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")) == [{
         "type": "text",
         "text": res2.message.content[-1].text
     }]
 
-    assert span1.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 62
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 62
     assert span1.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span1.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span1.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span1.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span1.attributes.get("gen_ai.response.id")
         == "965405bb-b9da-4dc5-b329-e708a795e188"
     )
-    assert span2.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 94
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 94
     assert span2.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span2.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span2.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span2.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span2.attributes.get("gen_ai.response.id")
         == "00f7ec58-cd22-4b62-b068-0e7ece6bbf67"
@@ -430,15 +430,15 @@ def test_cohere_v2_chat_legacy_with_tool_calls_and_streaming(
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "cohere.chat"
-    assert span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r"
 
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == user_prompt
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
     assert (
         span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
         == TOOLS[0].get("function").get("name")
@@ -465,41 +465,41 @@ def test_cohere_v2_chat_legacy_with_tool_calls_and_streaming(
     )
 
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [{
             "type": "text",
             "text": plan
         }]
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role") == "assistant"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id")
         == "get_time_dg5wwc00d8v5"
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name") == "get_time"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name") == "get_time"
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"))
         == {"location": "Tokyo"}
     )
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id")
         == "get_weather_bc8241gkqss5"
     )
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name")
         == "get_weather"
     )
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"))
         == {"location": "Tokyo"}
     )
 
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 62
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 62
     assert span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span.attributes.get("gen_ai.response.id")
         == "e6d757a9-f0f3-40fe-9b8a-44cdc3bd18a7"
@@ -579,23 +579,23 @@ async def test_cohere_chat_legacy_async(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res.text
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "ea2d074c-4f25-47cb-bef8-b00dc2ae991b"
@@ -618,9 +618,9 @@ async def test_cohere_chat_with_events_with_content_async(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -648,9 +648,9 @@ async def test_cohere_chat_with_events_with_no_content_async(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -682,23 +682,23 @@ async def test_cohere_chat_legacy_with_streaming_async(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
         == res
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "dcdb9a85-a8dc-4f4c-9779-f7c1801248f3"
@@ -727,15 +727,15 @@ async def test_cohere_v2_chat_legacy_with_streaming_async(
     spans = span_exporter.get_finished_spans()
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command"
     assert (
-        cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke, pirate style"
     )
     assert (
-        json.loads(cohere_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [
             {
                 "type": "text",
@@ -744,12 +744,12 @@ async def test_cohere_v2_chat_legacy_with_streaming_async(
             }
         ]
     )
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 7
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 7
     assert cohere_span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == cohere_span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + cohere_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         cohere_span.attributes.get("gen_ai.response.id")
         == "599ae0aa-0ef6-49e4-b7f4-e2fafc40ca2c"
@@ -802,19 +802,19 @@ async def test_cohere_v2_chat_legacy_with_tool_calls_and_history_async(
     span2 = sorted_spans[1]
     assert span1.name == "cohere.chat"
     assert span2.name == "cohere.chat"
-    assert span1.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
-    assert span2.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert span1.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
     assert span2.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert span1.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r7b-12-2024"
-    assert span2.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r7b-12-2024"
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r7b-12-2024"
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r7b-12-2024"
 
     for span in [span1, span2]:
         assert (
-            span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+            span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
             == user_prompt
         )
-        assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+        assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
         assert (
             span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
             == TOOLS[0].get("function").get("name")
@@ -841,67 +841,67 @@ async def test_cohere_v2_chat_legacy_with_tool_calls_and_history_async(
         )
 
     assert (
-        json.loads(span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [{
             "type": "text",
             "text": res1.message.tool_plan
         }]
     )
-    assert span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role") == "assistant"
+    assert span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id")
         == res1.message.tool_calls[0].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name")
         == res1.message.tool_calls[0].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments")
         == res1.message.tool_calls[0].function.arguments
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id")
         == res1.message.tool_calls[1].id
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name")
         == res1.message.tool_calls[1].function.name
     )
     assert (
-        span1.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments")
+        span1.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments")
         == res1.message.tool_calls[1].function.arguments
     )
 
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.content") == res1.message.content
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.1.role") == "assistant"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.2.content") == "4:20 PM"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.2.role") == "tool"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.3.content") == "Sunny 20 degrees Celsius"
-    assert span2.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.3.role") == "tool"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content") == res1.message.content
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.role") == "assistant"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.2.content") == "4:20 PM"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.2.role") == "tool"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.3.content") == "Sunny 20 degrees Celsius"
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.3.role") == "tool"
 
-    assert span2.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role") == "assistant"
-    assert json.loads(span2.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content")) == [{
+    assert span2.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
+    assert json.loads(span2.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")) == [{
         "type": "text",
         "text": res2.message.content[-1].text
     }]
 
-    assert span1.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 62
+    assert span1.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 62
     assert span1.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span1.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span1.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span1.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span1.attributes.get("gen_ai.response.id")
         == "b7391518-e53e-4486-98ea-fabffcde31c2"
     )
-    assert span2.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 78
+    assert span2.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 78
     assert span2.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span2.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span2.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span2.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span2.attributes.get("gen_ai.response.id")
         == "8289d4ee-a83b-4ce2-b7e1-245d9778fcf5"
@@ -934,15 +934,15 @@ async def test_cohere_v2_chat_legacy_with_tool_calls_and_streaming_async(
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "cohere.chat"
-    assert span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "chat"
-    assert span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == "command-r"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "command-r"
 
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == user_prompt
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.role") == "user"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
     assert (
         span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
         == TOOLS[0].get("function").get("name")
@@ -969,41 +969,41 @@ async def test_cohere_v2_chat_legacy_with_tool_calls_and_streaming_async(
     )
 
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.content"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"))
         == [{
             "type": "text",
             "text": plan
         }]
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.role") == "assistant"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.id")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id")
         == "get_time_mp1131yrhbga"
     )
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.name")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name")
         == "get_time"
     )
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.0.arguments"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"))
         == {"location": "Tokyo"}
     )
     assert (
-        span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.id")
+        span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id")
         == "get_weather_yxz1xx2m07cn"
     )
-    assert span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.name") == "get_weather"
+    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name") == "get_weather"
     assert (
-        json.loads(span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.0.tool_calls.1.arguments"))
+        json.loads(span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"))
         == {"location": "Tokyo"}
     )
 
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 62
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 62
     assert span.attributes.get(
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS
     ) == span.attributes.get(
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS
-    ) + span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS)
+        GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    ) + span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
     assert (
         span.attributes.get("gen_ai.response.id")
         == "ce257b09-c6da-4aed-b722-6384504180f5"
