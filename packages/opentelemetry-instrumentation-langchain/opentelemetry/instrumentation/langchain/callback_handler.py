@@ -557,6 +557,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     "metadata": metadata,
                     "kwargs": kwargs,
                 },
+                ensure_ascii=False,
                 cls=CallbackFilteredJSONEncoder,
             )
             # Set both for backwards compatibility
@@ -908,6 +909,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     "metadata": metadata,
                     "kwargs": kwargs,
                 },
+                ensure_ascii=False,
                 cls=CallbackFilteredJSONEncoder,
             )
             _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
@@ -946,6 +948,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
             output_json = json.dumps(
                 {"documents": docs_output, "count": len(documents)},
+                ensure_ascii=False,
                 cls=CallbackFilteredJSONEncoder,
             )
             _set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
