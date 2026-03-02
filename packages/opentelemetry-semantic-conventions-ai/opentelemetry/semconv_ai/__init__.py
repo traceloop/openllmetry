@@ -67,8 +67,22 @@ class SpanAttributes:
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
 
     # LLM Cache Attributes (legacy naming - keeping for backward compatibility)
+    LLM_SYSTEM = "gen_ai.system"
+    LLM_REQUEST_MODEL = "gen_ai.request.model"
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    LLM_TOKEN_TYPE = "gen_ai.token.type"
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
