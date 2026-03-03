@@ -72,7 +72,7 @@ datasets = ["pandas"]
 dev = [
   "autopep8>=2.2.0,<3",
   "ruff>=0.4.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
   "pytest-sugar==1.1.1",
   "mypy>=1.18.2,<2",
   "types-requests>=2.31.0,<3",
@@ -86,7 +86,7 @@ test = [
   "pytest-recording>=0.13.1,<0.14.0",
   "pydantic<3",
   "pytest-asyncio>=0.23.7,<1.4.0",
-  "anthropic>=0.25.2,<0.83.0",
+  "anthropic>=0.25.2,<0.85.0",
   "langchain>=1.0.0,<2.0.0",
   "langchain-openai>=1.0.0,<2.0.0",
   "pandas>=1.0.0",
