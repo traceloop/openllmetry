@@ -34,6 +34,7 @@ from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.content_allow_list import ContentAllowList
 from traceloop.sdk.utils import is_notebook
 from traceloop.sdk.utils.package_check import is_package_installed
+from traceloop.sdk.utils.instrumentation_warnings import warn_missing_instrumentation
 from typing import Callable, Dict, List, Optional, Set, Union
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_AGENT_NAME,
@@ -487,102 +488,115 @@ def init_instrumentations(
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
 
+    # Mapping of instrument to target library name(s) for warning purposes
+    instrument_to_library = {
+        Instruments.AGNO: ["agno"],
+        Instruments.ALEPHALPHA: ["aleph_alpha_client"],
+        Instruments.ANTHROPIC: ["anthropic"],
+        Instruments.AZURE_SEARCH: ["azure-search-documents"],
+        Instruments.BEDROCK: ["boto3"],
+        Instruments.CHROMA: ["chromadb"],
+        Instruments.COHERE: ["cohere"],
+        Instruments.CREWAI: ["crewai"],
+        Instruments.GOOGLE_GENERATIVEAI: ["google-generativeai", "google-genai"],
+        Instruments.GROQ: ["groq"],
+        Instruments.HAYSTACK: ["haystack"],
+        Instruments.LANCEDB: ["lancedb"],
+        Instruments.LANGCHAIN: ["langchain", "langgraph"],
+        Instruments.LLAMA_INDEX: ["llama-index", "llama_index"],
+        Instruments.MARQO: ["marqo"],
+        Instruments.MCP: ["mcp"],
+        Instruments.MILVUS: ["pymilvus"],
+        Instruments.MISTRAL: ["mistralai"],
+        Instruments.OLLAMA: ["ollama"],
+        Instruments.OPENAI: ["openai"],
+        Instruments.OPENAI_AGENTS: ["openai-agents"],
+        Instruments.PINECONE: ["pinecone"],
+        Instruments.QDRANT: ["qdrant_client", "qdrant-client"],
+        Instruments.REPLICATE: ["replicate"],
+        Instruments.SAGEMAKER: ["boto3"],
+        Instruments.TOGETHER: ["together"],
+        Instruments.TRANSFORMERS: ["transformers"],
+        Instruments.VERTEXAI: ["google-cloud-aiplatform"],
+        Instruments.WATSONX: ["ibm-watsonx-ai", "ibm-watson-machine-learning"],
+        Instruments.WEAVIATE: ["weaviate"],
+        Instruments.WRITER: ["writer-sdk"],
+    }
+
+    def is_target_library_installed(instrument: Instruments) -> bool:
+        """Check if any of the target libraries for an instrument are installed."""
+        libraries = instrument_to_library.get(instrument, [])
+        return any(is_package_installed(lib) for lib in libraries)
+
     instrument_set = False
     for instrument in instruments:
+        result = False
         if instrument == Instruments.AGNO:
-            if init_agno_instrumentor():
-                instrument_set = True
+            result = init_agno_instrumentor()
         elif instrument == Instruments.ALEPHALPHA:
-            if init_alephalpha_instrumentor():
-                instrument_set = True
+            result = init_alephalpha_instrumentor()
         elif instrument == Instruments.ANTHROPIC:
-            if init_anthropic_instrumentor(
+            result = init_anthropic_instrumentor(
                 should_enrich_metrics, base64_image_uploader
-            ):
-                instrument_set = True
+            )
+        elif instrument == Instruments.AZURE_SEARCH:
+            result = init_azure_search_instrumentor()
         elif instrument == Instruments.BEDROCK:
-            if init_bedrock_instrumentor(should_enrich_metrics):
-                instrument_set = True
+            result = init_bedrock_instrumentor(should_enrich_metrics)
         elif instrument == Instruments.CHROMA:
-            if init_chroma_instrumentor():
-                instrument_set = True
+            result = init_chroma_instrumentor()
         elif instrument == Instruments.COHERE:
-            if init_cohere_instrumentor():
-                instrument_set = True
+            result = init_cohere_instrumentor()
         elif instrument == Instruments.CREWAI:
-            if init_crewai_instrumentor():
-                instrument_set = True
+            result = init_crewai_instrumentor()
         elif instrument == Instruments.GOOGLE_GENERATIVEAI:
-            if init_google_generativeai_instrumentor(
+            result = init_google_generativeai_instrumentor(
                 should_enrich_metrics, base64_image_uploader
-            ):
-                instrument_set = True
+            )
         elif instrument == Instruments.GROQ:
-            if init_groq_instrumentor():
-                instrument_set = True
+            result = init_groq_instrumentor()
         elif instrument == Instruments.HAYSTACK:
-            if init_haystack_instrumentor():
-                instrument_set = True
+            result = init_haystack_instrumentor()
         elif instrument == Instruments.LANCEDB:
-            if init_lancedb_instrumentor():
-                instrument_set = True
+            result = init_lancedb_instrumentor()
         elif instrument == Instruments.LANGCHAIN:
-            if init_langchain_instrumentor():
-                instrument_set = True
+            result = init_langchain_instrumentor()
         elif instrument == Instruments.LLAMA_INDEX:
-            if init_llama_index_instrumentor():
-                instrument_set = True
+            result = init_llama_index_instrumentor()
         elif instrument == Instruments.MARQO:
-            if init_marqo_instrumentor():
-                instrument_set = True
+            result = init_marqo_instrumentor()
         elif instrument == Instruments.MCP:
-            if init_mcp_instrumentor():
-                instrument_set = True
+            result = init_mcp_instrumentor()
         elif instrument == Instruments.MILVUS:
-            if init_milvus_instrumentor():
-                instrument_set = True
+            result = init_milvus_instrumentor()
         elif instrument == Instruments.MISTRAL:
-            if init_mistralai_instrumentor():
-                instrument_set = True
+            result = init_mistralai_instrumentor()
         elif instrument == Instruments.OLLAMA:
-            if init_ollama_instrumentor():
-                instrument_set = True
+            result = init_ollama_instrumentor()
         elif instrument == Instruments.OPENAI:
-            if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
-                instrument_set = True
+            result = init_openai_instrumentor(should_enrich_metrics, base64_image_uploader)
         elif instrument == Instruments.OPENAI_AGENTS:
-            if init_openai_agents_instrumentor():
-                instrument_set = True
+            result = init_openai_agents_instrumentor()
         elif instrument == Instruments.PINECONE:
-            if init_pinecone_instrumentor():
-                instrument_set = True
+            result = init_pinecone_instrumentor()
         elif instrument == Instruments.PYMYSQL:
-            if init_pymysql_instrumentor():
-                instrument_set = True
+            result = init_pymysql_instrumentor()
         elif instrument == Instruments.QDRANT:
-            if init_qdrant_instrumentor():
-                instrument_set = True
+            result = init_qdrant_instrumentor()
         elif instrument == Instruments.REDIS:
-            if init_redis_instrumentor():
-                instrument_set = True
+            result = init_redis_instrumentor()
         elif instrument == Instruments.REPLICATE:
-            if init_replicate_instrumentor():
-                instrument_set = True
+            result = init_replicate_instrumentor()
         elif instrument == Instruments.REQUESTS:
-            if init_requests_instrumentor():
-                instrument_set = True
+            result = init_requests_instrumentor()
         elif instrument == Instruments.SAGEMAKER:
-            if init_sagemaker_instrumentor(should_enrich_metrics):
-                instrument_set = True
+            result = init_sagemaker_instrumentor(should_enrich_metrics)
         elif instrument == Instruments.TOGETHER:
-            if init_together_instrumentor():
-                instrument_set = True
+            result = init_together_instrumentor()
         elif instrument == Instruments.TRANSFORMERS:
-            if init_transformers_instrumentor():
-                instrument_set = True
+            result = init_transformers_instrumentor()
         elif instrument == Instruments.URLLIB3:
-            if init_urllib3_instrumentor():
-                instrument_set = True
+            result = init_urllib3_instrumentor()
         elif instrument == Instruments.VERTEXAI:
             if init_vertexai_instrumentor(should_enrich_metrics, base64_image_uploader):
                 instrument_set = True
@@ -590,14 +604,11 @@ def init_instrumentations(
             if init_voyageai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
-            if init_watsonx_instrumentor():
-                instrument_set = True
+            result = init_watsonx_instrumentor()
         elif instrument == Instruments.WEAVIATE:
-            if init_weaviate_instrumentor():
-                instrument_set = True
+            result = init_weaviate_instrumentor()
         elif instrument == Instruments.WRITER:
-            if init_writer_instrumentor():
-                instrument_set = True
+            result = init_writer_instrumentor()
         else:
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
             print(
@@ -606,6 +617,13 @@ def init_instrumentations(
                 "Traceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
             )
             print(Fore.RESET)
+            continue
+
+        if result:
+            instrument_set = True
+        elif is_target_library_installed(instrument):
+            # Library is installed but instrumentor failed - likely missing instrumentation package
+            warn_missing_instrumentation(instrument.value, target_library_installed=True)
 
     if not instrument_set:
         print(
@@ -1042,6 +1060,20 @@ def init_alephalpha_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Aleph Alpha instrumentor: {e}")
+    return False
+
+
+def init_azure_search_instrumentor():
+    try:
+        if is_package_installed("azure-search-documents"):
+            from opentelemetry.instrumentation.azure_search import AzureSearchInstrumentor
+
+            instrumentor = AzureSearchInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing Azure Search instrumentor: {e}")
     return False
 
 

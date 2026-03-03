@@ -1,0 +1,80 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://traceloop-otel-os.search.windows.net/indexes?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#indexes","value":[{"@odata.etag":"\"0x8DE3B3249357310\"","name":"basic-idx","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":true,"filterable":true,"retrievable":true,"stored":true,"sortable":true,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null},{"@odata.etag":"\"0x8DE667FF7A1BF3E\"","name":"otel-integration-test","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":false,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"name","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"description","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"rating","type":"Edm.Double","searchable":false,"filterable":true,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[{"name":"sg","searchMode":"analyzingInfixMatching","sourceFields":["name"]}],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null}]}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Sat, 07 Feb 2026 19:34:54 GMT
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '59'
+      request-id:
+      - 13bdfe5a-045c-11f1-8c6f-cda9dbe57b88
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+    method: GET
+    uri: https://traceloop-otel-os.search.windows.net/indexes?api-version=2025-09-01
+  response:
+    body:
+      string: '{"@odata.context":"https://traceloop-otel-os.search.windows.net/$metadata#indexes","value":[{"@odata.etag":"\"0x8DE3B3249357310\"","name":"basic-idx","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":true,"filterable":true,"retrievable":true,"stored":true,"sortable":true,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null},{"@odata.etag":"\"0x8DE66802542B4D3\"","name":"otel-integration-test","description":null,"defaultScoringProfile":null,"fields":[{"name":"id","type":"Edm.String","searchable":false,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":true,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"name","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"description","type":"Edm.String","searchable":true,"filterable":false,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]},{"name":"rating","type":"Edm.Double","searchable":false,"filterable":true,"retrievable":true,"stored":true,"sortable":false,"facetable":false,"key":false,"indexAnalyzer":null,"searchAnalyzer":null,"analyzer":null,"normalizer":null,"dimensions":null,"vectorSearchProfile":null,"vectorEncoding":null,"synonymMaps":[]}],"scoringProfiles":[],"corsOptions":null,"suggesters":[{"name":"sg","searchMode":"analyzingInfixMatching","sourceFields":["name"]}],"analyzers":[],"normalizers":[],"tokenizers":[],"tokenFilters":[],"charFilters":[],"encryptionKey":null,"similarity":{"@odata.type":"#Microsoft.Azure.Search.BM25Similarity","k1":null,"b":null},"semantic":null,"vectorSearch":null}]}'
+    headers:
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; odata.metadata=minimal; odata.streaming=true; charset=utf-8
+      Date:
+      - Sat, 07 Feb 2026 19:36:10 GMT
+      OData-Version:
+      - '4.0'
+      Preference-Applied:
+      - odata.include-annotations="*"
+      Strict-Transport-Security:
+      - max-age=2592000
+      - max-age=15724800; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      elapsed-time:
+      - '53'
+      request-id:
+      - 4131afa8-045c-11f1-8d1a-050a989e30a1
+    status:
+      code: 200
+      message: OK
+version: 1
