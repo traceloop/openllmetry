@@ -260,6 +260,24 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # GenAI Task Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_TASK_ID = "gen_ai.task.id"
+    GEN_AI_TASK_NAME = "gen_ai.task.name"
+    GEN_AI_TASK_PARENT_ID = "gen_ai.task.parent.id"
+    GEN_AI_TASK_INPUT = "gen_ai.task.input"
+    GEN_AI_TASK_OUTPUT = "gen_ai.task.output"
+    GEN_AI_TASK_STATUS = "gen_ai.task.status"
+    GEN_AI_TASK_KIND = "gen_ai.task.kind"
+
+    # GenAI Workflow Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_WORKFLOW_NODES = "gen_ai.workflow.nodes"
+    GEN_AI_WORKFLOW_EDGES = "gen_ai.workflow.edges"
+
+    # LangGraph-specific Attributes (vendor namespace)
+    LANGGRAPH_COMMAND_SOURCE_NODE = "langgraph.command.source_node"
+    LANGGRAPH_COMMAND_GOTO_NODE = "langgraph.command.goto_node"
+    LANGGRAPH_COMMAND_GOTO_NODES = "langgraph.command.goto_nodes"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
@@ -304,3 +322,26 @@ class TraceloopSpanKindValues(Enum):
     AGENT = "agent"
     TOOL = "tool"
     UNKNOWN = "unknown"
+
+
+class GenAICustomOperationName(Enum):
+    """
+    Custom operation names extending the official OpenTelemetry GenAI semantic conventions.
+
+    For standard operations (create_agent, invoke_agent, execute_tool, chat, embeddings),
+    use the official GenAiOperationNameValues from:
+    opentelemetry.semconv._incubating.attributes.gen_ai_attributes
+
+    These are agent workflow extensions not yet in the official spec.
+    """
+
+    EXECUTE_TASK = "execute_task"
+    LLM_REQUEST = "llm_request"
+    VECTOR_DB_RETRIEVE = "vector_db_retrieve"
+
+
+class GenAITaskStatus(Enum):
+    """Task execution status values for gen_ai.task.status attribute."""
+
+    SUCCESS = "success"
+    FAILURE = "failure"
