@@ -109,13 +109,33 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_api_attributes(span):
+def _get_api_base_url(instance):
+    """Extract the API base URL from a Watsonx ModelInference instance.
+
+    Attempts to read the URL from the underlying APIClient credentials.
+    Falls back to the default us-south endpoint when unavailable.
+    """
+    default_url = "https://us-south.ml.cloud.ibm.com"
+    try:
+        client = getattr(instance, "_client", None)
+        if client is not None:
+            credentials = getattr(client, "credentials", None)
+            if credentials is not None:
+                url = getattr(credentials, "url", None)
+                if url:
+                    return url
+    except Exception:
+        pass
+    return default_url
+
+
+def _set_api_attributes(span, instance=None):
     if not span.is_recording():
         return
     _set_span_attribute(
         span,
         WatsonxSpanAttributes.WATSONX_API_BASE,
-        "https://us-south.ml.cloud.ibm.com",
+        _get_api_base_url(instance),
     )
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_TYPE, "watsonx.ai")
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0")
@@ -488,7 +508,7 @@ def _with_tracer_wrapper(func):
 
 @dont_throw
 def _handle_input(span, event_logger, name, instance, response_counter, args, kwargs):
-    _set_api_attributes(span)
+    _set_api_attributes(span, instance)
 
     if "generate" in name:
         set_model_input_attributes(span, instance)
