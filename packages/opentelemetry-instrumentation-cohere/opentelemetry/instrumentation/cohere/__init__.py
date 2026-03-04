@@ -163,6 +163,44 @@ WRAPPED_AMETHODS = [
     },
 ]
 
+# Client classes whose __init__ may overwrite chat/chat_stream with
+# experimental_kwarg_decorator, adding instance attributes that shadow the
+# class-level wrapt wrappers.  We wrap __init__ to remove those instance
+# overrides so that the class-level wrapt instrumentation stays effective.
+_INIT_OVERWRITTEN_METHODS = {
+    ("cohere.client", "Client"): ["chat", "chat_stream"],
+    ("cohere.client", "AsyncClient"): ["chat", "chat_stream"],
+    ("cohere.client_v2", "ClientV2"): ["chat", "chat_stream"],
+    ("cohere.client_v2", "AsyncClientV2"): ["chat", "chat_stream"],
+}
+
+
+def _make_init_wrapper(method_names):
+    """Create an __init__ wrapper that removes instance-level method overrides.
+
+    Cohere SDK's Client/AsyncClient __init__ overwrite self.chat and
+    self.chat_stream with experimental_kwarg_decorator wrappers stored as
+    instance attributes.  These shadow the class-level wrapt wrappers
+    installed by wrap_function_wrapper, which can interfere with
+    instrumentation.
+
+    By deleting those instance attributes after __init__, Python's normal
+    attribute lookup falls back to the class-level descriptors where our
+    wrapt wrappers live, ensuring clean instrumentation.
+    """
+
+    def init_wrapper(wrapped, instance, args, kwargs):
+        result = wrapped(*args, **kwargs)
+        for method_name in method_names:
+            if method_name in instance.__dict__:
+                try:
+                    delattr(instance, method_name)
+                except AttributeError:
+                    pass
+        return result
+
+    return init_wrapper
+
 
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
@@ -343,6 +381,19 @@ class CohereInstrumentor(BaseInstrumentor):
             except (ImportError, ModuleNotFoundError, AttributeError):
                 logger.debug(f"Failed to instrument {wrap_module}.{wrap_object}.{wrap_method}")
 
+        # Wrap __init__ of client classes to remove instance-level method
+        # overrides that Cohere SDK's experimental_kwarg_decorator adds
+        # during client construction.
+        for (mod_name, cls_name), method_names in _INIT_OVERWRITTEN_METHODS.items():
+            try:
+                wrap_function_wrapper(
+                    mod_name,
+                    f"{cls_name}.__init__",
+                    _make_init_wrapper(method_names),
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to wrap {mod_name}.{cls_name}.__init__")
+
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_module = wrapped_method.get("module")
@@ -366,3 +417,11 @@ class CohereInstrumentor(BaseInstrumentor):
                 )
             except (ImportError, ModuleNotFoundError, AttributeError):
                 logger.debug(f"Failed to uninstrument {wrap_module}.{wrap_object}.{wrap_method}")
+        for mod_name, cls_name in _INIT_OVERWRITTEN_METHODS:
+            try:
+                unwrap(
+                    f"{mod_name}.{cls_name}",
+                    "__init__",
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                logger.debug(f"Failed to uninstrument {mod_name}.{cls_name}.__init__")
