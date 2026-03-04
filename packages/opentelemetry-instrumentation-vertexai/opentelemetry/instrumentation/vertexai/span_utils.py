@@ -116,13 +116,54 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         return None
 
 
+def _is_content_object(obj):
+    """Check if an object is a VertexAI Content object (has role and parts)."""
+    return hasattr(obj, 'role') and hasattr(obj, 'parts')
+
+
+async def _process_content_object(content_obj, span):
+    """Process a VertexAI Content object, returning (role, processed_parts)."""
+    role = content_obj.role or "user"
+    processed_parts = []
+    for part_index, part in enumerate(content_obj.parts):
+        processed = await _process_content_item_vertexai(part, span, part_index)
+        if processed is not None:
+            processed_parts.append(processed)
+    return role, processed_parts
+
+
+def _process_content_object_sync(content_obj, span):
+    """Synchronous version: process a VertexAI Content object, returning (role, processed_parts)."""
+    role = content_obj.role or "user"
+    processed_parts = []
+    for part_index, part in enumerate(content_obj.parts):
+        processed = _process_content_item_vertexai_sync(part, span, part_index)
+        if processed is not None:
+            processed_parts.append(processed)
+    return role, processed_parts
+
+
 async def _process_vertexai_argument(argument, span):
-    """Process a single argument for VertexAI, handling different types"""
+    """Process a single argument for VertexAI, handling different types.
+
+    Returns either:
+      - A list of processed content dicts (for simple text, Part lists, etc.)
+      - A list of (role, content_list) tuples when the argument is a list of Content objects
+    """
     if isinstance(argument, str):
         # Simple text argument in OpenAI format
         return [{"type": "text", "text": argument}]
 
     elif isinstance(argument, list):
+        # Check if the list contains Content objects (with role and parts)
+        if argument and _is_content_object(argument[0]):
+            # List of Content objects - each has its own role
+            results = []
+            for content_obj in argument:
+                role, parts = await _process_content_object(content_obj, span)
+                results.append((role, parts))
+            return results
+
         # List of mixed content (text strings and Part objects) - deep copy and process
         content_list = copy.deepcopy(argument)
         processed_items = []
@@ -133,6 +174,11 @@ async def _process_vertexai_argument(argument, span):
                 processed_items.append(processed_item)
 
         return processed_items
+
+    elif _is_content_object(argument):
+        # Single Content object
+        role, parts = await _process_content_object(argument, span)
+        return [(role, parts)]
 
     else:
         # Single Part object - convert to OpenAI format
@@ -162,12 +208,26 @@ async def _process_content_item_vertexai(content_item, span, item_index):
 
 
 def _process_vertexai_argument_sync(argument, span):
-    """Synchronous version of argument processing for VertexAI"""
+    """Synchronous version of argument processing for VertexAI.
+
+    Returns either:
+      - A list of processed content dicts (for simple text, Part lists, etc.)
+      - A list of (role, content_list) tuples when the argument is a list of Content objects
+    """
     if isinstance(argument, str):
         # Simple text argument in OpenAI format
         return [{"type": "text", "text": argument}]
 
     elif isinstance(argument, list):
+        # Check if the list contains Content objects (with role and parts)
+        if argument and _is_content_object(argument[0]):
+            # List of Content objects - each has its own role
+            results = []
+            for content_obj in argument:
+                role, parts = _process_content_object_sync(content_obj, span)
+                results.append((role, parts))
+            return results
+
         # List of mixed content (text strings and Part objects) - deep copy and process
         content_list = copy.deepcopy(argument)
         processed_items = []
@@ -178,6 +238,11 @@ def _process_vertexai_argument_sync(argument, span):
                 processed_items.append(processed_item)
 
         return processed_items
+
+    elif _is_content_object(argument):
+        # Single Content object
+        role, parts = _process_content_object_sync(argument, span)
+        return [(role, parts)]
 
     else:
         # Single Part object - convert to OpenAI format
@@ -212,21 +277,41 @@ async def set_input_attributes(span, args):
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
+        prompt_index = 0
+        for argument in args:
             processed_content = await _process_vertexai_argument(argument, span)
 
-            if processed_content:
+            if not processed_content:
+                continue
+
+            # Check if the result is a list of (role, parts) tuples (Content objects)
+            if isinstance(processed_content[0], tuple):
+                for role, parts in processed_content:
+                    if parts:
+                        _set_span_attribute(
+                            span,
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
+                            role,
+                        )
+                        _set_span_attribute(
+                            span,
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                            json.dumps(parts),
+                        )
+                        prompt_index += 1
+            else:
+                # Plain content list (strings, Parts, etc.) - assign as user role
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
+                    "user",
                 )
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                    json.dumps(processed_content),
                 )
+                prompt_index += 1
 
 
 # Sync version with image processing support
@@ -236,21 +321,41 @@ def set_input_attributes_sync(span, args):
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
+        prompt_index = 0
+        for argument in args:
             processed_content = _process_vertexai_argument_sync(argument, span)
 
-            if processed_content:
+            if not processed_content:
+                continue
+
+            # Check if the result is a list of (role, parts) tuples (Content objects)
+            if isinstance(processed_content[0], tuple):
+                for role, parts in processed_content:
+                    if parts:
+                        _set_span_attribute(
+                            span,
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
+                            role,
+                        )
+                        _set_span_attribute(
+                            span,
+                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                            json.dumps(parts),
+                        )
+                        prompt_index += 1
+            else:
+                # Plain content list (strings, Parts, etc.) - assign as user role
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
+                    "user",
                 )
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
+                    json.dumps(processed_content),
                 )
+                prompt_index += 1
 
 
 @dont_throw

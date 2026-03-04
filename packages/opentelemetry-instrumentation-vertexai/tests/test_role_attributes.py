@@ -210,3 +210,141 @@ class TestRoleAttributes:
 
         # Verify content is also set
         assert f"{SpanAttributes.LLM_PROMPTS}.0.content" in self.span_attributes
+
+
+class TestContentObjectMessageHistory:
+    """Test that Content objects with different roles are preserved as separate messages.
+
+    Regression tests for https://github.com/traceloop/openllmetry/issues/2513
+    """
+
+    def setup_method(self):
+        """Setup test fixtures"""
+        self.mock_span = Mock()
+        self.mock_span.is_recording.return_value = True
+        self.mock_span.context.trace_id = "test_trace_id"
+        self.mock_span.context.span_id = "test_span_id"
+        self.span_attributes = {}
+
+        def capture_attribute(key, value):
+            self.span_attributes[key] = value
+
+        self.mock_span.set_attribute = capture_attribute
+
+    def _make_content(self, role, text):
+        """Create a mock VertexAI Content object."""
+        part = Mock()
+        part.text = text
+        # Ensure Part does not look like a Content object
+        del part.role
+        del part.parts
+        # Ensure Part does not look like a base64 image
+        part.inline_data = None
+        part.mime_type = None
+
+        content = Mock()
+        content.role = role
+        content.parts = [part]
+        return content
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    def test_sync_content_objects_preserve_roles(self, mock_should_send_prompts):
+        """Test that a list of Content objects preserves each message's role."""
+        mock_should_send_prompts.return_value = True
+
+        args = [
+            [
+                self._make_content("user", "What's 2+2?"),
+                self._make_content("model", "5"),
+                self._make_content("user", "really?"),
+            ]
+        ]
+        set_input_attributes_sync(self.mock_span, args)
+
+        # Verify three separate messages with correct roles
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+        content_0 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        assert content_0 == [{"type": "text", "text": "What's 2+2?"}]
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "model"
+        content_1 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
+        assert content_1 == [{"type": "text", "text": "5"}]
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+        content_2 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"])
+        assert content_2 == [{"type": "text", "text": "really?"}]
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    @pytest.mark.asyncio
+    async def test_async_content_objects_preserve_roles(self, mock_should_send_prompts):
+        """Test that a list of Content objects preserves each message's role (async)."""
+        mock_should_send_prompts.return_value = True
+
+        args = [
+            [
+                self._make_content("user", "What's 2+2?"),
+                self._make_content("model", "5"),
+                self._make_content("user", "really?"),
+            ]
+        ]
+        await set_input_attributes(self.mock_span, args)
+
+        # Verify three separate messages with correct roles
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+        content_0 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        assert content_0 == [{"type": "text", "text": "What's 2+2?"}]
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.1.role"] == "model"
+        content_1 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.1.content"])
+        assert content_1 == [{"type": "text", "text": "5"}]
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.2.role"] == "user"
+        content_2 = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.2.content"])
+        assert content_2 == [{"type": "text", "text": "really?"}]
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    def test_sync_content_object_with_multiple_parts(self, mock_should_send_prompts):
+        """Test that a Content object with multiple parts is handled correctly."""
+        mock_should_send_prompts.return_value = True
+
+        # Create a Content with multiple text parts
+        part1 = Mock()
+        part1.text = "Hello"
+        del part1.role
+        del part1.parts
+        part1.inline_data = None
+        part1.mime_type = None
+
+        part2 = Mock()
+        part2.text = "World"
+        del part2.role
+        del part2.parts
+        part2.inline_data = None
+        part2.mime_type = None
+
+        content = Mock()
+        content.role = "user"
+        content.parts = [part1, part2]
+
+        args = [[content]]
+        set_input_attributes_sync(self.mock_span, args)
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+        content_parsed = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        assert content_parsed == [
+            {"type": "text", "text": "Hello"},
+            {"type": "text", "text": "World"},
+        ]
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    def test_sync_single_content_object_arg(self, mock_should_send_prompts):
+        """Test passing a single Content object (not in a list) as an argument."""
+        mock_should_send_prompts.return_value = True
+
+        content = self._make_content("user", "Hello!")
+        args = [content]
+        set_input_attributes_sync(self.mock_span, args)
+
+        assert self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.role"] == "user"
+        content_parsed = json.loads(self.span_attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"])
+        assert content_parsed == [{"type": "text", "text": "Hello!"}]
