@@ -424,7 +424,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/55/ca/d323556e2bf9bfb63
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.54.0"
+version = "0.54.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -438,9 +438,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "tomli", marker = "python_full_version < '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/be/43/2640cd5293fb5430528166908d6439cf3321bc1c54de5fe58ef100b143a1/datamodel_code_generator-0.54.0.tar.gz", hash = "sha256:2b183598d049e265146a8224c35d1bb96a80a641ea8ecd2a82e6a0e97b56da6b", size = 824327, upload-time = "2026-02-14T16:19:05.347Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/4b/6a63ea00c65402576e05e8cc963349ffe58db07d8c8183ab51488dbfb67a/datamodel_code_generator-0.54.1.tar.gz", hash = "sha256:dd9eb7594f94a8b85d7e410f4d997a443cf7a52a1dcc049fae6cf35660f18803", size = 829716, upload-time = "2026-03-04T04:15:02.582Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/d9/fd646ea4ae48e374817b2750f5e678a5bf6e10d8924f09cf4cce86a81607/datamodel_code_generator-0.54.0-py3-none-any.whl", hash = "sha256:3156df7a7e8fa5a7c9a6d50836e5ba5abe0532f6b71eee6d73a0c8e1fb5b7e47", size = 261838, upload-time = "2026-02-14T16:19:03.298Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/ce/8a8aadbb2fb428109949d0f7a42232d1d452dab0b8550f6e8c5843afa93d/datamodel_code_generator-0.54.1-py3-none-any.whl", hash = "sha256:67c59ff2368eb2ec96ba11441bc8957bb68a71459dd37275a78ea90238ad5f01", size = 264344, upload-time = "2026-03-04T04:15:00.721Z" },
 ]
 
 [[package]]
@@ -1582,7 +1582,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-agno"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-agno" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1622,7 +1622,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-alephalpha" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1660,7 +1660,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-anthropic" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1698,7 +1698,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-bedrock" }
 dependencies = [
     { name = "anthropic" },
@@ -1734,7 +1734,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-chromadb" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1769,7 +1769,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-cohere" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1807,7 +1807,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-crewai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-crewai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1844,7 +1844,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-google-generativeai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1881,7 +1881,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-groq"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-groq" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1919,7 +1919,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-haystack" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1956,7 +1956,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-lancedb"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-lancedb" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1996,7 +1996,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-langchain" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2011,7 +2011,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
+    { name = "opentelemetry-semantic-conventions-ai", editable = "../opentelemetry-semantic-conventions-ai" },
 ]
 provides-extras = ["instruments"]
 
@@ -2050,7 +2050,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-llamaindex" }
 dependencies = [
     { name = "inflection" },
@@ -2113,7 +2113,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-marqo"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-marqo" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2151,7 +2151,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-mcp"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-mcp" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2191,7 +2191,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-milvus" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2227,7 +2227,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-mistralai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-mistralai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2264,7 +2264,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-ollama"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-ollama" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2302,7 +2302,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-openai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2339,7 +2339,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai-agents"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-openai-agents" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2378,7 +2378,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-pinecone" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2417,7 +2417,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-qdrant" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2465,7 +2465,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-replicate" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2517,7 +2517,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-sagemaker"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-sagemaker" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2582,7 +2582,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-together"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-together" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2620,7 +2620,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-transformers" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2667,7 +2667,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-vertexai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2705,7 +2705,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-voyageai"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-voyageai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2743,7 +2743,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-watsonx" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2781,7 +2781,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-weaviate" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2820,7 +2820,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-writer"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "../opentelemetry-instrumentation-writer" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2898,7 +2898,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.14"
+version = "0.4.15"
 source = { editable = "../opentelemetry-semantic-conventions-ai" }
 dependencies = [
     { name = "opentelemetry-sdk" },
@@ -3983,7 +3983,7 @@ wheels = [
 
 [[package]]
 name = "traceloop-sdk"
-version = "0.52.6"
+version = "0.53.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
