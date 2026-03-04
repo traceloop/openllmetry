@@ -1,3 +1,15 @@
+## v0.53.0 (2026-03-04)
+
+### Feat
+
+- **langchain**: add OpenTelemetry GenAI semantic conventions (#3673)
+
+### Fix
+
+- **semconv**: revert deleted semconv attributes (#3750)
+- **pinecone**: instrument pinecone package instead of deprecated pinecone-client (#3733)
+- **langchain**: support non-ascii characters to support i18n (#3734)
+
 ## v0.52.6 (2026-02-26)
 
 ### Fix
