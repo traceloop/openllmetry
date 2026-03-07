@@ -1024,7 +1024,7 @@ wheels = [
 
 [[package]]
 name = "langchain-core"
-version = "1.2.12"
+version = "1.2.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonpatch" },
@@ -1036,9 +1036,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "uuid-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/1d/08e935d1532fcc90981f6e5bb6825914c9227ea7a962c62b1e18619b49e7/langchain_core-1.2.12.tar.gz", hash = "sha256:4d7fa6643d7ab06fc1905a9b7dcbe96a6f3c181046b56edf9c0c17ecd412d9e9", size = 831329, upload-time = "2026-02-12T20:53:15.01Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/0e/664d8d81b3493e09cbab72448d2f9d693d1fa5aa2bcc488602203a9b6da0/langchain_core-1.2.7.tar.gz", hash = "sha256:e1460639f96c352b4a41c375f25aeb8d16ffc1769499fb1c20503aad59305ced", size = 837039, upload-time = "2026-01-09T17:44:25.505Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/a5/678ab0e5cc57794f20ae5ed12c1442506ef1108c9434f950aebc6044e5a3/langchain_core-1.2.12-py3-none-any.whl", hash = "sha256:66ca17a2a9cb007ab29021968e6adfcf4228067151dc2bd6ebfff265ffaf92f5", size = 500132, upload-time = "2026-02-12T20:53:13.806Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/6f/34a9fba14d191a67f7e2ee3dbce3e9b86d2fa7310e2c7f2c713583481bd2/langchain_core-1.2.7-py3-none-any.whl", hash = "sha256:452f4fef7a3d883357b22600788d37e3d8854ef29da345b7ac7099f33c31828b", size = 490232, upload-time = "2026-01-09T17:44:24.236Z" },
 ]
 
 [[package]]
@@ -1514,7 +1514,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.52.3"
+version = "0.52.6"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1567,7 +1567,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
+    { name = "opentelemetry-semantic-conventions-ai", editable = "../opentelemetry-semantic-conventions-ai" },
 ]
 provides-extras = ["instruments"]
 
@@ -1575,11 +1575,11 @@ provides-extras = ["instruments"]
 dev = [
     { name = "autopep8", specifier = ">=2.3.1,<3" },
     { name = "pytest", specifier = ">=8.3.3,<9" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "pytest-sugar", specifier = "==1.1.1" },
     { name = "ruff", specifier = ">=0.4.0" },
 ]
 test = [
-    { name = "anthropic", specifier = ">=0.75.0,<0.76.0" },
+    { name = "anthropic", specifier = ">=0.75.0,<0.83.0" },
     { name = "boto3", specifier = ">=1.35.49,<2" },
     { name = "langchain", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchain-anthropic", specifier = ">=1.0.0,<2.0.0" },
@@ -1592,15 +1592,15 @@ test = [
     { name = "langchain-text-splitters", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchainhub", specifier = ">=0.1.21,<0.2.0" },
     { name = "langgraph", specifier = ">=1.0.0,<2.0.0" },
-    { name = "openai", specifier = ">=1.52.2,<2" },
+    { name = "openai", specifier = ">=1.52.2,<3" },
     { name = "opentelemetry-instrumentation-bedrock" },
     { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pydantic", specifier = ">=2.10.5,<3" },
     { name = "pytest", specifier = ">=8.3.3,<9" },
-    { name = "pytest-asyncio", specifier = ">=0.24.0,<0.25.0" },
+    { name = "pytest-asyncio", specifier = ">=0.24.0,<1.4.0" },
     { name = "pytest-recording", specifier = ">=0.13.2,<0.14.0" },
-    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "pytest-sugar", specifier = "==1.1.1" },
     { name = "vcrpy", specifier = ">=8.0.0,<9" },
 ]
 
@@ -1648,11 +1648,25 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.13"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ba/e6/40b59eda51ac47009fb47afcdf37c6938594a0bd7f3b9fadcbc6058248e3/opentelemetry_semantic_conventions_ai-0.4.13.tar.gz", hash = "sha256:94efa9fb4ffac18c45f54a3a338ffeb7eedb7e1bb4d147786e77202e159f0036", size = 5368, upload-time = "2025-08-22T10:14:17.387Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/b5/cf25da2218910f0d6cdf7f876a06bed118c4969eacaf60a887cbaef44f44/opentelemetry_semantic_conventions_ai-0.4.13-py3-none-any.whl", hash = "sha256:883a30a6bb5deaec0d646912b5f9f6dcbb9f6f72557b73d0f2560bf25d13e2d5", size = 6080, upload-time = "2025-08-22T10:14:16.477Z" },
+version = "0.4.14"
+source = { editable = "../opentelemetry-semantic-conventions-ai" }
+dependencies = [
+    { name = "opentelemetry-sdk" },
+    { name = "opentelemetry-semantic-conventions" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autopep8", specifier = ">=2.2.0,<3" },
+    { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "ruff", specifier = ">=0.4.0" },
 ]
 
 [[package]]
@@ -2133,16 +2147,15 @@ wheels = [
 
 [[package]]
 name = "pytest-sugar"
-version = "1.0.0"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging" },
     { name = "pytest" },
     { name = "termcolor" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/ac/5754f5edd6d508bc6493bc37d74b928f102a5fff82d9a80347e180998f08/pytest-sugar-1.0.0.tar.gz", hash = "sha256:6422e83258f5b0c04ce7c632176c7732cab5fdb909cb39cca5c9139f81276c0a", size = 14992, upload-time = "2024-02-01T18:30:36.735Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/4e/60fed105549297ba1a700e1ea7b828044842ea27d72c898990510b79b0e2/pytest-sugar-1.1.1.tar.gz", hash = "sha256:73b8b65163ebf10f9f671efab9eed3d56f20d2ca68bda83fa64740a92c08f65d", size = 16533, upload-time = "2025-08-23T12:19:35.737Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/fb/889f1b69da2f13691de09a111c16c4766a433382d44aa0ecf221deded44a/pytest_sugar-1.0.0-py3-none-any.whl", hash = "sha256:70ebcd8fc5795dc457ff8b69d266a4e2e8a74ae0c3edc749381c64b5246c8dfd", size = 10171, upload-time = "2024-02-01T18:30:29.395Z" },
+    { url = "https://files.pythonhosted.org/packages/87/d5/81d38a91c1fdafb6711f053f5a9b92ff788013b19821257c2c38c1e132df/pytest_sugar-1.1.1-py3-none-any.whl", hash = "sha256:2f8319b907548d5b9d03a171515c1d43d2e38e32bd8182a1781eb20b43344cc8", size = 11440, upload-time = "2025-08-23T12:19:34.894Z" },
 ]
 
 [[package]]
