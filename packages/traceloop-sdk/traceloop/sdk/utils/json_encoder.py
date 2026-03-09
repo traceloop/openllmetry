@@ -14,6 +14,11 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
+        # Prefer Pydantic v2 model_dump_json() to avoid PydanticDeprecatedSince20 warnings
+        # raised when calling the legacy .json() method on BaseModel instances.
+        if hasattr(o, "model_dump_json"):
+            return o.model_dump_json()
+
         if hasattr(o, "json"):
             return o.json()
 
