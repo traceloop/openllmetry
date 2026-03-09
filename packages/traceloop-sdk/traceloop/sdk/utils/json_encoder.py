@@ -14,13 +14,15 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        # Prefer Pydantic v2 model_dump_json() to avoid PydanticDeprecatedSince20 warnings
-        # raised when calling the legacy .json() method on BaseModel instances.
-        if hasattr(o, "model_dump_json"):
-            return o.model_dump_json()
+        # Prefer Pydantic v2 model_dump() to avoid PydanticDeprecatedSince20 warnings.
+        # model_dump() returns a dict (JSON-serializable Python object), whereas
+        # model_dump_json() / .json() return a JSON *string* which would be
+        # double-encoded by json.JSONEncoder into an escaped string literal.
+        if hasattr(o, "model_dump"):
+            return o.model_dump()
 
-        if hasattr(o, "json"):
-            return o.json()
+        if hasattr(o, "dict"):
+            return o.dict()
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__
