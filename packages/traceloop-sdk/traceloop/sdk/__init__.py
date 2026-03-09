@@ -1,3 +1,7 @@
+# NOTE:
+# This file has been modified by FortifyRoot.
+# Original source: https://github.com/traceloop/openllmetry
+
 import os
 import sys
 from pathlib import Path
@@ -36,9 +40,9 @@ from traceloop.sdk.associations.associations import AssociationProperty as Assoc
 
 class Traceloop:
     AUTO_CREATED_KEY_PATH = str(
-        Path.home() / ".cache" / "traceloop" / "auto_created_key"
+        Path.home() / ".cache" / "fortifyroot" / "auto_created_key"
     )
-    AUTO_CREATED_URL = str(Path.home() / ".cache" / "traceloop" / "auto_created_url")
+    AUTO_CREATED_URL = str(Path.home() / ".cache" / "fortifyroot" / "auto_created_url")
 
     __tracer_wrapper: TracerWrapper
     __fetcher: Optional[Fetcher] = None
@@ -48,7 +52,7 @@ class Traceloop:
     @staticmethod
     def init(
         app_name: str = sys.argv[0],
-        api_endpoint: str = "https://api.traceloop.com",
+        api_endpoint: str = "https://api.fortifyroot.com",
         api_key: Optional[str] = None,
         enabled: bool = True,
         headers: Dict[str, str] = {},
@@ -75,7 +79,7 @@ class Traceloop:
             TracerWrapper.set_disabled(True)
             print(
                 Fore.YELLOW
-                + "Traceloop instrumentation is disabled via init flag"
+                + "FortifyRoot instrumentation is disabled via init flag"
                 + Fore.RESET
             )
             return
@@ -91,7 +95,7 @@ class Traceloop:
         enable_content_tracing = is_content_tracing_enabled()
 
         if exporter or processor:
-            print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
+            print(Fore.GREEN + "FortifyRoot exporting traces to a custom exporter")
 
         headers = os.getenv("TRACELOOP_HEADERS") or headers
 
@@ -101,28 +105,28 @@ class Traceloop:
         if (
             not exporter
             and not processor
-            and api_endpoint == "https://api.traceloop.com"
+            and api_endpoint == "https://api.fortifyroot.com"
             and not api_key
         ):
             print(
                 Fore.RED
-                + "Error: Missing Traceloop API key,"
-                + " go to https://app.traceloop.com/settings/api-keys to create one"
+                + "Error: Missing FortifyRoot API key,"
+                + " go to https://app.fortifyroot.com/settings/api-keys to create one"
             )
-            print("Set the TRACELOOP_API_KEY environment variable to the key")
+            print("Set the FORTIFYROOT_API_KEY environment variable to the key")
             print(Fore.RESET)
             return
 
         if not exporter and not processor and headers:
             print(
                 Fore.GREEN
-                + f"Traceloop exporting traces to {api_endpoint}, authenticating with custom headers"
+                + f"FortifyRoot exporting traces to {api_endpoint}, authenticating with custom headers"
             )
 
         if api_key and not exporter and not processor and not headers:
             print(
                 Fore.GREEN
-                + f"Traceloop exporting traces to {api_endpoint} authenticating with bearer token"
+                + f"FortifyRoot exporting traces to {api_endpoint} authenticating with bearer token"
             )
             headers = {
                 "Authorization": f"Bearer {api_key}",
@@ -160,7 +164,7 @@ class Traceloop:
                 os.getenv("TRACELOOP_METRICS_HEADERS") or metrics_headers or headers
             )
             if metrics_exporter or processor:
-                print(Fore.GREEN + "Traceloop exporting metrics to a custom exporter")
+                print(Fore.GREEN + "FortifyRoot exporting metrics to a custom exporter")
 
             MetricsWrapper.set_static_params(
                 resource_attributes, metrics_endpoint, metrics_headers
@@ -173,7 +177,7 @@ class Traceloop:
                 os.getenv("TRACELOOP_LOGGING_HEADERS") or logging_headers or headers
             )
             if logging_exporter or processor:
-                print(Fore.GREEN + "Traceloop exporting logs to a custom exporter")
+                print(Fore.GREEN + "FortifyRoot exporting logs to a custom exporter")
 
             LoggerWrapper.set_static_params(
                 resource_attributes, logging_endpoint, logging_headers
@@ -181,7 +185,7 @@ class Traceloop:
             Traceloop.__logger_wrapper = LoggerWrapper(exporter=logging_exporter)
 
         if (
-            (api_endpoint.find("traceloop.com") != -1 or endpoint_is_traceloop)
+            (api_endpoint.find("fortifyroot.com") != -1 or endpoint_is_traceloop)
             and api_key
             and (exporter is None)
             and (processor is None)
@@ -191,7 +195,7 @@ class Traceloop:
                 Traceloop.__fetcher.run()
                 print(
                     Fore.GREEN
-                    + "Traceloop syncing configuration and prompts"
+                    + "FortifyRoot syncing configuration and prompts"
                     + Fore.RESET
                 )
             Traceloop.__client = Client(
@@ -215,9 +219,9 @@ class Traceloop:
         exporter: Optional[SpanExporter] = None
     ) -> SpanProcessor:
         """
-        Creates and returns the default Traceloop span processor.
+        Creates and returns the default FortifyRoot span processor.
 
-        This function allows users to get the default Traceloop span processor
+        This function allows users to get the default FortifyRoot span processor
         to combine it with their custom processors when using the processors parameter.
 
         Args:
@@ -227,7 +231,7 @@ class Traceloop:
             exporter: Custom exporter to use (creates default if None)
 
         Returns:
-            SpanProcessor: The default Traceloop span processor
+            SpanProcessor: The default FortifyRoot span processor
 
         Example:
             # Get the default processor and combine with custom one
@@ -246,7 +250,7 @@ class Traceloop:
                 "Authorization": f"Bearer {api_key}",
             }
         if api_endpoint is None:
-            api_endpoint = os.getenv("TRACELOOP_BASE_URL") or "https://api.traceloop.com"
+            api_endpoint = os.getenv("TRACELOOP_BASE_URL") or "https://api.fortifyroot.com"
         return get_default_span_processor(disable_batch, api_endpoint, headers, exporter)
 
     @staticmethod
@@ -263,7 +267,7 @@ class Traceloop:
         """
         if not Traceloop.__client:
             raise Exception(
-                "Client not initialized, you should call Traceloop.init() first. "
+                "Client not initialized, you should call fortifyroot.init() first. "
                 "If you are still getting this error - you are missing the api key"
             )
         return Traceloop.__client

@@ -1,3 +1,7 @@
+# NOTE:
+# This file has been modified by FortifyRoot.
+# Original source: https://github.com/traceloop/openllmetry
+
 import atexit
 import logging
 import os
@@ -41,7 +45,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 
 
-TRACER_NAME = "traceloop.tracer"
+TRACER_NAME = "fortifyroot.tracer"
 EXCLUDED_URLS = """
     iam.cloud.ibm.com,
     dataplatform.cloud.ibm.com,
@@ -53,6 +57,7 @@ EXCLUDED_URLS = """
     api.voyageai.com,
     pinecone.io,
     traceloop.com,
+    fortifyroot.com,
     posthog.com,
     sentry.io,
     bedrock-runtime,
@@ -209,7 +214,7 @@ class TracerWrapper(object):
 
         print(
             Fore.RED
-            + "Warning: Traceloop not initialized, make sure you call Traceloop.init()"
+            + "Warning: FortifyRoot not initialized, make sure you call fortifyroot.init()"
         )
         print(Fore.RESET)
         return False
@@ -327,20 +332,16 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
 
     match parsed.scheme.lower():
         case "http" | "https":
-            base_url = api_endpoint.strip().rstrip('/')
-            if not base_url.endswith('/v1/traces'):
+            base_url = api_endpoint.strip().rstrip("/")
+            if not base_url.endswith("/v1/traces"):
                 endpoint = f"{base_url}/v1/traces"
             else:
                 endpoint = base_url
             return HTTPExporter(endpoint=endpoint, headers=headers)
         case "grpc":
-            return GRPCExporter(
-                endpoint=parsed.netloc, headers=headers, insecure=True
-            )
+            return GRPCExporter(endpoint=parsed.netloc, headers=headers, insecure=True)
         case "grpcs":
-            return GRPCExporter(
-                endpoint=parsed.netloc, headers=headers, insecure=False
-            )
+            return GRPCExporter(endpoint=parsed.netloc, headers=headers, insecure=False)
         case _:
             # No scheme → default to insecure gRPC for backward compatibility
             return GRPCExporter(
@@ -425,7 +426,7 @@ def get_default_span_processor(
     exporter: Optional[SpanExporter] = None,
 ) -> SpanProcessor:
     """
-    Creates and returns the default Traceloop span processor.
+    Creates and returns the default FortifyRoot span processor.
 
     Args:
         disable_batch: If True, uses SimpleSpanProcessor, otherwise BatchSpanProcessor
@@ -434,7 +435,7 @@ def get_default_span_processor(
         exporter: Custom exporter to use (creates default if None)
 
     Returns:
-        SpanProcessor: The default Traceloop span processor
+        SpanProcessor: The default FortifyRoot span processor
     """
     endpoint = api_endpoint or TracerWrapper.endpoint
     request_headers = headers or TracerWrapper.headers
@@ -602,8 +603,8 @@ def init_instrumentations(
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
             print(
                 "Usage:\n"
-                "from traceloop.sdk.instruments import Instruments\n"
-                "Traceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
+                "from fortifyroot.instruments import Instruments\n"
+                "FortifyRoot.init(app_name='...', instruments=set([Instruments.OPENAI]))"
             )
             print(Fore.RESET)
 
