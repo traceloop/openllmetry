@@ -62,6 +62,10 @@ class Meters:
 
 
 class SpanAttributes:
+    # TODO: Remove from here once available in semantic conventions package
+    GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+    GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
+
     # GenAI Usage Cache Attributes (missing from incubating semantic conventions)
     GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"

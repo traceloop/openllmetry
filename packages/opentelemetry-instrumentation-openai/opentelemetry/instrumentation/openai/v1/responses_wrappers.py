@@ -216,9 +216,8 @@ def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
 def process_content_block(
     block: dict[str, Any],
 ) -> dict[str, Any]:
-    # TODO: keep the original type once backend supports it
     if block.get("type") in ["text", "input_text", "output_text"]:
-        return {"type": "text", "text": block.get("text")}
+        return {"type": block["type"], "text": block.get("text")}
     elif block.get("type") in ["image", "input_image", "output_image"]:
         return {
             "type": "image",

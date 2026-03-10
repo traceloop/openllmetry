@@ -188,6 +188,18 @@ def instrument_with_no_content(
     os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
+@pytest.fixture(scope="function")
+def instrument_with_messages_attributes(
+    instrument_legacy, reader, tracer_provider, logger_provider, meter_provider
+):
+    instrumentor = instrument_legacy
+    Config.use_messages_attributes = True
+
+    yield instrumentor
+
+    Config.use_messages_attributes = False
+    instrumentor.uninstrument()
+
 
 @pytest.fixture(autouse=True)
 def clear_exporter(span_exporter):
