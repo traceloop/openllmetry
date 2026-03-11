@@ -45,6 +45,7 @@ def traceloop_client(async_http_client):
         api_key=api_key,
         api_endpoint=base_url,
         disable_batch=True,
+        endpoint_is_traceloop=True,
     )
 
     yield client

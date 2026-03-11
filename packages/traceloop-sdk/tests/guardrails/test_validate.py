@@ -14,9 +14,11 @@ from traceloop.sdk.guardrail.on_failure import OnFailure
 def create_guardrails_with_guards(guards: list, on_failure=None) -> Guardrails:
     """Helper to create a Guardrails instance with specified guards."""
     mock_client = MagicMock()
-    guardrails = Guardrails(mock_client)
-    guardrails._guards = guards
-    guardrails._on_failure = on_failure or OnFailure.noop()
+    guardrails = Guardrails(
+        mock_client,
+        guards=guards,
+        on_failure=on_failure or OnFailure.noop(),
+    )
     return guardrails
 
 
@@ -166,16 +168,16 @@ class TestValidateErrors:
     """Tests for error handling in validate."""
 
     @pytest.mark.asyncio
-    async def test_raises_value_error_without_create(self):
-        """Validate raises ValueError if create() was not called."""
+    async def test_raises_value_error_with_empty_guards(self):
+        """Validate raises ValueError if no guards are configured."""
         mock_client = MagicMock()
-        guardrails = Guardrails(mock_client)
-        # _guards is empty since create() was not called
+        guardrails = Guardrails(mock_client, guards=[])
 
         with pytest.raises(ValueError) as exc_info:
             await guardrails.validate([{"score": 0.8}])
 
-        assert "Must call create() before validate()" in str(exc_info.value)
+        assert "Number of guard_inputs (1)" in str(exc_info.value)
+        assert "must match number of guards (0)" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_raises_value_error_on_input_length_mismatch(self):

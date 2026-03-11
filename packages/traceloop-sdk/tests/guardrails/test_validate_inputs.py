@@ -32,9 +32,11 @@ class AnotherInput(BaseModel):
 def create_guardrails_with_guards(guards: list) -> Guardrails:
     """Helper to create a Guardrails instance with specified guards."""
     mock_client = MagicMock()
-    guardrails = Guardrails(mock_client)
-    guardrails._guards = guards
-    guardrails._on_failure = lambda x: None
+    guardrails = Guardrails(
+        mock_client,
+        guards=guards,
+        on_failure=lambda x: None,
+    )
     return guardrails
 
 
