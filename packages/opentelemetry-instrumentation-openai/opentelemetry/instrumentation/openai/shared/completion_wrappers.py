@@ -20,6 +20,10 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
     MessageEvent,
 )
+from opentelemetry.instrumentation.openai.shared.completion_safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -61,6 +65,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        kwargs = _apply_prompt_safety(span, kwargs)
         _handle_request(span, kwargs, instance)
 
         try:
@@ -76,6 +81,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
             # span will be closed after the generator is done
             return _build_from_streaming_response(span, kwargs, response)
         else:
+            _apply_completion_safety(span, response)
             _handle_response(response, span, instance)
 
         span.end()
@@ -97,6 +103,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        kwargs = _apply_prompt_safety(span, kwargs)
         _handle_request(span, kwargs, instance)
 
         try:
@@ -112,6 +119,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
             # span will be closed after the generator is done
             return _abuild_from_streaming_response(span, kwargs, response)
         else:
+            _apply_completion_safety(span, response)
             _handle_response(response, span, instance)
 
         span.end()

@@ -10,6 +10,10 @@ from opentelemetry.instrumentation.cohere.event_emitter import (
     emit_input_event,
     emit_response_events,
 )
+from opentelemetry.instrumentation.cohere.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.cohere.span_utils import (
     set_input_content_attributes,
     set_response_content_attributes,
@@ -231,6 +235,7 @@ def _wrap(
     )
 
     with use_span(span, end_on_exit=False):
+        kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
         set_span_request_attributes(span, kwargs)
         _handle_input_content(span, event_logger, llm_request_type, kwargs)
 
@@ -246,6 +251,7 @@ def _wrap(
         if to_wrap.get("stream_process_func"):
             return to_wrap.get("stream_process_func")(span, event_logger, llm_request_type, response)
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         set_span_response_attributes(span, response)
         _handle_response_content(span, event_logger, llm_request_type, response)
         span.end()
@@ -278,6 +284,7 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
+        kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
         set_span_request_attributes(span, kwargs)
         _handle_input_content(span, event_logger, llm_request_type, kwargs)
 
@@ -290,6 +297,7 @@ async def _awrap(
                 span.end()
             raise
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         set_span_response_attributes(span, response)
         _handle_response_content(span, event_logger, llm_request_type, response)
 

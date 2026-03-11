@@ -31,6 +31,10 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
     MessageEvent,
     ToolCall,
 )
+from opentelemetry.instrumentation.openai.shared.chat_safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
@@ -92,6 +96,7 @@ def chat_wrapper(
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        kwargs = _apply_prompt_safety(span, kwargs)
         run_async(_handle_request(span, kwargs, instance))
         try:
             start_time = time.time()
@@ -148,6 +153,7 @@ def chat_wrapper(
 
         duration = end_time - start_time
 
+        _apply_completion_safety(span, response)
         _handle_response(
             response,
             span,
@@ -190,6 +196,7 @@ async def achat_wrapper(
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        kwargs = _apply_prompt_safety(span, kwargs)
         await _handle_request(span, kwargs, instance)
 
         try:
@@ -249,6 +256,7 @@ async def achat_wrapper(
 
         duration = end_time - start_time
 
+        _apply_completion_safety(span, response)
         _handle_response(
             response,
             span,
