@@ -78,7 +78,7 @@ dev = [
   "types-requests>=2.31.0,<3",
   "types-colorama>=0.4.15,<0.5.0",
   "pandas-stubs",
-  "datamodel-code-generator>=0.26.0,<0.55.0",
+  "datamodel-code-generator>=0.26.0,<0.56.0",
 ]
 test = [
   "openai>=1.31.1,<3",
