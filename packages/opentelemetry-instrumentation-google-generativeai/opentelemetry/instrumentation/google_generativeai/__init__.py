@@ -14,6 +14,10 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_choice_events,
     emit_message_events,
 )
+from opentelemetry.instrumentation.google_generativeai.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
     set_input_attributes_sync,
     set_model_request_attributes,
@@ -210,6 +214,7 @@ async def _awrap(
         },
     )
     start_time = time.perf_counter()
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     _handle_request(span, args, kwargs, llm_model, event_logger)
     try:
         response = await wrapped(*args, **kwargs)
@@ -238,6 +243,7 @@ async def _awrap(
                 span, response, llm_model, event_logger, token_histogram
             )
         else:
+            _apply_completion_safety(span, response, name)
             _handle_response(
                 span, response, llm_model, event_logger, token_histogram
             )
@@ -287,6 +293,7 @@ def _wrap(
     )
 
     start_time = time.perf_counter()
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     _handle_request(span, args, kwargs, llm_model, event_logger)
     try:
         response = wrapped(*args, **kwargs)
@@ -315,6 +322,7 @@ def _wrap(
                 span, response, llm_model, event_logger, token_histogram
             )
         else:
+            _apply_completion_safety(span, response, name)
             _handle_response(
                 span, response, llm_model, event_logger, token_histogram
             )
