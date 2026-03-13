@@ -115,7 +115,7 @@ def _set_request_attributes(span, kwargs, instance=None):
     model = kwargs.get("model")
     if vendor == "AWS" and model and "." in model:
         model = _cross_region_check(model)
-    elif vendor == "OpenRouter":
+    elif vendor == "OpenRouter" or vendor == "Forge":
         model = _extract_model_name_from_provider_format(model)
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
@@ -302,6 +302,8 @@ def _get_vendor_from_url(base_url):
         return "Google"
     elif "openrouter.ai" in base_url:
         return "OpenRouter"
+    elif "forge.tensorblock.co" in base_url:
+        return "Forge"
 
     return "openai"
 
