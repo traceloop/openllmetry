@@ -6,9 +6,32 @@ from llama_index.core.base.llms.types import MessageRole, ChatMessage, ChatRespo
 
 # Import the functions we're testing
 from opentelemetry.instrumentation.llamaindex.span_utils import (
+    _set_span_attribute,
     set_llm_chat_response,
     set_llm_predict_response,
 )
+
+
+class TestSetSpanAttribute:
+    """Tests for the _set_span_attribute utility function."""
+
+    def test_set_span_attribute_with_valid_value(self):
+        """Test that _set_span_attribute sets the attribute when value is valid."""
+        mock_span = MagicMock()
+        _set_span_attribute(mock_span, "test.attribute", "valid_value")
+        mock_span.set_attribute.assert_called_once_with("test.attribute", "valid_value")
+
+    def test_set_span_attribute_with_none_value(self):
+        """Test that _set_span_attribute does NOT set the attribute when value is None."""
+        mock_span = MagicMock()
+        _set_span_attribute(mock_span, "test.attribute", None)
+        mock_span.set_attribute.assert_not_called()
+
+    def test_set_span_attribute_with_empty_string(self):
+        """Test that _set_span_attribute does NOT set the attribute when value is empty string."""
+        mock_span = MagicMock()
+        _set_span_attribute(mock_span, "test.attribute", "")
+        mock_span.set_attribute.assert_not_called()
 
 
 class TestNoneContentHandling:

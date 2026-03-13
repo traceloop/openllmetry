@@ -12,6 +12,12 @@ from opentelemetry.semconv_ai import (
 )
 
 
+def _set_span_attribute(span, name, value):
+    if value is not None:
+        if value != "":
+            span.set_attribute(name, value)
+
+
 @dont_throw
 def set_llm_chat_request(event, span) -> None:
     if not span.is_recording():
@@ -63,11 +69,11 @@ def set_llm_chat_response(event, span) -> None:
             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
             response.message.role.value,
         )
-        if response.message.content is not None:
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                response.message.content,
-            )
+        _set_span_attribute(
+            span,
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
+            response.message.content,
+        )
 
 
 @dont_throw
@@ -159,11 +165,11 @@ def set_llm_predict_response(event, span) -> None:
             f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
             MessageRole.ASSISTANT.value,
         )
-        if event.output is not None:
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
-                event.output,
-            )
+        _set_span_attribute(
+            span,
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
+            event.output,
+        )
 
 
 @dont_throw
