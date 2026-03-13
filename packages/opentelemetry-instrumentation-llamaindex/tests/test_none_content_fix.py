@@ -2,7 +2,11 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from llama_index.core.base.llms.types import MessageRole, ChatMessage, ChatResponse
+from llama_index.core.base.llms.types import MessageRole
+
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 # Import the functions we're testing
 from opentelemetry.instrumentation.llamaindex.span_utils import (
@@ -41,41 +45,35 @@ class TestNoneContentHandling:
         """
         Test that set_llm_chat_response doesn't set gen_ai.completion.0.content
         when response.message.content is None (StructuredLLM case).
-        
-        This reproduces issue #3513 where StructuredLLM returns None for
-        response.message.content because the structured output goes to response.raw.
         """
-        # Create a mock span
         mock_span = MagicMock()
         mock_span.is_recording.return_value = True
         
-        # Create a mock response with None content (simulating StructuredLLM)
         mock_message = MagicMock()
         mock_message.role = MessageRole.ASSISTANT
-        mock_message.content = None  # This is the key - StructuredLLM returns None here
+        mock_message.content = None
         
         mock_response = MagicMock()
         mock_response.message = mock_message
         
-        # Create a mock event
         mock_event = MagicMock()
         mock_event.response = mock_response
         mock_event.messages = []
         
-        # Patch should_send_prompts to return True
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
-            # Call the function - this should NOT raise an error or set None attribute
             set_llm_chat_response(mock_event, mock_span)
         
-        # Verify that set_attribute was called for role
-        role_calls = [call for call in mock_span.set_attribute.call_args_list 
-                      if 'role' in str(call)]
-        assert len(role_calls) > 0, "Role attribute should be set"
+        # Verify role was set
+        mock_span.set_attribute.assert_any_call(
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
+            MessageRole.ASSISTANT.value
+        )
         
-        # Verify that set_attribute was NOT called with None for content
-        content_calls = [call for call in mock_span.set_attribute.call_args_list 
-                         if 'content' in str(call) and call[0][1] is None]
-        assert len(content_calls) == 0, "Content attribute should NOT be set to None"
+        # Verify content was NOT set (no call with the content attribute key)
+        content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
+        assert not any(
+            c.args[0] == content_key for c in mock_span.set_attribute.call_args_list
+        ), "Content attribute should NOT be set when value is None"
 
     def test_set_llm_chat_response_with_valid_content(self):
         """
@@ -99,9 +97,10 @@ class TestNoneContentHandling:
             set_llm_chat_response(mock_event, mock_span)
         
         # Verify content was set
-        content_calls = [call for call in mock_span.set_attribute.call_args_list 
-                         if 'completion' in str(call) and 'content' in str(call)]
-        assert len(content_calls) > 0, "Content attribute should be set when not None"
+        mock_span.set_attribute.assert_any_call(
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
+            "This is a valid response"
+        )
 
     def test_set_llm_predict_response_with_none_output(self):
         """
@@ -117,14 +116,16 @@ class TestNoneContentHandling:
             set_llm_predict_response(mock_event, mock_span)
         
         # Verify role was set
-        role_calls = [call for call in mock_span.set_attribute.call_args_list 
-                      if 'role' in str(call)]
-        assert len(role_calls) > 0, "Role attribute should be set"
+        mock_span.set_attribute.assert_any_call(
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
+            MessageRole.ASSISTANT.value
+        )
         
-        # Verify content was NOT set to None
-        content_calls = [call for call in mock_span.set_attribute.call_args_list 
-                         if 'content' in str(call) and call[0][1] is None]
-        assert len(content_calls) == 0, "Content attribute should NOT be set to None"
+        # Verify content was NOT set
+        content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.content"
+        assert not any(
+            c.args[0] == content_key for c in mock_span.set_attribute.call_args_list
+        ), "Content attribute should NOT be set when value is None"
 
     def test_set_llm_predict_response_with_valid_output(self):
         """
@@ -139,9 +140,10 @@ class TestNoneContentHandling:
             set_llm_predict_response(mock_event, mock_span)
         
         # Verify content was set
-        content_calls = [call for call in mock_span.set_attribute.call_args_list 
-                         if 'content' in str(call)]
-        assert len(content_calls) > 0, "Content attribute should be set when not None"
+        mock_span.set_attribute.assert_any_call(
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
+            "Valid output text"
+        )
 
 
 if __name__ == "__main__":
