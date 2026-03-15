@@ -48,27 +48,27 @@ class TestNoneContentHandling:
         """
         mock_span = MagicMock()
         mock_span.is_recording.return_value = True
-        
+
         mock_message = MagicMock()
         mock_message.role = MessageRole.ASSISTANT
         mock_message.content = None
-        
+
         mock_response = MagicMock()
         mock_response.message = mock_message
-        
+
         mock_event = MagicMock()
         mock_event.response = mock_response
         mock_event.messages = []
-        
+
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_chat_response(mock_event, mock_span)
-        
+
         # Verify role was set
         mock_span.set_attribute.assert_any_call(
             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
             MessageRole.ASSISTANT.value
         )
-        
+
         # Verify content was NOT set (no call with the content attribute key)
         content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
         assert not any(
@@ -81,21 +81,21 @@ class TestNoneContentHandling:
         """
         mock_span = MagicMock()
         mock_span.is_recording.return_value = True
-        
+
         mock_message = MagicMock()
         mock_message.role = MessageRole.ASSISTANT
         mock_message.content = "This is a valid response"
-        
+
         mock_response = MagicMock()
         mock_response.message = mock_message
-        
+
         mock_event = MagicMock()
         mock_event.response = mock_response
         mock_event.messages = []
-        
+
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_chat_response(mock_event, mock_span)
-        
+
         # Verify content was set
         mock_span.set_attribute.assert_any_call(
             f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
@@ -108,19 +108,19 @@ class TestNoneContentHandling:
         when event.output is None.
         """
         mock_span = MagicMock()
-        
+
         mock_event = MagicMock()
         mock_event.output = None
-        
+
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_predict_response(mock_event, mock_span)
-        
+
         # Verify role was set
         mock_span.set_attribute.assert_any_call(
             f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
             MessageRole.ASSISTANT.value
         )
-        
+
         # Verify content was NOT set
         content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.content"
         assert not any(
@@ -132,13 +132,13 @@ class TestNoneContentHandling:
         Test that set_llm_predict_response correctly sets content when output is not None.
         """
         mock_span = MagicMock()
-        
+
         mock_event = MagicMock()
         mock_event.output = "Valid output text"
-        
+
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_predict_response(mock_event, mock_span)
-        
+
         # Verify content was set
         mock_span.set_attribute.assert_any_call(
             f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
