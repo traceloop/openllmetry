@@ -1255,7 +1255,7 @@ def _accumulate_stream_items(item, complete_response):
                 complete_choice["message"]["tool_calls"] = []
 
             for tool_call in tool_calls:
-                i = int(tool_call["index"])
+                i = int(tool_call["index"] or 0)
                 if len(complete_choice["message"]["tool_calls"]) <= i:
                     complete_choice["message"]["tool_calls"].append(
                         {"id": "", "function": {"name": "", "arguments": ""}}
