@@ -69,22 +69,6 @@ class SpanAttributes:
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
 
     # LLM — project-policy attributes (not in upstream OTel spec)
-    GEN_AI_USAGE_TOTAL_TOKENS = "gen_ai.usage.total_tokens"
-    GEN_AI_USAGE_TOKEN_TYPE = "gen_ai.usage.token_type"
-    GEN_AI_USER = "gen_ai.user"
-    GEN_AI_HEADERS = "gen_ai.headers"
-    GEN_AI_IS_STREAMING = "gen_ai.is_streaming"
-    GEN_AI_REQUEST_REPETITION_PENALTY = "gen_ai.request.repetition_penalty"
-    GEN_AI_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reason"
-    GEN_AI_RESPONSE_STOP_REASON = "gen_ai.response.stop_reason"
-    GEN_AI_CONTENT_COMPLETION_CHUNK = "gen_ai.content.completion.chunk"
-    GEN_AI_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
-    GEN_AI_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
-    GEN_AI_REQUEST_N = "gen_ai.request.n"
-    GEN_AI_REQUEST_MAX_COMPLETION_TOKENS = "gen_ai.request.max_completion_tokens"
-    GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
-    GEN_AI_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
-    GEN_AI_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
 
     # OpenAI
     GEN_AI_OPENAI_API_BASE = "gen_ai.openai.api_base"
