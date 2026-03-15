@@ -3,7 +3,7 @@ from typing import Any, List, Literal, Optional, TypedDict
 
 
 class _FunctionToolCall(TypedDict):
-    function_name: str
+    name: str
     arguments: Optional[dict[str, Any]]
 
 

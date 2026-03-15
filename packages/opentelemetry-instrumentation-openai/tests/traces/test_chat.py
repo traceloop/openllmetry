@@ -1,4 +1,5 @@
 import asyncio
+import json
 from unittest.mock import patch
 
 import httpx
@@ -58,6 +59,60 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, openai_client):
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_chat_with_messages_attributes(
+    instrument_with_messages_attributes, span_exporter, log_exporter, openai_client
+):
+    openai_client.chat.completions.create(
+        model="gpt-5-nano",
+        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+    )
+
+    spans = span_exporter.get_finished_spans()
+
+    assert [span.name for span in spans] == [
+        "openai.chat",
+    ]
+    open_ai_span = spans[0]
+    assert (
+        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        == "https://api.openai.com/v1/"
+    )
+    # assert (
+    #     open_ai_span.attributes.get(
+    #         SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+    #     )
+    #     == "fp_2b778c6b35"
+    # )
+    assert open_ai_span.attributes.get(
+        SpanAttributes.LLM_IS_STREAMING) is False
+    assert (
+        open_ai_span.attributes.get("gen_ai.response.id")
+        == "chatcmpl-D9X7ymcBweNWeadgkGyG69kVYY16t"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    # Validate input messages shape
+    input_messages = json.loads(open_ai_span.attributes.get("gen_ai.input.messages"))
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert len(input_messages[0]["parts"]) == 1
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+
+    # Validate output messages shape
+    output_messages = json.loads(open_ai_span.attributes.get("gen_ai.output.messages"))
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert len(output_messages[0]["parts"]) >= 1
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in output_messages[0]["parts"][0]
 
 
 @pytest.mark.vcr
