@@ -569,7 +569,7 @@ def _set_output_messages(span, choices):
         messages.append({
             "role": "assistant",
             "parts": parts,
-            "finish_reason": message.get("finish_reason") or "stop",
+            "finish_reason": choice.get("finish_reason") or "stop",
         })
     _set_span_attribute(span, SpanAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
