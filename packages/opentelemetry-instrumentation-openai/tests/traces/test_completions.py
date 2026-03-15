@@ -72,7 +72,7 @@ def test_completion_with_messages_attributes(
     output_messages = json.loads(open_ai_span.attributes.get("gen_ai.output.messages"))
     assert len(output_messages) == 1
     assert output_messages[0]["role"] == "assistant"
-    assert output_messages[0]["finish_reason"] == "stop"
+    assert output_messages[0]["finish_reason"] == "length"
     assert len(output_messages[0]["parts"]) >= 1
     assert output_messages[0]["parts"][0]["type"] == "text"
     assert "content" in output_messages[0]["parts"][0]
