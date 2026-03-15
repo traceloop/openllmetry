@@ -471,7 +471,7 @@ def _set_input_messages(span, messages):
             content = msg.get("content")
             content = [{"content": content, "type": "text"}] if isinstance(content, str) else content
             attr_messages.append({
-                "role": "system",
+                "role": role,
                 "parts": content,
             })
         elif role == "assistant":
@@ -481,7 +481,7 @@ def _set_input_messages(span, messages):
             for tool_call in tool_calls:
                 parts.append({
                     "type": "tool_call_request",
-                    "name": tool_call.function.get("function_name"),
+                    "name": tool_call.function.get("name"),
                     "id": tool_call.id,
                     "arguments": tool_call.function.get("arguments"),
                 })
@@ -489,7 +489,7 @@ def _set_input_messages(span, messages):
                 "role": "assistant",
                 "parts": parts,
             })
-    _set_span_attribute(span, "gen_ai.input.messages", json.dumps(attr_messages))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages))
 
 async def _legacy_set_prompts(span, messages):
     if not span.is_recording() or messages is None:
@@ -557,20 +557,21 @@ def _set_output_messages(span, choices):
     for choice in choices:
         message = choice.get("message")
         content = message.get("content")
-        parts = [{"text": content, "type": "text"}] if isinstance(content, str) else content
+        parts = [{"content": content, "type": "text"}] if isinstance(content, str) else content
         tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
         for tool_call in tool_calls:
             parts.append({
-                "type": "tool_call_response",
+                "type": "tool_call_request",
+                "name": tool_call.function.get("name"),
                 "id": tool_call.id,
-                "response": tool_call.function.get("arguments"),
+                "arguments": tool_call.function.get("arguments"),
             })
         messages.append({
             "role": "assistant",
             "parts": parts,
             "finish_reason": message.get("finish_reason") or "stop",
         })
-    _set_span_attribute(span, "gen_ai.output.messages", json.dumps(messages))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 def _legacy_set_completions(span, choices):
     if not span.is_recording() or choices is None:

@@ -16,7 +16,7 @@ from typing_extensions import NotRequired
 
 
 Modality = Literal["image", "video", "audio"]
-Role = Literal["system", "user", "assistant", "tool"]
+Role = Literal["system", "user", "assistant", "tool", "developer"]
 FinishReason = Literal["stop", "length", "content_filter", "tool_call", "error"]
 
 

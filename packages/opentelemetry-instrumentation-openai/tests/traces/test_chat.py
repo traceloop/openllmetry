@@ -1,4 +1,5 @@
 import asyncio
+import json
 from unittest.mock import patch
 
 import httpx
@@ -96,9 +97,22 @@ def test_chat_with_messages_attributes(
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-    assert open_ai_span.attributes.get("gen_ai.input.messages") is not None
-    assert open_ai_span.attributes.get("gen_ai.output.messages") is not None
-    # TODO: verify shapes of the messages attributes with JSON schema
+    # Validate input messages shape
+    input_messages = json.loads(open_ai_span.attributes.get("gen_ai.input.messages"))
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert len(input_messages[0]["parts"]) == 1
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+
+    # Validate output messages shape
+    output_messages = json.loads(open_ai_span.attributes.get("gen_ai.output.messages"))
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert len(output_messages[0]["parts"]) >= 1
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in output_messages[0]["parts"][0]
 
 
 @pytest.mark.vcr

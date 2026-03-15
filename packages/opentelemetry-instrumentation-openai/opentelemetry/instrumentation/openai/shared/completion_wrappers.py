@@ -172,8 +172,7 @@ def _set_input_messages(span, prompt):
 
     _set_span_attribute(
         span,
-        "gen_ai.input.messages",
-        # f"{SpanAttributes.GEN_AI_INPUT_MESSAGES}",
+        SpanAttributes.GEN_AI_INPUT_MESSAGES,
         json.dumps([{"role": "user", "parts": [{"content": prompt, "type": "text"}]}]),
     )
 
@@ -209,8 +208,7 @@ def _set_output_messages(span, choices):
         })
     _set_span_attribute(
         span,
-        "gen_ai.output.messages",
-        # f"{SpanAttributes.GEN_AI_OUTPUT_MESSAGES}",
+        SpanAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(messages),
     )
 
