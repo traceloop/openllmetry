@@ -71,8 +71,22 @@ class SpanAttributes:
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
 
     # LLM Cache Attributes (legacy naming - keeping for backward compatibility)
+    LLM_SYSTEM = "gen_ai.system"
+    LLM_REQUEST_MODEL = "gen_ai.request.model"
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    LLM_TOKEN_TYPE = "gen_ai.token.type"
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
 
     # LLM
     LLM_REQUEST_TYPE = "llm.request.type"
@@ -250,6 +264,24 @@ class SpanAttributes:
     MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
     MCP_RESPONSE_VALUE = "mcp.response.value"
 
+    # GenAI Task Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_TASK_ID = "gen_ai.task.id"
+    GEN_AI_TASK_NAME = "gen_ai.task.name"
+    GEN_AI_TASK_PARENT_ID = "gen_ai.task.parent.id"
+    GEN_AI_TASK_INPUT = "gen_ai.task.input"
+    GEN_AI_TASK_OUTPUT = "gen_ai.task.output"
+    GEN_AI_TASK_STATUS = "gen_ai.task.status"
+    GEN_AI_TASK_KIND = "gen_ai.task.kind"
+
+    # GenAI Workflow Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_WORKFLOW_NODES = "gen_ai.workflow.nodes"
+    GEN_AI_WORKFLOW_EDGES = "gen_ai.workflow.edges"
+
+    # LangGraph-specific Attributes (vendor namespace)
+    LANGGRAPH_COMMAND_SOURCE_NODE = "langgraph.command.source_node"
+    LANGGRAPH_COMMAND_GOTO_NODE = "langgraph.command.goto_node"
+    LANGGRAPH_COMMAND_GOTO_NODES = "langgraph.command.goto_nodes"
+
 
 class Events(Enum):
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
@@ -294,3 +326,26 @@ class TraceloopSpanKindValues(Enum):
     AGENT = "agent"
     TOOL = "tool"
     UNKNOWN = "unknown"
+
+
+class GenAICustomOperationName(Enum):
+    """
+    Custom operation names extending the official OpenTelemetry GenAI semantic conventions.
+
+    For standard operations (create_agent, invoke_agent, execute_tool, chat, embeddings),
+    use the official GenAiOperationNameValues from:
+    opentelemetry.semconv._incubating.attributes.gen_ai_attributes
+
+    These are agent workflow extensions not yet in the official spec.
+    """
+
+    EXECUTE_TASK = "execute_task"
+    LLM_REQUEST = "llm_request"
+    VECTOR_DB_RETRIEVE = "vector_db_retrieve"
+
+
+class GenAITaskStatus(Enum):
+    """Task execution status values for gen_ai.task.status attribute."""
+
+    SUCCESS = "success"
+    FAILURE = "failure"

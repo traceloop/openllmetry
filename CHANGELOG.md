@@ -1,3 +1,29 @@
+## v0.53.0 (2026-03-04)
+
+### Feat
+
+- **langchain**: add OpenTelemetry GenAI semantic conventions (#3673)
+
+### Fix
+
+- **semconv**: revert deleted semconv attributes (#3750)
+- **pinecone**: instrument pinecone package instead of deprecated pinecone-client (#3733)
+- **langchain**: support non-ascii characters to support i18n (#3734)
+
+## v0.52.6 (2026-02-26)
+
+### Fix
+
+- **dataset**: Add versions to dataset metadata  (#3732)
+- **qdrant**: support all versions of qdrant package (#3500)
+
+## v0.52.5 (2026-02-23)
+
+### Fix
+
+- **traceloop-sdk**: Add evaluator config to the evaluator validator (#3706)
+- **anthropic**: restore accidentally lost cache tokens attributes (#3648)
+
 ## v0.52.4 (2026-02-19)
 
 ### Fix

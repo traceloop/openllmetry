@@ -596,7 +596,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
-    merged_tools = existing_data.get("tools", []) + request_tools
+    merged_tools = (existing_data.get("tools") or []) + request_tools
 
     try:
         parsed_response_output_text = None
@@ -612,7 +612,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             response_id=parsed_response.id,
             input=process_input(existing_data.get("input", non_sentinel_kwargs.get("input"))),
             instructions=existing_data.get("instructions", non_sentinel_kwargs.get("instructions")),
-            tools=merged_tools if merged_tools else None,
+            tools=merged_tools,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),
@@ -758,7 +758,7 @@ async def async_responses_get_or_create_wrapper(
 
     request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
-    merged_tools = existing_data.get("tools", []) + request_tools
+    merged_tools = (existing_data.get("tools") or []) + request_tools
 
     try:
         parsed_response_output_text = None
@@ -775,7 +775,7 @@ async def async_responses_get_or_create_wrapper(
             response_id=parsed_response.id,
             input=process_input(existing_data.get("input", non_sentinel_kwargs.get("input"))),
             instructions=existing_data.get("instructions", non_sentinel_kwargs.get("instructions")),
-            tools=merged_tools if merged_tools else None,
+            tools=merged_tools,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
             usage=existing_data.get("usage", parsed_response.usage),

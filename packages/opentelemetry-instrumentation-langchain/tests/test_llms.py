@@ -138,7 +138,7 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "HuggingFaceTextGenInference.completion",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -183,7 +183,7 @@ def test_custom_llm_with_events_with_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "HuggingFaceTextGenInference.completion",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -234,7 +234,7 @@ def test_custom_llm_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "HuggingFaceTextGenInference.completion",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -276,7 +276,7 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatOpenAI.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -331,7 +331,7 @@ def test_openai_with_events_with_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatOpenAI.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -382,7 +382,7 @@ def test_openai_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatOpenAI.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -437,8 +437,8 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
 
     assert set(
         [
-            "ChatPromptTemplate.task",
-            "JsonOutputFunctionsParser.task",
+            "execute_task ChatPromptTemplate",
+            "execute_task JsonOutputFunctionsParser",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
         ]
@@ -527,8 +527,8 @@ def test_openai_functions_with_events_with_content(
 
     assert set(
         [
-            "ChatPromptTemplate.task",
-            "JsonOutputFunctionsParser.task",
+            "execute_task ChatPromptTemplate",
+            "execute_task JsonOutputFunctionsParser",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
         ]
@@ -600,8 +600,8 @@ def test_openai_functions_with_events_with_no_content(
 
     assert set(
         [
-            "ChatPromptTemplate.task",
-            "JsonOutputFunctionsParser.task",
+            "execute_task ChatPromptTemplate",
+            "execute_task JsonOutputFunctionsParser",
             "ChatOpenAI.chat",
             "RunnableSequence.workflow",
         ]
@@ -648,7 +648,7 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -718,7 +718,7 @@ def test_anthropic_with_events_with_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -774,7 +774,7 @@ def test_anthropic_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatAnthropic.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -833,7 +833,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -907,7 +907,7 @@ def test_bedrock_with_events_with_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
@@ -970,7 +970,7 @@ def test_bedrock_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
 
     assert [
-        "ChatPromptTemplate.task",
+        "execute_task ChatPromptTemplate",
         "ChatBedrock.chat",
         "RunnableSequence.workflow",
     ] == [span.name for span in spans]
