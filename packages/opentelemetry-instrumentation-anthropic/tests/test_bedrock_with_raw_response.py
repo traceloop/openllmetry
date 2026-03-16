@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 from opentelemetry.semconv._incubating.attributes import (
@@ -55,25 +56,18 @@ async def test_async_anthropic_bedrock_with_raw_response(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
     # For raw response, content is accessed differently
     response_content = (
         response.parse().content[0].text
         if hasattr(response, "parse")
         else response.content[0].text
     )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert (
@@ -110,19 +104,12 @@ async def test_async_anthropic_bedrock_regular_create(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert (
@@ -161,25 +148,18 @@ async def test_async_anthropic_bedrock_beta_with_raw_response(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
     # For raw response, content is accessed differently
     response_content = (
         response.parse().content[0].text
         if hasattr(response, "parse")
         else response.content[0].text
     )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert (

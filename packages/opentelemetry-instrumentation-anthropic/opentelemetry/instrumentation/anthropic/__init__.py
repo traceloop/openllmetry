@@ -39,6 +39,10 @@ from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -537,11 +541,18 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    operation_name = (
+        GenAiOperationNameValues.TEXT_COMPLETION.value
+        if name == "anthropic.completion"
+        else GenAiOperationNameValues.CHAT.value
+    )
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
+            GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
@@ -661,11 +672,18 @@ async def _awrap(
         return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    operation_name = (
+        GenAiOperationNameValues.TEXT_COMPLETION.value
+        if name == "anthropic.completion"
+        else GenAiOperationNameValues.CHAT.value
+    )
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
+            GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
