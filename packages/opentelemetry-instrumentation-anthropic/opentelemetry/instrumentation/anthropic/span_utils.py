@@ -76,7 +76,7 @@ async def aset_input_attributes(span, kwargs):
 
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
     set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens_to_sample") or kwargs.get("max_tokens")
     )
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
@@ -93,79 +93,75 @@ async def aset_input_attributes(span, kwargs):
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
             set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
+                span,
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps([{"role": "user", "content": kwargs.get("prompt")}]),
             )
 
         elif kwargs.get("messages") is not None:
-            has_system_message = False
             if kwargs.get("system"):
-                has_system_message = True
                 set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
+                    GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
                     await _dump_content(
                         message_index=0, span=span, content=kwargs.get("system")
                     ),
                 )
-                set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
-                    "system",
-                )
+
+            input_messages = []
             for i, message in enumerate(kwargs.get("messages")):
-                prompt_index = i + (1 if has_system_message else 0)
                 content = message.get("content")
                 tool_use_blocks = []
-                other_blocks = []
+                non_tool_use_content = content
                 if isinstance(content, list):
-                    for block in content:
-                        if dict(block).get("type") == "tool_use":
-                            tool_use_blocks.append(dict(block))
-                        else:
-                            other_blocks.append(block)
-                    content = other_blocks
-                set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
-                    await _dump_content(
-                        message_index=i, span=span, content=message.get("content")
+                    tool_use_blocks = [
+                        dict(block)
+                        for block in content
+                        if dict(block).get("type") == "tool_use"
+                    ]
+                    non_tool_use_content = [
+                        block
+                        for block in content
+                        if dict(block).get("type") != "tool_use"
+                    ] or None
+
+                msg_obj = {
+                    "role": message.get("role"),
+                    "content": await _dump_content(
+                        message_index=i, span=span, content=non_tool_use_content
                     ),
-                )
-                set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
-                    message.get("role"),
-                )
+                }
                 if tool_use_blocks:
-                    for tool_num, tool_use_block in enumerate(tool_use_blocks):
-                        set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.id",
-                            tool_use_block.get("id"),
-                        )
-                        set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.name",
-                            tool_use_block.get("name"),
-                        )
-                        set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.tool_calls.{tool_num}.arguments",
-                            json.dumps(tool_use_block.get("input")),
-                        )
+                    msg_obj["tool_calls"] = [
+                        {
+                            "id": block.get("id"),
+                            "name": block.get("name"),
+                            "arguments": json.dumps(block.get("input")),
+                        }
+                        for block in tool_use_blocks
+                    ]
+                input_messages.append(msg_obj)
+
+            set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps(input_messages, cls=JSONEncoder),
+            )
 
         if kwargs.get("tools") is not None:
-            for i, tool in enumerate(kwargs.get("tools")):
-                prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-                set_span_attribute(span, f"{prefix}.name", tool.get("name"))
-                set_span_attribute(
-                    span, f"{prefix}.description", tool.get("description")
-                )
-                input_schema = tool.get("input_schema")
-                if input_schema is not None:
-                    set_span_attribute(
-                        span, f"{prefix}.input_schema", json.dumps(input_schema)
-                    )
+            tool_defs = []
+            for tool in kwargs.get("tools"):
+                tool_def = {"name": tool.get("name")}
+                if tool.get("description"):
+                    tool_def["description"] = tool.get("description")
+                if tool.get("input_schema") is not None:
+                    tool_def["input_schema"] = tool.get("input_schema")
+                tool_defs.append(tool_def)
+            set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+                json.dumps(tool_defs, cls=JSONEncoder),
+            )
 
         output_format = kwargs.get("output_format")
         if output_format and isinstance(output_format, dict):
@@ -180,140 +176,114 @@ async def aset_input_attributes(span, kwargs):
 
 
 async def _aset_span_completions(span, response):
-    if not should_send_prompts():
-        return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
     from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
 
     response = await _aextract_response_data(response)
-    index = 0
-    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("role"):
-        set_span_attribute(span, f"{prefix}.role", response.get("role"))
+    stop_reason = response.get("stop_reason")
+
+    if stop_reason:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [stop_reason])
+
+    if not should_send_prompts():
+        return
+
+    output_messages = []
 
     if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+        output_messages.append({
+            "role": response.get("role", "assistant"),
+            "content": response.get("completion"),
+        })
     elif response.get("content"):
-        tool_call_index = 0
+        tool_calls = []
         text = ""
+        thinking_messages = []
         for content in response.get("content"):
             content_block_type = content.type
-            # usually, Antrhopic responds with just one text block,
-            # but the API allows for multiple text blocks, so concatenate them
             if content_block_type == "text" and hasattr(content, "text"):
                 text += content.text
             elif content_block_type == "thinking":
-                content = dict(content)
-                # override the role to thinking
-                set_span_attribute(
-                    span,
-                    f"{prefix}.role",
-                    "thinking",
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.content",
-                    content.get("thinking"),
-                )
-                # increment the index for subsequent content blocks
-                index += 1
-                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-                # set the role to the original role on the next completions
-                set_span_attribute(
-                    span,
-                    f"{prefix}.role",
-                    response.get("role"),
-                )
+                thinking_messages.append({
+                    "role": "thinking",
+                    "content": getattr(content, "thinking", None),
+                })
             elif content_block_type == "tool_use":
-                content = dict(content)
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.id",
-                    content.get("id"),
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.name",
-                    content.get("name"),
-                )
-                tool_arguments = content.get("input")
-                if tool_arguments is not None:
-                    set_span_attribute(
-                        span,
-                        f"{prefix}.tool_calls.{tool_call_index}.arguments",
-                        json.dumps(tool_arguments),
-                    )
-                tool_call_index += 1
-        set_span_attribute(span, f"{prefix}.content", text)
+                tool_arguments = getattr(content, "input", None)
+                tool_calls.append({
+                    "id": getattr(content, "id", None),
+                    "name": getattr(content, "name", None),
+                    "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
+                })
+
+        output_messages.extend(thinking_messages)
+        msg = {"role": response.get("role", "assistant"), "content": text}
+        if tool_calls:
+            msg["tool_calls"] = tool_calls
+        output_messages.append(msg)
+
+    if output_messages:
+        set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages, cls=JSONEncoder),
+        )
 
 
 def _set_span_completions(span, response):
-    if not should_send_prompts():
-        return
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     response = _extract_response_data(response)
-    index = 0
-    prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-    set_span_attribute(span, f"{prefix}.finish_reason", response.get("stop_reason"))
-    if response.get("role"):
-        set_span_attribute(span, f"{prefix}.role", response.get("role"))
+    stop_reason = response.get("stop_reason")
+
+    if stop_reason:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [stop_reason])
+
+    if not should_send_prompts():
+        return
+
+    output_messages = []
 
     if response.get("completion"):
-        set_span_attribute(span, f"{prefix}.content", response.get("completion"))
+        output_messages.append({
+            "role": response.get("role", "assistant"),
+            "content": response.get("completion"),
+        })
     elif response.get("content"):
-        tool_call_index = 0
+        tool_calls = []
         text = ""
+        thinking_messages = []
         for content in response.get("content"):
             content_block_type = content.type
-            # usually, Antrhopic responds with just one text block,
+            # usually, Anthropic responds with just one text block,
             # but the API allows for multiple text blocks, so concatenate them
             if content_block_type == "text" and hasattr(content, "text"):
                 text += content.text
             elif content_block_type == "thinking":
-                content = dict(content)
-                # override the role to thinking
-                set_span_attribute(
-                    span,
-                    f"{prefix}.role",
-                    "thinking",
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.content",
-                    content.get("thinking"),
-                )
-                # increment the index for subsequent content blocks
-                index += 1
-                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-                # set the role to the original role on the next completions
-                set_span_attribute(
-                    span,
-                    f"{prefix}.role",
-                    response.get("role"),
-                )
+                thinking_messages.append({
+                    "role": "thinking",
+                    "content": getattr(content, "thinking", None),
+                })
             elif content_block_type == "tool_use":
-                content = dict(content)
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.id",
-                    content.get("id"),
-                )
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{tool_call_index}.name",
-                    content.get("name"),
-                )
-                tool_arguments = content.get("input")
-                if tool_arguments is not None:
-                    set_span_attribute(
-                        span,
-                        f"{prefix}.tool_calls.{tool_call_index}.arguments",
-                        json.dumps(tool_arguments),
-                    )
-                tool_call_index += 1
-        set_span_attribute(span, f"{prefix}.content", text)
+                tool_arguments = getattr(content, "input", None)
+                tool_calls.append({
+                    "id": getattr(content, "id", None),
+                    "name": getattr(content, "name", None),
+                    "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
+                })
+
+        output_messages.extend(thinking_messages)
+        msg = {"role": response.get("role", "assistant"), "content": text}
+        if tool_calls:
+            msg["tool_calls"] = tool_calls
+        output_messages.append(msg)
+
+    if output_messages:
+        set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages, cls=JSONEncoder),
+        )
 
 
 @dont_throw
@@ -367,40 +337,47 @@ def set_response_attributes(span, response):
 
 @dont_throw
 def set_streaming_response_attributes(span, complete_response_events):
-    if not should_send_prompts():
-        return
-
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
     if not span.is_recording() or not complete_response_events:
         return
 
-    index = 0
+    output_messages = []
+    finish_reasons = []
+
     for event in complete_response_events:
-        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-        set_span_attribute(span, f"{prefix}.finish_reason", event.get("finish_reason"))
-        role = "thinking" if event.get("type") == "thinking" else "assistant"
-        # Thinking is added as a separate completion, so we need to increment the index
-        if event.get("type") == "thinking":
-            index += 1
-        set_span_attribute(span, f"{prefix}.role", role)
-        if event.get("type") == "tool_use":
-            set_span_attribute(
-                span,
-                f"{prefix}.tool_calls.0.id",
-                event.get("id"),
-            )
-            set_span_attribute(
-                span,
-                f"{prefix}.tool_calls.0.name",
-                event.get("name"),
-            )
-            tool_arguments = event.get("input")
-            if tool_arguments is not None:
-                set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.0.arguments",
-                    tool_arguments,
-                )
-        else:
-            set_span_attribute(span, f"{prefix}.content", event.get("text"))
+        finish_reason = event.get("finish_reason")
+        if finish_reason and finish_reason not in finish_reasons:
+            finish_reasons.append(finish_reason)
+
+        if should_send_prompts():
+            if event.get("type") == "thinking":
+                output_messages.append({
+                    "role": "thinking",
+                    "content": event.get("text"),
+                })
+            elif event.get("type") == "tool_use":
+                tool_arguments = event.get("input")
+                output_messages.append({
+                    "role": "assistant",
+                    "tool_calls": [{
+                        "id": event.get("id"),
+                        "name": event.get("name"),
+                        "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
+                    }],
+                })
+            else:
+                output_messages.append({
+                    "role": "assistant",
+                    "content": event.get("text"),
+                })
+
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
+
+    if output_messages:
+        set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages, cls=JSONEncoder),
+        )

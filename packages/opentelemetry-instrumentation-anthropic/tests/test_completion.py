@@ -1,3 +1,4 @@
+import json
 import pytest
 from anthropic import AI_PROMPT, HUMAN_PROMPT
 from opentelemetry.sdk._logs import ReadableLogRecord
@@ -29,11 +30,11 @@ def test_anthropic_completion_legacy(
     assert all(span.name == "anthropic.completion" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
-    )
-    assert anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["content"]
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "compl_01EjfrPvPEsRDRUKD6VoBxtK"

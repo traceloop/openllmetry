@@ -50,19 +50,12 @@ def test_anthropic_structured_outputs_legacy(
     assert spans[0].name == "anthropic.chat"
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
-    )
-    assert anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
 
     assert "gen_ai.request.structured_output_schema" in anthropic_span.attributes
     schema_attr = json.loads(

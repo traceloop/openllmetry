@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
@@ -98,15 +99,15 @@ def test_anthropic_prompt_caching_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
 
-    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
+    cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cc_input[0]["role"] == "user"
+    assert text == cc_input[0]["content"]
+    cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cr_input[0]["role"] == "user"
+    assert text == cr_input[0]["content"]
 
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation_input_tokens"]
@@ -122,8 +123,8 @@ def test_anthropic_prompt_caching_legacy(
         == "msg_01YGB3PuEANUSkLuzemhtNVF"
     )
 
-    assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
+    assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
     _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
 
@@ -435,15 +436,15 @@ async def test_anthropic_prompt_caching_async_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
 
-    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
+    cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cc_input[0]["role"] == "user"
+    assert text == cc_input[0]["content"]
+    cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cr_input[0]["role"] == "user"
+    assert text == cr_input[0]["content"]
 
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
@@ -454,8 +455,8 @@ async def test_anthropic_prompt_caching_async_legacy(
         == "msg_01Q8hYZvCMAQKC4n8X3zFnrX"
     )
 
-    assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
+    assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
     _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
 
@@ -782,15 +783,15 @@ def test_anthropic_prompt_caching_stream_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
 
-    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
+    cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cc_input[0]["role"] == "user"
+    assert text == cc_input[0]["content"]
+    cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cr_input[0]["role"] == "user"
+    assert text == cr_input[0]["content"]
 
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
@@ -801,8 +802,8 @@ def test_anthropic_prompt_caching_stream_legacy(
         == "msg_01XQRA3bs4SB4yTBMwD3dbUi"
     )
 
-    assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
+    assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
     _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 202, 222, 1165)
 
@@ -1133,10 +1134,8 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_creation_span.attributes["gen_ai.prompt.0.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert system_message == cache_read_span.attributes["gen_ai.prompt.0.content"]
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
         == "msg_01KQCu5jXyou55u6YFNk6uqu"
@@ -1146,13 +1145,15 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
         == "msg_01GZo7EAMfEuzRqTKrFANNpA"
     )
 
-    assert cache_creation_span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert cache_read_span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
+    assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
-    assert cache_creation_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_creation_span.attributes["gen_ai.prompt.1.content"]
-    assert cache_read_span.attributes["gen_ai.prompt.1.role"] == "user"
-    assert text == cache_read_span.attributes["gen_ai.prompt.1.content"]
+    cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cc_input[0]["role"] == "user"
+    assert text == cc_input[0]["content"]
+    cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert cr_input[0]["role"] == "user"
+    assert text == cr_input[0]["content"]
 
     _verify_caching_attributes(cache_creation_span, cache_read_span, 1171, 290, 257, 1167)
 
