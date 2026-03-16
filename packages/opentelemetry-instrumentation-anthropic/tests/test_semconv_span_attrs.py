@@ -438,7 +438,7 @@ def test_output_messages_streaming_tool_use():
 
 def test_gen_ai_system_value_is_lowercase_anthropic():
     """gen_ai.system must use the spec enum value 'anthropic', not 'Anthropic'."""
-    from opentelemetry.instrumentation.anthropic import _wrap, _awrap, WRAPPED_METHODS
+    from opentelemetry.instrumentation.anthropic import _wrap
     from unittest.mock import patch, MagicMock
 
     tracer = MagicMock()
@@ -460,8 +460,9 @@ def test_gen_ai_system_value_is_lowercase_anthropic():
         fn = _wrap(tracer, None, None, None, None, None, to_wrap)
         fn(wrapped_fn, MagicMock(), [], {"model": "claude-3-opus-20240229", "messages": [], "max_tokens": 10})
 
-    assert captured["attributes"][GenAIAttributes.GEN_AI_SYSTEM] == GenAiSystemValues.ANTHROPIC.value, (
-        f"gen_ai.system must be 'anthropic' (lowercase), got '{captured['attributes'].get(GenAIAttributes.GEN_AI_SYSTEM)}'"
+    actual = captured["attributes"].get(GenAIAttributes.GEN_AI_SYSTEM)
+    assert actual == GenAiSystemValues.ANTHROPIC.value, (
+        f"gen_ai.system must be 'anthropic' (lowercase), got '{actual}'"
     )
 
 
@@ -546,7 +547,10 @@ def test_gen_ai_operation_name_completion():
         fn = _wrap(tracer, None, None, None, None, None, to_wrap)
         fn(wrapped_fn, MagicMock(), [], {"model": "claude-2", "prompt": "Hello", "max_tokens_to_sample": 100})
 
-    assert captured["attributes"][GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.TEXT_COMPLETION.value
+    assert (
+        captured["attributes"][GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
 
 # ---------------------------------------------------------------------------
