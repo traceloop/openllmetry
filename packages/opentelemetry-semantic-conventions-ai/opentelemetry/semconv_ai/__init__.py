@@ -7,29 +7,31 @@ class GenAISystem(Enum):
     """
     Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
 
-    These values match the actual strings used in span attributes (LLM_SYSTEM)
-    throughout the instrumentation packages.
+    Values that have a counterpart in the official OTel GenAI semantic conventions
+    (opentelemetry.semconv._incubating.attributes.gen_ai_attributes.GenAiSystemValues)
+    use the spec-defined lowercase string. Values without an OTel counterpart use
+    lowercase-with-underscores as a project convention.
     """
 
     OPENAI = "openai"
-    ANTHROPIC = "Anthropic"
-    COHERE = "Cohere"
-    MISTRALAI = "MistralAI"
-    OLLAMA = "Ollama"
-    GROQ = "Groq"
-    ALEPH_ALPHA = "AlephAlpha"
-    REPLICATE = "Replicate"
-    TOGETHER_AI = "TogetherAI"
-    WATSONX = "Watsonx"
-    HUGGINGFACE = "HuggingFace"
-    FIREWORKS = "Fireworks"
+    ANTHROPIC = "anthropic"
+    COHERE = "cohere"
+    MISTRALAI = "mistral_ai"
+    OLLAMA = "ollama"
+    GROQ = "groq"
+    ALEPH_ALPHA = "aleph_alpha"
+    REPLICATE = "replicate"
+    TOGETHER_AI = "together_ai"
+    WATSONX = "ibm.watsonx.ai"
+    HUGGINGFACE = "hugging_face"
+    FIREWORKS = "fireworks"
 
-    AZURE = "Azure"
-    AWS = "AWS"
-    GOOGLE = "Google"
-    OPENROUTER = "OpenRouter"
+    AZURE = "az.ai.openai"
+    AWS = "aws.bedrock"
+    GOOGLE = "gcp.gen_ai"
+    OPENROUTER = "openrouter"
 
-    LANGCHAIN = "Langchain"
+    LANGCHAIN = "langchain"
     CREWAI = "crewai"
 
 
@@ -38,7 +40,7 @@ class Meters:
     LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
     LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
     LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
-    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
+    LLM_STREAMING_TIME_TO_GENERATE = "gen_ai.client.chat_completions.streaming_time_to_generate"
     LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
     LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
     LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
@@ -62,11 +64,11 @@ class Meters:
 
 
 class SpanAttributes:
-    # GenAI Usage Cache Attributes (missing from incubating semantic conventions)
-    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
-    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    # GenAI Usage Cache Attributes (not yet in upstream OTel incubating semconv)
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
 
-    # LLM Cache Attributes (legacy naming - keeping for backward compatibility)
+    # LLM Attributes — names aligned with OTel GenAI semantic conventions
     LLM_SYSTEM = "gen_ai.system"
     LLM_REQUEST_MODEL = "gen_ai.request.model"
     LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
@@ -77,31 +79,31 @@ class SpanAttributes:
     LLM_RESPONSE_MODEL = "gen_ai.response.model"
     LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
     LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
-    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
-    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
     LLM_TOKEN_TYPE = "gen_ai.token.type"
     LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
     LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
     LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
 
-    # LLM
-    LLM_REQUEST_TYPE = "llm.request.type"
-    LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"
-    LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"
-    LLM_USER = "llm.user"
-    LLM_HEADERS = "llm.headers"
-    LLM_TOP_K = "llm.top_k"
-    LLM_IS_STREAMING = "llm.is_streaming"
-    LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
-    LLM_PRESENCE_PENALTY = "llm.presence_penalty"
-    LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
-    LLM_REQUEST_FUNCTIONS = "llm.request.functions"
-    LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
-    LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
-    LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
-    LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
-    LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"
-    LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"
+    # LLM — project-policy attributes (not in upstream OTel spec)
+    LLM_REQUEST_TYPE = "gen_ai.operation.name"
+    LLM_USAGE_TOTAL_TOKENS = "gen_ai.usage.total_tokens"
+    LLM_USAGE_TOKEN_TYPE = "gen_ai.usage.token_type"
+    LLM_USER = "gen_ai.user"
+    LLM_HEADERS = "gen_ai.headers"
+    LLM_TOP_K = "gen_ai.request.top_k"
+    LLM_IS_STREAMING = "gen_ai.is_streaming"
+    LLM_FREQUENCY_PENALTY = "gen_ai.request.frequency_penalty"
+    LLM_PRESENCE_PENALTY = "gen_ai.request.presence_penalty"
+    LLM_CHAT_STOP_SEQUENCES = "gen_ai.request.stop_sequences"
+    LLM_REQUEST_FUNCTIONS = "gen_ai.tool.definitions"
+    LLM_REQUEST_REPETITION_PENALTY = "gen_ai.request.repetition_penalty"
+    LLM_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reason"
+    LLM_RESPONSE_STOP_REASON = "gen_ai.response.stop_reason"
+    LLM_CONTENT_COMPLETION_CHUNK = "gen_ai.content.completion.chunk"
+    LLM_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
+    LLM_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
 
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
