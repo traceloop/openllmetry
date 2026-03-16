@@ -577,6 +577,35 @@ def test_streaming_tool_arguments_are_json_serialized():
     assert parsed == {"location": "Boston", "unit": "celsius"}
 
 
+def test_streaming_tool_arguments_not_double_encoded_when_input_is_string():
+    """Streaming input arrives as an accumulated JSON string (from partial_json deltas).
+    Calling json.dumps on it again would double-encode it — arguments must remain
+    parseable as a plain JSON object, not a JSON-encoded string.
+    """
+    span = make_span()
+    # input is a string here — exactly as streaming.py produces it after
+    # accumulating input_json_delta fragments
+    events = [
+        {
+            "type": "tool_use",
+            "id": "tool_abc",
+            "name": "get_weather",
+            "input": '{"location": "Boston", "unit": "celsius"}',
+            "finish_reason": "tool_use",
+            "index": 0,
+        }
+    ]
+    set_streaming_response_attributes(span, events)
+
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    tc = output[0]["tool_calls"][0]
+    assert isinstance(tc["arguments"], str), "arguments must be a string"
+    parsed = json.loads(tc["arguments"])
+    assert parsed == {"location": "Boston", "unit": "celsius"}, (
+        "arguments must parse to the original dict, not a double-encoded string"
+    )
+
+
 # ---------------------------------------------------------------------------
 # max_tokens fallback test (#2)
 # ---------------------------------------------------------------------------
@@ -611,3 +640,124 @@ def test_max_tokens_set_for_completions_api():
         "gen_ai.request.max_tokens must be set for Completions API calls"
     )
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
+
+
+def test_max_tokens_to_sample_takes_precedence_when_both_provided():
+    """When both max_tokens_to_sample and max_tokens are present,
+    max_tokens_to_sample (legacy) wins via `or` short-circuit.
+    This documents the current behaviour so a future change would be intentional.
+    """
+    span = make_span()
+    kwargs = {
+        "model": "claude-2",
+        "prompt": "Hello",
+        "max_tokens_to_sample": 100,
+        "max_tokens": 512,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100, (
+        "max_tokens_to_sample takes precedence over max_tokens when both are set"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Async finish_reasons with content tracing disabled (#2 async path)
+# ---------------------------------------------------------------------------
+
+def test_async_finish_reasons_set_when_content_tracing_disabled():
+    """_aset_span_completions must record finish_reasons even when content tracing is off."""
+    from opentelemetry.instrumentation.anthropic.span_utils import aset_response_attributes
+
+    os.environ[TRACELOOP_TRACE_CONTENT] = "false"
+
+    span = make_span()
+    response = _make_response([_make_text_block("Secret content")], stop_reason="end_turn")
+    asyncio.run(aset_response_attributes(span, response))
+
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in span.attributes, (
+        "async path: finish_reasons must be set regardless of content tracing"
+    )
+    assert "end_turn" in span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in span.attributes
+
+
+# ---------------------------------------------------------------------------
+# _awrap span identity attributes (#4 async path)
+# ---------------------------------------------------------------------------
+
+def test_awrap_gen_ai_provider_name_and_operation_name():
+    """_awrap must set gen_ai.provider.name and gen_ai.operation.name same as _wrap."""
+    import asyncio as _asyncio
+    from opentelemetry.instrumentation.anthropic import _awrap
+    from unittest.mock import patch, MagicMock, AsyncMock
+
+    tracer = MagicMock()
+    captured = {}
+
+    def fake_start_span(name, kind, attributes):
+        captured["attributes"] = attributes
+        span = MagicMock()
+        span.is_recording.return_value = False
+        return span
+
+    tracer.start_span.side_effect = fake_start_span
+
+    to_wrap = {"span_name": "anthropic.chat"}
+    wrapped_fn = AsyncMock(return_value=None)
+
+    async def run():
+        with patch("opentelemetry.context.get_value", return_value=False):
+            fn = _awrap(tracer, None, None, None, None, None, to_wrap)
+            await fn(wrapped_fn, MagicMock(), [], {"model": "claude-3-opus-20240229", "messages": [], "max_tokens": 10})
+
+    _asyncio.run(run())
+
+    assert captured["attributes"][GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.ANTHROPIC.value
+    assert captured["attributes"][GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+
+# ---------------------------------------------------------------------------
+# Multiple tool_use blocks in one input message
+# ---------------------------------------------------------------------------
+
+def test_multiple_tool_use_blocks_in_single_message():
+    """Multiple tool_use blocks in one message must all appear in tool_calls,
+    none in content, and content must be None.
+    """
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [
+            {"role": "user", "content": "What's the weather in Boston and NYC?"},
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "tool_1",
+                        "name": "get_weather",
+                        "input": {"location": "Boston"},
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "tool_2",
+                        "name": "get_weather",
+                        "input": {"location": "New York"},
+                    },
+                ],
+            },
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assistant_msg = messages[1]
+
+    assert len(assistant_msg["tool_calls"]) == 2
+    ids = {tc["id"] for tc in assistant_msg["tool_calls"]}
+    assert ids == {"tool_1", "tool_2"}
+    assert assistant_msg.get("content") is None, (
+        "content must be None when all blocks are tool_use"
+    )
