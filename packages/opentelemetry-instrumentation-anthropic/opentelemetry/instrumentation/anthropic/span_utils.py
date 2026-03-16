@@ -358,12 +358,20 @@ def set_streaming_response_attributes(span, complete_response_events):
                 })
             elif event.get("type") == "tool_use":
                 tool_arguments = event.get("input")
+                # Streaming accumulates input as a JSON string via input_json_delta;
+                # non-streaming may pass a dict. Normalise to a JSON string either way.
+                if isinstance(tool_arguments, str):
+                    arguments = tool_arguments or None
+                elif tool_arguments is not None:
+                    arguments = json.dumps(tool_arguments)
+                else:
+                    arguments = None
                 output_messages.append({
                     "role": "assistant",
                     "tool_calls": [{
                         "id": event.get("id"),
                         "name": event.get("name"),
-                        "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
+                        "arguments": arguments,
                     }],
                 })
             else:
