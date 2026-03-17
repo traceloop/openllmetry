@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from typing import Collection
@@ -16,6 +17,14 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Me
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
 _instruments = ("crewai >= 0.70.0",)
+
+
+def _safe_json(obj):
+    """Serialize obj to JSON string, falling back to str()."""
+    try:
+        return json.dumps(obj, default=str)
+    except Exception:
+        return str(obj)
 
 
 class CrewAIInstrumentor(BaseInstrumentor):
@@ -43,12 +52,15 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.tools.tool_usage", "ToolUsage._use",
+                              wrap_tool_use(tracer))
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
+        unwrap("crewai.tools.tool_usage.ToolUsage", "_use")
 
 
 def with_tracer_wrapper(func):
@@ -64,21 +76,40 @@ def with_tracer_wrapper(func):
 @with_tracer_wrapper
 def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram,
                  wrapped, instance, args, kwargs):
+    crew_name = getattr(instance, "name", None) or "Crew"
     with tracer.start_as_current_span(
-        "crewai.workflow",
+        crew_name,
         kind=SpanKind.INTERNAL,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+            SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
         }
     ) as span:
         try:
             CrewAISpanAttributes(span=span, instance=instance)
+
+            # Set inputs: task descriptions and agent roles
+            inputs_data = kwargs.get("inputs", {})
+            if args:
+                inputs_data = args[0] if isinstance(args[0], dict) else inputs_data
+            tasks_summary = []
+            for task in getattr(instance, "tasks", []):
+                tasks_summary.append({
+                    "description": getattr(task, "description", ""),
+                    "agent": getattr(task.agent, "role", "") if task.agent else "",
+                })
+            crew_input = {
+                "inputs": inputs_data,
+                "tasks": tasks_summary,
+                "agents": [getattr(a, "role", "") for a in getattr(instance, "agents", [])],
+            }
+            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, _safe_json(crew_input))
+
             result = wrapped(*args, **kwargs)
+
             if result:
-                class_name = instance.__class__.__name__
-                span.set_attribute(f"crewai.{class_name.lower()}.result", str(result))
+                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
                 span.set_status(Status(StatusCode.OK))
-                if class_name == "Crew":
+                if instance.__class__.__name__ == "Crew":
                     for attr in ["tasks_output", "token_usage", "usage_metrics"]:
                         if hasattr(result, attr):
                             span.set_attribute(f"crewai.crew.{attr}", str(getattr(result, attr)))
@@ -92,7 +123,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
 def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
     agent_name = instance.role if hasattr(instance, "role") else "agent"
     with tracer.start_as_current_span(
-        f"{agent_name}.agent",
+        f"{agent_name}",
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
@@ -100,7 +131,28 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
     ) as span:
         try:
             CrewAISpanAttributes(span=span, instance=instance)
+
+            # Set input: the task being executed and context
+            task = args[0] if args else kwargs.get("task")
+            context = args[1] if len(args) > 1 else kwargs.get("context")
+            if task:
+                agent_input = {
+                    "task": getattr(task, "description", str(task)),
+                    "expected_output": getattr(task, "expected_output", ""),
+                }
+                if context:
+                    agent_input["context"] = str(context)[:500]
+                tools_list = args[2] if len(args) > 2 else kwargs.get("tools")
+                if tools_list:
+                    agent_input["tools"] = [getattr(t, "name", str(t)) for t in tools_list]
+                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                                   _safe_json(agent_input))
+
             result = wrapped(*args, **kwargs)
+
+            if result:
+                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+
             if token_histogram:
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
@@ -119,8 +171,9 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                     },
                 )
 
-            set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, str(instance.llm.model))
-            set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.llm.model))
+            # Store model as metadata but NOT as gen_ai.request.model
+            # (that would cause the backend to classify this as run_type=llm)
+            span.set_attribute("crewai.agent.model", str(instance.llm.model))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -130,10 +183,13 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
 
 @with_tracer_wrapper
 def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
-    task_name = instance.description if hasattr(instance, "description") else "task"
+    task_name = getattr(instance, "name", None)
+    if not task_name:
+        desc = getattr(instance, "description", "task")
+        task_name = desc[:60] + "..." if len(desc) > 60 else desc
 
     with tracer.start_as_current_span(
-        f"{task_name}.task",
+        task_name,
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
@@ -141,6 +197,15 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
     ) as span:
         try:
             CrewAISpanAttributes(span=span, instance=instance)
+
+            # Set input: task description and expected output
+            task_input = {
+                "description": getattr(instance, "description", ""),
+                "expected_output": getattr(instance, "expected_output", ""),
+                "agent": getattr(instance.agent, "role", "") if instance.agent else "",
+            }
+            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, _safe_json(task_input))
+
             result = wrapped(*args, **kwargs)
             set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
             span.set_status(Status(StatusCode.OK))
@@ -148,6 +213,44 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
+
+
+def wrap_tool_use(tracer):
+    """Wrap CrewAI ToolUsage._use to create tool spans with inputs/outputs."""
+    def wrapper(wrapped, instance, args, kwargs):
+        # instance is ToolUsage, args/kwargs contain tool_string, tool, calling
+        calling = kwargs.get("calling") or (args[1] if len(args) > 1 else None)
+        tool = kwargs.get("tool") or (args[0] if args else None)
+
+        tool_name = "unknown_tool"
+        tool_input = {}
+        if calling:
+            tool_name = getattr(calling, "tool_name", tool_name)
+            tool_input = getattr(calling, "arguments", {}) or {}
+        if tool and hasattr(tool, "name"):
+            tool_name = tool.name
+
+        with tracer.start_as_current_span(
+            tool_name,
+            kind=SpanKind.INTERNAL,
+            attributes={
+                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
+            }
+        ) as span:
+            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_INPUT, _safe_json(tool_input))
+            if tool and hasattr(tool, "description"):
+                span.set_attribute("tool.description", str(tool.description))
+
+            try:
+                result = wrapped(*args, **kwargs)
+                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+                span.set_status(Status(StatusCode.OK))
+                return result
+            except Exception as ex:
+                span.set_status(Status(StatusCode.ERROR, str(ex)))
+                raise
+
+    return wrapper
 
 
 @with_tracer_wrapper
