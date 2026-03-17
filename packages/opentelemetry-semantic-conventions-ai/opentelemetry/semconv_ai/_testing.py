@@ -1,0 +1,364 @@
+"""
+Shared compliance test classes for opentelemetry-semantic-conventions-ai.
+
+Import these classes in any instrumentation package's test suite to verify
+that the installed semconv constants have the expected values:
+
+    from opentelemetry.semconv_ai._testing import *  # noqa: F401, F403
+
+pytest will discover and run all Test* classes that end up in the module
+namespace, so a single import line is enough.
+"""
+
+import pytest
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as otel_gen_ai
+
+from opentelemetry.semconv_ai import GenAISystem, Meters, SpanAttributes
+
+
+# ---------------------------------------------------------------------------
+# SpanAttributes — values that must match upstream OTel incubating spec
+# ---------------------------------------------------------------------------
+
+
+class TestSpanAttributesOtelAligned:
+    """Attributes whose string values are defined by the upstream OTel spec."""
+
+    def test_total_tokens(self):
+        # Renamed from "llm.usage.total_tokens" (project convention) to "gen_ai.usage.total_tokens"
+        assert SpanAttributes.LLM_USAGE_TOTAL_TOKENS == "gen_ai.usage.total_tokens"
+
+    def test_frequency_penalty_matches_otel(self):
+        assert SpanAttributes.LLM_FREQUENCY_PENALTY == otel_gen_ai.GEN_AI_REQUEST_FREQUENCY_PENALTY
+        assert SpanAttributes.LLM_FREQUENCY_PENALTY == "gen_ai.request.frequency_penalty"
+
+    def test_presence_penalty_matches_otel(self):
+        assert SpanAttributes.LLM_PRESENCE_PENALTY == otel_gen_ai.GEN_AI_REQUEST_PRESENCE_PENALTY
+        assert SpanAttributes.LLM_PRESENCE_PENALTY == "gen_ai.request.presence_penalty"
+
+    def test_request_type_matches_otel_operation_name(self):
+        # Renamed from "llm.request.type" to the OTel spec attribute "gen_ai.operation.name"
+        assert SpanAttributes.LLM_REQUEST_TYPE == otel_gen_ai.GEN_AI_OPERATION_NAME
+        assert SpanAttributes.LLM_REQUEST_TYPE == "gen_ai.operation.name"
+
+    def test_top_k_matches_otel(self):
+        assert SpanAttributes.LLM_TOP_K == otel_gen_ai.GEN_AI_REQUEST_TOP_K
+        assert SpanAttributes.LLM_TOP_K == "gen_ai.request.top_k"
+
+    def test_chat_stop_sequences_matches_otel(self):
+        assert SpanAttributes.LLM_CHAT_STOP_SEQUENCES == otel_gen_ai.GEN_AI_REQUEST_STOP_SEQUENCES
+        assert SpanAttributes.LLM_CHAT_STOP_SEQUENCES == "gen_ai.request.stop_sequences"
+
+    def test_request_functions_maps_to_tool_definitions(self):
+        # The old llm.request.functions.{i}.* flat-attribute prefix is replaced
+        # by a single gen_ai.tool.definitions JSON-array attribute.
+        assert SpanAttributes.LLM_REQUEST_FUNCTIONS == otel_gen_ai.GEN_AI_TOOL_DEFINITIONS
+        assert SpanAttributes.LLM_REQUEST_FUNCTIONS == "gen_ai.tool.definitions"
+
+    def test_repetition_penalty_gen_ai_namespace(self):
+        # No OTel counterpart — project policy aligns namespace to gen_ai.request.*
+        assert SpanAttributes.LLM_REQUEST_REPETITION_PENALTY == "gen_ai.request.repetition_penalty"
+
+    def test_reasoning_effort_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_REQUEST_REASONING_EFFORT == "gen_ai.request.reasoning_effort"
+
+    def test_reasoning_tokens_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_USAGE_REASONING_TOKENS == "gen_ai.usage.reasoning_tokens"
+
+    def test_usage_token_type_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_USAGE_TOKEN_TYPE == "gen_ai.usage.token_type"
+
+    def test_response_finish_reason_gen_ai_namespace(self):
+        # Singular string attribute (per-completion); distinct from the OTel array
+        # attribute gen_ai.response.finish_reasons used at the top-level response span.
+        assert SpanAttributes.LLM_RESPONSE_FINISH_REASON == "gen_ai.response.finish_reason"
+
+    def test_response_stop_reason_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_RESPONSE_STOP_REASON == "gen_ai.response.stop_reason"
+
+    def test_content_completion_chunk_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK == "gen_ai.content.completion.chunk"
+
+    def test_request_n_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_REQUEST_N == "gen_ai.request.n"
+
+    def test_request_max_completion_tokens_gen_ai_namespace(self):
+        assert SpanAttributes.LLM_REQUEST_MAX_COMPLETION_TOKENS == "gen_ai.request.max_completion_tokens"
+
+
+class TestSpanAttributesCacheDotSeparator:
+    """Cache token attributes use dot-separated sub-namespaces (spec update)."""
+
+    def test_cache_read_input_tokens(self):
+        assert SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
+
+    def test_cache_creation_input_tokens(self):
+        assert SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
+
+    def test_gen_ai_usage_cache_read_shorthand(self):
+        """GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS top-level alias matches."""
+        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
+
+    def test_gen_ai_usage_cache_creation_shorthand(self):
+        assert SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
+
+    def test_cache_constants_are_consistent(self):
+        """Both aliases for each cache constant point to the same value."""
+        assert SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS == SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS
+        assert SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS == SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS
+
+
+class TestSpanAttributesProjectPolicy:
+    """Project-policy attributes (not in upstream OTel spec) use gen_ai namespace."""
+
+    def test_is_streaming(self):
+        assert SpanAttributes.LLM_IS_STREAMING == "gen_ai.is_streaming"
+
+    def test_user(self):
+        assert SpanAttributes.LLM_USER == "gen_ai.user"
+
+    def test_headers(self):
+        assert SpanAttributes.LLM_HEADERS == "gen_ai.headers"
+
+
+class TestSpanAttributesOldValuesAbsent:
+    """Regression: old/incorrect string values must not appear anywhere in SpanAttributes."""
+
+    @pytest.mark.parametrize(
+        "old_value",
+        [
+            "llm.usage.total_tokens",
+            "llm.frequency_penalty",
+            "llm.presence_penalty",
+            "llm.is_streaming",
+            "llm.user",
+            "llm.headers",
+            "llm.top_k",
+            "llm.chat.stop_sequences",
+            "llm.request.functions",
+            "llm.request.repetition_penalty",
+            "llm.request.type",
+            "llm.usage.token_type",
+            "llm.response.finish_reason",
+            "llm.response.stop_reason",
+            "llm.content.completion.chunk",
+            "llm.request.reasoning_effort",
+            "llm.usage.reasoning_tokens",
+            "llm.chat_completions.streaming_time_to_generate",
+            "gen_ai.usage.cache_read_input_tokens",    # underscore variant (pre-migration)
+            "gen_ai.usage.cache_creation_input_tokens",  # underscore variant (pre-migration)
+        ],
+    )
+    def test_old_value_not_in_span_attributes(self, old_value):
+        all_values = {
+            name: value
+            for name, value in vars(SpanAttributes).items()
+            if not name.startswith("_") and isinstance(value, str)
+        }
+        assert old_value not in all_values.values(), (
+            f"Old attribute value {old_value!r} is still present in SpanAttributes. "
+            f"It should have been renamed."
+        )
+
+
+class TestSpanAttributesUnchanged:
+    """Constants that should NOT have changed — sanity check."""
+
+    def test_llm_system_unchanged(self):
+        assert SpanAttributes.LLM_SYSTEM == "gen_ai.system"
+
+    def test_request_model_unchanged(self):
+        assert SpanAttributes.LLM_REQUEST_MODEL == "gen_ai.request.model"
+
+    def test_request_max_tokens_unchanged(self):
+        assert SpanAttributes.LLM_REQUEST_MAX_TOKENS == "gen_ai.request.max_tokens"
+
+    def test_request_temperature_unchanged(self):
+        assert SpanAttributes.LLM_REQUEST_TEMPERATURE == "gen_ai.request.temperature"
+
+    def test_usage_input_tokens_unchanged(self):
+        assert SpanAttributes.LLM_USAGE_PROMPT_TOKENS == "gen_ai.usage.prompt_tokens"
+
+    def test_usage_output_tokens_unchanged(self):
+        assert SpanAttributes.LLM_USAGE_COMPLETION_TOKENS == "gen_ai.usage.completion_tokens"
+
+    def test_traceloop_span_kind_unchanged(self):
+        assert SpanAttributes.TRACELOOP_SPAN_KIND == "traceloop.span.kind"
+
+
+# ---------------------------------------------------------------------------
+# GenAISystem enum — values must match OTel GenAiSystemValues where possible
+# ---------------------------------------------------------------------------
+
+
+class TestGenAISystemOtelAligned:
+    """Enum members that have a counterpart in OTel GenAiSystemValues."""
+
+    def test_openai(self):
+        assert GenAISystem.OPENAI.value == "openai"
+
+    def test_anthropic_lowercase(self):
+        # Was "Anthropic" — must now match OTel GenAiSystemValues.ANTHROPIC
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.ANTHROPIC.value == GenAiSystemValues.ANTHROPIC.value
+        assert GenAISystem.ANTHROPIC.value == "anthropic"
+
+    def test_cohere_lowercase(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.COHERE.value == GenAiSystemValues.COHERE.value
+        assert GenAISystem.COHERE.value == "cohere"
+
+    def test_mistralai_spec_format(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.MISTRALAI.value == GenAiSystemValues.MISTRAL_AI.value
+        assert GenAISystem.MISTRALAI.value == "mistral_ai"
+
+    def test_groq_lowercase(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.GROQ.value == GenAiSystemValues.GROQ.value
+        assert GenAISystem.GROQ.value == "groq"
+
+    def test_watsonx_spec_format(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.WATSONX.value == GenAiSystemValues.IBM_WATSONX_AI.value
+        assert GenAISystem.WATSONX.value == "ibm.watsonx.ai"
+
+    def test_aws_spec_format(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.AWS.value == GenAiSystemValues.AWS_BEDROCK.value
+        assert GenAISystem.AWS.value == "aws.bedrock"
+
+    def test_azure_spec_format(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.AZURE.value == GenAiSystemValues.AZ_AI_OPENAI.value
+        assert GenAISystem.AZURE.value == "az.ai.openai"
+
+    def test_google_spec_format(self):
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiSystemValues
+
+        assert GenAISystem.GOOGLE.value == GenAiSystemValues.GCP_GEN_AI.value
+        assert GenAISystem.GOOGLE.value == "gcp.gen_ai"
+
+
+class TestGenAISystemProjectValues:
+    """Enum members without an OTel counterpart — project-defined lowercase values."""
+
+    def test_ollama(self):
+        assert GenAISystem.OLLAMA.value == "ollama"
+
+    def test_aleph_alpha(self):
+        assert GenAISystem.ALEPH_ALPHA.value == "aleph_alpha"
+
+    def test_replicate(self):
+        assert GenAISystem.REPLICATE.value == "replicate"
+
+    def test_together_ai(self):
+        assert GenAISystem.TOGETHER_AI.value == "together_ai"
+
+    def test_huggingface(self):
+        assert GenAISystem.HUGGINGFACE.value == "hugging_face"
+
+    def test_fireworks(self):
+        assert GenAISystem.FIREWORKS.value == "fireworks"
+
+    def test_openrouter(self):
+        assert GenAISystem.OPENROUTER.value == "openrouter"
+
+    def test_langchain(self):
+        assert GenAISystem.LANGCHAIN.value == "langchain"
+
+    def test_crewai(self):
+        assert GenAISystem.CREWAI.value == "crewai"
+
+
+class TestGenAISystemNoCaps:
+    """All GenAISystem values must be lowercase (no PascalCase or camelCase)."""
+
+    def test_all_values_lowercase(self):
+        non_lowercase = [
+            member.name
+            for member in GenAISystem
+            if member.value != member.value.lower() and "." not in member.value
+        ]
+        assert non_lowercase == [], (
+            f"GenAISystem members have non-lowercase values: {non_lowercase}. "
+            "Values should use lowercase with dots or underscores."
+        )
+
+
+# ---------------------------------------------------------------------------
+# Meters — metric names must use gen_ai.* namespace
+# ---------------------------------------------------------------------------
+
+
+class TestMetersGenAiNamespace:
+    """Generic metric names must use gen_ai.* namespace."""
+
+    def test_streaming_time_to_generate(self):
+        # Renamed from "llm.chat_completions.streaming_time_to_generate"
+        assert Meters.LLM_STREAMING_TIME_TO_GENERATE == "gen_ai.client.chat_completions.streaming_time_to_generate"
+
+    def test_core_metrics_unchanged(self):
+        """Core gen_ai.client.* metrics already had the correct namespace."""
+        assert Meters.LLM_GENERATION_CHOICES == "gen_ai.client.generation.choices"
+        assert Meters.LLM_TOKEN_USAGE == "gen_ai.client.token.usage"
+        assert Meters.LLM_OPERATION_DURATION == "gen_ai.client.operation.duration"
+
+
+class TestMetersVendorNamespacesKept:
+    """
+    Vendor-qualified metric names (llm.openai.*, llm.anthropic.*, llm.watsonx.*)
+    are intentionally kept. The llm.<vendor> prefix is a vendor identifier, not the
+    generic llm.* attribute namespace being migrated. These will be renamed in the
+    respective package PRs if/when those vendors adopt the gen_ai namespace.
+    """
+
+    def test_openai_completions_exceptions_kept(self):
+        assert Meters.LLM_COMPLETIONS_EXCEPTIONS == "llm.openai.chat_completions.exceptions"
+
+    def test_openai_embeddings_exceptions_kept(self):
+        assert Meters.LLM_EMBEDDINGS_EXCEPTIONS == "llm.openai.embeddings.exceptions"
+
+    def test_openai_embeddings_vector_size_kept(self):
+        assert Meters.LLM_EMBEDDINGS_VECTOR_SIZE == "llm.openai.embeddings.vector_size"
+
+    def test_openai_image_generations_exceptions_kept(self):
+        assert Meters.LLM_IMAGE_GENERATIONS_EXCEPTIONS == "llm.openai.image_generations.exceptions"
+
+    def test_anthropic_completion_exceptions_kept(self):
+        assert Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS == "llm.anthropic.completion.exceptions"
+
+    def test_watsonx_metrics_kept(self):
+        assert Meters.LLM_WATSONX_COMPLETIONS_DURATION == "llm.watsonx.completions.duration"
+        assert Meters.LLM_WATSONX_COMPLETIONS_EXCEPTIONS == "llm.watsonx.completions.exceptions"
+        assert Meters.LLM_WATSONX_COMPLETIONS_RESPONSES == "llm.watsonx.completions.responses"
+        assert Meters.LLM_WATSONX_COMPLETIONS_TOKENS == "llm.watsonx.completions.tokens"
+
+
+class TestSpanAttributesWatsonxKept:
+    """
+    llm.watsonx.* span attributes are intentionally kept. These use llm.watsonx as a
+    vendor-qualified prefix (analogous to db.chroma.*), not a generic llm.* namespace.
+    """
+
+    def test_watsonx_decoding_method_kept(self):
+        assert SpanAttributes.LLM_DECODING_METHOD == "llm.watsonx.decoding_method"
+
+    def test_watsonx_random_seed_kept(self):
+        assert SpanAttributes.LLM_RANDOM_SEED == "llm.watsonx.random_seed"
+
+    def test_watsonx_max_new_tokens_kept(self):
+        assert SpanAttributes.LLM_MAX_NEW_TOKENS == "llm.watsonx.max_new_tokens"
+
+    def test_watsonx_min_new_tokens_kept(self):
+        assert SpanAttributes.LLM_MIN_NEW_TOKENS == "llm.watsonx.min_new_tokens"
+
+    def test_watsonx_repetition_penalty_kept(self):
+        assert SpanAttributes.LLM_REPETITION_PENALTY == "llm.watsonx.repetition_penalty"

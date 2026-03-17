@@ -104,6 +104,8 @@ class SpanAttributes:
     LLM_CONTENT_COMPLETION_CHUNK = "gen_ai.content.completion.chunk"
     LLM_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
     LLM_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
+    LLM_REQUEST_N = "gen_ai.request.n"
+    LLM_REQUEST_MAX_COMPLETION_TOKENS = "gen_ai.request.max_completion_tokens"
 
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
