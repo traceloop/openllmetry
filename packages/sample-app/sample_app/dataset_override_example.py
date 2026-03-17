@@ -42,32 +42,32 @@ def main():
         f"{len(dataset.columns)} columns and {len(dataset.rows)} rows"
     )
 
-    # print("\n=== Override Dataset ===")
-    # override_request = OverrideDatasetRequest(
-    #     name="Updated Dataset Name",
-    #     description="Updated description",
-    #     columns=[
-    #         ColumnDefinition(name="Input", slug="input", type=ColumnType.STRING),
-    #         ColumnDefinition(
-    #             name="Expected Output", slug="expected-output", type=ColumnType.STRING
-    #         ),
-    #     ],
-    #     rows=[
-    #         {"input": "hello", "expected-output": "world"},
-    #         {"input": "foo", "expected-output": "bar"},
-    #     ],
-    # )
+    print("\n=== Override Dataset ===")
+    override_request = OverrideDatasetRequest(
+        name="Updated Dataset Name",
+        description="Updated description",
+        columns=[
+            ColumnDefinition(name="Input", slug="input", type=ColumnType.STRING),
+            ColumnDefinition(
+                name="Expected Output", slug="expected-output", type=ColumnType.STRING
+            ),
+        ],
+        rows=[
+            {"input": "hello", "expected-output": "world"},
+            {"input": "foo", "expected-output": "bar"},
+        ],
+    )
 
-    # updated_dataset = client.datasets.override(slug, override_request)
-    # print(
-    #     f"Overridden dataset '{updated_dataset.name}' with "
-    #     f"{len(updated_dataset.columns)} columns and {len(updated_dataset.rows)} rows"
-    # )
+    updated_dataset = client.datasets.override(slug, override_request)
+    print(
+        f"Overridden dataset '{updated_dataset.name}' with "
+        f"{len(updated_dataset.columns)} columns and {len(updated_dataset.rows)} rows"
+    )
 
-    # # Clean up
-    # print("\n=== Cleanup ===")
-    # client.datasets.delete_by_slug(slug)
-    # print("Dataset deleted")
+    # Clean up
+    print("\n=== Cleanup ===")
+    client.datasets.delete_by_slug(slug)
+    print("Dataset deleted")
 
 
 if __name__ == "__main__":
