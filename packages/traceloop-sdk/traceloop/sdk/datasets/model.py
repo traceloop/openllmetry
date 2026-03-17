@@ -89,6 +89,13 @@ class CreateDatasetRequest(BaseModel):
     rows: Optional[List[ValuesMap]] = None
 
 
+class OverrideDatasetRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    columns: Optional[List[ColumnDefinition]] = None
+    rows: Optional[List[ValuesMap]] = None
+
+
 class RowObject(BaseModel):
     id: str
     values: ValuesMap
