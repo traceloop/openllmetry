@@ -14,6 +14,10 @@ from opentelemetry.instrumentation.ollama.event_emitter import (
     emit_choice_events,
     emit_message_events,
 )
+from opentelemetry.instrumentation.ollama.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.ollama.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
@@ -306,6 +310,7 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
+    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
     _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
@@ -340,6 +345,7 @@ def _wrap(
                 start_time,
             )
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(
             span, event_logger, llm_request_type, token_histogram, response
         )
@@ -381,6 +387,7 @@ async def _awrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
     _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
@@ -414,6 +421,7 @@ async def _awrap(
                 start_time,
             )
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(
             span, event_logger, llm_request_type, token_histogram, response
         )

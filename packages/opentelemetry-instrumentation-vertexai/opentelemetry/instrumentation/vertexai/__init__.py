@@ -20,6 +20,10 @@ from opentelemetry.instrumentation.vertexai.span_utils import (
     set_model_response_attributes,
     set_response_attributes,
 )
+from opentelemetry.instrumentation.vertexai.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.vertexai.version import __version__
 from opentelemetry.semconv._incubating.attributes import (
@@ -243,6 +247,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         },
     )
 
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     await _handle_request(span, event_logger, args, kwargs, llm_model)
 
     response = await wrapped(*args, **kwargs)
@@ -257,6 +262,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
                 span, event_logger, response, llm_model
             )
         else:
+            _apply_completion_safety(span, response, name)
             _handle_response(span, event_logger, response, llm_model)
 
     span.end()
@@ -292,6 +298,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     # Use sync version for non-async wrapper to avoid image processing for now
     set_model_input_attributes(span, kwargs, llm_model)
     if should_emit_events():
@@ -311,6 +318,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
                 span, event_logger, response, llm_model
             )
         else:
+            _apply_completion_safety(span, response, name)
             _handle_response(span, event_logger, response, llm_model)
 
     span.end()

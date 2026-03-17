@@ -13,6 +13,10 @@ from opentelemetry.instrumentation.groq.event_emitter import (
     emit_message_events,
     emit_streaming_response_events,
 )
+from opentelemetry.instrumentation.groq.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.groq.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
@@ -250,6 +254,7 @@ def _wrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, name)
     _handle_input(span, kwargs, event_logger)
 
     start_time = time.time()
@@ -289,6 +294,7 @@ def _wrap(
                     attributes=metric_attributes,
                 )
 
+            _apply_completion_safety(span, response, name)
             _handle_response(span, response, token_histogram, event_logger)
 
         except Exception as ex:  # pylint: disable=broad-except
@@ -332,6 +338,7 @@ async def _awrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, name)
     _handle_input(span, kwargs, event_logger)
 
     start_time = time.time()
@@ -371,6 +378,7 @@ async def _awrap(
                 attributes=metric_attributes,
             )
 
+        _apply_completion_safety(span, response, name)
         _handle_response(span, response, token_histogram, event_logger)
 
         if span.is_recording():

@@ -1,6 +1,7 @@
 """OpenTelemetry SageMaker instrumentation"""
 
 from functools import wraps
+from io import BytesIO
 from typing import Collection
 
 from opentelemetry import context as context_api
@@ -13,6 +14,10 @@ from opentelemetry.instrumentation.sagemaker.event_emitter import (
 )
 from opentelemetry.instrumentation.sagemaker.reusable_streaming_body import (
     ReusableStreamingBody,
+)
+from opentelemetry.instrumentation.sagemaker.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
 )
 from opentelemetry.instrumentation.sagemaker.span_utils import (
     set_call_request_attributes,
@@ -96,6 +101,7 @@ def _instrumented_endpoint_invoke(fn, tracer, event_logger):
         with tracer.start_as_current_span(
             "sagemaker.completion", kind=SpanKind.CLIENT
         ) as span:
+            kwargs = _apply_prompt_safety(span, kwargs, "sagemaker.completion")
             response = fn(*args, **kwargs)
             _handle_call(span, event_logger, kwargs, response)
 
@@ -159,10 +165,16 @@ def _handle_call(span, event_logger, kwargs, response):
     set_call_span_attributes(span, kwargs, response)
 
     # Handle Response
+    raw_response = response["Body"].read()
+    raw_response, changed = _apply_completion_safety(
+        span, raw_response, "sagemaker.completion"
+    )
+    if changed:
+        response["Body"] = ReusableStreamingBody(BytesIO(raw_response), len(raw_response))
+
     if should_emit_events() and event_logger is not None:
         emit_choice_events(response, event_logger)
     else:
-        raw_response = response["Body"].read()
         set_call_response_attributes(span, raw_response)
 
 

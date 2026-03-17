@@ -16,6 +16,10 @@ from opentelemetry.instrumentation.alephalpha.span_utils import (
     set_completion_attributes,
     set_prompt_attributes,
 )
+from opentelemetry.instrumentation.alephalpha.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.alephalpha.utils import dont_throw
 from opentelemetry.instrumentation.alephalpha.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -164,12 +168,14 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     input_event = _parse_prompt_event(args, kwargs)
     _handle_message_event(input_event, span, event_logger, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
+        _apply_completion_safety(span, response, name)
         response_event = _parse_completion_event(response)
         _handle_completion_event(response_event, span, event_logger, response)
         if span.is_recording():

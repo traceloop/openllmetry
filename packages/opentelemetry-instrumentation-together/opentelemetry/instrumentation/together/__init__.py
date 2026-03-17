@@ -11,6 +11,10 @@ from opentelemetry.instrumentation.together.event_emitter import (
     emit_completion_event,
     emit_prompt_events,
 )
+from opentelemetry.instrumentation.together.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.together.span_utils import (
     set_completion_attributes,
     set_model_completion_attributes,
@@ -120,11 +124,13 @@ def _wrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
+    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
     _handle_input(span, event_logger, llm_request_type, kwargs)
 
     response = wrapped(*args, **kwargs)
 
     if response:
+        _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(span, event_logger, llm_request_type, response)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))

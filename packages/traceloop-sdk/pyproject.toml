@@ -39,6 +39,7 @@ dependencies = [
   "opentelemetry-instrumentation-transformers",
   "opentelemetry-instrumentation-together",
   "opentelemetry-instrumentation-llamaindex",
+  "opentelemetry-instrumentation-litellm",
   "opentelemetry-instrumentation-milvus",
   "opentelemetry-instrumentation-haystack",
   "opentelemetry-instrumentation-bedrock",
@@ -106,6 +107,11 @@ source = ["traceloop/sdk"]
 exclude_lines = ["if TYPE_CHECKING:"]
 show_missing = true
 
+[tool.pytest.ini_options]
+markers = [
+  "safety: safety-focused tests",
+]
+
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
@@ -169,6 +175,7 @@ opentelemetry-instrumentation-haystack = { path = "../opentelemetry-instrumentat
 opentelemetry-instrumentation-lancedb = { path = "../opentelemetry-instrumentation-lancedb", editable = true }
 opentelemetry-instrumentation-langchain = { path = "../opentelemetry-instrumentation-langchain", editable = true }
 opentelemetry-instrumentation-llamaindex = { path = "../opentelemetry-instrumentation-llamaindex", editable = true }
+opentelemetry-instrumentation-litellm = { path = "../opentelemetry-instrumentation-litellm", editable = true }
 opentelemetry-instrumentation-marqo = { path = "../opentelemetry-instrumentation-marqo", editable = true }
 opentelemetry-instrumentation-mcp = { path = "../opentelemetry-instrumentation-mcp", editable = true }
 opentelemetry-instrumentation-milvus = { path = "../opentelemetry-instrumentation-milvus", editable = true }

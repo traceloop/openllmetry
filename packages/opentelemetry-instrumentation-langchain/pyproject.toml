@@ -12,6 +12,7 @@ readme = "README.md"
 requires-python = ">=3.10,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation-fortifyroot",
   "opentelemetry-instrumentation>=0.59b0",
   "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
   "opentelemetry-semantic-conventions>=0.59b0",
@@ -89,3 +90,9 @@ select = ["E", "F", "W"]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
+
+[tool.uv.sources]
+opentelemetry-instrumentation-fortifyroot = { path = "../opentelemetry-instrumentation-fortifyroot", editable = true }
+
+[tool.pytest.ini_options]
+markers = ["safety: tests for FortifyRoot safety masking hooks"]

@@ -13,6 +13,10 @@ from opentelemetry.instrumentation.mistralai.event_models import (
     ChoiceEvent,
     MessageEvent,
 )
+from opentelemetry.instrumentation.mistralai.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.mistralai.utils import (
     dont_throw,
     should_emit_events,
@@ -412,6 +416,7 @@ def _wrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     response = wrapped(*args, **kwargs)
@@ -422,6 +427,7 @@ def _wrap(
                 span, event_logger, llm_request_type, response
             )
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(span, event_logger, llm_request_type, response)
 
         if span.is_recording():
@@ -458,6 +464,7 @@ async def _awrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     if to_wrap.get("streaming"):
@@ -471,6 +478,7 @@ async def _awrap(
                 span, event_logger, llm_request_type, response
             )
 
+        _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(span, event_logger, llm_request_type, response)
 
         if span.is_recording():

@@ -12,6 +12,10 @@ from opentelemetry.instrumentation.langchain.callback_handler import (
     TraceloopCallbackHandler,
 )
 from opentelemetry.instrumentation.langchain.config import Config
+from opentelemetry.instrumentation.langchain.safety import (
+    instrument_safety_wrappers,
+    uninstrument_safety_wrappers,
+)
 from opentelemetry.instrumentation.langchain.utils import is_package_available
 from opentelemetry.instrumentation.langchain.version import __version__
 from opentelemetry.instrumentation.utils import unwrap
@@ -95,6 +99,7 @@ class LangchainInstrumentor(BaseInstrumentor):
             name="BaseCallbackManager.__init__",
             wrapper=_BaseCallbackManagerInitWrapper(traceloopCallbackHandler),
         )
+        instrument_safety_wrappers()
 
         if not self.disable_trace_context_propagation:
             self._wrap_openai_functions_for_tracing(traceloopCallbackHandler)
@@ -181,6 +186,7 @@ class LangchainInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
+        uninstrument_safety_wrappers()
         if not self.disable_trace_context_propagation:
             if is_package_available("langchain_community"):
                 unwrap("langchain_community.llms.openai", "BaseOpenAI._generate")

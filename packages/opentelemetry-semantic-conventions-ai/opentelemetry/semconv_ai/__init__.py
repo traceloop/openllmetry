@@ -88,6 +88,9 @@ class SpanAttributes:
     LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
     LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"
     LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"
+    # Backward-compatible aliases still used across instrumentation packages.
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
 
     # OpenAI
     LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
