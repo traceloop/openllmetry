@@ -24,6 +24,7 @@ from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
     LLMChatStartEvent,
     LLMCompletionEndEvent,
+    LLMCompletionStartEvent,
     LLMPredictEndEvent,
 )
 from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
@@ -34,6 +35,13 @@ from opentelemetry.instrumentation.llamaindex.event_emitter import (
     emit_chat_message_events,
     emit_chat_response_events,
     emit_rerank_message_event,
+)
+from opentelemetry.instrumentation.llamaindex.safety import (
+    apply_chat_end_safety,
+    apply_completion_end_safety,
+    apply_completion_start_attributes,
+    apply_predict_end_safety,
+    instrument_llm_safety_wrappers,
 )
 from opentelemetry.instrumentation.llamaindex.span_utils import (
     set_embedding,
@@ -71,6 +79,7 @@ STREAMING_END_EVENTS = (
 
 
 def instrument_with_dispatcher(tracer: Tracer):
+    instrument_llm_safety_wrappers()
     dispatcher = get_dispatcher()
     openllmetry_span_handler = OpenLLMetrySpanHandler(tracer)
     dispatcher.add_span_handler(openllmetry_span_handler)
@@ -127,6 +136,7 @@ class SpanHolder:
 
     @update_span_for_event.register
     def _(self, event: LLMChatEndEvent):
+        apply_chat_end_safety(event, self.otel_span)
         set_llm_chat_response_model_attributes(event, self.otel_span)
         if should_emit_events():
             emit_chat_response_events(event)
@@ -134,7 +144,16 @@ class SpanHolder:
             set_llm_chat_response(event, self.otel_span)  # noqa: F821
 
     @update_span_for_event.register
+    def _(self, event: LLMCompletionStartEvent):
+        apply_completion_start_attributes(event, self.otel_span)
+
+    @update_span_for_event.register
+    def _(self, event: LLMCompletionEndEvent):
+        apply_completion_end_safety(event, self.otel_span)
+
+    @update_span_for_event.register
     def _(self, event: LLMPredictEndEvent):
+        apply_predict_end_safety(event, self.otel_span)
         if not should_emit_events():
             set_llm_predict_response(event, self.otel_span)
 

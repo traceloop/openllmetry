@@ -16,6 +16,7 @@ class Instruments(Enum):
     LANCEDB = "lancedb"
     LANGCHAIN = "langchain"
     LLAMA_INDEX = "llama_index"
+    LITELLM = "litellm"
     MARQO = "marqo"
     MCP = "mcp"
     MILVUS = "milvus"

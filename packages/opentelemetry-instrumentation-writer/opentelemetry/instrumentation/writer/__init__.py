@@ -26,6 +26,8 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer.config import Config
 from opentelemetry.instrumentation.writer.event_emitter import (
     emit_choice_events, emit_message_events)
+from opentelemetry.instrumentation.writer.safety import (
+    _apply_completion_safety, _apply_prompt_safety)
 from opentelemetry.instrumentation.writer.span_utils import (
     set_input_attributes, set_model_input_attributes,
     set_model_response_attributes, set_response_attributes)
@@ -361,6 +363,7 @@ def _wrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, request_type, name)
     _handle_input(span, kwargs, event_logger)
 
     start_time = time.time()
@@ -413,6 +416,9 @@ def _wrap(
                     attributes=response_attributes(response, to_wrap.get("method")),
                 )
 
+            _apply_completion_safety(
+                span, response, request_type, name
+            )
             _handle_response(
                 span, response, token_histogram, event_logger, to_wrap.get("method")
             )
@@ -462,6 +468,7 @@ async def _awrap(
         },
     )
 
+    kwargs = _apply_prompt_safety(span, kwargs, request_type, name)
     _handle_input(span, kwargs, event_logger)
 
     start_time = time.time()
@@ -514,6 +521,9 @@ async def _awrap(
                     attributes=response_attributes(response, to_wrap.get("method")),
                 )
 
+            _apply_completion_safety(
+                span, response, request_type, name
+            )
             _handle_response(
                 span, response, token_histogram, event_logger, to_wrap.get("method")
             )

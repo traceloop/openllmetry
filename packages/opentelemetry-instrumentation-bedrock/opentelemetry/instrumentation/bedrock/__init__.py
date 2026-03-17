@@ -26,6 +26,12 @@ from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
 )
+from opentelemetry.instrumentation.bedrock.safety import (
+    _apply_converse_completion_safety,
+    _apply_converse_prompt_safety,
+    _apply_invoke_prompt_safety,
+    _prepare_invoke_response,
+)
 from opentelemetry.instrumentation.bedrock.span_utils import (
     converse_usage_record,
     set_converse_input_prompt_span_attributes,
@@ -203,6 +209,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
+            kwargs = _apply_invoke_prompt_safety(span, kwargs, _BEDROCK_INVOKE_SPAN_NAME)
             response = fn(*args, **kwargs)
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
@@ -240,6 +247,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
         ) as span:
+            kwargs = _apply_converse_prompt_safety(span, kwargs, _BEDROCK_CONVERSE_SPAN_NAME)
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
@@ -316,7 +324,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
         response["body"]._raw_stream, response["body"]._content_length
     )
     request_body = json.loads(kwargs.get("body"))
-    response_body = json.loads(response.get("body").read())
+    response_body = _prepare_invoke_response(span, response, _BEDROCK_INVOKE_SPAN_NAME)
     headers = {}
     if "ResponseMetadata" in response:
         headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
@@ -352,6 +360,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
 
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
+    _apply_converse_completion_safety(span, response, _BEDROCK_CONVERSE_SPAN_NAME)
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     guardrail_converse(span, response, provider, model, metric_params)
 

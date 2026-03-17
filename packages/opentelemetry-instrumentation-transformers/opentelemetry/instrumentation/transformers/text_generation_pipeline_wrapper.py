@@ -10,6 +10,10 @@ from opentelemetry.instrumentation.transformers.span_utils import (
     set_model_input_attributes,
     set_response_attributes,
 )
+from opentelemetry.instrumentation.transformers.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.transformers.utils import (
     dont_throw,
     should_emit_events,
@@ -59,11 +63,13 @@ def text_generation_pipeline_wrapper(
 
     name = to_wrap.get("span_name")
     with tracer.start_as_current_span(name) as span:
+        args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
         _handle_input(span, event_logger, instance, args, kwargs)
 
         response = wrapped(*args, **kwargs)
 
         if response:
+            _apply_completion_safety(span, response, name)
             _handle_response(span, event_logger, response)
             if span.is_recording():
                 span.set_status(Status(StatusCode.OK))

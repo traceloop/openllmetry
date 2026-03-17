@@ -1,0 +1,81 @@
+[project]
+name = "opentelemetry-instrumentation-litellm"
+version = "0.52.6"
+description = "OpenTelemetry LiteLLM instrumentation"
+authors = [
+  { name = "FortifyRoot", email = "engineering@fortifyroot.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation-fortifyroot",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-litellm"
+
+[project.optional-dependencies]
+instruments = ["litellm>=1.71.2,<2"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+litellm = "opentelemetry.instrumentation.litellm:LiteLLMInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "black>=25.1.0,<26",
+  "isort>=6.0.1,<7",
+  "ruff>=0.4.0",
+]
+test = [
+  "litellm>=1.71.2,<2",
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-asyncio>=0.23.7,<0.24.0",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
+[tool.coverage.run]
+branch = true
+source = ["opentelemetry/instrumentation/litellm"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
+show_missing = true
+
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.pytest.ini_options]
+markers = [
+  "safety: safety-focused tests",
+]
+
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+
+[tool.uv.sources]
+opentelemetry-instrumentation-fortifyroot = { path = "../opentelemetry-instrumentation-fortifyroot", editable = true }

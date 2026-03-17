@@ -18,6 +18,10 @@ from opentelemetry.instrumentation.watsonx.event_emitter import (
     emit_event,
 )
 from opentelemetry.instrumentation.watsonx.event_models import ChoiceEvent, MessageEvent
+from opentelemetry.instrumentation.watsonx.safety import (
+    _apply_completion_safety,
+    _apply_prompt_safety,
+)
 from opentelemetry.instrumentation.watsonx.utils import (
     dont_throw,
     should_emit_events,
@@ -578,6 +582,7 @@ def _wrap(
         },
     )
 
+    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
     _handle_input(span, event_logger, name, instance, args, kwargs)
 
     if "generate" in name:
@@ -620,6 +625,7 @@ def _wrap(
             )
         else:
             duration = end_time - start_time
+            _apply_completion_safety(span, response, name)
             _handle_response(
                 span,
                 event_logger,
