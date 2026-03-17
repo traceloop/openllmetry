@@ -98,7 +98,7 @@ def test_langchain_association_properties(exporter):
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
     )
-    prompt_span = next(span for span in spans if span.name == "ChatPromptTemplate.task")
+    prompt_span = next(span for span in spans if span.name == "execute_task ChatPromptTemplate")
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
     assert (
@@ -170,7 +170,7 @@ def test_langchain_and_external_association_properties(exporter):
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
     )
-    prompt_span = next(span for span in spans if span.name == "ChatPromptTemplate.task")
+    prompt_span = next(span for span in spans if span.name == "execute_task ChatPromptTemplate")
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
     assert (
