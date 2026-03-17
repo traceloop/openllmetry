@@ -1,4 +1,7 @@
 from opentelemetry.trace import Span
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_SEED,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 import json
 
@@ -74,8 +77,14 @@ class CrewAISpanAttributes:
                 self._set_attribute(SpanAttributes.LLM_PRESENCE_PENALTY, value)
             elif field == "frequency_penalty":
                 self._set_attribute(SpanAttributes.LLM_FREQUENCY_PENALTY, value)
-            else:
-                self._set_attribute(f"llm.{field}", value)
+            elif field == "seed":
+                self._set_attribute(GEN_AI_REQUEST_SEED, value)
+            elif field == "stop":
+                self._set_attribute(SpanAttributes.LLM_CHAT_STOP_SEQUENCES, value)
+            elif field == "n":
+                self._set_attribute(SpanAttributes.LLM_REQUEST_N, value)
+            elif field == "max_completion_tokens":
+                self._set_attribute(SpanAttributes.LLM_REQUEST_MAX_COMPLETION_TOKENS, value)
 
     def _populate_crew_attributes(self):
         for key, value in self.instance.__dict__.items():

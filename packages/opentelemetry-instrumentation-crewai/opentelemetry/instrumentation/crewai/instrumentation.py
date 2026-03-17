@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.crewai.version import __version__
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_PROVIDER_NAME
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
@@ -69,6 +70,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         kind=SpanKind.INTERNAL,
         attributes={
             GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+            GEN_AI_PROVIDER_NAME: "crewai",
         }
     ) as span:
         try:
@@ -96,6 +98,8 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
+            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+            GEN_AI_PROVIDER_NAME: "crewai",
         }
     ) as span:
         try:
@@ -157,6 +161,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         f"{llm}.llm",
         kind=SpanKind.CLIENT,
         attributes={
+            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+            GEN_AI_PROVIDER_NAME: "crewai",
         }
     ) as span:
         start_time = time.time()
