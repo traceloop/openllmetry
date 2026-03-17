@@ -20,6 +20,7 @@ from traceloop.sdk.datasets.model import (
     CreateDatasetRequest,
     CreateDatasetResponse,
     DatasetMetadata,
+    OverrideDatasetRequest,
     ValuesMap,
 )
 
@@ -97,6 +98,35 @@ class Datasets:
 
         # Create the dataset
         response = self._create_dataset(clean_request)
+        dataset = Dataset.from_create_dataset_response(response, self._http)
+
+        # Process attachments if any
+        if attachments_to_process:
+            self._process_attachments(dataset, attachments_to_process)
+
+        return dataset
+
+    def override(self, slug: str, override_request: OverrideDatasetRequest) -> Dataset:
+        """
+        Override an existing dataset's columns and rows.
+
+        Args:
+            slug: The slug of the dataset to override
+            override_request: The override request containing new name, description, columns, and rows
+
+        Returns:
+            Updated dataset with overridden columns and rows
+        """
+        # Extract attachment objects from rows
+        attachments_to_process = self._extract_attachments_from_override(
+            override_request
+        )
+
+        # Replace attachment objects with None for the override request
+        clean_request = self._prepare_override_request(override_request)
+
+        # Override the dataset
+        response = self._override_dataset(slug, clean_request)
         dataset = Dataset.from_create_dataset_response(response, self._http)
 
         # Process attachments if any
@@ -221,6 +251,57 @@ class Datasets:
         if result is None:
             raise Exception(f"Failed to get dataset {slug} by version {version}")
         return cast(str, result)
+
+    def _override_dataset(
+        self, slug: str, input: OverrideDatasetRequest
+    ) -> CreateDatasetResponse:
+        """Override an existing dataset's columns and rows"""
+        data = input.model_dump(exclude_unset=True)
+
+        result = self._http.post(f"datasets/{slug}/override", data)
+
+        if result is None:
+            raise Exception(f"Failed to override dataset {slug}")
+
+        return CreateDatasetResponse(**result)
+
+    def _extract_attachments_from_override(
+        self, request: OverrideDatasetRequest
+    ) -> Dict[int, Dict[str, Any]]:
+        """Extract attachment objects from override request row values."""
+        attachments: Dict[int, Dict[str, Any]] = {}
+        if request.rows:
+            for row_idx, row in enumerate(request.rows):
+                for col_slug, value in row.items():
+                    if isinstance(value, (Attachment, ExternalAttachment)):
+                        if row_idx not in attachments:
+                            attachments[row_idx] = {}
+                        attachments[row_idx][col_slug] = value
+        return attachments
+
+    def _prepare_override_request(
+        self, request: OverrideDatasetRequest
+    ) -> OverrideDatasetRequest:
+        """Replace attachment objects with None in override request row values."""
+        if not request.rows:
+            return request
+
+        clean_rows = []
+        for row in request.rows:
+            clean_row: Dict[str, Any] = {}
+            for col_slug, value in row.items():
+                if isinstance(value, (Attachment, ExternalAttachment)):
+                    clean_row[col_slug] = None
+                else:
+                    clean_row[col_slug] = value
+            clean_rows.append(clean_row)
+
+        return OverrideDatasetRequest(
+            name=request.name,
+            description=request.description,
+            columns=request.columns,
+            rows=clean_rows,
+        )
 
     def _create_dataset(self, input: CreateDatasetRequest) -> CreateDatasetResponse:
         """Create new dataset"""
