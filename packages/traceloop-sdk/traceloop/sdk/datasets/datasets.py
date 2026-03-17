@@ -256,7 +256,7 @@ class Datasets:
         self, slug: str, input: OverrideDatasetRequest
     ) -> CreateDatasetResponse:
         """Override an existing dataset's columns and rows"""
-        data = input.model_dump()
+        data = input.model_dump(exclude_unset=True)
 
         result = self._http.post(f"datasets/{slug}/override", data)
 
