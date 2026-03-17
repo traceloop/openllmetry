@@ -1,3 +1,9 @@
+## v0.53.1 (2026-03-17)
+
+### Fix
+
+- **traceloop-sdk**: Add dataset override functionality (#3813)
+
 ## v0.53.0 (2026-03-04)
 
 ### Feat
