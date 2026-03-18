@@ -28,7 +28,7 @@ writer = "opentelemetry.instrumentation.writer:WriterInstrumentor"
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "black>=25.1.0,<26",
+  "black>=25.1.0,<27",
   "isort>=6.0.1,<7",
   "ruff>=0.4.0",
 ]
