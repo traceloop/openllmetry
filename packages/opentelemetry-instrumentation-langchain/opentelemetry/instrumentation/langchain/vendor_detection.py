@@ -49,7 +49,7 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"
             },
             patterns=["vertex", "google", "palm", "gemini"],
-            vendor_name="google"
+            vendor_name="gcp.gen_ai"
         ),
         VendorRule(
             exact_matches={"ChatCohere", "CohereEmbeddings", "Cohere"},
@@ -109,7 +109,7 @@ def detect_vendor_from_class(class_name: str) -> str:
         Vendor string, defaults to "Langchain" if no match found
     """
     if not class_name:
-        return "Langchain"
+        return "langchain"
 
     vendor_rules = _get_vendor_rules()
 
@@ -117,4 +117,4 @@ def detect_vendor_from_class(class_name: str) -> str:
         if rule.matches(class_name):
             return rule.vendor_name
 
-    return "Langchain"
+    return "langchain"

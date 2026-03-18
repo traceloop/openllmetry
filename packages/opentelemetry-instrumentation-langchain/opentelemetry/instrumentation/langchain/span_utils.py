@@ -305,7 +305,7 @@ def set_chat_response_usage(
             cache_read_tokens,
         )
         if record_token_usage:
-            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "langchain")
 
             if input_tokens > 0:
                 token_histogram.record(
