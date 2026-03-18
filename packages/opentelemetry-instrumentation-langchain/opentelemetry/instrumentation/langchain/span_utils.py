@@ -274,9 +274,8 @@ def set_chat_response_usage(
                             "input_token_details", {}
                         )
                         cache_read_tokens += input_token_details.get("cache_read", 0)
-    except Exception as e:
+    except Exception:
         # If there's any issue processing usage metadata, continue without it
-        print(f"DEBUG: Error processing usage metadata: {e}")
         pass
 
     if (

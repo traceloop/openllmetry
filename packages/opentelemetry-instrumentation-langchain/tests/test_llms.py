@@ -149,7 +149,7 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
 
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
-    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "HuggingFace"
+    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "hugging_face"
     input_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "System: You are a helpful assistant\nHuman: tell me a short joke"
     output_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
@@ -819,7 +819,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "aws.bedrock"
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "You are a helpful assistant"
     assert input_messages[0]["role"] == "system"
