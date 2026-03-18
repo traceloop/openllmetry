@@ -176,7 +176,6 @@ class TestSpanAttributesOldValuesAbsent:
             "llm.content.completion.chunk",
             "llm.request.reasoning_effort",
             "llm.usage.reasoning_tokens",
-            "llm.chat_completions.streaming_time_to_generate",
             "gen_ai.usage.cache_read_input_tokens",    # underscore variant (pre-migration)
             "gen_ai.usage.cache_creation_input_tokens",  # underscore variant (pre-migration)
         ],
@@ -344,8 +343,7 @@ class TestMetersGenAiNamespace:
     """Generic metric names must use gen_ai.* namespace."""
 
     def test_streaming_time_to_generate(self):
-        # Renamed from "llm.chat_completions.streaming_time_to_generate"
-        assert Meters.LLM_STREAMING_TIME_TO_GENERATE == "gen_ai.client.chat_completions.streaming_time_to_generate"
+        assert Meters.LLM_STREAMING_TIME_TO_GENERATE == "llm.chat_completions.streaming_time_to_generate"
 
     def test_core_metrics_unchanged(self):
         """Core gen_ai.client.* metrics already had the correct namespace."""
