@@ -15,7 +15,6 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 
 def food_analysis(
@@ -41,8 +40,8 @@ def test_tool_calls(instrument_legacy, span_exporter, log_exporter):
     #     span for span in spans if span.name == "ChatOpenAI.chat"
     # )
 
-    # assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "food_analysis"
-    # assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    # assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "food_analysis"
+    # assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
     #     "properties": {
     #         "name": {"type": "string"},
     #         "healthy": {"type": "boolean"},
@@ -192,8 +191,8 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -201,8 +200,8 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -480,8 +479,8 @@ def test_tool_calls_anthropic_text_block(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -489,8 +488,8 @@ def test_tool_calls_anthropic_text_block(
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -697,8 +696,8 @@ def test_tool_calls_anthropic_text_block_and_history(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -706,8 +705,8 @@ def test_tool_calls_anthropic_text_block_and_history(
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -1045,8 +1044,8 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -1054,8 +1053,8 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
+    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
         "properties": {
             "location": {"type": "string"},
         },
