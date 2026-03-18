@@ -491,7 +491,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             response_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "response",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "response",
             }
 
             otel_span = self.tracer.start_span(
@@ -510,7 +509,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             response_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
             }
 
             otel_span = self.tracer.start_span(
@@ -531,9 +529,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             speech_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
             }
 
             model = getattr(span_data, "model", None)
@@ -558,9 +555,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             transcription_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "transcription",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
             }
 
             model = getattr(span_data, "model", None)
@@ -585,9 +581,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             speech_group_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech_group",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
             }
 
             otel_span = self.tracer.start_span(
@@ -631,39 +626,30 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     and hasattr(response, "tools")
                     and response.tools
                 ):
-                    # Extract tool specifications
-                    for i, tool in enumerate(response.tools):
+                    # Extract tool specifications as a JSON array
+                    tool_defs = []
+                    for tool in response.tools:
                         if hasattr(tool, "function"):
                             function = tool.function
-                            otel_span.set_attribute(
-                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
-                                getattr(function, "name", ""),
-                            )
-                            otel_span.set_attribute(
-                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
-                                getattr(function, "description", ""),
-                            )
+                            tool_def = {
+                                "name": getattr(function, "name", ""),
+                                "description": getattr(function, "description", ""),
+                            }
                             if hasattr(function, "parameters"):
-                                otel_span.set_attribute(
-                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
-                                    json.dumps(function.parameters),
-                                )
+                                tool_def["parameters"] = function.parameters
+                            tool_defs.append(tool_def)
                         elif hasattr(tool, "name"):
                             # Direct function format
-                            otel_span.set_attribute(
-                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
-                                tool.name,
-                            )
+                            tool_def = {"name": tool.name}
                             if hasattr(tool, "description"):
-                                otel_span.set_attribute(
-                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
-                                    tool.description,
-                                )
+                                tool_def["description"] = tool.description
                             if hasattr(tool, "parameters"):
-                                otel_span.set_attribute(
-                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
-                                    json.dumps(tool.parameters),
-                                )
+                                tool_def["parameters"] = tool.parameters
+                            tool_defs.append(tool_def)
+                    if tool_defs:
+                        otel_span.set_attribute(
+                            GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+                        )
 
                 if response:
                     model_settings = _extract_response_attributes(otel_span, response, trace_content)
