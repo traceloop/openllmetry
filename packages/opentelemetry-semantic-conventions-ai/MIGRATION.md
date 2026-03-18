@@ -77,8 +77,8 @@ span.set_attribute(SpanAttributes.GEN_AI_IS_STREAMING, True)
 | `SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK` | `SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK` |
 | `SpanAttributes.LLM_USAGE_REASONING_TOKENS` | `SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS` |
 | `SpanAttributes.LLM_USAGE_TOKEN_TYPE` | `SpanAttributes.GEN_AI_USAGE_TOKEN_TYPE` |
-| `SpanAttributes.LLM_REQUEST_N` | `SpanAttributes.GEN_AI_REQUEST_N` |
-| `SpanAttributes.LLM_REQUEST_MAX_COMPLETION_TOKENS` | `SpanAttributes.GEN_AI_REQUEST_MAX_COMPLETION_TOKENS` |
+| `SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS` | `SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS` ¹ |
+| `SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS` | `SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS` ¹ |
 | `SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA` | `SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA` |
 | `SpanAttributes.LLM_OPENAI_API_BASE` | `SpanAttributes.GEN_AI_OPENAI_API_BASE` |
 | `SpanAttributes.LLM_OPENAI_API_VERSION` | `SpanAttributes.GEN_AI_OPENAI_API_VERSION` |
@@ -89,6 +89,8 @@ span.set_attribute(SpanAttributes.GEN_AI_IS_STREAMING, True)
 | `SpanAttributes.LLM_MIN_NEW_TOKENS` | `SpanAttributes.GEN_AI_WATSONX_MIN_NEW_TOKENS` |
 | `SpanAttributes.LLM_REPETITION_PENALTY` | `SpanAttributes.GEN_AI_WATSONX_REPETITION_PENALTY` |
 
+> ¹ The string value of these two cache-token attributes **also changed** — see [section 3](#cache-token-attributes).
+
 ---
 
 ## 3. Changed string values
@@ -97,22 +99,50 @@ Some constants kept their Python name but the underlying **string value** change
 
 ### Cache token attributes
 
-| Attribute | Old value | New value |
+| Python name | Old string value | New string value |
 |---|---|---|
-| `GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS` | `gen_ai.usage.cache_creation_input_tokens` | `gen_ai.usage.cache_creation.input_tokens` |
-| `GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS` | `gen_ai.usage.cache_read_input_tokens` | `gen_ai.usage.cache_read.input_tokens` |
+| `SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS` | `gen_ai.usage.cache_creation_input_tokens` | `gen_ai.usage.cache_creation.input_tokens` |
+| `SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS` | `gen_ai.usage.cache_read_input_tokens` | `gen_ai.usage.cache_read.input_tokens` |
 
 > **Dashboard impact**: Update any Grafana queries, alerts, or OTLP processors that filter on
 > these attribute names.
 
-### `GenAISystem.ANTHROPIC` value
+### `Meters.LLM_STREAMING_TIME_TO_GENERATE` value
 
-| Enum | Old value | New value |
+`SpanAttributes.LLM_STREAMING_TIME_TO_GENERATE` has been **removed**. The same name exists in
+`Meters` but its string value also changed.
+
+| Class | Old string value | New string value |
+|---|---|---|
+| `Meters.LLM_STREAMING_TIME_TO_GENERATE` | `llm.chat_completions.streaming_time_to_generate` | `gen_ai.client.chat_completions.streaming_time_to_generate` |
+
+### `GenAISystem` values
+
+All `GenAISystem` enum values now use the OTel spec canonical form (lowercase / dot-separated).
+
+| Enum member | Old value | New value |
 |---|---|---|
 | `GenAISystem.ANTHROPIC` | `"Anthropic"` | `"anthropic"` |
+| `GenAISystem.COHERE` | `"Cohere"` | `"cohere"` |
+| `GenAISystem.MISTRALAI` | `"MistralAI"` | `"mistral_ai"` |
+| `GenAISystem.OLLAMA` | `"Ollama"` | `"ollama"` |
+| `GenAISystem.GROQ` | `"Groq"` | `"groq"` |
+| `GenAISystem.ALEPH_ALPHA` | `"AlephAlpha"` | `"aleph_alpha"` |
+| `GenAISystem.REPLICATE` | `"Replicate"` | `"replicate"` |
+| `GenAISystem.TOGETHER_AI` | `"TogetherAI"` | `"together_ai"` |
+| `GenAISystem.WATSONX` | `"Watsonx"` | `"ibm.watsonx.ai"` |
+| `GenAISystem.HUGGINGFACE` | `"HuggingFace"` | `"hugging_face"` |
+| `GenAISystem.FIREWORKS` | `"Fireworks"` | `"fireworks"` |
+| `GenAISystem.AZURE` | `"Azure"` | `"az.ai.openai"` |
+| `GenAISystem.AWS` | `"AWS"` | `"aws.bedrock"` |
+| `GenAISystem.GOOGLE` | `"Google"` | `"gcp.gen_ai"` |
+| `GenAISystem.OPENROUTER` | `"OpenRouter"` | `"openrouter"` |
+| `GenAISystem.LANGCHAIN` | `"Langchain"` | `"langchain"` |
 
-> **Dashboard impact**: Update dashboards filtering on `gen_ai.system == "Anthropic"` to use
-> `gen_ai.system == "anthropic"`.
+> `GenAISystem.OPENAI` (`"openai"`) is unchanged.
+
+> **Dashboard impact**: Update dashboards, alerts, and OTLP processors that filter on
+> `gen_ai.system` to use the new lowercase values shown above.
 
 ---
 
