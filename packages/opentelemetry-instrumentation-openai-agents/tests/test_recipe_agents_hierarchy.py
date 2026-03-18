@@ -286,7 +286,7 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
         # Check for usage
         has_usage = any(
-            key.startswith("gen_ai.usage.") or key.startswith("llm.usage.") for key in response_span.attributes.keys()
+            key.startswith("gen_ai.usage.") for key in response_span.attributes.keys()
         )
         assert has_usage, (
             f"Response span {i} should have usage attributes, attributes: {dict(response_span.attributes)}"

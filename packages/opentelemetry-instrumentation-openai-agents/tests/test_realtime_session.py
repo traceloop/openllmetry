@@ -697,5 +697,6 @@ class TestTracedPutEventHandlers:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
-        assert json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))[0]["content"] == "Why did the chicken cross the road?"
+        output = json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))
+        assert output[0]["content"] == "Why did the chicken cross the road?"
         assert llm_spans[0].attributes.get("gen_ai.usage.input_tokens") is None

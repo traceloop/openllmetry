@@ -50,11 +50,11 @@ def test_dict_content_serialization(exporter):
 
     spans = exporter.get_finished_spans()
 
-    # Look for any spans with prompt/content attributes
+    # Look for any spans with message content attributes
     for span in spans:
         for attr_name, attr_value in span.attributes.items():
-            prompt_content_check = ("prompt" in attr_name and "content" in attr_name) or (
-                "gen_ai.prompt" in attr_name and "content" in attr_name
+            prompt_content_check = (
+                attr_name in ("gen_ai.input.messages", "gen_ai.output.messages")
             )
             if prompt_content_check:
                 # All content attributes should be strings, not dicts
@@ -98,7 +98,7 @@ def test_agent_spans(exporter, test_agent):
     assert GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE not in agent_span.attributes
     assert GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS not in agent_span.attributes
     assert GenAIAttributes.GEN_AI_REQUEST_TOP_P not in agent_span.attributes
-    assert "openai.agent.model.frequency_penalty" not in agent_span.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY not in agent_span.attributes
 
     # Find the response span (openai.response) - this should contain prompts/completions/usage
     response_spans = [s for s in spans if s.name == "openai.response"]
