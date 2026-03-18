@@ -353,7 +353,6 @@ class RealtimeTracingState:
             attributes={
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_REQUEST_MODEL: model_name_str,
             },
         )
