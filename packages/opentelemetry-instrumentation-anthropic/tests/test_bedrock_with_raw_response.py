@@ -73,7 +73,7 @@ async def test_async_anthropic_bedrock_with_raw_response(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
 
@@ -115,7 +115,7 @@ async def test_async_anthropic_bedrock_regular_create(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
 
@@ -165,5 +165,5 @@ async def test_async_anthropic_bedrock_beta_with_raw_response(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )

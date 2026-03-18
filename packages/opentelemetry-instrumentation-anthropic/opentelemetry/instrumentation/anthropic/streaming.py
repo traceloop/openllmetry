@@ -92,7 +92,7 @@ def _set_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
@@ -129,7 +129,7 @@ def _set_token_usage(
                 1,
                 attributes={
                     **metric_attributes,
-                    SpanAttributes.LLM_RESPONSE_FINISH_REASON: event.get(
+                    SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: event.get(
                         "finish_reason"
                     ),
                 },

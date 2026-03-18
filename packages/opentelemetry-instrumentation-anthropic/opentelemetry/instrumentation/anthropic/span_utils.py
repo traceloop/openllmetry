@@ -83,12 +83,12 @@ async def aset_input_attributes(span, kwargs):
     )
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    set_span_attribute(span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream"))
+    set_span_attribute(span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream"))
 
     if should_send_prompts():
         if kwargs.get("prompt") is not None:
@@ -304,7 +304,7 @@ async def aset_response_attributes(span, response):
         )
         set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             prompt_tokens + completion_tokens,
         )
 
@@ -328,7 +328,7 @@ def set_response_attributes(span, response):
         )
         set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             prompt_tokens + completion_tokens,
         )
 
