@@ -99,7 +99,7 @@ def test_anthropic_message_create_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -146,7 +146,7 @@ def test_anthropic_message_create_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -211,7 +211,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -274,7 +274,7 @@ def test_anthropic_multi_modal_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -328,7 +328,7 @@ def test_anthropic_multi_modal_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -389,7 +389,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -526,7 +526,7 @@ async def test_anthropic_async_multi_modal_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -581,7 +581,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -643,7 +643,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -704,7 +704,7 @@ def test_anthropic_message_streaming_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -758,7 +758,7 @@ def test_anthropic_message_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -823,7 +823,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -884,7 +884,7 @@ async def test_async_anthropic_message_create_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -931,7 +931,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -989,7 +989,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1055,7 +1055,7 @@ async def test_async_anthropic_message_streaming_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -1109,7 +1109,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1173,7 +1173,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2350,7 +2350,7 @@ def test_anthropic_message_stream_manager_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2403,7 +2403,7 @@ def test_anthropic_message_stream_manager_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2467,7 +2467,7 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2533,7 +2533,7 @@ async def test_async_anthropic_message_stream_manager_legacy(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2586,7 +2586,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2649,7 +2649,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()

@@ -45,7 +45,6 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     Meters,
     SpanAttributes,
 )
@@ -282,7 +281,7 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
@@ -290,7 +289,7 @@ async def _aset_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
@@ -396,7 +395,7 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
             },
         )
 
@@ -404,7 +403,7 @@ def _set_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
@@ -553,7 +552,6 @@ def _wrap(
             GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
 
@@ -684,7 +682,6 @@ async def _awrap(
             GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
     await _ahandle_input(span, event_logger, kwargs)

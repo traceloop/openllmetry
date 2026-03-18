@@ -160,7 +160,7 @@ def test_tool_definitions_attribute():
 
     # Old attribute must NOT be set
     from opentelemetry.semconv_ai import SpanAttributes
-    assert f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name" not in span.attributes
+    assert f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name" not in span.attributes
 
 
 def test_input_messages_with_tool_calls_in_content():
