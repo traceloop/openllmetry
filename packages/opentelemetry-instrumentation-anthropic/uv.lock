@@ -348,7 +348,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.54.0"
+version = "0.53.2"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -435,7 +435,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.15"
+version = "0.5.0"
 source = { editable = "../opentelemetry-semantic-conventions-ai" }
 dependencies = [
     { name = "opentelemetry-sdk" },

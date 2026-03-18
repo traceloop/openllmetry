@@ -1230,7 +1230,7 @@ def test_anthropic_tools_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify request and inputs
@@ -1332,7 +1332,7 @@ def test_anthropic_tools_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1434,7 +1434,7 @@ def test_anthropic_tools_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1555,7 +1555,7 @@ def test_anthropic_tools_history_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1687,7 +1687,7 @@ def test_anthropic_tools_history_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1789,7 +1789,7 @@ def test_anthropic_tools_history_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1871,7 +1871,7 @@ def test_anthropic_tools_streaming_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1980,7 +1980,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -2092,7 +2092,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
