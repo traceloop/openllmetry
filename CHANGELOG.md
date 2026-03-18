@@ -1,3 +1,9 @@
+## v0.53.2 (2026-03-18)
+
+### Fix
+
+- use GITHUB_TOKEN for release creation to resolve 403 error (#3821)
+
 ## v0.53.1 (2026-03-17)
 
 ### Fix
