@@ -11,8 +11,6 @@ namespace, so a single import line is enough.
 """
 
 import pytest
-from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as otel_gen_ai
-
 from opentelemetry.semconv_ai import GenAISystem, Meters, SpanAttributes
 
 
