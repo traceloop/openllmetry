@@ -272,14 +272,14 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
     # Verify each response span has prompts, completions, and usage
     for i, response_span in enumerate(response_spans):
-        # Check for prompts
-        has_prompt = any(key.startswith("gen_ai.prompt.") for key in response_span.attributes.keys())
+        # Check for input messages (new JSON array format)
+        has_prompt = "gen_ai.input.messages" in response_span.attributes
         assert has_prompt, (
             f"Response span {i} should have prompt attributes, attributes: {dict(response_span.attributes)}"
         )
 
-        # Check for completions
-        has_completion = any(key.startswith("gen_ai.completion.") for key in response_span.attributes.keys())
+        # Check for output messages (new JSON array format)
+        has_completion = "gen_ai.output.messages" in response_span.attributes
         assert has_completion, (
             f"Response span {i} should have completion attributes, attributes: {dict(response_span.attributes)}"
         )
