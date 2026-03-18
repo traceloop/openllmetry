@@ -118,7 +118,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.4.15"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-sdk" },
