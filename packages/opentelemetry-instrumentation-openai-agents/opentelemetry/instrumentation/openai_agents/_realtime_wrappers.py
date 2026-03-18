@@ -258,7 +258,7 @@ class RealtimeTracingState:
             kind=SpanKind.CLIENT,
             context=parent_context,
             attributes={
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
             },
         )
@@ -351,8 +351,8 @@ class RealtimeTracingState:
             context=parent_context,
             start_time=start_time,
             attributes={
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                SpanAttributes.LLM_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
+                GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_REQUEST_MODEL: model_name_str,
             },

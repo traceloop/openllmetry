@@ -304,7 +304,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
 
         if hasattr(usage, "total_tokens") and usage.total_tokens is not None:
             otel_span.set_attribute(
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+                SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens
             )
 
     return model_settings
@@ -489,7 +489,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             response_attributes = {
-                SpanAttributes.LLM_REQUEST_TYPE: "response",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "response",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "response",
             }
@@ -508,7 +508,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             response_attributes = {
-                SpanAttributes.LLM_REQUEST_TYPE: "chat",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
             }
@@ -531,7 +531,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             speech_attributes = {
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech",
             }
@@ -558,7 +558,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             transcription_attributes = {
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "transcription",
             }
@@ -585,7 +585,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             speech_group_attributes = {
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech_group",
             }
@@ -636,32 +636,32 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         if hasattr(tool, "function"):
                             function = tool.function
                             otel_span.set_attribute(
-                                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
                                 getattr(function, "name", ""),
                             )
                             otel_span.set_attribute(
-                                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
                                 getattr(function, "description", ""),
                             )
                             if hasattr(function, "parameters"):
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
                                     json.dumps(function.parameters),
                                 )
                         elif hasattr(tool, "name"):
                             # Direct function format
                             otel_span.set_attribute(
-                                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+                                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
                                 tool.name,
                             )
                             if hasattr(tool, "description"):
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
                                     tool.description,
                                 )
                             if hasattr(tool, "parameters"):
                                 otel_span.set_attribute(
-                                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+                                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
                                     json.dumps(tool.parameters),
                                 )
 
