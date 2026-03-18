@@ -4,6 +4,7 @@ The openai-agents SDK's realtime functionality doesn't use its native tracing sy
 so we need to patch the RealtimeSession class directly to add OpenTelemetry tracing.
 """
 
+import json
 import logging
 import time
 from typing import Dict, Any, Optional, List, Tuple
@@ -372,21 +373,14 @@ class RealtimeTracingState:
 
         if should_send_prompts():
             if prompt_content:
+                input_messages = [{"role": prompt_role or "user", "content": prompt_content}]
                 span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", prompt_role or "user"
-                )
-                span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", prompt_content
+                    GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages)
                 )
 
+            output_messages = [{"role": "assistant", "content": completion_content, "finish_reason": "stop"}]
             span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
-            )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", completion_content
-            )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason", "stop"
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages)
             )
 
         span.set_status(Status(StatusCode.OK))

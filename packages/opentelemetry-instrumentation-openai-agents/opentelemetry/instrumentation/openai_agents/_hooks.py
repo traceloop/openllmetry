@@ -437,9 +437,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "function",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True,
             }
 
             if hasattr(span_data, "description") and span_data.description:
