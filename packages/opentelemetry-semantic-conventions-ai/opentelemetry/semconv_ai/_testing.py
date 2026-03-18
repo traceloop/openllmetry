@@ -17,108 +17,142 @@ from opentelemetry.semconv_ai import GenAISystem, Meters, SpanAttributes
 
 
 # ---------------------------------------------------------------------------
-# SpanAttributes — values that must match upstream OTel incubating spec
+# SpanAttributes — renamed constants (LLM_* → GEN_AI_*)
 # ---------------------------------------------------------------------------
 
 
-class TestSpanAttributesOtelAligned:
-    """Attributes whose string values are defined by the upstream OTel spec."""
+class TestSpanAttributesGENAIRenamed:
+    """Verify all renamed LLM_* → GEN_AI_* constants have the correct string values."""
 
-    def test_total_tokens(self):
-        # Renamed from "llm.usage.total_tokens" (project convention) to "gen_ai.usage.total_tokens"
-        assert SpanAttributes.LLM_USAGE_TOTAL_TOKENS == "gen_ai.usage.total_tokens"
+    def test_gen_ai_usage_total_tokens(self):
+        assert SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS == "gen_ai.usage.total_tokens"
 
-    def test_frequency_penalty_matches_otel(self):
-        assert SpanAttributes.LLM_FREQUENCY_PENALTY == otel_gen_ai.GEN_AI_REQUEST_FREQUENCY_PENALTY
-        assert SpanAttributes.LLM_FREQUENCY_PENALTY == "gen_ai.request.frequency_penalty"
+    def test_gen_ai_usage_token_type(self):
+        assert SpanAttributes.GEN_AI_USAGE_TOKEN_TYPE == "gen_ai.usage.token_type"
 
-    def test_presence_penalty_matches_otel(self):
-        assert SpanAttributes.LLM_PRESENCE_PENALTY == otel_gen_ai.GEN_AI_REQUEST_PRESENCE_PENALTY
-        assert SpanAttributes.LLM_PRESENCE_PENALTY == "gen_ai.request.presence_penalty"
+    def test_gen_ai_user(self):
+        assert SpanAttributes.GEN_AI_USER == "gen_ai.user"
 
-    def test_request_type_matches_otel_operation_name(self):
-        # Renamed from "llm.request.type" to the OTel spec attribute "gen_ai.operation.name"
-        assert SpanAttributes.LLM_REQUEST_TYPE == otel_gen_ai.GEN_AI_OPERATION_NAME
-        assert SpanAttributes.LLM_REQUEST_TYPE == "gen_ai.operation.name"
+    def test_gen_ai_headers(self):
+        assert SpanAttributes.GEN_AI_HEADERS == "gen_ai.headers"
 
-    def test_top_k_matches_otel(self):
-        assert SpanAttributes.LLM_TOP_K == otel_gen_ai.GEN_AI_REQUEST_TOP_K
-        assert SpanAttributes.LLM_TOP_K == "gen_ai.request.top_k"
+    def test_gen_ai_is_streaming(self):
+        assert SpanAttributes.GEN_AI_IS_STREAMING == "gen_ai.is_streaming"
 
-    def test_chat_stop_sequences_matches_otel(self):
-        assert SpanAttributes.LLM_CHAT_STOP_SEQUENCES == otel_gen_ai.GEN_AI_REQUEST_STOP_SEQUENCES
-        assert SpanAttributes.LLM_CHAT_STOP_SEQUENCES == "gen_ai.request.stop_sequences"
+    def test_gen_ai_request_repetition_penalty(self):
+        assert SpanAttributes.GEN_AI_REQUEST_REPETITION_PENALTY == "gen_ai.request.repetition_penalty"
 
-    def test_request_functions_maps_to_tool_definitions(self):
-        # The old llm.request.functions.{i}.* flat-attribute prefix is replaced
-        # by a single gen_ai.tool.definitions JSON-array attribute.
-        assert SpanAttributes.LLM_REQUEST_FUNCTIONS == otel_gen_ai.GEN_AI_TOOL_DEFINITIONS
-        assert SpanAttributes.LLM_REQUEST_FUNCTIONS == "gen_ai.tool.definitions"
+    def test_gen_ai_response_finish_reason(self):
+        assert SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON == "gen_ai.response.finish_reason"
 
-    def test_repetition_penalty_gen_ai_namespace(self):
-        # No OTel counterpart — project policy aligns namespace to gen_ai.request.*
-        assert SpanAttributes.LLM_REQUEST_REPETITION_PENALTY == "gen_ai.request.repetition_penalty"
+    def test_gen_ai_response_stop_reason(self):
+        assert SpanAttributes.GEN_AI_RESPONSE_STOP_REASON == "gen_ai.response.stop_reason"
 
-    def test_reasoning_effort_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_REQUEST_REASONING_EFFORT == "gen_ai.request.reasoning_effort"
+    def test_gen_ai_content_completion_chunk(self):
+        assert SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK == "gen_ai.content.completion.chunk"
 
-    def test_reasoning_tokens_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_USAGE_REASONING_TOKENS == "gen_ai.usage.reasoning_tokens"
+    def test_gen_ai_request_reasoning_effort(self):
+        assert SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT == "gen_ai.request.reasoning_effort"
 
-    def test_usage_token_type_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_USAGE_TOKEN_TYPE == "gen_ai.usage.token_type"
+    def test_gen_ai_usage_reasoning_tokens(self):
+        assert SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS == "gen_ai.usage.reasoning_tokens"
 
-    def test_response_finish_reason_gen_ai_namespace(self):
-        # Singular string attribute (per-completion); distinct from the OTel array
-        # attribute gen_ai.response.finish_reasons used at the top-level response span.
-        assert SpanAttributes.LLM_RESPONSE_FINISH_REASON == "gen_ai.response.finish_reason"
+    def test_gen_ai_request_n(self):
+        assert SpanAttributes.GEN_AI_REQUEST_N == "gen_ai.request.n"
 
-    def test_response_stop_reason_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_RESPONSE_STOP_REASON == "gen_ai.response.stop_reason"
+    def test_gen_ai_request_max_completion_tokens(self):
+        assert SpanAttributes.GEN_AI_REQUEST_MAX_COMPLETION_TOKENS == "gen_ai.request.max_completion_tokens"
 
-    def test_content_completion_chunk_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK == "gen_ai.content.completion.chunk"
+    def test_gen_ai_request_structured_output_schema(self):
+        assert SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA == "gen_ai.request.structured_output_schema"
 
-    def test_request_n_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_REQUEST_N == "gen_ai.request.n"
+    def test_gen_ai_request_reasoning_summary(self):
+        assert SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY == "gen_ai.request.reasoning_summary"
 
-    def test_request_max_completion_tokens_gen_ai_namespace(self):
-        assert SpanAttributes.LLM_REQUEST_MAX_COMPLETION_TOKENS == "gen_ai.request.max_completion_tokens"
+    def test_gen_ai_response_reasoning_effort(self):
+        assert SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT == "gen_ai.response.reasoning_effort"
+
+    def test_gen_ai_openai_api_base(self):
+        assert SpanAttributes.GEN_AI_OPENAI_API_BASE == "gen_ai.openai.api_base"
+
+    def test_gen_ai_openai_api_version(self):
+        assert SpanAttributes.GEN_AI_OPENAI_API_VERSION == "gen_ai.openai.api_version"
+
+    def test_gen_ai_openai_api_type(self):
+        assert SpanAttributes.GEN_AI_OPENAI_API_TYPE == "gen_ai.openai.api_type"
+
+
+# ---------------------------------------------------------------------------
+# SpanAttributes — old LLM_* names must be gone
+# ---------------------------------------------------------------------------
+
+
+class TestSpanAttributesOldNamesGone:
+    """Assert that removed LLM_* constants no longer exist on SpanAttributes."""
+
+    @pytest.mark.parametrize(
+        "old_name",
+        [
+            "LLM_SYSTEM",
+            "LLM_REQUEST_MODEL",
+            "LLM_REQUEST_MAX_TOKENS",
+            "LLM_REQUEST_TEMPERATURE",
+            "LLM_REQUEST_TOP_P",
+            "LLM_PROMPTS",
+            "LLM_COMPLETIONS",
+            "LLM_RESPONSE_MODEL",
+            "LLM_USAGE_COMPLETION_TOKENS",
+            "LLM_USAGE_PROMPT_TOKENS",
+            "LLM_USAGE_CACHE_CREATION_INPUT_TOKENS",
+            "LLM_USAGE_CACHE_READ_INPUT_TOKENS",
+            "LLM_TOKEN_TYPE",
+            "LLM_REQUEST_TYPE",
+            "LLM_FREQUENCY_PENALTY",
+            "LLM_PRESENCE_PENALTY",
+            "LLM_CHAT_STOP_SEQUENCES",
+            "LLM_REQUEST_FUNCTIONS",
+            "LLM_TOP_K",
+            "LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT",
+        ],
+    )
+    def test_old_name_absent(self, old_name):
+        assert not hasattr(SpanAttributes, old_name), (
+            f"SpanAttributes.{old_name} should have been removed. "
+            "Consumers should import from opentelemetry.semconv._incubating.attributes.gen_ai_attributes directly."
+        )
+
+
+# ---------------------------------------------------------------------------
+# SpanAttributes — cache attributes
+# ---------------------------------------------------------------------------
 
 
 class TestSpanAttributesCacheDotSeparator:
     """Cache token attributes use dot-separated sub-namespaces (spec update)."""
 
-    def test_cache_read_input_tokens(self):
-        assert SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
-
-    def test_cache_creation_input_tokens(self):
-        assert SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
-
-    def test_gen_ai_usage_cache_read_shorthand(self):
-        """GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS top-level alias matches."""
+    def test_gen_ai_usage_cache_read_input_tokens(self):
         assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
 
-    def test_gen_ai_usage_cache_creation_shorthand(self):
+    def test_gen_ai_usage_cache_creation_input_tokens(self):
         assert SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
 
-    def test_cache_constants_are_consistent(self):
-        """Both aliases for each cache constant point to the same value."""
-        assert SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS == SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS
-        assert SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS == SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS
+
+# ---------------------------------------------------------------------------
+# SpanAttributes — project-policy attributes use gen_ai namespace
+# ---------------------------------------------------------------------------
 
 
 class TestSpanAttributesProjectPolicy:
     """Project-policy attributes (not in upstream OTel spec) use gen_ai namespace."""
 
     def test_is_streaming(self):
-        assert SpanAttributes.LLM_IS_STREAMING == "gen_ai.is_streaming"
+        assert SpanAttributes.GEN_AI_IS_STREAMING == "gen_ai.is_streaming"
 
     def test_user(self):
-        assert SpanAttributes.LLM_USER == "gen_ai.user"
+        assert SpanAttributes.GEN_AI_USER == "gen_ai.user"
 
     def test_headers(self):
-        assert SpanAttributes.LLM_HEADERS == "gen_ai.headers"
+        assert SpanAttributes.GEN_AI_HEADERS == "gen_ai.headers"
 
 
 class TestSpanAttributesOldValuesAbsent:
@@ -164,26 +198,36 @@ class TestSpanAttributesOldValuesAbsent:
 class TestSpanAttributesUnchanged:
     """Constants that should NOT have changed — sanity check."""
 
-    def test_llm_system_unchanged(self):
-        assert SpanAttributes.LLM_SYSTEM == "gen_ai.system"
-
-    def test_request_model_unchanged(self):
-        assert SpanAttributes.LLM_REQUEST_MODEL == "gen_ai.request.model"
-
-    def test_request_max_tokens_unchanged(self):
-        assert SpanAttributes.LLM_REQUEST_MAX_TOKENS == "gen_ai.request.max_tokens"
-
-    def test_request_temperature_unchanged(self):
-        assert SpanAttributes.LLM_REQUEST_TEMPERATURE == "gen_ai.request.temperature"
-
-    def test_usage_input_tokens_unchanged(self):
-        assert SpanAttributes.LLM_USAGE_PROMPT_TOKENS == "gen_ai.usage.prompt_tokens"
-
-    def test_usage_output_tokens_unchanged(self):
-        assert SpanAttributes.LLM_USAGE_COMPLETION_TOKENS == "gen_ai.usage.completion_tokens"
-
     def test_traceloop_span_kind_unchanged(self):
         assert SpanAttributes.TRACELOOP_SPAN_KIND == "traceloop.span.kind"
+
+
+# ---------------------------------------------------------------------------
+# SpanAttributes — Watsonx vendor-specific attributes (renamed to GEN_AI_WATSONX_*)
+# ---------------------------------------------------------------------------
+
+
+class TestSpanAttributesWatsonxKept:
+    """
+    llm.watsonx.* span attributes are intentionally kept. These use llm.watsonx as a
+    vendor-qualified prefix (analogous to db.chroma.*), not a generic llm.* namespace.
+    The Python names have been renamed to GEN_AI_WATSONX_* prefix.
+    """
+
+    def test_watsonx_decoding_method_kept(self):
+        assert SpanAttributes.GEN_AI_WATSONX_DECODING_METHOD == "llm.watsonx.decoding_method"
+
+    def test_watsonx_random_seed_kept(self):
+        assert SpanAttributes.GEN_AI_WATSONX_RANDOM_SEED == "llm.watsonx.random_seed"
+
+    def test_watsonx_max_new_tokens_kept(self):
+        assert SpanAttributes.GEN_AI_WATSONX_MAX_NEW_TOKENS == "llm.watsonx.max_new_tokens"
+
+    def test_watsonx_min_new_tokens_kept(self):
+        assert SpanAttributes.GEN_AI_WATSONX_MIN_NEW_TOKENS == "llm.watsonx.min_new_tokens"
+
+    def test_watsonx_repetition_penalty_kept(self):
+        assert SpanAttributes.GEN_AI_WATSONX_REPETITION_PENALTY == "llm.watsonx.repetition_penalty"
 
 
 # ---------------------------------------------------------------------------
@@ -340,25 +384,3 @@ class TestMetersVendorNamespacesKept:
         assert Meters.LLM_WATSONX_COMPLETIONS_EXCEPTIONS == "llm.watsonx.completions.exceptions"
         assert Meters.LLM_WATSONX_COMPLETIONS_RESPONSES == "llm.watsonx.completions.responses"
         assert Meters.LLM_WATSONX_COMPLETIONS_TOKENS == "llm.watsonx.completions.tokens"
-
-
-class TestSpanAttributesWatsonxKept:
-    """
-    llm.watsonx.* span attributes are intentionally kept. These use llm.watsonx as a
-    vendor-qualified prefix (analogous to db.chroma.*), not a generic llm.* namespace.
-    """
-
-    def test_watsonx_decoding_method_kept(self):
-        assert SpanAttributes.LLM_DECODING_METHOD == "llm.watsonx.decoding_method"
-
-    def test_watsonx_random_seed_kept(self):
-        assert SpanAttributes.LLM_RANDOM_SEED == "llm.watsonx.random_seed"
-
-    def test_watsonx_max_new_tokens_kept(self):
-        assert SpanAttributes.LLM_MAX_NEW_TOKENS == "llm.watsonx.max_new_tokens"
-
-    def test_watsonx_min_new_tokens_kept(self):
-        assert SpanAttributes.LLM_MIN_NEW_TOKENS == "llm.watsonx.min_new_tokens"
-
-    def test_watsonx_repetition_penalty_kept(self):
-        assert SpanAttributes.LLM_REPETITION_PENALTY == "llm.watsonx.repetition_penalty"
