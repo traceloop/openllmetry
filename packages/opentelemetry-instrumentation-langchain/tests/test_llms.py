@@ -458,21 +458,10 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
         == "tell me a short joke"
     )
     assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"]
-        == "Joke"
-    )
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.description"]
-        == "Joke to tell user."
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"
-            ]
-        )
-    ) == {
+    tool_defs = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "Joke"
+    assert tool_defs[0]["description"] == "Joke to tell user."
+    assert tool_defs[0]["parameters"] == {
         "type": "object",
         "properties": {
             "setup": {"description": "question to set up a joke", "type": "string"},

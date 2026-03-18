@@ -191,17 +191,9 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
-        "properties": {
-            "location": {"type": "string"},
-        },
-        "required": ["location"],
-        "type": "object",
-    }
-
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -479,17 +471,17 @@ def test_tool_calls_anthropic_text_block(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
         "required": ["location"],
         "type": "object",
     }
-
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -696,17 +688,17 @@ def test_tool_calls_anthropic_text_block_and_history(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
         "required": ["location"],
         "type": "object",
     }
-
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -1044,17 +1036,17 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
         "required": ["location"],
         "type": "object",
     }
-
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
