@@ -159,7 +159,6 @@ def test_tool_definitions_attribute():
     assert "input_schema" in defs[0]
 
     # Old attribute must NOT be set
-    from opentelemetry.semconv_ai import SpanAttributes
     assert f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name" not in span.attributes
 
 
