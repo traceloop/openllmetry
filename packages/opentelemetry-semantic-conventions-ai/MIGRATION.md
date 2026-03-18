@@ -107,15 +107,6 @@ Some constants kept their Python name but the underlying **string value** change
 > **Dashboard impact**: Update any Grafana queries, alerts, or OTLP processors that filter on
 > these attribute names.
 
-### `Meters.LLM_STREAMING_TIME_TO_GENERATE` value
-
-`SpanAttributes.LLM_STREAMING_TIME_TO_GENERATE` has been **removed**. The same name exists in
-`Meters` but its string value also changed.
-
-| Class | Old string value | New string value |
-|---|---|---|
-| `Meters.LLM_STREAMING_TIME_TO_GENERATE` | `llm.chat_completions.streaming_time_to_generate` | `gen_ai.client.chat_completions.streaming_time_to_generate` |
-
 ### `GenAISystem` values
 
 All `GenAISystem` enum values now use the OTel spec canonical form (lowercase / dot-separated).
