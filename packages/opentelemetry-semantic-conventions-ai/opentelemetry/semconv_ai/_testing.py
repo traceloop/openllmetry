@@ -176,6 +176,7 @@ class TestSpanAttributesOldValuesAbsent:
             "llm.content.completion.chunk",
             "llm.request.reasoning_effort",
             "llm.usage.reasoning_tokens",
+            "llm.chat_completions.streaming_time_to_generate",
             "gen_ai.usage.cache_read_input_tokens",    # underscore variant (pre-migration)
             "gen_ai.usage.cache_creation_input_tokens",  # underscore variant (pre-migration)
         ],
