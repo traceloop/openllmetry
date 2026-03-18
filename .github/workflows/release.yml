@@ -6,6 +6,8 @@ on:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     outputs:
       new_version: ${{ steps.cz.outputs.version }}
@@ -48,7 +50,7 @@ jobs:
           body_path: "body.md"
           tag_name: ${{ env.REVISION }}
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Version
         run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
