@@ -97,23 +97,19 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
 
     tools = kwargs.get("invocation_params", {}).get("tools", [])
-    for i, tool in enumerate(tools):
-        tool_function = tool.get("function", tool)
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
-            tool_function.get("name"),
-        )
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
-            tool_function.get("description"),
-        )
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
-            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
-        )
+    if tools:
+        tool_defs = []
+        for tool in tools:
+            tool_function = tool.get("function", tool)
+            tool_def = {
+                "name": tool_function.get("name"),
+                "description": tool_function.get("description"),
+            }
+            params = tool_function.get("parameters") or tool.get("input_schema")
+            if params is not None:
+                tool_def["parameters"] = params
+            tool_defs.append(tool_def)
+        span.set_attribute(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs))
 
 
 def set_llm_request(
@@ -148,20 +144,19 @@ def set_chat_request(
 ) -> None:
     set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
+    functions = kwargs.get("invocation_params", {}).get("functions", [])
+    if functions:
+        tool_defs = [
+            {
+                "name": f.get("name"),
+                "description": f.get("description"),
+                "parameters": f.get("parameters"),
+            }
+            for f in functions
+        ]
+        span.set_attribute(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs))
+
     if should_send_prompts():
-        for i, function in enumerate(
-            kwargs.get("invocation_params", {}).get("functions", [])
-        ):
-            prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
-
-            _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-            _set_span_attribute(
-                span, f"{prefix}.description", function.get("description")
-            )
-            _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-            )
-
         i = 0
         for message in messages:
             for msg in message:

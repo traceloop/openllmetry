@@ -453,9 +453,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
         _set_span_attribute(span, GenAIAttributes.GEN_AI_OPERATION_NAME, request_type.value)
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
-        )
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
