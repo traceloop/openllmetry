@@ -26,7 +26,7 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"},
             patterns=["azure"],
-            vendor_name="Azure"
+            vendor_name="az.ai.openai"
         ),
         VendorRule(
             exact_matches={"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"},
@@ -36,7 +36,7 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"},
             patterns=["bedrock", "aws"],
-            vendor_name="AWS"
+            vendor_name="aws.bedrock"
         ),
         VendorRule(
             exact_matches={"ChatAnthropic", "AnthropicLLM"},
@@ -49,12 +49,12 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"
             },
             patterns=["vertex", "google", "palm", "gemini"],
-            vendor_name="Google"
+            vendor_name="google"
         ),
         VendorRule(
             exact_matches={"ChatCohere", "CohereEmbeddings", "Cohere"},
             patterns=["cohere"],
-            vendor_name="Cohere"
+            vendor_name="cohere"
         ),
         VendorRule(
             exact_matches={
@@ -62,37 +62,37 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "HuggingFaceEmbeddings", "ChatHuggingFace"
             },
             patterns=["huggingface"],
-            vendor_name="HuggingFace"
+            vendor_name="hugging_face"
         ),
         VendorRule(
             exact_matches={"ChatOllama", "OllamaEmbeddings", "Ollama"},
             patterns=["ollama"],
-            vendor_name="Ollama"
+            vendor_name="ollama"
         ),
         VendorRule(
             exact_matches={"Together", "ChatTogether"},
             patterns=["together"],
-            vendor_name="Together"
+            vendor_name="together_ai"
         ),
         VendorRule(
             exact_matches={"Replicate", "ChatReplicate"},
             patterns=["replicate"],
-            vendor_name="Replicate"
+            vendor_name="replicate"
         ),
         VendorRule(
             exact_matches={"ChatFireworks", "Fireworks"},
             patterns=["fireworks"],
-            vendor_name="Fireworks"
+            vendor_name="fireworks"
         ),
         VendorRule(
             exact_matches={"ChatGroq"},
             patterns=["groq"],
-            vendor_name="Groq"
+            vendor_name="groq"
         ),
         VendorRule(
             exact_matches={"ChatMistralAI", "MistralAI"},
             patterns=["mistral"],
-            vendor_name="MistralAI"
+            vendor_name="mistral_ai"
         ),
     ]
 
