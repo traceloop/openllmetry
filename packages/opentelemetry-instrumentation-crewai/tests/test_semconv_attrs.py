@@ -140,9 +140,13 @@ class TestProcessLlmPenalties:
         assert "gen_ai.request.presence_penalty" not in attrs
 
     def test_semconv_constants_are_migrated(self):
-        """Guard: the semconv constants themselves must point to gen_ai.* strings."""
-        assert SpanAttributes.LLM_FREQUENCY_PENALTY == "gen_ai.request.frequency_penalty"
-        assert SpanAttributes.LLM_PRESENCE_PENALTY == "gen_ai.request.presence_penalty"
+        """Guard: the upstream constants must have the expected gen_ai.* strings."""
+        from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+            GEN_AI_REQUEST_FREQUENCY_PENALTY,
+            GEN_AI_REQUEST_PRESENCE_PENALTY,
+        )
+        assert GEN_AI_REQUEST_FREQUENCY_PENALTY == "gen_ai.request.frequency_penalty"
+        assert GEN_AI_REQUEST_PRESENCE_PENALTY == "gen_ai.request.presence_penalty"
 
 
 # ---------------------------------------------------------------------------
