@@ -1,5 +1,6 @@
 """Tests for realtime session instrumentation via wrapper patching."""
 
+import json
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -199,10 +200,12 @@ class TestRealtimeTracingState:
         assert len(llm_spans) == 1
 
         llm_span = llm_spans[0]
-        assert llm_span.attributes.get("gen_ai.prompt.0.role") == "user"
-        assert llm_span.attributes.get("gen_ai.prompt.0.content") == "What is the weather?"
-        assert llm_span.attributes.get("gen_ai.completion.0.role") == "assistant"
-        assert llm_span.attributes.get("gen_ai.completion.0.content") == "The weather is sunny."
+        input_msgs = json.loads(llm_span.attributes.get("gen_ai.input.messages"))
+        assert input_msgs[0]["role"] == "user"
+        assert input_msgs[0]["content"] == "What is the weather?"
+        output_msgs = json.loads(llm_span.attributes.get("gen_ai.output.messages"))
+        assert output_msgs[0]["role"] == "assistant"
+        assert output_msgs[0]["content"] == "The weather is sunny."
 
     def test_multiple_llm_spans(self, tracer, tracer_provider):
         """Test that multiple prompt/completion pairs create multiple LLM spans."""
@@ -229,12 +232,12 @@ class TestRealtimeTracingState:
         assert len(llm_spans) == 2
 
         # First span should have "Hello" and "Hi there!"
-        assert llm_spans[0].attributes.get("gen_ai.prompt.0.content") == "Hello"
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+        assert json.loads(llm_spans[0].attributes.get("gen_ai.input.messages"))[0]["content"] == "Hello"
+        assert json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))[0]["content"] == "Hi there!"
 
         # Second span should have "What is the weather?" and "It's sunny."
-        assert llm_spans[1].attributes.get("gen_ai.prompt.0.content") == "What is the weather?"
-        assert llm_spans[1].attributes.get("gen_ai.completion.0.content") == "It's sunny."
+        assert json.loads(llm_spans[1].attributes.get("gen_ai.input.messages"))[0]["content"] == "What is the weather?"
+        assert json.loads(llm_spans[1].attributes.get("gen_ai.output.messages"))[0]["content"] == "It's sunny."
 
     def test_cleanup_ends_all_spans(self, tracer, tracer_provider):
         """Test that cleanup ends all remaining spans."""
@@ -584,7 +587,7 @@ class TestTracedPutEventHandlers:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+        assert json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))[0]["content"] == "Hi there!"
 
     def test_response_done_dict_captures_usage_and_completion(self, tracer, tracer_provider):
         """Test that response.done with dict data captures usage and completions."""
@@ -646,7 +649,7 @@ class TestTracedPutEventHandlers:
         llm_span = llm_spans[0]
         assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 42
         assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 18
-        assert llm_span.attributes.get("gen_ai.completion.0.content") == "It is sunny today."
+        assert json.loads(llm_span.attributes.get("gen_ai.output.messages"))[0]["content"] == "It is sunny today."
 
     def test_response_done_without_usage_still_captures_completion(self, tracer, tracer_provider):
         """Test that completions are captured even when usage is absent from response.done."""
@@ -694,5 +697,5 @@ class TestTracedPutEventHandlers:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Why did the chicken cross the road?"
+        assert json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))[0]["content"] == "Why did the chicken cross the road?"
         assert llm_spans[0].attributes.get("gen_ai.usage.input_tokens") is None
