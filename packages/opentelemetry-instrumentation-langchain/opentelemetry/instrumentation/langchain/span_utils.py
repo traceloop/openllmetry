@@ -101,17 +101,17 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         tool_function = tool.get("function", tool)
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
             tool_function.get("name"),
         )
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
             tool_function.get("description"),
         )
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+            f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
             json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
         )
 
@@ -152,7 +152,7 @@ def set_chat_request(
         for i, function in enumerate(
             kwargs.get("invocation_params", {}).get("functions", [])
         ):
-            prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+            prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
 
             _set_span_attribute(span, f"{prefix}.name", function.get("name"))
             _set_span_attribute(
@@ -348,12 +348,12 @@ def set_chat_response_usage(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             total_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
         if record_token_usage:

@@ -452,7 +452,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         )
 
         _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_OPERATION_NAME, request_type.value)
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
         )
@@ -732,7 +732,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
+                span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens
             )
 
             # Record token usage metrics
