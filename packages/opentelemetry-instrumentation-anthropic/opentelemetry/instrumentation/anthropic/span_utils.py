@@ -170,7 +170,7 @@ async def aset_input_attributes(span, kwargs):
                 if schema:
                     set_span_attribute(
                         span,
-                        "gen_ai.request.structured_output_schema",
+                        SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                         json.dumps(schema),
                     )
 
