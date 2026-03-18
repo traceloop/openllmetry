@@ -624,16 +624,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     model_settings = _extract_response_attributes(otel_span, response, trace_content)
                     self._last_model_settings = model_settings
 
-            # Legacy fallback for other span types
-            elif span_data:
-                input_data = getattr(span_data, "input", [])
-                _extract_prompt_attributes(otel_span, input_data, trace_content)
-
-                response = getattr(span_data, "response", None)
-                if response:
-                    model_settings = _extract_response_attributes(otel_span, response, trace_content)
-                    self._last_model_settings = model_settings
-
             elif (
                 _has_realtime_spans
                 and SpeechSpanData
@@ -686,33 +676,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
                         json.dumps([{"role": "user", "content": input_text}]),
                     )
-
-            elif span_data and type(span_data).__name__ == "AgentSpanData":
-                # For agent spans, add the model settings we stored from the response span
-                if hasattr(self, "_last_model_settings") and self._last_model_settings:
-                    for key, value in self._last_model_settings.items():
-                        if key == "temperature":
-                            otel_span.set_attribute(
-                                GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, value
-                            )
-                        elif key == "max_tokens":
-                            otel_span.set_attribute(
-                                GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, value
-                            )
-                        elif key == "top_p":
-                            otel_span.set_attribute(
-                                GenAIAttributes.GEN_AI_REQUEST_TOP_P, value
-                            )
-                        elif key == "model":
-                            otel_span.set_attribute(
-                                GenAIAttributes.GEN_AI_REQUEST_MODEL, value
-                            )
-                        elif key == "frequency_penalty":
-                            otel_span.set_attribute(
-                                "openai.agent.model.frequency_penalty", value
-                            )
-                        # Note: prompt_attributes, completion_attributes, and usage tokens are now
-                        # on response spans only
 
             if hasattr(span, "error") and span.error:
                 otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
