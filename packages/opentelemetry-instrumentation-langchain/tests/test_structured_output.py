@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 import pytest
@@ -32,7 +33,8 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
 
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == query_text
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == query_text
 
     logs = log_exporter.get_finished_logs()
     assert (

@@ -127,7 +127,8 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"]
 
     logs = log_exporter.get_finished_logs()
     assert (

@@ -41,7 +41,7 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"ChatAnthropic", "AnthropicLLM"},
             patterns=["anthropic"],
-            vendor_name="Anthropic"
+            vendor_name="anthropic"
         ),
         VendorRule(
             exact_matches={

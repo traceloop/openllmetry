@@ -150,14 +150,10 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "HuggingFace"
-    assert (
-        hugging_face_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "System: You are a helpful assistant\nHuman: tell me a short joke"
-    )
-    assert (
-        hugging_face_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == response
-    )
+    input_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "System: You are a helpful assistant\nHuman: tell me a short joke"
+    output_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["content"] == response
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (
@@ -286,13 +282,11 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
     assert openai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]) == prompt
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "You are a helpful assistant"
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[1]["content"] == prompt
+    assert input_messages[1]["role"] == "user"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
@@ -448,16 +442,11 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are helpful assistant"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "You are helpful assistant"
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[1]["content"] == "tell me a short joke"
+    assert input_messages[1]["role"] == "user"
     tool_defs = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "Joke"
     assert tool_defs[0]["description"] == "Joke to tell user."
@@ -649,20 +638,13 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
 
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "Anthropic"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "anthropic"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    )
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "You are a helpful assistant"
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[1]["content"] == "tell me a short joke"
+    assert input_messages[1]["role"] == "user"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
@@ -838,16 +820,11 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
-    assert (
-        (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (
-        (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == "You are a helpful assistant"
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[1]["content"] == "tell me a short joke"
+    assert input_messages[1]["role"] == "user"
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
     assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 43
