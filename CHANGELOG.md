@@ -1,3 +1,9 @@
+## v0.53.3 (2026-03-19)
+
+### Fix
+
+- **langchain**: release and use semconv 0.4.16 version (#3829)
+
 ## v0.53.2 (2026-03-18)
 
 ### Fix
