@@ -15,6 +15,14 @@ from opentelemetry.instrumentation.together.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.together.async_wrappers import (
+    WRAPPED_AMETHODS,
+    _awrap,
+)
+from opentelemetry.instrumentation.together.streaming_safety import (
+    build_async_streaming_response,
+    build_streaming_response,
+)
 from opentelemetry.instrumentation.together.span_utils import (
     set_completion_attributes,
     set_model_completion_attributes,
@@ -55,8 +63,6 @@ WRAPPED_METHODS = [
         "span_name": "together.completion",
     },
 ]
-
-
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -70,9 +76,15 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
-    if method_name == "chat.completions.ChatCompletions.create":
+    if method_name in (
+        "chat.completions.ChatCompletions.create",
+        "AsyncChatCompletions.create",
+    ):
         return LLMRequestTypeValues.CHAT
-    elif method_name == "completions.Completions.create":
+    elif method_name in (
+        "completions.Completions.create",
+        "AsyncCompletions.create",
+    ):
         return LLMRequestTypeValues.COMPLETION
     else:
         return LLMRequestTypeValues.UNKNOWN
@@ -129,6 +141,16 @@ def _wrap(
 
     response = wrapped(*args, **kwargs)
 
+    if kwargs.get("stream") and response:
+        return build_streaming_response(
+            response,
+            span=span,
+            event_logger=event_logger,
+            llm_request_type=llm_request_type,
+            span_name=name,
+            handle_response=_handle_response,
+        )
+
     if response:
         _apply_completion_safety(span, response, llm_request_type, name)
         _handle_response(span, event_logger, llm_request_type, response)
@@ -169,9 +191,23 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                 f"{wrap_object}.{wrap_method}",
                 _wrap(tracer, event_logger, wrapped_method),
             )
+        for wrapped_method in WRAPPED_AMETHODS:
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+            wrap_function_wrapper(
+                "together",
+                f"{wrap_object}.{wrap_method}",
+                _awrap(tracer, event_logger, wrapped_method),
+            )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
+            wrap_object = wrapped_method.get("object")
+            unwrap(
+                f"together.{wrap_object}",
+                wrapped_method.get("method"),
+            )
+        for wrapped_method in WRAPPED_AMETHODS:
             wrap_object = wrapped_method.get("object")
             unwrap(
                 f"together.{wrap_object}",

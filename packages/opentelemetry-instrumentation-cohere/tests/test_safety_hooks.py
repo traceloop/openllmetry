@@ -7,6 +7,10 @@ from opentelemetry.instrumentation.cohere import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.cohere.streaming import (
+    aprocess_chat_v1_streaming_response,
+    process_chat_v1_streaming_response,
+)
 from opentelemetry.instrumentation.fortifyroot import (
     SafetyFinding,
     SafetyLocation,
@@ -22,7 +26,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -144,3 +148,90 @@ def test_completion_safety_masks_chat_message_content():
     assert response.message.content == "[SECRET.output]"
     spans = exporter.get_finished_spans()
     assert len(spans[0].events) == 1
+
+
+def test_chat_v1_stream_end_response_is_masked_before_yield():
+    _, tracer = _test_span()
+    register_completion_safety_handler(
+        lambda context: SafetyResult(
+            text="[SECRET.output]",
+            overall_action="MASK",
+            findings=[
+                SafetyFinding(
+                    category="SECRET",
+                    severity="HIGH",
+                    action="MASK",
+                    rule_name="SECRET.output",
+                    start=0,
+                    end=len(context.text),
+                )
+            ],
+        )
+        if context.location == SafetyLocation.COMPLETION and context.text == "secret"
+        else None
+    )
+
+    items = [
+        SimpleNamespace(event_type="text-generation", text="secret"),
+        SimpleNamespace(
+            event_type="stream-end",
+            response={"text": "secret", "message": {"content": "secret"}},
+        ),
+    ]
+
+    span = tracer.start_span("cohere.chat")
+    streamed = list(
+        process_chat_v1_streaming_response(
+            span,
+            None,
+            LLMRequestTypeValues.CHAT,
+            iter(items),
+        )
+    )
+
+    assert streamed[-1].response["text"] == "[SECRET.output]"
+    assert streamed[-1].response["message"]["content"] == "[SECRET.output]"
+
+
+@pytest.mark.asyncio
+async def test_async_chat_v1_stream_end_response_is_masked_before_yield():
+    _, tracer = _test_span()
+    register_completion_safety_handler(
+        lambda context: SafetyResult(
+            text="[SECRET.output]",
+            overall_action="MASK",
+            findings=[
+                SafetyFinding(
+                    category="SECRET",
+                    severity="HIGH",
+                    action="MASK",
+                    rule_name="SECRET.output",
+                    start=0,
+                    end=len(context.text),
+                )
+            ],
+        )
+        if context.location == SafetyLocation.COMPLETION and context.text == "secret"
+        else None
+    )
+
+    async def _stream():
+        yield SimpleNamespace(event_type="text-generation", text="secret")
+        yield SimpleNamespace(
+            event_type="stream-end",
+            response={"text": "secret", "message": {"content": "secret"}},
+        )
+
+    span = tracer.start_span("cohere.chat")
+    streamed = [
+        item
+        async for item in aprocess_chat_v1_streaming_response(
+            span,
+            None,
+            LLMRequestTypeValues.CHAT,
+            _stream(),
+        )
+    ]
+
+    assert streamed[-1].response["text"] == "[SECRET.output]"
+    assert streamed[-1].response["message"]["content"] == "[SECRET.output]"

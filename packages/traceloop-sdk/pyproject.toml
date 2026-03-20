@@ -109,7 +109,7 @@ show_missing = true
 
 [tool.pytest.ini_options]
 markers = [
-  "safety: safety-focused tests",
+  "fr: FortifyRoot-owned regression tests",
 ]
 
 [tool.mypy]

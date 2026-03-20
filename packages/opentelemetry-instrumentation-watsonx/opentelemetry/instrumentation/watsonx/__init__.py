@@ -22,6 +22,9 @@ from opentelemetry.instrumentation.watsonx.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.watsonx.streaming_runtime import (
+    build_and_set_stream_response_delegate as _fr_build_and_set_stream_response,
+)
 from opentelemetry.instrumentation.watsonx.utils import (
     dont_throw,
     should_emit_events,
@@ -448,6 +451,9 @@ def _build_and_set_stream_response(
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+_build_and_set_stream_response = _fr_build_and_set_stream_response
 
 
 def _metric_shared_attributes(response_model: str, is_streaming: bool = False):

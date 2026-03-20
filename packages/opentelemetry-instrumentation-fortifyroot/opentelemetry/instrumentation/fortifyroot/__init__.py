@@ -16,6 +16,16 @@ from opentelemetry.instrumentation.fortifyroot.safety import (
     run_prompt_safety,
     set_object_value,
 )
+from opentelemetry.instrumentation.fortifyroot.streaming import (
+    BoundCompletionSafetyStream,
+    CompletionSafetyStreamFactory,
+    CompletionSafetyStreamSession,
+    SafetyStreamContext,
+    clear_completion_safety_stream_factory,
+    create_completion_safety_stream,
+    get_completion_safety_stream_factory,
+    register_completion_safety_stream_factory,
+)
 
 __all__ = [
     "SAFETY_EVENT_NAME",
@@ -25,13 +35,21 @@ __all__ = [
     "SafetyLocation",
     "SafetyResult",
     "clear_safety_handlers",
+    "clear_completion_safety_stream_factory",
     "clone_value",
+    "CompletionSafetyStreamFactory",
+    "CompletionSafetyStreamSession",
+    "BoundCompletionSafetyStream",
+    "create_completion_safety_stream",
     "get_completion_safety_handler",
+    "get_completion_safety_stream_factory",
     "get_object_value",
     "get_prompt_safety_handler",
     "register_completion_safety_handler",
+    "register_completion_safety_stream_factory",
     "register_prompt_safety_handler",
     "run_completion_safety",
     "run_prompt_safety",
+    "SafetyStreamContext",
     "set_object_value",
 ]

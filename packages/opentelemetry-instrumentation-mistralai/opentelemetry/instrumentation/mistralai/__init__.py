@@ -17,6 +17,9 @@ from opentelemetry.instrumentation.mistralai.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.mistralai.streaming_safety import (
+    MistralAIStreamingSafety,
+)
 from opentelemetry.instrumentation.mistralai.utils import (
     dont_throw,
     should_emit_events,
@@ -211,7 +214,9 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
         usage=UsageInfo(prompt_tokens=0, total_tokens=0, completion_tokens=0),
     )
 
+    streaming_safety = MistralAIStreamingSafety(span, "mistralai.chat")
     for res in response:
+        res = streaming_safety.process_chunk(res)
         yield res
 
         # Handle new CompletionEvent structure with .data attribute
@@ -255,7 +260,9 @@ async def _aaccumulate_streaming_response(
         usage=UsageInfo(prompt_tokens=0, total_tokens=0, completion_tokens=0),
     )
 
+    streaming_safety = MistralAIStreamingSafety(span, "mistralai.chat")
     async for res in response:
+        res = streaming_safety.process_chunk(res)
         yield res
 
         # Handle new CompletionEvent structure with .data attribute

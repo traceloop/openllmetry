@@ -31,6 +31,10 @@ from opentelemetry.instrumentation.writer.safety import (
 from opentelemetry.instrumentation.writer.span_utils import (
     set_input_attributes, set_model_input_attributes,
     set_model_response_attributes, set_response_attributes)
+from opentelemetry.instrumentation.writer.streaming_runtime import (
+    create_async_stream_processor_delegate as _fr_create_async_stream_processor,
+    create_stream_processor_delegate as _fr_create_stream_processor,
+)
 from opentelemetry.instrumentation.writer.utils import (
     enhance_list_size, error_metrics_attributes,
     initialize_accumulated_response, initialize_choice, initialize_tool_call,
@@ -281,6 +285,10 @@ async def _create_async_stream_processor(
             span.set_status(Status(StatusCode.OK))
 
         span.end()
+
+
+_create_stream_processor = _fr_create_stream_processor
+_create_async_stream_processor = _fr_create_async_stream_processor
 
 
 def _handle_input(span, kwargs, event_logger):

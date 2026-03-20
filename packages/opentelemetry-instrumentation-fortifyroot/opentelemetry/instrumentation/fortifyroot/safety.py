@@ -76,8 +76,13 @@ def register_completion_safety_handler(handler: CompletionSafetyHandler | None) 
 
 
 def clear_safety_handlers() -> None:
+    from opentelemetry.instrumentation.fortifyroot.streaming import (
+        clear_completion_safety_stream_factory,
+    )
+
     register_prompt_safety_handler(None)
     register_completion_safety_handler(None)
+    clear_completion_safety_stream_factory()
 
 
 def get_prompt_safety_handler() -> PromptSafetyHandler | None:

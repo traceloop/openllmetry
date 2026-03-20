@@ -1,6 +1,9 @@
 from opentelemetry.instrumentation.openai.shared import _set_span_attribute
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
+from opentelemetry.instrumentation.openai.v1.assistant_safety import (
+    AssistantStreamingSafety,
+)
 from opentelemetry.instrumentation.openai.utils import should_emit_events
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
@@ -21,6 +24,7 @@ class EventHandleWrapper(AssistantEventHandler):
         super().__init__()
         self._original_handler = original_handler
         self._span = span
+        self._streaming_safety = AssistantStreamingSafety(span)
 
     @override
     def on_end(self):
@@ -89,6 +93,9 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_message_done(self, message):
+        self._streaming_safety.apply_message_safety(
+            message, text_index=self._current_text_index
+        )
         _set_span_attribute(
             self._span,
             f"gen_ai.response.{self._current_text_index}.id",
@@ -112,10 +119,14 @@ class EventHandleWrapper(AssistantEventHandler):
 
     @override
     def on_text_delta(self, delta, snapshot):
+        self._streaming_safety.process_text_delta(
+            delta, snapshot, text_index=self._current_text_index
+        )
         self._original_handler.on_text_delta(delta, snapshot)
 
     @override
     def on_text_done(self, text):
+        self._streaming_safety.flush_text(text, text_index=self._current_text_index)
         self._original_handler.on_text_done(text)
         if not should_emit_events():
             _set_span_attribute(

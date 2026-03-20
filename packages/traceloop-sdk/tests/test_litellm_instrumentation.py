@@ -2,8 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.fr
 
-@pytest.mark.safety
+
 def test_init_litellm_instrumentor_instruments_when_package_is_present():
     from traceloop.sdk.tracing.tracing import init_litellm_instrumentor
 
@@ -17,7 +18,6 @@ def test_init_litellm_instrumentor_instruments_when_package_is_present():
         instrumentor.instrument.assert_called_once_with()
 
 
-@pytest.mark.safety
 def test_init_litellm_instrumentor_returns_false_when_package_is_missing():
     from traceloop.sdk.tracing.tracing import init_litellm_instrumentor
 
@@ -25,7 +25,6 @@ def test_init_litellm_instrumentor_returns_false_when_package_is_missing():
         assert init_litellm_instrumentor() is False
 
 
-@pytest.mark.safety
 def test_init_instrumentations_dispatches_litellm():
     from traceloop.sdk.instruments import Instruments
     from traceloop.sdk.tracing.tracing import init_instrumentations

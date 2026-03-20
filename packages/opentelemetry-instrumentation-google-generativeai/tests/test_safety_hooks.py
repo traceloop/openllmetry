@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyResult,
     clear_safety_handlers,
     register_completion_safety_handler,
+    register_completion_safety_stream_factory,
     register_prompt_safety_handler,
 )
 from opentelemetry.instrumentation.google_generativeai import (
@@ -15,13 +16,18 @@ from opentelemetry.instrumentation.google_generativeai import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.google_generativeai.streaming_safety import (
+    GoogleGenerativeAIStreamingSafety,
+    build_async_streaming_response,
+    build_streaming_response,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -142,3 +148,154 @@ def test_completion_safety_masks_candidate_parts():
     assert response.candidates[0].content.parts[0].text == "[SECRET.gemini]"
     spans = exporter.get_finished_spans()
     assert len(spans[0].events) == 1
+
+
+class _FakeStreamSession:
+    def process_chunk(self, text):
+        return SafetyResult(text="masked", overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text="-tail", overall_action="allow", findings=[])
+
+
+def test_streaming_helper_masks_parts_and_flushes_tail():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    item = SimpleNamespace(
+        text="secret",
+        candidates=[
+            SimpleNamespace(
+                content=SimpleNamespace(parts=[SimpleNamespace(text="secret")])
+            )
+        ],
+    )
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        helper = GoogleGenerativeAIStreamingSafety(span, "gemini.generate_content")
+        helper.process_item(item)
+        helper.flush_pending_item(item)
+
+    assert item.text == "masked-tail"
+    assert item.candidates[0].content.parts[0].text == "masked-tail"
+
+
+def test_streaming_helper_clears_top_level_text_when_holdback_masks_current_parts():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession()
+    )
+    item = SimpleNamespace(
+        text="raw-visible",
+        candidates=[
+            SimpleNamespace(
+                content=SimpleNamespace(parts=[SimpleNamespace(text="secret")])
+            )
+        ],
+    )
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        helper = GoogleGenerativeAIStreamingSafety(span, "gemini.generate_content")
+        helper.process_item(item)
+
+    assert item.text == "masked"
+    assert item.candidates[0].content.parts[0].text == "masked"
+
+
+def test_streaming_helper_flushes_all_pending_parts():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    item = SimpleNamespace(
+        text="secretsecret",
+        candidates=[
+            SimpleNamespace(
+                content=SimpleNamespace(
+                    parts=[
+                        SimpleNamespace(text="secret"),
+                        SimpleNamespace(text="secret"),
+                    ]
+                )
+            )
+        ],
+    )
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        helper = GoogleGenerativeAIStreamingSafety(span, "gemini.generate_content")
+        helper.process_item(item)
+        helper.flush_pending_item(item)
+
+    assert item.candidates[0].content.parts[0].text == "masked-tail"
+    assert item.candidates[0].content.parts[1].text == "masked-tail"
+    assert item.text == "masked-tailmasked-tail"
+
+
+def test_streaming_helper_ignores_items_without_text_parts():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    item = SimpleNamespace(text="raw", candidates=[SimpleNamespace(content=SimpleNamespace(parts=[SimpleNamespace()]))])
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        helper = GoogleGenerativeAIStreamingSafety(span, "gemini.generate_content")
+        assert helper.process_item(item) is item
+        helper.flush_pending_item(SimpleNamespace(candidates=[]))
+
+    assert item.text == "raw"
+
+
+def test_build_streaming_response_flushes_pending_chunk_and_finalizes():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    complete = []
+    chunks = [
+        SimpleNamespace(
+            text="raw-a",
+            candidates=[SimpleNamespace(content=SimpleNamespace(parts=[SimpleNamespace(text="a")]))],
+        ),
+        SimpleNamespace(
+            text="raw-b",
+            candidates=[SimpleNamespace(content=SimpleNamespace(parts=[SimpleNamespace(text="b")]))],
+        ),
+    ]
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        yielded = list(
+            build_streaming_response(
+                iter(chunks),
+                span=span,
+                llm_model="gemini-2.0",
+                finalize_response=lambda full_text, final_chunk, llm_model: complete.append(
+                    (full_text, final_chunk.text, llm_model)
+                ),
+            )
+        )
+
+    assert [item.text for item in yielded] == ["masked", "masked-tail"]
+    assert complete == [("maskedmasked-tail", "masked-tail", "gemini-2.0")]
+
+
+@pytest.mark.asyncio
+async def test_build_async_streaming_response_flushes_pending_chunk_and_finalizes():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    complete = []
+
+    async def _response():
+        yield SimpleNamespace(
+            text="raw-a",
+            candidates=[SimpleNamespace(content=SimpleNamespace(parts=[SimpleNamespace(text="a")]))],
+        )
+
+    with tracer.start_as_current_span("gemini.generate_content") as span:
+        yielded = [
+            item
+            async for item in build_async_streaming_response(
+                _response(),
+                span=span,
+                llm_model="gemini-2.0",
+                finalize_response=lambda full_text, final_chunk, llm_model: complete.append(
+                    (full_text, final_chunk.text, llm_model)
+                ),
+            )
+        ]
+
+    assert [item.text for item in yielded] == ["masked-tail"]
+    assert complete == [("masked-tail", "masked-tail", "gemini-2.0")]

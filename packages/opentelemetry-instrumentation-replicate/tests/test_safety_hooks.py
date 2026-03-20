@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyResult,
     clear_safety_handlers,
     register_completion_safety_handler,
+    register_completion_safety_stream_factory,
     register_prompt_safety_handler,
 )
 from opentelemetry.instrumentation.replicate.safety import (
@@ -15,12 +16,15 @@ from opentelemetry.instrumentation.replicate.safety import (
     _apply_prompt_safety,
     _resolve_masked_text,
 )
+from opentelemetry.instrumentation.replicate.streaming_safety import (
+    ReplicateStreamingSafety,
+)
 from opentelemetry.instrumentation.replicate import _wrap
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -190,3 +194,44 @@ def test_wrapper_masks_plain_string_response_before_attributes_are_written():
     span = exporter.get_finished_spans()[0]
     assert span.attributes["gen_ai.prompt.0.user"] == "[PII.prompt]"
     assert span.attributes["gen_ai.completion.0.content"] == "[MASKED:plain-string]"
+
+
+class _FakeStreamSession:
+    def process_chunk(self, text):
+        return SafetyResult(text="masked", overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text="-tail", overall_action="allow", findings=[])
+
+
+def test_streaming_helper_masks_text_and_flushes_tail():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+
+    with tracer.start_as_current_span("replicate.stream") as span:
+        helper = ReplicateStreamingSafety(span, "replicate.stream")
+        assert helper.process_text("secret") == "masked"
+        assert helper.flush() == "-tail"
+
+
+def test_stream_wrapper_preserves_provider_chunk_count_when_flushing_tail():
+    exporter, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    wrapper = _wrap(tracer, None, {"span_name": "replicate.stream"})
+
+    def _stream(*args, **kwargs):
+        yield "secret"
+        yield "chunk"
+
+    response = list(
+        wrapper(
+            _stream,
+            None,
+            (),
+            {"input": {"prompt": "plain"}},
+        )
+    )
+
+    assert response == ["masked", "masked-tail"]
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1

@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyResult,
     clear_safety_handlers,
     register_completion_safety_handler,
+    register_completion_safety_stream_factory,
     register_prompt_safety_handler,
 )
 from opentelemetry.instrumentation.groq import _awrap
@@ -18,12 +19,15 @@ from opentelemetry.instrumentation.groq.safety import (
     _mask_prompt_content,
     _resolve_masked_text,
 )
+from opentelemetry.instrumentation.groq.streaming_safety import (
+    GroqStreamingSafety,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.semconv_ai import SpanAttributes
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -187,3 +191,59 @@ async def test_async_wrapper_masks_completion_without_metrics_histogram():
     assert response["choices"][0]["message"]["content"] == "[MASKED:secret]"
     span = exporter.get_finished_spans()[0]
     assert span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == "[MASKED:secret]"
+
+
+class _FakeStreamSession:
+    def process_chunk(self, text):
+        return SafetyResult(text="masked", overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text="-tail", overall_action="allow", findings=[])
+
+
+def test_streaming_helper_masks_delta_content_and_flushes_on_finish():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                delta=SimpleNamespace(content="secret"),
+                finish_reason="stop",
+            )
+        ]
+    )
+
+    with tracer.start_as_current_span("groq.chat") as span:
+        helper = GroqStreamingSafety(span, "groq.chat")
+        helper.process_chunk(chunk)
+
+    assert chunk.choices[0].delta.content == "masked-tail"
+
+
+def test_streaming_helper_flushes_tail_when_finish_chunk_has_no_content():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    first_chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                delta=SimpleNamespace(content="secret"),
+                finish_reason=None,
+            )
+        ]
+    )
+    final_chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                delta=SimpleNamespace(),
+                finish_reason="stop",
+            )
+        ]
+    )
+
+    with tracer.start_as_current_span("groq.chat") as span:
+        helper = GroqStreamingSafety(span, "groq.chat")
+        helper.process_chunk(first_chunk)
+        helper.process_chunk(final_chunk)
+
+    assert first_chunk.choices[0].delta.content == "masked"
+    assert final_chunk.choices[0].delta.content == "-tail"

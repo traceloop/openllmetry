@@ -227,6 +227,7 @@ def _instrumented_model_invoke_with_response_stream(
 
         span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
 
+        kwargs = _apply_invoke_prompt_safety(span, kwargs, _BEDROCK_INVOKE_SPAN_NAME)
         response = fn(*args, **kwargs)
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
 
@@ -263,6 +264,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             return fn(*args, **kwargs)
 
         span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+        kwargs = _apply_converse_prompt_safety(span, kwargs, _BEDROCK_CONVERSE_SPAN_NAME)
         response = fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)

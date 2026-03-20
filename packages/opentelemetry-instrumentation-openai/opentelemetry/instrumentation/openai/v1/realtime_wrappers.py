@@ -728,3 +728,29 @@ def realtime_connect_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     model = kwargs.get("model", "gpt-4o-realtime-preview")
     connection_manager = wrapped(*args, **kwargs)
     return RealtimeConnectionManagerWrapper(connection_manager, tracer, model)
+
+
+from opentelemetry.instrumentation.openai.v1.realtime_runtime import (
+    RealtimeConnectionManagerWrapper as _fr_RealtimeConnectionManagerWrapper,
+    RealtimeConnectionWrapper as _fr_RealtimeConnectionWrapper,
+    RealtimeConversationItemWrapper as _fr_RealtimeConversationItemWrapper,
+    RealtimeConversationWrapper as _fr_RealtimeConversationWrapper,
+    RealtimeEventIterator as _fr_RealtimeEventIterator,
+    RealtimeEventProcessor as _fr_RealtimeEventProcessor,
+    RealtimeResponseWrapper as _fr_RealtimeResponseWrapper,
+    RealtimeSessionState as _fr_RealtimeSessionState,
+    RealtimeSessionWrapper as _fr_RealtimeSessionWrapper,
+    realtime_connect_wrapper as _fr_realtime_connect_wrapper,
+)
+
+# Keep the Traceloop surface close to upstream and delegate FR safety behavior.
+RealtimeConnectionManagerWrapper = _fr_RealtimeConnectionManagerWrapper
+RealtimeConnectionWrapper = _fr_RealtimeConnectionWrapper
+RealtimeConversationItemWrapper = _fr_RealtimeConversationItemWrapper
+RealtimeConversationWrapper = _fr_RealtimeConversationWrapper
+RealtimeEventIterator = _fr_RealtimeEventIterator
+RealtimeEventProcessor = _fr_RealtimeEventProcessor
+RealtimeResponseWrapper = _fr_RealtimeResponseWrapper
+RealtimeSessionState = _fr_RealtimeSessionState
+RealtimeSessionWrapper = _fr_RealtimeSessionWrapper
+realtime_connect_wrapper = _fr_realtime_connect_wrapper

@@ -17,7 +17,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def test_run_prompt_safety_emits_one_event_per_finding():

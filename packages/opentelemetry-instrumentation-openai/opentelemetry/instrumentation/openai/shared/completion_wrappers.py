@@ -24,6 +24,9 @@ from opentelemetry.instrumentation.openai.shared.completion_safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.openai.shared.streaming_safety import (
+    OpenAICompletionStreamingSafety,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -193,7 +196,9 @@ def _set_completions(span, choices):
 @dont_throw
 def _build_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": "", "id": ""}
+    streaming_safety = OpenAICompletionStreamingSafety(span, SPAN_NAME)
     for item in response:
+        item = streaming_safety.process_chunk(item)
         yield item
         _accumulate_streaming_response(complete_response, item)
 
@@ -214,7 +219,9 @@ def _build_from_streaming_response(span, request_kwargs, response):
 @dont_throw
 async def _abuild_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": "", "id": ""}
+    streaming_safety = OpenAICompletionStreamingSafety(span, SPAN_NAME)
     async for item in response:
+        item = streaming_safety.process_chunk(item)
         yield item
         _accumulate_streaming_response(complete_response, item)
 

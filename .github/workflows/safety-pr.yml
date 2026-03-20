@@ -1,4 +1,4 @@
-name: Safety PR Tests
+name: FR PR Tests
 
 on:
   pull_request:
@@ -7,12 +7,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: safety-pr-${{ github.event.pull_request.number || github.ref }}
+  group: fr-pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  safety-tests:
-    name: Safety Tests
+  fr-tests:
+    name: FR Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -32,15 +32,15 @@ jobs:
       - name: Install Poetry
         run: python -m pip install --upgrade pip poetry
 
-      - name: Run safety test suite
+      - name: Run FR-marked test suite
         env:
           HAYSTACK_TELEMETRY_ENABLED: "False"
-        run: bash ./scripts/run-tests.sh --safety
+        run: bash ./scripts/run-tests.sh --fr
 
-      - name: Upload safety test reports
+      - name: Upload FR test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: safety-test-reports
+          name: fr-test-reports
           path: reports/test-run/
           if-no-files-found: ignore

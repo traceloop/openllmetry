@@ -18,6 +18,10 @@ from opentelemetry.instrumentation.google_generativeai.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.google_generativeai.streaming_runtime import (
+    build_async_streaming_response_delegate as _fr_build_async_streaming_response,
+    build_streaming_response_delegate as _fr_build_streaming_response,
+)
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
     set_input_attributes_sync,
     set_model_request_attributes,
@@ -128,6 +132,10 @@ async def _abuild_from_streaming_response(
         span, last_chunk if last_chunk else response, llm_model, token_histogram
     )
     span.end()
+
+
+_build_from_streaming_response = _fr_build_streaming_response
+_abuild_from_streaming_response = _fr_build_async_streaming_response
 
 
 @dont_throw

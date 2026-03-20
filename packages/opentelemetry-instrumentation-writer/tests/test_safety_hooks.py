@@ -20,7 +20,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():

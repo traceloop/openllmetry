@@ -26,7 +26,10 @@ from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
     runs_create_wrapper,
     runs_retrieve_wrapper,
 )
-
+from opentelemetry.instrumentation.openai.v1.instrumentation_runtime import (
+    instrument_additional_beta_safety_surfaces,
+    uninstrument_additional_beta_safety_surfaces,
+)
 from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     async_responses_cancel_wrapper,
     async_responses_get_or_create_wrapper,
@@ -256,6 +259,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             "Assistants.create",
             assistants_create_wrapper(tracer),
         )
+        instrument_additional_beta_safety_surfaces(self, tracer)
         self._try_wrap(
             "openai.resources.beta.chat.completions",
             "Completions.parse",
@@ -356,6 +360,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         # Beta APIs may not be available consistently in all versions
         try:
             unwrap("openai.resources.beta.assistants", "Assistants.create")
+            uninstrument_additional_beta_safety_surfaces()
             unwrap("openai.resources.beta.chat.completions", "Completions.parse")
             unwrap("openai.resources.beta.chat.completions", "AsyncCompletions.parse")
             unwrap("openai.resources.beta.threads.runs", "Runs.create")

@@ -13,6 +13,11 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
     ChoiceEvent,
     MessageEvent,
 )
+from opentelemetry.instrumentation.openai.v1.assistant_safety import (
+    apply_assistant_instruction_prompt_safety,
+    apply_assistant_message_prompt_safety,
+    apply_assistant_messages_list_safety,
+)
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -40,6 +45,7 @@ def assistants_create_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
+    kwargs = apply_assistant_instruction_prompt_safety(None, kwargs)
     response = wrapped(*args, **kwargs)
 
     assistants[response.id] = {
@@ -51,10 +57,20 @@ def assistants_create_wrapper(tracer, wrapped, instance, args, kwargs):
 
 
 @_with_tracer_wrapper
+def messages_create_wrapper(tracer, wrapped, instance, args, kwargs):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+        return wrapped(*args, **kwargs)
+
+    args, kwargs = apply_assistant_message_prompt_safety(None, args, kwargs)
+    return wrapped(*args, **kwargs)
+
+
+@_with_tracer_wrapper
 def runs_create_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
+    kwargs = apply_assistant_instruction_prompt_safety(None, kwargs)
     thread_id = kwargs.get("thread_id")
     instructions = kwargs.get("instructions")
 
@@ -117,20 +133,20 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
     id = kwargs.get("thread_id")
 
     response = wrapped(*args, **kwargs)
-
-    response_dict = model_as_dict(response)
     if id not in runs:
+        apply_assistant_messages_list_safety(span=None, response=response)
         return response
 
     run = runs[id]
-    messages = sorted(response_dict["data"], key=lambda x: x["created_at"])
-
     span = tracer.start_span(
         "openai.assistant.run",
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
         start_time=run.get("start_time"),
     )
+    apply_assistant_messages_list_safety(span=span, response=response)
+    response_dict = model_as_dict(response)
+    messages = sorted(response_dict["data"], key=lambda x: x["created_at"])
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
@@ -251,14 +267,14 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
-    assistant_id = kwargs.get("assistant_id")
-    instructions = kwargs.get("instructions")
-
     span = tracer.start_span(
         "openai.assistant.run_stream",
         kind=SpanKind.CLIENT,
         attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
     )
+    kwargs = apply_assistant_instruction_prompt_safety(span, kwargs)
+    assistant_id = kwargs.get("assistant_id")
+    instructions = kwargs.get("instructions")
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):

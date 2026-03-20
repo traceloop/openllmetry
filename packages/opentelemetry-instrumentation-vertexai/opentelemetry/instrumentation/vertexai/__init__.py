@@ -24,6 +24,10 @@ from opentelemetry.instrumentation.vertexai.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.vertexai.streaming_runtime import (
+    build_async_streaming_response_delegate as _fr_build_async_streaming_response,
+    build_streaming_response_delegate as _fr_build_streaming_response,
+)
 from opentelemetry.instrumentation.vertexai.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.vertexai.version import __version__
 from opentelemetry.semconv._incubating.attributes import (
@@ -183,6 +187,10 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
 
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+_build_from_streaming_response = _fr_build_streaming_response
+_abuild_from_streaming_response = _fr_build_async_streaming_response
 
 
 @dont_throw

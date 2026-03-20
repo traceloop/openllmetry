@@ -184,3 +184,17 @@ def _accumulate_stream_item(item, current_content_item, current_tool_call_item, 
     elif item_dict.get("type") == "message-end":
         final_response["usage"] = (item_dict.get("delta") or {}).get("usage") or {}
         final_response["finish_reason"] = (item_dict.get("delta") or {}).get("finish_reason")
+
+
+from opentelemetry.instrumentation.cohere.streaming_runtime import (
+    aprocess_chat_v1_streaming_response as _fr_aprocess_chat_v1_streaming_response,
+    aprocess_chat_v2_streaming_response as _fr_aprocess_chat_v2_streaming_response,
+    process_chat_v1_streaming_response as _fr_process_chat_v1_streaming_response,
+    process_chat_v2_streaming_response as _fr_process_chat_v2_streaming_response,
+)
+
+# Keep the Traceloop file near-upstream and delegate FR safety behavior.
+aprocess_chat_v1_streaming_response = _fr_aprocess_chat_v1_streaming_response
+aprocess_chat_v2_streaming_response = _fr_aprocess_chat_v2_streaming_response
+process_chat_v1_streaming_response = _fr_process_chat_v1_streaming_response
+process_chat_v2_streaming_response = _fr_process_chat_v2_streaming_response

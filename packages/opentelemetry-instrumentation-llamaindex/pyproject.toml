@@ -90,4 +90,6 @@ constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
 opentelemetry-instrumentation-fortifyroot = { path = "../opentelemetry-instrumentation-fortifyroot", editable = true }
 
 [tool.pytest.ini_options]
-markers = ["safety: tests for FortifyRoot safety masking hooks"]
+markers = [
+  "fr: FortifyRoot-owned regression tests",
+]

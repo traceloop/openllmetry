@@ -13,6 +13,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyResult,
     clear_safety_handlers,
     register_completion_safety_handler,
+    register_completion_safety_stream_factory,
     register_prompt_safety_handler,
 )
 from opentelemetry.instrumentation.litellm import (
@@ -29,6 +30,14 @@ from opentelemetry.instrumentation.litellm.safety import (
     _get_messages,
     _resolve_masked_text,
 )
+from opentelemetry.instrumentation.litellm.streaming_safety import (
+    _accumulate_streaming_chunk,
+    _mask_streaming_chunk,
+    is_async_streaming_response,
+    is_sync_streaming_response,
+    wrap_async_streaming_response,
+    wrap_sync_streaming_response,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -40,7 +49,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -308,14 +317,116 @@ async def test_sync_wrapper_handles_awaitable_response():
     assert spans[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == "[SECRET.token]"
 
 
-def test_streaming_completion_is_passthrough():
+def test_streaming_completion_masks_prompt_and_stream_chunks():
     exporter, tracer = _test_tracer()
-    sentinel = SimpleNamespace(value="stream")
-    calls = []
+    register_prompt_safety_handler(
+        lambda context: _prompt_result("[PII.email]", context)
+        if context.location == SafetyLocation.PROMPT and context.text == "secret"
+        else None
+    )
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["masked-a"], flush_result="tail")
+    )
 
     def wrapped(*args, **kwargs):
-        calls.append(kwargs)
-        return sentinel
+        assert kwargs["messages"][0]["content"] == "[PII.email]"
+
+        def _stream():
+            yield SimpleNamespace(
+                model="gpt-4o-mini",
+                choices=[
+                    SimpleNamespace(
+                        finish_reason=None,
+                        message=SimpleNamespace(role="assistant", content="secret"),
+                    )
+                ],
+            )
+            yield SimpleNamespace(
+                model="gpt-4o-mini",
+                choices=[
+                    SimpleNamespace(
+                        finish_reason="stop",
+                        message=SimpleNamespace(role="assistant", content=None),
+                    )
+                ],
+            )
+
+        return _stream()
+
+    response = list(
+        _invoke_completion(
+            tracer,
+            wrapped,
+            (),
+            {
+                "model": "gpt-4o-mini",
+                "messages": [{"role": "user", "content": "secret"}],
+                "stream": True,
+            },
+        )
+    )
+
+    assert response[0].choices[0].message.content == "masked-a"
+    assert response[1].choices[0].message.content == "tail"
+    span = exporter.get_finished_spans()[0]
+    assert span.attributes[f"{SpanAttributes.LLM_PROMPTS}.0.content"] == "[PII.email]"
+    assert span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == "masked-atail"
+
+
+class _FakeStreamSession:
+    def __init__(self, process_results, flush_result=""):
+        self._process_results = list(process_results)
+        self._flush_result = flush_result
+
+    def process_chunk(self, text):
+        return SafetyResult(text=self._process_results.pop(0), overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text=self._flush_result, overall_action="allow", findings=[])
+
+
+def test_streaming_text_completion_masks_chunks():
+    exporter, tracer = _test_tracer()
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["masked-a"], flush_result="tail")
+    )
+
+    def wrapped(*args, **kwargs):
+        def _stream():
+            yield SimpleNamespace(
+                model="gpt-3.5-turbo-instruct",
+                choices=[SimpleNamespace(text="secret", finish_reason=None)],
+            )
+            yield SimpleNamespace(
+                model="gpt-3.5-turbo-instruct",
+                choices=[SimpleNamespace(finish_reason="stop")],
+            )
+
+        return _stream()
+
+    response = list(
+        _invoke_completion(
+            tracer,
+            wrapped,
+            ("secret",),
+            {"model": "gpt-3.5-turbo-instruct", "stream": True},
+            is_text_completion=True,
+        )
+    )
+
+    assert response[0].choices[0].text == "masked-a"
+    assert response[1].choices[0].text == "tail"
+    assert exporter.get_finished_spans()[0].attributes[f"{SpanAttributes.LLM_COMPLETIONS}.0.content"] == "masked-atail"
+
+
+def test_streaming_completion_is_not_skipped():
+    exporter, tracer = _test_tracer()
+
+    def wrapped(*args, **kwargs):
+        def _stream():
+            if False:
+                yield None
+        return _stream()
 
     response = _invoke_completion(
         tracer,
@@ -323,14 +434,12 @@ def test_streaming_completion_is_passthrough():
         (),
         {
             "model": "gpt-4o-mini",
-            "messages": [{"role": "user", "content": "secret"}],
             "stream": True,
         },
     )
 
-    assert response is sentinel
-    assert calls[0]["messages"][0]["content"] == "secret"
-    assert not exporter.get_finished_spans()
+    assert list(response) == []
+    assert exporter.get_finished_spans()
 
 
 def test_instrumentor_wraps_and_unwraps_all_methods():
@@ -386,7 +495,7 @@ async def test_async_skip_and_error_paths():
         {"model": "gpt-4o-mini", "stream": True},
     )
     assert response is sentinel
-    assert not exporter.get_finished_spans()
+    assert exporter.get_finished_spans()
 
     async def raising(*args, **kwargs):
         raise RuntimeError("async boom")
@@ -399,7 +508,7 @@ async def test_async_skip_and_error_paths():
             {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "secret"}]},
         )
 
-    error_span = exporter.get_finished_spans()[0]
+    error_span = exporter.get_finished_spans()[-1]
     assert error_span.status.status_code.name == "ERROR"
 
 
@@ -479,3 +588,94 @@ def test_safety_helpers_cover_args_blocks_and_text_extraction():
         "same",
         False,
     )
+
+
+def test_streaming_helper_units_cover_text_mirroring_usage_and_detector_helpers():
+    class _FakeStreamGroup:
+        def process(self, key, text, **kwargs):
+            return "masked"
+
+        def flush(self, key):
+            return "tail"
+
+    chunk = SimpleNamespace(
+        model="gpt-4o-mini",
+        usage={"total_tokens": 3},
+        choices=[
+            SimpleNamespace(
+                finish_reason="stop",
+                message=SimpleNamespace(role="assistant", content="secret"),
+                text="secret",
+            )
+        ],
+    )
+    complete_response = {"choices": [], "model": None, "usage": None}
+
+    _mask_streaming_chunk(_FakeStreamGroup(), chunk)
+    _accumulate_streaming_chunk(complete_response, chunk)
+
+    assert chunk.choices[0].message.content == "maskedtail"
+    assert chunk.choices[0].text == "maskedtail"
+    assert complete_response["usage"] == {"total_tokens": 3}
+    assert is_sync_streaming_response((item for item in ())) is True
+
+    async def _agen():
+        yield chunk
+
+    assert is_async_streaming_response(_agen()) is True
+
+
+def test_sync_streaming_wrapper_records_error_and_re_raises():
+    _, tracer = _test_tracer()
+    span = tracer.start_span("litellm.completion")
+
+    def _response():
+        yield SimpleNamespace(choices=[])
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        list(
+            wrap_sync_streaming_response(
+                span,
+                _response(),
+                "chat",
+                "litellm.completion",
+                lambda *_: None,
+            )
+        )
+
+    assert span.status.status_code.name == "ERROR"
+
+
+@pytest.mark.asyncio
+async def test_async_streaming_wrapper_finalizes_span():
+    _, tracer = _test_tracer()
+    span = tracer.start_span("litellm.completion")
+    responses = []
+
+    async def _response():
+        yield SimpleNamespace(
+            model="gpt-4o-mini",
+            usage={"total_tokens": 3},
+            choices=[
+                SimpleNamespace(
+                    finish_reason="stop",
+                    message=SimpleNamespace(role="assistant", content="secret"),
+                    text="secret",
+                )
+            ],
+        )
+
+    yielded = [
+        chunk
+        async for chunk in wrap_async_streaming_response(
+            span,
+            _response(),
+            "chat",
+            "litellm.completion",
+            lambda _span, response: responses.append(response),
+        )
+    ]
+
+    assert yielded[0].choices[0].message.content == "secret"
+    assert responses[0].usage == {"total_tokens": 3}

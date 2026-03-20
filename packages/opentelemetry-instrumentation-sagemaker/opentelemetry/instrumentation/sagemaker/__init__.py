@@ -25,7 +25,9 @@ from opentelemetry.instrumentation.sagemaker.span_utils import (
     set_call_span_attributes,
     set_stream_response_attributes,
 )
-from opentelemetry.instrumentation.sagemaker.streaming_wrapper import StreamingWrapper
+from opentelemetry.instrumentation.sagemaker.streaming_safety import (
+    create_streaming_wrapper,
+)
 from opentelemetry.instrumentation.sagemaker.utils import dont_throw, should_emit_events
 from opentelemetry.instrumentation.sagemaker.version import __version__
 from opentelemetry.instrumentation.utils import (
@@ -117,6 +119,7 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger)
             return fn(*args, **kwargs)
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
+        kwargs = _apply_prompt_safety(span, kwargs, "sagemaker.completion")
 
         response = fn(*args, **kwargs)
 
@@ -147,7 +150,11 @@ def _handle_stream_call(span, event_logger, kwargs, response):
 
         span.end()
 
-    response["Body"] = StreamingWrapper(response["Body"], stream_done)
+    response["Body"] = create_streaming_wrapper(
+        response["Body"],
+        span=span,
+        stream_done_callback=stream_done,
+    )
 
 
 @dont_throw

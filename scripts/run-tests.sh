@@ -3,16 +3,16 @@
 # Examples:
 # Run every discovered package test suite:
 #   ./scripts/run-tests.sh
-# Run only tests marked with `@pytest.mark.safety` across matching packages:
-#   ./scripts/run-tests.sh --safety
+# Run only tests marked with `@pytest.mark.fr` across matching packages:
+#   ./scripts/run-tests.sh --fr
 # Run all tests for packages whose basename matches a glob:
 #   ./scripts/run-tests.sh --package '*openai*'
-# Run only tests marked with `@pytest.mark.safety` for a selected package glob:
-#   ./scripts/run-tests.sh --safety --package '*anthropic*'
+# Run only tests marked with `@pytest.mark.fr` for a selected package glob:
+#   ./scripts/run-tests.sh --fr --package '*anthropic*'
 # List all discovered packages without running tests:
 #   ./scripts/run-tests.sh --list
 # Forward extra pytest arguments after `--`:
-#   ./scripts/run-tests.sh --safety -- -x
+#   ./scripts/run-tests.sh --fr -- -x
 
 set -euo pipefail
 
@@ -37,16 +37,16 @@ usage() {
 Usage: scripts/run-tests.sh [options] [-- <extra pytest args>]
 
 Options:
-  --safety           Run only tests marked with @pytest.mark.safety
+  --fr               Run only tests marked with @pytest.mark.fr
   --package <glob>   Restrict packages by basename glob, e.g. "*openai*"
   --list             List discovered packages and exit
   -h, --help         Show this help
 
 Examples:
   scripts/run-tests.sh
-  scripts/run-tests.sh --safety
+  scripts/run-tests.sh --fr
   scripts/run-tests.sh --package "*openai*"
-  scripts/run-tests.sh --safety -- -x
+  scripts/run-tests.sh --fr -- -x
 EOF
 }
 
@@ -140,17 +140,16 @@ has_tests_directory() {
   [[ -d "$package_dir/tests" ]]
 }
 
-is_candidate_for_safety_mode() {
+has_marker_in_tests() {
   local package_dir="$1"
-
-  has_tests_directory "$package_dir" || return 1
+  local marker="$2"
 
   if command -v rg >/dev/null 2>&1; then
-    rg -l 'pytest\.mark\.safety' "$package_dir/tests" >/dev/null 2>&1
+    rg -l "pytest\\.mark\\.${marker}" "$package_dir/tests" >/dev/null 2>&1
     return $?
   fi
 
-  grep -RIl -E 'pytest\.mark\.safety' "$package_dir/tests" >/dev/null 2>&1
+  grep -RIl -E "pytest\\.mark\\.${marker}" "$package_dir/tests" >/dev/null 2>&1
 }
 
 python_meta() {
@@ -329,9 +328,9 @@ run_package_tests() {
     return 0
   fi
 
-  if [[ "$MODE" == "safety" ]] && ! is_candidate_for_safety_mode "$package_dir"; then
+  if [[ "$MODE" == "fr" ]] && ! has_marker_in_tests "$package_dir" "fr"; then
     set_state "$package_name" "status" "SKIP"
-    set_state "$package_name" "reason" "No safety-related tests detected"
+    set_state "$package_name" "reason" "No FR-marked tests detected"
     return 0
   fi
 
@@ -342,9 +341,12 @@ run_package_tests() {
   local junit_xml="$REPORT_DIR/${package_name}.xml"
   local test_log="$REPORT_DIR/${package_name}.test.log"
   local -a pytest_cmd
-  pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
-  if [[ "$MODE" == "safety" ]]; then
-    pytest_cmd+=(-m safety)
+  local -a pytest_targets=(tests)
+  if [[ "$MODE" == "fr" ]]; then
+    pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
+    pytest_cmd+=(-m fr)
+  else
+    pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
   fi
   pytest_cmd+=("${PYTEST_ARGS[@]:-}")
 
@@ -381,6 +383,8 @@ print_report() {
   local install_failed=0
   local package_name
   local -a failing_lines=()
+  local -a skipped_lines=()
+  local -a executed_lines=()
 
   printf '\n=== Consolidated Test Report ===\n'
   printf 'Mode: %s\n' "$MODE"
@@ -391,11 +395,11 @@ print_report() {
     case "$(get_state "$package_name" "status")" in
       PASS)
         passed=$((passed + 1))
-        printf 'PASS  %-50s %s\n' "$package_name" "$(get_state "$package_name" "counts")"
+        executed_lines+=("$(printf 'PASS  %-50s %s' "$package_name" "$(get_state "$package_name" "counts")")")
         ;;
       FAIL)
         failed=$((failed + 1))
-        printf 'FAIL  %-50s %s\n' "$package_name" "$(get_state "$package_name" "counts")"
+        executed_lines+=("$(printf 'FAIL  %-50s %s' "$package_name" "$(get_state "$package_name" "counts")")")
         if [[ -n "$(get_state "$package_name" "failures")" ]]; then
           while IFS= read -r failing_test; do
             [[ -n "$failing_test" ]] || continue
@@ -405,15 +409,29 @@ print_report() {
         ;;
       INSTALL_FAIL)
         install_failed=$((install_failed + 1))
-        printf 'ERROR %-50s %s\n' "$package_name" "$(get_state "$package_name" "reason")"
+        executed_lines+=("$(printf 'ERROR %-50s %s' "$package_name" "$(get_state "$package_name" "reason")")")
         failing_lines+=("$package_name :: [install] $(get_state "$package_name" "reason")")
         ;;
       *)
         skipped=$((skipped + 1))
-        printf 'SKIP  %-50s %s\n' "$package_name" "$(get_state "$package_name" "reason")"
+        skipped_lines+=("$(printf 'SKIP  %-50s %s' "$package_name" "$(get_state "$package_name" "reason")")")
         ;;
     esac
   done
+
+  printf 'Skipped packages:\n'
+  if (( ${#skipped_lines[@]} > 0 )); then
+    printf '%s\n' "${skipped_lines[@]}"
+  else
+    printf ' - none\n'
+  fi
+
+  printf '\nExecuted packages:\n'
+  if (( ${#executed_lines[@]} > 0 )); then
+    printf '%s\n' "${executed_lines[@]}"
+  else
+    printf ' - none\n'
+  fi
 
   printf '\nPackages: total=%d passed=%d failed=%d install_failed=%d skipped=%d\n' \
     "$total" "$passed" "$failed" "$install_failed" "$skipped"
@@ -437,8 +455,8 @@ print_report() {
 main() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --safety)
-        MODE="safety"
+      --fr)
+        MODE="fr"
         shift
         ;;
       --package)

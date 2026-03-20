@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.cohere import safety
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def test_apply_prompt_safety_masks_chat_fields(monkeypatch):

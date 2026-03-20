@@ -1111,3 +1111,47 @@ class ResponseStream(ObjectProxy):
 
             except Exception:
                 self._cleanup_completed = True
+
+
+from opentelemetry.instrumentation.openai.v1.responses_api import (
+    ResponseStream as _fr_ResponseStream,
+    SPAN_NAME as _fr_SPAN_NAME,
+    TracedData as _fr_TracedData,
+    _cache_legacy_parsed_response as _fr_cache_legacy_parsed_response,
+    _get_openai_sentinel_types as _fr_get_openai_sentinel_types,
+    _sanitize_sentinel_values as _fr_sanitize_sentinel_values,
+    async_responses_cancel_wrapper as _fr_async_responses_cancel_wrapper,
+    async_responses_get_or_create_wrapper as _fr_async_responses_get_or_create_wrapper,
+    get_tools_from_kwargs as _fr_get_tools_from_kwargs,
+    is_validator_iterator as _fr_is_validator_iterator,
+    parse_response as _fr_parse_response,
+    prepare_input_param as _fr_prepare_input_param,
+    prepare_kwargs_for_shared_attributes as _fr_prepare_kwargs_for_shared_attributes,
+    process_content_block as _fr_process_content_block,
+    process_input as _fr_process_input,
+    responses as _fr_responses,
+    responses_cancel_wrapper as _fr_responses_cancel_wrapper,
+    responses_get_or_create_wrapper as _fr_responses_get_or_create_wrapper,
+    set_data_attributes as _fr_set_data_attributes,
+)
+
+# Keep the Traceloop surface close to upstream and delegate FR safety behavior.
+ResponseStream = _fr_ResponseStream
+SPAN_NAME = _fr_SPAN_NAME
+TracedData = _fr_TracedData
+_cache_legacy_parsed_response = _fr_cache_legacy_parsed_response
+_get_openai_sentinel_types = _fr_get_openai_sentinel_types
+_sanitize_sentinel_values = _fr_sanitize_sentinel_values
+async_responses_cancel_wrapper = _fr_async_responses_cancel_wrapper
+async_responses_get_or_create_wrapper = _fr_async_responses_get_or_create_wrapper
+get_tools_from_kwargs = _fr_get_tools_from_kwargs
+is_validator_iterator = _fr_is_validator_iterator
+parse_response = _fr_parse_response
+prepare_input_param = _fr_prepare_input_param
+prepare_kwargs_for_shared_attributes = _fr_prepare_kwargs_for_shared_attributes
+process_content_block = _fr_process_content_block
+process_input = _fr_process_input
+responses = _fr_responses
+responses_cancel_wrapper = _fr_responses_cancel_wrapper
+responses_get_or_create_wrapper = _fr_responses_get_or_create_wrapper
+set_data_attributes = _fr_set_data_attributes

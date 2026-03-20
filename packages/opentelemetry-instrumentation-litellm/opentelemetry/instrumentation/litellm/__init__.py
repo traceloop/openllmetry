@@ -12,6 +12,12 @@ from opentelemetry.instrumentation.litellm.safety import (
     extract_prompt_texts,
     extract_text_content,
 )
+from opentelemetry.instrumentation.litellm.streaming_safety import (
+    is_async_streaming_response,
+    is_sync_streaming_response,
+    wrap_async_streaming_response,
+    wrap_sync_streaming_response,
+)
 from opentelemetry.instrumentation.litellm.version import __version__
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
 from opentelemetry.semconv._incubating.attributes import (
@@ -100,7 +106,7 @@ def _invoke_completion(tracer, wrapped, args, kwargs, *, is_text_completion=Fals
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: "litellm",
         SpanAttributes.LLM_REQUEST_TYPE: request_type,
-        SpanAttributes.LLM_IS_STREAMING: False,
+        SpanAttributes.LLM_IS_STREAMING: bool(kwargs.get("stream")),
     }
 
     span = tracer.start_span(
@@ -143,6 +149,14 @@ def _invoke_completion(tracer, wrapped, args, kwargs, *, is_text_completion=Fals
             )
 
         context_api.detach(token)
+        if is_sync_streaming_response(response):
+            return wrap_sync_streaming_response(
+                span,
+                response,
+                request_type,
+                span_name,
+                _set_response_attributes,
+            )
         return _finalize_response(span, response, request_type, span_name)
 
 
@@ -162,7 +176,7 @@ async def _invoke_acompletion(
     attributes = {
         GenAIAttributes.GEN_AI_SYSTEM: "litellm",
         SpanAttributes.LLM_REQUEST_TYPE: request_type,
-        SpanAttributes.LLM_IS_STREAMING: False,
+        SpanAttributes.LLM_IS_STREAMING: bool(kwargs.get("stream")),
     }
 
     span = tracer.start_span(
@@ -196,6 +210,14 @@ async def _invoke_acompletion(
         finally:
             context_api.detach(token)
 
+        if is_async_streaming_response(response):
+            return wrap_async_streaming_response(
+                span,
+                response,
+                request_type,
+                span_name,
+                _set_response_attributes,
+            )
         return _finalize_response(span, response, request_type, span_name)
 
 
@@ -203,7 +225,6 @@ def _should_skip_instrumentation(kwargs):
     return bool(
         context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY)
         or context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
-        or kwargs.get("stream")
     )
 
 

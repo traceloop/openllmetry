@@ -70,7 +70,7 @@ select = ["E", "F", "W"]
 
 [tool.pytest.ini_options]
 markers = [
-  "safety: safety-focused tests",
+  "fr: FortifyRoot-owned regression tests",
 ]
 
 [tool.uv]

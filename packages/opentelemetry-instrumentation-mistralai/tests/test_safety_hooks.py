@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyResult,
     clear_safety_handlers,
     register_completion_safety_handler,
+    register_completion_safety_stream_factory,
     register_prompt_safety_handler,
 )
 from opentelemetry.instrumentation.mistralai.safety import (
@@ -17,12 +18,15 @@ from opentelemetry.instrumentation.mistralai.safety import (
     _mask_prompt_content,
     _resolve_masked_text,
 )
+from opentelemetry.instrumentation.mistralai.streaming_safety import (
+    MistralAIStreamingSafety,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def setup_function():
@@ -144,3 +148,65 @@ def test_completion_helpers_cover_passthrough_and_block_paths():
     unchanged = SafetyResult(text="same", overall_action="MASK", findings=[])
     assert _resolve_masked_text("same", unchanged) == ("same", False)
     assert exporter.get_finished_spans()
+
+
+class _FakeStreamSession:
+    def process_chunk(self, text):
+        return SafetyResult(text="masked", overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text="-tail", overall_action="allow", findings=[])
+
+
+def test_streaming_helper_masks_delta_content_and_flushes_on_finish():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    item = SimpleNamespace(
+        data=SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(content="secret"),
+                    finish_reason="stop",
+                )
+            ]
+        )
+    )
+
+    with tracer.start_as_current_span("mistralai.chat") as span:
+        helper = MistralAIStreamingSafety(span, "mistralai.chat")
+        helper.process_chunk(item)
+
+    assert item.data.choices[0].delta.content == "masked-tail"
+
+
+def test_streaming_helper_flushes_tail_when_finish_chunk_has_no_content():
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    first_item = SimpleNamespace(
+        data=SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(content="secret"),
+                    finish_reason=None,
+                )
+            ]
+        )
+    )
+    final_item = SimpleNamespace(
+        data=SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(),
+                    finish_reason="stop",
+                )
+            ]
+        )
+    )
+
+    with tracer.start_as_current_span("mistralai.chat") as span:
+        helper = MistralAIStreamingSafety(span, "mistralai.chat")
+        helper.process_chunk(first_item)
+        helper.process_chunk(final_item)
+
+    assert first_item.data.choices[0].delta.content == "masked"
+    assert final_item.data.choices[0].delta.content == "-tail"

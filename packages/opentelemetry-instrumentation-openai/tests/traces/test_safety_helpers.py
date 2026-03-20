@@ -5,7 +5,7 @@ import pytest
 from opentelemetry.instrumentation.openai.shared import chat_safety, completion_safety, safety_common
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def test_chat_prompt_safety_masks_string_and_block_content(monkeypatch):

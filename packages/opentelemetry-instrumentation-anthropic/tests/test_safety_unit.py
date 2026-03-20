@@ -3,9 +3,22 @@ from types import SimpleNamespace
 import pytest
 
 from opentelemetry.instrumentation.anthropic import safety
+from opentelemetry.instrumentation.anthropic.streaming_safety import (
+    AnthropicStreamingSafety,
+)
+from opentelemetry.instrumentation.anthropic.streaming import AnthropicStream
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
+from opentelemetry.instrumentation.fortifyroot import (
+    clear_safety_handlers,
+    register_completion_safety_stream_factory,
+)
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def test_apply_prompt_safety_masks_prompt_system_and_messages(monkeypatch):
@@ -110,3 +123,124 @@ def test_anthropic_fail_opens_on_internal_error(monkeypatch):
     response = SimpleNamespace(completion="secret")
     monkeypatch.setattr(safety, "_request_type", lambda *_: (_ for _ in ()).throw(RuntimeError("boom")))
     assert safety._apply_completion_safety(None, response, "anthropic.chat") is None
+
+
+class _FakeStreamSession:
+    def process_chunk(self, text):
+        return SafetyResult(text="masked", overall_action="allow", findings=[])
+
+    def flush(self):
+        return SafetyResult(text="-tail", overall_action="allow", findings=[])
+
+
+class _Iterator:
+    def __init__(self, items):
+        self._items = iter(items)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._items)
+
+
+def _test_tracer():
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer(__name__)
+    return exporter, tracer
+
+
+def test_anthropic_stream_masks_text_delta_and_flushes_on_block_stop():
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    exporter, tracer = _test_tracer()
+
+    items = [
+        SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text="secret"),
+        ),
+        SimpleNamespace(type="content_block_stop", index=0),
+    ]
+
+    with tracer.start_as_current_span("anthropic.chat") as span:
+        stream = AnthropicStream(
+            span,
+            _Iterator(items),
+            SimpleNamespace(count_tokens=lambda text: len(text)),
+            0.0,
+            kwargs={},
+        )
+        first = next(stream)
+        second = next(stream)
+        with pytest.raises(StopIteration):
+            next(stream)
+
+    assert first.delta.text == "masked-tail"
+    assert second.type == "content_block_stop"
+    assert exporter.get_finished_spans()
+
+
+def test_anthropic_streaming_safety_handles_thinking_and_noop_paths():
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    _, tracer = _test_tracer()
+
+    with tracer.start_as_current_span("anthropic.chat") as span:
+        helper = AnthropicStreamingSafety(span, "anthropic.chat")
+
+        thinking_item = SimpleNamespace(
+            type="content_block_delta",
+            index=1,
+            delta=SimpleNamespace(type="thinking_delta", thinking="secret"),
+        )
+        helper.process_item(thinking_item)
+        helper.flush_transition(thinking_item, SimpleNamespace(type="message_stop"))
+        helper.flush_pending_item(None)
+        noop = helper.process_item(SimpleNamespace(type="message_start"))
+
+    assert thinking_item.delta.thinking == "masked-tail"
+    assert noop.type == "message_start"
+
+
+def test_anthropic_streaming_safety_covers_unknown_and_mismatch_branches():
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    _, tracer = _test_tracer()
+
+    with tracer.start_as_current_span("anthropic.chat") as span:
+        helper = AnthropicStreamingSafety(span, "anthropic.chat")
+        unknown_delta = SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="tool_delta"),
+        )
+        no_text = SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text=None),
+        )
+        pending = SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text="secret"),
+        )
+        helper.process_item(pending)
+        helper.flush_transition(pending, SimpleNamespace(type="message_start"))
+        helper.flush_pending_item(SimpleNamespace(type="message_start"))
+        helper._append_tail(
+            SimpleNamespace(
+                type="content_block_delta",
+                index=1,
+                delta=SimpleNamespace(type="text_delta", text="raw"),
+            ),
+            (0, "assistant"),
+            "tail",
+        )
+
+    assert helper.process_item(unknown_delta) is unknown_delta
+    assert helper.process_item(no_text) is no_text
+    assert pending.delta.text == "masked"

@@ -45,7 +45,7 @@ from opentelemetry.instrumentation.llamaindex.safety import (
     _resolve_masked_text,
 )
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 class _FakeLLM:

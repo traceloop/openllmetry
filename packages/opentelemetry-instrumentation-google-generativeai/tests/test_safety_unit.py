@@ -5,7 +5,7 @@ import pytest
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
 from opentelemetry.instrumentation.google_generativeai import safety
 
-pytestmark = pytest.mark.safety
+pytestmark = pytest.mark.fr
 
 
 def test_apply_prompt_safety_masks_args_kwargs_and_parts(monkeypatch):

@@ -17,6 +17,9 @@ from opentelemetry.instrumentation.groq.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.groq.streaming_safety import (
+    GroqStreamingSafety,
+)
 from opentelemetry.instrumentation.groq.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
@@ -162,8 +165,10 @@ def _create_stream_processor(response, span, event_logger):
     accumulated_content = ""
     finish_reason = None
     usage = None
+    streaming_safety = GroqStreamingSafety(span, "groq.chat")
 
     for chunk in response:
+        chunk = streaming_safety.process_chunk(chunk)
         content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
         if content:
             accumulated_content += content
@@ -188,8 +193,10 @@ async def _create_async_stream_processor(response, span, event_logger):
     accumulated_content = ""
     finish_reason = None
     usage = None
+    streaming_safety = GroqStreamingSafety(span, "groq.chat")
 
     async for chunk in response:
+        chunk = streaming_safety.process_chunk(chunk)
         content, chunk_finish_reason, chunk_usage = _process_streaming_chunk(chunk)
         if content:
             accumulated_content += content

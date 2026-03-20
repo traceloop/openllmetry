@@ -511,6 +511,20 @@ class WrappedMessageStreamManager:
         pass
 
 
+from opentelemetry.instrumentation.anthropic.streaming_runtime import (
+    AnthropicAsyncStream as _fr_AnthropicAsyncStream,
+    AnthropicStream as _fr_AnthropicStream,
+    WrappedAsyncMessageStreamManager as _fr_WrappedAsyncMessageStreamManager,
+    WrappedMessageStreamManager as _fr_WrappedMessageStreamManager,
+)
+
+# Keep the Traceloop file near-upstream and delegate FR safety behavior.
+AnthropicAsyncStream = _fr_AnthropicAsyncStream
+AnthropicStream = _fr_AnthropicStream
+WrappedAsyncMessageStreamManager = _fr_WrappedAsyncMessageStreamManager
+WrappedMessageStreamManager = _fr_WrappedMessageStreamManager
+
+
 class WrappedAsyncMessageStreamManager:
     """Wrapper for AsyncMessageStreamManager that handles instrumentation"""
 
