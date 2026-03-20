@@ -1,58 +1,40 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from opentelemetry.instrumentation.ag2 import AG2Instrumentor
-from opentelemetry.trace.status import StatusCode
 
 
 @pytest.fixture
-def mock_instrumentor():
-    instrumentor = AG2Instrumentor()
-    instrumentor.instrument = MagicMock()
-    instrumentor.uninstrument = MagicMock()
-    return instrumentor
+def instrumentor():
+    return AG2Instrumentor()
 
 
-@pytest.fixture
-def mock_agents():
-    assistant = MagicMock()
-    assistant.name = "assistant"
-    assistant.description = "A helpful assistant"
-    assistant._oai_system_message = [{"content": "You are a helpful AI assistant."}]
+def test_instrument_calls_ag2_builtins(instrumentor):
+    """Verify that _instrument delegates to AG2's built-in opentelemetry instrumentation."""
+    mock_tracer_provider = MagicMock()
 
-    user_proxy = MagicMock()
-    user_proxy.name = "user_proxy"
-    user_proxy.description = "A user proxy agent"
-    user_proxy._oai_system_message = [{"content": ""}]
+    with (
+        patch("opentelemetry.instrumentation.ag2.instrumentation.wrap_function_wrapper") as mock_wrap,
+        patch("autogen.opentelemetry.instrument_llm_wrapper") as mock_llm,
+        patch("autogen.opentelemetry.instrument_agent"),
+    ):
+        instrumentor._instrument(tracer_provider=mock_tracer_provider)
 
-    return assistant, user_proxy
+        # LLM wrapper should be instrumented globally
+        mock_llm.assert_called_once_with(
+            tracer_provider=mock_tracer_provider,
+            capture_messages=True,
+        )
 
-
-def test_ag2_instrumentation(mock_agents, mock_instrumentor):
-    mock_instrumentor.instrument()
-    mock_instrumentor.instrument.assert_called_once()
-
-    assistant, user_proxy = mock_agents
-    assert assistant.name == "assistant"
-    assert user_proxy.name == "user_proxy"
+        # ConversableAgent.__init__ should be wrapped
+        wrap_calls = [call.args[:2] for call in mock_wrap.call_args_list]
+        assert ("autogen.agentchat.conversable_agent", "ConversableAgent.__init__") in wrap_calls
 
 
-def test_trace_status(mock_agents, mock_instrumentor):
-    mock_span = MagicMock()
-    mock_span.set_status = MagicMock()
+def test_uninstrument(instrumentor):
+    """Verify that _uninstrument cleans up patches."""
+    with patch("opentelemetry.instrumentation.utils.unwrap") as mock_unwrap:
+        instrumentor._uninstrument()
 
-    mock_span.set_status(StatusCode.OK)
-    mock_span.set_status.assert_called_with(StatusCode.OK)
-
-    mock_span.set_status(StatusCode.ERROR)
-    mock_span.set_status.assert_called_with(StatusCode.ERROR)
-
-    memory_exporter = MagicMock()
-    memory_exporter.get_finished_spans.return_value = [
-        MagicMock(status=MagicMock(status_code=StatusCode.ERROR))
-    ]
-
-    spans = memory_exporter.get_finished_spans()
-    assert spans[-1].status.status_code == StatusCode.ERROR
-
-    mock_instrumentor.uninstrument()
-    mock_instrumentor.uninstrument.assert_called_once()
+        # Should attempt to unwrap ConversableAgent.__init__
+        unwrap_targets = [(call.args[0].__name__, call.args[1]) for call in mock_unwrap.call_args_list]
+        assert ("ConversableAgent", "__init__") in unwrap_targets
