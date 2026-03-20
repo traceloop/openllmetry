@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Instruments(Enum):
+    AG2 = "ag2"
     AGNO = "agno"
     ALEPHALPHA = "alephalpha"
     ANTHROPIC = "anthropic"

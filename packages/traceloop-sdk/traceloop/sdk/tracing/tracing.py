@@ -489,7 +489,10 @@ def init_instrumentations(
 
     instrument_set = False
     for instrument in instruments:
-        if instrument == Instruments.AGNO:
+        if instrument == Instruments.AG2:
+            if init_ag2_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.AGNO:
             if init_agno_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.ALEPHALPHA:
@@ -1014,6 +1017,20 @@ def init_writer_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Writer instrumentor: {e}")
+    return False
+
+
+def init_ag2_instrumentor():
+    try:
+        if is_package_installed("ag2"):
+            from opentelemetry.instrumentation.ag2 import AG2Instrumentor
+
+            instrumentor = AG2Instrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing AG2 instrumentor: {e}")
     return False
 
 

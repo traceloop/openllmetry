@@ -2,6 +2,7 @@ import os
 from typing import Collection
 
 from wrapt import wrap_function_wrapper
+from opentelemetry import trace
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
 _instruments = ("ag2 >= 0.11.0",)
@@ -17,7 +18,7 @@ class AG2Instrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
-        tracer_provider = kwargs.get("tracer_provider")
+        tracer_provider = kwargs.get("tracer_provider") or trace.get_tracer_provider()
 
         # Use AG2's built-in OpenTelemetry instrumentation for LLM calls
         from autogen.opentelemetry import instrument_llm_wrapper

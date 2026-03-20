@@ -65,6 +65,9 @@ class Meters:
 
 
 class SpanAttributes:
+    # Compatibility alias — removed in semconv migration but still used by instrumentation packages
+    LLM_REQUEST_TYPE = "gen_ai.operation.name"
+
     # GenAI Usage Cache Attributes (not yet in upstream OTel incubating semconv)
     GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
