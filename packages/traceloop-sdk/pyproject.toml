@@ -22,6 +22,7 @@ dependencies = [
   "opentelemetry-instrumentation-threading>=0.59b0",
   "opentelemetry-instrumentation-redis>=0.59b0",
   "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-instrumentation-ag2",
   "opentelemetry-instrumentation-agno",
   "opentelemetry-instrumentation-mistralai",
   "opentelemetry-instrumentation-openai",
@@ -156,6 +157,7 @@ constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
 
 [tool.uv.sources]
 opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai", editable = true }
+opentelemetry-instrumentation-ag2 = { path = "../opentelemetry-instrumentation-ag2", editable = true }
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
 opentelemetry-instrumentation-alephalpha = { path = "../opentelemetry-instrumentation-alephalpha", editable = true }
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", editable = true }
