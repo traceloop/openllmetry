@@ -86,4 +86,5 @@ def build_and_set_stream_response_delegate(
         span=span,
         raw_flag=raw_flag,
         finalize_response=finalize_response,
+        span_name=getattr(span, "name", "watsonx.generate_text_stream"),
     )

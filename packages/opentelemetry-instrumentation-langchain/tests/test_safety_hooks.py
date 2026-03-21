@@ -340,3 +340,34 @@ def test_internal_helpers_cover_kwargs_passthrough_and_block_updates():
     assert _content_text(block) == "value"
     assert _set_content_text(block, "new") is True
     assert block["text"] == "new"
+
+
+def test_registration_helpers_fail_open_on_wrap_and_unwrap_errors():
+    with patch(
+        "opentelemetry.instrumentation.langchain.safety.wrap_function_wrapper",
+        side_effect=RuntimeError("wrap boom"),
+    ), patch("opentelemetry.instrumentation.langchain.safety.logger.warning") as warning_mock:
+        instrument_safety_wrappers()
+
+    with patch(
+        "opentelemetry.instrumentation.langchain.safety.unwrap",
+        side_effect=RuntimeError("unwrap boom"),
+    ), patch("opentelemetry.instrumentation.langchain.safety.logger.debug") as debug_mock:
+        uninstrument_safety_wrappers()
+
+    assert warning_mock.called
+    assert debug_mock.called
+
+
+def test_prompt_and_completion_handler_exceptions_fail_open():
+    register_prompt_safety_handler(lambda context: (_ for _ in ()).throw(RuntimeError("boom")))
+
+    messages = [[HumanMessage(content="secret")]]
+    args, kwargs = _apply_chat_prompt_safety(_FakeChatModel(), (messages,), {})
+    assert args[0][0][0].content == "secret"
+    assert kwargs == {}
+
+    register_completion_safety_handler(lambda context: (_ for _ in ()).throw(RuntimeError("boom")))
+    llm_result = LLMResult(generations=[[Generation(text="secret")]])
+    _apply_llm_result_completion_safety(_FakeLLM(), llm_result)
+    assert llm_result.generations[0][0].text == "secret"

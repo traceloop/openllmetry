@@ -101,67 +101,49 @@ def _mask_prompt_content(
     segment_index,
     segment_role,
 ):
-    if isinstance(content, str):
-        return _mask_prompt_text(
+    return _mask_content_items(
+        content,
+        mask_string=lambda text: _mask_prompt_text(
             span,
-            content,
+            text,
             request_type=request_type,
             span_name=span_name,
             segment_index=segment_index,
             segment_role=segment_role,
-        )
-
-    if not isinstance(content, list):
-        return content, False
-
-    updated_content = content
-    for block_index, block in enumerate(content):
-        if isinstance(block, str):
-            updated_text, changed = _mask_prompt_text(
-                span,
-                block,
-                request_type=request_type,
-                span_name=span_name,
-                segment_index=segment_index,
-                segment_role=segment_role,
-            )
-            if not changed:
-                continue
-            if updated_content is content:
-                updated_content = clone_value(content)
-            updated_content[block_index] = updated_text
-            continue
-
-        block_type = get_object_value(block, "type")
-        block_text = get_object_value(block, "text")
-        if block_type not in (None, "text") or not isinstance(block_text, str):
-            continue
-        updated_text, changed = _mask_prompt_text(
-            span,
-            block_text,
-            request_type=request_type,
-            span_name=span_name,
-            segment_index=segment_index,
-            segment_role=segment_role,
-        )
-        if not changed:
-            continue
-        if updated_content is content:
-            updated_content = clone_value(content)
-        set_object_value(updated_content[block_index], "text", updated_text)
-
-    return updated_content, updated_content is not content
+        ),
+        clone_item=clone_value,
+        get_text=lambda block: (
+            get_object_value(block, "text")
+            if get_object_value(block, "type") in (None, "text")
+            else None
+        ),
+        set_text=lambda block, text: set_object_value(block, "text", text),
+    )
 
 
 def _mask_completion_content(span, content, *, request_type, span_name, segment_index):
-    if isinstance(content, str):
-        return _mask_completion_text(
+    return _mask_content_items(
+        content,
+        mask_string=lambda text: _mask_completion_text(
             span,
-            content,
+            text,
             request_type=request_type,
             span_name=span_name,
             segment_index=segment_index,
-        )
+        ),
+        clone_item=clone_value,
+        get_text=lambda block: (
+            get_object_value(block, "text")
+            if get_object_value(block, "type") in (None, "text")
+            else None
+        ),
+        set_text=lambda block, text: set_object_value(block, "text", text),
+    )
+
+
+def _mask_content_items(content, *, mask_string, clone_item, get_text, set_text):
+    if isinstance(content, str):
+        return mask_string(content)
 
     if not isinstance(content, list):
         return content, False
@@ -169,36 +151,23 @@ def _mask_completion_content(span, content, *, request_type, span_name, segment_
     updated_content = content
     for block_index, block in enumerate(content):
         if isinstance(block, str):
-            updated_text, changed = _mask_completion_text(
-                span,
-                block,
-                request_type=request_type,
-                span_name=span_name,
-                segment_index=segment_index,
-            )
+            updated_text, changed = mask_string(block)
             if not changed:
                 continue
             if updated_content is content:
-                updated_content = clone_value(content)
+                updated_content = clone_item(content)
             updated_content[block_index] = updated_text
             continue
 
-        block_type = get_object_value(block, "type")
-        block_text = get_object_value(block, "text")
-        if block_type not in (None, "text") or not isinstance(block_text, str):
+        block_text = get_text(block)
+        if not isinstance(block_text, str):
             continue
-        updated_text, changed = _mask_completion_text(
-            span,
-            block_text,
-            request_type=request_type,
-            span_name=span_name,
-            segment_index=segment_index,
-        )
+        updated_text, changed = mask_string(block_text)
         if not changed:
             continue
         if updated_content is content:
-            updated_content = clone_value(content)
-        set_object_value(updated_content[block_index], "text", updated_text)
+            updated_content = clone_item(content)
+        set_text(updated_content[block_index], updated_text)
 
     return updated_content, updated_content is not content
 

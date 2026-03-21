@@ -6,8 +6,11 @@ from io import BytesIO
 from opentelemetry.instrumentation.fortifyroot import (
     SafetyDecision,
     SafetyLocation,
+    clone_value,
+    get_object_value,
     run_completion_safety,
     run_prompt_safety,
+    set_object_value,
 )
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
     ReusableStreamingBody,
@@ -41,11 +44,11 @@ def _apply_converse_prompt_safety(span, kwargs, span_name):
     try:
         mutated_kwargs = kwargs
 
-        system_messages = kwargs.get("system")
+        system_messages = get_object_value(kwargs, "system")
         if isinstance(system_messages, list):
             mutated_system = None
             for index, message in enumerate(system_messages):
-                text = message.get("text") if isinstance(message, dict) else None
+                text = get_object_value(message, "text") if message is not None else None
                 if not isinstance(text, str):
                     continue
                 updated_text, changed = _mask_prompt_text(
@@ -60,34 +63,34 @@ def _apply_converse_prompt_safety(span, kwargs, span_name):
                     continue
                 if mutated_system is None:
                     mutated_kwargs = dict(kwargs)
-                    mutated_system = [dict(item) for item in system_messages]
+                    mutated_system = clone_value(system_messages)
                     mutated_kwargs["system"] = mutated_system
-                mutated_system[index]["text"] = updated_text
+                set_object_value(mutated_system[index], "text", updated_text)
 
-        messages = kwargs.get("messages")
+        messages = get_object_value(kwargs, "messages")
         if not isinstance(messages, list):
             return mutated_kwargs
 
         mutated_messages = None
         for index, message in enumerate(messages):
-            if not isinstance(message, dict):
+            if message is None:
                 continue
             updated_content, changed = _mask_prompt_content(
                 span,
-                message.get("content"),
+                get_object_value(message, "content"),
                 span_name=span_name,
                 request_type=LLMRequestTypeValues.CHAT.value,
                 segment_index=index,
-                segment_role=message.get("role") or "user",
+                segment_role=get_object_value(message, "role") or "user",
             )
             if not changed:
                 continue
             if mutated_messages is None:
                 if mutated_kwargs is kwargs:
                     mutated_kwargs = dict(kwargs)
-                mutated_messages = [dict(item) if isinstance(item, dict) else item for item in messages]
+                mutated_messages = clone_value(messages)
                 mutated_kwargs["messages"] = mutated_messages
-            mutated_messages[index]["content"] = updated_content
+            set_object_value(mutated_messages[index], "content", updated_content)
 
         return mutated_kwargs
     except Exception:
@@ -129,25 +132,25 @@ def _prepare_invoke_response(span, response, span_name):
 
 def _apply_converse_completion_safety(span, response, span_name):
     try:
-        output = response.get("output")
-        if not isinstance(output, dict):
+        output = get_object_value(response, "output")
+        if output is None:
             return
-        message = output.get("message")
-        if not isinstance(message, dict):
+        message = get_object_value(output, "message")
+        if message is None:
             return
         updated_content, changed = _mask_completion_content(
             span,
-            message.get("content"),
+            get_object_value(message, "content"),
             span_name=span_name,
             request_type=LLMRequestTypeValues.CHAT.value,
             segment_index=0,
         )
         if changed:
-            updated_message = dict(message)
-            updated_message["content"] = updated_content
-            updated_output = dict(output)
-            updated_output["message"] = updated_message
-            response["output"] = updated_output
+            updated_message = clone_value(message)
+            set_object_value(updated_message, "content", updated_content)
+            updated_output = clone_value(output)
+            set_object_value(updated_output, "message", updated_message)
+            set_object_value(response, "output", updated_output)
     except Exception:
         return
 
@@ -185,8 +188,8 @@ def _mask_prompt_payload(span, value, *, span_name, request_type, segment_index)
             if not changed:
                 continue
             if updated is value:
-                updated = dict(value)
-            updated[key] = updated_item
+                updated = clone_value(value)
+            set_object_value(updated, key, updated_item)
         return updated, updated is not value
 
     if isinstance(value, list):
@@ -202,7 +205,7 @@ def _mask_prompt_payload(span, value, *, span_name, request_type, segment_index)
             if not changed:
                 continue
             if updated is value:
-                updated = list(value)
+                updated = clone_value(value)
             updated[index] = updated_item
         return updated, updated is not value
 
@@ -240,8 +243,8 @@ def _mask_completion_payload(span, value, *, span_name, request_type, segment_in
             if not changed:
                 continue
             if updated is value:
-                updated = dict(value)
-            updated[key] = updated_item
+                updated = clone_value(value)
+            set_object_value(updated, key, updated_item)
         return updated, updated is not value
 
     if isinstance(value, list):
@@ -257,7 +260,7 @@ def _mask_completion_payload(span, value, *, span_name, request_type, segment_in
             if not changed:
                 continue
             if updated is value:
-                updated = list(value)
+                updated = clone_value(value)
             updated[index] = updated_item
         return updated, updated is not value
 
@@ -288,10 +291,11 @@ def _mask_prompt_content(
 
     updated = content
     for index, item in enumerate(content):
-        if isinstance(item, dict) and isinstance(item.get("text"), str):
+        block_text = get_object_value(item, "text") if item is not None else None
+        if isinstance(block_text, str):
             updated_text, changed = _mask_prompt_text(
                 span,
-                item["text"],
+                block_text,
                 span_name=span_name,
                 request_type=request_type,
                 segment_index=segment_index,
@@ -300,8 +304,8 @@ def _mask_prompt_content(
             if not changed:
                 continue
             if updated is content:
-                updated = [dict(block) if isinstance(block, dict) else block for block in content]
-            updated[index]["text"] = updated_text
+                updated = clone_value(content)
+            set_object_value(updated[index], "text", updated_text)
             continue
 
         updated_item, changed = _mask_prompt_payload(
@@ -314,7 +318,7 @@ def _mask_prompt_content(
         if not changed:
             continue
         if updated is content:
-            updated = list(content)
+            updated = clone_value(content)
         updated[index] = updated_item
 
     return updated, updated is not content
@@ -335,10 +339,11 @@ def _mask_completion_content(span, content, *, span_name, request_type, segment_
 
     updated = content
     for index, item in enumerate(content):
-        if isinstance(item, dict) and isinstance(item.get("text"), str):
+        block_text = get_object_value(item, "text") if item is not None else None
+        if isinstance(block_text, str):
             updated_text, changed = _mask_completion_text(
                 span,
-                item["text"],
+                block_text,
                 span_name=span_name,
                 request_type=request_type,
                 segment_index=segment_index,
@@ -346,8 +351,8 @@ def _mask_completion_content(span, content, *, span_name, request_type, segment_
             if not changed:
                 continue
             if updated is content:
-                updated = [dict(block) if isinstance(block, dict) else block for block in content]
-            updated[index]["text"] = updated_text
+                updated = clone_value(content)
+            set_object_value(updated[index], "text", updated_text)
             continue
 
         updated_item, changed = _mask_completion_payload(
@@ -360,7 +365,7 @@ def _mask_completion_content(span, content, *, span_name, request_type, segment_
         if not changed:
             continue
         if updated is content:
-            updated = list(content)
+            updated = clone_value(content)
         updated[index] = updated_item
 
     return updated, updated is not content

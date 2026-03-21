@@ -54,7 +54,7 @@ async def create_async_stream_processor_delegate(
         _update_accumulated_response,
     )
 
-    return await create_async_stream_processor(
+    async for item in create_async_stream_processor(
         response,
         span=span,
         event_logger=event_logger,
@@ -67,4 +67,5 @@ async def create_async_stream_processor_delegate(
         span_name=getattr(span, "name", "writerai.chat"),
         update_accumulated_response=_update_accumulated_response,
         handle_response=_handle_response,
-    )
+    ):
+        yield item

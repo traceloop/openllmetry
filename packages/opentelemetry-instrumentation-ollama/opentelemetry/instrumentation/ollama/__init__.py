@@ -18,6 +18,9 @@ from opentelemetry.instrumentation.ollama.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
 )
+from opentelemetry.instrumentation.ollama.streaming_safety import (
+    OllamaStreamingSafety,
+)
 from opentelemetry.instrumentation.ollama.span_utils import (
     set_input_attributes,
     set_model_input_attributes,
@@ -108,8 +111,14 @@ def _accumulate_streaming_response(
     first_token = True
     first_token_time = None
     last_response = None
+    streaming_safety = OllamaStreamingSafety(
+        span,
+        llm_request_type,
+        getattr(span, "name", f"ollama.{llm_request_type.value}"),
+    )
 
     for res in response:
+        res = streaming_safety.process_chunk(res)
         last_response = res  # Track the last response explicitly
 
         if first_token and streaming_time_to_first_token and start_time is not None:
@@ -172,8 +181,14 @@ async def _aaccumulate_streaming_response(
     first_token = True
     first_token_time = None
     last_response = None
+    streaming_safety = OllamaStreamingSafety(
+        span,
+        llm_request_type,
+        getattr(span, "name", f"ollama.{llm_request_type.value}"),
+    )
 
     async for res in response:
+        res = streaming_safety.process_chunk(res)
         last_response = res
 
         if first_token and streaming_time_to_first_token and start_time is not None:

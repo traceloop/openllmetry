@@ -31,6 +31,9 @@ from opentelemetry.instrumentation.llamaindex.dispatcher_wrapper import (
 from opentelemetry.instrumentation.llamaindex.llamaparse_instrumentor import (
     LlamaParseInstrumentor,
 )
+from opentelemetry.instrumentation.llamaindex.safety import (
+    uninstrument_llm_safety_wrappers,
+)
 from opentelemetry.instrumentation.llamaindex.query_pipeline_instrumentor import (
     QueryPipelineInstrumentor,
 )
@@ -114,7 +117,7 @@ class LlamaIndexInstrumentorCore(BaseInstrumentor):
         LlamaIndexInstrumentor.apply_instrumentation("llama-index-core", **kwargs)
 
     def _uninstrument(self, **kwargs):
-        pass
+        uninstrument_llm_safety_wrappers()
 
 
 class LlamaIndexInstrumentorFull(BaseInstrumentor):
@@ -131,4 +134,4 @@ class LlamaIndexInstrumentorFull(BaseInstrumentor):
         LlamaIndexInstrumentor.apply_instrumentation("llama-index", **kwargs)
 
     def _uninstrument(self, **kwargs):
-        pass
+        uninstrument_llm_safety_wrappers()

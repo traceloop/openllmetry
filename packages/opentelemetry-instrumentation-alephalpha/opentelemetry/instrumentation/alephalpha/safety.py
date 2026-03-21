@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from aleph_alpha_client import Prompt as AlephAlphaPrompt
+try:
+    from aleph_alpha_client import Prompt as AlephAlphaPrompt
+except Exception:  # pragma: no cover
+    AlephAlphaPrompt = None
 from opentelemetry.instrumentation.fortifyroot import (
     SafetyDecision,
     SafetyLocation,
@@ -64,7 +67,7 @@ def _mask_prompt_value(span, prompt, *, span_name):
         )
         if not changed:
             return prompt, False
-        return AlephAlphaPrompt.from_text(updated_text), True
+        return updated_text, True
 
     if prompt is None:
         return prompt, False
@@ -75,7 +78,9 @@ def _mask_prompt_value(span, prompt, *, span_name):
         return prompt, False
 
     if isinstance(updated_json, list):
-        return AlephAlphaPrompt.from_json(updated_json), True
+        if AlephAlphaPrompt is not None:
+            return AlephAlphaPrompt.from_json(updated_json), True
+        return updated_json, True
     return updated_json, True
 
 

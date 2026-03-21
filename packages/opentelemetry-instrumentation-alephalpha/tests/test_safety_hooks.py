@@ -3,9 +3,11 @@ from types import SimpleNamespace
 import pytest
 from aleph_alpha_client import Prompt
 
+from opentelemetry.instrumentation.alephalpha import safety as alephalpha_safety
 from opentelemetry.instrumentation.alephalpha.safety import (
     _apply_completion_safety,
     _apply_prompt_safety,
+    _mask_prompt_value,
     _resolve_masked_text,
 )
 from opentelemetry.instrumentation.fortifyroot import (
@@ -141,3 +143,45 @@ def test_helpers_cover_passthrough_and_prompt_extraction_branches():
     assert _resolve_masked_text("same", None) == ("same", False)
     unchanged = SafetyResult(text="same", overall_action="MASK", findings=[])
     assert _resolve_masked_text("same", unchanged) == ("same", False)
+
+
+def test_prompt_safety_keeps_plain_string_prompts_as_strings():
+    _, tracer = _test_span()
+    register_prompt_safety_handler(
+        lambda context: SafetyResult(
+            text="[PII:secret]",
+            overall_action="MASK",
+            findings=[SafetyFinding("PII", "HIGH", "MASK", "PII.prompt", 0, len(context.text))],
+        )
+        if context.location == SafetyLocation.PROMPT and context.text == "secret"
+        else None
+    )
+
+    request = SimpleNamespace(prompt="secret")
+    with tracer.start_as_current_span("alephalpha.completion") as span:
+        _apply_prompt_safety(span, (request,), {}, "alephalpha.completion")
+
+    assert request.prompt == "[PII:secret]"
+    assert isinstance(request.prompt, str)
+
+
+def test_mask_prompt_value_falls_back_to_json_when_prompt_class_is_unavailable(monkeypatch):
+    register_prompt_safety_handler(
+        lambda context: SafetyResult(
+            text="[PII:secret]",
+            overall_action="MASK",
+            findings=[SafetyFinding("PII", "HIGH", "MASK", "PII.prompt", 0, len(context.text))],
+        )
+        if context.location == SafetyLocation.PROMPT and context.text == "secret"
+        else None
+    )
+    monkeypatch.setattr(alephalpha_safety, "AlephAlphaPrompt", None)
+
+    updated_prompt, changed = _mask_prompt_value(
+        None,
+        [{"type": "text", "data": "secret"}],
+        span_name="alephalpha.completion",
+    )
+
+    assert changed is True
+    assert updated_prompt == [{"type": "text", "data": "[PII:secret]"}]

@@ -429,7 +429,10 @@ class RealtimeConnectionWrapper:
 
     async def send(self, event):
         """Send an event, tracking response.create."""
-        event = apply_realtime_event_prompt_safety(event)
+        event = apply_realtime_event_prompt_safety(
+            event,
+            span=self._state.response_span or self._state.session_span,
+        )
         self._process_outgoing_event(event)
         return await self._connection.send(event)
 
@@ -562,7 +565,10 @@ class RealtimeSessionWrapper:
 
     async def update(self, **kwargs):
         """Wrap session.update to track configuration changes."""
-        kwargs = apply_realtime_session_prompt_safety(kwargs)
+        kwargs = apply_realtime_session_prompt_safety(
+            kwargs,
+            span=self._state.session_span,
+        )
         result = await self._session.update(**kwargs)
 
         # Track session config updates
@@ -617,7 +623,10 @@ class RealtimeConversationItemWrapper:
 
     async def create(self, **kwargs):
         """Wrap item.create to track user input."""
-        kwargs = apply_realtime_item_prompt_safety(kwargs)
+        kwargs = apply_realtime_item_prompt_safety(
+            kwargs,
+            span=self._state.session_span,
+        )
         result = await self._item.create(**kwargs)
 
         # Track input for the span

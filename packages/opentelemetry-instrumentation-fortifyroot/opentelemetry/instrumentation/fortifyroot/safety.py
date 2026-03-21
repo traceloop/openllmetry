@@ -27,16 +27,20 @@ class SafetyLocation(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class SafetyFinding:
+    """A single safety match emitted by a prompt or completion scan."""
+
     category: str
     severity: str
     action: str
     rule_name: str
-    start: int
-    end: int
+    start: int | str
+    end: int | str
 
 
 @dataclass(frozen=True, slots=True)
 class SafetyContext:
+    """Context passed to registered prompt and completion safety handlers."""
+
     provider: str
     text: str
     location: SafetyLocation
@@ -49,6 +53,8 @@ class SafetyContext:
 
 @dataclass(frozen=True, slots=True)
 class SafetyResult:
+    """Normalized handler output returned to provider integrations."""
+
     text: str
     findings: Sequence[SafetyFinding] = ()
     overall_action: str = SafetyDecision.ALLOW.value
@@ -58,24 +64,31 @@ PromptSafetyHandler = Callable[[SafetyContext], SafetyResult | None]
 CompletionSafetyHandler = Callable[[SafetyContext], SafetyResult | None]
 
 
-_handler_lock = threading.RLock()
+HANDLER_LOCK = threading.RLock()
+_handler_lock = HANDLER_LOCK
 _prompt_handler: PromptSafetyHandler | None = None
 _completion_handler: CompletionSafetyHandler | None = None
 
 
 def register_prompt_safety_handler(handler: PromptSafetyHandler | None) -> None:
+    """Register the global prompt safety handler."""
+
     global _prompt_handler
     with _handler_lock:
         _prompt_handler = handler
 
 
 def register_completion_safety_handler(handler: CompletionSafetyHandler | None) -> None:
+    """Register the global completion safety handler."""
+
     global _completion_handler
     with _handler_lock:
         _completion_handler = handler
 
 
 def clear_safety_handlers() -> None:
+    """Clear all registered FortifyRoot safety hooks."""
+
     from opentelemetry.instrumentation.fortifyroot.streaming import (
         clear_completion_safety_stream_factory,
     )
@@ -86,11 +99,15 @@ def clear_safety_handlers() -> None:
 
 
 def get_prompt_safety_handler() -> PromptSafetyHandler | None:
+    """Return the currently registered prompt safety handler, if any."""
+
     with _handler_lock:
         return _prompt_handler
 
 
 def get_completion_safety_handler() -> CompletionSafetyHandler | None:
+    """Return the currently registered completion safety handler, if any."""
+
     with _handler_lock:
         return _completion_handler
 
@@ -107,6 +124,8 @@ def run_prompt_safety(
     segment_role: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> SafetyResult | None:
+    """Execute prompt safety for provider request text."""
+
     return _run_safety(
         handler=get_prompt_safety_handler(),
         span=span,
@@ -133,6 +152,8 @@ def run_completion_safety(
     segment_role: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> SafetyResult | None:
+    """Execute completion safety for provider response text."""
+
     return _run_safety(
         handler=get_completion_safety_handler(),
         span=span,
@@ -148,6 +169,8 @@ def run_completion_safety(
 
 
 def clone_value(value: Any) -> Any:
+    """Best-effort deep copy that falls back to the original object."""
+
     try:
         return copy.deepcopy(value)
     except Exception:
@@ -155,12 +178,16 @@ def clone_value(value: Any) -> Any:
 
 
 def get_object_value(obj: Any, key: str, default: Any = None) -> Any:
+    """Read a field from either a mapping or attribute-based object."""
+
     if isinstance(obj, Mapping):
         return obj.get(key, default)
     return getattr(obj, key, default)
 
 
 def set_object_value(obj: Any, key: str, value: Any) -> bool:
+    """Write a field onto either a mapping or attribute-based object."""
+
     if isinstance(obj, MutableMapping):
         obj[key] = value
         return True

@@ -26,6 +26,7 @@ def build_streaming_response_delegate(span, event_logger, response, llm_model):
         span=span,
         llm_model=llm_model,
         finalize_response=finalize_response,
+        span_name=getattr(span, "name", "vertexai.generate_content"),
     )
 
 
@@ -48,5 +49,6 @@ async def build_async_streaming_response_delegate(span, event_logger, response, 
         span=span,
         llm_model=llm_model,
         finalize_response=finalize_response,
+        span_name=getattr(span, "name", "vertexai.generate_content"),
     ):
         yield item

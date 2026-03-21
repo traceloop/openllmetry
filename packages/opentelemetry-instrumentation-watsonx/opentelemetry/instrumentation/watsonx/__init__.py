@@ -589,7 +589,7 @@ def _wrap(
     )
 
     args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
-    _handle_input(span, event_logger, name, instance, args, kwargs)
+    _handle_input(span, event_logger, name, instance, response_counter, args, kwargs)
 
     if "generate" in name:
         if to_wrap.get("method") == "generate_text_stream":

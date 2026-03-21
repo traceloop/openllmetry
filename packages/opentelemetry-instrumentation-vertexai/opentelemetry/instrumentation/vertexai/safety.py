@@ -49,50 +49,40 @@ def _apply_prompt_safety(span, args, kwargs, span_name):
 
 def _apply_completion_safety(span, response, span_name):
     try:
-        text = get_object_value(response, "text")
-        if isinstance(text, str):
-            updated_text, changed = _mask_completion_text(
-                span,
-                text,
-                span_name=span_name,
-                segment_index=0,
-            )
-            if changed:
-                set_object_value(response, "text", updated_text)
-
         candidates = get_object_value(response, "candidates")
         if not isinstance(candidates, list):
             return
 
         for candidate_index, candidate in enumerate(candidates):
-            candidate_text = get_object_value(candidate, "text")
-            if isinstance(candidate_text, str):
-                updated_candidate_text, changed = _mask_completion_text(
-                    span,
-                    candidate_text,
-                    span_name=span_name,
-                    segment_index=candidate_index,
-                )
-                if changed:
-                    set_object_value(candidate, "text", updated_candidate_text)
-
             content = get_object_value(candidate, "content")
             parts = get_object_value(content, "parts")
-            if not isinstance(parts, list):
+            if isinstance(parts, list):
+                for part_index, part in enumerate(parts):
+                    part_text = get_object_value(part, "text")
+                    if not isinstance(part_text, str):
+                        continue
+                    updated_part_text, changed = _mask_completion_text(
+                        span,
+                        part_text,
+                        span_name=span_name,
+                        segment_index=candidate_index,
+                        metadata={"part_index": part_index},
+                    )
+                    if changed:
+                        set_object_value(part, "text", updated_part_text)
                 continue
-            for part_index, part in enumerate(parts):
-                part_text = get_object_value(part, "text")
-                if not isinstance(part_text, str):
-                    continue
-                updated_part_text, changed = _mask_completion_text(
-                    span,
-                    part_text,
-                    span_name=span_name,
-                    segment_index=candidate_index,
-                    metadata={"part_index": part_index},
-                )
-                if changed:
-                    set_object_value(part, "text", updated_part_text)
+
+            candidate_text = get_object_value(candidate, "text")
+            if not isinstance(candidate_text, str):
+                continue
+            updated_candidate_text, changed = _mask_completion_text(
+                span,
+                candidate_text,
+                span_name=span_name,
+                segment_index=candidate_index,
+            )
+            if changed:
+                set_object_value(candidate, "text", updated_candidate_text)
     except Exception:
         return
 

@@ -18,19 +18,6 @@ def _apply_prompt_safety(span, kwargs, span_name):
     try:
         mutated_kwargs = kwargs
 
-        prompt = kwargs.get("prompt")
-        if isinstance(prompt, str):
-            updated_prompt, changed = _mask_prompt_text(
-                span,
-                prompt,
-                span_name=span_name,
-                segment_index=0,
-                segment_role="user",
-            )
-            if changed:
-                mutated_kwargs = dict(kwargs)
-                mutated_kwargs["prompt"] = updated_prompt
-
         messages = kwargs.get("messages")
         if not isinstance(messages, list):
             return mutated_kwargs

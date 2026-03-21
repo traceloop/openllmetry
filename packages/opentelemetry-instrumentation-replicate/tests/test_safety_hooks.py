@@ -124,7 +124,7 @@ def test_prompt_safety_supports_args_path_and_passthrough():
     assert updated_args[1]["prompt"] == "[PII.prompt]"
     assert unchanged_kwargs == {}
     assert nested_kwargs["input"]["query"] == "[PII.prompt]"
-    assert nested_kwargs["input"]["nested"]["negative_prompt"] == "[PII.prompt]"
+    assert nested_kwargs["input"]["nested"]["negative_prompt"] == "secret"
     assert nested_kwargs["input"]["image"] == "https://example.invalid/cat.png"
     assert passthrough_args == ()
     assert passthrough_kwargs == {"input": {"prompt": None}}

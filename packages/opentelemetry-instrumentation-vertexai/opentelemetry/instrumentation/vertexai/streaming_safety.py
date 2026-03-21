@@ -72,11 +72,15 @@ def build_streaming_response(
     span,
     llm_model,
     finalize_response,
+    span_name=None,
 ) -> Iterator:
     complete_response = ""
     token_usage = None
     pending_item = None
-    streaming_safety = VertexAIStreamingSafety(span, "vertexai.generate_content")
+    streaming_safety = VertexAIStreamingSafety(
+        span,
+        span_name or "vertexai.generate_content",
+    )
     for item in response:
         item = streaming_safety.process_item(item)
         if pending_item is not None:
@@ -102,11 +106,15 @@ async def build_async_streaming_response(
     span,
     llm_model,
     finalize_response,
+    span_name=None,
 ) -> AsyncIterator:
     complete_response = ""
     token_usage = None
     pending_item = None
-    streaming_safety = VertexAIStreamingSafety(span, "vertexai.generate_content")
+    streaming_safety = VertexAIStreamingSafety(
+        span,
+        span_name or "vertexai.generate_content",
+    )
     async for item in response:
         item = streaming_safety.process_item(item)
         if pending_item is not None:

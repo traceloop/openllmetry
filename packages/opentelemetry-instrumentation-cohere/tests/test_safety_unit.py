@@ -96,6 +96,24 @@ def test_apply_completion_safety_masks_chat_and_completion_shapes(monkeypatch):
     assert generation.text == "masked:gen-secret"
 
 
+def test_apply_completion_safety_syncs_response_text_only_when_derived_from_message_content(monkeypatch):
+    monkeypatch.setattr(
+        safety,
+        "run_completion_safety",
+        lambda **kwargs: SafetyResult(text=f"masked:{kwargs['text']}", overall_action="MASK"),
+    )
+
+    chat_response = SimpleNamespace(
+        text="content-secret",
+        message=SimpleNamespace(content=[{"text": "content-secret"}]),
+    )
+
+    safety._apply_completion_safety(None, chat_response, LLMRequestTypeValues.CHAT, "cohere.chat")
+
+    assert chat_response.text == "masked:content-secret"
+    assert chat_response.message.content[0]["text"] == "masked:content-secret"
+
+
 def test_cohere_completion_helper_noop_branches(monkeypatch):
     monkeypatch.setattr(safety, "run_completion_safety", lambda **kwargs: SafetyResult(text=kwargs["text"], overall_action="MASK"))
     assert safety._apply_completion_safety(None, SimpleNamespace(text="x"), SimpleNamespace(value="embed"), "cohere.embed") is None

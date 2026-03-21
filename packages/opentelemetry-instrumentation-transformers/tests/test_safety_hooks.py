@@ -129,3 +129,34 @@ def test_prompt_and_completion_cover_keyword_and_nested_batch_paths():
     assert response[0][0]["generated_text"] == "[MASKED:completion-a]"
     assert response[1][0]["generated_text"][0]["content"] == "[MASKED:chat-completion]"
     assert _resolve_masked_text("same", None) == ("same", False)
+
+
+def test_prompt_safety_masks_kwargs_args_string_and_list_values():
+    _, tracer = _test_span()
+    register_prompt_safety_handler(
+        lambda context: SafetyResult(
+            text=f"[MASKED:{context.text}]",
+            overall_action="MASK",
+            findings=[SafetyFinding("PII", "HIGH", "MASK", "PII.prompt", 0, len(context.text))],
+        )
+        if context.location == SafetyLocation.PROMPT
+        else None
+    )
+
+    with tracer.start_as_current_span("transformers_text_generation_pipeline.call") as span:
+        _, string_kwargs = _apply_prompt_safety(
+            span,
+            (),
+            {"args": "secret"},
+            "transformers_text_generation_pipeline.call",
+        )
+        _, list_kwargs = _apply_prompt_safety(
+            span,
+            (),
+            {"args": ["secret-a", {"role": "user", "content": "secret-b"}]},
+            "transformers_text_generation_pipeline.call",
+        )
+
+    assert string_kwargs["args"] == "[MASKED:secret]"
+    assert list_kwargs["args"][0] == "[MASKED:secret-a]"
+    assert list_kwargs["args"][1]["content"] == "[MASKED:secret-b]"

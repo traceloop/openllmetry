@@ -5,6 +5,7 @@ import logging
 from typing import Collection
 
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.fortifyroot import get_object_value
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.litellm.safety import (
     apply_completion_safety,
@@ -243,7 +244,10 @@ def _request_type(kwargs, is_text_completion):
 def _set_request_attributes(span, args, kwargs, is_text_completion):
     model = kwargs.get("model")
     if model is None and args:
-        model = args[1] if is_text_completion and len(args) > 1 else args[0]
+        if is_text_completion:
+            model = args[1] if len(args) > 1 else None
+        else:
+            model = args[0]
     if model is not None:
         span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, str(model))
 
@@ -275,8 +279,8 @@ def _set_prompt_attributes(span, args, kwargs, request_type, is_text_completion)
         return
 
     for index, message in enumerate(messages):
-        role = _object_value(message, "role")
-        content = extract_text_content(_object_value(message, "content"))
+        role = get_object_value(message, "role")
+        content = extract_text_content(get_object_value(message, "content"))
         if role is not None:
             span.set_attribute(f"{SpanAttributes.LLM_PROMPTS}.{index}.role", str(role))
         if content:
@@ -287,14 +291,14 @@ def _set_prompt_attributes(span, args, kwargs, request_type, is_text_completion)
 
 
 def _set_response_attributes(span, response):
-    response_model = _object_value(response, "model")
+    response_model = get_object_value(response, "model")
     if response_model is not None:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(response_model))
 
-    usage = _object_value(response, "usage")
-    input_tokens = _object_value(usage, "prompt_tokens")
-    output_tokens = _object_value(usage, "completion_tokens")
-    total_tokens = _object_value(usage, "total_tokens")
+    usage = get_object_value(response, "usage")
+    input_tokens = get_object_value(usage, "prompt_tokens")
+    output_tokens = get_object_value(usage, "completion_tokens")
+    total_tokens = get_object_value(usage, "total_tokens")
 
     if input_tokens is not None:
         span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, int(input_tokens))
@@ -306,18 +310,18 @@ def _set_response_attributes(span, response):
     if total_tokens is not None:
         span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, int(total_tokens))
 
-    choices = _object_value(response, "choices") or []
+    choices = get_object_value(response, "choices") or []
     for index, choice in enumerate(choices):
-        finish_reason = _object_value(choice, "finish_reason")
+        finish_reason = get_object_value(choice, "finish_reason")
         if finish_reason is not None:
             span.set_attribute(
                 f"{SpanAttributes.LLM_COMPLETIONS}.{index}.finish_reason",
                 str(finish_reason),
             )
 
-        message = _object_value(choice, "message")
-        role = _object_value(message, "role")
-        content = extract_text_content(_object_value(message, "content"))
+        message = get_object_value(choice, "message")
+        role = get_object_value(message, "role")
+        content = extract_text_content(get_object_value(message, "content"))
         if role is not None:
             span.set_attribute(
                 f"{SpanAttributes.LLM_COMPLETIONS}.{index}.role",
@@ -330,7 +334,7 @@ def _set_response_attributes(span, response):
             )
             continue
 
-        text = _object_value(choice, "text")
+        text = get_object_value(choice, "text")
         if isinstance(text, str) and text:
             span.set_attribute(
                 f"{SpanAttributes.LLM_COMPLETIONS}.{index}.content",
@@ -372,16 +376,6 @@ def _finalize_response(span, response, request_type, span_name):
 def _record_span_error(span, exc):
     span.record_exception(exc)
     span.set_status(Status(StatusCode.ERROR, str(exc)))
-
-
-def _object_value(obj, key):
-    if obj is None:
-        return None
-    if isinstance(obj, dict):
-        return obj.get(key)
-    return getattr(obj, key, None)
-
-
 __all__ = [
     "LiteLLMInstrumentor",
     "_invoke_acompletion",

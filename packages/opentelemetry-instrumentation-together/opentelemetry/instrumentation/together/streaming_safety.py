@@ -69,27 +69,23 @@ def build_streaming_response(
     span_name,
     handle_response,
 ) -> Iterator:
-    tracker = _TogetherStreamingState(llm_request_type)
-    streaming_safety = TogetherStreamingSafety(
+    processor = _TogetherStreamProcessor(
         span=span,
         llm_request_type=llm_request_type,
         span_name=span_name,
+        event_logger=event_logger,
+        handle_response=handle_response,
     )
-    pending_chunk = None
 
     for chunk in response:
-        chunk = streaming_safety.process_chunk(chunk)
-        if pending_chunk is not None:
-            tracker.add_chunk(pending_chunk)
-            yield pending_chunk
-        pending_chunk = chunk
+        yielded = processor.process_chunk(chunk)
+        if yielded is not None:
+            yield yielded
 
-    if pending_chunk is not None:
-        streaming_safety.flush_pending_chunk(pending_chunk)
-        tracker.add_chunk(pending_chunk)
-        yield pending_chunk
-
-    _finalize_stream(span, event_logger, llm_request_type, tracker, handle_response)
+    final_chunk = processor.finish()
+    if final_chunk is not None:
+        yield final_chunk
+    processor.finalize()
 
 
 async def build_async_streaming_response(
@@ -101,27 +97,23 @@ async def build_async_streaming_response(
     span_name,
     handle_response,
 ) -> AsyncIterator:
-    tracker = _TogetherStreamingState(llm_request_type)
-    streaming_safety = TogetherStreamingSafety(
+    processor = _TogetherStreamProcessor(
         span=span,
         llm_request_type=llm_request_type,
         span_name=span_name,
+        event_logger=event_logger,
+        handle_response=handle_response,
     )
-    pending_chunk = None
 
     async for chunk in response:
-        chunk = streaming_safety.process_chunk(chunk)
-        if pending_chunk is not None:
-            tracker.add_chunk(pending_chunk)
-            yield pending_chunk
-        pending_chunk = chunk
+        yielded = processor.process_chunk(chunk)
+        if yielded is not None:
+            yield yielded
 
-    if pending_chunk is not None:
-        streaming_safety.flush_pending_chunk(pending_chunk)
-        tracker.add_chunk(pending_chunk)
-        yield pending_chunk
-
-    _finalize_stream(span, event_logger, llm_request_type, tracker, handle_response)
+    final_chunk = processor.finish()
+    if final_chunk is not None:
+        yield final_chunk
+    processor.finalize()
 
 
 class _TogetherStreamingState:
@@ -182,6 +174,50 @@ class _TogetherStreamingState:
             model=self._response_model,
             usage=self._usage,
             choices=choices,
+        )
+
+
+class _TogetherStreamProcessor:
+    def __init__(self, *, span, llm_request_type, span_name, event_logger, handle_response):
+        self._span = span
+        self._event_logger = event_logger
+        self._llm_request_type = llm_request_type
+        self._handle_response = handle_response
+        self._tracker = _TogetherStreamingState(llm_request_type)
+        self._streaming_safety = TogetherStreamingSafety(
+            span=span,
+            llm_request_type=llm_request_type,
+            span_name=span_name,
+        )
+        self._pending_chunk = None
+
+    def process_chunk(self, chunk):
+        chunk = self._streaming_safety.process_chunk(chunk)
+        if self._pending_chunk is None:
+            self._pending_chunk = chunk
+            return None
+
+        yielded = self._pending_chunk
+        self._tracker.add_chunk(yielded)
+        self._pending_chunk = chunk
+        return yielded
+
+    def finish(self):
+        if self._pending_chunk is None:
+            return None
+        self._streaming_safety.flush_pending_chunk(self._pending_chunk)
+        self._tracker.add_chunk(self._pending_chunk)
+        chunk = self._pending_chunk
+        self._pending_chunk = None
+        return chunk
+
+    def finalize(self):
+        _finalize_stream(
+            self._span,
+            self._event_logger,
+            self._llm_request_type,
+            self._tracker,
+            self._handle_response,
         )
 
 

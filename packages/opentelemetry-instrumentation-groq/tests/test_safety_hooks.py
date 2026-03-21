@@ -85,7 +85,7 @@ def test_completion_safety_masks_chat_choice():
     assert len(exporter.get_finished_spans()[0].events) == 1
 
 
-def test_prompt_safety_masks_prompt_and_block_content():
+def test_prompt_safety_masks_supported_chat_block_content_only():
     _, tracer = _test_span()
     register_prompt_safety_handler(
         lambda context: SafetyResult(
@@ -112,7 +112,7 @@ def test_prompt_safety_masks_prompt_and_block_content():
     with tracer.start_as_current_span("groq.chat") as span:
         updated_kwargs = _apply_prompt_safety(span, kwargs, "groq.chat")
 
-    assert updated_kwargs["prompt"] == "[MASKED:secret-prompt]"
+    assert updated_kwargs["prompt"] == "secret-prompt"
     assert updated_kwargs["messages"][0]["content"][0]["text"] == "[MASKED:secret-block]"
     assert kwargs["messages"][0]["content"][0]["text"] == "secret-block"
 
@@ -247,3 +247,39 @@ def test_streaming_helper_flushes_tail_when_finish_chunk_has_no_content():
 
     assert first_chunk.choices[0].delta.content == "masked"
     assert final_chunk.choices[0].delta.content == "-tail"
+
+
+def test_streaming_helper_fail_opens_when_stream_session_raises():
+    class _ExplodingSession:
+        def process_chunk(self, text):
+            raise RuntimeError("boom")
+
+        def flush(self):
+            raise RuntimeError("boom")
+
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _ExplodingSession())
+    first_chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                delta=SimpleNamespace(content="secret"),
+                finish_reason=None,
+            )
+        ]
+    )
+    final_chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                delta=SimpleNamespace(content=None),
+                finish_reason="stop",
+            )
+        ]
+    )
+
+    with tracer.start_as_current_span("groq.chat") as span:
+        helper = GroqStreamingSafety(span, "groq.chat")
+        helper.process_chunk(first_chunk)
+        helper.process_chunk(final_chunk)
+
+    assert first_chunk.choices[0].delta.content == "secret"
+    assert final_chunk.choices[0].delta.content is None

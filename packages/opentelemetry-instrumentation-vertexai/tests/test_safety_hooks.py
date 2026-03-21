@@ -81,9 +81,9 @@ def test_completion_safety_masks_response_text():
     with tracer.start_as_current_span("vertexai.generate_content") as span:
         _apply_completion_safety(span, response, "vertexai.generate_content")
 
-    assert response.text == "[SECRET.output]"
+    assert response.text == "secret"
     assert response.candidates[0].text == "[SECRET.output]"
-    assert len(exporter.get_finished_spans()[0].events) == 2
+    assert len(exporter.get_finished_spans()[0].events) == 1
 
 
 def test_prompt_and_completion_cover_contents_parts_and_candidate_parts():

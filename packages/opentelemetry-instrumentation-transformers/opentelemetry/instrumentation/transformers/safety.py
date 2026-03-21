@@ -31,7 +31,7 @@ def _apply_prompt_safety(span, args, kwargs, span_name):
         if not changed:
             return args, kwargs
 
-        if source == "args":
+        if source == "positional_args":
             return (updated_prompts, *args[1:]), kwargs
 
         mutated_kwargs = dict(kwargs)
@@ -50,7 +50,7 @@ def _apply_completion_safety(span, response, span_name):
 
 def _get_prompt_input(args, kwargs):
     if args:
-        return args[0], "args"
+        return args[0], "positional_args"
     for key in _PROMPT_KWARGS:
         if key in kwargs:
             return kwargs.get(key), key

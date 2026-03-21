@@ -33,7 +33,7 @@ class GoogleGenerativeAIStreamingSafety:
                 metadata={"part_index": key[1]},
             )
             set_object_value(part, "text", masked)
-        self._sync_item_text(item)
+        self._sync_item_text(item, parts)
         return item
 
     def flush_pending_item(self, item):
@@ -46,7 +46,7 @@ class GoogleGenerativeAIStreamingSafety:
                 continue
             current_text = get_object_value(part, "text") or ""
             set_object_value(part, "text", f"{current_text}{tail}")
-        self._sync_item_text(item)
+        self._sync_item_text(item, parts)
 
     def _text_parts(self, item):
         parts = []
@@ -57,8 +57,7 @@ class GoogleGenerativeAIStreamingSafety:
                     parts.append(((candidate_index, part_index), part))
         return parts
 
-    def _sync_item_text(self, item):
-        parts = self._text_parts(item)
+    def _sync_item_text(self, item, parts):
         if not parts:
             return
         text_parts = [get_object_value(part, "text") for _, part in parts]

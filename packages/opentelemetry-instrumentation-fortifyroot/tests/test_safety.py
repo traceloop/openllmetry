@@ -20,6 +20,10 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 pytestmark = pytest.mark.fr
 
 
+def teardown_function():
+    clear_safety_handlers()
+
+
 def test_run_prompt_safety_emits_one_event_per_finding():
     exporter = InMemorySpanExporter()
     provider = TracerProvider()

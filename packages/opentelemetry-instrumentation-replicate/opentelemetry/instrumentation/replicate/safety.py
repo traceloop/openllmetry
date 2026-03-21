@@ -156,7 +156,12 @@ def _should_mask_prompt_key(key):
     if not isinstance(key, str):
         return False
     normalized = key.lower()
-    return any(marker in normalized for marker in _PROMPT_KEY_MARKERS)
+    return any(
+        normalized == marker
+        or normalized.startswith(f"{marker}_")
+        or normalized.startswith(f"{marker}.")
+        for marker in _PROMPT_KEY_MARKERS
+    )
 
 
 def _mask_prompt_text(span, text, *, span_name, segment_index, segment_role):

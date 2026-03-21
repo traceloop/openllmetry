@@ -7,6 +7,9 @@ from opentelemetry.instrumentation.anthropic.streaming_safety import (
     AnthropicStreamingSafety,
 )
 from opentelemetry.instrumentation.anthropic.streaming import AnthropicStream
+from opentelemetry.instrumentation.anthropic.streaming_runtime import (
+    AnthropicAsyncStream,
+)
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
 from opentelemetry.instrumentation.fortifyroot import (
     clear_safety_handlers,
@@ -144,6 +147,20 @@ class _Iterator:
         return next(self._items)
 
 
+class _AsyncIterator:
+    def __init__(self, items):
+        self._items = iter(items)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._items)
+        except StopIteration as exc:
+            raise StopAsyncIteration from exc
+
+
 def _test_tracer():
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
@@ -178,6 +195,39 @@ def test_anthropic_stream_masks_text_delta_and_flushes_on_block_stop():
         second = next(stream)
         with pytest.raises(StopIteration):
             next(stream)
+
+    assert first.delta.text == "masked-tail"
+    assert second.type == "content_block_stop"
+    assert exporter.get_finished_spans()
+
+
+@pytest.mark.asyncio
+async def test_anthropic_async_stream_masks_text_delta_and_flushes_on_block_stop():
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    exporter, tracer = _test_tracer()
+
+    items = [
+        SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text="secret"),
+        ),
+        SimpleNamespace(type="content_block_stop", index=0),
+    ]
+
+    with tracer.start_as_current_span("anthropic.chat") as span:
+        stream = AnthropicAsyncStream(
+            span,
+            _AsyncIterator(items),
+            SimpleNamespace(count_tokens=lambda text: len(text)),
+            0.0,
+            kwargs={},
+        )
+        first = await stream.__anext__()
+        second = await stream.__anext__()
+        with pytest.raises(StopAsyncIteration):
+            await stream.__anext__()
 
     assert first.delta.text == "masked-tail"
     assert second.type == "content_block_stop"

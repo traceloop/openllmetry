@@ -92,6 +92,7 @@ def apply_assistant_messages_list_safety(span, response):
 
 class AssistantStreamingSafety:
     def __init__(self, span):
+        self._span = span
         self._streams = CompletionTextStreamGroup(
             span=span,
             provider=CHAT_PROVIDER,
@@ -143,7 +144,7 @@ class AssistantStreamingSafety:
                 value = get_object_value(text, "value")
                 if isinstance(value, str):
                     masked_value, changed = mask_completion_text(
-                        None,
+                        self._span,
                         value,
                         span_name=CHAT_SPAN_NAME,
                         segment_index=text_index,
@@ -151,6 +152,8 @@ class AssistantStreamingSafety:
                     if changed:
                         set_object_value(text, "value", masked_value)
             break
+
+
 def _mask_assistant_content(
     span,
     content,

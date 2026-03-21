@@ -21,6 +21,9 @@ from opentelemetry.instrumentation.mistralai.safety import (
 from opentelemetry.instrumentation.mistralai.streaming_safety import (
     MistralAIStreamingSafety,
 )
+from opentelemetry.instrumentation.mistralai import (
+    _aaccumulate_streaming_response,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -116,6 +119,21 @@ def test_prompt_safety_handles_non_chat_and_content_blocks():
         ) == (None, False)
 
     assert updated_kwargs["messages"][0].content[0].text == "[MASKED:secret-block]"
+    with tracer.start_as_current_span("mistralai.chat") as span:
+        image_kwargs = _apply_prompt_safety(
+            span,
+            {
+                "messages": [
+                    SimpleNamespace(
+                        role="user",
+                        content=[SimpleNamespace(type="image_url", text="leave-alone")],
+                    )
+                ]
+            },
+            LLMRequestTypeValues.CHAT,
+            "mistralai.chat",
+        )
+    assert image_kwargs["messages"][0].content[0].text == "leave-alone"
 
 
 def test_completion_helpers_cover_passthrough_and_block_paths():
@@ -210,3 +228,69 @@ def test_streaming_helper_flushes_tail_when_finish_chunk_has_no_content():
 
     assert first_item.data.choices[0].delta.content == "masked"
     assert final_item.data.choices[0].delta.content == "-tail"
+
+
+@pytest.mark.asyncio
+async def test_async_streaming_accumulator_masks_tail_before_final_response(monkeypatch):
+    _, tracer = _test_span()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    handled = []
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.mistralai._handle_response",
+        lambda span, event_logger, llm_request_type, response: handled.append(response),
+    )
+
+    class _AsyncResponse:
+        def __init__(self, chunks):
+            self._chunks = iter(chunks)
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            try:
+                return next(self._chunks)
+            except StopIteration as exc:
+                raise StopAsyncIteration from exc
+
+    first = SimpleNamespace(
+        data=SimpleNamespace(
+            id="resp-1",
+            model="mistral-test",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    finish_reason=None,
+                    delta=SimpleNamespace(content="secret", role="assistant"),
+                )
+            ],
+        )
+    )
+    final = SimpleNamespace(
+        data=SimpleNamespace(
+            id="resp-1",
+            model="mistral-test",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    finish_reason="stop",
+                    delta=SimpleNamespace(content=None, role="assistant"),
+                )
+            ],
+        )
+    )
+
+    with tracer.start_as_current_span("mistralai.chat") as span:
+        yielded = [
+            item
+            async for item in _aaccumulate_streaming_response(
+                span,
+                None,
+                LLMRequestTypeValues.CHAT,
+                _AsyncResponse([first, final]),
+            )
+        ]
+
+    assert yielded[0].data.choices[0].delta.content == "masked"
+    assert yielded[1].data.choices[0].delta.content == "-tail"
+    assert handled[0].choices[0].message.content == "masked-tail"

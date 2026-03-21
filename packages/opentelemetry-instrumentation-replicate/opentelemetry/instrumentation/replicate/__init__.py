@@ -64,21 +64,6 @@ WRAPPED_METHODS = [
 
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
-
-
-def _build_from_streaming_response(span, event_logger, response):
-    complete_response = ""
-    for item in response:
-        item_to_yield = item
-        complete_response += str(item)
-
-        yield item_to_yield
-
-    _handle_response(span, event_logger, complete_response)
-
-    span.end()
-
-
 _build_from_streaming_response = _fr_build_streaming_response
 
 

@@ -18,12 +18,12 @@ from opentelemetry.instrumentation.openai.shared.safety_common import (
 )
 
 
-def apply_realtime_event_prompt_safety(event):
+def apply_realtime_event_prompt_safety(event, span=None):
     if get_object_value(event, "type") != "conversation.item.create":
         return event
 
     item = get_object_value(event, "item")
-    masked_item, changed = _mask_realtime_item(item)
+    masked_item, changed = _mask_realtime_item(item, span=span)
     if not changed:
         return event
 
@@ -31,14 +31,17 @@ def apply_realtime_event_prompt_safety(event):
     return updated_event if updated_event is not None else event
 
 
-def apply_realtime_session_prompt_safety(kwargs: dict[str, Any]) -> dict[str, Any]:
+def apply_realtime_session_prompt_safety(
+    kwargs: dict[str, Any],
+    span=None,
+) -> dict[str, Any]:
     session = kwargs.get("session")
     instructions = get_object_value(session, "instructions")
     if not isinstance(instructions, str):
         return kwargs
 
     masked_instructions, changed = mask_prompt_text(
-        None,
+        span,
         instructions,
         span_name=CHAT_SPAN_NAME,
         segment_index=0,
@@ -56,9 +59,9 @@ def apply_realtime_session_prompt_safety(kwargs: dict[str, Any]) -> dict[str, An
     return updated_kwargs
 
 
-def apply_realtime_item_prompt_safety(kwargs: dict[str, Any]) -> dict[str, Any]:
+def apply_realtime_item_prompt_safety(kwargs: dict[str, Any], span=None) -> dict[str, Any]:
     item = kwargs.get("item")
-    masked_item, changed = _mask_realtime_item(item)
+    masked_item, changed = _mask_realtime_item(item, span=span)
     if not changed:
         return kwargs
 
@@ -143,7 +146,7 @@ class RealtimeStreamingSafety:
         return response_id or "current"
 
 
-def _mask_realtime_item(item):
+def _mask_realtime_item(item, *, span=None):
     content = get_object_value(item, "content")
     if not isinstance(content, list):
         return item, False
@@ -158,7 +161,7 @@ def _mask_realtime_item(item):
         if not isinstance(text, str):
             continue
         masked_text, text_changed = mask_prompt_text(
-            None,
+            span,
             text,
             span_name=CHAT_SPAN_NAME,
             segment_index=0,

@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from functools import partial, wraps
+from functools import wraps
 from typing import Collection
 
 from opentelemetry import context as context_api
@@ -15,7 +15,6 @@ from opentelemetry.instrumentation.bedrock.event_emitter import (
     emit_input_events_converse,
     emit_message_events,
     emit_response_event_converse,
-    emit_streaming_converse_response_event,
     emit_streaming_response_event,
 )
 from opentelemetry.instrumentation.bedrock.guardrail import (
@@ -32,12 +31,15 @@ from opentelemetry.instrumentation.bedrock.safety import (
     _apply_invoke_prompt_safety,
     _prepare_invoke_response,
 )
+from opentelemetry.instrumentation.bedrock.streaming_safety import (
+    create_converse_stream_wrapper,
+    create_invoke_stream_wrapper,
+)
 from opentelemetry.instrumentation.bedrock.span_utils import (
     converse_usage_record,
     set_converse_input_prompt_span_attributes,
     set_converse_model_span_attributes,
     set_converse_response_span_attributes,
-    set_converse_streaming_response_span_attributes,
     set_model_choice_span_attributes,
     set_model_message_span_attributes,
     set_model_span_attributes,
@@ -315,8 +317,10 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
         span.end()
 
-    response["body"] = StreamingWrapper(
-        response["body"], stream_done_callback=stream_done
+    response["body"] = create_invoke_stream_wrapper(
+        StreamingWrapper(response["body"], stream_done_callback=stream_done),
+        span=span,
+        stream_done_callback=stream_done,
     )
 
 
@@ -390,42 +394,15 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
         set_converse_input_prompt_span_attributes(kwargs, span)
 
     stream = response.get("stream")
-    role = "unknown"
     if stream:
-
-        def handler(func):
-            def wrap(*args, **kwargs):
-                response_msg = kwargs.pop("response_msg")
-                span = kwargs.pop("span")
-                event = func(*args, **kwargs)
-                nonlocal role
-                if "contentBlockDelta" in event and "text" in event["contentBlockDelta"].get("delta", {}):
-                    response_msg.append(event["contentBlockDelta"]["delta"]["text"])
-                elif "messageStart" in event:
-                    role = event["messageStart"]["role"]
-                elif "metadata" in event:
-                    # last message sent
-                    guardrail_converse(span, event["metadata"], provider, model, metric_params)
-                    converse_usage_record(span, event["metadata"], metric_params)
-                    span.end()
-                elif "messageStop" in event:
-                    if should_emit_events() and event_logger:
-                        emit_streaming_converse_response_event(
-                            event_logger,
-                            response_msg,
-                            role,
-                            event.get("messageStop", {}).get("stopReason", "unknown"),
-                        )
-                    else:
-                        set_converse_streaming_response_span_attributes(
-                            response_msg, role, span
-                        )
-
-                return event
-
-            return partial(wrap, response_msg=[], span=span)
-
-        stream._parse_event = handler(stream._parse_event)
+        response["stream"] = create_converse_stream_wrapper(
+            stream,
+            span=span,
+            provider=provider,
+            model=model,
+            metric_params=metric_params,
+            event_logger=event_logger,
+        )
 
 
 def _get_vendor_model(modelId):

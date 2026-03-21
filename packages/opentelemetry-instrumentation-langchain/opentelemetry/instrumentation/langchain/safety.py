@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from opentelemetry.instrumentation.fortifyroot import (
@@ -19,6 +20,7 @@ from opentelemetry.semconv_ai import LLMRequestTypeValues
 from wrapt import wrap_function_wrapper
 
 PROVIDER = "Langchain"
+logger = logging.getLogger(__name__)
 
 
 def base_chat_model_generate_wrapper(wrapped, instance, args, kwargs):
@@ -480,9 +482,25 @@ _WRAPPED_METHODS = (
 
 def instrument_safety_wrappers():
     for module_name, function_name, wrapper in _WRAPPED_METHODS:
-        wrap_function_wrapper(module_name, function_name, wrapper)
+        try:
+            wrap_function_wrapper(module_name, function_name, wrapper)
+        except Exception:
+            logger.warning(
+                "Failed to install LangChain safety wrapper for %s.%s",
+                module_name,
+                function_name,
+                exc_info=True,
+            )
 
 
 def uninstrument_safety_wrappers():
     for module_name, function_name, _ in _WRAPPED_METHODS:
-        unwrap(module_name, function_name)
+        try:
+            unwrap(module_name, function_name)
+        except Exception:
+            logger.debug(
+                "Failed to remove LangChain safety wrapper for %s.%s",
+                module_name,
+                function_name,
+                exc_info=True,
+            )

@@ -19,13 +19,16 @@ class WatsonxStreamingSafety:
         )
 
     def process_item(self, item):
-        text = item["results"][0]["generated_text"]
-        item["results"][0]["generated_text"] = self._streams.process(
-            "completion",
-            text,
-            segment_index=0,
-            segment_role="assistant",
-        )
+        try:
+            text = item["results"][0]["generated_text"]
+            item["results"][0]["generated_text"] = self._streams.process(
+                "completion",
+                text,
+                segment_index=0,
+                segment_role="assistant",
+            )
+        except Exception:
+            return item
         return item
 
     def flush_pending_item(self, item):
@@ -41,6 +44,7 @@ def build_streaming_response(
     span,
     raw_flag,
     finalize_response,
+    span_name=None,
 ) -> Iterator:
     stream_state = {
         "generated_text": "",
@@ -50,9 +54,15 @@ def build_streaming_response(
         "input_token_count": 0,
     }
     pending_item = None
-    streaming_safety = WatsonxStreamingSafety(span, "watsonx.generate_text_stream")
+    streaming_safety = WatsonxStreamingSafety(
+        span,
+        span_name or "watsonx.generate_text_stream",
+    )
     for item in response:
-        item = streaming_safety.process_item(item)
+        try:
+            item = streaming_safety.process_item(item)
+        except Exception:
+            pass
         if pending_item is not None:
             _update_stream_state(stream_state, pending_item)
             yield pending_item if raw_flag else pending_item["results"][0]["generated_text"]

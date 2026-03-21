@@ -83,8 +83,9 @@ def _mask_prompt_content(span, content, *, span_name, segment_index, segment_rol
 
     updated_content = content
     for block_index, block in enumerate(content):
+        block_type = get_object_value(block, "type")
         block_text = get_object_value(block, "text")
-        if not isinstance(block_text, str):
+        if block_type not in (None, "text") or not isinstance(block_text, str):
             continue
         updated_text, changed = _mask_prompt_text(
             span,

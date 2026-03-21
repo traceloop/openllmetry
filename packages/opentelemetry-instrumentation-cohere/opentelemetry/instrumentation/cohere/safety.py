@@ -146,6 +146,7 @@ def _apply_completion_safety(span, response, llm_request_type, span_name):
             message = get_object_value(response, "message")
             if message is not None:
                 content = get_object_value(message, "content")
+                original_content_text = _cohere_content_text(content)
                 updated_content, changed = _mask_completion_content(
                     span,
                     content,
@@ -155,6 +156,11 @@ def _apply_completion_safety(span, response, llm_request_type, span_name):
                 )
                 if changed:
                     set_object_value(message, "content", updated_content)
+                    updated_response_text = _cohere_content_text(updated_content)
+                    if isinstance(updated_response_text, str) and (
+                        text is None or text == original_content_text
+                    ):
+                        set_object_value(response, "text", updated_response_text)
             return
 
         generations = get_object_value(response, "generations")
@@ -268,3 +274,16 @@ def _resolve_masked_text(original_text, result):
     if result.text == original_text:
         return original_text, False
     return result.text, True
+
+
+def _cohere_content_text(content):
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return None
+    parts = []
+    for block in content:
+        text = get_object_value(block, "text")
+        if isinstance(text, str):
+            parts.append(text)
+    return "".join(parts)

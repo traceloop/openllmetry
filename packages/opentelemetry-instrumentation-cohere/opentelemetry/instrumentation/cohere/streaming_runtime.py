@@ -194,43 +194,45 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
     }
     pending_item = None
     streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)
-    async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-        item = streaming_safety.process_v2_item(item)
-        if pending_item is None:
+    try:
+        async for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            item = streaming_safety.process_v2_item(item)
+            if pending_item is None:
+                pending_item = item
+                continue
+
+            streaming_safety.flush_transition(pending_item, item)
+            try:
+                _accumulate_stream_item(
+                    pending_item, current_content_item, current_tool_call_item, final_response
+                )
+            except Exception:
+                pass
+            yield pending_item
             pending_item = item
-            continue
 
-        streaming_safety.flush_transition(pending_item, item)
-        try:
-            _accumulate_stream_item(
-                pending_item, current_content_item, current_tool_call_item, final_response
-            )
-        except Exception:
-            pass
-        yield pending_item
-        pending_item = item
+        if pending_item is not None:
+            streaming_safety.flush_pending_item(pending_item)
+            try:
+                _accumulate_stream_item(
+                    pending_item, current_content_item, current_tool_call_item, final_response
+                )
+            except Exception:
+                pass
+            yield pending_item
 
-    if pending_item is not None:
-        streaming_safety.flush_pending_item(pending_item)
-        try:
-            _accumulate_stream_item(
-                pending_item, current_content_item, current_tool_call_item, final_response
-            )
-        except Exception:
-            pass
-        yield pending_item
-
-    set_span_response_attributes(span, final_response)
-    if should_emit_events():
-        emit_response_events(event_logger, llm_request_type, final_response)
-    elif should_send_prompts():
-        _set_span_chat_response(span, final_response)
-    if final_response.get("error"):
-        span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
-        span.record_exception(final_response.get("error"))
-    else:
-        span.set_status(Status(StatusCode.OK))
+        set_span_response_attributes(span, final_response)
+        if should_emit_events():
+            emit_response_events(event_logger, llm_request_type, final_response)
+        elif should_send_prompts():
+            _set_span_chat_response(span, final_response)
+        if final_response.get("error"):
+            span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
+            span.record_exception(final_response.get("error"))
+        else:
+            span.set_status(Status(StatusCode.OK))
+    finally:
         span.end()
 
 

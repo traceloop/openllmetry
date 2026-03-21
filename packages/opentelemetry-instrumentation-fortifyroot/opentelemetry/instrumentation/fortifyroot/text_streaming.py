@@ -13,6 +13,8 @@ from opentelemetry.instrumentation.fortifyroot.streaming import (
 
 
 class CompletionTextStreamGroup:
+    """Track per-segment completion safety streams for a single response."""
+
     def __init__(
         self,
         *,
@@ -36,7 +38,8 @@ class CompletionTextStreamGroup:
         segment_role: str | None,
         metadata: Mapping[str, Any] | None = None,
     ) -> str:
-        if not text:
+        """Process a streaming chunk for the given segment key."""
+        if text is None or text == "":
             return text or ""
 
         stream = self._get_stream(
@@ -50,12 +53,16 @@ class CompletionTextStreamGroup:
         return stream.process_chunk(text)
 
     def flush(self, key: Hashable) -> str:
+        """Flush the trailing buffered text for a single segment."""
+
         stream = self._streams.get(key)
         if stream is None:
             return ""
         return stream.flush()
 
     def flush_all(self) -> dict[Hashable, str]:
+        """Flush all tracked segments and return non-empty tails."""
+
         flushed: dict[Hashable, str] = {}
         for key, stream in self._streams.items():
             if stream is None:

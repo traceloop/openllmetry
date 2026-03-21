@@ -12,9 +12,13 @@ concurrency:
 
 jobs:
   fr-tests:
-    name: FR Tests
+    name: FR Tests (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Check out code
@@ -23,11 +27,16 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+          cache-dependency-path: |
+            pyproject.toml
+            poetry.lock
+            packages/**/pyproject.toml
+            packages/**/poetry.lock
 
       - name: Install Poetry
         run: python -m pip install --upgrade pip poetry
@@ -41,6 +50,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fr-test-reports
+          name: fr-test-reports-py${{ matrix.python-version }}
           path: reports/test-run/
           if-no-files-found: ignore

@@ -21,6 +21,7 @@ from opentelemetry.instrumentation.litellm import (
     _WRAPPED_METHODS,
     _invoke_acompletion,
     _invoke_completion,
+    _set_request_attributes,
 )
 from opentelemetry.instrumentation.litellm.safety import (
     apply_completion_safety,
@@ -625,6 +626,18 @@ def test_streaming_helper_units_cover_text_mirroring_usage_and_detector_helpers(
     assert is_async_streaming_response(_agen()) is True
 
 
+def test_set_request_attributes_does_not_treat_text_prompt_as_model():
+    exporter, tracer = _test_tracer()
+    span = tracer.start_span("litellm.text_completion")
+    _set_request_attributes(span, ("secret",), {}, True)
+    span.end()
+
+    assert (
+        GenAIAttributes.GEN_AI_REQUEST_MODEL
+        not in exporter.get_finished_spans()[0].attributes
+    )
+
+
 def test_sync_streaming_wrapper_records_error_and_re_raises():
     _, tracer = _test_tracer()
     span = tracer.start_span("litellm.completion")
@@ -645,6 +658,43 @@ def test_sync_streaming_wrapper_records_error_and_re_raises():
         )
 
     assert span.status.status_code.name == "ERROR"
+
+
+def test_sync_streaming_wrapper_closes_underlying_response_on_error():
+    _, tracer = _test_tracer()
+    span = tracer.start_span("litellm.completion")
+
+    class _ClosingResponse:
+        def __init__(self):
+            self._chunks = iter([SimpleNamespace(choices=[]), RuntimeError("boom")])
+            self.closed = False
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            item = next(self._chunks)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+        def close(self):
+            self.closed = True
+
+    response = _ClosingResponse()
+
+    with pytest.raises(RuntimeError, match="boom"):
+        list(
+            wrap_sync_streaming_response(
+                span,
+                response,
+                "chat",
+                "litellm.completion",
+                lambda *_: None,
+            )
+        )
+
+    assert response.closed is True
 
 
 @pytest.mark.asyncio
@@ -679,3 +729,40 @@ async def test_async_streaming_wrapper_finalizes_span():
 
     assert yielded[0].choices[0].message.content == "secret"
     assert responses[0].usage == {"total_tokens": 3}
+
+
+@pytest.mark.asyncio
+async def test_async_streaming_wrapper_closes_underlying_response_on_error():
+    _, tracer = _test_tracer()
+    span = tracer.start_span("litellm.completion")
+
+    class _ClosingAsyncResponse:
+        def __init__(self):
+            self._chunks = iter([SimpleNamespace(choices=[]), RuntimeError("boom")])
+            self.closed = False
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            item = next(self._chunks)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+        async def aclose(self):
+            self.closed = True
+
+    response = _ClosingAsyncResponse()
+
+    with pytest.raises(RuntimeError, match="boom"):
+        async for _ in wrap_async_streaming_response(
+            span,
+            response,
+            "chat",
+            "litellm.completion",
+            lambda *_: None,
+        ):
+            pass
+
+    assert response.closed is True

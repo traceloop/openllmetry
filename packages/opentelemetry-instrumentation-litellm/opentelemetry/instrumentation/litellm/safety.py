@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from opentelemetry.instrumentation.fortifyroot import (
     SafetyDecision,
     SafetyLocation,
@@ -12,6 +14,7 @@ from opentelemetry.instrumentation.fortifyroot import (
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
 PROVIDER = "LiteLLM"
+logger = logging.getLogger(__name__)
 
 
 def apply_prompt_safety(span, args, kwargs, request_type, span_name):
@@ -231,6 +234,7 @@ def apply_completion_safety(span, response, request_type, span_name):
                 if message is not None and isinstance(message_content, str):
                     set_object_value(message, "content", updated_text)
     except Exception:
+        logger.warning("safety completion error", exc_info=True)
         return
 
 

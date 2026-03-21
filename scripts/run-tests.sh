@@ -11,6 +11,8 @@
 #   ./scripts/run-tests.sh --fr --package '*anthropic*'
 # List all discovered packages without running tests:
 #   ./scripts/run-tests.sh --list
+# Override the per-package test timeout:
+#   PACKAGE_TEST_TIMEOUT_SECONDS=1800 ./scripts/run-tests.sh --fr
 # Forward extra pytest arguments after `--`:
 #   ./scripts/run-tests.sh --fr -- -x
 
@@ -23,6 +25,7 @@ REPORTS_ROOT="$ROOT_DIR/reports/test-run"
 TIMESTAMP="$(date +"%Y%m%d-%H%M%S")"
 REPORT_DIR="$REPORTS_ROOT/$TIMESTAMP"
 STATE_DIR="$REPORT_DIR/state"
+PACKAGE_TEST_TIMEOUT_SECONDS="${PACKAGE_TEST_TIMEOUT_SECONDS:-1200}"
 
 MODE="all"
 PACKAGE_FILTER=""
@@ -46,6 +49,7 @@ Examples:
   scripts/run-tests.sh
   scripts/run-tests.sh --fr
   scripts/run-tests.sh --package "*openai*"
+  PACKAGE_TEST_TIMEOUT_SECONDS=1800 scripts/run-tests.sh --fr
   scripts/run-tests.sh --fr -- -x
 EOF
 }
@@ -292,6 +296,30 @@ print(json.dumps(summary))
 PY
 }
 
+run_with_timeout() {
+  local timeout_seconds="$1"
+  shift
+
+  python3 - "$timeout_seconds" "$@" <<'PY'
+import subprocess
+import sys
+
+timeout_seconds = int(sys.argv[1])
+command = sys.argv[2:]
+
+try:
+    completed = subprocess.run(command, timeout=timeout_seconds)
+except subprocess.TimeoutExpired:
+    print(
+        f"[run-tests] ERROR: command timed out after {timeout_seconds} seconds",
+        file=sys.stderr,
+    )
+    raise SystemExit(124)
+
+raise SystemExit(completed.returncode)
+PY
+}
+
 record_test_summary() {
   local package_name="$1"
   local junit_xml="$2"
@@ -341,7 +369,6 @@ run_package_tests() {
   local junit_xml="$REPORT_DIR/${package_name}.xml"
   local test_log="$REPORT_DIR/${package_name}.test.log"
   local -a pytest_cmd
-  local -a pytest_targets=(tests)
   if [[ "$MODE" == "fr" ]]; then
     pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
     pytest_cmd+=(-m fr)
@@ -350,11 +377,11 @@ run_package_tests() {
   fi
   pytest_cmd+=("${PYTEST_ARGS[@]:-}")
 
-  log "Running tests for $package_name"
+  log "Running tests for $package_name (timeout=${PACKAGE_TEST_TIMEOUT_SECONDS}s)"
   set +e
   (
     cd "$package_dir"
-    "${pytest_cmd[@]}"
+    run_with_timeout "$PACKAGE_TEST_TIMEOUT_SECONDS" "${pytest_cmd[@]}"
   ) > >(tee "$test_log") 2>&1
   local test_status=$?
   set -e
@@ -369,6 +396,9 @@ run_package_tests() {
 
   if [[ $test_status -eq 0 ]]; then
     set_state "$package_name" "status" "PASS"
+  elif [[ $test_status -eq 124 ]]; then
+    set_state "$package_name" "status" "FAIL"
+    set_state "$package_name" "reason" "Timed out after ${PACKAGE_TEST_TIMEOUT_SECONDS}s. See $test_log"
   else
     set_state "$package_name" "status" "FAIL"
     set_state "$package_name" "reason" "Test failures detected. See $test_log"

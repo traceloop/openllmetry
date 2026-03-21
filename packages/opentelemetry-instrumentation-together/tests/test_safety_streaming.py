@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from opentelemetry.instrumentation.fortifyroot import (
+    SafetyFinding,
     SafetyResult,
     clear_completion_safety_stream_factory,
     clear_safety_handlers,
@@ -13,6 +14,10 @@ from opentelemetry.instrumentation.together.streaming_safety import (
     build_streaming_response,
 )
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
 pytestmark = pytest.mark.fr
@@ -32,6 +37,14 @@ def _test_span():
     provider = TracerProvider()
     tracer = provider.get_tracer(__name__)
     return tracer.start_span("together.chat")
+
+
+def _test_tracer():
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer(__name__)
+    return exporter, tracer
 
 
 class _FakeStreamSession:
@@ -87,6 +100,63 @@ def test_build_streaming_response_masks_chat_chunks_and_builds_final_response():
 
     assert chunks[0].choices[0].delta.content == "masked-atail"
     assert handled[0].choices[0].message.content == "masked-atail"
+
+
+def test_build_streaming_response_emits_safety_events():
+    class _EventfulSession:
+        def process_chunk(self, text):
+            return SafetyResult(
+                text="[SECRET.output]",
+                overall_action="MASK",
+                findings=[
+                    SafetyFinding(
+                        category="SECRET",
+                        severity="HIGH",
+                        action="MASK",
+                        rule_name="SECRET.output",
+                        start=0,
+                        end=len(text),
+                    )
+                ],
+            )
+
+        def flush(self):
+            return SafetyResult(text="", overall_action="ALLOW", findings=[])
+
+    exporter, tracer = _test_tracer()
+    register_completion_safety_stream_factory(lambda _: _EventfulSession())
+    handled = []
+
+    response = [
+        SimpleNamespace(
+            id="resp-chat",
+            model="demo",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    index=0,
+                    finish_reason="stop",
+                    delta=SimpleNamespace(content="secret"),
+                )
+            ],
+        )
+    ]
+
+    with tracer.start_as_current_span("together.chat") as span:
+        chunks = list(
+            build_streaming_response(
+                response,
+                span=span,
+                event_logger=None,
+                llm_request_type=LLMRequestTypeValues.CHAT,
+                span_name="together.chat",
+                handle_response=lambda _span, _logger, _type, final: handled.append(final),
+            )
+        )
+
+    assert chunks[0].choices[0].delta.content == "[SECRET.output]"
+    assert handled[0].choices[0].message.content == "[SECRET.output]"
+    assert exporter.get_finished_spans()[0].events[0].name == "fortifyroot.safety.violation"
 
 
 @pytest.mark.asyncio

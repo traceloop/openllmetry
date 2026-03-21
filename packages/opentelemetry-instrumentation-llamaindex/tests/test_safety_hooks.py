@@ -1,3 +1,5 @@
+import sys
+import types
 from llama_index.core.base.llms.types import (
     ChatMessage,
     ChatResponse,
@@ -27,14 +29,17 @@ from opentelemetry.instrumentation.fortifyroot import (
     register_completion_safety_handler,
     register_prompt_safety_handler,
 )
+from opentelemetry.instrumentation.llamaindex import safety as llamaindex_safety
 from opentelemetry.instrumentation.llamaindex.safety import (
     _apply_chat_prompt_safety,
     _apply_completion_prompt_safety,
+    _wrap_package_classes,
     _block_text,
     _set_block_text,
     apply_chat_end_safety,
     apply_completion_end_safety,
     apply_completion_start_attributes,
+    apply_completion_start_span_attributes,
     apply_predict_end_safety,
     instrument_llm_safety_wrappers,
     llm_acomplete_wrapper,
@@ -43,6 +48,7 @@ from opentelemetry.instrumentation.llamaindex.safety import (
     llm_chat_wrapper,
     _mask_chat_message,
     _resolve_masked_text,
+    uninstrument_llm_safety_wrappers,
 )
 
 pytestmark = pytest.mark.fr
@@ -54,10 +60,12 @@ class _FakeLLM:
 
 def setup_function():
     clear_safety_handlers()
+    uninstrument_llm_safety_wrappers()
 
 
 def teardown_function():
     clear_safety_handlers()
+    uninstrument_llm_safety_wrappers()
 
 
 def _test_span():
@@ -386,3 +394,83 @@ def test_internal_helpers_cover_kwargs_and_non_recording_paths():
     assert _block_text(thinking_block) == "idea"
     assert _set_block_text(thinking_block, "updated") is True
     assert thinking_block.content == "updated"
+
+
+def test_wrap_package_classes_logs_debug_on_import_failure(monkeypatch):
+    monkeypatch.setattr(
+        llamaindex_safety.importlib,
+        "import_module",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(ImportError("boom")),
+    )
+    with patch.object(llamaindex_safety.logger, "debug") as debug_mock:
+        _wrap_package_classes("missing_llama_package")
+
+    assert debug_mock.called
+
+
+def test_wrap_package_classes_wraps_real_subclass_and_uninstrument_restores_runtime_behavior(monkeypatch):
+    register_prompt_safety_handler(
+        lambda context: SafetyResult(
+            text="[MASKED:secret]",
+            overall_action="MASK",
+            findings=[SafetyFinding("PII", "MEDIUM", "MASK", "PII.llamaindex", 0, len(context.text))],
+        )
+        if context.location == SafetyLocation.PROMPT and context.text == "secret"
+        else None
+    )
+
+    import llama_index.core.base.llms.base as base_module
+
+    package_name = "fake_llama_pkg"
+    module_name = f"{package_name}.fake_module"
+    package = types.ModuleType(package_name)
+    package.__path__ = ["fake"]
+    module = types.ModuleType(module_name)
+
+    DummyLLM = type(
+        "DummyLLM",
+        (base_module.BaseLLM,),
+        {
+            "__module__": module_name,
+            "chat": lambda self, messages, **kwargs: messages,
+        },
+    )
+    DummyLLM.__abstractmethods__ = frozenset()
+    module.DummyLLM = DummyLLM
+
+    monkeypatch.setitem(sys.modules, package_name, package)
+    monkeypatch.setitem(sys.modules, module_name, module)
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.llamaindex.safety.pkgutil.iter_modules",
+        lambda _paths: [SimpleNamespace(name="fake_module")],
+    )
+
+    _wrap_package_classes(package_name)
+
+    llm = DummyLLM()
+    original_messages = [ChatMessage(content="secret", role=MessageRole.USER)]
+    wrapped_messages = llm.chat(original_messages)
+    assert wrapped_messages[0].content == "[MASKED:secret]"
+    assert original_messages[0].content == "secret"
+
+    uninstrument_llm_safety_wrappers()
+
+    unwrapped_messages = llm.chat([ChatMessage(content="secret", role=MessageRole.USER)])
+    assert unwrapped_messages[0].content == "secret"
+
+
+def test_completion_start_span_attributes_alias_matches_public_helper():
+    exporter, tracer = _test_span()
+
+    with tracer.start_as_current_span("llamaindex.completion") as span:
+        apply_completion_start_span_attributes(
+            LLMCompletionStartEvent(
+                prompt="secret",
+                additional_kwargs={},
+                model_dict={"model": "test-model"},
+                span_id="span-3",
+            ),
+            span,
+        )
+
+    assert exporter.get_finished_spans()[0].attributes["gen_ai.prompt.0.content"] == "secret"

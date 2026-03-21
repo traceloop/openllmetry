@@ -273,7 +273,17 @@ def test_streaming_invoke_applies_prompt_safety_before_provider_call():
 
     def fn(*args, **kwargs):
         wrapped_kwargs.update(kwargs)
-        return {"body": iter(())}
+        return {
+            "body": iter(
+                [
+                    {
+                        "chunk": {
+                            "bytes": json.dumps({"completion": "secret"}).encode("utf-8")
+                        }
+                    }
+                ]
+            )
+        }
 
     instrumented = _instrumented_model_invoke_with_response_stream(
         fn,
@@ -281,9 +291,17 @@ def test_streaming_invoke_applies_prompt_safety_before_provider_call():
         metric_params=SimpleNamespace(),
         event_logger=None,
     )
-    instrumented(body=json.dumps({"prompt": "secret"}), modelId="anthropic.claude")
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["masked-secret"], flush_result="tail")
+    )
+    response = instrumented(
+        body=json.dumps({"prompt": "secret"}),
+        modelId="anthropic.claude",
+    )
 
     assert json.loads(wrapped_kwargs["body"])["prompt"] == "[PII.prompt]"
+    yielded = list(response["body"])
+    assert json.loads(yielded[0]["chunk"]["bytes"].decode("utf-8"))["completion"] == "masked-secrettail"
 
 
 def test_streaming_converse_applies_prompt_safety_before_provider_call():

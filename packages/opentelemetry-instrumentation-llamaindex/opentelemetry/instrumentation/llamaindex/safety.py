@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import pkgutil
 from typing import Any
 
@@ -10,6 +11,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     SafetyDecision,
     SafetyLocation,
     clone_value,
+    get_prompt_safety_handler,
     get_object_value,
     run_completion_safety,
     run_prompt_safety,
@@ -20,6 +22,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.instrumentation.utils import unwrap
 from wrapt import wrap_function_wrapper
 
 try:
@@ -30,6 +33,8 @@ except Exception:  # pragma: no cover
 PROVIDER = "LlamaIndex"
 _WRAPPERS_INSTALLED = False
 _METHODS = ("chat", "achat", "complete", "acomplete")
+_WRAPPED_TARGETS: set[tuple[str, str]] = set()
+logger = logging.getLogger(__name__)
 
 
 def instrument_llm_safety_wrappers():
@@ -43,6 +48,27 @@ def instrument_llm_safety_wrappers():
         _wrap_package_classes(package_name)
 
     _WRAPPERS_INSTALLED = True
+
+
+def uninstrument_llm_safety_wrappers():
+    global _WRAPPERS_INSTALLED
+    for module_name, target in list(_WRAPPED_TARGETS):
+        try:
+            unwrap_object = module_name
+            unwrap_target = target
+            if "." in target:
+                owner_name, unwrap_target = target.rsplit(".", 1)
+                unwrap_object = f"{module_name}.{owner_name}"
+            unwrap(unwrap_object, unwrap_target)
+        except Exception:
+            logger.debug(
+                "failed to unwrap llamaindex safety target %s.%s",
+                module_name,
+                target,
+                exc_info=True,
+            )
+    _WRAPPED_TARGETS.clear()
+    _WRAPPERS_INSTALLED = False
 
 
 def llm_chat_wrapper(wrapped, instance, args, kwargs):
@@ -77,7 +103,7 @@ def apply_chat_end_safety(event, span):
     _apply_chat_response_safety(event, span)
 
 
-def apply_completion_start_attributes(event, span):
+def apply_completion_start_span_attributes(event, span):
     if span is None or not span.is_recording():
         return
 
@@ -97,6 +123,9 @@ def apply_completion_start_attributes(event, span):
     if should_send_prompts():
         span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
         span.set_attribute(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", event.prompt)
+
+
+apply_completion_start_attributes = apply_completion_start_span_attributes
 
 
 def apply_completion_end_safety(event, span):
@@ -146,6 +175,7 @@ def _wrap_package_classes(package_name: str):
     try:
         package = importlib.import_module(package_name)
     except Exception:
+        logger.debug("failed to import llamaindex package %s", package_name, exc_info=True)
         return
 
     for module_info in pkgutil.iter_modules(package.__path__):
@@ -153,6 +183,7 @@ def _wrap_package_classes(package_name: str):
         try:
             module = importlib.import_module(module_name)
         except Exception:
+            logger.debug("failed to import llamaindex module %s", module_name, exc_info=True)
             continue
         for _, cls in module.__dict__.items():
             if not isinstance(cls, type):
@@ -162,7 +193,7 @@ def _wrap_package_classes(package_name: str):
             for method_name in _METHODS:
                 if method_name not in cls.__dict__:
                     continue
-                wrap_function_wrapper(
+                _wrap_target(
                     cls.__module__,
                     f"{cls.__name__}.{method_name}",
                     _METHOD_WRAPPERS[method_name],
@@ -171,30 +202,41 @@ def _wrap_package_classes(package_name: str):
 
 def _wrap_base_methods():
     for method_name in _METHODS:
-        wrap_function_wrapper(
+        _wrap_target(
             "llama_index.core.base.llms.base",
             f"BaseLLM.{method_name}",
             _METHOD_WRAPPERS[method_name],
         )
 
 
+def _wrap_target(module_name: str, target: str, wrapper) -> None:
+    wrap_function_wrapper(module_name, target, wrapper)
+    _WRAPPED_TARGETS.add((module_name, target))
+
+
 def _apply_chat_prompt_safety(instance, args, kwargs):
     messages = args[0] if args else kwargs.get("messages")
     if not isinstance(messages, (list, tuple)):
         return args, kwargs
+    if get_prompt_safety_handler() is None:
+        return args, kwargs
 
-    updated_messages = list(clone_value(list(messages)))
+    updated_messages = list(messages)
     changed = False
     span_name = f"{instance.__class__.__name__}.chat"
 
-    for index, message in enumerate(updated_messages):
+    for index, message in enumerate(messages):
+        candidate = clone_value(message)
         if _mask_chat_message(
-            message,
+            candidate,
             span=None,
             span_name=span_name,
             request_type=LLMRequestTypeValues.CHAT.value,
             segment_index=index,
         ):
+            if not changed:
+                updated_messages = list(messages)
+            updated_messages[index] = candidate
             changed = True
 
     if not changed:

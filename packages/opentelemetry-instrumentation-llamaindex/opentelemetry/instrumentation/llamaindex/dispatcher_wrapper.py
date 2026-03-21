@@ -39,7 +39,7 @@ from opentelemetry.instrumentation.llamaindex.event_emitter import (
 from opentelemetry.instrumentation.llamaindex.safety import (
     apply_chat_end_safety,
     apply_completion_end_safety,
-    apply_completion_start_attributes,
+    apply_completion_start_span_attributes,
     apply_predict_end_safety,
     instrument_llm_safety_wrappers,
 )
@@ -145,7 +145,7 @@ class SpanHolder:
 
     @update_span_for_event.register
     def _(self, event: LLMCompletionStartEvent):
-        apply_completion_start_attributes(event, self.otel_span)
+        apply_completion_start_span_attributes(event, self.otel_span)
 
     @update_span_for_event.register
     def _(self, event: LLMCompletionEndEvent):

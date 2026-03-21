@@ -39,6 +39,7 @@ def wrap_sync_streaming_response(span, response, request_type, span_name, set_re
     except Exception as exc:
         span.record_exception(exc)
         span.set_status(Status(StatusCode.ERROR, str(exc)))
+        _close_streaming_response(response)
         span.end()
         raise
 
@@ -67,6 +68,7 @@ async def wrap_async_streaming_response(
     except Exception as exc:
         span.record_exception(exc)
         span.set_status(Status(StatusCode.ERROR, str(exc)))
+        await _aclose_streaming_response(response)
         span.end()
         raise
 
@@ -162,3 +164,15 @@ def _finalize_streaming_span(span, complete_response, set_response_attributes):
     set_response_attributes(span, response)
     span.set_status(Status(StatusCode.OK))
     span.end()
+
+
+def _close_streaming_response(response) -> None:
+    close = getattr(response, "close", None)
+    if callable(close):
+        close()
+
+
+async def _aclose_streaming_response(response) -> None:
+    aclose = getattr(response, "aclose", None)
+    if callable(aclose):
+        await aclose()
