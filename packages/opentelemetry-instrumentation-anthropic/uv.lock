@@ -348,7 +348,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.53.2"
+version = "0.53.3"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
