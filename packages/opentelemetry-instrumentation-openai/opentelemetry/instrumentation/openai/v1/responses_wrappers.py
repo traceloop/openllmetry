@@ -1078,9 +1078,7 @@ class ResponseStream(ObjectProxy):
                     self._output_text += chunk.delta
             elif chunk.type == "response.completed" and hasattr(chunk, "response"):
                 self._complete_response_data = chunk.response
-
-        if hasattr(chunk, "delta"):
-            if hasattr(chunk.delta, "text") and chunk.delta.text:
+            elif hasattr(chunk, "delta") and hasattr(chunk.delta, "text") and chunk.delta.text:
                 self._output_text += chunk.delta.text
 
         if hasattr(chunk, "response") and chunk.response:

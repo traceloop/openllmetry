@@ -1,3 +1,5 @@
+import copy
+
 from opentelemetry.instrumentation.cohere.event_emitter import emit_response_events
 from opentelemetry.instrumentation.cohere.safety import _apply_completion_safety
 from opentelemetry.instrumentation.cohere.streaming_safety import CohereStreamingSafety
@@ -120,7 +122,7 @@ async def aprocess_chat_v1_streaming_response(span, event_logger, llm_request_ty
 def process_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": DEFAULT_MESSAGE,
+        "message": copy.deepcopy(DEFAULT_MESSAGE),
         "usage": {},
         "id": "",
         "error": None,
@@ -180,7 +182,7 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
 async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": DEFAULT_MESSAGE,
+        "message": copy.deepcopy(DEFAULT_MESSAGE),
         "usage": {},
         "id": "",
         "error": None,

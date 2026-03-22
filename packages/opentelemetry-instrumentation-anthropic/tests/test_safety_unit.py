@@ -294,3 +294,35 @@ def test_anthropic_streaming_safety_covers_unknown_and_mismatch_branches():
     assert helper.process_item(unknown_delta) is unknown_delta
     assert helper.process_item(no_text) is no_text
     assert pending.delta.text == "masked"
+
+
+class _ErrorIterator:
+    """Iterator that raises a RuntimeError on the first call to __next__."""
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        raise RuntimeError("stream error")
+
+
+def test_anthropic_sync_stream_ends_span_on_error():
+    """Verify that AnthropicStream.__next__ sets error status and ends the span on exception."""
+    clear_safety_handlers()
+    exporter, tracer = _test_tracer()
+
+    with tracer.start_as_current_span("anthropic.chat") as span:
+        stream = AnthropicStream(
+            span,
+            _ErrorIterator(),
+            SimpleNamespace(count_tokens=lambda text: len(text)),
+            0.0,
+            kwargs={},
+        )
+        with pytest.raises(RuntimeError, match="stream error"):
+            next(stream)
+
+    finished_spans = exporter.get_finished_spans()
+    assert len(finished_spans) == 1
+    assert finished_spans[0].status.status_code.name == "ERROR"
+    assert "stream error" in finished_spans[0].status.description
+    assert stream._instrumentation_completed is True

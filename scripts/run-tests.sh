@@ -156,6 +156,41 @@ has_marker_in_tests() {
   grep -RIl -E "pytest\\.mark\\.${marker}" "$package_dir/tests" >/dev/null 2>&1
 }
 
+has_fr_source_files() {
+  # Check if a package contains FR-authored source files (safety.py,
+  # streaming_safety.py, etc.) that indicate it has FR modifications.
+  local package_dir="$1"
+  find "$package_dir" -path '*/tests' -prune -o \
+    \( -name 'safety.py' -o -name 'streaming_safety.py' -o -name 'safety_registration.py' \) \
+    -print -quit 2>/dev/null | grep -q .
+}
+
+validate_fr_test_coverage() {
+  # In --fr mode, warn about packages that have FR source files but no
+  # FR-marked tests.  This catches cases where new safety code was added
+  # to a package but the developer forgot to add @pytest.mark.fr tests.
+  local -a gap_packages=()
+  local package_dir
+
+  for package_dir in "$@"; do
+    if has_fr_source_files "$package_dir"; then
+      if ! has_tests_directory "$package_dir" || ! has_marker_in_tests "$package_dir" "fr"; then
+        gap_packages+=("$(basename "$package_dir")")
+      fi
+    fi
+  done
+
+  if (( ${#gap_packages[@]} > 0 )); then
+    printf '\n'
+    log "WARNING: The following packages have FR safety source files but NO @pytest.mark.fr tests:"
+    for pkg in "${gap_packages[@]}"; do
+      log "  - $pkg"
+    done
+    log "Add FR-marked tests to these packages to ensure safety code is covered."
+    printf '\n'
+  fi
+}
+
 python_meta() {
   local package_dir="$1"
   local key="$2"
@@ -586,6 +621,13 @@ main() {
   if (( LIST_ONLY == 1 )); then
     printf '%s\n' "${package_dirs[@]}"
     exit 0
+  fi
+
+  # In --fr mode, validate that every package with FR source files also
+  # has FR-marked tests.  This runs before test execution so gaps are
+  # visible even if the test run itself is aborted.
+  if [[ "$MODE" == "fr" ]]; then
+    validate_fr_test_coverage "${package_dirs[@]}"
   fi
 
   local package_name

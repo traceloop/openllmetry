@@ -2,6 +2,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from opentelemetry.instrumentation.cohere.streaming import (
+    DEFAULT_MESSAGE,
+    _accumulate_stream_item,
+)
 from opentelemetry.instrumentation.cohere.streaming_safety import CohereStreamingSafety
 from opentelemetry.instrumentation.fortifyroot import (
     clear_safety_handlers,
@@ -144,3 +148,44 @@ def test_cohere_streaming_safety_covers_missing_content_and_non_terminal_transit
         assert pending_item.delta.message.content.text == "masked-a"
     finally:
         span.end()
+
+
+def test_default_message_not_corrupted_by_missing_message_start():
+    """Verify DEFAULT_MESSAGE is not mutated when a stream skips 'message-start'."""
+    import copy
+
+    final_response = {
+        "finish_reason": None,
+        "message": copy.deepcopy(DEFAULT_MESSAGE),
+        "usage": {},
+        "id": "",
+        "error": None,
+    }
+    current_content_item = {"type": "text", "thinking": None, "text": "hello"}
+    current_tool_call_item = {
+        "id": "tc_1",
+        "type": "function",
+        "function": {"name": "fn", "arguments": "", "description": ""},
+    }
+
+    # _accumulate_stream_item calls to_dict() which expects dict items
+    # Simulate a content-end event WITHOUT a preceding message-start,
+    # which appends to final_response["message"]["content"].
+    content_end_item = {"type": "content-end"}
+    _accumulate_stream_item(
+        content_end_item, current_content_item, current_tool_call_item, final_response
+    )
+
+    # Simulate a tool-call-end event WITHOUT a preceding message-start.
+    tool_call_end_item = {"type": "tool-call-end"}
+    _accumulate_stream_item(
+        tool_call_end_item, current_content_item, current_tool_call_item, final_response
+    )
+
+    # The deep-copied message should have accumulated data
+    assert len(final_response["message"]["content"]) == 1
+    assert len(final_response["message"]["tool_calls"]) == 1
+
+    # The module-level DEFAULT_MESSAGE must remain pristine
+    assert DEFAULT_MESSAGE["content"] == []
+    assert DEFAULT_MESSAGE["tool_calls"] == []

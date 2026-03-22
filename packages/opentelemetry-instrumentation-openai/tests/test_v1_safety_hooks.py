@@ -1009,3 +1009,29 @@ def test_response_streaming_safety_flush_text_collects_pending_tails_once():
             )
         )
         assert helper.flush_text() == "maskedtail"
+
+
+def test_response_stream_process_chunk_does_not_double_count_object_delta():
+    """Verify that _process_chunk does not double-count text when chunk.delta has a .text attribute."""
+    _, tracer = _test_span()
+
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_EmptyStream(),
+        start_time=1,
+        request_kwargs={"model": "gpt-test", "input": "hello"},
+        tracer=tracer,
+    )
+
+    # Simulate a chunk with an object delta that has a .text attribute.
+    # This exercises the path where chunk.type != "response.output_text.delta"
+    # but chunk.delta.text is present. Only one path should fire.
+    chunk = SimpleNamespace(
+        type="response.content_part.delta",
+        delta=SimpleNamespace(text="hello"),
+        response=None,
+    )
+    stream._process_chunk(chunk)
+
+    # Text should appear exactly once, not double-counted
+    assert stream._output_text == "hello"
