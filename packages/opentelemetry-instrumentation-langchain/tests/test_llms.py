@@ -149,7 +149,7 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
 
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
-    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "hugging_face"
+    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "hugging_face"
     input_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "System: You are a helpful assistant\nHuman: tell me a short joke"
     output_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
@@ -281,7 +281,7 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
-    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
     input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "You are a helpful assistant"
     assert input_messages[0]["role"] == "system"
@@ -638,7 +638,7 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
 
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "anthropic"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "You are a helpful assistant"
@@ -819,7 +819,7 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "aws.bedrock"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "aws.bedrock"
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["content"] == "You are a helpful assistant"
     assert input_messages[0]["role"] == "system"
@@ -1016,7 +1016,7 @@ def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
         VLLMOpenAI: "openai",
         ChatOpenAI: "openai"
     }
-    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == expected_vendors[LLM]
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == expected_vendors[LLM]
 
     args, kwargs = send_spy.mock.call_args
     request = args[0]
@@ -1624,7 +1624,7 @@ async def test_trace_propagation_stream_async_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body

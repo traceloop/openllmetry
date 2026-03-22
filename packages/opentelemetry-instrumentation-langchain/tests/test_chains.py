@@ -819,7 +819,7 @@ async def test_astream_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body
