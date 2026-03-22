@@ -1,3 +1,5 @@
+import asyncio  # FR: async safety
+
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.together.safety import (
     _apply_completion_safety,
@@ -95,7 +97,7 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     )
-    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
+    kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, llm_request_type, name)  # FR: async safety
     _handle_input, _handle_response = _get_handlers()
 
     _handle_input(span, event_logger, llm_request_type, kwargs)
@@ -113,7 +115,7 @@ async def _awrap(
         )
 
     if response:
-        _apply_completion_safety(span, response, llm_request_type, name)
+        await asyncio.to_thread(_apply_completion_safety, span, response, llm_request_type, name)  # FR: async safety
         _handle_response(span, event_logger, llm_request_type, response)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))

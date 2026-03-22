@@ -1,5 +1,6 @@
 """OpenTelemetry LiteLLM instrumentation."""
 
+import asyncio  # FR: async safety
 import inspect
 import logging
 from typing import Collection
@@ -188,7 +189,8 @@ async def _invoke_acompletion(
     with use_span(span, end_on_exit=False):
         _set_request_attributes(span, args, kwargs, is_text_completion)
 
-        updated_args, updated_kwargs = apply_prompt_safety(
+        updated_args, updated_kwargs = await asyncio.to_thread(  # FR: async safety
+            apply_prompt_safety,
             span, args, kwargs, request_type, span_name
         )
         _set_prompt_attributes(
@@ -219,7 +221,7 @@ async def _invoke_acompletion(
                 span_name,
                 _set_response_attributes,
             )
-        return _finalize_response(span, response, request_type, span_name)
+        return await _async_finalize_response(span, response, request_type, span_name)  # FR: async safety
 
 
 def _should_skip_instrumentation(kwargs):
@@ -360,7 +362,18 @@ async def _finalize_awaitable_response(
     finally:
         context_api.detach(token)
 
-    return _finalize_response(span, awaited_response, request_type, span_name)
+    return await _async_finalize_response(span, awaited_response, request_type, span_name)  # FR: async safety
+
+
+async def _async_finalize_response(span, response, request_type, span_name):  # FR: async safety
+    """Async variant of _finalize_response that offloads safety to a thread."""  # FR: async safety
+    try:  # FR: async safety
+        await asyncio.to_thread(apply_completion_safety, span, response, request_type, span_name)  # FR: async safety
+        _set_response_attributes(span, response)  # FR: async safety
+        span.set_status(Status(StatusCode.OK))  # FR: async safety
+        return response  # FR: async safety
+    finally:  # FR: async safety
+        span.end()  # FR: async safety
 
 
 def _finalize_response(span, response, request_type, span_name):

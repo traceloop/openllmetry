@@ -1,5 +1,6 @@
 """OpenTelemetry Cohere instrumentation"""
 
+import asyncio  # FR: async safety
 import logging
 from typing import Collection, Union
 
@@ -284,7 +285,7 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
         },
     ) as span:
-        kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
+        kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, llm_request_type, name)  # FR: async safety
         set_span_request_attributes(span, kwargs)
         _handle_input_content(span, event_logger, llm_request_type, kwargs)
 
@@ -297,7 +298,7 @@ async def _awrap(
                 span.end()
             raise
 
-        _apply_completion_safety(span, response, llm_request_type, name)
+        await asyncio.to_thread(_apply_completion_safety, span, response, llm_request_type, name)  # FR: async safety
         set_span_response_attributes(span, response)
         _handle_response_content(span, event_logger, llm_request_type, response)
 

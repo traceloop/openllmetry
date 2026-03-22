@@ -10,6 +10,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     clone_value,
     register_prompt_safety_handler,
     run_prompt_safety,
+    run_prompt_safety_async,
 )
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
@@ -132,4 +133,62 @@ def test_run_prompt_safety_fail_opens_when_handler_raises():
             location=SafetyLocation.PROMPT,
         )
 
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_run_prompt_safety_async_offloads_to_thread():
+    """Async variant should produce the same result as sync but run off event loop."""
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+
+    register_prompt_safety_handler(
+        lambda context: SafetyResult(
+            text="[MASKED]",
+            findings=(
+                SafetyFinding(
+                    category="PII",
+                    severity="HIGH",
+                    rule_name="email",
+                    action="MASK",
+                    start=0,
+                    end=len(context.text),
+                ),
+            ),
+            overall_action="MASK",
+        )
+    )
+
+    with tracer.start_as_current_span("test-span") as span:
+        result = await run_prompt_safety_async(
+            span=span,
+            provider="OpenAI",
+            span_name="openai.chat",
+            text="john@example.com",
+            location=SafetyLocation.PROMPT,
+        )
+
+    assert result is not None
+    assert result.text == "[MASKED]"
+    assert len(result.findings) == 1
+
+    finished = exporter.get_finished_spans()
+    assert len(finished) == 1
+    events = finished[0].events
+    assert len(events) == 1
+    assert events[0].name == SAFETY_EVENT_NAME
+
+
+@pytest.mark.asyncio
+async def test_run_prompt_safety_async_returns_none_when_no_handler():
+    """Async variant should return None when no handler is registered."""
+    result = await run_prompt_safety_async(
+        span=None,
+        provider="Test",
+        span_name="test",
+        text="hello",
+        location=SafetyLocation.PROMPT,
+    )
     assert result is None

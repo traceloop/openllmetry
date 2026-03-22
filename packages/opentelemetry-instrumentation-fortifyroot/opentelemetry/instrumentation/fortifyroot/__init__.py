@@ -14,7 +14,9 @@ from opentelemetry.instrumentation.fortifyroot.safety import (
     register_completion_safety_handler,
     register_prompt_safety_handler,
     run_completion_safety,
+    run_completion_safety_async,
     run_prompt_safety,
+    run_prompt_safety_async,
     set_object_value,
 )
 from opentelemetry.instrumentation.fortifyroot.text_streaming import (
@@ -55,7 +57,9 @@ __all__ = [
     "register_completion_safety_stream_factory",
     "register_prompt_safety_handler",
     "run_completion_safety",
+    "run_completion_safety_async",
     "run_prompt_safety",
+    "run_prompt_safety_async",
     "SafetyStreamContext",
     "set_object_value",
 ]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import threading
@@ -156,6 +157,70 @@ def run_completion_safety(
 
     return _run_safety(
         handler=get_completion_safety_handler(),
+        span=span,
+        provider=provider,
+        span_name=span_name,
+        text=text,
+        location=location,
+        request_type=request_type,
+        segment_index=segment_index,
+        segment_role=segment_role,
+        metadata=metadata,
+    )
+
+
+async def run_prompt_safety_async(
+    *,
+    span: Span | None,
+    provider: str,
+    span_name: str,
+    text: str | None,
+    location: SafetyLocation,
+    request_type: str | None = None,
+    segment_index: int | None = None,
+    segment_role: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+) -> SafetyResult | None:
+    """Execute prompt safety off the event loop via asyncio.to_thread."""
+
+    handler = get_prompt_safety_handler()
+    if handler is None or text is None or text == "":
+        return None
+    return await asyncio.to_thread(
+        _run_safety,
+        handler=handler,
+        span=span,
+        provider=provider,
+        span_name=span_name,
+        text=text,
+        location=location,
+        request_type=request_type,
+        segment_index=segment_index,
+        segment_role=segment_role,
+        metadata=metadata,
+    )
+
+
+async def run_completion_safety_async(
+    *,
+    span: Span | None,
+    provider: str,
+    span_name: str,
+    text: str | None,
+    location: SafetyLocation,
+    request_type: str | None = None,
+    segment_index: int | None = None,
+    segment_role: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+) -> SafetyResult | None:
+    """Execute completion safety off the event loop via asyncio.to_thread."""
+
+    handler = get_completion_safety_handler()
+    if handler is None or text is None or text == "":
+        return None
+    return await asyncio.to_thread(
+        _run_safety,
+        handler=handler,
         span=span,
         provider=provider,
         span_name=span_name,

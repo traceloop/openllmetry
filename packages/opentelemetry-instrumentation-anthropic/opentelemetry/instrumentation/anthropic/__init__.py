@@ -1,5 +1,6 @@
 """OpenTelemetry Anthropic instrumentation"""
 
+import asyncio  # FR: async safety
 import logging
 import os
 import time
@@ -668,7 +669,7 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
-    kwargs = _apply_prompt_safety(span, kwargs, name)
+    kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, name)  # FR: async safety
     await _ahandle_input(span, event_logger, kwargs)
     start_time = time.time()
     try:
@@ -740,7 +741,7 @@ async def _awrap(
                 attributes=metric_attributes,
             )
 
-        _apply_completion_safety(span, response, name)
+        await asyncio.to_thread(_apply_completion_safety, span, response, name)  # FR: async safety
         await _ahandle_response(span, event_logger, response)
 
         if span.is_recording():

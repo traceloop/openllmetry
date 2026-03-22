@@ -1,5 +1,6 @@
 """OpenTelemetry Writer instrumentation"""
 
+import asyncio  # FR: async safety
 import logging
 import os
 import time
@@ -476,7 +477,7 @@ async def _awrap(
         },
     )
 
-    kwargs = _apply_prompt_safety(span, kwargs, request_type, name)
+    kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, request_type, name)  # FR: async safety
     _handle_input(span, kwargs, event_logger)
 
     start_time = time.time()
@@ -529,7 +530,8 @@ async def _awrap(
                     attributes=response_attributes(response, to_wrap.get("method")),
                 )
 
-            _apply_completion_safety(
+            await asyncio.to_thread(  # FR: async safety
+                _apply_completion_safety,
                 span, response, request_type, name
             )
             _handle_response(

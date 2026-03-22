@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio  # FR: async safety
 import logging
 from typing import Any
 
@@ -30,7 +31,9 @@ def base_chat_model_generate_wrapper(wrapped, instance, args, kwargs):
 
 
 async def base_chat_model_agenerate_wrapper(wrapped, instance, args, kwargs):
-    updated_args, updated_kwargs = _apply_chat_prompt_safety(instance, args, kwargs)
+    updated_args, updated_kwargs = await asyncio.to_thread(  # FR: async safety
+        _apply_chat_prompt_safety, instance, args, kwargs
+    )
     return await wrapped(*updated_args, **updated_kwargs)
 
 
@@ -40,7 +43,9 @@ def base_llm_generate_wrapper(wrapped, instance, args, kwargs):
 
 
 async def base_llm_agenerate_wrapper(wrapped, instance, args, kwargs):
-    updated_args, updated_kwargs = _apply_llm_prompt_safety(instance, args, kwargs)
+    updated_args, updated_kwargs = await asyncio.to_thread(  # FR: async safety
+        _apply_llm_prompt_safety, instance, args, kwargs
+    )
     return await wrapped(*updated_args, **updated_kwargs)
 
 
@@ -54,7 +59,7 @@ async def base_chat_model_agenerate_with_cache_wrapper(
     wrapped, instance, args, kwargs
 ):
     response = await wrapped(*args, **kwargs)
-    _apply_chat_result_completion_safety(instance, response)
+    await asyncio.to_thread(_apply_chat_result_completion_safety, instance, response)  # FR: async safety
     return response
 
 
@@ -66,7 +71,7 @@ def base_llm_generate_helper_wrapper(wrapped, instance, args, kwargs):
 
 async def base_llm_agenerate_helper_wrapper(wrapped, instance, args, kwargs):
     response = await wrapped(*args, **kwargs)
-    _apply_llm_result_completion_safety(instance, response)
+    await asyncio.to_thread(_apply_llm_result_completion_safety, instance, response)  # FR: async safety
     return response
 
 

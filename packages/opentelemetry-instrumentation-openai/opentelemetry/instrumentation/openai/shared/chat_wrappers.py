@@ -1,3 +1,4 @@
+import asyncio  # FR: async safety
 import copy
 import json
 import logging
@@ -199,7 +200,7 @@ async def achat_wrapper(
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
-        kwargs = _apply_prompt_safety(span, kwargs)
+        kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs)  # FR: async safety
         await _handle_request(span, kwargs, instance)
 
         try:
@@ -259,7 +260,7 @@ async def achat_wrapper(
 
         duration = end_time - start_time
 
-        _apply_completion_safety(span, response)
+        await asyncio.to_thread(_apply_completion_safety, span, response)  # FR: async safety
         _handle_response(
             response,
             span,

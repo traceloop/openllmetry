@@ -1,5 +1,6 @@
 """OpenTelemetry Ollama instrumentation"""
 
+import asyncio  # FR: async safety
 import json
 import logging
 import os
@@ -402,7 +403,7 @@ async def _awrap(
         },
     )
 
-    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
+    kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, llm_request_type, name)  # FR: async safety
     _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
@@ -436,7 +437,7 @@ async def _awrap(
                 start_time,
             )
 
-        _apply_completion_safety(span, response, llm_request_type, name)
+        await asyncio.to_thread(_apply_completion_safety, span, response, llm_request_type, name)  # FR: async safety
         _handle_response(
             span, event_logger, llm_request_type, token_histogram, response
         )

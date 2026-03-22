@@ -1,5 +1,6 @@
 """OpenTelemetry Mistral AI instrumentation"""
 
+import asyncio  # FR: async safety
 import json
 import logging
 from typing import Collection, Union
@@ -471,7 +472,7 @@ async def _awrap(
         },
     )
 
-    kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
+    kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs, llm_request_type, name)  # FR: async safety
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
     if to_wrap.get("streaming"):
@@ -485,7 +486,7 @@ async def _awrap(
                 span, event_logger, llm_request_type, response
             )
 
-        _apply_completion_safety(span, response, llm_request_type, name)
+        await asyncio.to_thread(_apply_completion_safety, span, response, llm_request_type, name)  # FR: async safety
         _handle_response(span, event_logger, llm_request_type, response)
 
         if span.is_recording():

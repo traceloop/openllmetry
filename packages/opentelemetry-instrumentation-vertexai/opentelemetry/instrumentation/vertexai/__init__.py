@@ -1,5 +1,6 @@
 """OpenTelemetry Vertex AI instrumentation"""
 
+import asyncio  # FR: async safety
 import logging
 import types
 from typing import Collection
@@ -219,7 +220,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         },
     )
 
-    args, kwargs = _apply_prompt_safety(span, args, kwargs, name)
+    args, kwargs = await asyncio.to_thread(_apply_prompt_safety, span, args, kwargs, name)  # FR: async safety
     await _handle_request(span, event_logger, args, kwargs, llm_model)
 
     response = await wrapped(*args, **kwargs)
@@ -234,7 +235,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
                 span, event_logger, response, llm_model
             )
         else:
-            _apply_completion_safety(span, response, name)
+            await asyncio.to_thread(_apply_completion_safety, span, response, name)  # FR: async safety
             _handle_response(span, event_logger, response, llm_model)
 
     span.end()

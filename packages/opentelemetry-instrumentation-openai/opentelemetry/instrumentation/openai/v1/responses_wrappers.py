@@ -1,3 +1,4 @@
+import asyncio  # FR: async safety
 import json
 import pydantic
 import re
@@ -683,7 +684,7 @@ async def async_responses_get_or_create_wrapper(
     )
     _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)  # FR: moved
     try:  # FR: prompt safety
-        non_sentinel_kwargs = apply_response_prompt_safety(span, non_sentinel_kwargs)  # FR: prompt safety
+        non_sentinel_kwargs = await asyncio.to_thread(apply_response_prompt_safety, span, non_sentinel_kwargs)  # FR: async safety
     except Exception:  # FR: prompt safety
         pass  # FR: prompt safety
 
@@ -753,7 +754,7 @@ async def async_responses_get_or_create_wrapper(
     parsed_response = parse_response(response)
 
     try:  # FR: completion safety
-        apply_response_completion_safety(span, parsed_response)  # FR: completion safety
+        await asyncio.to_thread(apply_response_completion_safety, span, parsed_response)  # FR: async safety
     except Exception:  # FR: completion safety
         pass  # FR: completion safety
 

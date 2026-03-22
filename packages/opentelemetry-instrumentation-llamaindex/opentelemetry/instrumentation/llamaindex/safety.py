@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio  # FR: async safety
 import importlib
 import logging
 import pkgutil
@@ -82,7 +83,9 @@ def llm_chat_wrapper(wrapped, instance, args, kwargs):
 
 
 async def llm_achat_wrapper(wrapped, instance, args, kwargs):
-    updated_args, updated_kwargs = _apply_chat_prompt_safety(instance, args, kwargs)
+    updated_args, updated_kwargs = await asyncio.to_thread(  # FR: async safety
+        _apply_chat_prompt_safety, instance, args, kwargs
+    )
     return await wrapped(*updated_args, **updated_kwargs)
 
 
@@ -92,7 +95,9 @@ def llm_complete_wrapper(wrapped, instance, args, kwargs):
 
 
 async def llm_acomplete_wrapper(wrapped, instance, args, kwargs):
-    updated_args, updated_kwargs = _apply_completion_prompt_safety(instance, args, kwargs)
+    updated_args, updated_kwargs = await asyncio.to_thread(  # FR: async safety
+        _apply_completion_prompt_safety, instance, args, kwargs
+    )
     return await wrapped(*updated_args, **updated_kwargs)
 
 

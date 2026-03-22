@@ -1,3 +1,4 @@
+import asyncio  # FR: async safety
 import logging
 
 from opentelemetry import context as context_api
@@ -106,7 +107,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
-        kwargs = _apply_prompt_safety(span, kwargs)
+        kwargs = await asyncio.to_thread(_apply_prompt_safety, span, kwargs)  # FR: async safety
         _handle_request(span, kwargs, instance)
 
         try:
@@ -122,7 +123,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
             # span will be closed after the generator is done
             return _abuild_from_streaming_response(span, kwargs, response)
         else:
-            _apply_completion_safety(span, response)
+            await asyncio.to_thread(_apply_completion_safety, span, response)  # FR: async safety
             _handle_response(response, span, instance)
 
         span.end()
