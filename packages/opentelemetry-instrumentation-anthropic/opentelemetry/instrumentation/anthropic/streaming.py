@@ -18,9 +18,9 @@ from opentelemetry.instrumentation.anthropic.utils import (
     shared_metrics_attributes,
     should_emit_events,
 )
-from opentelemetry.instrumentation.anthropic.streaming_safety import (
-    AnthropicStreamingSafety,
-)
+from opentelemetry.instrumentation.anthropic.streaming_safety import (  # FR: safety import
+    AnthropicStreamingSafety,  # FR: safety import
+)  # FR: safety import
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -178,8 +178,8 @@ class AnthropicStream(ObjectProxy):
 
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
-        self._pending_item = None
-        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))
+        self._pending_item = None  # FR: pending-item buffer for streaming safety
+        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))  # FR: streaming safety init
 
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
@@ -219,17 +219,20 @@ class AnthropicStream(ObjectProxy):
     def __iter__(self):
         return self
 
-    def __next__(self):
-        while True:
+    # FR: Rewritten from simple try/except to while-loop with pending-item buffer.
+    # Streaming safety requires buffering one item ahead so flush_transition can
+    # process cross-item boundary matches before yielding.
+    def __next__(self):  # FR: rewritten for pending-item safety buffer
+        while True:  # FR: rewritten for pending-item safety buffer
             try:
                 item = self.__wrapped__.__next__()
             except StopIteration:
-                if self._pending_item is not None:
-                    pending = self._pending_item
-                    self._streaming_safety.flush_pending_item(pending)
-                    _process_response_item(pending, self._complete_response)
-                    self._pending_item = None
-                    return pending
+                if self._pending_item is not None:  # FR: flush last buffered item
+                    pending = self._pending_item  # FR: flush last buffered item
+                    self._streaming_safety.flush_pending_item(pending)  # FR: flush last buffered item
+                    _process_response_item(pending, self._complete_response)  # FR: flush last buffered item
+                    self._pending_item = None  # FR: flush last buffered item
+                    return pending  # FR: flush last buffered item
                 if not self._instrumentation_completed:
                     self._complete_instrumentation()
                 raise
@@ -244,17 +247,19 @@ class AnthropicStream(ObjectProxy):
                     self._instrumentation_completed = True
                 raise e
 
-            item = self._streaming_safety.process_item(item)
-            if self._pending_item is None:
-                self._pending_item = item
-                continue
+            item = self._streaming_safety.process_item(item)  # FR: streaming safety processing
+            if self._pending_item is None:  # FR: pending-item buffer logic
+                self._pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            pending = self._pending_item
-            self._streaming_safety.flush_transition(pending, item)
-            _process_response_item(pending, self._complete_response)
-            self._pending_item = item
-            return pending
+            pending = self._pending_item  # FR: pending-item buffer logic
+            self._streaming_safety.flush_transition(pending, item)  # FR: streaming safety flush
+            _process_response_item(pending, self._complete_response)  # FR: pending-item buffer logic
+            self._pending_item = item  # FR: pending-item buffer logic
+            return pending  # FR: pending-item buffer logic
 
+    # FR: TL bug fix - removed duplicate metric block that was nested inside
+    # the duration_histogram conditional, causing metrics to be recorded twice.
     def _handle_completion(self):
         """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
@@ -357,8 +362,8 @@ class AnthropicAsyncStream(ObjectProxy):
 
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
-        self._pending_item = None
-        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))
+        self._pending_item = None  # FR: pending-item buffer for streaming safety
+        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))  # FR: streaming safety init
 
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
@@ -401,17 +406,20 @@ class AnthropicAsyncStream(ObjectProxy):
     def __aiter__(self):
         return self
 
-    async def __anext__(self):
-        while True:
+    # FR: Rewritten from simple try/except to while-loop with pending-item buffer.
+    # Streaming safety requires buffering one item ahead so flush_transition can
+    # process cross-item boundary matches before yielding.
+    async def __anext__(self):  # FR: rewritten for pending-item safety buffer
+        while True:  # FR: rewritten for pending-item safety buffer
             try:
                 item = await self.__wrapped__.__anext__()
             except StopAsyncIteration:
-                if self._pending_item is not None:
-                    pending = self._pending_item
-                    self._streaming_safety.flush_pending_item(pending)
-                    _process_response_item(pending, self._complete_response)
-                    self._pending_item = None
-                    return pending
+                if self._pending_item is not None:  # FR: flush last buffered item
+                    pending = self._pending_item  # FR: flush last buffered item
+                    self._streaming_safety.flush_pending_item(pending)  # FR: flush last buffered item
+                    _process_response_item(pending, self._complete_response)  # FR: flush last buffered item
+                    self._pending_item = None  # FR: flush last buffered item
+                    return pending  # FR: flush last buffered item
                 if not self._instrumentation_completed:
                     self._complete_instrumentation()
                 raise
@@ -426,16 +434,16 @@ class AnthropicAsyncStream(ObjectProxy):
                     self._instrumentation_completed = True
                 raise
 
-            item = self._streaming_safety.process_item(item)
-            if self._pending_item is None:
-                self._pending_item = item
-                continue
+            item = self._streaming_safety.process_item(item)  # FR: streaming safety processing
+            if self._pending_item is None:  # FR: pending-item buffer logic
+                self._pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            pending = self._pending_item
-            self._streaming_safety.flush_transition(pending, item)
-            _process_response_item(pending, self._complete_response)
-            self._pending_item = item
-            return pending
+            pending = self._pending_item  # FR: pending-item buffer logic
+            self._streaming_safety.flush_transition(pending, item)  # FR: streaming safety flush
+            _process_response_item(pending, self._complete_response)  # FR: pending-item buffer logic
+            self._pending_item = item  # FR: pending-item buffer logic
+            return pending  # FR: pending-item buffer logic
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""

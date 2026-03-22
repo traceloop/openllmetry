@@ -1,8 +1,8 @@
-import copy
+import copy  # FR: needed for deepcopy fix
 
 from opentelemetry.instrumentation.cohere.event_emitter import emit_response_events
-from opentelemetry.instrumentation.cohere.safety import _apply_completion_safety
-from opentelemetry.instrumentation.cohere.streaming_safety import CohereStreamingSafety
+from opentelemetry.instrumentation.cohere.safety import _apply_completion_safety  # FR: safety import
+from opentelemetry.instrumentation.cohere.streaming_safety import CohereStreamingSafety  # FR: safety import
 from opentelemetry.instrumentation.cohere.utils import (
     dont_throw,
     should_send_prompts,
@@ -22,47 +22,49 @@ DEFAULT_MESSAGE = {
 }
 
 
-def _mask_v1_stream_end_response(span, llm_request_type, item):
-    if getattr(item, "event_type", None) != "stream-end" or not hasattr(item, "response"):
-        return None
-    final_response = item.response
-    _apply_completion_safety(span, final_response, llm_request_type, "cohere.chat")
-    return final_response
+# FR: Helper to apply completion safety masking on v1 stream-end responses.
+def _mask_v1_stream_end_response(span, llm_request_type, item):  # FR: entire function is FR
+    if getattr(item, "event_type", None) != "stream-end" or not hasattr(item, "response"):  # FR
+        return None  # FR
+    final_response = item.response  # FR
+    _apply_completion_safety(span, final_response, llm_request_type, "cohere.chat")  # FR
+    return final_response  # FR
 
 
 @dont_throw
+# FR: Modified with pending-item buffer for streaming safety.
 def process_chat_v1_streaming_response(span, event_logger, llm_request_type, response):
     # This naive version assumes we've always successfully streamed till the end
     # and have received a StreamEndChatResponse, which includes the full response
     final_response = None
-    pending_item = None
-    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)
+    pending_item = None  # FR: pending-item buffer for streaming safety
+    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)  # FR: streaming safety init
     try:
         for item in response:
             span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
-            item = streaming_safety.process_v1_item(item)
-            if pending_item is None:
-                pending_item = item
-                continue
+            item = streaming_safety.process_v1_item(item)  # FR: streaming safety processing
+            if pending_item is None:  # FR: pending-item buffer logic
+                pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            streaming_safety.flush_transition(pending_item, item)
-            masked_final_response = _mask_v1_stream_end_response(
-                span, llm_request_type, pending_item
-            )
-            if masked_final_response is not None:
-                final_response = masked_final_response
-            yield pending_item
-            pending_item = item
+            streaming_safety.flush_transition(pending_item, item)  # FR: streaming safety flush
+            masked_final_response = _mask_v1_stream_end_response(  # FR: safety masking
+                span, llm_request_type, pending_item  # FR: safety masking
+            )  # FR: safety masking
+            if masked_final_response is not None:  # FR: safety masking
+                final_response = masked_final_response  # FR: safety masking
+            yield pending_item  # FR: pending-item buffer logic
+            pending_item = item  # FR: pending-item buffer logic
 
-        if pending_item is not None:
-            streaming_safety.flush_pending_item(pending_item)
-            masked_final_response = _mask_v1_stream_end_response(
-                span, llm_request_type, pending_item
-            )
-            if masked_final_response is not None:
-                final_response = masked_final_response
-            yield pending_item
+        if pending_item is not None:  # FR: flush last buffered item
+            streaming_safety.flush_pending_item(pending_item)  # FR: flush last buffered item
+            masked_final_response = _mask_v1_stream_end_response(  # FR: safety masking
+                span, llm_request_type, pending_item  # FR: safety masking
+            )  # FR: safety masking
+            if masked_final_response is not None:  # FR: safety masking
+                final_response = masked_final_response  # FR: safety masking
+            yield pending_item  # FR: flush last buffered item
 
         set_span_response_attributes(span, final_response)
         if should_emit_events():
@@ -75,38 +77,39 @@ def process_chat_v1_streaming_response(span, event_logger, llm_request_type, res
 
 
 @dont_throw
+# FR: Modified with pending-item buffer for streaming safety.
 async def aprocess_chat_v1_streaming_response(span, event_logger, llm_request_type, response):
     # This naive version assumes we've always successfully streamed till the end
     # and have received a StreamEndChatResponse, which includes the full response
     final_response = None
-    pending_item = None
-    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)
+    pending_item = None  # FR: pending-item buffer for streaming safety
+    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)  # FR: streaming safety init
     try:
         async for item in response:
             span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
 
-            item = streaming_safety.process_v1_item(item)
-            if pending_item is None:
-                pending_item = item
-                continue
+            item = streaming_safety.process_v1_item(item)  # FR: streaming safety processing
+            if pending_item is None:  # FR: pending-item buffer logic
+                pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            streaming_safety.flush_transition(pending_item, item)
-            masked_final_response = _mask_v1_stream_end_response(
-                span, llm_request_type, pending_item
-            )
-            if masked_final_response is not None:
-                final_response = masked_final_response
-            yield pending_item
-            pending_item = item
+            streaming_safety.flush_transition(pending_item, item)  # FR: streaming safety flush
+            masked_final_response = _mask_v1_stream_end_response(  # FR: safety masking
+                span, llm_request_type, pending_item  # FR: safety masking
+            )  # FR: safety masking
+            if masked_final_response is not None:  # FR: safety masking
+                final_response = masked_final_response  # FR: safety masking
+            yield pending_item  # FR: pending-item buffer logic
+            pending_item = item  # FR: pending-item buffer logic
 
-        if pending_item is not None:
-            streaming_safety.flush_pending_item(pending_item)
-            masked_final_response = _mask_v1_stream_end_response(
-                span, llm_request_type, pending_item
-            )
-            if masked_final_response is not None:
-                final_response = masked_final_response
-            yield pending_item
+        if pending_item is not None:  # FR: flush last buffered item
+            streaming_safety.flush_pending_item(pending_item)  # FR: flush last buffered item
+            masked_final_response = _mask_v1_stream_end_response(  # FR: safety masking
+                span, llm_request_type, pending_item  # FR: safety masking
+            )  # FR: safety masking
+            if masked_final_response is not None:  # FR: safety masking
+                final_response = masked_final_response  # FR: safety masking
+            yield pending_item  # FR: flush last buffered item
 
         set_span_response_attributes(span, final_response)
         if should_emit_events():
@@ -119,10 +122,11 @@ async def aprocess_chat_v1_streaming_response(span, event_logger, llm_request_ty
 
 
 @dont_throw
+# FR: Modified with pending-item buffer for streaming safety.
 def process_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": copy.deepcopy(DEFAULT_MESSAGE),
+        "message": copy.deepcopy(DEFAULT_MESSAGE),  # FR: TL bug fix - deepcopy prevents cross-call corruption
         "usage": {},
         "id": "",
         "error": None,
@@ -133,35 +137,35 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
         "type": "function",
         "function": {"name": "", "arguments": "", "description": ""},
     }
-    pending_item = None
-    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)
+    pending_item = None  # FR: pending-item buffer for streaming safety
+    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)  # FR: streaming safety init
     try:
         for item in response:
             span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-            item = streaming_safety.process_v2_item(item)
-            if pending_item is None:
-                pending_item = item
-                continue
+            item = streaming_safety.process_v2_item(item)  # FR: streaming safety processing
+            if pending_item is None:  # FR: pending-item buffer logic
+                pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            streaming_safety.flush_transition(pending_item, item)
+            streaming_safety.flush_transition(pending_item, item)  # FR: streaming safety flush
             try:
                 _accumulate_stream_item(
                     pending_item, current_content_item, current_tool_call_item, final_response
                 )
             except Exception:
                 pass
-            yield pending_item
-            pending_item = item
+            yield pending_item  # FR: pending-item buffer logic
+            pending_item = item  # FR: pending-item buffer logic
 
-        if pending_item is not None:
-            streaming_safety.flush_pending_item(pending_item)
+        if pending_item is not None:  # FR: flush last buffered item
+            streaming_safety.flush_pending_item(pending_item)  # FR: flush last buffered item
             try:
                 _accumulate_stream_item(
                     pending_item, current_content_item, current_tool_call_item, final_response
                 )
             except Exception:
                 pass
-            yield pending_item
+            yield pending_item  # FR: flush last buffered item
 
         set_span_response_attributes(span, final_response)
         if should_emit_events():
@@ -179,10 +183,11 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
 
 
 @dont_throw
+# FR: Modified with pending-item buffer for streaming safety.
 async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": copy.deepcopy(DEFAULT_MESSAGE),
+        "message": copy.deepcopy(DEFAULT_MESSAGE),  # FR: TL bug fix - deepcopy prevents cross-call corruption
         "usage": {},
         "id": "",
         "error": None,
@@ -193,35 +198,35 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
         "type": "function",
         "function": {"name": "", "arguments": "", "description": ""},
     }
-    pending_item = None
-    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)
-    try:
+    pending_item = None  # FR: pending-item buffer for streaming safety
+    streaming_safety = CohereStreamingSafety(span, "cohere.chat", llm_request_type.value)  # FR: streaming safety init
+    try:  # FR: TL bug fix - span.end() in finally
         async for item in response:
             span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-            item = streaming_safety.process_v2_item(item)
-            if pending_item is None:
-                pending_item = item
-                continue
+            item = streaming_safety.process_v2_item(item)  # FR: streaming safety processing
+            if pending_item is None:  # FR: pending-item buffer logic
+                pending_item = item  # FR: pending-item buffer logic
+                continue  # FR: pending-item buffer logic
 
-            streaming_safety.flush_transition(pending_item, item)
+            streaming_safety.flush_transition(pending_item, item)  # FR: streaming safety flush
             try:
                 _accumulate_stream_item(
                     pending_item, current_content_item, current_tool_call_item, final_response
                 )
             except Exception:
                 pass
-            yield pending_item
-            pending_item = item
+            yield pending_item  # FR: pending-item buffer logic
+            pending_item = item  # FR: pending-item buffer logic
 
-        if pending_item is not None:
-            streaming_safety.flush_pending_item(pending_item)
+        if pending_item is not None:  # FR: flush last buffered item
+            streaming_safety.flush_pending_item(pending_item)  # FR: flush last buffered item
             try:
                 _accumulate_stream_item(
                     pending_item, current_content_item, current_tool_call_item, final_response
                 )
             except Exception:
                 pass
-            yield pending_item
+            yield pending_item  # FR: flush last buffered item
 
         set_span_response_attributes(span, final_response)
         if should_emit_events():
@@ -233,8 +238,8 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
             span.record_exception(final_response.get("error"))
         else:
             span.set_status(Status(StatusCode.OK))
-    finally:
-        span.end()
+    finally:  # FR: TL bug fix - span.end() in finally
+        span.end()  # FR: TL bug fix - span.end() in finally
 
 
 # accumulated items are passed in by reference
