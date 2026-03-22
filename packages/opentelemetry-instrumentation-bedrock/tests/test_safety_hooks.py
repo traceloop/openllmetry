@@ -569,3 +569,81 @@ def test_bedrock_converse_streaming_safety_and_wrapper_cover_observation_paths(m
     assert recorded["span"] == [(["masked-atail"], "assistant")]
     assert recorded["guardrail"]
     assert recorded["usage"]
+
+
+def _raise_boom(context):
+    raise RuntimeError("boom")
+
+
+def test_apply_invoke_prompt_safety_returns_kwargs_on_handler_exception():
+    """MF-5: _apply_invoke_prompt_safety must return original kwargs when safety handler raises."""
+    _, tracer = _test_span()
+    register_prompt_safety_handler(_raise_boom)
+
+    kwargs = {"body": json.dumps({"prompt": "secret"}), "modelId": "anthropic.claude"}
+    with tracer.start_as_current_span("bedrock.completion") as span:
+        result = _apply_invoke_prompt_safety(span, kwargs, "bedrock.completion")
+
+    assert result is kwargs
+
+
+def test_apply_invoke_completion_safety_returns_response_on_handler_exception():
+    """MF-5: _apply_invoke_completion_safety must return original response when safety handler raises."""
+    _, tracer = _test_span()
+    register_completion_safety_handler(_raise_boom)
+
+    raw_response = json.dumps({"completion": "secret"})
+    with tracer.start_as_current_span("bedrock.completion") as span:
+        result, changed = _apply_invoke_completion_safety(
+            span, raw_response, "bedrock.completion"
+        )
+
+    assert result is raw_response
+    assert changed is False
+
+
+def test_streaming_with_safety_span_attributes_contain_masked_data():
+    """MF-6: When streaming with safety enabled, span attributes must contain MASKED data,
+    not unmasked data. The stream_done callback should only be called once with masked body."""
+    exporter, tracer = _test_span()
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["[MASKED]"], flush_result="")
+    )
+
+    events = [
+        {
+            "chunk": {
+                "bytes": json.dumps(
+                    {"contentBlockDelta": {"delta": {"text": "secret-data"}}}
+                ).encode("utf-8")
+            }
+        },
+    ]
+
+    span = tracer.start_span("bedrock.completion")
+
+    callback_bodies = []
+
+    def stream_done(response_body):
+        callback_bodies.append(dict(response_body))
+        if span.is_recording():
+            span.set_attribute("gen_ai.completion.0.content", response_body.get("outputText", ""))
+        span.end()
+
+    from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
+    wrapper = create_invoke_stream_wrapper(
+        StreamingWrapper(events),
+        span=span,
+        stream_done_callback=stream_done,
+    )
+    yielded = list(wrapper)
+
+    assert len(callback_bodies) == 1
+    assert "secret-data" not in callback_bodies[0].get("outputText", "")
+    assert "[MASKED]" in callback_bodies[0].get("outputText", "")
+
+    finished_spans = exporter.get_finished_spans()
+    assert len(finished_spans) == 1
+    completion_attr = finished_spans[0].attributes.get("gen_ai.completion.0.content", "")
+    assert "secret-data" not in completion_attr
+    assert "[MASKED]" in completion_attr

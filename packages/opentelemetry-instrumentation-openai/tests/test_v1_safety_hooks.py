@@ -296,7 +296,9 @@ def test_response_streaming_safety_uses_done_event_for_tail_delivery():
     assert done_chunk.text == "maskedtail"
 
 
-def test_response_wrapper_ends_span_for_non_completed_response():
+def test_response_wrapper_defers_span_end_for_non_completed_response():
+    """Non-completed responses (in_progress, queued) should NOT end the span
+    immediately -- the span stays open for continuation polling."""
     exporter, tracer = _test_span()
 
     wrapper = responses_get_or_create_wrapper(tracer)
@@ -315,6 +317,31 @@ def test_response_wrapper_ends_span_for_non_completed_response():
     )
 
     assert response.status == "in_progress"
+    # Span should NOT be ended for non-completed responses
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 0
+
+
+def test_response_wrapper_ends_span_for_completed_response():
+    """Completed responses should have their span ended immediately."""
+    exporter, tracer = _test_span()
+
+    wrapper = responses_get_or_create_wrapper(tracer)
+    response = wrapper(
+        lambda **_: SimpleNamespace(
+            id="resp_2",
+            status="completed",
+            output=[],
+            usage=None,
+            model="gpt-test",
+            service_tier=None,
+        ),
+        SimpleNamespace(_client=None),
+        (),
+        {"model": "gpt-test", "input": "hello"},
+    )
+
+    assert response.status == "completed"
     spans = exporter.get_finished_spans()
     assert len(spans) == 1
     assert spans[0].name == "openai.response"

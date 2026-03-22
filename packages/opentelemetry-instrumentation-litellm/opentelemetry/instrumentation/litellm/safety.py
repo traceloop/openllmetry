@@ -18,22 +18,26 @@ logger = logging.getLogger(__name__)
 
 
 def apply_prompt_safety(span, args, kwargs, request_type, span_name):
-    messages, source = _get_messages(args, kwargs)
-    if isinstance(messages, list):
-        return _apply_messages_prompt_safety(
-            span,
-            args,
-            kwargs,
-            messages,
-            source,
-            request_type,
-            span_name,
-        )
+    try:
+        messages, source = _get_messages(args, kwargs)
+        if isinstance(messages, list):
+            return _apply_messages_prompt_safety(
+                span,
+                args,
+                kwargs,
+                messages,
+                source,
+                request_type,
+                span_name,
+            )
 
-    if request_type != LLMRequestTypeValues.COMPLETION.value:
+        if request_type != LLMRequestTypeValues.COMPLETION.value:
+            return args, kwargs
+
+        return _apply_text_prompt_safety(span, args, kwargs, request_type, span_name)
+    except Exception:
+        logger.warning("safety prompt error", exc_info=True)
         return args, kwargs
-
-    return _apply_text_prompt_safety(span, args, kwargs, request_type, span_name)
 
 
 def _apply_messages_prompt_safety(

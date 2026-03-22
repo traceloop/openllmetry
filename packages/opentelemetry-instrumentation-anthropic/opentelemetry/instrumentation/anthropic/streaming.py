@@ -229,8 +229,6 @@ class AnthropicStream(ObjectProxy):
                     self._streaming_safety.flush_pending_item(pending)
                     _process_response_item(pending, self._complete_response)
                     self._pending_item = None
-                    if not self._instrumentation_completed:
-                        self._complete_instrumentation()
                     return pending
                 if not self._instrumentation_completed:
                     self._complete_instrumentation()
@@ -413,8 +411,6 @@ class AnthropicAsyncStream(ObjectProxy):
                     self._streaming_safety.flush_pending_item(pending)
                     _process_response_item(pending, self._complete_response)
                     self._pending_item = None
-                    if not self._instrumentation_completed:
-                        self._complete_instrumentation()
                     return pending
                 if not self._instrumentation_completed:
                     self._complete_instrumentation()

@@ -14,7 +14,7 @@ from opentelemetry.semconv_ai import LLMRequestTypeValues
 PROVIDER = "Groq"
 
 
-def _apply_prompt_safety(span, kwargs, span_name):
+def _apply_prompt_safety(span, kwargs, span_name, request_type=LLMRequestTypeValues.CHAT.value):
     try:
         mutated_kwargs = kwargs
 
@@ -30,6 +30,7 @@ def _apply_prompt_safety(span, kwargs, span_name):
                 span_name=span_name,
                 segment_index=index,
                 segment_role=get_object_value(message, "role"),
+                request_type=request_type,
             )
             if not changed:
                 continue
@@ -45,7 +46,7 @@ def _apply_prompt_safety(span, kwargs, span_name):
         return kwargs
 
 
-def _apply_completion_safety(span, response, span_name):
+def _apply_completion_safety(span, response, span_name, request_type=LLMRequestTypeValues.CHAT.value):
     try:
         choices = get_object_value(response, "choices") or []
         for index, choice in enumerate(choices):
@@ -56,6 +57,7 @@ def _apply_completion_safety(span, response, span_name):
                     get_object_value(message, "content"),
                     span_name=span_name,
                     segment_index=index,
+                    request_type=request_type,
                 )
                 if changed:
                     set_object_value(message, "content", updated_content)
@@ -69,6 +71,7 @@ def _apply_completion_safety(span, response, span_name):
                 text,
                 span_name=span_name,
                 segment_index=index,
+                request_type=request_type,
             )
             if changed:
                 set_object_value(choice, "text", updated_text)
@@ -76,7 +79,7 @@ def _apply_completion_safety(span, response, span_name):
         return
 
 
-def _mask_prompt_content(span, content, *, span_name, segment_index, segment_role):
+def _mask_prompt_content(span, content, *, span_name, segment_index, segment_role, request_type=LLMRequestTypeValues.CHAT.value):
     if isinstance(content, str):
         return _mask_prompt_text(
             span,
@@ -84,6 +87,7 @@ def _mask_prompt_content(span, content, *, span_name, segment_index, segment_rol
             span_name=span_name,
             segment_index=segment_index,
             segment_role=segment_role,
+            request_type=request_type,
         )
 
     if not isinstance(content, list):
@@ -101,6 +105,7 @@ def _mask_prompt_content(span, content, *, span_name, segment_index, segment_rol
             span_name=span_name,
             segment_index=segment_index,
             segment_role=segment_role,
+            request_type=request_type,
             metadata={"block_index": block_index},
         )
         if not changed:
@@ -112,13 +117,14 @@ def _mask_prompt_content(span, content, *, span_name, segment_index, segment_rol
     return updated_content, updated_content is not content
 
 
-def _mask_completion_content(span, content, *, span_name, segment_index):
+def _mask_completion_content(span, content, *, span_name, segment_index, request_type=LLMRequestTypeValues.CHAT.value):
     if isinstance(content, str):
         return _mask_completion_text(
             span,
             content,
             span_name=span_name,
             segment_index=segment_index,
+            request_type=request_type,
         )
 
     if not isinstance(content, list):
@@ -135,6 +141,7 @@ def _mask_completion_content(span, content, *, span_name, segment_index):
             block_text,
             span_name=span_name,
             segment_index=segment_index,
+            request_type=request_type,
             metadata={"block_index": block_index},
         )
         if not changed:
@@ -153,6 +160,7 @@ def _mask_prompt_text(
     span_name,
     segment_index,
     segment_role,
+    request_type=LLMRequestTypeValues.CHAT.value,
     metadata=None,
 ):
     result = run_prompt_safety(
@@ -161,7 +169,7 @@ def _mask_prompt_text(
         span_name=span_name,
         text=text,
         location=SafetyLocation.PROMPT,
-        request_type=LLMRequestTypeValues.CHAT.value,
+        request_type=request_type,
         segment_index=segment_index,
         segment_role=segment_role,
         metadata=metadata,
@@ -169,14 +177,14 @@ def _mask_prompt_text(
     return _resolve_masked_text(text, result)
 
 
-def _mask_completion_text(span, text, *, span_name, segment_index, metadata=None):
+def _mask_completion_text(span, text, *, span_name, segment_index, request_type=LLMRequestTypeValues.CHAT.value, metadata=None):
     result = run_completion_safety(
         span=span,
         provider=PROVIDER,
         span_name=span_name,
         text=text,
         location=SafetyLocation.COMPLETION,
-        request_type=LLMRequestTypeValues.CHAT.value,
+        request_type=request_type,
         segment_index=segment_index,
         segment_role="assistant",
         metadata=metadata,

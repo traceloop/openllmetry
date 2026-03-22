@@ -31,15 +31,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+          cache: "pip"
           cache-dependency-path: |
-            pyproject.toml
-            poetry.lock
             packages/**/pyproject.toml
-            packages/**/poetry.lock
-
-      - name: Install Poetry
-        run: python -m pip install --upgrade pip poetry
 
       - name: Run FR-marked test suite
         env:

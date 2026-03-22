@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import logging
 import pkgutil
+import threading
 from typing import Any
 
 import llama_index.core.llms
@@ -21,6 +22,7 @@ from opentelemetry.instrumentation.llamaindex.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry import trace
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.instrumentation.utils import unwrap
 from wrapt import wrap_function_wrapper
@@ -32,6 +34,7 @@ except Exception:  # pragma: no cover
 
 PROVIDER = "LlamaIndex"
 _WRAPPERS_INSTALLED = False
+_WRAPPERS_LOCK = threading.Lock()
 _METHODS = ("chat", "achat", "complete", "acomplete")
 _WRAPPED_TARGETS: set[tuple[str, str]] = set()
 logger = logging.getLogger(__name__)
@@ -39,36 +42,38 @@ logger = logging.getLogger(__name__)
 
 def instrument_llm_safety_wrappers():
     global _WRAPPERS_INSTALLED
-    if _WRAPPERS_INSTALLED:
-        return
+    with _WRAPPERS_LOCK:
+        if _WRAPPERS_INSTALLED:
+            return
 
-    _wrap_base_methods()
+        _wrap_base_methods()
 
-    for package_name in ("llama_index.core.llms", "llama_index.llms"):
-        _wrap_package_classes(package_name)
+        for package_name in ("llama_index.core.llms", "llama_index.llms"):
+            _wrap_package_classes(package_name)
 
-    _WRAPPERS_INSTALLED = True
+        _WRAPPERS_INSTALLED = True
 
 
 def uninstrument_llm_safety_wrappers():
     global _WRAPPERS_INSTALLED
-    for module_name, target in list(_WRAPPED_TARGETS):
-        try:
-            unwrap_object = module_name
-            unwrap_target = target
-            if "." in target:
-                owner_name, unwrap_target = target.rsplit(".", 1)
-                unwrap_object = f"{module_name}.{owner_name}"
-            unwrap(unwrap_object, unwrap_target)
-        except Exception:
-            logger.debug(
-                "failed to unwrap llamaindex safety target %s.%s",
-                module_name,
-                target,
-                exc_info=True,
-            )
-    _WRAPPED_TARGETS.clear()
-    _WRAPPERS_INSTALLED = False
+    with _WRAPPERS_LOCK:
+        for module_name, target in list(_WRAPPED_TARGETS):
+            try:
+                unwrap_object = module_name
+                unwrap_target = target
+                if "." in target:
+                    owner_name, unwrap_target = target.rsplit(".", 1)
+                    unwrap_object = f"{module_name}.{owner_name}"
+                unwrap(unwrap_object, unwrap_target)
+            except Exception:
+                logger.debug(
+                    "failed to unwrap llamaindex safety target %s.%s",
+                    module_name,
+                    target,
+                    exc_info=True,
+                )
+        _WRAPPED_TARGETS.clear()
+        _WRAPPERS_INSTALLED = False
 
 
 def llm_chat_wrapper(wrapped, instance, args, kwargs):
@@ -229,10 +234,11 @@ def _apply_chat_prompt_safety(instance, args, kwargs):
         candidate = clone_value(message)
         if _mask_chat_message(
             candidate,
-            span=None,
+            span=trace.get_current_span(),
             span_name=span_name,
             request_type=LLMRequestTypeValues.CHAT.value,
             segment_index=index,
+            location=SafetyLocation.PROMPT,
         ):
             if not changed:
                 updated_messages = list(messages)
@@ -259,7 +265,7 @@ def _apply_completion_prompt_safety(instance, args, kwargs):
 
     updated_prompt, changed = _mask_prompt_text(
         prompt,
-        span=None,
+        span=trace.get_current_span(),
         span_name=f"{instance.__class__.__name__}.completion",
         request_type=LLMRequestTypeValues.COMPLETION.value,
         segment_index=0,
@@ -294,6 +300,7 @@ def _apply_chat_response_safety(event, span):
         request_type=LLMRequestTypeValues.CHAT.value,
         segment_index=0,
         segment_role="assistant",
+        location=SafetyLocation.COMPLETION,
     )
 
 
@@ -305,9 +312,12 @@ def _mask_chat_message(
     request_type,
     segment_index,
     segment_role=None,
+    location=None,
 ):
     changed = False
     role = segment_role or _message_role(message)
+    if location is None:
+        location = SafetyLocation.PROMPT
     blocks = get_object_value(message, "blocks")
     if isinstance(blocks, list):
         for block_index, block in enumerate(blocks):
@@ -321,7 +331,7 @@ def _mask_chat_message(
                 request_type=request_type,
                 segment_index=segment_index,
                 segment_role=role,
-                location=SafetyLocation.PROMPT if span is None else SafetyLocation.COMPLETION,
+                location=location,
                 metadata={"block_index": block_index},
             )
             if not text_changed:
@@ -340,7 +350,7 @@ def _mask_chat_message(
         request_type=request_type,
         segment_index=segment_index,
         segment_role=role,
-        location=SafetyLocation.PROMPT if span is None else SafetyLocation.COMPLETION,
+        location=location,
     )
     if text_changed:
         set_object_value(message, "content", updated_text)

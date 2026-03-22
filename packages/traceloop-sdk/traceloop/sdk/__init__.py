@@ -113,7 +113,7 @@ class Traceloop:
                 + "Error: Missing FortifyRoot API key,"
                 + " go to https://app.fortifyroot.com/settings/api-keys to create one"
             )
-            print("Set the FORTIFYROOT_API_KEY environment variable to the key")
+            print("Set the TRACELOOP_API_KEY environment variable to the key")
             print(Fore.RESET)
             return
 

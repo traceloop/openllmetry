@@ -190,3 +190,20 @@ def test_prompt_and_completion_mask_mixed_content_blocks():
     assert updated_kwargs["messages"][0]["content"][1]["text"] == "leave-image-alone"
     assert response.choices[0].message.content[0].text == "[MASKED:completion-secret]"
     assert response.choices[0].message.content[1].text == "leave-image-alone"
+
+
+def test_get_handlers_caches_imports():
+    from opentelemetry.instrumentation.together.async_wrappers import _get_handlers
+    import opentelemetry.instrumentation.together.async_wrappers as aw
+
+    # Reset cached values
+    aw._handle_input = None
+    aw._handle_response = None
+
+    hi1, hr1 = _get_handlers()
+    hi2, hr2 = _get_handlers()
+
+    assert hi1 is hi2
+    assert hr1 is hr2
+    assert hi1 is not None
+    assert hr1 is not None

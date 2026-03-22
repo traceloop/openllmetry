@@ -29,6 +29,7 @@ from opentelemetry.instrumentation.fortifyroot import (
     register_completion_safety_handler,
     register_prompt_safety_handler,
 )
+from opentelemetry.instrumentation.llamaindex.safety import _WRAPPERS_LOCK
 from opentelemetry.instrumentation.llamaindex import safety as llamaindex_safety
 from opentelemetry.instrumentation.llamaindex.safety import (
     _apply_chat_prompt_safety,
@@ -236,6 +237,7 @@ async def test_async_wrappers_and_chat_end_safety_cover_block_paths():
             request_type="chat",
             segment_index=0,
             segment_role="assistant",
+            location=SafetyLocation.COMPLETION,
         )
         response = ChatResponse(message=ChatMessage(role=MessageRole.ASSISTANT, content="secret"))
         apply_chat_end_safety(
@@ -474,3 +476,9 @@ def test_completion_start_span_attributes_alias_matches_public_helper():
         )
 
     assert exporter.get_finished_spans()[0].attributes["gen_ai.prompt.0.content"] == "secret"
+
+
+def test_wrappers_lock_is_threading_lock():
+    import threading
+
+    assert isinstance(_WRAPPERS_LOCK, type(threading.Lock()))

@@ -198,3 +198,106 @@ async def test_build_async_streaming_response_masks_completion_chunks():
 
     assert chunks[0].choices[0].delta.content == "masked-atail"
     assert handled[0].choices[0].text == "masked-atail"
+
+
+def test_build_streaming_response_ends_span_on_early_break():
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["masked-a", "masked-b"], flush_result="tail")
+    )
+    exporter, tracer = _test_tracer()
+
+    response = [
+        SimpleNamespace(
+            id="resp-chat",
+            model="demo",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    index=0,
+                    finish_reason=None,
+                    delta=SimpleNamespace(content="a"),
+                )
+            ],
+        ),
+        SimpleNamespace(
+            id="resp-chat",
+            model="demo",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    index=0,
+                    finish_reason=None,
+                    delta=SimpleNamespace(content="b"),
+                )
+            ],
+        ),
+    ]
+
+    span = tracer.start_span("together.chat")
+    gen = build_streaming_response(
+        response,
+        span=span,
+        event_logger=None,
+        llm_request_type=LLMRequestTypeValues.CHAT,
+        span_name="together.chat",
+        handle_response=lambda _span, _logger, _type, final: None,
+    )
+
+    # Consume only the first chunk, then abandon the generator
+    next(gen)
+    gen.close()
+
+    finished = exporter.get_finished_spans()
+    assert len(finished) == 1, "Span should be ended after generator abandonment"
+
+
+@pytest.mark.asyncio
+async def test_build_async_streaming_response_ends_span_on_early_break():
+    register_completion_safety_stream_factory(
+        lambda _: _FakeStreamSession(["masked-a", "masked-b"], flush_result="tail")
+    )
+    exporter, tracer = _test_tracer()
+
+    async def _response():
+        yield SimpleNamespace(
+            id="resp-completion",
+            model="demo",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    index=0,
+                    finish_reason=None,
+                    delta=SimpleNamespace(content="a"),
+                )
+            ],
+        )
+        yield SimpleNamespace(
+            id="resp-completion",
+            model="demo",
+            usage=None,
+            choices=[
+                SimpleNamespace(
+                    index=0,
+                    finish_reason=None,
+                    delta=SimpleNamespace(content="b"),
+                )
+            ],
+        )
+
+    span = tracer.start_span("together.completion")
+    gen = build_async_streaming_response(
+        _response(),
+        span=span,
+        event_logger=None,
+        llm_request_type=LLMRequestTypeValues.COMPLETION,
+        span_name="together.completion",
+        handle_response=lambda _span, _logger, _type, final: None,
+    )
+
+    # Consume only the first chunk, then abandon the generator
+    async for _ in gen:
+        break
+    await gen.aclose()
+
+    finished = exporter.get_finished_spans()
+    assert len(finished) == 1, "Span should be ended after async generator abandonment"

@@ -326,3 +326,79 @@ def test_anthropic_sync_stream_ends_span_on_error():
     assert finished_spans[0].status.status_code.name == "ERROR"
     assert "stream error" in finished_spans[0].status.description
     assert stream._instrumentation_completed is True
+
+
+def test_anthropic_sync_stream_span_not_ended_before_last_item_consumed():
+    """D-13: Span must not be ended until the consumer has processed the last pending item.
+    When StopIteration is caught with a pending item, the item is returned WITHOUT
+    calling _complete_instrumentation(). On the NEXT __next__ call, instrumentation completes."""
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    exporter, tracer = _test_tracer()
+
+    items = [
+        SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text="hello"),
+        ),
+    ]
+
+    span = tracer.start_span("anthropic.chat")
+    stream = AnthropicStream(
+        span,
+        _Iterator(items),
+        SimpleNamespace(count_tokens=lambda text: len(text)),
+        0.0,
+        kwargs={},
+    )
+
+    # First call returns the pending item (flushed from the stream end)
+    last_item = next(stream)
+    assert last_item.type == "content_block_delta"
+    # At this point the span must NOT be ended yet -- the consumer hasn't processed the item
+    assert not stream._instrumentation_completed
+    assert len(exporter.get_finished_spans()) == 0
+
+    # Second call triggers StopIteration and completes instrumentation
+    with pytest.raises(StopIteration):
+        next(stream)
+
+    assert stream._instrumentation_completed
+    assert len(exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.asyncio
+async def test_anthropic_async_stream_span_not_ended_before_last_item_consumed():
+    """D-13: Async variant - span must not be ended until the consumer has processed the last pending item."""
+    clear_safety_handlers()
+    register_completion_safety_stream_factory(lambda _: _FakeStreamSession())
+    exporter, tracer = _test_tracer()
+
+    items = [
+        SimpleNamespace(
+            type="content_block_delta",
+            index=0,
+            delta=SimpleNamespace(type="text_delta", text="hello"),
+        ),
+    ]
+
+    span = tracer.start_span("anthropic.chat")
+    stream = AnthropicAsyncStream(
+        span,
+        _AsyncIterator(items),
+        SimpleNamespace(count_tokens=lambda text: len(text)),
+        0.0,
+        kwargs={},
+    )
+
+    last_item = await stream.__anext__()
+    assert last_item.type == "content_block_delta"
+    assert not stream._instrumentation_completed
+    assert len(exporter.get_finished_spans()) == 0
+
+    with pytest.raises(StopAsyncIteration):
+        await stream.__anext__()
+
+    assert stream._instrumentation_completed
+    assert len(exporter.get_finished_spans()) == 1

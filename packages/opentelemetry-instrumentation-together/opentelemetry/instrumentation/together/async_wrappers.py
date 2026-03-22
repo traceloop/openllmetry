@@ -19,6 +19,21 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+_handle_input = None
+_handle_response = None
+
+
+def _get_handlers():
+    global _handle_input, _handle_response
+    if _handle_input is None:
+        from opentelemetry.instrumentation.together import (
+            _handle_input as hi,
+            _handle_response as hr,
+        )
+        _handle_input = hi
+        _handle_response = hr
+    return _handle_input, _handle_response
+
 
 WRAPPED_AMETHODS = [
     {
@@ -81,7 +96,7 @@ async def _awrap(
         },
     )
     kwargs = _apply_prompt_safety(span, kwargs, llm_request_type, name)
-    from opentelemetry.instrumentation.together import _handle_input, _handle_response
+    _handle_input, _handle_response = _get_handlers()
 
     _handle_input(span, event_logger, llm_request_type, kwargs)
 

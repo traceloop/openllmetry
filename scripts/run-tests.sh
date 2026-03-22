@@ -105,7 +105,6 @@ mark_package_seen() {
 
 bootstrap_venv() {
   require_cmd python3
-  require_cmd poetry
 
   if [[ ! -x "$VENV_DIR/bin/python" ]]; then
     log "Creating shared virtualenv at $VENV_DIR"
@@ -114,7 +113,6 @@ bootstrap_venv() {
 
   # shellcheck disable=SC1091
   source "$VENV_DIR/bin/activate"
-  export POETRY_VIRTUALENVS_CREATE=false
   export PIP_DISABLE_PIP_VERSION_CHECK=1
 
   log "Bootstrapping shared virtualenv"
@@ -269,7 +267,7 @@ install_package() {
   set +e
   (
     cd "$package_dir"
-    poetry run python -m pip install "${pip_args[@]}"
+    python -m pip install "${pip_args[@]}"
   ) > >(tee "$install_log") 2>&1
   local install_status=$?
   set -e
@@ -405,10 +403,10 @@ run_package_tests() {
   local test_log="$REPORT_DIR/${package_name}.test.log"
   local -a pytest_cmd
   if [[ "$MODE" == "fr" ]]; then
-    pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
+    pytest_cmd=(python -m pytest -q --junitxml "$junit_xml" tests)
     pytest_cmd+=(-m fr)
   else
-    pytest_cmd=(poetry run pytest -q --junitxml "$junit_xml" tests)
+    pytest_cmd=(python -m pytest -q --junitxml "$junit_xml" tests)
   fi
   pytest_cmd+=("${PYTEST_ARGS[@]:-}")
 

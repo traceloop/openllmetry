@@ -13,12 +13,18 @@ from opentelemetry.instrumentation.litellm.safety import PROVIDER, extract_text_
 from opentelemetry.semconv_ai import SpanAttributes
 
 
-def is_sync_streaming_response(response) -> bool:
-    return inspect.isgenerator(response)
+def is_sync_streaming_response(kwargs, response) -> bool:
+    """Check if this is a streaming response."""
+    if kwargs.get("stream"):
+        return not inspect.iscoroutine(response) and not inspect.isasyncgen(response)
+    return False
 
 
-def is_async_streaming_response(response) -> bool:
-    return inspect.isasyncgen(response)
+def is_async_streaming_response(kwargs, response) -> bool:
+    """Check if this is an async streaming response."""
+    if kwargs.get("stream"):
+        return inspect.iscoroutine(response) or inspect.isasyncgen(response)
+    return False
 
 
 def wrap_sync_streaming_response(span, response, request_type, span_name, set_response_attributes):
@@ -37,11 +43,12 @@ def wrap_sync_streaming_response(span, response, request_type, span_name, set_re
             yield chunk
         _finalize_streaming_span(span, complete_response, set_response_attributes)
     except Exception as exc:
-        span.record_exception(exc)
-        span.set_status(Status(StatusCode.ERROR, str(exc)))
         _close_streaming_response(response)
-        span.end()
+        _record_span_error(span, exc)
         raise
+    finally:
+        if span.is_recording():
+            span.end()
 
 
 async def wrap_async_streaming_response(
@@ -66,11 +73,12 @@ async def wrap_async_streaming_response(
             yield chunk
         _finalize_streaming_span(span, complete_response, set_response_attributes)
     except Exception as exc:
-        span.record_exception(exc)
-        span.set_status(Status(StatusCode.ERROR, str(exc)))
         await _aclose_streaming_response(response)
-        span.end()
+        _record_span_error(span, exc)
         raise
+    finally:
+        if span.is_recording():
+            span.end()
 
 
 def _mask_streaming_chunk(streams, chunk):
@@ -163,7 +171,11 @@ def _finalize_streaming_span(span, complete_response, set_response_attributes):
     )
     set_response_attributes(span, response)
     span.set_status(Status(StatusCode.OK))
-    span.end()
+
+
+def _record_span_error(span, exc):
+    span.record_exception(exc)
+    span.set_status(Status(StatusCode.ERROR, str(exc)))
 
 
 def _close_streaming_response(response) -> None:

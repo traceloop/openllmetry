@@ -153,42 +153,6 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
         span.set_status(Status(StatusCode.OK))
 
 
-def _build_from_streaming_response(span, event_logger, response, llm_model):
-    complete_response = ""
-    token_usage = None
-    for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
-
-        yield item_to_yield
-
-    handle_streaming_response(
-        span, event_logger, llm_model, complete_response, token_usage
-    )
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
-
-
-async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
-    complete_response = ""
-    token_usage = None
-    async for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
-
-        yield item_to_yield
-
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
-
-    span.set_status(Status(StatusCode.OK))
-    span.end()
-
-
 _build_from_streaming_response = _fr_build_streaming_response
 _abuild_from_streaming_response = _fr_build_async_streaming_response
 

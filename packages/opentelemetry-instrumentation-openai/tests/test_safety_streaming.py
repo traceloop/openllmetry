@@ -120,3 +120,40 @@ def test_ensure_delta_returns_none_when_choice_cannot_store_delta():
         __slots__ = ()
 
     assert _ensure_delta(_NoAttrs()) is None
+
+
+def test_chat_streaming_safety_no_delta_created_on_choices_without_content():
+    """D-14: _ensure_delta should NOT be called for choices that have no content to mask.
+    Choices without a delta (or with an empty delta) should not get an empty delta attached."""
+    _, tracer = _test_tracer()
+
+    chunk = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                index=0,
+                finish_reason=None,
+            ),
+        ]
+    )
+    # Verify the choice has no delta attribute before processing
+    assert not hasattr(chunk.choices[0], "delta")
+
+    with tracer.start_as_current_span("openai.chat") as span:
+        helper = OpenAIChatStreamingSafety(span, "openai.chat")
+        helper.process_chunk(chunk)
+
+    # After processing, the choice should still have no delta attribute
+    assert not hasattr(chunk.choices[0], "delta")
+
+
+def test_chat_streaming_safety_no_delta_created_on_dict_choices_without_content():
+    """D-14: Same test with dict-based choices -- no empty delta dict should be injected."""
+    _, tracer = _test_tracer()
+
+    chunk = {"choices": [{"index": 0, "finish_reason": None}]}
+
+    with tracer.start_as_current_span("openai.chat") as span:
+        helper = OpenAIChatStreamingSafety(span, "openai.chat")
+        helper.process_chunk(chunk)
+
+    assert "delta" not in chunk["choices"][0]

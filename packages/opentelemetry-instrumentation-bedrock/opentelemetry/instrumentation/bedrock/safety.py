@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from io import BytesIO
 
 from opentelemetry.instrumentation.fortifyroot import (
@@ -18,26 +19,31 @@ from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 
 PROVIDER = "Bedrock"
+logger = logging.getLogger(__name__)
 
 
 def _apply_invoke_prompt_safety(span, kwargs, span_name):
-    payload, as_bytes = _decode_payload(kwargs.get("body"))
-    if payload is None:
-        return kwargs
+    try:
+        payload, as_bytes = _decode_payload(kwargs.get("body"))
+        if payload is None:
+            return kwargs
 
-    masked_payload, changed = _mask_prompt_payload(
-        span,
-        payload,
-        span_name=span_name,
-        request_type=_request_type(span_name),
-        segment_index=0,
-    )
-    if not changed:
-        return kwargs
+        masked_payload, changed = _mask_prompt_payload(
+            span,
+            payload,
+            span_name=span_name,
+            request_type=_request_type(span_name),
+            segment_index=0,
+        )
+        if not changed:
+            return kwargs
 
-    mutated_kwargs = dict(kwargs)
-    mutated_kwargs["body"] = _encode_payload(masked_payload, as_bytes)
-    return mutated_kwargs
+        mutated_kwargs = dict(kwargs)
+        mutated_kwargs["body"] = _encode_payload(masked_payload, as_bytes)
+        return mutated_kwargs
+    except Exception:
+        logger.warning("Prompt safety handling failed", exc_info=True)
+        return kwargs
 
 
 def _apply_converse_prompt_safety(span, kwargs, span_name):
@@ -98,20 +104,24 @@ def _apply_converse_prompt_safety(span, kwargs, span_name):
 
 
 def _apply_invoke_completion_safety(span, raw_response, span_name):
-    payload, as_bytes = _decode_payload(raw_response)
-    if payload is None:
-        return raw_response, False
+    try:
+        payload, as_bytes = _decode_payload(raw_response)
+        if payload is None:
+            return raw_response, False
 
-    masked_payload, changed = _mask_completion_payload(
-        span,
-        payload,
-        span_name=span_name,
-        request_type=_request_type(span_name),
-        segment_index=0,
-    )
-    if not changed:
+        masked_payload, changed = _mask_completion_payload(
+            span,
+            payload,
+            span_name=span_name,
+            request_type=_request_type(span_name),
+            segment_index=0,
+        )
+        if not changed:
+            return raw_response, False
+        return _encode_payload(masked_payload, as_bytes), True
+    except Exception:
+        logger.warning("Completion safety handling failed", exc_info=True)
         return raw_response, False
-    return _encode_payload(masked_payload, as_bytes), True
 
 
 def _prepare_invoke_response(span, response, span_name):

@@ -150,7 +150,7 @@ def _invoke_completion(tracer, wrapped, args, kwargs, *, is_text_completion=Fals
             )
 
         context_api.detach(token)
-        if is_sync_streaming_response(response):
+        if is_sync_streaming_response(updated_kwargs, response):
             return wrap_sync_streaming_response(
                 span,
                 response,
@@ -211,7 +211,7 @@ async def _invoke_acompletion(
         finally:
             context_api.detach(token)
 
-        if is_async_streaming_response(response):
+        if is_async_streaming_response(updated_kwargs, response):
             return wrap_async_streaming_response(
                 span,
                 response,

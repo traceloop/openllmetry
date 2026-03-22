@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.fortifyroot import (
 from opentelemetry.instrumentation.langchain.vendor_detection import (
     detect_vendor_from_class,
 )
+from opentelemetry import trace
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.semconv_ai import LLMRequestTypeValues
 from wrapt import wrap_function_wrapper
@@ -362,7 +363,7 @@ def _mask_prompt_text(
     metadata=None,
 ):
     result = run_prompt_safety(
-        span=None,
+        span=trace.get_current_span(),
         provider=provider,
         span_name=span_name,
         text=text,
@@ -385,7 +386,7 @@ def _mask_completion_text(
     segment_role,
 ):
     result = run_completion_safety(
-        span=None,
+        span=trace.get_current_span(),
         provider=provider,
         span_name=span_name,
         text=text,
@@ -415,16 +416,13 @@ def _message_role(message) -> str:
 
 
 def _content_text(block):
-    if get_object_value(block, "type") == "text":
-        return get_object_value(block, "text")
-    if get_object_value(block, "text") is not None:
+    block_type = get_object_value(block, "type")
+    if block_type in (None, "text"):
         return get_object_value(block, "text")
     return None
 
 
 def _set_content_text(block, value):
-    if get_object_value(block, "type") == "text":
-        return set_object_value(block, "text", value)
     return set_object_value(block, "text", value)
 
 

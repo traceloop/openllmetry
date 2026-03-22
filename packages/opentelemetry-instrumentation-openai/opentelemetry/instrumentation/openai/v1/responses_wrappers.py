@@ -527,8 +527,13 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     except Exception:
         pass
 
+    # Merge safety-modified keys back into original kwargs (preserving sentinels)
+    for key in ("input", "instructions"):
+        if key in non_sentinel_kwargs:
+            kwargs[key] = non_sentinel_kwargs[key]
+
     try:
-        response = wrapped(*args, **non_sentinel_kwargs)
+        response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
             return ResponseStream(
                 span=span,
@@ -650,8 +655,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         span.end()
         return response
 
-    set_data_attributes(traced_data, span)
-    span.end()
+    if parsed_response.status == "completed":
+        set_data_attributes(traced_data, span)
+        span.end()
 
     return response
 
@@ -682,8 +688,13 @@ async def async_responses_get_or_create_wrapper(
     except Exception:
         pass
 
+    # Merge safety-modified keys back into original kwargs (preserving sentinels)
+    for key in ("input", "instructions"):
+        if key in non_sentinel_kwargs:
+            kwargs[key] = non_sentinel_kwargs[key]
+
     try:
-        response = await wrapped(*args, **non_sentinel_kwargs)
+        response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
             return ResponseStream(
                 span=span,
@@ -802,8 +813,9 @@ async def async_responses_get_or_create_wrapper(
         span.end()
         return response
 
-    set_data_attributes(traced_data, span)
-    span.end()
+    if parsed_response.status == "completed":
+        set_data_attributes(traced_data, span)
+        span.end()
 
     return response
 

@@ -77,15 +77,24 @@ def build_streaming_response(
         handle_response=handle_response,
     )
 
-    for chunk in response:
-        yielded = processor.process_chunk(chunk)
-        if yielded is not None:
-            yield yielded
+    try:
+        for chunk in response:
+            yielded = processor.process_chunk(chunk)
+            if yielded is not None:
+                yield yielded
 
-    final_chunk = processor.finish()
-    if final_chunk is not None:
-        yield final_chunk
-    processor.finalize()
+        final_chunk = processor.finish()
+        if final_chunk is not None:
+            yield final_chunk
+        processor.finalize()
+    except GeneratorExit:
+        if span.is_recording():
+            span.end()
+        raise
+    except BaseException:
+        if span.is_recording():
+            span.end()
+        raise
 
 
 async def build_async_streaming_response(
@@ -105,15 +114,24 @@ async def build_async_streaming_response(
         handle_response=handle_response,
     )
 
-    async for chunk in response:
-        yielded = processor.process_chunk(chunk)
-        if yielded is not None:
-            yield yielded
+    try:
+        async for chunk in response:
+            yielded = processor.process_chunk(chunk)
+            if yielded is not None:
+                yield yielded
 
-    final_chunk = processor.finish()
-    if final_chunk is not None:
-        yield final_chunk
-    processor.finalize()
+        final_chunk = processor.finish()
+        if final_chunk is not None:
+            yield final_chunk
+        processor.finalize()
+    except GeneratorExit:
+        if span.is_recording():
+            span.end()
+        raise
+    except BaseException:
+        if span.is_recording():
+            span.end()
+        raise
 
 
 class _TogetherStreamingState:

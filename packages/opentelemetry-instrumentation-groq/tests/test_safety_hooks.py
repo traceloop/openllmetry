@@ -283,3 +283,37 @@ def test_streaming_helper_fail_opens_when_stream_session_raises():
 
     assert first_chunk.choices[0].delta.content == "secret"
     assert final_chunk.choices[0].delta.content is None
+
+
+def test_prompt_safety_accepts_request_type_parameter():
+    _, tracer = _test_span()
+    captured_request_types = []
+    register_prompt_safety_handler(
+        lambda context: (
+            captured_request_types.append(context.request_type),
+            None,
+        )[1]
+    )
+
+    kwargs = {"messages": [{"role": "user", "content": "hello"}]}
+    with tracer.start_as_current_span("groq.chat") as span:
+        _apply_prompt_safety(span, kwargs, "groq.chat", request_type="completion")
+
+    assert captured_request_types[0] == "completion"
+
+
+def test_completion_safety_accepts_request_type_parameter():
+    _, tracer = _test_span()
+    captured_request_types = []
+    register_completion_safety_handler(
+        lambda context: (
+            captured_request_types.append(context.request_type),
+            None,
+        )[1]
+    )
+
+    response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="hello"))])
+    with tracer.start_as_current_span("groq.chat") as span:
+        _apply_completion_safety(span, response, "groq.chat", request_type="completion")
+
+    assert captured_request_types[0] == "completion"

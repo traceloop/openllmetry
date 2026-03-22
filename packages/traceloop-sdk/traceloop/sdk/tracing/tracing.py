@@ -332,16 +332,20 @@ def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExpor
 
     match parsed.scheme.lower():
         case "http" | "https":
-            base_url = api_endpoint.strip().rstrip("/")
-            if not base_url.endswith("/v1/traces"):
+            base_url = api_endpoint.strip().rstrip('/')
+            if not base_url.endswith('/v1/traces'):
                 endpoint = f"{base_url}/v1/traces"
             else:
                 endpoint = base_url
             return HTTPExporter(endpoint=endpoint, headers=headers)
         case "grpc":
-            return GRPCExporter(endpoint=parsed.netloc, headers=headers, insecure=True)
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=True
+            )
         case "grpcs":
-            return GRPCExporter(endpoint=parsed.netloc, headers=headers, insecure=False)
+            return GRPCExporter(
+                endpoint=parsed.netloc, headers=headers, insecure=False
+            )
         case _:
             # No scheme → default to insecure gRPC for backward compatibility
             return GRPCExporter(
@@ -606,8 +610,8 @@ def init_instrumentations(
             print(Fore.RED + f"Warning: {instrument} instrumentation does not exist.")
             print(
                 "Usage:\n"
-                "from fortifyroot.instruments import Instruments\n"
-                "FortifyRoot.init(app_name='...', instruments=set([Instruments.OPENAI]))"
+                "from traceloop.sdk.instruments import Instruments\n"
+                "Traceloop.init(app_name='...', instruments=set([Instruments.OPENAI]))"
             )
             print(Fore.RESET)
 

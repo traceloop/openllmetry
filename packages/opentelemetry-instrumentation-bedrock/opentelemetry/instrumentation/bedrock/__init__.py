@@ -318,7 +318,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
         span.end()
 
     response["body"] = create_invoke_stream_wrapper(
-        StreamingWrapper(response["body"], stream_done_callback=stream_done),
+        StreamingWrapper(response["body"]),
         span=span,
         stream_done_callback=stream_done,
     )
@@ -326,9 +326,6 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
 @dont_throw
 def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
-    response["body"] = ReusableStreamingBody(
-        response["body"]._raw_stream, response["body"]._content_length
-    )
     request_body = json.loads(kwargs.get("body"))
     response_body = _prepare_invoke_response(span, response, _BEDROCK_INVOKE_SPAN_NAME)
     headers = {}

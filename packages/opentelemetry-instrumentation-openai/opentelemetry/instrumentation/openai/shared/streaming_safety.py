@@ -28,11 +28,12 @@ class OpenAIChatStreamingSafety:
     def process_chunk(self, item):
         for choice in get_object_value(item, "choices", []) or []:
             index = get_object_value(choice, "index", 0) or 0
-            delta = _ensure_delta(choice)
-            if delta is None:
-                continue
-            content = get_object_value(delta, "content")
+            delta = get_object_value(choice, "delta")
+            content = get_object_value(delta, "content") if delta is not None else None
             if isinstance(content, str):
+                delta = _ensure_delta(choice)
+                if delta is None:
+                    continue
                 masked = self._streams.process(
                     ("choice", index),
                     content,
@@ -45,6 +46,9 @@ class OpenAIChatStreamingSafety:
             if finish_reason:
                 tail = self._streams.flush(("choice", index))
                 if tail:
+                    delta = _ensure_delta(choice)
+                    if delta is None:
+                        continue
                     current_text = get_object_value(delta, "content") or ""
                     set_object_value(delta, "content", f"{current_text}{tail}")
         return item
