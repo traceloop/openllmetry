@@ -411,7 +411,19 @@ print_report() {
   local failed=0
   local skipped=0
   local install_failed=0
+  local tests_total=0
+  local tests_passed=0
+  local tests_failed=0
+  local tests_skipped=0
   local package_name
+  local package_counts
+  local counts_field
+  local counts_value
+  local package_passed
+  local package_failed
+  local package_errors
+  local package_skipped
+  local package_total
   local -a failing_lines=()
   local -a skipped_lines=()
   local -a executed_lines=()
@@ -425,11 +437,51 @@ print_report() {
     case "$(get_state "$package_name" "status")" in
       PASS)
         passed=$((passed + 1))
-        executed_lines+=("$(printf 'PASS  %-50s %s' "$package_name" "$(get_state "$package_name" "counts")")")
+        package_counts="$(get_state "$package_name" "counts")"
+        executed_lines+=("$(printf 'PASS  %-50s %s' "$package_name" "$package_counts")")
+        package_passed=0
+        package_failed=0
+        package_errors=0
+        package_skipped=0
+        package_total=0
+        for counts_field in $package_counts; do
+          counts_value="${counts_field#*=}"
+          case "$counts_field" in
+            passed=*) package_passed="$counts_value" ;;
+            failed=*) package_failed="$counts_value" ;;
+            errors=*) package_errors="$counts_value" ;;
+            skipped=*) package_skipped="$counts_value" ;;
+            total=*) package_total="$counts_value" ;;
+          esac
+        done
+        tests_total=$((tests_total + package_total))
+        tests_passed=$((tests_passed + package_passed))
+        tests_failed=$((tests_failed + package_failed + package_errors))
+        tests_skipped=$((tests_skipped + package_skipped))
         ;;
       FAIL)
         failed=$((failed + 1))
-        executed_lines+=("$(printf 'FAIL  %-50s %s' "$package_name" "$(get_state "$package_name" "counts")")")
+        package_counts="$(get_state "$package_name" "counts")"
+        executed_lines+=("$(printf 'FAIL  %-50s %s' "$package_name" "$package_counts")")
+        package_passed=0
+        package_failed=0
+        package_errors=0
+        package_skipped=0
+        package_total=0
+        for counts_field in $package_counts; do
+          counts_value="${counts_field#*=}"
+          case "$counts_field" in
+            passed=*) package_passed="$counts_value" ;;
+            failed=*) package_failed="$counts_value" ;;
+            errors=*) package_errors="$counts_value" ;;
+            skipped=*) package_skipped="$counts_value" ;;
+            total=*) package_total="$counts_value" ;;
+          esac
+        done
+        tests_total=$((tests_total + package_total))
+        tests_passed=$((tests_passed + package_passed))
+        tests_failed=$((tests_failed + package_failed + package_errors))
+        tests_skipped=$((tests_skipped + package_skipped))
         if [[ -n "$(get_state "$package_name" "failures")" ]]; then
           while IFS= read -r failing_test; do
             [[ -n "$failing_test" ]] || continue
@@ -462,6 +514,9 @@ print_report() {
   else
     printf ' - none\n'
   fi
+
+  printf '\nOverall tests run: total = %d passed = %d failed = %d skipped = %d\n' \
+    "$tests_total" "$tests_passed" "$tests_failed" "$tests_skipped"
 
   printf '\nPackages: total=%d passed=%d failed=%d install_failed=%d skipped=%d\n' \
     "$total" "$passed" "$failed" "$install_failed" "$skipped"

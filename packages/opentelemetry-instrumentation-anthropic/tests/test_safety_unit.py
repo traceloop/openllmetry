@@ -6,9 +6,9 @@ from opentelemetry.instrumentation.anthropic import safety
 from opentelemetry.instrumentation.anthropic.streaming_safety import (
     AnthropicStreamingSafety,
 )
-from opentelemetry.instrumentation.anthropic.streaming import AnthropicStream
-from opentelemetry.instrumentation.anthropic.streaming_runtime import (
+from opentelemetry.instrumentation.anthropic.streaming import (
     AnthropicAsyncStream,
+    AnthropicStream,
 )
 from opentelemetry.instrumentation.fortifyroot import SafetyDecision, SafetyResult
 from opentelemetry.instrumentation.fortifyroot import (

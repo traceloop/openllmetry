@@ -18,6 +18,9 @@ from opentelemetry.instrumentation.anthropic.utils import (
     shared_metrics_attributes,
     should_emit_events,
 )
+from opentelemetry.instrumentation.anthropic.streaming_safety import (
+    AnthropicStreamingSafety,
+)
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -175,6 +178,8 @@ class AnthropicStream(ObjectProxy):
 
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
+        self._pending_item = None
+        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))
 
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
@@ -215,25 +220,46 @@ class AnthropicStream(ObjectProxy):
         return self
 
     def __next__(self):
-        try:
-            item = self.__wrapped__.__next__()
-        except StopIteration:
-            # Stream is complete - handle instrumentation
-            if not self._instrumentation_completed:
-                self._complete_instrumentation()
-            raise
-        except Exception as e:
-            attributes = error_metrics_attributes(e)
-            if self._exception_counter:
-                self._exception_counter.add(1, attributes=attributes)
-            raise e
-        _process_response_item(item, self._complete_response)
-        return item
+        while True:
+            try:
+                item = self.__wrapped__.__next__()
+            except StopIteration:
+                if self._pending_item is not None:
+                    pending = self._pending_item
+                    self._streaming_safety.flush_pending_item(pending)
+                    _process_response_item(pending, self._complete_response)
+                    self._pending_item = None
+                    if not self._instrumentation_completed:
+                        self._complete_instrumentation()
+                    return pending
+                if not self._instrumentation_completed:
+                    self._complete_instrumentation()
+                raise
+            except Exception as e:
+                attributes = error_metrics_attributes(e)
+                if self._exception_counter:
+                    self._exception_counter.add(1, attributes=attributes)
+                raise e
+
+            item = self._streaming_safety.process_item(item)
+            if self._pending_item is None:
+                self._pending_item = item
+                continue
+
+            pending = self._pending_item
+            self._streaming_safety.flush_transition(pending, item)
+            _process_response_item(pending, self._complete_response)
+            self._pending_item = item
+            return pending
 
     def _handle_completion(self):
         """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
-        set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
+        set_span_attribute(
+            self._span,
+            GenAIAttributes.GEN_AI_RESPONSE_ID,
+            self._complete_response.get("id"),
+        )
         if self._duration_histogram:
             duration = time.time() - self._start_time
             self._duration_histogram.record(
@@ -241,57 +267,55 @@ class AnthropicStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-            # This mirrors the logic from build_from_streaming_response
-            metric_attributes = shared_metrics_attributes(self._complete_response)
-            set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
-
-            if self._duration_histogram:
-                duration = time.time() - self._start_time
-                self._duration_histogram.record(
-                    duration,
-                    attributes=metric_attributes,
-                )
-
-            # Calculate token usage
-            if Config.enrich_token_usage:
-                try:
-                    if usage := self._complete_response.get("usage"):
-                        prompt_tokens = usage.get("input_tokens", 0) or 0
-                    else:
-                        prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
-
-                    if usage := self._complete_response.get("usage"):
-                        completion_tokens = usage.get("output_tokens", 0) or 0
-                    else:
-                        completion_content = ""
-                        if self._complete_response.get("events"):
-                            model_name = self._complete_response.get("model") or None
-                            for event in self._complete_response.get("events"):
-                                if event.get("text"):
-                                    completion_content += event.get("text")
-
-                            if model_name and hasattr(self._instance, "count_tokens"):
-                                completion_tokens = self._instance.count_tokens(completion_content)
-
-                    _set_token_usage(
-                        self._span,
-                        self._complete_response,
-                        prompt_tokens,
-                        completion_tokens,
-                        metric_attributes,
-                        self._token_histogram,
-                        self._choice_counter,
+        if Config.enrich_token_usage:
+            try:
+                if usage := self._complete_response.get("usage"):
+                    prompt_tokens = usage.get("input_tokens", 0) or 0
+                else:
+                    prompt_tokens = count_prompt_tokens_from_request(
+                        self._instance,
+                        self._kwargs,
                     )
-                except Exception as e:
-                    logger.warning("Failed to set token usage, error: %s", e)
 
-            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+                if usage := self._complete_response.get("usage"):
+                    completion_tokens = usage.get("output_tokens", 0) or 0
+                else:
+                    completion_tokens = 0
+                    completion_content = ""
+                    if self._complete_response.get("events"):
+                        model_name = self._complete_response.get("model") or None
+                        for event in self._complete_response.get("events"):
+                            if event.get("text"):
+                                completion_content += event.get("text")
 
-            if self._span.is_recording():
-                self._span.set_status(Status(StatusCode.OK))
-                self._span.end()
+                        if model_name and hasattr(self._instance, "count_tokens"):
+                            completion_tokens = self._instance.count_tokens(
+                                completion_content
+                            )
 
-            self._instrumentation_completed = True
+                _set_token_usage(
+                    self._span,
+                    self._complete_response,
+                    prompt_tokens,
+                    completion_tokens,
+                    metric_attributes,
+                    self._token_histogram,
+                    self._choice_counter,
+                )
+            except Exception as e:
+                logger.warning("Failed to set token usage, error: %s", e)
+
+        _handle_streaming_response(
+            self._span,
+            self._event_logger,
+            self._complete_response,
+        )
+
+        if self._span.is_recording():
+            self._span.set_status(Status(StatusCode.OK))
+            self._span.end()
+
+        self._instrumentation_completed = True
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
@@ -330,6 +354,8 @@ class AnthropicAsyncStream(ObjectProxy):
 
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
+        self._pending_item = None
+        self._streaming_safety = AnthropicStreamingSafety(span, getattr(span, "name", "anthropic.chat"))
 
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
@@ -373,28 +399,42 @@ class AnthropicAsyncStream(ObjectProxy):
         return self
 
     async def __anext__(self):
-        try:
-            item = await self.__wrapped__.__anext__()
-        except StopAsyncIteration:
-            # Stream is complete - handle instrumentation
-            if not self._instrumentation_completed:
-                self._complete_instrumentation()
-            raise
-        except Exception as e:
-            # Handle errors during streaming
-            if not self._instrumentation_completed:
-                attributes = error_metrics_attributes(e)
-                if self._exception_counter:
-                    self._exception_counter.add(1, attributes=attributes)
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
-                self._span.end()
-                self._instrumentation_completed = True
-            raise
-        else:
-            # Process the item for instrumentation
-            _process_response_item(item, self._complete_response)
-            return item
+        while True:
+            try:
+                item = await self.__wrapped__.__anext__()
+            except StopAsyncIteration:
+                if self._pending_item is not None:
+                    pending = self._pending_item
+                    self._streaming_safety.flush_pending_item(pending)
+                    _process_response_item(pending, self._complete_response)
+                    self._pending_item = None
+                    if not self._instrumentation_completed:
+                        self._complete_instrumentation()
+                    return pending
+                if not self._instrumentation_completed:
+                    self._complete_instrumentation()
+                raise
+            except Exception as e:
+                if not self._instrumentation_completed:
+                    attributes = error_metrics_attributes(e)
+                    if self._exception_counter:
+                        self._exception_counter.add(1, attributes=attributes)
+                    if self._span and self._span.is_recording():
+                        self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                        self._span.end()
+                    self._instrumentation_completed = True
+                raise
+
+            item = self._streaming_safety.process_item(item)
+            if self._pending_item is None:
+                self._pending_item = item
+                continue
+
+            pending = self._pending_item
+            self._streaming_safety.flush_transition(pending, item)
+            _process_response_item(pending, self._complete_response)
+            self._pending_item = item
+            return pending
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
@@ -511,15 +551,58 @@ class WrappedMessageStreamManager:
         pass
 
 
-from opentelemetry.instrumentation.anthropic.streaming_runtime import (
-    AnthropicAsyncStream as _fr_AnthropicAsyncStream,
-    AnthropicStream as _fr_AnthropicStream,
-    WrappedAsyncMessageStreamManager as _fr_WrappedAsyncMessageStreamManager,
-    WrappedMessageStreamManager as _fr_WrappedMessageStreamManager,
-)
+class WrappedAsyncMessageStreamManager:
+    """Wrapper for AsyncMessageStreamManager that handles instrumentation"""
 
-# Keep the Traceloop file near-upstream and delegate FR safety behavior.
-AnthropicAsyncStream = _fr_AnthropicAsyncStream
-AnthropicStream = _fr_AnthropicStream
-WrappedAsyncMessageStreamManager = _fr_WrappedAsyncMessageStreamManager
-WrappedMessageStreamManager = _fr_WrappedMessageStreamManager
+    def __init__(
+        self,
+        stream_manager,
+        span,
+        instance,
+        start_time,
+        token_histogram,
+        choice_counter,
+        duration_histogram,
+        exception_counter,
+        event_logger,
+        kwargs,
+    ):
+        self._stream_manager = stream_manager
+        self._span = span
+        self._instance = instance
+        self._start_time = start_time
+        self._token_histogram = token_histogram
+        self._choice_counter = choice_counter
+        self._duration_histogram = duration_histogram
+        self._exception_counter = exception_counter
+        self._event_logger = event_logger
+        self._kwargs = kwargs
+
+    async def __aenter__(self):
+        # Call the original stream manager's __aenter__ to get the actual stream
+        stream = await self._stream_manager.__aenter__()
+        # Return the proxy that preserves helper methods
+        return AnthropicAsyncStream(
+            self._span,
+            stream,
+            self._instance,
+            self._start_time,
+            self._token_histogram,
+            self._choice_counter,
+            self._duration_histogram,
+            self._exception_counter,
+            self._event_logger,
+            self._kwargs,
+        )
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
+
+    def __getattr__(self, name):
+        if name == '_complete_instrumentation':
+            return self._complete_instrumentation
+        return getattr(self._stream_manager, name)
+
+    def _complete_instrumentation(self):
+        """Complete the instrumentation when stream is fully consumed"""
+        pass

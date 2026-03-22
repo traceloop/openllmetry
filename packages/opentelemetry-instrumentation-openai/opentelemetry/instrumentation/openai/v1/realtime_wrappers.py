@@ -15,6 +15,7 @@ Key concepts:
 
 import json
 import time
+from collections import deque
 from typing import Optional
 
 from opentelemetry import context as context_api
@@ -34,6 +35,13 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
+)
+from opentelemetry.instrumentation.openai.v1.realtime_safety import (
+    RealtimeStreamingSafety,
+    apply_realtime_event_prompt_safety,
+    apply_realtime_item_prompt_safety,
+    apply_realtime_session_prompt_safety,
+    extract_realtime_input_text,
 )
 
 
@@ -64,6 +72,7 @@ class RealtimeEventProcessor:
 
     def __init__(self, state: RealtimeSessionState):
         self._state = state
+        self._streaming_safety = RealtimeStreamingSafety(state.response_span)
 
     @dont_throw
     def process_event(self, event):
@@ -88,6 +97,27 @@ class RealtimeEventProcessor:
             self.handle_response_done(event)
         elif event_type == "error":
             self.handle_error_event(event)
+
+    @dont_throw
+    def expand_and_process_event(self, event, *, start_span_if_none: bool):
+        events = self._streaming_safety.process_event(
+            self._state.current_response_id, event
+        )
+        processed_events = []
+        for item in events:
+            event_type = getattr(item, "type", None)
+            if not event_type:
+                processed_events.append(item)
+                continue
+
+            if event_type == "response.created":
+                self.handle_response_created(
+                    item, start_span_if_none=start_span_if_none
+                )
+            else:
+                self.process_event(item)
+            processed_events.append(item)
+        return processed_events
 
     @dont_throw
     def handle_session_created(self, event):
@@ -135,12 +165,13 @@ class RealtimeEventProcessor:
     @dont_throw
     def handle_response_created(self, event, start_span_if_none: bool = False):
         """Handle response.created event - response cycle started."""
-        if hasattr(event, "response") and hasattr(event.response, "id"):
-            self._state.current_response_id = event.response.id
-
         # Optionally start span if not already started (used by iterator)
         if start_span_if_none and self._state.response_span is None:
             self.start_response_span()
+
+        if hasattr(event, "response") and hasattr(event.response, "id"):
+            self._state.current_response_id = event.response.id
+        self._streaming_safety = RealtimeStreamingSafety(self._state.response_span)
 
     @dont_throw
     def handle_text_delta(self, event):
@@ -170,6 +201,13 @@ class RealtimeEventProcessor:
             return
 
         span = self._state.response_span
+        text_tail, transcript_tail = self._streaming_safety.consume_done_tails(
+            self._state.current_response_id
+        )
+        if text_tail:
+            self._state.accumulated_text += text_tail
+        if transcript_tail:
+            self._state.accumulated_audio_transcript += transcript_tail
 
         if span.is_recording():
             # Set response attributes
@@ -298,6 +336,7 @@ class RealtimeEventProcessor:
             start_time=self._state.response_start_time,
             context=ctx,
         )
+        self._streaming_safety = RealtimeStreamingSafety(self._state.response_span)
 
         if self._state.response_span.is_recording():
             _set_span_attribute(
@@ -353,6 +392,7 @@ class RealtimeConnectionWrapper:
         self._state = state
         self._processor = RealtimeEventProcessor(state)
         self._closed = False
+        self._pending_events = deque()
 
     def __getattr__(self, name):
         """Delegate attribute access to the wrapped connection."""
@@ -377,9 +417,14 @@ class RealtimeConnectionWrapper:
 
     async def recv(self):
         """Receive and process an event."""
+        if self._pending_events:
+            return self._pending_events.popleft()
         event = await self._connection.recv()
-        self._processor.process_event(event)
-        return event
+        events = self._process_incoming_event(event)
+        if not events:
+            return event
+        self._pending_events.extend(events[1:])
+        return events[0]
 
     def recv_bytes(self):
         """Delegate to wrapped connection."""
@@ -387,6 +432,10 @@ class RealtimeConnectionWrapper:
 
     async def send(self, event):
         """Send an event, tracking response.create."""
+        event = apply_realtime_event_prompt_safety(
+            event,
+            span=self._state.response_span or self._state.session_span,
+        )
         self._process_outgoing_event(event)
         return await self._connection.send(event)
 
@@ -431,6 +480,10 @@ class RealtimeConnectionWrapper:
             self._track_input(event)
 
     @dont_throw
+    def _process_incoming_event(self, event):
+        return self._processor.expand_and_process_event(event, start_span_if_none=False)
+
+    @dont_throw
     def _track_input(self, event):
         """Track input from conversation.item.create events."""
         if isinstance(event, dict):
@@ -438,15 +491,9 @@ class RealtimeConnectionWrapper:
         else:
             item = getattr(event, "item", {})
 
-        if isinstance(item, dict):
-            content = item.get("content", [])
-            for block in content:
-                if isinstance(block, dict):
-                    if block.get("type") == "input_text":
-                        self._state.input_text = block.get("text", "")
-                    elif block.get("type") == "input_audio":
-                        # Audio input - could capture transcript if available
-                        pass
+        input_text = extract_realtime_input_text(item)
+        if input_text is not None:
+            self._state.input_text = input_text
 
     def _handle_error(self, error):
         """Handle connection errors."""
@@ -484,28 +531,28 @@ class RealtimeEventIterator:
         self._state = state
         self._processor = processor
         self._iterator = connection.__aiter__()
+        self._pending_events = deque()
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
+        if self._pending_events:
+            return self._pending_events.popleft()
         event = await self._iterator.__anext__()
-        self._process_event(event)
-        return event
+        events = self._process_event(event)
+        if not events:
+            return event
+        self._pending_events.extend(events[1:])
+        return events[0]
 
     @dont_throw
     def _process_event(self, event):
         """Process server events to track response lifecycle."""
-        event_type = getattr(event, "type", None)
-        if not event_type:
-            return
-
-        # For response.created, start span if not already started
-        if event_type == "response.created":
-            self._processor.handle_response_created(event, start_span_if_none=True)
-        else:
-            # Delegate all other events to the shared processor
-            self._processor.process_event(event)
+        return self._processor.expand_and_process_event(
+            event,
+            start_span_if_none=True,
+        )
 
 
 class RealtimeSessionWrapper:
@@ -520,6 +567,7 @@ class RealtimeSessionWrapper:
 
     async def update(self, **kwargs):
         """Wrap session.update to track configuration changes."""
+        kwargs = apply_realtime_session_prompt_safety(kwargs, span=self._state.session_span)
         result = await self._session.update(**kwargs)
 
         # Track session config updates
@@ -574,17 +622,14 @@ class RealtimeConversationItemWrapper:
 
     async def create(self, **kwargs):
         """Wrap item.create to track user input."""
+        kwargs = apply_realtime_item_prompt_safety(kwargs, span=self._state.session_span)
         result = await self._item.create(**kwargs)
 
         # Track input for the span
         if "item" in kwargs:
-            item = kwargs["item"]
-            if isinstance(item, dict):
-                content = item.get("content", [])
-                for block in content:
-                    if isinstance(block, dict):
-                        if block.get("type") == "input_text":
-                            self._state.input_text = block.get("text", "")
+            input_text = extract_realtime_input_text(kwargs["item"])
+            if input_text is not None:
+                self._state.input_text = input_text
 
         return result
 
@@ -728,29 +773,3 @@ def realtime_connect_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     model = kwargs.get("model", "gpt-4o-realtime-preview")
     connection_manager = wrapped(*args, **kwargs)
     return RealtimeConnectionManagerWrapper(connection_manager, tracer, model)
-
-
-from opentelemetry.instrumentation.openai.v1.realtime_runtime import (
-    RealtimeConnectionManagerWrapper as _fr_RealtimeConnectionManagerWrapper,
-    RealtimeConnectionWrapper as _fr_RealtimeConnectionWrapper,
-    RealtimeConversationItemWrapper as _fr_RealtimeConversationItemWrapper,
-    RealtimeConversationWrapper as _fr_RealtimeConversationWrapper,
-    RealtimeEventIterator as _fr_RealtimeEventIterator,
-    RealtimeEventProcessor as _fr_RealtimeEventProcessor,
-    RealtimeResponseWrapper as _fr_RealtimeResponseWrapper,
-    RealtimeSessionState as _fr_RealtimeSessionState,
-    RealtimeSessionWrapper as _fr_RealtimeSessionWrapper,
-    realtime_connect_wrapper as _fr_realtime_connect_wrapper,
-)
-
-# Keep the Traceloop surface close to upstream and delegate FR safety behavior.
-RealtimeConnectionManagerWrapper = _fr_RealtimeConnectionManagerWrapper
-RealtimeConnectionWrapper = _fr_RealtimeConnectionWrapper
-RealtimeConversationItemWrapper = _fr_RealtimeConversationItemWrapper
-RealtimeConversationWrapper = _fr_RealtimeConversationWrapper
-RealtimeEventIterator = _fr_RealtimeEventIterator
-RealtimeEventProcessor = _fr_RealtimeEventProcessor
-RealtimeResponseWrapper = _fr_RealtimeResponseWrapper
-RealtimeSessionState = _fr_RealtimeSessionState
-RealtimeSessionWrapper = _fr_RealtimeSessionWrapper
-realtime_connect_wrapper = _fr_realtime_connect_wrapper
