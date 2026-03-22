@@ -549,7 +549,6 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         },
@@ -679,7 +678,6 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         },

@@ -435,36 +435,6 @@ def test_output_messages_streaming_tool_use():
 # Span identity attribute tests (#4, #5)
 # ---------------------------------------------------------------------------
 
-def test_gen_ai_system_value_is_lowercase_anthropic():
-    """gen_ai.system must use the spec enum value 'anthropic', not 'Anthropic'."""
-    from opentelemetry.instrumentation.anthropic import _wrap
-    from unittest.mock import patch, MagicMock
-
-    tracer = MagicMock()
-    captured = {}
-
-    def fake_start_span(name, kind, attributes):
-        captured["attributes"] = attributes
-        span = MagicMock()
-        span.is_recording.return_value = False
-        return span
-
-    tracer.start_span.side_effect = fake_start_span
-
-    # Simulate _wrap being called for anthropic.chat
-    to_wrap = {"span_name": "anthropic.chat"}
-    wrapped_fn = MagicMock(return_value=None)
-
-    with patch("opentelemetry.context.get_value", return_value=False):
-        fn = _wrap(tracer, None, None, None, None, None, to_wrap)
-        fn(wrapped_fn, MagicMock(), [], {"model": "claude-3-opus-20240229", "messages": [], "max_tokens": 10})
-
-    actual = captured["attributes"].get(GenAIAttributes.GEN_AI_SYSTEM)
-    assert actual == GenAiSystemValues.ANTHROPIC.value, (
-        f"gen_ai.system must be 'anthropic' (lowercase), got '{actual}'"
-    )
-
-
 def test_gen_ai_provider_name_is_set():
     """gen_ai.provider.name must be set on every span."""
     from opentelemetry.instrumentation.anthropic import _wrap
