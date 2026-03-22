@@ -14,6 +14,9 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
+GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -212,21 +215,16 @@ async def set_input_attributes(span, args):
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
+        messages = []
+        for argument in args:
             processed_content = await _process_vertexai_argument(argument, span)
-
             if processed_content:
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
-                )
+                messages.append({
+                    "role": "user",
+                    "content": json.dumps(processed_content),
+                })
+        if messages:
+            _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
 
 
 # Sync version with image processing support
@@ -236,21 +234,16 @@ def set_input_attributes_sync(span, args):
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
+        messages = []
+        for argument in args:
             processed_content = _process_vertexai_argument_sync(argument, span)
-
             if processed_content:
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
-                )
+                messages.append({
+                    "role": "user",
+                    "content": json.dumps(processed_content),
+                })
+        if messages:
+            _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
 
 
 @dont_throw
@@ -258,9 +251,12 @@ def set_model_input_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
-    _set_span_attribute(
-        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
-    )
+
+    prompt = kwargs.get("prompt")
+    if prompt:
+        messages = [{"role": "user", "content": prompt}]
+        _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
+
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
@@ -270,10 +266,10 @@ def set_model_input_attributes(span, kwargs, llm_model):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
 
 
@@ -281,12 +277,8 @@ def set_model_input_attributes(span, kwargs, llm_model):
 def set_response_attributes(span, llm_model, generation_text):
     if not span.is_recording() or not should_send_prompts():
         return
-    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant")
-    _set_span_attribute(
-        span,
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-        generation_text,
-    )
+    messages = [{"role": "assistant", "content": generation_text}]
+    _set_span_attribute(span, GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 
 @dont_throw
@@ -298,7 +290,7 @@ def set_model_response_attributes(span, llm_model, token_usage):
     if token_usage:
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             token_usage.total_token_count,
         )
         _set_span_attribute(

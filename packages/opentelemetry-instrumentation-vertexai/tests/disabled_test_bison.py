@@ -10,6 +10,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from vertexai.language_models import ChatModel, InputOutputTextPair, TextGenerationModel
+import json
 
 vertexai.init()
 
@@ -41,13 +42,13 @@ def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
     )
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes["gen_ai.input.messages"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
-        vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
+        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
         == response
     )
 
@@ -84,13 +85,13 @@ def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
     )
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes["gen_ai.input.messages"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
-        vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
+        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
         == response
     )
 
@@ -120,14 +121,13 @@ def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes["gen_ai.input.messages"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert vertexai_span.attributes[
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    ] == "".join(response)
+    output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
+    assert output_messages[0]["content"] == "".join(response)
 
 
 @pytest.mark.vcr
@@ -160,14 +160,13 @@ def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "text-bison"
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes["gen_ai.input.messages"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert vertexai_span.attributes[
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    ] == "".join(response)
+    output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
+    assert output_messages[0]["content"] == "".join(response)
 
 
 @pytest.mark.vcr
@@ -207,13 +206,13 @@ def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
     )
     assert (
         "How many planets are there in the solar system?"
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes["gen_ai.input.messages"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     assert (
-        vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
+        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
         == response
     )
 
@@ -259,16 +258,15 @@ def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert vertexai_span.attributes[
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    ] == "".join(response)
+    output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
+    assert output_messages[0]["content"] == "".join(response)
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == "vertex_ai"
     )
 
     if not expected_content:

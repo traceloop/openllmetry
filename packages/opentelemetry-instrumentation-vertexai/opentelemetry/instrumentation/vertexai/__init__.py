@@ -27,8 +27,6 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -238,8 +236,8 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
         },
     )
 
@@ -287,8 +285,8 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
         },
     )
 

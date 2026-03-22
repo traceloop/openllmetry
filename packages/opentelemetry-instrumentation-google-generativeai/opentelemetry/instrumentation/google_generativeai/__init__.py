@@ -32,7 +32,6 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     SpanAttributes,
     Meters
 )
@@ -205,8 +204,8 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
         },
     )
     start_time = time.perf_counter()
@@ -224,7 +223,7 @@ async def _awrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )
@@ -281,8 +280,8 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
         },
     )
 
@@ -301,7 +300,7 @@ def _wrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )

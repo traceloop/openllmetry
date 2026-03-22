@@ -1,4 +1,5 @@
 
+import json
 import pytest
 from opentelemetry.trace import StatusCode, SpanKind
 from opentelemetry.semconv_ai import (
@@ -13,7 +14,7 @@ from opentelemetry.semconv._incubating.attributes import (
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "gemini"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "gcp.gen_ai"
 
     if not expected_content:
         assert not log.log_record.body
@@ -40,18 +41,24 @@ def test_client_spans(exporter, genai_client):
 
     attrs = span.attributes
 
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "Google"
-    assert attrs[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "gcp.gen_ai"
+    assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
-    assert "gen_ai.prompt.0.content" in attrs
-    assert attrs["gen_ai.prompt.0.role"] == "user"
+    # Input messages are now a single JSON array
+    assert "gen_ai.input.messages" in attrs
+    input_messages = json.loads(attrs["gen_ai.input.messages"])
+    assert len(input_messages) > 0
+    assert input_messages[0]["role"] == "user"
 
-    assert "gen_ai.completion.0.content" in attrs
-    assert attrs["gen_ai.completion.0.role"] == "assistant"
+    # Output messages are now a single JSON array
+    assert "gen_ai.output.messages" in attrs
+    output_messages = json.loads(attrs["gen_ai.output.messages"])
+    assert len(output_messages) > 0
+    assert output_messages[0]["role"] == "assistant"
 
-    assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+    assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
 

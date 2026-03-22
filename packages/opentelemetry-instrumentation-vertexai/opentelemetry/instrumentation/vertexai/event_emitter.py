@@ -29,9 +29,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {
-    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
-}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai"}
 """The attributes to be used for the event."""
 
 

@@ -19,6 +19,9 @@ from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
 
+GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
+
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -160,20 +163,6 @@ async def _process_content_part(part, span, part_index):
         return {"type": "text", "text": str(part)}
 
 
-def _set_prompt_attributes(span, prompt_index, processed_content, content_item):
-    """Set span attributes for a processed prompt"""
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.content",
-        json.dumps(processed_content),
-    )
-    _set_span_attribute(
-        span,
-        f"{SpanAttributes.LLM_PROMPTS}.{prompt_index}.role",
-        getattr(content_item, "role", "user"),
-    )
-
-
 async def _process_argument(argument, span):
     """Process a single argument from args list"""
     processed_content = []
@@ -213,49 +202,36 @@ async def set_input_attributes(span, args, kwargs, llm_model):
     if not should_send_prompts():
         return
 
+    messages = []
+
     if "contents" in kwargs:
         contents = kwargs["contents"]
         if isinstance(contents, str):
-            # Simple string content in OpenAI format
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                contents,
-            )
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
-                "user",
-            )
+            messages.append({"role": "user", "content": contents})
         elif isinstance(contents, list):
-            for prompt_index, content_item in enumerate(contents):
+            for content_item in contents:
                 processed_content = await _process_content_item(content_item, span)
-
                 if processed_content:
-                    _set_prompt_attributes(span, prompt_index, processed_content, content_item)
-
+                    messages.append({
+                        "role": getattr(content_item, "role", "user"),
+                        "content": json.dumps(processed_content),
+                    })
     elif args and len(args) > 0:
-        # Handle args - process each argument
-        for arg_index, argument in enumerate(args):
+        for argument in args:
             processed_content = await _process_argument(argument, span)
-
             if processed_content:
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.content",
-                    json.dumps(processed_content),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{arg_index}.role",
-                    "user",
-                )
+                messages.append({
+                    "role": "user",
+                    "content": json.dumps(processed_content),
+                })
     elif "prompt" in kwargs:
-        _set_span_attribute(
-            span, f"{SpanAttributes.LLM_PROMPTS}.0.content",
-            json.dumps([{"type": "text", "text": kwargs["prompt"]}])
-        )
-        _set_span_attribute(span, f"{SpanAttributes.LLM_PROMPTS}.0.role", "user")
+        messages.append({
+            "role": "user",
+            "content": json.dumps([{"type": "text", "text": kwargs["prompt"]}]),
+        })
+
+    if messages:
+        _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
 
 
 # Keep sync version for backward compatibility
@@ -268,27 +244,20 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
     if not should_send_prompts():
         return
 
+    messages = []
+
     if "contents" in kwargs:
         contents = kwargs["contents"]
         if isinstance(contents, str):
-            # Simple string content in OpenAI format
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                json.dumps([{"type": "text", "text": contents}]),
-            )
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
-                "user",
-            )
+            messages.append({
+                "role": "user",
+                "content": json.dumps([{"type": "text", "text": contents}]),
+            })
         elif isinstance(contents, list):
-            # Process content list - could be mixed text and Part objects
-            for i, content in enumerate(contents):
+            for content in contents:
                 processed_content = []
 
                 if hasattr(content, "parts"):
-                    # Content with parts (Google GenAI Content object)
                     for j, part in enumerate(content.parts):
                         if hasattr(part, "text") and part.text:
                             processed_content.append({"type": "text", "text": part.text})
@@ -299,36 +268,25 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                             if processed_image is not None:
                                 processed_content.append(processed_image)
                         else:
-                            # Other part types
                             processed_content.append({"type": "text", "text": str(part)})
                 elif isinstance(content, str):
-                    # Direct string in the list
                     processed_content.append({"type": "text", "text": content})
                 elif _is_image_part(content):
-                    # Direct Part object that's an image
                     processed_image = _process_image_part_sync(
                         content, span.context.trace_id, span.context.span_id, 0
                     )
                     if processed_image is not None:
                         processed_content.append(processed_image)
                 else:
-                    # Other content types
                     processed_content.append({"type": "text", "text": str(content)})
 
                 if processed_content:
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                        json.dumps(processed_content),
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                        getattr(content, "role", "user"),
-                    )
+                    messages.append({
+                        "role": getattr(content, "role", "user"),
+                        "content": json.dumps(processed_content),
+                    })
     elif args and len(args) > 0:
-        # Handle args - process each argument
-        for i, arg in enumerate(args):
+        for arg in args:
             processed_content = []
 
             if isinstance(arg, str):
@@ -355,22 +313,18 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                 processed_content.append({"type": "text", "text": str(arg)})
 
             if processed_content:
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.content",
-                    json.dumps(processed_content),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{SpanAttributes.LLM_PROMPTS}.{i}.role",
-                    "user",
-                )
+                messages.append({
+                    "role": "user",
+                    "content": json.dumps(processed_content),
+                })
     elif "prompt" in kwargs:
-        _set_span_attribute(
-            span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-            json.dumps([{"type": "text", "text": kwargs["prompt"]}])
-        )
-        _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
+        messages.append({
+            "role": "user",
+            "content": json.dumps([{"type": "text", "text": kwargs["prompt"]}]),
+        })
+
+    if messages:
+        _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
 
 
 def set_model_request_attributes(span, kwargs, llm_model):
@@ -386,10 +340,10 @@ def set_model_request_attributes(span, kwargs, llm_model):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
 
     generation_config = kwargs.get("generation_config")
@@ -397,7 +351,7 @@ def set_model_request_attributes(span, kwargs, llm_model):
         try:
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(generation_config.response_schema),
             )
         except Exception:
@@ -407,7 +361,7 @@ def set_model_request_attributes(span, kwargs, llm_model):
         try:
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(kwargs.get("response_schema")),
             )
         except Exception:
@@ -418,32 +372,24 @@ def set_model_request_attributes(span, kwargs, llm_model):
 def set_response_attributes(span, response, llm_model):
     if not should_send_prompts():
         return
+
+    messages = []
+
     if hasattr(response, "usage_metadata"):
         if isinstance(response.text, list):
-            for index, item in enumerate(response):
-                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-                _set_span_attribute(span, f"{prefix}.content", item.text)
-                _set_span_attribute(span, f"{prefix}.role", "assistant")
+            for item in response:
+                messages.append({"role": "assistant", "content": item.text})
         elif isinstance(response.text, str):
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response.text
-            )
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
-            )
+            messages.append({"role": "assistant", "content": response.text})
     else:
         if isinstance(response, list):
-            for index, item in enumerate(response):
-                prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-                _set_span_attribute(span, f"{prefix}.content", item)
-                _set_span_attribute(span, f"{prefix}.role", "assistant")
+            for item in response:
+                messages.append({"role": "assistant", "content": item})
         elif isinstance(response, str):
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response
-            )
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
-            )
+            messages.append({"role": "assistant", "content": response})
+
+    if messages:
+        _set_span_attribute(span, GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 
 def set_model_response_attributes(span, response, llm_model, token_histogram):
@@ -455,7 +401,7 @@ def set_model_response_attributes(span, response, llm_model, token_histogram):
     if hasattr(response, "usage_metadata"):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             response.usage_metadata.total_token_count,
         )
         _set_span_attribute(
@@ -473,18 +419,18 @@ def set_model_response_attributes(span, response, llm_model, token_histogram):
         token_histogram.record(
             response.usage_metadata.prompt_token_count,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             }
         )
         token_histogram.record(
-                    response.usage_metadata.candidates_token_count,
-                    attributes={
-                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
-                        GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
-                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-                    },
-                )
+            response.usage_metadata.candidates_token_count,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+            },
+        )
 
     span.set_status(Status(StatusCode.OK))
