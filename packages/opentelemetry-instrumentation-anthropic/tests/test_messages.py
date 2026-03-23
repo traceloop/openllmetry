@@ -1576,7 +1576,9 @@ def test_anthropic_tools_history_legacy(
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
     assert input_messages[0]["role"] == "user"
-    assert input_messages[1]["parts"][0]["content"] == "I'll help you get the weather and current time in San Francisco."
+    assert input_messages[1]["parts"][0]["content"] == (
+        "I'll help you get the weather and current time in San Francisco."
+    )
     assert input_messages[1]["role"] == "assistant"
     assert input_messages[2]["parts"] == [
         {
