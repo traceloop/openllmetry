@@ -32,7 +32,6 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
     Meters
 )
 from opentelemetry.metrics import Meter, get_meter
