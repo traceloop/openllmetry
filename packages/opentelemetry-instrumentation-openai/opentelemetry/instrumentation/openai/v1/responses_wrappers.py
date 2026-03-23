@@ -291,17 +291,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY}",
+        SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY,
         traced_response.request_reasoning_summary or (),
     )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT}",
+        SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
         traced_response.request_reasoning_effort or (),
     )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT}",
+        SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT,
         traced_response.response_reasoning_effort or (),
     )
 

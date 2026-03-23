@@ -61,7 +61,7 @@ SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
 
-LLM_REQUEST_TYPE = GenAiOperationNameValues.CHAT
+OPERATION_NAME = GenAiOperationNameValues.CHAT
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def chat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -187,7 +187,7 @@ async def achat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -455,26 +455,25 @@ def _set_input_messages(span, messages):
     for msg in messages:
         role = msg.get("role")
         if role == "tool":
-            id = msg.get("tool_call_id")
+            tool_call_id = msg.get("tool_call_id")
             content = msg.get("content")
             attr_messages.append({
                 "role": role,
-                "parts": [{"type": "tool_call_response", "id": id, "response": content}],
+                "parts": [{"type": "tool_call_response", "id": tool_call_id, "response": content}],
             })
         elif role == "user":
             content = msg.get("content")
-            content = [{"content": content, "type": "text"}] if isinstance(content, str) else content
-            # TODO: convert image_url parts to uri parts, process image parts and add the new uri parts
+            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
             attr_messages.append({
                 "role": role,
-                "parts": content,
+                "parts": parts,
             })
         elif role in ["system", "developer"]:
             content = msg.get("content")
-            content = [{"content": content, "type": "text"}] if isinstance(content, str) else content
+            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
             attr_messages.append({
                 "role": role,
-                "parts": content,
+                "parts": parts,
             })
         elif role == "assistant":
             content = msg.get("content")
@@ -482,7 +481,7 @@ def _set_input_messages(span, messages):
             tool_calls = _parse_tool_calls(msg.get("tool_calls")) or []
             for tool_call in tool_calls:
                 parts.append({
-                    "type": "tool_call_request",
+                    "type": "tool_call",
                     "name": tool_call["function"]["name"],
                     "id": tool_call["id"],
                     "arguments": tool_call["function"].get("arguments"),
@@ -551,6 +550,15 @@ def _set_completions(span, choices):
     else:
         _legacy_set_completions(span, choices)
 
+OPENAI_FINISH_REASON_MAP = {
+    "tool_calls": "tool_call",
+}
+
+def _map_finish_reason(reason):
+    if not reason:
+        return "stop"
+    return OPENAI_FINISH_REASON_MAP.get(reason, reason)
+
 def _set_output_messages(span, choices):
     if not span.is_recording() or choices is None:
         return
@@ -558,12 +566,14 @@ def _set_output_messages(span, choices):
     messages = []
     for choice in choices:
         message = choice.get("message")
+        if not message:
+            continue
         content = message.get("content")
         parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
         tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
         for tool_call in tool_calls:
             parts.append({
-                "type": "tool_call_request",
+                "type": "tool_call",
                 "name": tool_call["function"]["name"],
                 "id": tool_call["id"],
                 "arguments": tool_call["function"].get("arguments"),
@@ -571,7 +581,7 @@ def _set_output_messages(span, choices):
         messages.append({
             "role": "assistant",
             "parts": parts,
-            "finish_reason": choice.get("finish_reason") or "stop",
+            "finish_reason": _map_finish_reason(choice.get("finish_reason")),
         })
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
@@ -798,7 +808,7 @@ class ChatStream(ObjectProxy):
 
     def _process_item(self, item):
         self._span.add_event(
-            name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
+            name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
@@ -959,7 +969,7 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
-        span.add_event(name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         item_to_yield = item
 
@@ -1030,7 +1040,7 @@ async def _abuild_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     async for item in response:
-        span.add_event(name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         item_to_yield = item
 

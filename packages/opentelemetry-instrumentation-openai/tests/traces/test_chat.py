@@ -80,12 +80,6 @@ def test_chat_with_messages_attributes(
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    # assert (
-    #     open_ai_span.attributes.get(
-    #         GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
-    #     )
-    #     == "fp_2b778c6b35"
-    # )
     assert open_ai_span.attributes.get(
         SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (

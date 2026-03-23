@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.chat_wrappers import _map_finish_reason
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
@@ -42,7 +43,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 SPAN_NAME = "openai.completion"
-LLM_REQUEST_TYPE = GenAiOperationNameValues.TEXT_COMPLETION
+OPERATION_NAME = GenAiOperationNameValues.TEXT_COMPLETION
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -94,7 +95,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -205,7 +206,7 @@ def _set_output_messages(span, choices):
         messages.append({
             "role": "assistant",
             "parts": [{"content": choice.get("text"), "type": "text"}],
-            "finish_reason": choice.get("finish_reason") or "stop",
+            "finish_reason": _map_finish_reason(choice.get("finish_reason")),
         })
     _set_span_attribute(
         span,

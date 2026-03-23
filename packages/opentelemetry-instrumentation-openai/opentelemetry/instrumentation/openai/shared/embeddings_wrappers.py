@@ -47,7 +47,7 @@ from openai._legacy_response import LegacyAPIResponse
 from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 SPAN_NAME = "openai.embeddings"
-LLM_REQUEST_TYPE = GenAiOperationNameValues.EMBEDDINGS
+OPERATION_NAME = GenAiOperationNameValues.EMBEDDINGS
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def embeddings_wrapper(
     with tracer.start_as_current_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     ) as span:
         _handle_request(span, kwargs, instance)
 
@@ -137,7 +137,7 @@ async def aembeddings_wrapper(
         tracer=tracer,
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     ) as span:
         _handle_request(span, kwargs, instance)
 
