@@ -5,8 +5,10 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
-
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 
 @pytest.mark.vcr
 def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_exporter):
@@ -28,18 +30,17 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
-    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
-    assert (
-        imported_model_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == prompt
-    )
+    input_messages = json.loads(imported_model_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == prompt
     assert data is not None
 
     logs = log_exporter.get_finished_logs()
@@ -70,9 +71,10 @@ def test_imported_model_completion_with_events_with_content(
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
-    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
@@ -118,9 +120,10 @@ def test_imported_model_completion_with_events_with_no_content(
         == "arn:aws:sagemaker:us-east-1:767398002385:endpoint/endpoint-quick-start-idr7y"
     )
     assert (
-        imported_model_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+        imported_model_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
-    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert imported_model_span.attributes.get("gen_ai.response.id") is None
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 100
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
@@ -147,8 +150,8 @@ def test_imported_model_completion_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
     )
 
     if not expected_content:

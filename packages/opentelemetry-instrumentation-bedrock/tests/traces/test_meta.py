@@ -5,6 +5,9 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -44,7 +47,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -91,7 +94,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -148,7 +151,7 @@ There's a llama in my garden  What should I do? [/INST]"""
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -195,14 +198,21 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
-    assert meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == prompt
-    assert (
-        meta_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == response_body["generation"]
+    input_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
+    assert len(input_messages) == 1
+    assert input_messages[0]["content"] == prompt
+
+    output_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
+    )
+    assert len(output_messages) == 1
+    assert output_messages[0]["content"] == response_body["generation"]
+
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -239,7 +249,7 @@ def test_meta_llama3_completion_with_events_with_content(
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -288,7 +298,7 @@ def test_meta_llama3_completion_with_events_with_no_content(
         == response_body["generation_token_count"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response_body["generation_token_count"] + response_body["prompt_token_count"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -344,26 +354,26 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
         == response["usage"]["outputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
-    assert meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system_prompt
+    input_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(messages[0]["content"])
-    for i in range(0, len(generated_text)):
-        assert (
-            meta_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role"]
-            == "assistant"
-        )
-        assert (
-            meta_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content"]
-            == generated_text[i]["text"]
-        )
+    assert len(input_messages) == 2
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system_prompt
+    assert input_messages[1]["role"] == "user"
+    assert input_messages[1]["content"] == json.dumps(messages[0]["content"])
+
+    output_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
+    )
+    assert len(output_messages) == len(generated_text)
+    for i in range(len(generated_text)):
+        assert output_messages[i]["role"] == "assistant"
+        assert output_messages[i]["content"] == generated_text[i]["text"]
+
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -409,7 +419,7 @@ def test_meta_converse_with_events_with_content(
         == response["usage"]["outputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -476,7 +486,7 @@ def test_meta_converse_with_events_with_no_content(
         == response["usage"]["outputTokens"]
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -552,25 +562,25 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
         meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
-    assert meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system_prompt
+    input_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert meta_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-    assert meta_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(messages[0]["content"])
+    assert len(input_messages) == 2
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system_prompt
+    assert input_messages[1]["role"] == "user"
+    assert input_messages[1]["content"] == json.dumps(messages[0]["content"])
 
-    assert (
-        meta_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"]
-        == response_role
+    output_messages = json.loads(
+        meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
     )
-    assert (
-        meta_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == content
-    )
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == response_role
+    assert output_messages[0]["content"] == content
+
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
     logs = log_exporter.get_finished_logs()
@@ -628,7 +638,7 @@ def test_meta_converse_stream_with_events_with_content(
         meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -708,7 +718,7 @@ def test_meta_converse_stream_with_events_with_no_content(
         meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == outputTokens
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
@@ -740,8 +750,8 @@ def test_meta_converse_stream_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
     )
 
     if not expected_content:

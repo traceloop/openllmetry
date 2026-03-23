@@ -5,6 +5,9 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -47,7 +50,7 @@ def test_ai21_j2_completion_string_content(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
@@ -100,7 +103,7 @@ def test_ai21_j2_completion_string_content_with_events_with_content(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
@@ -159,7 +162,7 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
         response_body.get("completions")[0].get("data").get("tokens")
     )
     assert (
-        meta_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         + meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
     )
@@ -186,8 +189,8 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
     )
 
     if not expected_content:

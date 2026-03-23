@@ -2,6 +2,9 @@ from enum import Enum
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiSystemValues,
+)
 from opentelemetry.instrumentation.bedrock.span_utils import set_guardrail_attributes
 
 
@@ -156,7 +159,7 @@ def guardrail_converse(span, response, vendor, model, metric_params):
     attrs = {
         "gen_ai.vendor": vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
-        GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
     }
     input_filters = None
     output_filters = []
@@ -185,7 +188,7 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
         attrs = {
             "gen_ai.vendor": vendor,
             GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
-            GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
         }
         if "amazon-bedrock-trace" in response_body:
             bedrock_trace = response_body["amazon-bedrock-trace"]

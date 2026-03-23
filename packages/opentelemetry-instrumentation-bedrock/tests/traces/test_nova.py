@@ -5,6 +5,10 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -43,31 +47,26 @@ def test_nova_completion(instrument_legacy, brt, span_exporter, log_exporter):
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == system_list[0].get("text")
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system_list[0].get("text")
+    assert input_messages[1]["role"] == "user"
+    assert input_messages[1]["content"] == json.dumps(message_list[0].get("content"), default=str)
 
     # Assert on response
     generated_text = response_body["output"]["message"]["content"]
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content"]
-            == generated_text[i]["text"]
-        )
+        assert output_messages[i]["content"] == generated_text[i]["text"]
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
@@ -120,10 +119,13 @@ def test_nova_completion_with_events_with_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on response
     generated_text = response_body["output"]["message"]["content"]
@@ -199,10 +201,13 @@ def test_nova_completion_with_events_with_no_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
@@ -278,30 +283,25 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == system_list[0].get("text")
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system_list[0].get("text")
+    assert input_messages[1]["role"] == "user"
+    assert input_messages[1]["content"] == json.dumps(message_list[0].get("content"), default=str)
 
     # Assert on response
     completion_msg = "".join(generated_text)
-    assert (
-        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == completion_msg
-    )
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["content"] == completion_msg
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -371,10 +371,13 @@ def test_nova_invoke_stream_with_events_with_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on response
     completion_msg = "".join(generated_text)
@@ -469,10 +472,13 @@ def test_nova_invoke_stream_with_events_with_no_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -565,29 +571,22 @@ def test_nova_converse(instrument_legacy, brt, span_exporter, log_exporter):
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system[
-        0
-    ].get("text")
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system[0].get("text")
+    assert input_messages[1]["content"] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
     generated_text = response["output"]["message"]["content"]
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content"]
-            == generated_text[i]["text"]
-        )
+        assert output_messages[i]["content"] == generated_text[i]["text"]
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -659,10 +658,10 @@ def test_nova_converse_with_events_with_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -755,10 +754,10 @@ def test_nova_converse_with_events_with_no_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -863,31 +862,21 @@ def test_nova_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-
-    # Assert on system prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system[
-        0
-    ].get("text")
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on prompt
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"
-    ] == json.dumps(messages[0].get("content"), default=str)
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["content"] == system[0].get("text")
+    assert input_messages[1]["content"] == json.dumps(messages[0].get("content"), default=str)
 
     # Assert on response
-    assert (
-        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == content
-    )
-    assert (
-        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"]
-        == response_role
-    )
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["content"] == content
+    assert output_messages[0]["role"] == response_role
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -903,7 +892,7 @@ def test_nova_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
         == outputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
 
@@ -989,10 +978,10 @@ def test_nova_converse_stream_with_events_with_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -1008,7 +997,7 @@ def test_nova_converse_stream_with_events_with_content(
         == outputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
 
@@ -1114,10 +1103,10 @@ def test_nova_converse_stream_with_events_with_no_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
@@ -1133,7 +1122,7 @@ def test_nova_converse_stream_with_events_with_no_content(
         == outputTokens
     )
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
 
@@ -1189,28 +1178,24 @@ def test_nova_cross_region_invoke(instrument_legacy, brt, span_exporter, log_exp
 
     # Assert on model name and vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
-
-    # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-
-    assert bedrock_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == json.dumps(message_list[0].get("content"), default=str)
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["content"] == json.dumps(message_list[0].get("content"), default=str)
 
     # Assert on response
     generated_text = response_body["output"]["message"]["content"]
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     for i in range(0, len(generated_text)):
-        assert (
-            bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content"]
-            == generated_text[i]["text"]
-        )
+        assert output_messages[i]["content"] == generated_text[i]["text"]
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
@@ -1260,13 +1245,13 @@ def test_nova_cross_region_invoke_with_events_with_content(
 
     # Assert on model name and vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
-
-    # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
@@ -1327,13 +1312,13 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
 
     # Assert on model name and vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
-
-    # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
@@ -1362,8 +1347,8 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
     )
 
     if not expected_content:

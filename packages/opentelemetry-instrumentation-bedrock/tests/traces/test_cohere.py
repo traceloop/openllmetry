@@ -5,7 +5,10 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 
 
 @pytest.mark.vcr
@@ -42,20 +45,23 @@ def test_cohere_completion(instrument_legacy, brt, span_exporter, log_exporter):
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on prompt
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"] == prompt
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["role"] == "user"
 
     # Assert on response
     generated_text = response_body["generations"][0]["text"]
-    assert (
-        bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == generated_text
-    )
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["content"] == generated_text
     assert (
         bedrock_span.attributes.get("gen_ai.response.id")
         == "3266ca30-473c-4491-b6ef-5b1f033798d2"
@@ -104,10 +110,13 @@ def test_cohere_completion_with_events_with_no_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on response
     assert (
@@ -172,10 +181,13 @@ def test_cohere_completion_with_events_with_content(
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on response
     generated_text = response_body["generations"][0]["text"]
@@ -208,8 +220,8 @@ def test_cohere_completion_with_events_with_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
     )
 
     if not expected_content:

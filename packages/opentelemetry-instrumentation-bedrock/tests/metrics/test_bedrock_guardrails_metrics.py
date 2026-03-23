@@ -124,8 +124,8 @@ def assert_guardrails(reader):
                         assert data_point.value > 0
 
                 assert (
-                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
-                    == "bedrock"
+                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+                    == "aws.bedrock"
                 )
 
     assert found_activations is True

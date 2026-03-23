@@ -10,10 +10,11 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )
-from opentelemetry.semconv_ai import (
-    LLMRequestTypeValues,
-    SpanAttributes,
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
 )
+from opentelemetry.semconv_ai import SpanAttributes
 
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
@@ -37,17 +38,17 @@ def set_model_message_span_attributes(model_vendor, span, request_body):
         if "prompt" in request_body:
             _set_prompt_span_attributes(span, request_body)
         elif "messages" in request_body:
-            for idx, message in enumerate(request_body.get("messages")):
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role",
-                    message.get("role"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                    json.dumps(message.get("content")),
-                )
+            input_messages = []
+            for message in request_body.get("messages"):
+                input_messages.append({
+                    "role": message.get("role"),
+                    "content": json.dumps(message.get("content")),
+                })
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps(input_messages),
+            )
     elif model_vendor == "ai21":
         _set_prompt_span_attributes(span, request_body)
     elif model_vendor == "meta":
@@ -91,7 +92,7 @@ def set_model_span_attributes(
 
     _set_span_attribute(span, AWS_BEDROCK_GUARDRAIL_ID, _guardrail_value(kwargs))
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, provider)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
@@ -133,26 +134,28 @@ def set_guardrail_attributes(span, input_filters, output_filters):
     if input_filters:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
             json.dumps(input_filters, default=str)
         )
     if output_filters:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}",
+            f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}",
             json.dumps(output_filters, default=str)
         )
 
 
 def _set_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", request_body.get("prompt")
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps([{"role": "user", "content": request_body.get("prompt")}]),
     )
 
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("p"))
     _set_span_attribute(
@@ -183,19 +186,24 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
 
 
 def _set_generations_span_attributes(span, response_body):
-    for i, generation in enumerate(response_body.get("generations")):
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
-            generation.get("text"),
-        )
+    output_messages = []
+    for generation in response_body.get("generations"):
+        output_messages.append({
+            "role": "assistant",
+            "content": generation.get("text"),
+        })
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps(output_messages),
+    )
 
 
 def _set_anthropic_completion_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
@@ -250,17 +258,14 @@ def _set_anthropic_response_span_attributes(span, response_body):
     if response_body.get("completion") is not None:
         _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            response_body.get("completion"),
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([{"role": "assistant", "content": response_body.get("completion")}]),
         )
     elif response_body.get("content") is not None:
         _set_span_attribute(
-            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", "assistant"
-        )
-        _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            json.dumps(response_body.get("content")),
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([{"role": "assistant", "content": json.dumps(response_body.get("content"))}]),
         )
 
 
@@ -268,7 +273,7 @@ def _set_anthropic_messages_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.CHAT.value
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
@@ -348,7 +353,7 @@ def _count_anthropic_tokens(messages: list[str]):
 
 def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
@@ -369,17 +374,22 @@ def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
 
 
 def _set_span_completions_attributes(span, response_body):
-    for i, completion in enumerate(response_body.get("completions")):
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
-            completion.get("data").get("text"),
-        )
+    output_messages = []
+    for completion in response_body.get("completions"):
+        output_messages.append({
+            "role": "assistant",
+            "content": completion.get("data").get("text"),
+        })
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps(output_messages),
+    )
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
@@ -401,36 +411,35 @@ def _set_llama_span_attributes(span, request_body, response_body, metric_params)
 
 def _set_llama_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps([{"role": "user", "content": request_body.get("prompt")}]),
     )
-    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
 
 
 def _set_llama_response_span_attributes(span, response_body):
     if response_body.get("generation"):
         _set_span_attribute(
-            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
-        )
-        _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            response_body.get("generation"),
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([{"role": "assistant", "content": response_body.get("generation")}]),
         )
     else:
-        for i, generation in enumerate(response_body.get("generations")):
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.role", "assistant"
-            )
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content", generation
-            )
+        output_messages = []
+        for generation in response_body.get("generations"):
+            output_messages.append({"role": "assistant", "content": generation})
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages),
+        )
 
 
 def _set_amazon_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
 
     if "textGenerationConfig" in request_body:
@@ -486,66 +495,68 @@ def _set_amazon_input_span_attributes(span, request_body):
     if "inputText" in request_body:
         _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
-            request_body.get("inputText"),
+            GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+            json.dumps([{"role": "user", "content": request_body.get("inputText")}]),
         )
     else:
-        prompt_idx = 0
+        input_messages = []
         if "system" in request_body:
-            for idx, prompt in enumerate(request_body["system"]):
-                prompt_idx = idx + 1
-                _set_span_attribute(
-                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
-                )
-                # TODO: add support for "image"
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content",
-                    prompt.get("text"),
-                )
-        for idx, prompt in enumerate(request_body["messages"]):
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.role",
-                prompt.get("role"),
-            )
-            # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx + idx}.content",
-                json.dumps(prompt.get("content", ""), default=str),
-            )
+            for prompt in request_body["system"]:
+                input_messages.append({
+                    "role": "system",
+                    "content": prompt.get("text"),
+                })
+        for prompt in request_body["messages"]:
+            input_messages.append({
+                "role": prompt.get("role"),
+                "content": json.dumps(prompt.get("content", ""), default=str),
+            })
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+            json.dumps(input_messages),
+        )
 
 
 def _set_amazon_response_span_attributes(span, response_body):
     if "results" in response_body:
-        for i, result in enumerate(response_body.get("results")):
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}.content",
-                result.get("outputText"),
-            )
+        output_messages = []
+        for result in response_body.get("results"):
+            output_messages.append({
+                "role": "assistant",
+                "content": result.get("outputText"),
+            })
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages),
+        )
     elif "outputText" in response_body:
         _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            response_body.get("outputText"),
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([{"role": "assistant", "content": response_body.get("outputText")}]),
         )
     elif "output" in response_body:
         msgs = response_body.get("output").get("message", {}).get("content", [])
-        for idx, msg in enumerate(msgs):
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content",
-                msg.get("text"),
-            )
+        output_messages = []
+        for msg in msgs:
+            output_messages.append({
+                "role": "assistant",
+                "content": msg.get("text"),
+            })
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages),
+        )
 
 
 def _set_imported_model_span_attributes(
     span, request_body, response_body, metric_params
 ):
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.COMPLETION.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
@@ -576,14 +587,16 @@ def _set_imported_model_span_attributes(
 def _set_imported_model_response_span_attributes(span, response_body):
     _set_span_attribute(
         span,
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-        response_body.get("generation"),
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps([{"role": "assistant", "content": response_body.get("generation")}]),
     )
 
 
 def _set_imported_model_prompt_span_attributes(span, request_body):
     _set_span_attribute(
-        span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", request_body.get("prompt")
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps([{"role": "user", "content": request_body.get("prompt")}]),
     )
 
 
@@ -600,7 +613,7 @@ def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     )
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
         prompt_tokens + completion_tokens,
     )
 
@@ -647,16 +660,16 @@ def _metric_shared_attributes(
     return {
         "vendor": response_vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
-        GenAIAttributes.GEN_AI_SYSTEM: "bedrock",
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
         "stream": is_streaming,
     }
 
 
 def set_converse_model_span_attributes(span, provider, model, kwargs):
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, provider)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(
-        span, SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value
+        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.CHAT.value
     )
 
     guardrail_config = kwargs.get("guardrailConfig")
@@ -679,32 +692,24 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
 def set_converse_input_prompt_span_attributes(kwargs, span):
     if not should_send_prompts():
         return
-    prompt_idx = 0
+    input_messages = []
     if "system" in kwargs:
-        for idx, prompt in enumerate(kwargs["system"]):
-            prompt_idx = idx + 1
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", "system"
-            )
-            # TODO: add support for "image"
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content",
-                prompt.get("text"),
-            )
+        for prompt in kwargs["system"]:
+            input_messages.append({
+                "role": "system",
+                "content": prompt.get("text"),
+            })
     if "messages" in kwargs:
-        for idx, prompt in enumerate(kwargs["messages"]):
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.role",
-                prompt.get("role"),
-            )
-            # TODO: here we stringify the object, consider moving these to events or prompt.{i}.content.{j}
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_idx+idx}.content",
-                json.dumps(prompt.get("content", ""), default=str),
-            )
+        for prompt in kwargs["messages"]:
+            input_messages.append({
+                "role": prompt.get("role"),
+                "content": json.dumps(prompt.get("content", ""), default=str),
+            })
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps(input_messages),
+    )
 
 
 def set_converse_response_span_attributes(response, span):
@@ -712,23 +717,22 @@ def set_converse_response_span_attributes(response, span):
         return
     if "output" in response:
         message = response["output"]["message"]
+        contents = [content.get("text") for content in message["content"]]
+        content = contents[0] if len(contents) == 1 else json.dumps(contents)
         _set_span_attribute(
-            span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", message.get("role")
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([{"role": message.get("role"), "content": content}]),
         )
-        for idx, content in enumerate(message["content"]):
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content",
-                content.get("text"),
-            )
 
 
 def set_converse_streaming_response_span_attributes(response, role, span):
     if not should_send_prompts():
         return
-    _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", role)
     _set_span_attribute(
-        span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", "".join(response)
+        span,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps([{"role": role, "content": "".join(response)}]),
     )
 
 

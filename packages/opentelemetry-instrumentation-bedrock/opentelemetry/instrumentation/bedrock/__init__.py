@@ -48,6 +48,9 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
@@ -420,7 +423,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    provider = "AWS"
+    provider = GenAiSystemValues.AWS_BEDROCK.value
     model_vendor = "imported_model"
     model = modelId
 
