@@ -66,11 +66,11 @@ def test_open_ai_function_calls(
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"]
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.description"]
         == "Get the current weather in a given location"
     )
     assert (
@@ -78,7 +78,7 @@ def test_open_ai_function_calls(
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -125,7 +125,7 @@ def test_open_ai_function_calls_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -196,7 +196,7 @@ def test_open_ai_function_calls_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -245,11 +245,11 @@ def test_open_ai_function_calls_tools(
         == "What's the weather like in Boston?"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"]
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
+        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.description"]
         == "Get the current weather"
     )
     assert isinstance(
@@ -261,7 +261,7 @@ def test_open_ai_function_calls_tools(
         == "get_current_weather"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -289,7 +289,7 @@ def test_open_ai_function_calls_tools_with_events_with_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -341,7 +341,7 @@ def test_open_ai_function_calls_tools_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -397,7 +397,7 @@ async def test_open_ai_function_calls_tools_streaming(
         str,
     )
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
         == "get_current_weather"
     )
     assert (
@@ -560,7 +560,7 @@ def test_open_ai_function_calls_tools_parallel(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
         == "get_current_weather"
     )
     assert (
@@ -754,7 +754,7 @@ async def test_open_ai_function_calls_tools_streaming_parallel(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes.get(f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name")
+        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
         == "get_current_weather"
     )
     assert (

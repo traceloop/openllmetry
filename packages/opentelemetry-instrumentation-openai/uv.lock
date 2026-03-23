@@ -538,7 +538,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.53.0"
+version = "0.53.3"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },

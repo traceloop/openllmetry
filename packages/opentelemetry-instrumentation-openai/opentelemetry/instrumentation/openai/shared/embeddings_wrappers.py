@@ -35,10 +35,11 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
@@ -46,7 +47,7 @@ from openai._legacy_response import LegacyAPIResponse
 from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 SPAN_NAME = "openai.embeddings"
-LLM_REQUEST_TYPE = LLMRequestTypeValues.EMBEDDING
+LLM_REQUEST_TYPE = GenAiOperationNameValues.EMBEDDINGS
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def embeddings_wrapper(
     with tracer.start_as_current_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs, instance)
 
@@ -136,7 +137,7 @@ async def aembeddings_wrapper(
         tracer=tracer,
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     ) as span:
         _handle_request(span, kwargs, instance)
 

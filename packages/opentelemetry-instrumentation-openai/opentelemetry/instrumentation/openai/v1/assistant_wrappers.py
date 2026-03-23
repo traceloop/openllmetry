@@ -23,7 +23,7 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
 from openai._legacy_response import LegacyAPIResponse
@@ -128,7 +128,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         "openai.assistant.run",
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value},
         start_time=run.get("start_time"),
     )
 
@@ -257,7 +257,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         "openai.assistant.run_stream",
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.CHAT.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value},
     )
 
     # Use the span as current context to ensure events get proper trace context

@@ -262,12 +262,12 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
         _set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
+            span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens
         )
         if usage.input_tokens_details:
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 usage.input_tokens_details.cached_tokens,
             )
 
@@ -285,23 +285,23 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_REASONING_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
             reasoning_tokens or 0,
         )
 
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_REQUEST_REASONING_SUMMARY}",
+        f"{SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY}",
         traced_response.request_reasoning_summary or (),
     )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_REQUEST_REASONING_EFFORT}",
+        f"{SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT}",
         traced_response.request_reasoning_effort or (),
     )
     _set_span_attribute(
         span,
-        f"{SpanAttributes.LLM_RESPONSE_REASONING_EFFORT}",
+        f"{SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT}",
         traced_response.response_reasoning_effort or (),
     )
 
@@ -317,17 +317,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                     continue
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
+                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.description",
                     description,
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
+                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.parameters",
                     json.dumps(parameters),
                 )
                 _set_span_attribute(
                     span,
-                    f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
+                    f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}.name",
                     name,
                 )
         if traced_response.instructions:

@@ -122,7 +122,7 @@ class RealtimeEventProcessor:
                 if hasattr(session, "modalities"):
                     _set_span_attribute(
                         self._state.session_span,
-                        f"{SpanAttributes.LLM_REQUEST_TYPE}.modalities",
+                        f"{GenAIAttributes.GEN_AI_OPERATION_NAME}.modalities",
                         json.dumps(session.modalities) if session.modalities else None,
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
@@ -199,7 +199,7 @@ class RealtimeEventProcessor:
                     )
                     _set_span_attribute(
                         span,
-                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
                         total,
                     )
 
@@ -312,7 +312,7 @@ class RealtimeEventProcessor:
             )
             _set_span_attribute(
                 self._state.response_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 "realtime",
             )
 
@@ -678,7 +678,7 @@ class RealtimeConnectionManagerWrapper:
             )
             _set_span_attribute(
                 self._state.session_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
                 "realtime",
             )
 

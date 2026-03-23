@@ -39,17 +39,17 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, openai_client):
     assert open_ai_span.attributes.get(
         f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
         open_ai_span.attributes.get(
-            SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+            GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
         )
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-908MD9ivBBLb6EaIjlqwFokntayQK"
@@ -77,17 +77,17 @@ def test_chat_with_messages_attributes(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     # assert (
     #     open_ai_span.attributes.get(
-    #         SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+    #         GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
     #     )
     #     == "fp_2b778c6b35"
     # )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-D9X7ymcBweNWeadgkGyG69kVYY16t"
@@ -133,17 +133,17 @@ def test_chat_with_events_with_content(
     open_ai_span = spans[0]
 
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
         open_ai_span.attributes.get(
-            SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+            GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
         )
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-908MD9ivBBLb6EaIjlqwFokntayQK"
@@ -188,17 +188,17 @@ def test_chat_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
         open_ai_span.attributes.get(
-            SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+            GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
         )
         == "fp_2b778c6b35"
     )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-908MD9ivBBLb6EaIjlqwFokntayQK"
@@ -682,10 +682,10 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
     assert open_ai_span.attributes.get(
         f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     # Mock OpenAI background may produce different number of events, just check it's reasonable
@@ -694,7 +694,7 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
     # check token usage attributes for stream
     completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert completion_tokens and prompt_tokens and total_tokens
     # When OpenAI API provides token usage, check that the sum of completion and prompt tokens equals total tokens
     assert completion_tokens + prompt_tokens == total_tokens
@@ -731,10 +731,10 @@ def test_chat_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -742,7 +742,7 @@ def test_chat_streaming_with_events_with_content(
     # check token usage attributes for stream
     completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
@@ -798,10 +798,10 @@ def test_chat_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -809,7 +809,7 @@ def test_chat_streaming_with_events_with_no_content(
     # check token usage attributes for stream (optional, depends on API support)
     completion_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -857,10 +857,10 @@ async def test_chat_async_streaming(
     )
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -870,7 +870,7 @@ async def test_chat_async_streaming(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -907,10 +907,10 @@ async def test_chat_async_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -920,7 +920,7 @@ async def test_chat_async_streaming_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -974,10 +974,10 @@ async def test_chat_async_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     events = open_ai_span.events
     assert len(events) == chunk_count
@@ -987,7 +987,7 @@ async def test_chat_async_streaming_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     )
     prompt_tokens = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
-    total_tokens = open_ai_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    total_tokens = open_ai_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     if completion_tokens and prompt_tokens and total_tokens:
         assert completion_tokens + prompt_tokens == total_tokens
     assert (
@@ -1593,11 +1593,11 @@ def test_chat_exception(instrument_legacy, span_exporter, openai_client):
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events
@@ -1633,11 +1633,11 @@ async def test_chat_async_exception(instrument_legacy, span_exporter, async_open
         == "Tell me a joke about opentelemetry"
     )
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_IS_STREAMING) is False
+        SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events
@@ -1683,10 +1683,10 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
     assert open_ai_span.end_time > open_ai_span.start_time
 
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_REQUEST_MODEL) == "gpt-3.5-turbo"
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+        GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-3.5-turbo"
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_REQUEST_TYPE) == "chat"
+        GenAIAttributes.GEN_AI_OPERATION_NAME) == "chat"
 
     assert open_ai_span.attributes.get(
         f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
@@ -1764,8 +1764,8 @@ def test_chat_streaming_partial_consumption(instrument_legacy, span_exporter, lo
     assert open_ai_span.end_time is not None
 
     assert open_ai_span.attributes.get(
-        SpanAttributes.LLM_REQUEST_MODEL) == "gpt-3.5-turbo"
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+        GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-3.5-turbo"
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is True
 
     # Should have at least one event from the consumed chunk
     events = open_ai_span.events

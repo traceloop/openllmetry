@@ -32,16 +32,17 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 SPAN_NAME = "openai.completion"
-LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
+LLM_REQUEST_TYPE = GenAiOperationNameValues.TEXT_COMPLETION
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -93,7 +94,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -172,7 +173,7 @@ def _set_input_messages(span, prompt):
 
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_INPUT_MESSAGES,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
         json.dumps([{"role": "user", "parts": [{"content": prompt, "type": "text"}]}]),
     )
 
@@ -208,7 +209,7 @@ def _set_output_messages(span, choices):
         })
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_OUTPUT_MESSAGES,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(messages),
     )
 

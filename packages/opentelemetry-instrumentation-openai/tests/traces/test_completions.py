@@ -31,10 +31,10 @@ def test_completion(instrument_legacy, span_exporter, log_exporter, openai_clien
     )
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -98,10 +98,10 @@ def test_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -142,10 +142,10 @@ def test_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -404,7 +404,7 @@ def test_completion_streaming(
         f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
     )
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
     )
 
@@ -416,7 +416,7 @@ def test_completion_streaming(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert if token usage is available (depends on API support)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -447,7 +447,7 @@ def test_completion_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
 
@@ -458,7 +458,7 @@ def test_completion_streaming_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -509,7 +509,7 @@ def test_completion_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
 
@@ -521,7 +521,7 @@ def test_completion_streaming_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -568,7 +568,7 @@ async def test_async_completion_streaming(
     )
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -602,7 +602,7 @@ async def test_async_completion_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -652,7 +652,7 @@ async def test_async_completion_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (

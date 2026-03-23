@@ -45,9 +45,11 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
@@ -59,7 +61,7 @@ SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
 
-LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
+LLM_REQUEST_TYPE = GenAiOperationNameValues.CHAT
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +89,7 @@ def chat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -185,7 +187,7 @@ async def achat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: LLM_REQUEST_TYPE.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -292,7 +294,7 @@ async def _handle_request(span, kwargs, instance):
     reasoning_effort = kwargs.get("reasoning_effort")
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_REQUEST_REASONING_EFFORT,
+        SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
         reasoning_effort or ()
     )
 
@@ -345,7 +347,7 @@ def _handle_response(
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_REASONING_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
         reasoning_tokens or 0,
     )
 
@@ -396,7 +398,7 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {**shared_attributes}
         if choice.get("finish_reason"):
-            attributes_with_reason[SpanAttributes.LLM_RESPONSE_FINISH_REASON] = (
+            attributes_with_reason[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON] = (
                 choice.get("finish_reason")
             )
         choice_counter.add(1, attributes=attributes_with_reason)
@@ -476,20 +478,20 @@ def _set_input_messages(span, messages):
             })
         elif role == "assistant":
             content = msg.get("content")
-            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else content
+            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
             tool_calls = _parse_tool_calls(msg.get("tool_calls")) or []
             for tool_call in tool_calls:
                 parts.append({
                     "type": "tool_call_request",
-                    "name": tool_call.function.get("name"),
-                    "id": tool_call.id,
-                    "arguments": tool_call.function.get("arguments"),
+                    "name": tool_call["function"]["name"],
+                    "id": tool_call["id"],
+                    "arguments": tool_call["function"].get("arguments"),
                 })
             attr_messages.append({
                 "role": "assistant",
                 "parts": parts,
             })
-    _set_span_attribute(span, SpanAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages))
 
 async def _legacy_set_prompts(span, messages):
     if not span.is_recording() or messages is None:
@@ -557,21 +559,21 @@ def _set_output_messages(span, choices):
     for choice in choices:
         message = choice.get("message")
         content = message.get("content")
-        parts = [{"content": content, "type": "text"}] if isinstance(content, str) else content
+        parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
         tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
         for tool_call in tool_calls:
             parts.append({
                 "type": "tool_call_request",
-                "name": tool_call.function.get("name"),
-                "id": tool_call.id,
-                "arguments": tool_call.function.get("arguments"),
+                "name": tool_call["function"]["name"],
+                "id": tool_call["id"],
+                "arguments": tool_call["function"].get("arguments"),
             })
         messages.append({
             "role": "assistant",
             "parts": parts,
             "finish_reason": choice.get("finish_reason") or "stop",
         })
-    _set_span_attribute(span, SpanAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 def _legacy_set_completions(span, choices):
     if not span.is_recording() or choices is None:
@@ -796,7 +798,7 @@ class ChatStream(ObjectProxy):
 
     def _process_item(self, item):
         self._span.add_event(
-            name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
 
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
@@ -957,7 +959,7 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
 
         item_to_yield = item
 
@@ -1028,7 +1030,7 @@ async def _abuild_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=f"{SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK}")
 
         item_to_yield = item
 

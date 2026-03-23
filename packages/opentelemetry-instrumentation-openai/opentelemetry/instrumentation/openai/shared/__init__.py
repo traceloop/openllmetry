@@ -48,11 +48,11 @@ def _set_client_attributes(span, instance):
     client = instance._client  # pylint: disable=protected-access
     if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
         _set_span_attribute(
-            span, SpanAttributes.LLM_OPENAI_API_BASE, str(client.base_url)
+            span, SpanAttributes.GEN_AI_OPENAI_API_BASE, str(client.base_url)
         )
     if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
         _set_span_attribute(
-            span, SpanAttributes.LLM_OPENAI_API_VERSION, client._api_version
+            span, SpanAttributes.GEN_AI_OPENAI_API_VERSION, client._api_version
         )  # pylint: disable=protected-access
 
 
@@ -65,9 +65,9 @@ def _set_api_attributes(span):
 
     base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_BASE, base_url)
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_VERSION, openai.api_version)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_VERSION, openai.api_version)
 
     return
 
@@ -77,7 +77,7 @@ def _set_functions_attributes(span, functions):
         return
 
     for i, function in enumerate(functions):
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
         _set_span_attribute(span, f"{prefix}.name", function.get("name"))
         _set_span_attribute(span, f"{prefix}.description", function.get("description"))
         _set_span_attribute(
@@ -94,7 +94,7 @@ def set_tools_attributes(span, tools):
         if not function:
             continue
 
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
+        prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
         _set_span_attribute(span, f"{prefix}.name", function.get("name"))
         _set_span_attribute(span, f"{prefix}.description", function.get("description"))
         _set_span_attribute(
@@ -127,20 +127,20 @@ def _set_request_attributes(span, kwargs, instance=None):
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
-    _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_USER, kwargs.get("user"))
+    _set_span_attribute(span, SpanAttributes.GEN_AI_HEADERS, str(kwargs.get("headers")))
     # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
     if kwargs.get("extra_headers") is not None:
         _set_span_attribute(
-            span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
+            span, SpanAttributes.GEN_AI_HEADERS, str(kwargs.get("extra_headers"))
         )
     _set_span_attribute(
-        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
+        span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream") or False
     )
     _set_span_attribute(
         span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, kwargs.get("service_tier")
@@ -157,7 +157,7 @@ def _set_request_attributes(span, kwargs, instance=None):
             if schema:
                 _set_span_attribute(
                     span,
-                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                     json.dumps(schema),
                 )
         elif (
@@ -169,7 +169,7 @@ def _set_request_attributes(span, kwargs, instance=None):
         ):
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(response_format.model_json_schema()),
             )
         else:
@@ -185,7 +185,7 @@ def _set_request_attributes(span, kwargs, instance=None):
             if schema:
                 _set_span_attribute(
                     span,
-                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                     schema,
                 )
 
@@ -211,7 +211,7 @@ def _set_response_attributes(span, response):
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+        GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
         response.get("system_fingerprint"),
     )
     _set_span_attribute(
@@ -228,7 +228,7 @@ def _set_response_attributes(span, response):
         usage = usage.__dict__
 
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
+        span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
     )
     _set_span_attribute(
         span,
@@ -241,7 +241,7 @@ def _set_response_attributes(span, response):
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
         prompt_tokens_details.get("cached_tokens", 0),
     )
     return
@@ -276,7 +276,7 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     ):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             completion_tokens + prompt_tokens,
         )
 

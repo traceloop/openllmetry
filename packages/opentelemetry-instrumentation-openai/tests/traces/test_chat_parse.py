@@ -32,10 +32,10 @@ def test_parsed_completion(
     open_ai_span = spans[0]
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
@@ -72,10 +72,10 @@ def test_parsed_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -121,10 +121,10 @@ def test_parsed_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -280,10 +280,10 @@ async def test_async_parsed_completion(
     open_ai_span = spans[0]
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
         == "Tell me a joke about opentelemetry"
@@ -320,10 +320,10 @@ async def test_async_parsed_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -370,10 +370,10 @@ async def test_async_parsed_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -543,8 +543,8 @@ def test_parsed_completion_exception(
     assert len(spans) == 1
     span: Span = spans[0]
     assert span.name == "openai.chat"
-    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
-    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
     assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
 
@@ -578,8 +578,8 @@ async def test_async_parsed_completion_exception(
     assert len(spans) == 1
     span: Span = spans[0]
     assert span.name == "openai.chat"
-    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
-    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
     assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
 

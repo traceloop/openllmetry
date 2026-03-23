@@ -4,7 +4,6 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from typing_extensions import override
 
 
@@ -56,7 +55,7 @@ def test_new_assistant(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -153,7 +152,7 @@ def test_new_assistant_with_events_with_content(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -234,7 +233,7 @@ def test_new_assistant_with_events_with_no_content(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -298,7 +297,7 @@ def test_new_assistant_with_polling(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["llm.request.type"] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert (
@@ -378,7 +377,7 @@ def test_new_assistant_with_polling_with_events_with_content(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["llm.request.type"] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
@@ -452,7 +451,7 @@ def test_new_assistant_with_polling_with_events_with_no_content(
         "openai.assistant.run",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["llm.request.type"] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
@@ -772,7 +771,7 @@ def test_streaming_new_assistant(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -850,7 +849,7 @@ def test_streaming_new_assistant_with_events_with_content(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -953,7 +952,7 @@ def test_streaming_new_assistant_with_events_with_no_content(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -1022,7 +1021,7 @@ def test_streaming_existing_assistant(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -1099,7 +1098,7 @@ def test_streaming_existing_assistant_with_events_with_content(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"
@@ -1187,7 +1186,7 @@ def test_streaming_existing_assistant_with_events_with_no_content(
         "openai.assistant.run_stream",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gpt-4-turbo-preview"

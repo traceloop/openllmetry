@@ -50,7 +50,7 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
 
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -95,7 +95,7 @@ def test_vision_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -166,7 +166,7 @@ def test_vision_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -236,7 +236,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
 
     assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -291,7 +291,7 @@ def test_vision_base64_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -370,7 +370,7 @@ def test_vision_base64_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (

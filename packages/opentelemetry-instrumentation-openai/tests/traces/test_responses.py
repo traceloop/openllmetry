@@ -656,7 +656,7 @@ def test_responses_streaming_with_parent_span(
     assert full_text != "", "Should have received streaming content"
     assert openai_span.attributes["gen_ai.system"] == "openai"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
-    assert openai_span.attributes["llm.is_streaming"] is True
+    assert openai_span.attributes["gen_ai.is_streaming"] is True
 
 
 @pytest.mark.vcr
@@ -728,7 +728,7 @@ async def test_responses_streaming_async_with_parent_span(
     assert full_text != "", "Should have received streaming content"
     assert openai_span.attributes["gen_ai.system"] == "openai"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
-    assert openai_span.attributes["llm.is_streaming"] is True
+    assert openai_span.attributes["gen_ai.is_streaming"] is True
 
 
 def test_response_stream_init_with_not_given_reasoning():

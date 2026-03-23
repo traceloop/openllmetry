@@ -35,7 +35,7 @@ def test_embeddings(instrument_legacy, span_exporter, log_exporter, openai_clien
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -65,7 +65,7 @@ def test_embeddings_with_events_with_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -109,7 +109,7 @@ def test_embeddings_with_events_with_no_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -149,7 +149,7 @@ def test_embeddings_with_raw_response(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -182,7 +182,7 @@ def test_embeddings_with_raw_response_with_events_with_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -229,7 +229,7 @@ def test_embeddings_with_raw_response_with_events_with_no_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -277,11 +277,11 @@ def test_azure_openai_embeddings(instrument_legacy, span_exporter, log_exporter)
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
@@ -318,11 +318,11 @@ def test_azure_openai_embeddings_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
@@ -373,11 +373,11 @@ def test_azure_openai_embeddings_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
