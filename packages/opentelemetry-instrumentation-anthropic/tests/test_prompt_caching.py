@@ -104,10 +104,10 @@ def test_anthropic_prompt_caching_legacy(
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
-    assert text == cc_input[0]["content"]
+    assert text == cc_input[0]["parts"][0]["content"]
     cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cr_input[0]["role"] == "user"
-    assert text == cr_input[0]["content"]
+    assert text == cr_input[0]["parts"][0]["content"]
 
     assert (
         cache_creation_span.attributes["gen_ai.usage.cache_creation.input_tokens"]
@@ -441,10 +441,10 @@ async def test_anthropic_prompt_caching_async_legacy(
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
-    assert text == cc_input[0]["content"]
+    assert text == cc_input[0]["parts"][0]["content"]
     cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cr_input[0]["role"] == "user"
-    assert text == cr_input[0]["content"]
+    assert text == cr_input[0]["parts"][0]["content"]
 
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
@@ -788,10 +788,10 @@ def test_anthropic_prompt_caching_stream_legacy(
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
-    assert text == cc_input[0]["content"]
+    assert text == cc_input[0]["parts"][0]["content"]
     cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cr_input[0]["role"] == "user"
-    assert text == cr_input[0]["content"]
+    assert text == cr_input[0]["parts"][0]["content"]
 
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
@@ -1150,10 +1150,10 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
-    assert text == cc_input[0]["content"]
+    assert text == cc_input[0]["parts"][0]["content"]
     cr_input = json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cr_input[0]["role"] == "user"
-    assert text == cr_input[0]["content"]
+    assert text == cr_input[0]["parts"][0]["content"]
 
     _verify_caching_attributes(cache_creation_span, cache_read_span, 1171, 290, 257, 1167)
 

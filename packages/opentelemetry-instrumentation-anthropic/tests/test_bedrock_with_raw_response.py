@@ -57,7 +57,7 @@ async def test_async_anthropic_bedrock_with_raw_response(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     # For raw response, content is accessed differently
     response_content = (
@@ -66,7 +66,8 @@ async def test_async_anthropic_bedrock_with_raw_response(
         else response.content[0].text
     )
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
@@ -105,10 +106,11 @@ async def test_async_anthropic_bedrock_regular_create(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
@@ -149,7 +151,7 @@ async def test_async_anthropic_bedrock_beta_with_raw_response(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     # For raw response, content is accessed differently
     response_content = (
@@ -158,7 +160,8 @@ async def test_async_anthropic_bedrock_beta_with_raw_response(
         else response.content[0].text
     )
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0

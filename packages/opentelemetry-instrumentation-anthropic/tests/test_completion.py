@@ -31,10 +31,11 @@ def test_anthropic_completion_legacy(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
+    assert input_messages[0]["parts"][0]["content"] == f"{HUMAN_PROMPT}\nHello world\n{AI_PROMPT}"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"]
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"]
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "compl_01EjfrPvPEsRDRUKD6VoBxtK"

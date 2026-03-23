@@ -51,10 +51,11 @@ def test_anthropic_structured_outputs_legacy(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
 
     assert "gen_ai.request.structured_output_schema" in anthropic_span.attributes

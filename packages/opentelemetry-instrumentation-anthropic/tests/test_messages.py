@@ -90,10 +90,11 @@ def test_anthropic_message_create_legacy(
 
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -262,13 +263,14 @@ def test_anthropic_multi_modal_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert json.loads(input_messages[0]["content"]) == [
-        {"type": "text", "text": "What do you see?"},
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
         {"type": "image_url", "image_url": {"url": "/some/url"}},
     ]
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
     assert (
@@ -452,10 +454,11 @@ def test_anthropic_image_with_history(
     # span 0: system + first user message
     assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
     span0_input = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert span0_input[0]["content"] == "Are you capable of describing an image?"
+    assert span0_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
     assert span0_input[0]["role"] == "user"
     span0_output = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert span0_output[-1]["content"] == response1.content[0].text
+    text_parts = [p for p in span0_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response1.content[0].text
     assert span0_output[-1]["role"] == "assistant"
     assert (
         spans[0].attributes.get("gen_ai.response.id") == "msg_01Ctc62hUPvikvYASXZqTo9q"
@@ -464,17 +467,18 @@ def test_anthropic_image_with_history(
     # span 1: system + multi-turn
     assert spans[1].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
     span1_input = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert span1_input[0]["content"] == "Are you capable of describing an image?"
+    assert span1_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
     assert span1_input[0]["role"] == "user"
-    assert span1_input[1]["content"] == response1.content[0].text
+    assert span1_input[1]["parts"][0]["content"] == response1.content[0].text
     assert span1_input[1]["role"] == "assistant"
-    assert json.loads(span1_input[2]["content"]) == [
-        {"type": "text", "text": "What do you see?"},
+    assert span1_input[2]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
         {"type": "image_url", "image_url": {"url": "/some/url"}},
     ]
     assert span1_input[2]["role"] == "user"
     span1_output = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert span1_output[-1]["content"] == response2.content[0].text
+    text_parts = [p for p in span1_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response2.content[0].text
     assert span1_output[-1]["role"] == "assistant"
     assert (
         spans[1].attributes.get("gen_ai.response.id") == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
@@ -514,13 +518,14 @@ async def test_anthropic_async_multi_modal_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert json.loads(input_messages[0]["content"]) == [
-        {"type": "text", "text": "What do you see?"},
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
         {"type": "image_url", "image_url": {"url": "/some/url"}},
     ]
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
     assert (
@@ -695,10 +700,11 @@ def test_anthropic_message_streaming_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -875,10 +881,11 @@ async def test_async_anthropic_message_create_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -1046,10 +1053,11 @@ async def test_async_anthropic_message_streaming_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -1235,7 +1243,7 @@ def test_anthropic_tools_legacy(
 
     # verify request and inputs
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == (
+    assert input_messages[0]["parts"][0]["content"] == (
         "What is the weather like right now in New York? Also what time is it there now?"
     )
     assert input_messages[0]["role"] == "user"
@@ -1272,17 +1280,18 @@ def test_anthropic_tools_legacy(
 
     # verify response and output
     finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
-    assert response.stop_reason in finish_reasons
+    assert "tool_call" in finish_reasons
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response.content[0].text
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
     assert output_messages[-1]["role"] == "assistant"
-    tool_calls = output_messages[-1]["tool_calls"]
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
     assert tool_calls[0]["id"] == response.content[1].id
     assert tool_calls[0]["name"] == response.content[1].name
-    assert json.loads(tool_calls[0]["arguments"]) == response.content[1].input
+    assert tool_calls[0]["arguments"] == response.content[1].input
     assert tool_calls[1]["id"] == response.content[2].id
     assert tool_calls[1]["name"] == response.content[2].name
-    assert json.loads(tool_calls[1]["arguments"]) == response.content[2].input
+    assert tool_calls[1]["arguments"] == response.content[2].input
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_01RBkXFe9TmDNNWThMz2HmGt"
@@ -1565,15 +1574,15 @@ def test_anthropic_tools_history_legacy(
 
     # verify request and inputs
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
     assert input_messages[0]["role"] == "user"
-    assert input_messages[1]["content"] == "I'll help you get the weather and current time in San Francisco."
+    assert input_messages[1]["parts"][0]["content"] == "I'll help you get the weather and current time in San Francisco."
     assert input_messages[1]["role"] == "assistant"
-    assert json.loads(input_messages[2]["content"]) == [
+    assert input_messages[2]["parts"] == [
         {
-            "type": "tool_result",
-            "content": "Sunny and 65 degrees Fahrenheit",
-            "tool_use_id": "call_1",
+            "type": "tool_call_response",
+            "id": "call_1",
+            "response": "Sunny and 65 degrees Fahrenheit",
         }
     ]
     assert input_messages[2]["role"] == "user"
@@ -1611,13 +1620,13 @@ def test_anthropic_tools_history_legacy(
 
     # verify response and output
     finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
-    assert response.stop_reason in finish_reasons
+    assert "tool_call" in finish_reasons
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output_messages[-1]["role"] == "assistant"
-    tool_calls = output_messages[-1]["tool_calls"]
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
     assert tool_calls[0]["id"] == response.content[0].id
     assert tool_calls[0]["name"] == response.content[0].name
-    assert json.loads(tool_calls[0]["arguments"]) == response.content[0].input
+    assert tool_calls[0]["arguments"] == response.content[0].input
 
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -1881,7 +1890,7 @@ def test_anthropic_tools_streaming_legacy(
 
     # verify request and inputs
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
     assert input_messages[0]["role"] == "user"
     tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "get_weather"
@@ -1914,22 +1923,24 @@ def test_anthropic_tools_streaming_legacy(
         "required": ["timezone"],
     }
 
-    # verify response and output
+    # verify response and output - all parts consolidated into single assistant message
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    text_msg = next(m for m in output_messages if m.get("content"))
-    assert text_msg["content"] == (
+    assert len(output_messages) == 1
+    msg = output_messages[0]
+    assert msg["role"] == "assistant"
+    text_parts = [p for p in msg["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == (
         "Certainly! I can help you with that information. "
         "To get the weather and current time in San Francisco, I'll need to use "
         "two separate functions. Let me fetch that data for you."
     )
-    assert text_msg["role"] == "assistant"
-    tool_msgs = [m for m in output_messages if m.get("tool_calls")]
-    assert len(tool_msgs) == 2
-    assert tool_msgs[0]["tool_calls"][0]["id"] == "toolu_014x5X91kx3fvdhpLvwXZWE2"
-    assert tool_msgs[0]["tool_calls"][0]["name"] == "get_weather"
-    assert tool_msgs[1]["tool_calls"][0]["id"] == "toolu_0121kXsENLvoDZ72LCuAnCCz"
-    assert tool_msgs[1]["tool_calls"][0]["name"] == "get_time"
-    assert json.loads(tool_msgs[1]["tool_calls"][0]["arguments"]) == {"timezone": "America/Los_Angeles"}
+    tool_calls = [p for p in msg["parts"] if p["type"] == "tool_call"]
+    assert len(tool_calls) == 2
+    assert tool_calls[0]["id"] == "toolu_014x5X91kx3fvdhpLvwXZWE2"
+    assert tool_calls[0]["name"] == "get_weather"
+    assert tool_calls[1]["id"] == "toolu_0121kXsENLvoDZ72LCuAnCCz"
+    assert tool_calls[1]["name"] == "get_time"
+    assert tool_calls[1]["arguments"] == {"timezone": "America/Los_Angeles"}
 
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2341,10 +2352,11 @@ def test_anthropic_message_stream_manager_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -2524,10 +2536,11 @@ async def test_async_anthropic_message_stream_manager_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[-1]["content"] == response_content
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
@@ -2784,7 +2797,7 @@ async def test_async_anthropic_beta_message_stream_manager_legacy(
     ]
     anthropic_span = spans[0]
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
     assert input_messages[0]["role"] == "user"
 
     logs = log_exporter.get_finished_logs()

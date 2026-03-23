@@ -17,6 +17,21 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
+# Anthropic stop_reason -> OTel GenAI FinishReason enum
+_FINISH_REASON_MAP = {
+    "end_turn": "stop",
+    "tool_use": "tool_call",
+    "max_tokens": "length",
+    "stop_sequence": "stop",
+}
+
+
+def _map_finish_reason(anthropic_reason):
+    """Map an Anthropic stop_reason to the OTel GenAI FinishReason enum value."""
+    if not anthropic_reason:
+        return anthropic_reason
+    return _FINISH_REASON_MAP.get(anthropic_reason, anthropic_reason)
+
 
 def _is_base64_image(item: Dict[str, Any]) -> bool:
     if not isinstance(item, dict):
@@ -43,31 +58,57 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
     return {"type": "image_url", "image_url": {"url": url}}
 
 
-async def _dump_content(message_index, content, span):
-    if isinstance(content, str):
-        return content
-    elif isinstance(content, list):
-        # If the content is a list of text blocks, concatenate them.
-        # This is more commonly used in prompt caching.
-        if all([model_as_dict(item).get("type") == "text" for item in content]):
-            return "".join([model_as_dict(item).get("text") for item in content])
+async def _content_to_parts(message_index, content, span):
+    """Convert Anthropic message content into OTel spec parts array.
 
-        content = [
-            (
-                await _process_image_item(
-                    model_as_dict(item),
+    Returns a list of parts following the gen-ai-input-messages.json schema:
+      - Text:     {"type": "text", "content": "..."}
+      - ToolCall: {"type": "tool_call", "id": "...", "name": "...", "arguments": {...}}
+      - Image:    passed through as-is (image_url format)
+    """
+    if isinstance(content, str):
+        return [{"type": "text", "content": content}]
+    elif isinstance(content, list):
+        parts = []
+        for j, item in enumerate(content):
+            item_dict = model_as_dict(item) if not isinstance(item, dict) else dict(item)
+            block_type = item_dict.get("type")
+
+            if block_type == "tool_use":
+                tool_input = item_dict.get("input")
+                if isinstance(tool_input, str):
+                    try:
+                        tool_input = json.loads(tool_input)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                parts.append({
+                    "type": "tool_call",
+                    "id": item_dict.get("id"),
+                    "name": item_dict.get("name"),
+                    "arguments": tool_input,
+                })
+            elif block_type == "text":
+                text_value = item_dict.get("text", "")
+                parts.append({"type": "text", "content": text_value})
+            elif _is_base64_image(item_dict):
+                processed = await _process_image_item(
+                    item_dict,
                     span.context.trace_id,
                     span.context.span_id,
                     message_index,
                     j,
                 )
-                if _is_base64_image(model_as_dict(item))
-                else model_as_dict(item)
-            )
-            for j, item in enumerate(content)
-        ]
-
-        return json.dumps(content, cls=JSONEncoder)
+                parts.append(processed)
+            elif block_type == "tool_result":
+                parts.append({
+                    "type": "tool_call_response",
+                    "id": item_dict.get("tool_use_id"),
+                    "response": item_dict.get("content"),
+                })
+            else:
+                parts.append(item_dict)
+        return parts
+    return []
 
 
 @dont_throw
@@ -95,7 +136,10 @@ async def aset_input_attributes(span, kwargs):
             set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                json.dumps([{"role": "user", "content": kwargs.get("prompt")}]),
+                json.dumps([{
+                    "role": "user",
+                    "parts": [{"type": "text", "content": kwargs.get("prompt")}],
+                }]),
             )
 
         elif kwargs.get("messages") is not None:
@@ -103,7 +147,7 @@ async def aset_input_attributes(span, kwargs):
                 set_span_attribute(
                     span,
                     GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
-                    await _dump_content(
+                    await _dump_system_content(
                         message_index=0, span=span, content=kwargs.get("system")
                     ),
                 )
@@ -111,35 +155,13 @@ async def aset_input_attributes(span, kwargs):
             input_messages = []
             for i, message in enumerate(kwargs.get("messages")):
                 content = message.get("content")
-                tool_use_blocks = []
-                non_tool_use_content = content
-                if isinstance(content, list):
-                    tool_use_blocks = [
-                        dict(block)
-                        for block in content
-                        if dict(block).get("type") == "tool_use"
-                    ]
-                    non_tool_use_content = [
-                        block
-                        for block in content
-                        if dict(block).get("type") != "tool_use"
-                    ] or None
-
+                parts = await _content_to_parts(
+                    message_index=i, content=content, span=span
+                )
                 msg_obj = {
                     "role": message.get("role"),
-                    "content": await _dump_content(
-                        message_index=i, span=span, content=non_tool_use_content
-                    ),
+                    "parts": parts,
                 }
-                if tool_use_blocks:
-                    msg_obj["tool_calls"] = [
-                        {
-                            "id": block.get("id"),
-                            "name": block.get("name"),
-                            "arguments": json.dumps(block.get("input")),
-                        }
-                        for block in tool_use_blocks
-                    ]
                 input_messages.append(msg_obj)
 
             set_span_attribute(
@@ -175,6 +197,82 @@ async def aset_input_attributes(span, kwargs):
                     )
 
 
+async def _dump_system_content(message_index, content, span):
+    """Convert system content to a string for gen_ai.system_instructions."""
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        if all([model_as_dict(item).get("type") == "text" for item in content]):
+            return "".join([model_as_dict(item).get("text") for item in content])
+        content = [
+            (
+                await _process_image_item(
+                    model_as_dict(item),
+                    span.context.trace_id,
+                    span.context.span_id,
+                    message_index,
+                    j,
+                )
+                if _is_base64_image(model_as_dict(item))
+                else model_as_dict(item)
+            )
+            for j, item in enumerate(content)
+        ]
+        return json.dumps(content, cls=JSONEncoder)
+
+
+def _build_output_messages_from_content(response):
+    """Build OTel spec-compliant output messages from an Anthropic response.
+
+    Returns a list with a single assistant message using parts structure:
+      - Text:      {"type": "text", "content": "..."}
+      - ToolCall:  {"type": "tool_call", "id": "...", "name": "...", "arguments": {...}}
+      - Reasoning: {"type": "reasoning", "content": "..."}
+    """
+    if response.get("completion"):
+        return [{
+            "role": response.get("role", "assistant"),
+            "parts": [{"type": "text", "content": response.get("completion")}],
+            "finish_reason": _map_finish_reason(response.get("stop_reason")),
+        }]
+
+    if not response.get("content"):
+        return []
+
+    parts = []
+    for content_block in response.get("content"):
+        content_block_type = content_block.type
+        if content_block_type == "text" and hasattr(content_block, "text"):
+            parts.append({"type": "text", "content": content_block.text})
+        elif content_block_type == "thinking":
+            parts.append({
+                "type": "reasoning",
+                "content": getattr(content_block, "thinking", None),
+            })
+        elif content_block_type == "tool_use":
+            tool_arguments = getattr(content_block, "input", None)
+            if isinstance(tool_arguments, str):
+                try:
+                    tool_arguments = json.loads(tool_arguments)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            parts.append({
+                "type": "tool_call",
+                "id": getattr(content_block, "id", None),
+                "name": getattr(content_block, "name", None),
+                "arguments": tool_arguments,
+            })
+
+    if not parts:
+        return []
+
+    return [{
+        "role": response.get("role", "assistant"),
+        "parts": parts,
+        "finish_reason": _map_finish_reason(response.get("stop_reason")),
+    }]
+
+
 async def _aset_span_completions(span, response):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
     from opentelemetry.instrumentation.anthropic.utils import _aextract_response_data
@@ -183,44 +281,12 @@ async def _aset_span_completions(span, response):
     stop_reason = response.get("stop_reason")
 
     if stop_reason:
-        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [stop_reason])
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [_map_finish_reason(stop_reason)])
 
     if not should_send_prompts():
         return
 
-    output_messages = []
-
-    if response.get("completion"):
-        output_messages.append({
-            "role": response.get("role", "assistant"),
-            "content": response.get("completion"),
-        })
-    elif response.get("content"):
-        tool_calls = []
-        text = ""
-        thinking_messages = []
-        for content in response.get("content"):
-            content_block_type = content.type
-            if content_block_type == "text" and hasattr(content, "text"):
-                text += content.text
-            elif content_block_type == "thinking":
-                thinking_messages.append({
-                    "role": "thinking",
-                    "content": getattr(content, "thinking", None),
-                })
-            elif content_block_type == "tool_use":
-                tool_arguments = getattr(content, "input", None)
-                tool_calls.append({
-                    "id": getattr(content, "id", None),
-                    "name": getattr(content, "name", None),
-                    "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
-                })
-
-        output_messages.extend(thinking_messages)
-        msg = {"role": response.get("role", "assistant"), "content": text}
-        if tool_calls:
-            msg["tool_calls"] = tool_calls
-        output_messages.append(msg)
+    output_messages = _build_output_messages_from_content(response)
 
     if output_messages:
         set_span_attribute(
@@ -237,46 +303,12 @@ def _set_span_completions(span, response):
     stop_reason = response.get("stop_reason")
 
     if stop_reason:
-        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [stop_reason])
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [_map_finish_reason(stop_reason)])
 
     if not should_send_prompts():
         return
 
-    output_messages = []
-
-    if response.get("completion"):
-        output_messages.append({
-            "role": response.get("role", "assistant"),
-            "content": response.get("completion"),
-        })
-    elif response.get("content"):
-        tool_calls = []
-        text = ""
-        thinking_messages = []
-        for content in response.get("content"):
-            content_block_type = content.type
-            # usually, Anthropic responds with just one text block,
-            # but the API allows for multiple text blocks, so concatenate them
-            if content_block_type == "text" and hasattr(content, "text"):
-                text += content.text
-            elif content_block_type == "thinking":
-                thinking_messages.append({
-                    "role": "thinking",
-                    "content": getattr(content, "thinking", None),
-                })
-            elif content_block_type == "tool_use":
-                tool_arguments = getattr(content, "input", None)
-                tool_calls.append({
-                    "id": getattr(content, "id", None),
-                    "name": getattr(content, "name", None),
-                    "arguments": json.dumps(tool_arguments) if tool_arguments is not None else None,
-                })
-
-        output_messages.extend(thinking_messages)
-        msg = {"role": response.get("role", "assistant"), "content": text}
-        if tool_calls:
-            msg["tool_calls"] = tool_calls
-        output_messages.append(msg)
+    output_messages = _build_output_messages_from_content(response)
 
     if output_messages:
         set_span_attribute(
@@ -342,48 +374,54 @@ def set_streaming_response_attributes(span, complete_response_events):
     if not span.is_recording() or not complete_response_events:
         return
 
-    output_messages = []
+    # Collect all parts and determine finish_reason
+    parts = []
     finish_reasons = []
 
     for event in complete_response_events:
         finish_reason = event.get("finish_reason")
-        if finish_reason and finish_reason not in finish_reasons:
-            finish_reasons.append(finish_reason)
+        if finish_reason:
+            mapped = _map_finish_reason(finish_reason)
+            if mapped not in finish_reasons:
+                finish_reasons.append(mapped)
 
         if should_send_prompts():
             if event.get("type") == "thinking":
-                output_messages.append({
-                    "role": "thinking",
+                parts.append({
+                    "type": "reasoning",
                     "content": event.get("text"),
                 })
             elif event.get("type") == "tool_use":
                 tool_arguments = event.get("input")
-                # Streaming accumulates input as a JSON string via input_json_delta;
-                # non-streaming may pass a dict. Normalise to a JSON string either way.
                 if isinstance(tool_arguments, str):
-                    arguments = tool_arguments or None
-                elif tool_arguments is not None:
-                    arguments = json.dumps(tool_arguments)
-                else:
-                    arguments = None
-                output_messages.append({
-                    "role": "assistant",
-                    "tool_calls": [{
-                        "id": event.get("id"),
-                        "name": event.get("name"),
-                        "arguments": arguments,
-                    }],
+                    try:
+                        tool_arguments = json.loads(tool_arguments)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                elif tool_arguments is None:
+                    tool_arguments = None
+                parts.append({
+                    "type": "tool_call",
+                    "id": event.get("id"),
+                    "name": event.get("name"),
+                    "arguments": tool_arguments,
                 })
             else:
-                output_messages.append({
-                    "role": "assistant",
+                parts.append({
+                    "type": "text",
                     "content": event.get("text"),
                 })
 
     if finish_reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
-    if output_messages:
+    if parts:
+        # Consolidate all parts into a single assistant message
+        output_messages = [{
+            "role": "assistant",
+            "parts": parts,
+            "finish_reason": finish_reasons[-1] if finish_reasons else None,
+        }]
         set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,

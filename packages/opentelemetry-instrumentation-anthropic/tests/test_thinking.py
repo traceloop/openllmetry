@@ -47,13 +47,15 @@ def test_anthropic_thinking_legacy(
     assert anthropic_span.name == "anthropic.chat"
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    thinking_msg = next(m for m in output_messages if m.get("role") == "thinking")
-    assert thinking_msg["content"] == response.content[0].thinking
-    assistant_msg = next(m for m in output_messages if m.get("role") == "assistant")
-    assert assistant_msg["content"] == response.content[1].text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    reasoning_parts = [p for p in output_messages[0]["parts"] if p["type"] == "reasoning"]
+    assert reasoning_parts[0]["content"] == response.content[0].thinking
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[1].text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -245,13 +247,15 @@ async def test_async_anthropic_thinking_legacy(
     assert anthropic_span.name == "anthropic.chat"
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    thinking_msg = next(m for m in output_messages if m.get("role") == "thinking")
-    assert thinking_msg["content"] == response.content[0].thinking
-    assistant_msg = next(m for m in output_messages if m.get("role") == "assistant")
-    assert assistant_msg["content"] == response.content[1].text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    reasoning_parts = [p for p in output_messages[0]["parts"] if p["type"] == "reasoning"]
+    assert reasoning_parts[0]["content"] == response.content[0].thinking
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[1].text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -459,12 +463,14 @@ def test_anthropic_thinking_streaming_legacy(
     assert anthropic_span.name == "anthropic.chat"
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert any(m.get("role") == "thinking" for m in output_messages)
-    assistant_msg = next(m for m in output_messages if m.get("role") == "assistant")
-    assert assistant_msg["content"] == text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert any(p["type"] == "reasoning" for p in output_messages[0]["parts"])
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -698,12 +704,14 @@ async def test_async_anthropic_thinking_streaming_legacy(
     assert anthropic_span.name == "anthropic.chat"
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert any(m.get("role") == "thinking" for m in output_messages)
-    assistant_msg = next(m for m in output_messages if m.get("role") == "assistant")
-    assert assistant_msg["content"] == text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert any(p["type"] == "reasoning" for p in output_messages[0]["parts"])
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
