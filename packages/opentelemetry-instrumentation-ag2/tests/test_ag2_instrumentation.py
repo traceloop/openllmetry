@@ -8,8 +8,9 @@ def instrumentor():
     return AG2Instrumentor()
 
 
-def test_instrument_calls_ag2_builtins(instrumentor):
+def test_instrument_calls_ag2_builtins(instrumentor, monkeypatch):
     """Verify that _instrument delegates to AG2's built-in opentelemetry instrumentation."""
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
     mock_tracer_provider = MagicMock()
 
     with (

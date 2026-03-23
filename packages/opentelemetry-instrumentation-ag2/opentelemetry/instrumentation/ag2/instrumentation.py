@@ -20,6 +20,13 @@ class AG2Instrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider") or trace.get_tracer_provider()
 
+        # Save the original OpenAIWrapper.create before AG2 wraps it so we can
+        # restore it in _uninstrument (AG2 keeps the original only in a closure).
+        from autogen.oai.client import OpenAIWrapper
+
+        if not hasattr(OpenAIWrapper.create, "__otel_wrapped__"):
+            self._original_create = OpenAIWrapper.create
+
         # Use AG2's built-in OpenTelemetry instrumentation for LLM calls
         from autogen.opentelemetry import instrument_llm_wrapper
 
@@ -76,9 +83,13 @@ class AG2Instrumentor(BaseInstrumentor):
 
         try:
             from autogen.oai.client import OpenAIWrapper
+
             if hasattr(OpenAIWrapper.create, "__otel_wrapped__"):
-                # instrument_llm_wrapper stores original as a closure;
-                # best-effort: remove the wrapper flag so re-instrument works
-                delattr(OpenAIWrapper.create, "__otel_wrapped__")
+                original = getattr(self, "_original_create", None)
+                if original is not None:
+                    OpenAIWrapper.create = original
+                    self._original_create = None
+                else:
+                    delattr(OpenAIWrapper.create, "__otel_wrapped__")
         except (ImportError, AttributeError):
             pass
