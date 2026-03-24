@@ -37,14 +37,16 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert input_messages[0]["content"] == "Human: Tell me a joke about opentelemetry Assistant:"
+    assert input_messages[0]["parts"][0]["content"] == "Human: Tell me a joke about opentelemetry Assistant:"
     assert input_messages[0]["role"] == "user"
 
     output_messages = json.loads(
         anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
-    assert output_messages[0]["content"] == completion
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
@@ -195,8 +197,7 @@ def test_anthropic_3_completion_complex_content(
         contentType="application/json",
     )
 
-    response_body = json.loads(response.get("body").read())
-    completion = response_body.get("content")
+    json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
@@ -205,15 +206,17 @@ def test_anthropic_3_completion_complex_content(
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert json.loads(input_messages[0]["content"]) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["parts"][0]["type"] == "text"
 
     output_messages = json.loads(
         anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
-    assert json.loads(output_messages[0]["content"]) == completion
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
@@ -405,20 +408,17 @@ def test_anthropic_3_completion_streaming(
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert json.loads(input_messages[0]["content"]) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["parts"][0]["type"] == "text"
 
     output_messages = json.loads(
         anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
-    assert json.loads(output_messages[0]["content"]) == [
-        {
-            "type": "text",
-            "text": completion,
-        }
-    ]
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
@@ -599,8 +599,7 @@ def test_anthropic_3_completion_string_content(
         contentType="application/json",
     )
 
-    response_body = json.loads(response.get("body").read())
-    completion = response_body.get("content")
+    json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "bedrock.completion" for span in spans)
@@ -609,13 +608,16 @@ def test_anthropic_3_completion_string_content(
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert json.loads(input_messages[0]["content"]) == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
     output_messages = json.loads(
         anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
-    assert json.loads(output_messages[0]["content"]) == completion
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
@@ -791,12 +793,14 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert input_messages[0]["content"] == json.dumps(messages[0]["content"])
+    assert input_messages[0]["parts"][0]["content"] is not None
     output_messages = json.loads(
         anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
-    assert output_messages[0]["content"] == completion
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS

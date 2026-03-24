@@ -55,13 +55,18 @@ def test_cohere_completion(instrument_legacy, brt, span_exporter, log_exporter):
 
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == prompt
     assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     # Assert on response
     generated_text = response_body["generations"][0]["text"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] == generated_text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == generated_text
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert (
         bedrock_span.attributes.get("gen_ai.response.id")
         == "3266ca30-473c-4491-b6ef-5b1f033798d2"

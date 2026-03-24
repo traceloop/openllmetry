@@ -205,13 +205,19 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
         meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
     assert len(input_messages) == 1
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
     output_messages = json.loads(
         meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
     )
     assert len(output_messages) == 1
-    assert output_messages[0]["content"] == response_body["generation"]
+    assert output_messages[0]["parts"][0]["content"] == response_body["generation"]
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    assert (
+        meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+        == ("stop",)
+    )
 
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
@@ -362,9 +368,11 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
     )
     assert len(input_messages) == 2
     assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["content"] == system_prompt
+    assert input_messages[0]["parts"][0]["content"] == system_prompt
     assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["content"] == json.dumps(messages[0]["content"])
+    assert input_messages[1]["parts"] == [
+        {"type": "text", "content": "Tell me a joke about opentelemetry"}
+    ]
 
     output_messages = json.loads(
         meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
@@ -372,7 +380,13 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
     assert len(output_messages) == len(generated_text)
     for i in range(len(generated_text)):
         assert output_messages[i]["role"] == "assistant"
-        assert output_messages[i]["content"] == generated_text[i]["text"]
+        assert output_messages[i]["parts"][0]["content"] == generated_text[i]["text"]
+        assert output_messages[i]["finish_reason"] == "stop"
+
+    assert (
+        meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+        == ("stop",)
+    )
 
     assert meta_span.attributes.get("gen_ai.response.id") is None
 
@@ -570,16 +584,24 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
     )
     assert len(input_messages) == 2
     assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["content"] == system_prompt
+    assert input_messages[0]["parts"][0]["content"] == system_prompt
     assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["content"] == json.dumps(messages[0]["content"])
+    assert input_messages[1]["parts"] == [
+        {"type": "text", "content": "Tell me a joke about opentelemetry"}
+    ]
 
     output_messages = json.loads(
         meta_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
     )
     assert len(output_messages) == 1
     assert output_messages[0]["role"] == response_role
-    assert output_messages[0]["content"] == content
+    assert output_messages[0]["parts"][0]["content"] == content
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    assert (
+        meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+        == ("stop",)
+    )
 
     assert meta_span.attributes.get("gen_ai.response.id") is None
 

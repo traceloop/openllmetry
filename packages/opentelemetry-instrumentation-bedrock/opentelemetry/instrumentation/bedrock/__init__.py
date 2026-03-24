@@ -401,16 +401,17 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
+                    stop_reason = event.get("messageStop", {}).get("stopReason", "unknown")
                     if should_emit_events() and event_logger:
                         emit_streaming_converse_response_event(
                             event_logger,
                             response_msg,
                             role,
-                            event.get("messageStop", {}).get("stopReason", "unknown"),
+                            stop_reason,
                         )
                     else:
                         set_converse_streaming_response_span_attributes(
-                            response_msg, role, span
+                            response_msg, role, span, finish_reason=stop_reason
                         )
 
                 return event

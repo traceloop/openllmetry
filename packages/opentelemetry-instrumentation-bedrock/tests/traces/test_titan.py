@@ -63,13 +63,20 @@ def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
         "scale generative AI applications with base models (FMs)'."
     )
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == expected_prompt
     assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == expected_prompt
 
     # Assert on response
     generated_text = response_body["results"][0]["outputText"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] == generated_text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == generated_text
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
@@ -292,13 +299,20 @@ def test_titan_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter
         "scale generative AI applications with base models (FMs)'."
     )
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == expected_prompt
     assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == expected_prompt
 
     # Assert on response
     completion_text = "".join(generated_text)
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] == completion_text
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == completion_text
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
     # Assert on other request parameters
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
@@ -542,12 +556,21 @@ def test_titan_converse(instrument_legacy, brt, span_exporter, log_exporter):
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == json.dumps(messages[0].get("content"), default=str)
+    # guardContent blocks become text parts with json.dumps of each block
+    assert len(input_messages[0]["parts"]) == 2
+    for i, block in enumerate(messages[0]["content"]):
+        assert input_messages[0]["parts"][i]["type"] == "text"
+        assert input_messages[0]["parts"][i]["content"] == json.dumps(block, default=str)
 
     # Assert on response
     generated_text = response["output"]["message"]["content"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] == generated_text[0]["text"]
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == generated_text[0]["text"]
+    assert output_messages[0]["finish_reason"] == "content_filter"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -788,12 +811,21 @@ def test_titan_converse_stream(instrument_legacy, brt, span_exporter, log_export
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == json.dumps(messages[0].get("content"), default=str)
+    # guardContent blocks become text parts with json.dumps of each block
+    assert len(input_messages[0]["parts"]) == 2
+    for i, block in enumerate(messages[0]["content"]):
+        assert input_messages[0]["parts"][i]["type"] == "text"
+        assert input_messages[0]["parts"][i]["content"] == json.dumps(block, default=str)
 
     # Assert on response
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] == content
     assert output_messages[0]["role"] == response_role
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == content
+    assert output_messages[0]["finish_reason"] == "content_filter"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
 
     # Assert on usage data
     assert (

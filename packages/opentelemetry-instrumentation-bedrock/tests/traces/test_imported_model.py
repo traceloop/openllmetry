@@ -40,7 +40,14 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
     assert imported_model_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 2
 
     input_messages = json.loads(imported_model_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["content"] == prompt
+    assert input_messages[0]["parts"][0]["content"] == prompt
+
+    output_messages = json.loads(imported_model_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    assert imported_model_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
     assert data is not None
 
     logs = log_exporter.get_finished_logs()
