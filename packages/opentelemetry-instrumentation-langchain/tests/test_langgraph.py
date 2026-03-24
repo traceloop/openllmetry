@@ -533,15 +533,23 @@ def test_create_react_agent_span(instrument_legacy, span_exporter):
     from langgraph.prebuilt import create_react_agent
 
     class MockChatModel(BaseChatModel):
+        """Mock chat model for testing ToolNode handling."""
+
         @property
         def _llm_type(self) -> str:
+            """Return model type identifier."""
             return "mock"
 
         def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="Mock"))])
+            """Return a mock AI response."""
+            return ChatResult(
+                generations=[ChatGeneration(message=AIMessage(content="Mock"))]
+            )
 
         def bind_tools(self, tools, **kwargs):
+            """Return self without binding tools."""
             return self
+
 
     @tool
     def get_weather(city: str) -> str:
