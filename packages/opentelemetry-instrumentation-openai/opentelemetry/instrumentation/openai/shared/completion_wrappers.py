@@ -167,15 +167,19 @@ def _set_prompts(span, prompt):
         _legacy_set_prompts(span, prompt)
 
 def _set_input_messages(span, prompt):
-    if not span.is_recording() or not prompt:
+    if not span.is_recording() or prompt is None:
         return
 
-    prompt = prompt[0] if isinstance(prompt, list) else prompt
+    prompts = prompt if isinstance(prompt, list) else [prompt]
 
+    messages = [
+        {"role": "user", "parts": [{"content": p, "type": "text"}]}
+        for p in prompts
+    ]
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps([{"role": "user", "parts": [{"content": prompt, "type": "text"}]}]),
+        json.dumps(messages),
     )
 
 def _legacy_set_prompts(span, prompt):

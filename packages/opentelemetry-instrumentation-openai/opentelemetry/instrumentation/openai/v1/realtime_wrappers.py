@@ -23,6 +23,9 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode, Tracer
 
@@ -119,11 +122,11 @@ class RealtimeEventProcessor:
             self._state.session_config.update(session_dict)
 
             if self._state.session_span and self._state.session_span.is_recording():
-                if hasattr(session, "modalities"):
+                if hasattr(session, "modalities") and session.modalities:
                     _set_span_attribute(
                         self._state.session_span,
-                        f"{GenAIAttributes.GEN_AI_OPERATION_NAME}.modalities",
-                        json.dumps(session.modalities) if session.modalities else None,
+                        GenAIAttributes.GEN_AI_OUTPUT_TYPE,
+                        json.dumps(session.modalities),
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
                     _set_span_attribute(
@@ -313,7 +316,7 @@ class RealtimeEventProcessor:
             _set_span_attribute(
                 self._state.response_span,
                 GenAIAttributes.GEN_AI_OPERATION_NAME,
-                "realtime",
+                GenAiOperationNameValues.CHAT.value,
             )
 
             # Set input if available and requested
@@ -679,7 +682,7 @@ class RealtimeConnectionManagerWrapper:
             _set_span_attribute(
                 self._state.session_span,
                 GenAIAttributes.GEN_AI_OPERATION_NAME,
-                "realtime",
+                GenAiOperationNameValues.CHAT.value,
             )
 
         # Enter the underlying connection manager

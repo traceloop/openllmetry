@@ -11,10 +11,18 @@ import pytest
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     _set_input_messages,
     _set_output_messages,
+)
+from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
+    _set_input_messages as _set_completion_input_messages,
+)
+from opentelemetry.instrumentation.openai.shared import (
+    _set_request_attributes,
+    _set_span_attribute,
 )
 
 
@@ -101,20 +109,20 @@ class TestSetInputMessages:
         assert result[3]["parts"][0]["response"] == '{"temp": 72, "unit": "F"}'
 
     def test_user_with_none_content(self, mock_span):
-        """User message with None content should not crash or produce null parts."""
+        """User message with None content should produce empty parts list."""
         _set_input_messages(mock_span, [{"role": "user", "content": None}])
         result = _get_input_messages(mock_span)
 
         assert len(result) == 1
-        assert result[0]["parts"] is not None
+        assert result[0]["parts"] == []
 
     def test_system_with_none_content(self, mock_span):
-        """System message with None content should not crash or produce null parts."""
+        """System message with None content should produce empty parts list."""
         _set_input_messages(mock_span, [{"role": "system", "content": None}])
         result = _get_input_messages(mock_span)
 
         assert len(result) == 1
-        assert result[0]["parts"] is not None
+        assert result[0]["parts"] == []
 
     def test_developer_role(self, mock_span):
         _set_input_messages(mock_span, [{"role": "developer", "content": "Be concise."}])
@@ -209,12 +217,13 @@ class TestSetOutputMessages:
         assert tool_parts[0]["id"] == "call_abc"
 
     def test_none_message_in_choice(self, mock_span):
-        """Choice with message=None should not crash."""
+        """Choice with message=None should produce empty output array."""
         choices = [
             {"index": 0, "message": None, "finish_reason": "content_filter"},
         ]
         _set_output_messages(mock_span, choices)
-        # Should not crash; attribute may or may not be set
+        result = _get_output_messages(mock_span)
+        assert result == []
 
     def test_none_choices(self, mock_span):
         """None choices should be a no-op."""
@@ -240,3 +249,54 @@ class TestSetOutputMessages:
         assert len(result) == 2
         assert result[0]["parts"][0]["content"] == "Answer A"
         assert result[1]["parts"][0]["content"] == "Answer B"
+
+
+# ---------------------------------------------------------------------------
+# Completion wrappers: _set_input_messages for text completions
+# ---------------------------------------------------------------------------
+
+class TestCompletionInputMessages:
+    def test_list_prompt_preserves_all_items(self, mock_span):
+        """Batched prompt list should preserve all items, not collapse to first."""
+        prompts = ["First prompt", "Second prompt", "Third prompt"]
+        _set_completion_input_messages(mock_span, prompts)
+        result = _get_input_messages(mock_span)
+
+        assert len(result) == 3
+        assert result[0]["parts"][0]["content"] == "First prompt"
+        assert result[1]["parts"][0]["content"] == "Second prompt"
+        assert result[2]["parts"][0]["content"] == "Third prompt"
+
+    def test_single_string_prompt(self, mock_span):
+        """Single string prompt should work as a single message."""
+        _set_completion_input_messages(mock_span, "Hello world")
+        result = _get_input_messages(mock_span)
+
+        assert len(result) == 1
+        assert result[0]["role"] == "user"
+        assert result[0]["parts"][0]["content"] == "Hello world"
+
+    def test_empty_string_prompt_is_preserved(self, mock_span):
+        """Empty string prompt should still be recorded, not dropped."""
+        _set_completion_input_messages(mock_span, "")
+        result = _get_input_messages(mock_span)
+
+        assert len(result) == 1
+        assert result[0]["parts"][0]["content"] == ""
+
+
+# ---------------------------------------------------------------------------
+# _set_request_attributes: headers / user serialization
+# ---------------------------------------------------------------------------
+
+class TestRequestAttributesSerialization:
+    def test_none_headers_not_recorded_as_string(self, mock_span):
+        """kwargs with headers=None should not record literal 'None'."""
+        _set_request_attributes(mock_span, {"model": "gpt-4"})
+        val = mock_span._attrs.get(SpanAttributes.GEN_AI_HEADERS)
+        assert val != "None", "Should not record literal string 'None'"
+
+    def test_none_user_not_recorded(self, mock_span):
+        """kwargs with user=None should not record attribute."""
+        _set_request_attributes(mock_span, {"model": "gpt-4"})
+        assert SpanAttributes.GEN_AI_USER not in mock_span._attrs

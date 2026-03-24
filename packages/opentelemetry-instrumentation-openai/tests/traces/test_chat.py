@@ -108,6 +108,12 @@ def test_chat_with_messages_attributes(
     assert output_messages[0]["parts"][0]["type"] == "text"
     assert "content" in output_messages[0]["parts"][0]
 
+    # Legacy prompt/completion attributes must NOT be present alongside new format
+    assert not any(
+        k.startswith("gen_ai.prompt.") or k.startswith("gen_ai.completion.")
+        for k in open_ai_span.attributes.keys()
+    ), "Legacy gen_ai.prompt.*/gen_ai.completion.* should not be emitted with use_messages_attributes"
+
 
 @pytest.mark.vcr
 def test_chat_with_events_with_content(

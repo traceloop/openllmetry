@@ -4,7 +4,7 @@ from typing import Any, List, Literal, Optional, TypedDict
 
 class _FunctionToolCall(TypedDict):
     name: str
-    arguments: Optional[dict[str, Any]]
+    arguments: Optional[str]
 
 
 class ToolCall(TypedDict):

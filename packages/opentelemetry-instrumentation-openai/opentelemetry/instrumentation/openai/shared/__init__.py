@@ -133,12 +133,9 @@ def _set_request_attributes(span, kwargs, instance=None):
         span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
     _set_span_attribute(span, SpanAttributes.GEN_AI_USER, kwargs.get("user"))
-    _set_span_attribute(span, SpanAttributes.GEN_AI_HEADERS, str(kwargs.get("headers")))
-    # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
-    if kwargs.get("extra_headers") is not None:
-        _set_span_attribute(
-            span, SpanAttributes.GEN_AI_HEADERS, str(kwargs.get("extra_headers"))
-        )
+    headers = kwargs.get("extra_headers") or kwargs.get("headers")
+    if headers is not None:
+        _set_span_attribute(span, SpanAttributes.GEN_AI_HEADERS, str(headers))
     _set_span_attribute(
         span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream") or False
     )

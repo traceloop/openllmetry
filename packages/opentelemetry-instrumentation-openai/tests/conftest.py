@@ -194,11 +194,12 @@ def instrument_with_messages_attributes(
     instrument_legacy, reader, tracer_provider, logger_provider, meter_provider
 ):
     instrumentor = instrument_legacy
+    previous = Config.use_messages_attributes
     Config.use_messages_attributes = True
 
     yield instrumentor
 
-    Config.use_messages_attributes = False
+    Config.use_messages_attributes = previous
 
 
 @pytest.fixture(autouse=True)
@@ -208,4 +209,11 @@ def clear_exporter(span_exporter):
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization", "api-key"]}
+    return {"filter_headers": [
+        "authorization",
+        "api-key",
+        "openai-organization",
+        "openai-project",
+        "set-cookie",
+        "x-request-id",
+    ]}
