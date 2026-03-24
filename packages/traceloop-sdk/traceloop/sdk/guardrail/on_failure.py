@@ -5,9 +5,9 @@ On failure handlers are called when a guard returns False.
 They receive the full GuardedResult and can raise, log, or perform custom actions.
 """
 import logging
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, Union
 
-from .model import GuardedResult, GuardValidationError
+from .model import GuardedResult, GuardValidationError, OnFailureHandler
 
 logger = logging.getLogger("traceloop.guardrail")
 
@@ -97,3 +97,39 @@ class OnFailure:
             return value
 
         return handler
+
+
+# Reserved keywords for string-based on_failure
+_ON_FAILURE_KEYWORDS = {"raise", "log", "ignore"}
+
+# Type for on_failure inputs before resolution
+OnFailureInput = Union[str, OnFailureHandler]
+
+
+def resolve_on_failure(value: OnFailureInput) -> OnFailureHandler:
+    """
+    Resolve an on_failure value into a callable handler.
+
+    Accepts:
+        - "raise": Raise GuardValidationError (equivalent to OnFailure.raise_exception())
+        - "log": Log warning and return result (equivalent to OnFailure.log())
+        - "ignore": Return result silently (equivalent to OnFailure.noop())
+        - Any other string: Return that string as fallback value
+        - Callable: Use as-is
+
+    Args:
+        value: String keyword, fallback string, or callable handler.
+
+    Returns:
+        An OnFailureHandler callable.
+    """
+    if isinstance(value, str):
+        if value == "raise":
+            return OnFailure.raise_exception()
+        elif value == "log":
+            return OnFailure.log()
+        elif value == "ignore":
+            return OnFailure.noop()
+        else:
+            return OnFailure.return_value(value)
+    return value

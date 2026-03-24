@@ -5,8 +5,8 @@ from traceloop.sdk.annotation.user_feedback import UserFeedback
 from traceloop.sdk.datasets.datasets import Datasets
 from traceloop.sdk.experiment.experiment import Experiment
 from traceloop.sdk.guardrail.guardrail import Guardrails
-from traceloop.sdk.guardrail.model import Guard, OnFailureHandler
-from traceloop.sdk.guardrail.on_failure import OnFailure
+from traceloop.sdk.guardrail.model import Guard
+from traceloop.sdk.guardrail.on_failure import OnFailureInput
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.version import __version__
 from traceloop.sdk.associations.associations import Associations
@@ -75,7 +75,7 @@ class Client:
     def create_guardrail(
         self,
         guards: list[Guard],
-        on_failure: OnFailureHandler = OnFailure.raise_exception(),
+        on_failure: OnFailureInput = "raise",
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
@@ -86,7 +86,12 @@ class Client:
         Args:
             guards: List of guard functions. Each receives its corresponding
                     guard_input and returns bool. True = pass, False = fail.
-            on_failure: Called when any guard returns False.
+            on_failure: Called when any guard returns False. Can be:
+                - "raise": Raise GuardValidationError (default)
+                - "log": Log warning and return result
+                - "ignore": Return result silently (shadow mode)
+                - Any other string: Return that string as fallback
+                - Callable: Custom OnFailureHandler
             name: Identifier for this guardrail configuration.
             run_all: If True, run all guards before handling failures.
                      If False (default), stop at first failure.
@@ -99,7 +104,7 @@ class Client:
         Example:
             g = client.create_guardrail(
                 guards=[toxicity_guard(), pii_guard()],
-                on_failure=OnFailure.raise_exception("Guard failed"),
+                on_failure="raise",
             )
             result = await g.run(my_function)
         """

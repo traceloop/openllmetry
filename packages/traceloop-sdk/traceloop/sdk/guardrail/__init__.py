@@ -44,7 +44,7 @@ from .model import (
     GuardedFunctionResult,
 )
 from .condition import Condition
-from .on_failure import OnFailure
+from .on_failure import OnFailure, OnFailureInput, resolve_on_failure
 from .guards import (
     custom_evaluator_guard,
     toxicity_guard,
@@ -99,6 +99,8 @@ __all__ = [
     "GuardedFunctionResult",
     "Condition",
     "OnFailure",
+    "OnFailureInput",
+    "resolve_on_failure",
     "default_input_mapper",
     # Guard functions
     "custom_evaluator_guard",

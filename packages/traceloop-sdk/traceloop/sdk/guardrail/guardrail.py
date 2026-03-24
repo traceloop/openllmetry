@@ -26,7 +26,7 @@ from .span_attributes import (
     GEN_AI_GUARDRAIL_ERROR_TYPE,
     GEN_AI_GUARDRAIL_ERROR_MESSAGE,
 )
-from .on_failure import OnFailure
+from .on_failure import OnFailureInput, resolve_on_failure
 from .default_mapper import default_input_mapper
 from .model import (
     GuardedResult,
@@ -68,7 +68,7 @@ class Guardrails:
         self,
         async_http_client: httpx.AsyncClient,
         guards: list[Guard],
-        on_failure: OnFailureHandler = OnFailure.raise_exception(),
+        on_failure: OnFailureInput = "raise",
         name: str = "",
         run_all: bool = False,
         parallel: bool = True,
@@ -80,7 +80,12 @@ class Guardrails:
             async_http_client: HTTP client for evaluator API calls.
             guards: List of guard functions. Each receives its corresponding
                     guard_input and returns bool. True = pass, False = fail.
-            on_failure: Called when any guard returns False.
+            on_failure: Called when any guard returns False. Can be:
+                - "raise": Raise GuardValidationError (default)
+                - "log": Log warning and return result
+                - "ignore": Return result silently (shadow mode)
+                - Any other string: Return that string as fallback
+                - Callable: Custom OnFailureHandler
             name: Identifier for this guardrail configuration. Used as the
                   gen_ai.guardrail span attribute.
             run_all: If True, run all guards before handling failures.
@@ -90,7 +95,7 @@ class Guardrails:
         """
         self._async_http = async_http_client
         self._guards = guards
-        self._on_failure = on_failure
+        self._on_failure = resolve_on_failure(on_failure)
         self._name = name
         self._run_all = run_all
         self._parallel = parallel

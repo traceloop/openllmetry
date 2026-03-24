@@ -11,8 +11,8 @@ from traceloop.sdk.decorators.base import (
     entity_class,
     entity_method,
 )
-from traceloop.sdk.guardrail.model import Guard, OnFailureHandler, InputMapper
-from traceloop.sdk.guardrail.on_failure import OnFailure
+from traceloop.sdk.guardrail.model import Guard, InputMapper
+from traceloop.sdk.guardrail.on_failure import OnFailureInput, resolve_on_failure
 
 F = TypeVar("F", bound=Callable[..., Any])
 _P = ParamSpec("_P")
@@ -218,7 +218,7 @@ def atool(
 def guardrail(
     *guards: Guard,
     input_mapper: InputMapper | None = None,
-    on_failure: OnFailureHandler | str | None = None,
+    on_failure: OnFailureInput | None = None,
     name: str = "",
 ) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
     """
@@ -232,9 +232,12 @@ def guardrail(
         *guards: Guard functions to run on the output (positional args).
         input_mapper: Function to convert output to guard inputs.
         on_failure: Handler called when any guard fails. Can be:
-            - OnFailure handler (e.g., OnFailure.raise_exception())
-            - String (shorthand for OnFailure.return_value(string))
-            - None (defaults to OnFailure.raise_exception())
+            - "raise": Raise GuardValidationError (default)
+            - "log": Log warning and return result
+            - "ignore": Return result silently (shadow mode)
+            - Any other string: Return that string as fallback
+            - Callable: Custom OnFailureHandler
+            - None (defaults to "raise")
         name: Optional name for the guardrail (defaults to function name).
 
     Example:
@@ -253,13 +256,8 @@ def guardrail(
         # Call directly - guardrail runs automatically
         result = await generate_response("Hello!")
     """
-    # Convert string on_failure to OnFailure.return_value
-    if isinstance(on_failure, str):
-        failure_handler = OnFailure.return_value(on_failure)
-    elif on_failure is None:
-        failure_handler = OnFailure.raise_exception()
-    else:
-        failure_handler = on_failure
+    # Resolve on_failure: None defaults to "raise", strings/callables resolved
+    failure_handler = resolve_on_failure(on_failure if on_failure is not None else "raise")
 
     guards_list = list(guards)
 

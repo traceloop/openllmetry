@@ -16,7 +16,6 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
-    OnFailure,
     pii_guard,
     toxicity_guard,
     agent_goal_completeness_guard,
@@ -60,7 +59,7 @@ async def pii_guard_example():
 
     guardrail = client.create_guardrail(
         guards=[pii_guard(probability_threshold=0.7, timeout_in_sec=45)],
-        on_failure=OnFailure.raise_exception(message="PII detected in response"),
+        on_failure="raise",
     )
     result = await guardrail.run(
         generate_customer_response,
@@ -91,7 +90,7 @@ async def toxicity_guard_example():
 
     guardrail = client.create_guardrail(
         guards=[toxicity_guard(threshold=0.7)],
-        on_failure=OnFailure.raise_exception("Content too toxic for family audience"),
+        on_failure="raise",
     )
     result = await guardrail.run(
         generate_content,
@@ -163,7 +162,7 @@ async def agent_trajectory_example():
 
     guardrail = client.create_guardrail(
         guards=[agent_goal_completeness_guard(threshold=0.7)],
-        on_failure=OnFailure.return_value(value="Sorry the agent is unable to help you with that."),
+        on_failure="Sorry the agent is unable to help you with that.",
     )
     result = await guardrail.run(run_travel_agent, input_mapper=create_trajectory_input)
     print(f"Agent final response: {result[:100]}...")

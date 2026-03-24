@@ -5,7 +5,7 @@ Tests all built-in failure handlers from the OnFailure class.
 """
 import logging
 import pytest
-from traceloop.sdk.guardrail.on_failure import OnFailure
+from traceloop.sdk.guardrail.on_failure import OnFailure, resolve_on_failure
 from traceloop.sdk.guardrail.model import GuardedResult, GuardValidationError
 
 
@@ -326,3 +326,72 @@ class TestOnFailureReturnValue:
         result = handler(output)
         assert result == 0
         assert isinstance(result, int)
+
+
+class TestResolveOnFailure:
+    """Tests for the resolve_on_failure() function."""
+
+    def test_resolve_raise_keyword(self):
+        """'raise' keyword resolves to a handler that raises GuardValidationError."""
+        handler = resolve_on_failure("raise")
+        output = GuardedResult(result="test", guard_inputs=[{"text": "test"}])
+
+        with pytest.raises(GuardValidationError):
+            handler(output)
+
+    def test_resolve_log_keyword(self, caplog):
+        """'log' keyword resolves to a handler that logs and returns result."""
+        handler = resolve_on_failure("log")
+        output = GuardedResult(result="test result", guard_inputs=[{"text": "test"}])
+
+        with caplog.at_level(logging.WARNING):
+            result = handler(output)
+
+        assert result == "test result"
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.WARNING
+
+    def test_resolve_ignore_keyword(self):
+        """'ignore' keyword resolves to a handler that returns result silently."""
+        handler = resolve_on_failure("ignore")
+        output = GuardedResult(result="test result", guard_inputs=[{"text": "test"}])
+
+        result = handler(output)
+        assert result == "test result"
+
+    def test_resolve_arbitrary_string_returns_value(self):
+        """Any non-keyword string resolves to a handler that returns that string."""
+        handler = resolve_on_failure("Sorry, I can't help with that.")
+        output = GuardedResult(result="original", guard_inputs=[{"text": "test"}])
+
+        result = handler(output)
+        assert result == "Sorry, I can't help with that."
+
+    def test_resolve_callable_passthrough(self):
+        """A callable is returned as-is."""
+        def custom_handler(output):
+            return "custom"
+        handler = resolve_on_failure(custom_handler)
+        assert handler is custom_handler
+
+    def test_resolve_on_failure_handler_passthrough(self):
+        """An existing OnFailure handler is returned as-is."""
+        original = OnFailure.raise_exception("custom message")
+        handler = resolve_on_failure(original)
+        assert handler is original
+
+    def test_resolve_case_sensitive_keywords(self):
+        """Keywords are case-sensitive — 'RAISE' is a return value, not a keyword."""
+        handler = resolve_on_failure("RAISE")
+        output = GuardedResult(result="original", guard_inputs=[{"text": "test"}])
+
+        result = handler(output)
+        assert result == "RAISE"
+
+    def test_resolve_empty_string_returns_value(self):
+        """Empty string is not a keyword — returns empty string."""
+        handler = resolve_on_failure("")
+        output = GuardedResult(result="original", guard_inputs=[{"text": "test"}])
+
+        result = handler(output)
+        assert result == ""
