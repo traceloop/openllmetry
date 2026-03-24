@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-writer"
-version = "0.53.0"
+version = "0.53.3"
 description = "OpenTelemetry Writer instrumentation"
 authors = [
   { name = "Yan Tolstoy", email = "yan.talstoi@writer.com" },
@@ -12,7 +12,7 @@ requires-python = ">=3.10,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.4.11",
+  "opentelemetry-semantic-conventions-ai>=0.4.11,<0.5.0",
   "opentelemetry-semantic-conventions>=0.59b0",
 ]
 
@@ -28,7 +28,7 @@ writer = "opentelemetry.instrumentation.writer:WriterInstrumentor"
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "black>=25.1.0,<26",
+  "black>=25.1.0,<27",
   "isort>=6.0.1,<7",
   "ruff>=0.4.0",
 ]
