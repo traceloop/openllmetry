@@ -22,7 +22,6 @@ from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
 )
 from opentelemetry.instrumentation.openai.shared import (
     _set_request_attributes,
-    _set_span_attribute,
 )
 
 
