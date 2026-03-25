@@ -85,39 +85,48 @@ class TestSpanAttributesGENAIRenamed:
 # ---------------------------------------------------------------------------
 
 
-class TestSpanAttributesOldNamesGone:
-    """Assert that removed LLM_* constants no longer exist on SpanAttributes."""
+class TestSpanAttributesLegacyLLMNamesPresent:
+    """Assert that legacy LLM_* constants are still available for non-migrated packages."""
 
     @pytest.mark.parametrize(
-        "old_name",
+        "legacy_name,expected_value",
         [
-            "LLM_SYSTEM",
-            "LLM_REQUEST_MODEL",
-            "LLM_REQUEST_MAX_TOKENS",
-            "LLM_REQUEST_TEMPERATURE",
-            "LLM_REQUEST_TOP_P",
-            "LLM_PROMPTS",
-            "LLM_COMPLETIONS",
-            "LLM_RESPONSE_MODEL",
-            "LLM_USAGE_COMPLETION_TOKENS",
-            "LLM_USAGE_PROMPT_TOKENS",
-            "LLM_USAGE_CACHE_CREATION_INPUT_TOKENS",
-            "LLM_USAGE_CACHE_READ_INPUT_TOKENS",
-            "LLM_TOKEN_TYPE",
-            "LLM_REQUEST_TYPE",
-            "LLM_FREQUENCY_PENALTY",
-            "LLM_PRESENCE_PENALTY",
-            "LLM_CHAT_STOP_SEQUENCES",
-            "LLM_REQUEST_FUNCTIONS",
-            "LLM_TOP_K",
-            "LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT",
+            ("LLM_SYSTEM", "gen_ai.system"),
+            ("LLM_REQUEST_MODEL", "gen_ai.request.model"),
+            ("LLM_REQUEST_MAX_TOKENS", "gen_ai.request.max_tokens"),
+            ("LLM_REQUEST_TEMPERATURE", "gen_ai.request.temperature"),
+            ("LLM_REQUEST_TOP_P", "gen_ai.request.top_p"),
+            ("LLM_PROMPTS", "gen_ai.prompt"),
+            ("LLM_COMPLETIONS", "gen_ai.completion"),
+            ("LLM_RESPONSE_MODEL", "gen_ai.response.model"),
+            ("LLM_USAGE_COMPLETION_TOKENS", "gen_ai.usage.completion_tokens"),
+            ("LLM_USAGE_PROMPT_TOKENS", "gen_ai.usage.prompt_tokens"),
+            ("LLM_USAGE_CACHE_CREATION_INPUT_TOKENS", "gen_ai.usage.cache_creation_input_tokens"),
+            ("LLM_USAGE_CACHE_READ_INPUT_TOKENS", "gen_ai.usage.cache_read_input_tokens"),
+            ("LLM_TOKEN_TYPE", "gen_ai.token.type"),
+            ("LLM_REQUEST_TYPE", "llm.request.type"),
+            ("LLM_FREQUENCY_PENALTY", "llm.frequency_penalty"),
+            ("LLM_PRESENCE_PENALTY", "llm.presence_penalty"),
+            ("LLM_CHAT_STOP_SEQUENCES", "llm.chat.stop_sequences"),
+            ("LLM_REQUEST_FUNCTIONS", "llm.request.functions"),
+            ("LLM_TOP_K", "llm.top_k"),
+            ("LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT", "gen_ai.openai.system_fingerprint"),
+            ("LLM_IS_STREAMING", "llm.is_streaming"),
+            ("LLM_USAGE_TOTAL_TOKENS", "llm.usage.total_tokens"),
+            ("LLM_USER", "llm.user"),
+            ("LLM_HEADERS", "llm.headers"),
+            ("LLM_RESPONSE_FINISH_REASON", "llm.response.finish_reason"),
+            ("LLM_RESPONSE_STOP_REASON", "llm.response.stop_reason"),
+            ("LLM_CONTENT_COMPLETION_CHUNK", "llm.content.completion.chunk"),
+            ("LLM_REQUEST_REASONING_EFFORT", "llm.request.reasoning_effort"),
+            ("LLM_USAGE_REASONING_TOKENS", "llm.usage.reasoning_tokens"),
         ],
     )
-    def test_old_name_absent(self, old_name):
-        assert not hasattr(SpanAttributes, old_name), (
-            f"SpanAttributes.{old_name} should have been removed. "
-            "Consumers should import from opentelemetry.semconv._incubating.attributes.gen_ai_attributes directly."
+    def test_legacy_name_present_with_old_value(self, legacy_name, expected_value):
+        assert hasattr(SpanAttributes, legacy_name), (
+            f"SpanAttributes.{legacy_name} must exist for backward compatibility."
         )
+        assert getattr(SpanAttributes, legacy_name) == expected_value
 
 
 # ---------------------------------------------------------------------------
@@ -181,14 +190,16 @@ class TestSpanAttributesOldValuesAbsent:
             "gen_ai.usage.cache_creation_input_tokens",  # underscore variant (pre-migration)
         ],
     )
-    def test_old_value_not_in_span_attributes(self, old_value):
+    def test_old_value_not_in_new_span_attributes(self, old_value):
         all_values = {
             name: value
             for name, value in vars(SpanAttributes).items()
             if not name.startswith("_") and isinstance(value, str)
+            and not name.startswith("LLM_")  # exclude legacy aliases
+            and not name.endswith("_DEPRECATED")  # exclude deprecated aliases
         }
         assert old_value not in all_values.values(), (
-            f"Old attribute value {old_value!r} is still present in SpanAttributes. "
+            f"Old attribute value {old_value!r} is still present in a GEN_AI_* SpanAttribute. "
             f"It should have been renamed."
         )
 

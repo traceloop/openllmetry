@@ -140,6 +140,70 @@ class SpanAttributes:
     GEN_AI_WATSONX_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     GEN_AI_WATSONX_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
+    # -----------------------------------------------------------------------
+    # Legacy LLM_* aliases (old names with original string values)
+    # These constants were removed or renamed in v0.5.0.
+    # Kept so non-migrated instrumentation packages continue to work.
+    # TODO: Remove once all instrumentation packages are migrated.
+    # -----------------------------------------------------------------------
+
+    # Removed from SpanAttributes in v0.5.0 (now in upstream OTel gen_ai_attributes)
+    LLM_SYSTEM = "gen_ai.system"  # TODO: migrate to GenAIAttributes.GEN_AI_SYSTEM
+    LLM_REQUEST_MODEL = "gen_ai.request.model"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_MODEL
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_TOP_P
+    LLM_PROMPTS = "gen_ai.prompt"  # TODO: migrate to GenAIAttributes.GEN_AI_PROMPT
+    LLM_COMPLETIONS = "gen_ai.completion"  # TODO: migrate to GenAIAttributes.GEN_AI_COMPLETION
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"  # TODO: migrate to GenAIAttributes.GEN_AI_RESPONSE_MODEL
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"  # TODO: migrate to GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"  # TODO: migrate to GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
+    LLM_TOKEN_TYPE = "gen_ai.token.type"  # TODO: migrate to GenAIAttributes.GEN_AI_TOKEN_TYPE
+    LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"  # TODO: migrate to GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT
+    LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY
+    LLM_PRESENCE_PENALTY = "llm.presence_penalty"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY
+    LLM_TOP_K = "llm.top_k"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_TOP_K
+    LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"  # TODO: migrate to GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES
+    LLM_REQUEST_FUNCTIONS = "llm.request.functions"  # TODO: migrate to GenAIAttributes.GEN_AI_TOOL_DEFINITIONS
+    LLM_REQUEST_TYPE = "llm.request.type"  # TODO: migrate to GenAIAttributes.GEN_AI_OPERATION_NAME
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name AND value changed: llm.* -> gen_ai.*)
+    LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
+    LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_TOKEN_TYPE
+    LLM_USER = "llm.user"  # TODO: migrate to SpanAttributes.GEN_AI_USER
+    LLM_HEADERS = "llm.headers"  # TODO: migrate to SpanAttributes.GEN_AI_HEADERS
+    LLM_IS_STREAMING = "llm.is_streaming"  # TODO: migrate to SpanAttributes.GEN_AI_IS_STREAMING
+    LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"  # TODO: migrate to SpanAttributes.GEN_AI_REQUEST_REPETITION_PENALTY
+    LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"  # TODO: migrate to SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON
+    LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"  # TODO: migrate to SpanAttributes.GEN_AI_RESPONSE_STOP_REASON
+    LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"  # TODO: migrate to SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK
+    LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"  # TODO: migrate to SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT
+    LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name changed, value UNCHANGED)
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"  # TODO: migrate to SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"  # TODO: migrate to SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"  # TODO: migrate to SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT
+
+    # OpenAI (renamed LLM_OPENAI_* -> GEN_AI_OPENAI_* in v0.5.0, value unchanged)
+    LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"  # TODO: migrate to SpanAttributes.GEN_AI_OPENAI_API_BASE
+    LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"  # TODO: migrate to SpanAttributes.GEN_AI_OPENAI_API_VERSION
+    LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"  # TODO: migrate to SpanAttributes.GEN_AI_OPENAI_API_TYPE
+
+    # Watsonx (renamed LLM_* -> GEN_AI_WATSONX_* in v0.5.0, value unchanged)
+    LLM_DECODING_METHOD = "llm.watsonx.decoding_method"  # TODO: migrate to SpanAttributes.GEN_AI_WATSONX_DECODING_METHOD
+    LLM_RANDOM_SEED = "llm.watsonx.random_seed"  # TODO: migrate to SpanAttributes.GEN_AI_WATSONX_RANDOM_SEED
+    LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_WATSONX_MAX_NEW_TOKENS
+    LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_WATSONX_MIN_NEW_TOKENS
+    LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"  # TODO: migrate to SpanAttributes.GEN_AI_WATSONX_REPETITION_PENALTY
+
+    # Cache attributes — name unchanged but VALUE changed in v0.5.0 (added dot separator)
+    # Old value kept as _DEPRECATED so both old and new coexist
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS_DEPRECATED = "gen_ai.usage.cache_creation_input_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS_DEPRECATED = "gen_ai.usage.cache_read_input_tokens"  # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS
+
     # Chroma db
     CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"
     CHROMADB_ADD_EMBEDDINGS_COUNT = "db.chroma.add.embeddings_count"
