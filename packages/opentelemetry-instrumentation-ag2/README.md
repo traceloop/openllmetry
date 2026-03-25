@@ -1,7 +1,7 @@
 # OpenTelemetry AG2 Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-ag2/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-ag2.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-ag2.svg" alt="PyPI version">
 </a>
 
 This library allows tracing multi-agent workflows implemented with the [AG2 (formerly AutoGen) framework](https://github.com/ag2ai/ag2).

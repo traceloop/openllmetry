@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Collection
 
@@ -5,10 +6,15 @@ from wrapt import wrap_function_wrapper
 from opentelemetry import trace
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
+logger = logging.getLogger(__name__)
+
 _instruments = ("ag2 >= 0.11.0",)
 
 
 def _should_send_prompts():
+    # Note: Context override (override_enable_content_tracing) is not supported
+    # here because AG2's instrument_llm_wrapper evaluates capture_messages at
+    # instrumentation time, not per-call.
     return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
@@ -40,7 +46,10 @@ class AG2Instrumentor(BaseInstrumentor):
 
         def _wrap_agent_init(wrapped, instance, args, kwargs):
             result = wrapped(*args, **kwargs)
-            instrument_agent(instance, tracer_provider=tracer_provider)
+            try:
+                instrument_agent(instance, tracer_provider=tracer_provider)
+            except Exception:
+                logger.exception("Failed to instrument AG2 agent")
             return result
 
         wrap_function_wrapper(
@@ -55,7 +64,10 @@ class AG2Instrumentor(BaseInstrumentor):
 
             def _wrap_pattern_init(wrapped, instance, args, kwargs):
                 result = wrapped(*args, **kwargs)
-                instrument_pattern(instance, tracer_provider=tracer_provider)
+                try:
+                    instrument_pattern(instance, tracer_provider=tracer_provider)
+                except Exception:
+                    logger.exception("Failed to instrument AG2 pattern")
                 return result
 
             wrap_function_wrapper(
@@ -89,7 +101,5 @@ class AG2Instrumentor(BaseInstrumentor):
                 if original is not None:
                     OpenAIWrapper.create = original
                     self._original_create = None
-                else:
-                    delattr(OpenAIWrapper.create, "__otel_wrapped__")
         except (ImportError, AttributeError):
             pass

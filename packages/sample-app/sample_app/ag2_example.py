@@ -1,3 +1,4 @@
+# AG2 (formerly AutoGen) provides the 'autogen' module
 from autogen import AssistantAgent, UserProxyAgent
 from traceloop.sdk import Traceloop
 

@@ -37,5 +37,7 @@ def test_uninstrument(instrumentor):
         instrumentor._uninstrument()
 
         # Should attempt to unwrap ConversableAgent.__init__
-        unwrap_targets = [(call.args[0].__name__, call.args[1]) for call in mock_unwrap.call_args_list]
-        assert ("ConversableAgent", "__init__") in unwrap_targets
+        assert any(
+            getattr(call.args[0], "__name__", None) == "ConversableAgent" and call.args[1] == "__init__"
+            for call in mock_unwrap.call_args_list
+        ), f"Expected unwrap call for ConversableAgent.__init__, got: {mock_unwrap.call_args_list}"
