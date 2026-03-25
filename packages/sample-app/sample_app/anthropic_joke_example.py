@@ -3,7 +3,10 @@ from anthropic import Anthropic
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 
-Traceloop.init()
+Traceloop.init(
+    app_name="sample-app",
+    disable_batch=True,
+)
 
 
 @workflow(name="pirate_joke_generator")
@@ -17,7 +20,7 @@ def joke_workflow():
                 "content": "Tell me a joke about OpenTelemetry",
             }
         ],
-        model="claude-3-opus-20240229",
+        model="claude-haiku-4-5-20251001",
     )
     print(response.content)
     return response

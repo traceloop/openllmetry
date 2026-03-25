@@ -16,7 +16,7 @@ class JokeAgent:
         response = await anthropic.messages.create(
             max_tokens=1024,
             messages=[{"role": "user", "content": "Tell me a joke about Donald Trump"}],
-            model="claude-3-haiku-20240307",
+            model="claude-haiku-4-5-20251001",
         )
         return response.content[0].text
 
@@ -33,7 +33,7 @@ class PirateJokeAgent(JokeAgent):
             messages=[
                 {"role": "user", "content": "Tell me a joke about Donald Trump"},
             ],
-            model="claude-3-haiku-20240307",
+            model="claude-haiku-4-5-20251001",
         )
 
         return response.content[0].text

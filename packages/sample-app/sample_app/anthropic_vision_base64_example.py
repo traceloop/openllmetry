@@ -30,7 +30,7 @@ async def task():
 
     client = anthropic.AsyncAnthropic(api_key=api_key)
     message = await client.messages.create(
-        model="claude-3-5-sonnet-20240620",
+        model="claude-haiku-4-5-20251001",
         max_tokens=1024,
         messages=[
             {"role": "user", "content": "You are a sub-system ..."},
