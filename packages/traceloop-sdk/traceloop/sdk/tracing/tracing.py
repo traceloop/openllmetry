@@ -1022,7 +1022,7 @@ def init_writer_instrumentor():
 
 def init_ag2_instrumentor():
     try:
-        if is_package_installed("ag2") or is_package_installed("autogen") or is_package_installed("pyautogen"):
+        if is_package_installed("ag2") or is_package_installed("autogen"):
             from opentelemetry.instrumentation.ag2 import AG2Instrumentor
 
             instrumentor = AG2Instrumentor()
