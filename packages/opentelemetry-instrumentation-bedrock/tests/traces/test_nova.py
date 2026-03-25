@@ -1011,6 +1011,9 @@ def test_nova_converse_stream_with_events_with_content(
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
+        "guardrail_intervened",
+    )
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1135,6 +1138,9 @@ def test_nova_converse_stream_with_events_with_no_content(
     assert (
         bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
+    )
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
+        "guardrail_intervened",
     )
 
     logs = log_exporter.get_finished_logs()

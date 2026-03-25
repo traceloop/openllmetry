@@ -723,7 +723,11 @@ def set_converse_response_span_attributes(response, span):
             )
 
 
-def set_converse_streaming_response_span_attributes(response, role, span):
+def set_converse_streaming_response_span_attributes(response, role, span, finish_reason=None):
+    if finish_reason is not None:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [finish_reason]
+        )
     if not should_send_prompts():
         return
     _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", role)
