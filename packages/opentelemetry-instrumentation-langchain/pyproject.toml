@@ -92,3 +92,5 @@ constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip
 
 [tool.uv.sources]
 opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai", editable = true }
+opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", editable = true }
+opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }

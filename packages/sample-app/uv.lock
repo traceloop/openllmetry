@@ -3608,7 +3608,7 @@ dev = [
 test = [
     { name = "agno", specifier = ">=2.2.2" },
     { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
@@ -3684,7 +3684,7 @@ dev = [
     { name = "ruff", specifier = ">=0.4.0" },
 ]
 test = [
-    { name = "anthropic", extras = ["bedrock"], specifier = ">=0.86.0" },
+    { name = "anthropic", extras = ["bedrock"], specifier = ">=0.74.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
@@ -4066,8 +4066,8 @@ test = [
     { name = "langchainhub", specifier = ">=0.1.21,<0.2.0" },
     { name = "langgraph", specifier = ">=1.0.0,<2.0.0" },
     { name = "openai", specifier = ">=1.52.2,<3" },
-    { name = "opentelemetry-instrumentation-bedrock" },
-    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-bedrock", editable = "../opentelemetry-instrumentation-bedrock" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pydantic", specifier = ">=2.10.5,<3" },
     { name = "pytest", specifier = ">=8.3.3,<9" },
@@ -4117,9 +4117,9 @@ test = [
     { name = "llama-parse", specifier = ">=0.6.0,<0.7.0" },
     { name = "onnxruntime", specifier = "<1.20.0" },
     { name = "openai", specifier = ">=1.52.2,<2" },
-    { name = "opentelemetry-instrumentation-chromadb" },
-    { name = "opentelemetry-instrumentation-cohere" },
-    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-chromadb", editable = "../opentelemetry-instrumentation-chromadb" },
+    { name = "opentelemetry-instrumentation-cohere", editable = "../opentelemetry-instrumentation-cohere" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
@@ -4435,7 +4435,7 @@ dev = [
 ]
 test = [
     { name = "openai", extras = ["datalib"], specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pinecone", specifier = ">=5.1.0,<9" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
@@ -4838,7 +4838,7 @@ dev = [
 ]
 test = [
     { name = "openai", specifier = ">=1.31.1,<2" },
-    { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },

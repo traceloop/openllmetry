@@ -206,7 +206,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.5.1,<0.6.0" },
+    { name = "opentelemetry-semantic-conventions-ai", editable = "../opentelemetry-semantic-conventions-ai" },
     { name = "replicate", marker = "extra == 'instruments'" },
 ]
 provides-extras = ["instruments"]
@@ -257,14 +257,24 @@ wheels = [
 [[package]]
 name = "opentelemetry-semantic-conventions-ai"
 version = "0.5.1"
-source = { registry = "../opentelemetry-semantic-conventions-ai/dist" }
+source = { editable = "../opentelemetry-semantic-conventions-ai" }
 dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-sdist = { path = "opentelemetry_semantic_conventions_ai-0.5.1.tar.gz" }
-wheels = [
-    { path = "opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl" },
+
+[package.metadata]
+requires-dist = [
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autopep8", specifier = ">=2.2.0,<3" },
+    { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "ruff", specifier = ">=0.4.0" },
 ]
 
 [[package]]

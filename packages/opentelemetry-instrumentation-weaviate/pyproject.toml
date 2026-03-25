@@ -77,3 +77,4 @@ constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
 
 [tool.uv.sources]
 opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai", editable = true }
+opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
