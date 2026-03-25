@@ -1,0 +1,105 @@
+import logging
+import os
+from typing import Collection
+
+from wrapt import wrap_function_wrapper
+from opentelemetry import trace
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+
+logger = logging.getLogger(__name__)
+
+_instruments = ("ag2 >= 0.11.0",)
+
+
+def _should_send_prompts():
+    # Note: Context override (override_enable_content_tracing) is not supported
+    # here because AG2's instrument_llm_wrapper evaluates capture_messages at
+    # instrumentation time, not per-call.
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
+
+
+class AG2Instrumentor(BaseInstrumentor):
+
+    def instrumentation_dependencies(self) -> Collection[str]:
+        return _instruments
+
+    def _instrument(self, **kwargs):
+        tracer_provider = kwargs.get("tracer_provider") or trace.get_tracer_provider()
+
+        # Save the original OpenAIWrapper.create before AG2 wraps it so we can
+        # restore it in _uninstrument (AG2 keeps the original only in a closure).
+        from autogen.oai.client import OpenAIWrapper
+
+        if not hasattr(OpenAIWrapper.create, "__otel_wrapped__"):
+            self._original_create = OpenAIWrapper.create
+
+        # Use AG2's built-in OpenTelemetry instrumentation for LLM calls
+        from autogen.opentelemetry import instrument_llm_wrapper
+
+        instrument_llm_wrapper(
+            tracer_provider=tracer_provider,
+            capture_messages=_should_send_prompts(),
+        )
+
+        # Patch ConversableAgent.__init__ to auto-instrument every agent instance
+        from autogen.opentelemetry import instrument_agent
+
+        def _wrap_agent_init(wrapped, instance, args, kwargs):
+            result = wrapped(*args, **kwargs)
+            try:
+                instrument_agent(instance, tracer_provider=tracer_provider)
+            except Exception:
+                logger.exception("Failed to instrument AG2 agent")
+            return result
+
+        wrap_function_wrapper(
+            "autogen.agentchat.conversable_agent",
+            "ConversableAgent.__init__",
+            _wrap_agent_init,
+        )
+
+        # Patch Pattern.prepare_group_chat to auto-instrument patterns
+        try:
+            from autogen.opentelemetry import instrument_pattern
+
+            def _wrap_pattern_init(wrapped, instance, args, kwargs):
+                result = wrapped(*args, **kwargs)
+                try:
+                    instrument_pattern(instance, tracer_provider=tracer_provider)
+                except Exception:
+                    logger.exception("Failed to instrument AG2 pattern")
+                return result
+
+            wrap_function_wrapper(
+                "autogen.agentchat.group.patterns.pattern",
+                "Pattern.__init__",
+                _wrap_pattern_init,
+            )
+        except (ImportError, AttributeError):
+            pass
+
+    def _uninstrument(self, **kwargs):
+        from opentelemetry.instrumentation.utils import unwrap
+
+        try:
+            from autogen.agentchat.conversable_agent import ConversableAgent
+            unwrap(ConversableAgent, "__init__")
+        except (ImportError, AttributeError):
+            pass
+
+        try:
+            from autogen.agentchat.group.patterns.pattern import Pattern
+            unwrap(Pattern, "__init__")
+        except (ImportError, AttributeError):
+            pass
+
+        try:
+            from autogen.oai.client import OpenAIWrapper
+
+            if hasattr(OpenAIWrapper.create, "__otel_wrapped__"):
+                original = getattr(self, "_original_create", None)
+                if original is not None:
+                    OpenAIWrapper.create = original
+                    self._original_create = None
+        except (ImportError, AttributeError):
+            pass

@@ -6,6 +6,8 @@ major_version_zero = true
 update_changelog_on_bump = true
 version = "0.53.3"
 version_files = [
+    "packages/opentelemetry-instrumentation-ag2/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-ag2/opentelemetry/instrumentation/ag2/version.py",
     "packages/opentelemetry-instrumentation-mcp/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp/version.py",
     "packages/opentelemetry-instrumentation-groq/pyproject.toml:^version",

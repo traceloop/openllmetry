@@ -146,6 +146,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 
 ### Frameworks
 
+- ✅ [AG2](https://ag2.ai/)
 - ✅ [Agno](https://github.com/agno-agi/agno)
 - ✅ [AWS Strands](https://strandsagents.com/) (built-in OTEL support)
 - ✅ [CrewAI](https://docs.crewai.com/introduction)
