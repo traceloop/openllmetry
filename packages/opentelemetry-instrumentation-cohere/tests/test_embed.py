@@ -1,5 +1,8 @@
 import json
 import pytest
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 
 
@@ -33,19 +36,19 @@ def test_cohere_v2_embed_legacy(
     assert len(spans) == 1
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.embed"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "embedding"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "embed-english-light-v3.0"
     )
     assert (
         cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.0.role"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"
         )
         == "user"
     )
-    assert json.loads(cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")) == [{
+    assert json.loads(cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")) == [{
         "type": "text",
         "text": text
     } for text in texts]
@@ -92,19 +95,19 @@ async def test_cohere_v2_embed_legacy_async(
     assert len(spans) == 1
     cohere_span = spans[0]
     assert cohere_span.name == "cohere.embed"
-    assert cohere_span.attributes.get(SpanAttributes.LLM_SYSTEM) == "Cohere"
+    assert cohere_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "Cohere"
     assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "embedding"
     assert (
-        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "embed-english-light-v3.0"
     )
     assert (
         cohere_span.attributes.get(
-            f"{SpanAttributes.LLM_PROMPTS}.0.role"
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"
         )
         == "user"
     )
-    assert json.loads(cohere_span.attributes.get(f"{SpanAttributes.LLM_PROMPTS}.0.content")) == [{
+    assert json.loads(cohere_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")) == [{
         "type": "text",
         "text": text
     } for text in texts]
