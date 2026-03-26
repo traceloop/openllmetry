@@ -13,7 +13,7 @@ requires-python = ">=3.10,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
+  "opentelemetry-semantic-conventions-ai>=0.4.16,<0.5.0",
   "opentelemetry-semantic-conventions>=0.59b0",
 ]
 
@@ -92,5 +92,3 @@ constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip
 
 [tool.uv.sources]
 opentelemetry-semantic-conventions-ai = { path = "../opentelemetry-semantic-conventions-ai", editable = true }
-opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", editable = true }
-opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
