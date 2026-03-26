@@ -266,9 +266,8 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         },
     )
 
-    await _handle_request(span, event_logger, args, kwargs, llm_model)
-
     try:
+        await _handle_request(span, event_logger, args, kwargs, llm_model)
         response = await wrapped(*args, **kwargs)
 
         if response:
@@ -322,9 +321,8 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
-    _handle_request_sync(span, event_logger, args, kwargs, llm_model)
-
     try:
+        _handle_request_sync(span, event_logger, args, kwargs, llm_model)
         response = wrapped(*args, **kwargs)
 
         if response:
