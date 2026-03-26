@@ -148,13 +148,19 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
 def _build_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
+    try:
+        for item in response:
+            item_to_yield = item
+            complete_response += str(item.text)
+            if item.usage_metadata:
+                token_usage = item.usage_metadata
 
-        yield item_to_yield
+            yield item_to_yield
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     handle_streaming_response(
         span, event_logger, llm_model, complete_response, token_usage
@@ -167,13 +173,19 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    async for item in response:
-        item_to_yield = item
-        complete_response += str(item.text)
-        if item.usage_metadata:
-            token_usage = item.usage_metadata
+    try:
+        async for item in response:
+            item_to_yield = item
+            complete_response += str(item.text)
+            if item.usage_metadata:
+                token_usage = item.usage_metadata
 
-        yield item_to_yield
+            yield item_to_yield
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     handle_streaming_response(span, event_logger, llm_model, response, token_usage)
 
@@ -245,7 +257,13 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
     await _handle_request(span, event_logger, args, kwargs, llm_model)
 
-    response = await wrapped(*args, **kwargs)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if is_streaming_response(response):
@@ -299,7 +317,13 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     else:
         set_input_attributes_sync(span, args)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if is_streaming_response(response):
