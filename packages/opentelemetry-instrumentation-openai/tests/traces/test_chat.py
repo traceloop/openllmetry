@@ -1380,7 +1380,7 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     # In OpenTelemetry 1.37.0+, event_name is a field on LogRecord, not in attributes
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 
@@ -1721,7 +1721,7 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
     # Verify metric attributes
     attributes = data_point.attributes
     assert attributes.get(
-        "gen_ai.system") == "openai", f"Expected gen_ai.system=openai, got {attributes.get('gen_ai.system')}"
+        "gen_ai.provider.name") == "openai", f"Expected gen_ai.provider.name=openai, got {attributes.get('gen_ai.provider.name')}"
     assert attributes.get(
         "gen_ai.operation.name") == "chat", f"Expected operation=chat, got {attributes.get('gen_ai.operation.name')}"
 
@@ -1797,7 +1797,7 @@ def test_chat_streaming_partial_consumption(instrument_legacy, span_exporter, lo
 
     attributes = data_point.attributes
     assert attributes.get(
-        "gen_ai.system") == "openai", f"Expected gen_ai.system=openai, got {attributes.get('gen_ai.system')}"
+        "gen_ai.provider.name") == "openai", f"Expected gen_ai.provider.name=openai, got {attributes.get('gen_ai.provider.name')}"
     assert attributes.get(
         "gen_ai.operation.name") == "chat", f"Expected operation=chat, got {attributes.get('gen_ai.operation.name')}"
 

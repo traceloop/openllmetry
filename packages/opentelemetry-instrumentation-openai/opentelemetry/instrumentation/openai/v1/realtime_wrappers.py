@@ -305,7 +305,7 @@ class RealtimeEventProcessor:
         if self._state.response_span.is_recording():
             _set_span_attribute(
                 self._state.response_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(
@@ -671,7 +671,7 @@ class RealtimeConnectionManagerWrapper:
         if self._state.session_span.is_recording():
             _set_span_attribute(
                 self._state.session_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(

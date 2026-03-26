@@ -110,12 +110,12 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, vendor)
 
     model = kwargs.get("model")
-    if vendor == "AWS" and model and "." in model:
+    if vendor == "aws.bedrock" and model and "." in model:
         model = _cross_region_check(model)
-    elif vendor == "OpenRouter":
+    elif vendor == "openrouter":
         model = _extract_model_name_from_provider_format(model)
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
@@ -292,13 +292,13 @@ def _get_vendor_from_url(base_url):
         return "openai"
 
     if "openai.azure.com" in base_url:
-        return "Azure"
+        return "az.ai.openai"
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
-        return "AWS"
+        return "aws.bedrock"
     elif "googleapis.com" in base_url or "vertex" in base_url:
-        return "Google"
+        return "gcp.vertex_ai"
     elif "openrouter.ai" in base_url:
-        return "OpenRouter"
+        return "openrouter"
 
     return "openai"
 
@@ -375,9 +375,9 @@ def metric_shared_attributes(
 
     return {
         **attributes,
-        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
-        "gen_ai.operation.name": operation,
+        GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
         "server.address": server_address,
         "stream": is_streaming,
     }

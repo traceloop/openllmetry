@@ -471,13 +471,13 @@ class TestRealtimeFullFlow:
         assert "openai.realtime" in span_names
 
         session_span = next(s for s in spans if s.name == "openai.session")
-        assert session_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        assert session_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
         assert session_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-realtime-preview"
         assert session_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
         assert session_span.status.status_code == StatusCode.OK
 
         response_span = next(s for s in spans if s.name == "openai.realtime")
-        assert response_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        assert response_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
         assert response_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
 
         # Verify finish_reason is "stop" for text response without tool calls

@@ -20,7 +20,7 @@ def test_responses(
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     # assert (
@@ -45,7 +45,7 @@ def test_responses_with_request_params(
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
 
     # Check that request parameters are captured
@@ -104,7 +104,7 @@ def test_responses_with_input_history(
     assert len(spans) == 2
     span = spans[1]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     # assert (
@@ -165,7 +165,7 @@ def test_responses_tool_calls(
     assert len(spans) == 1
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
 
@@ -285,7 +285,7 @@ def test_responses_streaming(
 
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert full_text != "", "Should have received streaming content"
@@ -322,7 +322,7 @@ async def test_responses_streaming_async(
 
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
     assert span.attributes["gen_ai.prompt.0.content"] == input_text
@@ -355,7 +355,7 @@ def test_responses_streaming_with_content(
 
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
     assert span.attributes["gen_ai.prompt.0.content"] == input_text
@@ -386,7 +386,7 @@ def test_responses_streaming_with_context_manager(
 
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
     assert span.attributes["gen_ai.prompt.0.content"] == input_text
@@ -422,7 +422,7 @@ async def test_responses_streaming_async_with_context_manager(
 
     span = spans[0]
     assert span.name == "openai.response"
-    assert span.attributes["gen_ai.system"] == "openai"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
     assert span.attributes["gen_ai.prompt.0.content"] == input_text
@@ -654,7 +654,7 @@ def test_responses_streaming_with_parent_span(
 
     # Verify streaming worked correctly
     assert full_text != "", "Should have received streaming content"
-    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.provider.name"] == "openai"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
     assert openai_span.attributes["gen_ai.is_streaming"] is True
 
@@ -726,7 +726,7 @@ async def test_responses_streaming_async_with_parent_span(
 
     # Verify streaming worked correctly
     assert full_text != "", "Should have received streaming content"
-    assert openai_span.attributes["gen_ai.system"] == "openai"
+    assert openai_span.attributes["gen_ai.provider.name"] == "openai"
     assert openai_span.attributes["gen_ai.request.model"] == "gpt-4o"
     assert openai_span.attributes["gen_ai.is_streaming"] is True
 

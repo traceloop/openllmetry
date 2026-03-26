@@ -81,7 +81,7 @@ def test_new_assistant(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 155
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -164,7 +164,7 @@ def test_new_assistant_with_events_with_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 155
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -244,7 +244,7 @@ def test_new_assistant_with_events_with_no_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 155
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -314,7 +314,7 @@ def test_new_assistant_with_polling(
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -382,7 +382,7 @@ def test_new_assistant_with_polling_with_events_with_content(
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -456,7 +456,7 @@ def test_new_assistant_with_polling_with_events_with_no_content(
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -536,7 +536,7 @@ def test_existing_assistant(
     assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 170
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     completion_index = 0
     for message in messages.data:
@@ -615,7 +615,7 @@ def test_existing_assistant_with_events_with_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 170
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 5
@@ -710,7 +710,7 @@ def test_existing_assistant_with_events_with_no_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 170
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 5
@@ -793,7 +793,7 @@ def test_streaming_new_assistant(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     for idx, message in enumerate(assistant_messages):
         assert (
@@ -861,7 +861,7 @@ def test_streaming_new_assistant_with_events_with_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -964,7 +964,7 @@ def test_streaming_new_assistant_with_events_with_no_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -1042,7 +1042,7 @@ def test_streaming_existing_assistant(
     assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "system"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     for idx, message in enumerate(assistant_messages):
         assert (
@@ -1110,7 +1110,7 @@ def test_streaming_existing_assistant_with_events_with_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1198,7 +1198,7 @@ def test_streaming_existing_assistant_with_events_with_no_content(
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1217,7 +1217,7 @@ def test_streaming_existing_assistant_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 

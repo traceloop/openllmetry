@@ -447,6 +447,29 @@ async def _set_prompts(span, messages):
     else:
         await _legacy_set_prompts(span, messages)
 
+def _map_content_block(block):
+    """Map an OpenAI content block to an OTel-compliant part."""
+    if not isinstance(block, dict):
+        return block
+    block_type = block.get("type")
+    if block_type == "text":
+        return {"type": "text", "content": block.get("text", "")}
+    elif block_type == "image_url":
+        url = ""
+        image_url = block.get("image_url")
+        if isinstance(image_url, dict):
+            url = image_url.get("url", "")
+        return {"type": "uri", "modality": "image", "uri": url}
+    return block
+
+def _map_content_parts(content):
+    """Convert content to OTel parts list. Handles str, list, and None."""
+    if isinstance(content, str):
+        return [{"content": content, "type": "text"}]
+    if isinstance(content, list):
+        return [_map_content_block(block) for block in content]
+    return content or []
+
 def _set_input_messages(span, messages):
     if not span.is_recording() or messages is None:
         return
@@ -463,28 +486,28 @@ def _set_input_messages(span, messages):
             })
         elif role == "user":
             content = msg.get("content")
-            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
+            parts = _map_content_parts(content)
             attr_messages.append({
                 "role": role,
                 "parts": parts,
             })
         elif role in ["system", "developer"]:
             content = msg.get("content")
-            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
+            parts = _map_content_parts(content)
             attr_messages.append({
                 "role": role,
                 "parts": parts,
             })
         elif role == "assistant":
             content = msg.get("content")
-            parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
+            parts = _map_content_parts(content)
             tool_calls = _parse_tool_calls(msg.get("tool_calls")) or []
             for tool_call in tool_calls:
                 parts.append({
                     "type": "tool_call",
                     "name": tool_call["function"]["name"],
                     "id": tool_call["id"],
-                    "arguments": tool_call["function"].get("arguments"),
+                    "arguments": _parse_arguments(tool_call["function"].get("arguments")),
                 })
             attr_messages.append({
                 "role": "assistant",
@@ -554,9 +577,20 @@ OPENAI_FINISH_REASON_MAP = {
     "tool_calls": "tool_call",
 }
 
+def _parse_arguments(raw_args):
+    """Best-effort parse of JSON argument string to dict. Falls back to raw string."""
+    if raw_args is None:
+        return None
+    if isinstance(raw_args, dict):
+        return raw_args
+    try:
+        return json.loads(raw_args)
+    except (json.JSONDecodeError, TypeError):
+        return raw_args
+
 def _map_finish_reason(reason):
     if not reason:
-        return "stop"
+        return None
     return OPENAI_FINISH_REASON_MAP.get(reason, reason)
 
 def _set_output_messages(span, choices):
@@ -569,14 +603,14 @@ def _set_output_messages(span, choices):
         if not message:
             continue
         content = message.get("content")
-        parts = [{"content": content, "type": "text"}] if isinstance(content, str) else (content or [])
+        parts = _map_content_parts(content)
         tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
         for tool_call in tool_calls:
             parts.append({
                 "type": "tool_call",
                 "name": tool_call["function"]["name"],
                 "id": tool_call["id"],
-                "arguments": tool_call["function"].get("arguments"),
+                "arguments": _parse_arguments(tool_call["function"].get("arguments")),
             })
         messages.append({
             "role": "assistant",

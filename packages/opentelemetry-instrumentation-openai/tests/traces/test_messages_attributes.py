@@ -16,12 +16,16 @@ from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     _set_input_messages,
     _set_output_messages,
+    _map_finish_reason,
+    OPENAI_FINISH_REASON_MAP,
 )
 from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
     _set_input_messages as _set_completion_input_messages,
 )
 from opentelemetry.instrumentation.openai.shared import (
+    _get_vendor_from_url,
     _set_request_attributes,
+    metric_shared_attributes,
 )
 
 
@@ -99,7 +103,7 @@ class TestSetInputMessages:
         )
         assert tool_part["name"] == "get_weather"
         assert tool_part["id"] == "call_abc123"
-        assert tool_part["arguments"] == '{"location": "NYC"}'
+        assert tool_part["arguments"] == {"location": "NYC"}
 
         # tool response
         assert result[3]["role"] == "tool"
@@ -287,6 +291,226 @@ class TestCompletionInputMessages:
 # ---------------------------------------------------------------------------
 # _set_request_attributes: headers / user serialization
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# P1: _map_finish_reason
+# ---------------------------------------------------------------------------
+
+class TestMapFinishReason:
+    def test_none_returns_none(self):
+        """_map_finish_reason(None) must return None, NOT fabricate 'stop'."""
+        assert _map_finish_reason(None) is None
+
+    def test_empty_string_returns_none(self):
+        """_map_finish_reason('') must return None."""
+        assert _map_finish_reason("") is None
+
+    def test_tool_calls_mapped_to_tool_call(self):
+        """OpenAI 'tool_calls' (plural) must map to OTel 'tool_call' (singular)."""
+        assert _map_finish_reason("tool_calls") == "tool_call"
+
+    def test_stop_passthrough(self):
+        assert _map_finish_reason("stop") == "stop"
+
+    def test_length_passthrough(self):
+        assert _map_finish_reason("length") == "length"
+
+    def test_content_filter_passthrough(self):
+        assert _map_finish_reason("content_filter") == "content_filter"
+
+
+# ---------------------------------------------------------------------------
+# P1: Tool call arguments must be parsed objects
+# ---------------------------------------------------------------------------
+
+class TestToolCallArgumentsParsed:
+    def test_input_tool_call_arguments_are_parsed(self, mock_span):
+        """Tool call arguments in input messages must be parsed dicts, not raw JSON strings."""
+        _set_input_messages(mock_span, [
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "get_weather",
+                            "arguments": '{"location": "NYC"}',
+                        },
+                    }
+                ],
+            }
+        ])
+        result = _get_input_messages(mock_span)
+        tool_part = next(p for p in result[0]["parts"] if p["type"] == "tool_call")
+        # arguments must be a parsed dict, not a raw JSON string
+        assert isinstance(tool_part["arguments"], dict), (
+            f"Expected parsed dict, got {type(tool_part['arguments'])}: {tool_part['arguments']}"
+        )
+        assert tool_part["arguments"] == {"location": "NYC"}
+
+    def test_output_tool_call_arguments_are_parsed(self, mock_span):
+        """Tool call arguments in output messages must be parsed dicts."""
+        choices = [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_2",
+                            "type": "function",
+                            "function": {
+                                "name": "search",
+                                "arguments": '{"query": "hello"}',
+                            },
+                        }
+                    ],
+                },
+                "finish_reason": "tool_calls",
+            }
+        ]
+        _set_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
+        tool_part = next(p for p in result[0]["parts"] if p["type"] == "tool_call")
+        assert isinstance(tool_part["arguments"], dict), (
+            f"Expected parsed dict, got {type(tool_part['arguments'])}: {tool_part['arguments']}"
+        )
+        assert tool_part["arguments"] == {"query": "hello"}
+
+    def test_invalid_json_arguments_fallback_to_string(self, mock_span):
+        """Non-JSON arguments string should fall back to the raw string."""
+        _set_input_messages(mock_span, [
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_3",
+                        "type": "function",
+                        "function": {
+                            "name": "fn",
+                            "arguments": "not valid json",
+                        },
+                    }
+                ],
+            }
+        ])
+        result = _get_input_messages(mock_span)
+        tool_part = next(p for p in result[0]["parts"] if p["type"] == "tool_call")
+        assert tool_part["arguments"] == "not valid json"
+
+
+# ---------------------------------------------------------------------------
+# P1: Multimodal content blocks mapped to OTel part types
+# ---------------------------------------------------------------------------
+
+class TestMultimodalContentMapping:
+    def test_user_image_url_mapped_to_uri_part(self, mock_span):
+        """OpenAI image_url content block must map to OTel uri part."""
+        _set_input_messages(mock_span, [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "What is in this image?"},
+                    {"type": "image_url", "image_url": {"url": "https://example.com/img.png"}},
+                ],
+            }
+        ])
+        result = _get_input_messages(mock_span)
+        parts = result[0]["parts"]
+
+        # text block mapped
+        text_parts = [p for p in parts if p.get("type") == "text"]
+        assert len(text_parts) == 1
+        assert text_parts[0]["content"] == "What is in this image?"
+
+        # image_url block mapped to uri part
+        uri_parts = [p for p in parts if p.get("type") == "uri"]
+        assert len(uri_parts) == 1, f"Expected 1 uri part, got parts: {parts}"
+        assert uri_parts[0]["uri"] == "https://example.com/img.png"
+        assert uri_parts[0]["modality"] == "image"
+
+    def test_text_list_content_mapped(self, mock_span):
+        """List content with text blocks must use 'content' key not 'text' key."""
+        _set_input_messages(mock_span, [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Hello"},
+                ],
+            }
+        ])
+        result = _get_input_messages(mock_span)
+        parts = result[0]["parts"]
+        assert parts[0]["type"] == "text"
+        assert parts[0]["content"] == "Hello"
+        assert "text" not in parts[0] or parts[0].get("type") == "text"  # "text" key only for type
+
+
+# ---------------------------------------------------------------------------
+# P2: _get_vendor_from_url returns OTel well-known provider name values
+# ---------------------------------------------------------------------------
+
+class TestGetVendorFromUrl:
+    def test_openai_default(self):
+        assert _get_vendor_from_url("") == "openai"
+
+    def test_openai_api(self):
+        assert _get_vendor_from_url("https://api.openai.com/v1/") == "openai"
+
+    def test_azure_openai(self):
+        result = _get_vendor_from_url("https://myendpoint.openai.azure.com/")
+        # Must NOT be mixed-case "Azure" — OTel well-known value
+        assert result == "az.ai.openai", f"Expected 'az.ai.openai', got '{result}'"
+
+    def test_aws_bedrock(self):
+        result = _get_vendor_from_url("https://bedrock-runtime.us-east-1.amazonaws.com/")
+        assert result == "aws.bedrock", f"Expected 'aws.bedrock', got '{result}'"
+
+    def test_google_vertex(self):
+        result = _get_vendor_from_url("https://us-central1-aiplatform.googleapis.com/")
+        assert result == "gcp.vertex_ai", f"Expected 'gcp.vertex_ai', got '{result}'"
+
+    def test_openrouter(self):
+        result = _get_vendor_from_url("https://openrouter.ai/api/v1/")
+        assert result == "openrouter", f"Expected 'openrouter', got '{result}'"
+
+
+# ---------------------------------------------------------------------------
+# P2: metric_shared_attributes uses constant, not hardcoded string
+# ---------------------------------------------------------------------------
+
+class TestMetricSharedAttributes:
+    def test_operation_name_key_is_constant(self):
+        """gen_ai.operation.name key must use the upstream constant."""
+        attrs = metric_shared_attributes(
+            response_model="gpt-4",
+            operation="chat",
+            server_address="https://api.openai.com/v1/",
+        )
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in attrs, (
+            f"Expected key '{GenAIAttributes.GEN_AI_OPERATION_NAME}' in attrs, "
+            f"got keys: {list(attrs.keys())}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# P2: gen_ai.provider.name used instead of deprecated gen_ai.system
+# ---------------------------------------------------------------------------
+
+class TestProviderNameAttribute:
+    def test_request_attributes_set_provider_name(self, mock_span):
+        """_set_request_attributes must set gen_ai.provider.name, not gen_ai.system."""
+        _set_request_attributes(mock_span, {"model": "gpt-4"})
+        # The new attribute should be present
+        assert GenAIAttributes.GEN_AI_PROVIDER_NAME in mock_span._attrs, (
+            f"Expected '{GenAIAttributes.GEN_AI_PROVIDER_NAME}' in attrs, "
+            f"got: {list(mock_span._attrs.keys())}"
+        )
+
 
 class TestRequestAttributesSerialization:
     def test_none_headers_not_recorded_as_string(self, mock_span):

@@ -153,7 +153,7 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
             _set_span_attribute(
                 span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(
@@ -277,7 +277,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             )
             _set_span_attribute(
                 span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(
