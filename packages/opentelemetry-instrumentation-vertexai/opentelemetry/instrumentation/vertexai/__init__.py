@@ -259,6 +259,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         },
     )
 
+    is_streaming = False
     try:
         await _handle_request(span, event_logger, args, kwargs, llm_model)
 
@@ -266,10 +267,12 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         if response:
             if is_streaming_response(response):
+                is_streaming = True
                 return _build_from_streaming_response(
                     span, event_logger, response, llm_model
                 )
             elif is_async_streaming_response(response):
+                is_streaming = True
                 return _abuild_from_streaming_response(
                     span, event_logger, response, llm_model
                 )
@@ -279,10 +282,11 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
     except Exception as e:
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
         raise
+    finally:
+        if not is_streaming:
+            span.end()
 
-    span.end()
     return response
 
 
@@ -315,6 +319,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         },
     )
 
+    is_streaming = False
     try:
         # Use sync version for non-async wrapper to avoid image processing for now
         set_model_input_attributes(span, kwargs, llm_model)
@@ -327,10 +332,12 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
 
         if response:
             if is_streaming_response(response):
+                is_streaming = True
                 return _build_from_streaming_response(
                     span, event_logger, response, llm_model
                 )
             elif is_async_streaming_response(response):
+                is_streaming = True
                 return _abuild_from_streaming_response(
                     span, event_logger, response, llm_model
                 )
@@ -340,10 +347,11 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     except Exception as e:
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
         raise
+    finally:
+        if not is_streaming:
+            span.end()
 
-    span.end()
     return response
 
 
