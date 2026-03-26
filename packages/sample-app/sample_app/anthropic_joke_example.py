@@ -20,7 +20,7 @@ def joke_workflow():
                 "content": "Tell me a joke about OpenTelemetry",
             }
         ],
-        model="claude-haiku-4-5-20251001",
+        model="claude-haiku-4-5",
     )
     print(response.content)
     return response

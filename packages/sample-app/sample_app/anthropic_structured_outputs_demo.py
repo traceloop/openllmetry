@@ -31,7 +31,7 @@ def main():
     }
 
     response = client.beta.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-haiku-4-5",
         max_tokens=1024,
         betas=["structured-outputs-2025-11-13"],
         messages=[
