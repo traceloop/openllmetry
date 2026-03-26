@@ -148,7 +148,7 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
 def _build_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    has_error = False
+    exception_occurred = False
     try:
         for item in response:
             item_to_yield = item
@@ -157,16 +157,17 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
                 token_usage = item.usage_metadata
 
             yield item_to_yield
+
+        handle_streaming_response(
+            span, event_logger, llm_model, complete_response, token_usage
+        )
     except Exception as e:
-        has_error = True
+        exception_occurred = True
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         raise
     finally:
-        if not has_error:
-            handle_streaming_response(
-                span, event_logger, llm_model, complete_response, token_usage
-            )
+        if not exception_occurred:
             span.set_status(Status(StatusCode.OK))
         span.end()
 
@@ -174,7 +175,7 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
-    has_error = False
+    exception_occurred = False
     try:
         async for item in response:
             item_to_yield = item
@@ -183,25 +184,17 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
                 token_usage = item.usage_metadata
 
             yield item_to_yield
+
+        handle_streaming_response(span, event_logger, llm_model, complete_response, token_usage)
     except Exception as e:
-        has_error = True
+        exception_occurred = True
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         raise
     finally:
-        if not has_error:
-            handle_streaming_response(span, event_logger, llm_model, complete_response, token_usage)
+        if not exception_occurred:
             span.set_status(Status(StatusCode.OK))
         span.end()
-
-
-@dont_throw
-def _handle_request_sync(span, event_logger, args, kwargs, llm_model):
-    set_model_input_attributes(span, kwargs, llm_model)
-    if should_emit_events():
-        emit_prompt_events(args, event_logger)
-    else:
-        set_input_attributes_sync(span, args)
 
 
 @dont_throw
@@ -268,6 +261,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
     try:
         await _handle_request(span, event_logger, args, kwargs, llm_model)
+
         response = await wrapped(*args, **kwargs)
 
         if response:
@@ -322,7 +316,13 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     )
 
     try:
-        _handle_request_sync(span, event_logger, args, kwargs, llm_model)
+        # Use sync version for non-async wrapper to avoid image processing for now
+        set_model_input_attributes(span, kwargs, llm_model)
+        if should_emit_events():
+            emit_prompt_events(args, event_logger)
+        else:
+            set_input_attributes_sync(span, args)
+
         response = wrapped(*args, **kwargs)
 
         if response:
