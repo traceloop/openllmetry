@@ -259,23 +259,24 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
     try:
         response = await wrapped(*args, **kwargs)
+
+        if response:
+            if is_streaming_response(response):
+                return _build_from_streaming_response(
+                    span, event_logger, response, llm_model
+                )
+            elif is_async_streaming_response(response):
+                return _abuild_from_streaming_response(
+                    span, event_logger, response, llm_model
+                )
+            else:
+                _handle_response(span, event_logger, response, llm_model)
+
     except Exception as e:
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
-
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
-        else:
-            _handle_response(span, event_logger, response, llm_model)
 
     span.end()
     return response
@@ -319,23 +320,24 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
 
     try:
         response = wrapped(*args, **kwargs)
+
+        if response:
+            if is_streaming_response(response):
+                return _build_from_streaming_response(
+                    span, event_logger, response, llm_model
+                )
+            elif is_async_streaming_response(response):
+                return _abuild_from_streaming_response(
+                    span, event_logger, response, llm_model
+                )
+            else:
+                _handle_response(span, event_logger, response, llm_model)
+
     except Exception as e:
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
-
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, event_logger, response, llm_model
-            )
-        else:
-            _handle_response(span, event_logger, response, llm_model)
 
     span.end()
     return response
