@@ -55,6 +55,11 @@ def test_cohere_v2_embed_legacy(
         == "74d7aae4-2939-4002-b4d4-352dfcca03cf"
     )
 
+    # Assert token usage attributes are captured
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 208
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 208
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -114,7 +119,45 @@ async def test_cohere_v2_embed_legacy_async(
         == "3bc87f83-0534-4478-af7d-fee196c92758"
     )
 
+    # Assert token usage attributes are captured
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 208
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 208
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_cohere_v2_embed_token_usage(
+    span_exporter, log_exporter, instrument_legacy, cohere_client_v2
+):
+    """Test that token usage is captured for embed-english-v3.0 model."""
+    texts = [
+        "hello world",
+        "this is a test of the embedding model",
+    ]
+
+    cohere_client_v2.embed(
+        input_type="search_document",
+        texts=texts, model="embed-english-v3.0"
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    cohere_span = spans[0]
+    assert cohere_span.name == "cohere.embed"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "embedding"
+    assert (
+        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        == "embed-english-v3.0"
+    )
+
+    # Assert token usage attributes are captured for embed-english-v3.0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) is not None
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) is not None
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
