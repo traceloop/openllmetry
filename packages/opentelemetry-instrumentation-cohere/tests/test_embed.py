@@ -7,6 +7,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 def test_cohere_v2_embed_legacy(
     span_exporter, log_exporter, instrument_legacy, cohere_client_v2
 ):
+    """Test that legacy embed attributes and token usage are captured for embed-english-light-v3.0."""
     texts = [
         "Carson City is the capital city of the American state of Nevada."
         + " At the  2010 United States Census, Carson City had a population of 55,274.",
@@ -71,6 +72,7 @@ def test_cohere_v2_embed_legacy(
 async def test_cohere_v2_embed_legacy_async(
     span_exporter, log_exporter, instrument_legacy, async_cohere_client_v2
 ):
+    """Test that legacy embed attributes and token usage are captured asynchronously."""
     texts = [
         "Carson City is the capital city of the American state of Nevada."
         + " At the  2010 United States Census, Carson City had a population of 55,274.",
