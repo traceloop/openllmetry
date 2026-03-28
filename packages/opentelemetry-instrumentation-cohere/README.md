@@ -29,11 +29,11 @@ Token usage is captured for Cohere text embedding models, including:
 - `embed-multilingual-v3.0`
 - `embed-multilingual-light-v3.0`
 
-The following span attributes are set for embedding calls:
+The following span attributes are set for embedding calls (attribute names follow the project's semantic conventions -- `gen_ai.*` for the newer spec, `llm.*` for legacy attributes not yet migrated):
 
-- `gen_ai.usage.prompt_tokens` - Number of input tokens
-- `gen_ai.usage.completion_tokens` - Number of output tokens (0 for embeddings)
-- `llm.usage.total_tokens` - Total token count
+- `gen_ai.usage.prompt_tokens` -- Number of input tokens
+- `gen_ai.usage.completion_tokens` -- Number of output tokens (0 for embeddings)
+- `llm.usage.total_tokens` -- Total token count
 
 ## Privacy
 

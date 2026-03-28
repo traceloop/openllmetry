@@ -156,8 +156,11 @@ def test_cohere_v2_embed_token_usage(
     )
 
     # Assert token usage attributes are captured for embed-english-v3.0
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) is not None
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) > 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 12
     assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) is not None
-    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 12
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
