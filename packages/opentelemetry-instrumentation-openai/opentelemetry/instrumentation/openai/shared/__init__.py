@@ -75,8 +75,33 @@ def _set_api_attributes(span):
     return
 
 
+def _build_tool_def_dict(function_dict):
+    """Extract name/description/parameters from a function dict into a tool definition."""
+    tool_def = {}
+    if function_dict.get("name"):
+        tool_def["name"] = function_dict["name"]
+    if function_dict.get("description"):
+        tool_def["description"] = function_dict["description"]
+    if function_dict.get("parameters"):
+        tool_def["parameters"] = function_dict["parameters"]
+    return tool_def
+
+
+def _set_tool_definitions_json(span, tool_defs):
+    """Set gen_ai.tool.definitions as a single JSON string attribute."""
+    if tool_defs:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+        )
+
+
 def _set_functions_attributes(span, functions):
     if not functions:
+        return
+
+    if Config.use_messages_attributes:
+        tool_defs = [d for f in functions if (d := _build_tool_def_dict(f))]
+        _set_tool_definitions_json(span, tool_defs)
         return
 
     for i, function in enumerate(functions):
@@ -90,6 +115,14 @@ def _set_functions_attributes(span, functions):
 
 def set_tools_attributes(span, tools):
     if not tools:
+        return
+
+    if Config.use_messages_attributes:
+        tool_defs = [
+            d for tool in tools
+            if tool.get("function") and (d := _build_tool_def_dict(tool["function"]))
+        ]
+        _set_tool_definitions_json(span, tool_defs)
         return
 
     for i, tool in enumerate(tools):
