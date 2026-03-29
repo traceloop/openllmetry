@@ -6,6 +6,8 @@ instead of message types ("ai", "tool", etc.), which caused completion roles to 
 in observability traces.
 """
 
+import json
+
 import pytest
 from unittest.mock import Mock
 from langchain_core.outputs import LLMResult, ChatGeneration, Generation
@@ -46,9 +48,9 @@ class TestCompletionRoleExtraction:
         set_chat_response(mock_span, llm_result)
 
         # Assert role is 'assistant', not 'unknown'
-        role_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"
-        assert role_key in mock_span.attributes
-        assert mock_span.attributes[role_key] == "assistant"
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span.attributes
+        output_messages = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output_messages[0]["role"] == "assistant"
 
     def test_chat_generation_with_tool_message_role(self, mock_span, monkeypatch):
         """Test that ChatGeneration with ToolMessage correctly extracts 'tool' role."""
@@ -68,9 +70,9 @@ class TestCompletionRoleExtraction:
         set_chat_response(mock_span, llm_result)
 
         # Assert role is 'tool', not 'unknown'
-        role_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"
-        assert role_key in mock_span.attributes
-        assert mock_span.attributes[role_key] == "tool"
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span.attributes
+        output_messages = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output_messages[0]["role"] == "tool"
 
     def test_generation_without_message_defaults_to_assistant(self, mock_span, monkeypatch):
         """Test that Generation (non-chat) defaults to 'assistant' role."""
@@ -88,9 +90,9 @@ class TestCompletionRoleExtraction:
         set_chat_response(mock_span, llm_result)
 
         # Assert role defaults to 'assistant', not 'unknown'
-        role_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"
-        assert role_key in mock_span.attributes
-        assert mock_span.attributes[role_key] == "assistant"
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span.attributes
+        output_messages = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output_messages[0]["role"] == "assistant"
 
     def test_multiple_generations_with_different_roles(self, mock_span, monkeypatch):
         """Test that multiple generations with different message types are handled correctly."""
@@ -111,9 +113,11 @@ class TestCompletionRoleExtraction:
         set_chat_response(mock_span, llm_result)
 
         # Assert all roles are correctly set
-        assert mock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-        assert mock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.1.role"] == "tool"
-        assert mock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.2.role"] == "assistant"
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span.attributes
+        output_messages = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output_messages[0]["role"] == "assistant"
+        assert output_messages[1]["role"] == "tool"
+        assert output_messages[2]["role"] == "assistant"
 
     def test_generation_type_attribute_is_not_used(self, mock_span, monkeypatch):
         """Test that generation.type (which returns class name) is not used directly."""
@@ -138,5 +142,6 @@ class TestCompletionRoleExtraction:
         # Assert role is 'assistant', not 'unknown'
         # If the bug existed, passing generation.type directly to _message_type_to_role
         # would return 'unknown' because "ChatGeneration" doesn't match any message type
-        role_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"
-        assert mock_span.attributes[role_key] == "assistant"
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span.attributes
+        output_messages = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output_messages[0]["role"] == "assistant"

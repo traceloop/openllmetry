@@ -6,6 +6,8 @@ These tests use comprehensive mocking to simulate the full WebSocket flow withou
 requiring real API connections.
 """
 
+import json
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from opentelemetry.sdk.trace import TracerProvider
@@ -13,7 +15,6 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import StatusCode
 
 
@@ -472,18 +473,19 @@ class TestRealtimeFullFlow:
         assert "openai.realtime" in span_names
 
         session_span = next(s for s in spans if s.name == "openai.session")
-        assert session_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        assert session_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
         assert session_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-realtime-preview"
-        assert session_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
+        assert session_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
         assert session_span.status.status_code == StatusCode.OK
 
         response_span = next(s for s in spans if s.name == "openai.realtime")
-        assert response_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-        assert response_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
+        assert response_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
+        assert response_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
 
-        # Verify finish_reason is "stop" for text response without tool calls
-        attrs = dict(response_span.attributes)
-        assert attrs.get("gen_ai.completion.0.finish_reason") == "stop"
+        # Verify finish_reasons top-level attribute
+        assert response_span.attributes[
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        ] == ("stop",)
 
     @pytest.mark.asyncio
     async def test_response_span_is_child_of_session_span(self, tracer_provider_and_exporter):
@@ -617,14 +619,23 @@ class TestRealtimeFullFlow:
         response_span = next(s for s in spans if s.name == "openai.realtime")
         assert response_span.status.status_code == StatusCode.OK
 
-        # Verify tool call attributes are set
-        attrs = dict(response_span.attributes)
-        assert attrs.get("gen_ai.completion.0.role") == "assistant"
-        assert attrs.get("gen_ai.completion.0.finish_reason") == "tool_calls"
-        assert attrs.get("gen_ai.completion.0.tool_calls.0.type") == "function"
-        assert attrs.get("gen_ai.completion.0.tool_calls.0.name") == "get_weather"
-        assert attrs.get("gen_ai.completion.0.tool_calls.0.id") == "call_123"
-        assert attrs.get("gen_ai.completion.0.tool_calls.0.arguments") == '{"location": "NYC"}'
+        # Verify finish_reasons top-level attribute
+        assert response_span.attributes[
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        ] == ("tool_call",)
+
+        # Verify output messages in OTel JSON format
+        output = json.loads(
+            response_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
+        )
+        assert len(output) == 1
+        assert output[0]["role"] == "assistant"
+        assert output[0]["finish_reason"] == "tool_call"
+        tool_part = output[0]["parts"][0]
+        assert tool_part["type"] == "tool_call"
+        assert tool_part["name"] == "get_weather"
+        assert tool_part["id"] == "call_123"
+        assert tool_part["arguments"] == {"location": "NYC"}
 
     @pytest.mark.asyncio
     async def test_error_handling_in_response(self, tracer_provider_and_exporter):

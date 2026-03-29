@@ -9,6 +9,8 @@ from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.sdk.trace import Span
 from opentelemetry.trace import StatusCode
 
+from .utils import get_input_messages, get_output_messages
+
 
 class StructuredAnswer(BaseModel):
     rating: int
@@ -30,16 +32,17 @@ def test_parsed_completion(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -72,10 +75,10 @@ def test_parsed_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -121,10 +124,10 @@ def test_parsed_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1gNoe1Zyq9yZicdhLc85lmt2Ep"
@@ -161,12 +164,10 @@ def test_parsed_refused_completion(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
+    output_messages = get_output_messages(open_ai_span)
+    refusal_parts = [p for p in output_messages[0]["parts"] if p.get("type") == "refusal"]
+    assert len(refusal_parts) == 1
+    assert refusal_parts[0]["content"] == "I'm very sorry, but I can't assist with that request."
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
@@ -197,7 +198,6 @@ def test_parsed_refused_completion_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
@@ -240,7 +240,6 @@ def test_parsed_refused_completion_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGky8KFDbg6f5fF4qLtsBredIjZZh"
@@ -278,16 +277,17 @@ async def test_async_parsed_completion(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -320,10 +320,10 @@ async def test_async_parsed_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -370,10 +370,10 @@ async def test_async_parsed_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGC1iysV7rZ0qZ510vbeKVTNxSOHB"
@@ -411,12 +411,10 @@ async def test_async_parsed_refused_completion(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.refusal" in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.refusal"]
-        == "I'm very sorry, but I can't assist with that request."
-    )
+    output_messages = get_output_messages(open_ai_span)
+    refusal_parts = [p for p in output_messages[0]["parts"] if p.get("type") == "refusal"]
+    assert len(refusal_parts) == 1
+    assert refusal_parts[0]["content"] == "I'm very sorry, but I can't assist with that request."
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
@@ -448,7 +446,6 @@ async def test_async_parsed_refused_completion_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
@@ -492,7 +489,6 @@ async def test_async_parsed_refused_completion_with_events_with_no_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-AGkyFJGzZPUGAAEDJJuOS3idKvD3G"
@@ -517,7 +513,7 @@ async def test_async_parsed_refused_completion_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 
@@ -543,10 +539,11 @@ def test_parsed_completion_exception(
     assert len(spans) == 1
     span: Span = spans[0]
     assert span.name == "openai.chat"
-    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
-    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
-    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
+    assert span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
     assert span.status.status_code == StatusCode.ERROR
     assert span.status.description.startswith("Error code: 401")
@@ -578,10 +575,11 @@ async def test_async_parsed_completion_exception(
     assert len(spans) == 1
     span: Span = spans[0]
     assert span.name == "openai.chat"
-    assert span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE) == "https://api.openai.com/v1/"
-    assert span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
-    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
-    assert span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
+    assert span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE) == "https://api.openai.com/v1/"
+    assert span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
     assert span.status.status_code == StatusCode.ERROR
     assert span.status.description.startswith("Error code: 401")

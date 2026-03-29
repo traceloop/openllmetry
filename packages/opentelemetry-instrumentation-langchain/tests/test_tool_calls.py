@@ -15,7 +15,6 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
 
 
 def food_analysis(
@@ -101,7 +100,7 @@ def test_tool_calls_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -147,7 +146,7 @@ def test_tool_calls_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [
             {
@@ -192,8 +191,9 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -201,70 +201,37 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
-        "properties": {
-            "location": {"type": "string"},
-        },
-        "required": ["location"],
-        "type": "object",
-    }
+    system_instructions = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["type"] == "text"
+    assert system_instructions[0]["content"] == messages[0].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == messages[0].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == messages[1].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == messages[1].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
+    assert input_messages[1]["role"] == "assistant"
+    assert input_messages[1]["parts"][0]["type"] == "tool_call"
+    assert input_messages[1]["parts"][0]["name"] == messages[2].tool_calls[0]["name"]
+    assert input_messages[1]["parts"][0]["arguments"] == messages[2].tool_calls[0]["args"]
+    assert input_messages[1]["parts"][0]["id"] == messages[2].tool_calls[0]["id"]
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_calls.0.name"]
-        == messages[2].tool_calls[0]["name"]
-    )
-    assert (
-        json.loads(
-            chat_span.attributes[
-                f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_calls.0.arguments"
-            ]
-        )
-        == messages[2].tool_calls[0]["args"]
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_calls.0.id"]
-        == messages[2].tool_calls[0]["id"]
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "assistant"
+    assert input_messages[2]["role"] == "tool"
+    assert input_messages[2]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[2]["parts"][0]["id"] == messages[3].tool_call_id
+    assert input_messages[2]["parts"][0]["response"] == messages[3].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.content"]
-        == messages[3].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.role"] == "tool"
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.tool_call_id"] == messages[3].tool_call_id
+    assert input_messages[3]["role"] == "user"
+    assert input_messages[3]["parts"][0]["content"] == messages[4].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.4.content"]
-        == messages[4].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.4.role"] == "user"
+    output_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "tool_call"
+    assert output_messages[0]["parts"][0]["name"] == "get_weather"
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_weather"
-    )
-
-    arguments = chat_span.attributes[
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-    ]
     result_arguments = result.model_dump()["additional_kwargs"]["tool_calls"][0][
         "function"
     ]["arguments"]
-    assert json.loads(arguments) == json.loads(result_arguments)
+    assert output_messages[0]["parts"][0]["arguments"] == json.loads(result_arguments)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -272,7 +239,6 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_with_history_with_events_with_content(
@@ -356,7 +322,7 @@ def test_tool_calls_with_history_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": ""},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_call["id"],
@@ -371,7 +337,6 @@ def test_tool_calls_with_history_with_events_with_content(
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_with_history_with_events_with_no_content(
@@ -441,7 +406,7 @@ def test_tool_calls_with_history_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_call["id"],
@@ -480,8 +445,9 @@ def test_tool_calls_anthropic_text_block(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -489,8 +455,8 @@ def test_tool_calls_anthropic_text_block(
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -498,33 +464,19 @@ def test_tool_calls_anthropic_text_block(
         "type": "object",
     }
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == messages[0].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == messages[0].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    output_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
     # Test that we write both the content and the tool calls
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == result.content[0]["text"]
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"]
-        == "toolu_016q9vtSd8CY2vnZSpEp1j4o"
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_weather"
-    )
-    assert json.loads(
-        chat_span.attributes[
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        ]
-    ) == {"location": "San Francisco"}
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == result.content[0]["text"]
+    assert output_messages[0]["parts"][1]["type"] == "tool_call"
+    assert output_messages[0]["parts"][1]["id"] == "toolu_016q9vtSd8CY2vnZSpEp1j4o"
+    assert output_messages[0]["parts"][1]["name"] == "get_weather"
+    assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -532,7 +484,6 @@ def test_tool_calls_anthropic_text_block(
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_with_events_with_content(
@@ -577,7 +528,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"][0]["text"]},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -592,7 +543,6 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_with_events_with_no_content(
@@ -631,7 +581,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -643,7 +593,6 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history(
@@ -697,8 +646,9 @@ def test_tool_calls_anthropic_text_block_and_history(
     chat_span = spans[0]
     assert chat_span.name == "ChatAnthropic.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -706,8 +656,8 @@ def test_tool_calls_anthropic_text_block_and_history(
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -715,58 +665,30 @@ def test_tool_calls_anthropic_text_block_and_history(
         "type": "object",
     }
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == messages[0].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == messages[0].content
+    assert input_messages[1]["role"] == "assistant"
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.name"]
-        == messages[1].tool_calls[0]["name"]
-    )
-    assert (
-        json.loads(
-            chat_span.attributes[
-                f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.arguments"
-            ]
-        )
-        == messages[1].tool_calls[0]["args"]
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.id"]
-        == messages[1].tool_calls[0]["id"]
-    )
+    assert input_messages[1]["parts"][0]["type"] == "tool_call"
+    assert input_messages[1]["parts"][0]["name"] == messages[1].tool_calls[0]["name"]
+    assert input_messages[1]["parts"][0]["arguments"] == messages[1].tool_calls[0]["args"]
+    assert input_messages[1]["parts"][0]["id"] == messages[1].tool_calls[0]["id"]
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "tool"
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
-        == messages[2].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id"] == messages[2].tool_call_id
+    assert input_messages[2]["role"] == "tool"
+    assert input_messages[2]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[2]["parts"][0]["response"] == messages[2].content
+    assert input_messages[2]["parts"][0]["id"] == messages[2].tool_call_id
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    output_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
     # Test that we write both the content and the tool calls
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == result.content[0]["text"]
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"]
-        == "toolu_012guEZNJ5yH5jxHKWAkzCzh"
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_news"
-    )
-    assert json.loads(
-        chat_span.attributes[
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        ]
-    ) == {"location": "San Francisco"}
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == result.content[0]["text"]
+    assert output_messages[0]["parts"][1]["type"] == "tool_call"
+    assert output_messages[0]["parts"][1]["id"] == "toolu_012guEZNJ5yH5jxHKWAkzCzh"
+    assert output_messages[0]["parts"][1]["name"] == "get_news"
+    assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -774,8 +696,6 @@ def test_tool_calls_anthropic_text_block_and_history(
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
@@ -867,7 +787,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"][0]["text"]},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -915,9 +835,11 @@ def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_ex
     assert chat_span.name == "ChatOpenAI.chat"
 
     # Verify that the tool_call_id is properly set for the ToolMessage
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "tool"
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"] == "Tool executed successfully"
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id"] == "call_12345"
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[2]["role"] == "tool"
+    assert input_messages[2]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[2]["parts"][0]["response"] == "Tool executed successfully"
+    assert input_messages[2]["parts"][0]["id"] == "call_12345"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (
@@ -925,8 +847,6 @@ def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_ex
     )
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content(
@@ -1010,7 +930,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -1045,8 +965,9 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     chat_span = spans[0]
     assert chat_span.name == "ChatOpenAI.chat"
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"] == "get_weather"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"]) == {
+    tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -1054,8 +975,8 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
         "type": "object",
     }
 
-    assert chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.name"] == "get_news"
-    assert json.loads(chat_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.1.parameters"]) == {
+    assert tool_defs[1]["name"] == "get_news"
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -1063,42 +984,21 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
         "type": "object",
     }
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == messages[0].content
-    )
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == messages[0].content
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    output_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
 
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"]
-        == "call_EgULHWKqGjuB36aUeiOSpALZ"
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_weather"
-    )
-    assert json.loads(
-        chat_span.attributes[
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        ]
-    ) == {"location": "San Francisco"}
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id"]
-        == "call_Xer9QGOTDMG2Bxn9AKGiVM14"
-    )
-    assert (
-        chat_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name"]
-        == "get_news"
-    )
-    assert json.loads(
-        chat_span.attributes[
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"
-        ]
-    ) == {"location": "San Francisco"}
+    assert output_messages[0]["parts"][0]["type"] == "tool_call"
+    assert output_messages[0]["parts"][0]["id"] == "call_EgULHWKqGjuB36aUeiOSpALZ"
+    assert output_messages[0]["parts"][0]["name"] == "get_weather"
+    assert output_messages[0]["parts"][0]["arguments"] == {"location": "San Francisco"}
+    assert output_messages[0]["parts"][1]["type"] == "tool_call"
+    assert output_messages[0]["parts"][1]["id"] == "call_Xer9QGOTDMG2Bxn9AKGiVM14"
+    assert output_messages[0]["parts"][1]["name"] == "get_news"
+    assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -1106,7 +1006,6 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_parallel_tool_calls_with_events_with_content(
@@ -1146,7 +1045,7 @@ def test_parallel_tool_calls_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"]},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_calls[0]["id"],
@@ -1169,7 +1068,6 @@ def test_parallel_tool_calls_with_events_with_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_parallel_tool_calls_with_events_with_no_content(
@@ -1207,7 +1105,7 @@ def test_parallel_tool_calls_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_calls[0]["id"],
@@ -1226,7 +1124,7 @@ def test_parallel_tool_calls_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body

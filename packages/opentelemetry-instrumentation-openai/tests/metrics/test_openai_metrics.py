@@ -212,7 +212,7 @@ def test_chat_streaming_metrics(instrument_legacy, reader, deepseek_client):
 
                 for data_point in metric.data.data_points:
                     assert (
-                        data_point.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "openai"
+                        data_point.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "openai"
                     )
                     # Add `deepseek-chat` to the list of models since it's a alternative to OpenAI API
                     assert str(

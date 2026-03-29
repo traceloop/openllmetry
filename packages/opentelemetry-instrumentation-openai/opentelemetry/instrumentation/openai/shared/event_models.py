@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from typing import Any, List, Literal, Optional, TypedDict
 
+from typing_extensions import NotRequired
+
 
 class _FunctionToolCall(TypedDict):
-    function_name: str
-    arguments: Optional[dict[str, Any]]
+    name: str
+    arguments: NotRequired[Optional[str]]
 
 
 class ToolCall(TypedDict):

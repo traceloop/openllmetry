@@ -147,15 +147,16 @@ def test_custom_llm(instrument_legacy, span_exporter, log_exporter):
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
     )
 
-    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
-    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "HuggingFace"
+    assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "hugging_face"
+    input_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert (
-        hugging_face_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+        input_messages[0]["parts"][0]["content"]
         == "System: You are a helpful assistant\nHuman: tell me a short joke"
     )
+    output_messages = json.loads(hugging_face_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert (
-        hugging_face_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
+        output_messages[0]["parts"][0]["content"]
         == response
     )
 
@@ -192,7 +193,6 @@ def test_custom_llm_with_events_with_content(
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
     )
 
-    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
 
     logs = log_exporter.get_finished_logs()
@@ -210,7 +210,7 @@ def test_custom_llm_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
@@ -243,7 +243,6 @@ def test_custom_llm_with_events_with_no_content(
         span for span in spans if span.name == "HuggingFaceTextGenInference.completion"
     )
 
-    assert hugging_face_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
     assert hugging_face_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "unknown"
 
     logs = log_exporter.get_finished_logs()
@@ -255,7 +254,7 @@ def test_custom_llm_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
@@ -283,20 +282,17 @@ def test_openai(instrument_legacy, span_exporter, log_exporter):
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
-    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]) == prompt
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
+    system_instructions = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == "You are a helpful assistant"
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == prompt
+    assert input_messages[0]["role"] == "user"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 2534
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
@@ -338,12 +334,11 @@ def test_openai_with_events_with_content(
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 2534
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -389,12 +384,11 @@ def test_openai_with_events_with_no_content(
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1497
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 1037
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2534
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 2534
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -446,33 +440,16 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are helpful assistant"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (
-        (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.name"]
-        == "Joke"
-    )
-    assert (
-        openai_span.attributes[f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.description"]
-        == "Joke to tell user."
-    )
-    assert (
-        json.loads(
-            openai_span.attributes[
-                f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.0.parameters"
-            ]
-        )
-    ) == {
+    system_instructions = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == "You are helpful assistant"
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "tell me a short joke"
+    assert input_messages[0]["role"] == "user"
+    tool_definitions = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_definitions[0]["name"] == "Joke"
+    assert tool_definitions[0]["description"] == "Joke to tell user."
+    assert tool_definitions[0]["parameters"] == {
         "type": "object",
         "properties": {
             "setup": {"description": "question to set up a joke", "type": "string"},
@@ -485,7 +462,7 @@ def test_openai_functions(instrument_legacy, span_exporter, log_exporter):
     }
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 111
 
     workflow_span = next(
         span for span in spans if span.name == "RunnableSequence.workflow"
@@ -536,12 +513,11 @@ def test_openai_functions_with_events_with_content(
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 111
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -559,7 +535,7 @@ def test_openai_functions_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -609,12 +585,11 @@ def test_openai_functions_with_events_with_no_content(
 
     openai_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert openai_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 76
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 35
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 111
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 111
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -628,7 +603,7 @@ def test_openai_functions_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
@@ -658,27 +633,19 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
         span for span in spans if span.name == "RunnableSequence.workflow"
     )
 
-    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "Anthropic"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    )
-    assert (
-        (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    system_instructions = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == "You are a helpful assistant"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "tell me a short joke"
+    assert input_messages[0]["role"] == "user"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
     output = json.loads(
@@ -725,15 +692,14 @@ def test_anthropic_with_events_with_content(
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
 
-    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
 
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
 
@@ -753,7 +719,7 @@ def test_anthropic_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -781,15 +747,14 @@ def test_anthropic_with_events_with_no_content(
 
     anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
 
-    assert anthropic_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "claude-2.1"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
 
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 19
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
-    assert anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 41
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
 
@@ -805,7 +770,7 @@ def test_anthropic_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -843,25 +808,19 @@ def test_bedrock(instrument_legacy, span_exporter, log_exporter):
         span for span in spans if span.name == "RunnableSequence.workflow"
     )
 
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
-    assert (
-        (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "You are a helpful assistant"
-    )
-    assert (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (
-        (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"])
-        == "tell me a short joke"
-    )
-    assert (bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "aws.bedrock"
+    system_instructions = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == "You are a helpful assistant"
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "tell me a short joke"
+    assert input_messages[0]["role"] == "user"
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 43
     output = json.loads(
         workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
     )
@@ -914,7 +873,6 @@ def test_bedrock_with_events_with_content(
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
 
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
@@ -922,7 +880,7 @@ def test_bedrock_with_events_with_content(
 
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 43
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -940,7 +898,7 @@ def test_bedrock_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -977,14 +935,13 @@ def test_bedrock_with_events_with_no_content(
 
     bedrock_span = next(span for span in spans if span.name == "ChatBedrock.chat")
 
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "anthropic.claude-3-haiku-20240307-v1:0"
     )
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 16
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 27
-    assert bedrock_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 43
+    assert bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 43
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -998,7 +955,7 @@ def test_bedrock_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -1050,7 +1007,7 @@ def test_trace_propagation(instrument_legacy, span_exporter, log_exporter, LLM):
         VLLMOpenAI: "openai",
         ChatOpenAI: "openai"
     }
-    assert openai_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == expected_vendors[LLM]
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == expected_vendors[LLM]
 
     args, kwargs = send_spy.mock.call_args
     request = args[0]
@@ -1658,7 +1615,7 @@ async def test_trace_propagation_stream_async_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body
