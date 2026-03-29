@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.anthropic.event_models import (
     MessageEvent,
     ToolCall,
 )
+from opentelemetry.instrumentation.anthropic.span_utils import _map_finish_reason
 from opentelemetry.instrumentation.anthropic.utils import (
     should_emit_events,
     should_send_prompts,
@@ -29,7 +30,7 @@ VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
 EVENT_ATTRIBUTES = {
-    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
 }
 """The attributes to be used for the event."""
 
@@ -69,7 +70,7 @@ def emit_response_events(event_logger: Optional[Logger], response):
                     "content": response.get("completion"),
                     "role": response.get("role", "assistant"),
                 },
-                finish_reason=response.get("stop_reason"),
+                finish_reason=_map_finish_reason(response.get("stop_reason")),
             ),
             event_logger,
         )
@@ -117,7 +118,7 @@ def emit_response_events(event_logger: Optional[Logger], response):
                 ChoiceEvent(
                     index=i,
                     message=message,
-                    finish_reason=response.get("stop_reason"),
+                    finish_reason=_map_finish_reason(response.get("stop_reason")),
                     tool_calls=tool_calls,
                 ),
                 event_logger,
@@ -146,7 +147,7 @@ def emit_streaming_response_events(
                     "content": None,
                     "role": message.get("role", "assistant"),
                 },
-                finish_reason=message.get("finish_reason", "unknown"),
+                finish_reason=_map_finish_reason(message.get("finish_reason")),
                 tool_calls=tool_calls,
             )
         else:
@@ -159,7 +160,7 @@ def emit_streaming_response_events(
                     },
                     "role": message.get("role", "assistant"),
                 },
-                finish_reason=message.get("finish_reason", "unknown"),
+                finish_reason=_map_finish_reason(message.get("finish_reason")),
             )
         emit_event(event, event_logger)
 
