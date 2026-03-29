@@ -1,6 +1,5 @@
 import json
 import logging
-from typing import Any, Dict
 
 from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
