@@ -38,6 +38,7 @@ from typing import Callable, Dict, List, Optional, Set, Union
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_AGENT_NAME,
     GEN_AI_CONVERSATION_ID,
+    GEN_AI_OPERATION_NAME,
 )
 
 
@@ -303,7 +304,10 @@ def set_external_prompt_tracing_context(
 
 
 def is_llm_span(span) -> bool:
-    return span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
+    return (
+        span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
+        or span.attributes.get(GEN_AI_OPERATION_NAME) is not None
+    )
 
 
 def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExporter:

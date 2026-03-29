@@ -65,12 +65,12 @@ def test_rag_with_chroma(instrument_legacy, span_exporter):
     assert (
         llm_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-3.5-turbo-0125"
     )
-    assert llm_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"].startswith(
-        "You are an expert Q&A system that is trusted around the world."
+    assert "You are an expert Q&A system that is trusted around the world." in (
+        llm_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert llm_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == (
-        "The author worked on writing and programming before college."
+    assert "The author worked on writing and programming before college." in (
+        llm_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
     )
     assert llm_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 10
     assert llm_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 2070
-    assert llm_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 2080
+    assert llm_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 2080

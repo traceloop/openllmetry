@@ -1,4 +1,14 @@
 from opentelemetry.trace import Span
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    GEN_AI_REQUEST_MAX_TOKENS,
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_REQUEST_PRESENCE_PENALTY,
+    GEN_AI_REQUEST_SEED,
+    GEN_AI_REQUEST_STOP_SEQUENCES,
+    GEN_AI_REQUEST_TEMPERATURE,
+    GEN_AI_REQUEST_TOP_P,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 import json
 
@@ -32,6 +42,8 @@ class CrewAISpanAttributes:
     def _process_crew(self):
         self._populate_crew_attributes()
         for key, value in self.crew.items():
+            if isinstance(value, list):
+                value = json.dumps(value, default=str)
             self._set_attribute(f"crewai.crew.{key}", value)
 
     def _process_agent(self):
@@ -63,19 +75,26 @@ class CrewAISpanAttributes:
             if value is None:
                 continue
             if field == "model":
-                self._set_attribute(SpanAttributes.LLM_REQUEST_MODEL, value)
+                self._set_attribute(GEN_AI_REQUEST_MODEL, value)
             elif field == "temperature":
-                self._set_attribute(SpanAttributes.LLM_REQUEST_TEMPERATURE, value)
+                self._set_attribute(GEN_AI_REQUEST_TEMPERATURE, value)
             elif field == "top_p":
-                self._set_attribute(SpanAttributes.LLM_REQUEST_TOP_P, value)
+                self._set_attribute(GEN_AI_REQUEST_TOP_P, value)
             elif field == "max_tokens":
-                self._set_attribute(SpanAttributes.LLM_REQUEST_MAX_TOKENS, value)
+                self._set_attribute(GEN_AI_REQUEST_MAX_TOKENS, value)
             elif field == "presence_penalty":
-                self._set_attribute(SpanAttributes.LLM_PRESENCE_PENALTY, value)
+                self._set_attribute(GEN_AI_REQUEST_PRESENCE_PENALTY, value)
             elif field == "frequency_penalty":
-                self._set_attribute(SpanAttributes.LLM_FREQUENCY_PENALTY, value)
-            else:
-                self._set_attribute(f"llm.{field}", value)
+                self._set_attribute(GEN_AI_REQUEST_FREQUENCY_PENALTY, value)
+            elif field == "seed":
+                self._set_attribute(GEN_AI_REQUEST_SEED, value)
+            elif field == "stop":
+                self._set_attribute(GEN_AI_REQUEST_STOP_SEQUENCES, value)
+            elif field == "n":
+                # Still on semconv-ai; upstream incubating has no GEN_AI_REQUEST_N yet (verify on semconv bumps).
+                self._set_attribute(SpanAttributes.GEN_AI_REQUEST_N, value)
+            elif field == "max_completion_tokens":
+                self._set_attribute(SpanAttributes.GEN_AI_REQUEST_MAX_COMPLETION_TOKENS, value)
 
     def _populate_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
@@ -160,4 +179,6 @@ class CrewAISpanAttributes:
 
     def _set_attribute(self, key, value):
         if value is not None:
-            set_span_attribute(self.span, key, str(value) if isinstance(value, list) else value)
+            if isinstance(value, list):
+                value = tuple(value)
+            set_span_attribute(self.span, key, value)

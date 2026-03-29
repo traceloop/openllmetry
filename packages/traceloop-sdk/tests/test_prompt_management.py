@@ -234,11 +234,10 @@ def test_prompt_management(exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry, pirate style"
+    assert "Tell me a joke about OpenTelemetry, pirate style" in (
+        open_ai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     assert open_ai_span.attributes.get("traceloop.prompt.key") == "joke_generator"
 
 
@@ -252,10 +251,11 @@ def test_prompt_management_with_tools(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    completion = open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
-    )
-    assert completion == "get_joke"
+    output = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    assert output is not None
+    parsed = json.loads(output)
+    tool_call_parts = [p for m in parsed for p in m.get("parts", []) if p.get("type") == "tool_call"]
+    assert any(p.get("name") == "get_joke" for p in tool_call_parts)
 
 
 @pytest.mark.vcr
@@ -268,11 +268,11 @@ def test_prompt_management_with_response_format(exporter, openai_client):
 
     spans = exporter.get_finished_spans()
     open_ai_span = spans[0]
-    completion = open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    )
+    output = open_ai_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    assert output is not None
+    parsed = json.loads(output)
+    content = parsed[0]["parts"][0]["content"]
     try:
-        json.loads(completion)
+        json.loads(content)
     except json.JSONDecodeError:
-        pytest.fail("Response is not valid JSON")
-    assert True
+        pytest.fail("Response content is not valid JSON")

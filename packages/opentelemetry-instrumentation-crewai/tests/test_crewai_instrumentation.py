@@ -1,8 +1,28 @@
 import pytest
 from unittest.mock import MagicMock
+from pydantic import BaseModel
+
+from crewai import Agent, Crew, Task
+from crewai.llms.base_llm import BaseLLM
+
 from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
-from crewai import Agent, Task, Crew
 from opentelemetry.trace.status import StatusCode
+
+
+class StubLLM(BaseLLM):
+    """Minimal LLM for tests — CrewAI 1.x validates `llm` and rejects arbitrary mocks."""
+
+    def call(
+        self,
+        messages,
+        tools=None,
+        callbacks=None,
+        available_functions=None,
+        from_task=None,
+        from_agent=None,
+        response_model: type[BaseModel] | None = None,
+    ):
+        return "Mocked response"
 
 
 @pytest.fixture
@@ -15,13 +35,12 @@ def mock_instrumentor():
 
 @pytest.fixture
 def mock_crew():
-    mock_llm = MagicMock()
-    mock_llm.predict.return_value = "Mocked response"
+    llm = StubLLM(model="stub-model")
     agent = Agent(
         role="Data Collector",
         goal="Collect accurate and up-to-date financial data",
         backstory="You are an expert in gathering financial data from various sources.",
-        llm=mock_llm,
+        llm=llm,
     )
 
     task = Task(
@@ -34,11 +53,7 @@ def mock_crew():
         agent=agent,
     )
 
-    crew = Crew(agents=[agent], tasks=[task])
-
-    with pytest.raises(Exception):
-        crew.kickoff()
-    return crew
+    return Crew(agents=[agent], tasks=[task], tracing=False)
 
 
 def test_crewai_instrumentation(mock_crew, mock_instrumentor):
