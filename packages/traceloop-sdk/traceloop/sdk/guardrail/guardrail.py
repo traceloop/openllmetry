@@ -91,6 +91,36 @@ class Guardrails:
         self._run_all = run_all
         self._parallel = parallel
 
+    def _resolve_dict_inputs(self, mapped: dict[str, Any]) -> list[Any]:
+        """
+        Resolve a dict of guard inputs keyed by guard name to an ordered list.
+
+        Args:
+            mapped: Dict mapping guard names to their inputs.
+
+        Returns:
+            List of guard inputs in the same order as self._guards.
+
+        Raises:
+            ValueError: If a guard name is missing from the dict.
+        """
+        guard_inputs = []
+        for i, guard in enumerate(self._guards):
+            guard_name = getattr(guard, "__name__", f"guard_{i}")
+            if guard_name not in mapped:
+                available = list(mapped.keys())
+                names = [
+                    getattr(g, "__name__", f"guard_{j}")
+                    for j, g in enumerate(self._guards)
+                ]
+                raise ValueError(
+                    f"input_mapper dict missing key '{guard_name}' for guard at index {i}. "
+                    f"Available keys: {available}. "
+                    f"Guard names: {names}"
+                )
+            guard_inputs.append(mapped[guard_name])
+        return guard_inputs
+
     def _validate_inputs(self, guard_inputs: list[Any]) -> None:
         """
         Validate guard_inputs match guards in count and type.
@@ -317,7 +347,11 @@ class Guardrails:
 
                 # 2. Convert result to guard inputs
                 if input_mapper:
-                    guard_inputs = input_mapper(result)
+                    mapped = input_mapper(result)
+                    if isinstance(mapped, dict):
+                        guard_inputs = self._resolve_dict_inputs(mapped)
+                    else:
+                        guard_inputs = mapped
                 else:
                     guard_inputs = default_input_mapper(result, len(self._guards))
 
@@ -339,14 +373,16 @@ class Guardrails:
 
     async def validate(
         self,
-        guard_inputs: list[Any],
+        guard_inputs: list[Any] | dict[str, Any],
         on_failure: Optional[OnFailureHandler] = None,
     ) -> bool:
         """
         Run guards on inputs directly, without wrapping in a function.
 
         Args:
-            guard_inputs: List of inputs for each guard (must match number of guards)
+            guard_inputs: Inputs for each guard. Can be:
+                - A list (positional, must match number of guards)
+                - A dict keyed by guard name (order-independent)
             on_failure: Optional handler to override the configured on_failure
 
         Returns:
@@ -362,6 +398,9 @@ class Guardrails:
             )
             passed = await g.validate([{"score": 0.9}])  # Returns True
         """
+
+        if isinstance(guard_inputs, dict):
+            guard_inputs = self._resolve_dict_inputs(guard_inputs)
 
         failure_handler = on_failure if on_failure is not None else self._on_failure
 

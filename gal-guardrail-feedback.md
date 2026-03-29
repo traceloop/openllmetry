@@ -173,8 +173,8 @@ toxicity_guard(input=lambda r: ToxicityDetectorInput(text=r))
 
 **Rationale:** Self-documenting and order-independent.
 
-- [ ] Address this suggestion
-- [ ] Test changes
+- [x] Address this suggestion
+- [x] Test changes
 
 ---
 

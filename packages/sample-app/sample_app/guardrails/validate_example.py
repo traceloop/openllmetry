@@ -97,11 +97,11 @@ async def secure_chat(user_prompt: str) -> str:
 
     result = await output_guardrail.run(
         generate_response, user_prompt,
-        input_mapper=lambda response_text: [
-            AnswerRelevancyInput(answer=response_text, question=user_prompt),
-            SexismDetectorInput(text=response_text),
-            ToxicityDetectorInput(text=response_text),
-        ],
+        input_mapper=lambda response_text: {
+            "answer-relevancy": AnswerRelevancyInput(answer=response_text, question=user_prompt),
+            "sexism-detector": SexismDetectorInput(text=response_text),
+            "toxicity-detector": ToxicityDetectorInput(text=response_text),
+        },
     )
 
     print("Output validation passed.")

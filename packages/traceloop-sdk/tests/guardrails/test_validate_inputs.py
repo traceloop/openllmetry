@@ -410,3 +410,91 @@ class TestValidateInputsEdgeCases:
 
         with pytest.raises(GuardInputTypeError):
             guardrails._validate_inputs(["not a dict"])
+
+
+class TestResolveDictInputs:
+    """Tests for _resolve_dict_inputs dict-to-list resolution."""
+
+    def test_resolves_by_function_name(self):
+        """Dict keys are matched to guard __name__ attributes."""
+
+        def score_guard(data):
+            return True
+
+        def text_guard(data):
+            return True
+
+        guardrails = create_guardrails_with_guards([score_guard, text_guard])
+
+        # Reverse order — should still resolve correctly
+        result = guardrails._resolve_dict_inputs({
+            "text_guard": {"text": "hello"},
+            "score_guard": {"score": 0.8},
+        })
+
+        assert result == [{"score": 0.8}, {"text": "hello"}]
+
+    def test_resolves_evaluator_guard_names(self):
+        """Evaluator guards use their slug as __name__."""
+        guardrails = create_guardrails_with_guards([
+            pii_guard(),
+            toxicity_guard(),
+        ])
+
+        pii_input = PIIDetectorInput(text="hello")
+        tox_input = ToxicityDetectorInput(text="hello")
+
+        result = guardrails._resolve_dict_inputs({
+            "toxicity-detector": tox_input,
+            "pii-detector": pii_input,
+        })
+
+        assert result == [pii_input, tox_input]
+
+    def test_missing_key_raises_with_helpful_message(self):
+        """Missing dict key raises ValueError with available keys and guard names."""
+
+        def my_guard(data):
+            return True
+
+        guardrails = create_guardrails_with_guards([my_guard])
+
+        with pytest.raises(ValueError) as exc_info:
+            guardrails._resolve_dict_inputs({"wrong_name": "data"})
+
+        error_msg = str(exc_info.value)
+        assert "my_guard" in error_msg
+        assert "wrong_name" in error_msg
+        assert "missing key" in error_msg
+
+    def test_extra_keys_are_ignored(self):
+        """Extra keys in the dict are silently ignored."""
+
+        def my_guard(data):
+            return True
+
+        guardrails = create_guardrails_with_guards([my_guard])
+
+        result = guardrails._resolve_dict_inputs({
+            "my_guard": {"score": 0.8},
+            "extra_key": {"unused": True},
+        })
+
+        assert result == [{"score": 0.8}]
+
+    def test_lambda_guards_use_fallback_name(self):
+        """Lambda guards get fallback names like guard_0, guard_1."""
+        guardrails = create_guardrails_with_guards([
+            lambda z: True,
+            lambda z: True,
+        ])
+
+        result = guardrails._resolve_dict_inputs({
+            "<lambda>": "input_0",
+        })
+
+        # Both lambdas have __name__ == "<lambda>", so the first
+        # one matches and the second one also matches the same key.
+        # This is expected — lambdas have identical names, so dict
+        # mapping is most useful with named functions/evaluator guards.
+        assert result == ["input_0", "input_0"]

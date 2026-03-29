@@ -12,8 +12,8 @@ FailureResult = TypeVar("FailureResult")
 # Type aliases for guards and handlers
 Guard = Union[Callable[[Any], bool], Callable[[Any], Awaitable[bool]]]
 
-# Type for input mapper: takes function result, returns list of guard inputs (one per guard)
-InputMapper = Callable[[GuardedFunctionResult], list[GuardInput]]
+# Type for input mapper: takes function result, returns guard inputs (list or dict keyed by guard name)
+InputMapper = Callable[[GuardedFunctionResult], list[GuardInput] | dict[str, GuardInput]]
 
 
 @dataclass

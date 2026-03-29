@@ -270,3 +270,71 @@ class TestValidateParallelSequential:
 
         assert result is False
         assert call_count[0] == 1  # Only first guard was called
+
+
+class TestValidateDictInputs:
+    """Tests for validate() with dict-based guard inputs."""
+
+    @pytest.mark.asyncio
+    async def test_dict_inputs_resolves_by_guard_name(self):
+        """Dict inputs are matched to guards by __name__."""
+
+        def score_guard(data):
+            return data["score"] > 0.5
+
+        def text_guard(data):
+            return "bad" not in data["text"]
+
+        guardrails = create_guardrails_with_guards(
+            guards=[score_guard, text_guard]
+        )
+
+        # Dict keys match function names, order doesn't matter
+        result = await guardrails.validate({
+            "text_guard": {"text": "hello"},
+            "score_guard": {"score": 0.8},
+        })
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_dict_inputs_guard_fails(self):
+        """Dict inputs correctly route failing input to the right guard."""
+
+        def score_guard(data):
+            return data["score"] > 0.5
+
+        def text_guard(data):
+            return "bad" not in data["text"]
+
+        guardrails = create_guardrails_with_guards(
+            guards=[score_guard, text_guard]
+        )
+
+        result = await guardrails.validate({
+            "score_guard": {"score": 0.8},
+            "text_guard": {"text": "this is bad"},
+        })
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_dict_inputs_missing_key_raises(self):
+        """Dict inputs raise ValueError when a guard name is missing."""
+
+        def score_guard(data):
+            return True
+
+        def text_guard(data):
+            return True
+
+        guardrails = create_guardrails_with_guards(
+            guards=[score_guard, text_guard]
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            await guardrails.validate({
+                "score_guard": {"score": 0.8},
+                # Missing "text_guard"
+            })
+
+        assert "text_guard" in str(exc_info.value)
+        assert "missing key" in str(exc_info.value)
