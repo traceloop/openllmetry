@@ -267,11 +267,10 @@ def guardrail(
         if is_async:
             @wraps(func)
             async def async_wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-                from traceloop.sdk import Traceloop
+                from traceloop.sdk.guardrail import Guardrails
 
-                client = Traceloop.get()
-                g = client.create_guardrail(
-                    guards=guards_list,
+                g = Guardrails(
+                    *guards_list,
                     on_failure=failure_handler,
                     name=name or func.__name__,
                 )
@@ -284,11 +283,10 @@ def guardrail(
         else:
             @wraps(func)
             def sync_wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-                from traceloop.sdk import Traceloop
+                from traceloop.sdk.guardrail import Guardrails
 
-                client = Traceloop.get()
-                g = client.create_guardrail(
-                    guards=guards_list,
+                g = Guardrails(
+                    *guards_list,
                     on_failure=failure_handler,
                     name=name or func.__name__,
                 )

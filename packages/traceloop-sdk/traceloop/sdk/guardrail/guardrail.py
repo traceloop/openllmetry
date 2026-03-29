@@ -1,5 +1,5 @@
 """
-Guardrails class for running guarded operations through the Traceloop client.
+Guardrails class for running guarded operations.
 """
 import asyncio
 import inspect
@@ -7,7 +7,6 @@ import json
 import time
 from typing import Any, Callable, Awaitable, cast, Optional
 
-import httpx
 from pydantic import TypeAdapter
 from opentelemetry.trace import Tracer, Span
 from opentelemetry.trace.status import Status, StatusCode
@@ -43,21 +42,15 @@ class Guardrails:
     """
     Guardrails class for running guarded operations.
 
-    Create via the Traceloop client:
-        client = Traceloop.init(api_key="...")
-
     Usage:
-        g = client.create_guardrail(
-            guards=[
-                lambda z: z["score"] > 0.8,
-                pii_guard(),
-            ],
-            on_failure=OnFailure.raise_exception("Guard failed"),
+        g = Guardrails(
+            pii_guard(),
+            toxicity_guard(),
+            on_failure="raise",
         )
         result = await g.run(my_function)
     """
 
-    _async_http: httpx.AsyncClient
     _guards: list[Guard]
     _on_failure: OnFailureHandler
     _run_all: bool
@@ -66,8 +59,7 @@ class Guardrails:
 
     def __init__(
         self,
-        async_http_client: httpx.AsyncClient,
-        guards: list[Guard],
+        *guards: Guard,
         on_failure: OnFailureInput = "raise",
         name: str = "",
         run_all: bool = False,
@@ -77,9 +69,9 @@ class Guardrails:
         Create a new guardrail instance.
 
         Args:
-            async_http_client: HTTP client for evaluator API calls.
-            guards: List of guard functions. Each receives its corresponding
-                    guard_input and returns bool. True = pass, False = fail.
+            *guards: Guard functions as positional arguments. Each receives its
+                     corresponding guard_input and returns bool. True = pass,
+                     False = fail.
             on_failure: Called when any guard returns False. Can be:
                 - "raise": Raise GuardValidationError (default)
                 - "log": Log warning and return result
@@ -93,8 +85,7 @@ class Guardrails:
             parallel: If True (default), run guards in parallel.
                       If False, run guards sequentially.
         """
-        self._async_http = async_http_client
-        self._guards = guards
+        self._guards = list(guards)
         self._on_failure = resolve_on_failure(on_failure)
         self._name = name
         self._run_all = run_all
@@ -297,9 +288,9 @@ class Guardrails:
             GuardExecutionError: If a guard function throws an exception
 
         Example:
-            g = client.create_guardrail(
-                guards=[toxicity_guard()],
-                on_failure=OnFailure.raise_exception("Quality check failed"),
+            g = Guardrails(
+                toxicity_guard(),
+                on_failure="raise",
             )
             result = await g.run(generate_email)
 
@@ -365,9 +356,9 @@ class Guardrails:
             GuardExecutionError: If a guard function throws an exception
 
         Example:
-            g = client.create_guardrail(
-                guards=[lambda z: z["score"] > 0.8],
-                on_failure=OnFailure.log(),
+            g = Guardrails(
+                lambda z: z["score"] > 0.8,
+                on_failure="log",
             )
             passed = await g.validate([{"score": 0.9}])  # Returns True
         """

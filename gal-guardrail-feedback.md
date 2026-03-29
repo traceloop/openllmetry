@@ -105,8 +105,8 @@ result = await Guardrail(pii_guard(), toxicity_guard()).run(my_func).on_failure(
 
 **Rationale:** If a class can be instantiated directly, it should be. The `client.create_guardrail()` indirection forces users to manage a client object just to create a guardrail. The HTTP client dependency can be resolved internally from the Traceloop singleton.
 
-- [ ] Address this suggestion
-- [ ] Test changes
+- [x] Address this suggestion
+- [x] Test changes
 
 ---
 

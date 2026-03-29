@@ -4,7 +4,6 @@ Unit tests for guardrail _validate_inputs method.
 Tests both pass and fail cases for length and type validation.
 """
 import pytest
-from unittest.mock import MagicMock
 from pydantic import BaseModel
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
@@ -31,10 +30,8 @@ class AnotherInput(BaseModel):
 
 def create_guardrails_with_guards(guards: list) -> Guardrails:
     """Helper to create a Guardrails instance with specified guards."""
-    mock_client = MagicMock()
     guardrails = Guardrails(
-        mock_client,
-        guards=guards,
+        *guards,
         on_failure=lambda x: None,
     )
     return guardrails

@@ -13,10 +13,8 @@ from traceloop.sdk.guardrail.on_failure import OnFailure
 
 def create_guardrails_with_guards(guards: list, on_failure=None) -> Guardrails:
     """Helper to create a Guardrails instance with specified guards."""
-    mock_client = MagicMock()
     guardrails = Guardrails(
-        mock_client,
-        guards=guards,
+        *guards,
         on_failure=on_failure or OnFailure.noop(),
     )
     return guardrails
@@ -170,8 +168,7 @@ class TestValidateErrors:
     @pytest.mark.asyncio
     async def test_raises_value_error_with_empty_guards(self):
         """Validate raises ValueError if no guards are configured."""
-        mock_client = MagicMock()
-        guardrails = Guardrails(mock_client, guards=[])
+        guardrails = Guardrails()
 
         with pytest.raises(ValueError) as exc_info:
             await guardrails.validate([{"score": 0.8}])

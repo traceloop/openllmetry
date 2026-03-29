@@ -31,6 +31,7 @@ from pydantic import BaseModel
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, guardrail
 from traceloop.sdk.guardrail import (
+    Guardrails,
     custom_evaluator_guard,
 )
 
@@ -43,8 +44,8 @@ class MedicalAdviceInput(BaseModel):
     text: str
 
 
-# Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True, endpoint_is_traceloop=True)
+# Initialize Traceloop
+Traceloop.init(app_name="guardrail-custom-evaluator", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -120,11 +121,11 @@ async def diagnosis_request_blocker():
         )
         return completion.choices[0].message.content
 
-    guardrail = client.create_guardrail(
-        guards=[custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass")],
+    g = Guardrails(
+        custom_evaluator_guard(evaluator_slug="diagnosis-blocker", condition_field="pass"),
         on_failure="raise",
     )
-    result = await guardrail.run(
+    result = await g.run(
         attempt_diagnosis_request,
     )
     print(f"Response: {result[:200]}...")

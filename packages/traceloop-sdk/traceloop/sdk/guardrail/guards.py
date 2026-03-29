@@ -1,21 +1,16 @@
 """
 Simplified guard factory with sensible defaults.
 
-Provides pre-configured guards ready for use with client.create_guardrail().
+Provides pre-configured guards ready for use with Guardrails().
 
 Example:
-    from traceloop.sdk import Traceloop
-    from traceloop.sdk.guardrail import toxicity_guard, pii_guard, answer_relevancy_guard, OnFailure
+    from traceloop.sdk.guardrail import Guardrails, toxicity_guard, pii_guard, answer_relevancy_guard
 
-    client = Traceloop.init(api_key="...")
-
-    guardrail = client.create_guardrail(
-        guards=[
-            toxicity_guard(),
-            pii_guard(),
-            answer_relevancy_guard(),
-        ],
-        on_failure=OnFailure.raise_exception("Content policy violation"),
+    guardrail = Guardrails(
+        toxicity_guard(),
+        pii_guard(),
+        answer_relevancy_guard(),
+        on_failure="raise",
     )
 
     result = await guardrail.run(generate_content)

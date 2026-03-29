@@ -16,6 +16,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, agent
 from traceloop.sdk.guardrail import (
+    Guardrails,
     pii_guard,
     toxicity_guard,
     agent_goal_completeness_guard,
@@ -29,8 +30,8 @@ from traceloop.sdk.generated.evaluators.request import (
     AnswerRelevancyInput,
 )
 
-# Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-traceloop-evaluator", disable_batch=True, endpoint_is_traceloop=True)
+# Initialize Traceloop
+Traceloop.init(app_name="guardrail-traceloop-evaluator", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -60,8 +61,8 @@ async def generate_customer_response() -> str:
 async def pii_guard_example():
     """Demonstrate PII detection guard using Traceloop evaluator."""
 
-    guardrail = client.create_guardrail(
-        guards=[pii_guard(probability_threshold=0.7, timeout_in_sec=45)],
+    guardrail = Guardrails(
+        pii_guard(probability_threshold=0.7, timeout_in_sec=45),
         on_failure="raise",
     )
     result = await guardrail.run(
@@ -91,8 +92,8 @@ async def generate_content() -> str:
 async def toxicity_guard_example():
     """Demonstrate toxicity detection with score-based condition."""
 
-    guardrail = client.create_guardrail(
-        guards=[toxicity_guard(threshold=0.7)],
+    guardrail = Guardrails(
+        toxicity_guard(threshold=0.7),
         on_failure="raise",
     )
     result = await guardrail.run(
@@ -163,8 +164,8 @@ async def agent_trajectory_example():
             trajectory_completions=json.dumps(trajectory_completions)
         )]
 
-    guardrail = client.create_guardrail(
-        guards=[agent_goal_completeness_guard(threshold=0.7)],
+    guardrail = Guardrails(
+        agent_goal_completeness_guard(threshold=0.7),
         on_failure="Sorry the agent is unable to help you with that.",
     )
     result = await guardrail.run(run_travel_agent, input_mapper=create_trajectory_input)
@@ -204,24 +205,24 @@ async def condition_helpers_example():
         return [AnswerRelevancyInput(answer=response, question=user_question)]
 
     # Using gt() helper - passes if relevancy score > 0.7
-    guardrail = client.create_guardrail(
-        guards=[answer_relevancy_guard(condition=gt(0.7))],
+    guardrail = Guardrails(
+        answer_relevancy_guard(condition=gt(0.7)),
         on_failure="The response was not relevant enough.",
     )
     result = await guardrail.run(generate_travel_response, input_mapper=relevancy_mapper)
     print(f"Relevancy check (gt 0.7): {result[:100]}...")
 
     # Using between() helper - passes if relevancy score is in acceptable range
-    guardrail2 = client.create_guardrail(
-        guards=[answer_relevancy_guard(condition=between(0.5, 1.0))],
+    guardrail2 = Guardrails(
+        answer_relevancy_guard(condition=between(0.5, 1.0)),
         on_failure="Relevancy score outside acceptable range.",
     )
     result2 = await guardrail2.run(generate_travel_response, input_mapper=relevancy_mapper)
     print(f"Relevancy check (between 0.5-1.0): {result2[:100]}...")
 
     # Using a plain lambda - the most Pythonic option
-    guardrail3 = client.create_guardrail(
-        guards=[answer_relevancy_guard(condition=lambda v: v >= 0.9)],
+    guardrail3 = Guardrails(
+        answer_relevancy_guard(condition=lambda v: v >= 0.9),
         on_failure="The response did not meet the high relevancy bar.",
     )
     result3 = await guardrail3.run(generate_travel_response, input_mapper=relevancy_mapper)

@@ -22,6 +22,7 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
+    Guardrails,
     GuardValidationError,
     GuardedResult,
     pii_guard,
@@ -29,7 +30,7 @@ from traceloop.sdk.guardrail import (
 from traceloop.sdk.generated.evaluators.request import PIIDetectorInput
 
 # Initialize Traceloop
-client = Traceloop.init(app_name="guardrail-multiple-guards", disable_batch=True, endpoint_is_traceloop=True)
+Traceloop.init(app_name="guardrail-multiple-guards", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -72,12 +73,10 @@ async def multiple_lambda_guards_example():
             {"caps_ratio": caps_ratio},   # For capitalization guard
         ]
 
-    guardrail = client.create_guardrail(
-        guards=[
-            lambda z: z["word_count"] < 200,           # Guard 0: Length check
-            lambda z: "danger" not in z["text"].lower(),  # Guard 1: Forbidden words
-            lambda z: z["caps_ratio"] < 0.3,           # Guard 2: No excessive caps
-        ],
+    guardrail = Guardrails(
+        lambda z: z["word_count"] < 200,           # Guard 0: Length check
+        lambda z: "danger" not in z["text"].lower(),  # Guard 1: Forbidden words
+        lambda z: z["caps_ratio"] < 0.3,           # Guard 2: No excessive caps
         on_failure="raise",
         parallel=True,
     )
@@ -143,11 +142,9 @@ async def mixed_guard_types_example():
             {"text": text},                # Guard 1: Custom function input (dict)
         ]
 
-    guardrail = client.create_guardrail(
-        guards=[
-            pii_guard(probability_threshold=0.7),
-            business_rules_guard,
-        ],
+    guardrail = Guardrails(
+        pii_guard(probability_threshold=0.7),
+        business_rules_guard,
         on_failure="raise",
     )
 
@@ -187,12 +184,10 @@ async def run_all_guards_example():
         print(f"[Handler] Content failed validation: {output.result[:50]}...")
         return "Content did not meet our quality standards. Please try again."
 
-    guardrail = client.create_guardrail(
-        guards=[
-            lambda z: z["word_count"] > 5,                    # Min length
-            lambda z: "dangerous" not in z["text"].lower(),   # No dangerous
-            lambda z: not z["has_caps_issues"],               # No all caps
-        ],
+    guardrail = Guardrails(
+        lambda z: z["word_count"] > 5,                    # Min length
+        lambda z: "dangerous" not in z["text"].lower(),   # No dangerous
+        lambda z: not z["has_caps_issues"],               # No all caps
         on_failure=custom_handler,
         run_all=True,  # Run ALL guards even after first failure
         parallel=True,
@@ -250,8 +245,8 @@ async def sequential_guards_example():
         print(f"  Running {z['step']}...")
         return len(z["text"].split()) >= 3
 
-    guardrail = client.create_guardrail(
-        guards=[pre_check, main_check, post_check],
+    guardrail = Guardrails(
+        pre_check, main_check, post_check,
         on_failure="raise",
         parallel=False,  # Run guards one at a time, in order
         run_all=False,   # Stop at first failure (default)

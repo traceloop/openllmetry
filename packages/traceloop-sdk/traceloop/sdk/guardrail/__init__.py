@@ -5,18 +5,14 @@ Provides a simple function-based guardrail system for running protected operatio
 with evaluation and failure handling.
 
 Example:
-    from traceloop.sdk import Traceloop
-    from traceloop.sdk.guardrail import pii_guard, OnFailure
-
-    # Initialize and get client
-    client = Traceloop.init(api_key="...")
+    from traceloop.sdk.guardrail import Guardrails, pii_guard
 
     async def generate_email() -> str:
         return await llm.complete("Write a customer email...")
 
-    guardrail = client.create_guardrail(
-        guards=[pii_guard()],
-        on_failure=OnFailure.raise_exception("PII detected in response"),
+    guardrail = Guardrails(
+        pii_guard(),
+        on_failure="raise",
     )
     result = await guardrail.run(generate_email)
 

@@ -19,12 +19,13 @@ from openai import AsyncOpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
+    Guardrails,
     GuardedResult,
     GuardValidationError,
 )
 
-# Initialize Traceloop - returns client with guardrails access
-client = Traceloop.init(app_name="guardrail-custom-function", disable_batch=True, endpoint_is_traceloop=True)
+# Initialize Traceloop
+Traceloop.init(app_name="guardrail-custom-function", disable_batch=True, endpoint_is_traceloop=True)
 
 openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -50,8 +51,8 @@ async def simple_lambda_guard_example():
 
 
     try:
-        guardrail = client.create_guardrail(
-            guards=[lambda z: z["word_count"] < 100],
+        guardrail = Guardrails(
+            lambda z: z["word_count"] < 100,
             on_failure="raise",
         )
         result = await guardrail.run(generate_summary)
@@ -108,8 +109,8 @@ async def custom_function_guard_example():
         return completion.choices[0].message.content
 
     try:
-        guardrail = client.create_guardrail(
-            guards=[content_safety_guard],  # Pass function reference
+        guardrail = Guardrails(
+            content_safety_guard,  # Pass function reference
             on_failure="raise",
         )
         # Default mapper handles str -> {"text": text, "prompt": text, "completion": text}
@@ -145,8 +146,8 @@ async def custom_handler_example():
         raise GuardValidationError("Blocked after alerting team", output)
 
     try:
-        guardrail = client.create_guardrail(
-            guards=[lambda z: "danger" not in z["text"].lower()],
+        guardrail = Guardrails(
+            lambda z: "danger" not in z["text"].lower(),
             on_failure=custom_alert_handler,
         )
         result = await guardrail.run(generate_content)
@@ -176,8 +177,8 @@ async def fallback_value_example():
         return completion.choices[0].message.content
 
     # Return a safe fallback instead of raising
-    guardrail = client.create_guardrail(
-        guards=[lambda z: "risk" not in z["text"].lower()],
+    guardrail = Guardrails(
+        lambda z: "risk" not in z["text"].lower(),
         on_failure=(
             "I'd recommend visiting a local museum or taking a guided walking tour - "
             "both are safe and enjoyable options!"
