@@ -409,7 +409,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.53.3"
+version = "0.54.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },

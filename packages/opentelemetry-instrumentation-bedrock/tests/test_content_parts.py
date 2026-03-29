@@ -4,8 +4,6 @@ These are pure unit tests (no VCR cassettes, no boto3) that validate
 the mapping logic in span_utils.py against the OTel GenAI semconv.
 """
 
-import json
-
 from opentelemetry.instrumentation.bedrock.span_utils import (
     _anthropic_content_to_parts,
     _converse_content_to_parts,
@@ -267,8 +265,22 @@ class TestConverseContentToParts:
         ]
         parts = _converse_content_to_parts(blocks)
         assert len(parts) == 1
-        # Document should be a blob or file part, not a generic text fallback
-        assert parts[0]["type"] != "text" or "document" in json.dumps(parts[0]).lower()
+        assert parts[0]["type"] == "blob"
+        assert parts[0]["modality"] == "document"
+        assert parts[0]["mime_type"] == "application/pdf"
+        assert parts[0]["content"] == "report.pdf"
+
+    def test_document_block_csv(self):
+        """Document format 'csv' maps to 'text/csv'."""
+        blocks = [{"document": {"format": "csv", "name": "data.csv", "source": {"bytes": b"x"}}}]
+        parts = _converse_content_to_parts(blocks)
+        assert parts[0]["mime_type"] == "text/csv"
+
+    def test_document_block_unknown_format(self):
+        """Unknown document format falls back to 'application/<fmt>'."""
+        blocks = [{"document": {"format": "odt", "name": "f.odt", "source": {"bytes": b"x"}}}]
+        parts = _converse_content_to_parts(blocks)
+        assert parts[0]["mime_type"] == "application/odt"
 
     def test_guard_content_block(self):
         blocks = [{"guardContent": {"text": {"text": "blocked"}}}]

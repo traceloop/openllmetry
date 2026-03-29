@@ -31,6 +31,7 @@ BEDROCK_FINISH_REASON_MAP = {
     "COMPLETE": "stop",
     "TOOL_CALL": "tool_call",
     "MAX_TOKENS": "length",
+    "ERROR": "error",
     # Amazon Titan
     "FINISH": "stop",
     # Converse API
@@ -113,6 +114,9 @@ def _anthropic_content_to_parts(content_blocks):
             elif block_type == "thinking":
                 parts.append({"type": "reasoning", "content": block.get("thinking", "")})
             else:
+                # Stopgap: unknown Anthropic block types are passed through
+                # with their raw type string. This may emit non-OTel types
+                # but avoids data loss until explicit mappings are added.
                 parts.append({"type": block_type, "content": json.dumps(block)})
         else:
             parts.append(_text_part(str(block)))
@@ -363,7 +367,6 @@ def _set_generations_span_attributes(span, response_body):
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(output_messages),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
 
 
 def _set_anthropic_completion_span_attributes(
@@ -436,8 +439,6 @@ def _set_anthropic_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps([_output_message("assistant", parts, fr)]),
         )
-    if fr:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_anthropic_messages_span_attributes(
@@ -549,16 +550,16 @@ def _set_span_completions_attributes(span, response_body):
     finish_reasons = []
     for completion in response_body.get("completions"):
         fr_data = completion.get("finishReason", {})
-        raw_reason = fr_data.get("reason", "unknown") if isinstance(fr_data, dict) else str(fr_data)
+        raw_reason = fr_data.get("reason") if isinstance(fr_data, dict) else str(fr_data) or None
         fr = _map_finish_reason(raw_reason)
-        finish_reasons.append(fr)
+        if fr:
+            finish_reasons.append(fr)
         output_messages.append(_output_message("assistant", [_text_part(completion.get("data").get("text"))], fr))
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(output_messages),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
@@ -608,8 +609,6 @@ def _set_llama_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-    if fr:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_amazon_span_attributes(
@@ -715,8 +714,6 @@ def _set_amazon_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-        filtered_reasons = tuple(fr for fr in finish_reasons if fr)
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, filtered_reasons)
     elif "outputText" in response_body:
         fr = _map_finish_reason(response_body.get("completionReason"))
         _set_span_attribute(
@@ -724,8 +721,6 @@ def _set_amazon_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps([_output_message("assistant", [_text_part(response_body.get("outputText"))], fr)]),
         )
-        if fr:
-            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
     elif "output" in response_body:
         fr = _map_finish_reason(response_body.get("stopReason"))
         msgs = response_body.get("output").get("message", {}).get("content", [])
@@ -737,8 +732,6 @@ def _set_amazon_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-        if fr:
-            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_imported_model_span_attributes(
@@ -783,8 +776,6 @@ def _set_imported_model_response_span_attributes(span, response_body):
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps([_output_message("assistant", [_text_part(content)], fr)]),
     )
-    if fr:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_imported_model_prompt_span_attributes(span, request_body):
@@ -926,11 +917,25 @@ def _converse_content_to_parts(content_blocks):
                 })
             elif "document" in block:
                 doc = block["document"]
+                # Converse API uses short format names (e.g. "pdf", "csv");
+                # map to proper MIME types for OTel semconv compliance.
                 fmt = doc.get("format", "")
+                mime_map = {
+                    "pdf": "application/pdf",
+                    "csv": "text/csv",
+                    "doc": "application/msword",
+                    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "xls": "application/vnd.ms-excel",
+                    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "html": "text/html",
+                    "txt": "text/plain",
+                    "md": "text/markdown",
+                }
+                mime_type = mime_map.get(fmt, f"application/{fmt}" if fmt else "")
                 parts.append({
                     "type": "blob",
                     "modality": "document",
-                    "mime_type": fmt,
+                    "mime_type": mime_type,
                     "content": doc.get("name", ""),
                 })
             elif "guardContent" in block:
@@ -965,11 +970,12 @@ def set_converse_input_prompt_span_attributes(kwargs, span):
                 "role": prompt.get("role"),
                 "parts": parts,
             })
-    _set_span_attribute(
-        span,
-        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps(input_messages),
-    )
+    if input_messages:
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+            json.dumps(input_messages),
+        )
 
 
 def set_converse_response_span_attributes(response, span):
