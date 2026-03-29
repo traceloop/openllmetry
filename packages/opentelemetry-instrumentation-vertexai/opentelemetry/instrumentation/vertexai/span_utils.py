@@ -14,9 +14,6 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
-GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
-GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
-
 
 def _set_span_attribute(span, name, value):
     if value is not None:
@@ -33,14 +30,71 @@ def _is_base64_image_part(item):
             return False
 
         # Check if it's an image mime type and has inline data
-        if item.mime_type and 'image/' in item.mime_type and item.inline_data:
-            # Check if the inline_data has actual data
-            if hasattr(item.inline_data, 'data') and item.inline_data.data:
+        if item.mime_type and "image/" in item.mime_type and item.inline_data:
+            data = getattr(item.inline_data, "data", None)
+            if isinstance(data, (bytes, bytearray)) and len(data) > 0:
                 return True
 
         return False
     except Exception:
         return False
+
+
+def _map_vertex_finish_reason(finish_reason):
+    if finish_reason is None:
+        return None
+    name = getattr(finish_reason, "name", None) or str(finish_reason)
+    mapping = {
+        "STOP": "stop",
+        "MAX_TOKENS": "length",
+        "SAFETY": "content_filter",
+        "RECITATION": "content_filter",
+        "BLOCKLIST": "content_filter",
+        "PROHIBITED_CONTENT": "content_filter",
+        "SPII": "content_filter",
+        "LANGUAGE": "content_filter",
+        "FINISH_REASON_UNSPECIFIED": None,
+        "OTHER": "error",
+    }
+    return mapping.get(name)
+
+
+async def _otel_image_part_vertex_async(item, span, item_index):
+    if not _is_base64_image_part(item):
+        return None
+    mime = item.mime_type or "application/octet-stream"
+    if Config.upload_base64_image:
+        uploaded = await _process_image_part(
+            item, span.context.trace_id, span.context.span_id, item_index
+        )
+        if uploaded and uploaded.get("image_url", {}).get("url"):
+            return {
+                "type": "uri",
+                "modality": "image",
+                "uri": uploaded["image_url"]["url"],
+            }
+    binary_data = item.inline_data.data
+    b64 = base64.b64encode(binary_data).decode("utf-8")
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+
+
+def _otel_image_part_vertex_sync(item, span, item_index):
+    if not _is_base64_image_part(item):
+        return None
+    mime = item.mime_type or "application/octet-stream"
+    if Config.upload_base64_image:
+        uploaded = _process_image_part_sync(
+            item, span.context.trace_id, span.context.span_id, item_index
+        )
+        if uploaded and uploaded.get("image_url", {}).get("url"):
+            return {
+                "type": "uri",
+                "modality": "image",
+                "uri": uploaded["image_url"]["url"],
+            }
+    binary_data = item.inline_data.data
+    b64 = base64.b64encode(binary_data).decode("utf-8")
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
 
 
 async def _process_image_part(item, trace_id, span_id, content_index):
@@ -122,11 +176,9 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
 async def _process_vertexai_argument(argument, span):
     """Process a single argument for VertexAI, handling different types"""
     if isinstance(argument, str):
-        # Simple text argument in OpenAI format
-        return [{"type": "text", "text": argument}]
+        return [{"type": "text", "content": argument}]
 
     elif isinstance(argument, list):
-        # List of mixed content (text strings and Part objects) - deep copy and process
         content_list = copy.deepcopy(argument)
         processed_items = []
 
@@ -138,7 +190,6 @@ async def _process_vertexai_argument(argument, span):
         return processed_items
 
     else:
-        # Single Part object - convert to OpenAI format
         processed_item = await _process_content_item_vertexai(argument, span, 0)
         return [processed_item] if processed_item is not None else []
 
@@ -146,32 +197,25 @@ async def _process_vertexai_argument(argument, span):
 async def _process_content_item_vertexai(content_item, span, item_index):
     """Process a single content item for VertexAI"""
     if isinstance(content_item, str):
-        # Convert text to OpenAI format
-        return {"type": "text", "text": content_item}
+        return {"type": "text", "content": content_item}
 
     elif _is_base64_image_part(content_item):
-        # Process image part
-        return await _process_image_part(
-            content_item, span.context.trace_id, span.context.span_id, item_index
-        )
+        return await _otel_image_part_vertex_async(content_item, span, item_index)
 
-    elif hasattr(content_item, 'text'):
-        # Text part to OpenAI format
-        return {"type": "text", "text": content_item.text}
+    elif hasattr(content_item, "text"):
+        t = getattr(content_item, "text", None)
+        if isinstance(t, str) and t:
+            return {"type": "text", "content": t}
 
-    else:
-        # Other types as text
-        return {"type": "text", "text": str(content_item)}
+    return {"type": "text", "content": str(content_item)}
 
 
 def _process_vertexai_argument_sync(argument, span):
     """Synchronous version of argument processing for VertexAI"""
     if isinstance(argument, str):
-        # Simple text argument in OpenAI format
-        return [{"type": "text", "text": argument}]
+        return [{"type": "text", "content": argument}]
 
     elif isinstance(argument, list):
-        # List of mixed content (text strings and Part objects) - deep copy and process
         content_list = copy.deepcopy(argument)
         processed_items = []
 
@@ -183,7 +227,6 @@ def _process_vertexai_argument_sync(argument, span):
         return processed_items
 
     else:
-        # Single Part object - convert to OpenAI format
         processed_item = _process_content_item_vertexai_sync(argument, span, 0)
         return [processed_item] if processed_item is not None else []
 
@@ -191,22 +234,17 @@ def _process_vertexai_argument_sync(argument, span):
 def _process_content_item_vertexai_sync(content_item, span, item_index):
     """Synchronous version of content item processing for VertexAI"""
     if isinstance(content_item, str):
-        # Convert text to OpenAI format
-        return {"type": "text", "text": content_item}
+        return {"type": "text", "content": content_item}
 
     elif _is_base64_image_part(content_item):
-        # Process image part
-        return _process_image_part_sync(
-            content_item, span.context.trace_id, span.context.span_id, item_index
-        )
+        return _otel_image_part_vertex_sync(content_item, span, item_index)
 
-    elif hasattr(content_item, 'text'):
-        # Text part to OpenAI format
-        return {"type": "text", "text": content_item.text}
+    elif hasattr(content_item, "text"):
+        t = getattr(content_item, "text", None)
+        if isinstance(t, str) and t:
+            return {"type": "text", "content": t}
 
-    else:
-        # Other types as text
-        return {"type": "text", "text": str(content_item)}
+    return {"type": "text", "content": str(content_item)}
 
 
 @dont_throw
@@ -219,12 +257,11 @@ async def set_input_attributes(span, args):
         for argument in args:
             processed_content = await _process_vertexai_argument(argument, span)
             if processed_content:
-                messages.append({
-                    "role": "user",
-                    "content": json.dumps(processed_content),
-                })
+                messages.append({"role": "user", "parts": processed_content})
         if messages:
-            _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
+            )
 
 
 # Sync version with image processing support
@@ -238,12 +275,11 @@ def set_input_attributes_sync(span, args):
         for argument in args:
             processed_content = _process_vertexai_argument_sync(argument, span)
             if processed_content:
-                messages.append({
-                    "role": "user",
-                    "content": json.dumps(processed_content),
-                })
+                messages.append({"role": "user", "parts": processed_content})
         if messages:
-            _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
+            )
 
 
 @dont_throw
@@ -254,8 +290,12 @@ def set_model_input_attributes(span, kwargs, llm_model):
 
     prompt = kwargs.get("prompt")
     if prompt:
-        messages = [{"role": "user", "content": prompt}]
-        _set_span_attribute(span, GEN_AI_INPUT_MESSAGES, json.dumps(messages))
+        messages = [
+            {"role": "user", "parts": [{"type": "text", "content": prompt}]},
+        ]
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
+        )
 
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
@@ -274,18 +314,41 @@ def set_model_input_attributes(span, kwargs, llm_model):
 
 
 @dont_throw
-def set_response_attributes(span, llm_model, generation_text):
+def set_response_attributes(span, llm_model, generation_text, finish_reason_otel=None):
     if not span.is_recording() or not should_send_prompts():
         return
-    messages = [{"role": "assistant", "content": generation_text}]
-    _set_span_attribute(span, GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
+    parts = []
+    if generation_text:
+        parts.append({"type": "text", "content": generation_text})
+    msg = {"role": "assistant", "parts": parts}
+    if finish_reason_otel is not None:
+        msg["finish_reason"] = finish_reason_otel
+    if parts or finish_reason_otel is not None:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([msg])
+        )
 
 
 @dont_throw
-def set_model_response_attributes(span, llm_model, token_usage):
+def set_model_response_attributes(span, llm_model, token_usage, response_meta=None):
     if not span.is_recording():
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
+
+    if response_meta is not None:
+        candidates = getattr(response_meta, "candidates", None) or []
+        reasons = []
+        for cand in candidates:
+            mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
+            if mapped is not None:
+                reasons.append(mapped)
+        if reasons:
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons
+            )
+        rid = getattr(response_meta, "response_id", None)
+        if rid:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, rid)
 
     if token_usage:
         _set_span_attribute(

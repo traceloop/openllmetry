@@ -32,7 +32,11 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
 
     vertexai_span = spans[0]
     input_messages = json.loads(vertexai_span.attributes["gen_ai.input.messages"])
-    assert any("what is shown in this image?" in msg.get("content", "") for msg in input_messages)
+    assert any(
+        "what is shown in this image?" in part.get("content", "")
+        for msg in input_messages
+        for part in msg.get("parts", [])
+    )
     assert (
         vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gemini-2.0-flash-lite"
@@ -50,7 +54,7 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
         == response._raw_response.usage_metadata.candidates_token_count
     )
     output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
-    assert output_messages[0]["content"] == response.text
+    assert output_messages[0]["parts"][0]["content"] == response.text
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -172,7 +176,7 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == "vertex_ai"
+        == GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
     )
 
     if not expected_content:

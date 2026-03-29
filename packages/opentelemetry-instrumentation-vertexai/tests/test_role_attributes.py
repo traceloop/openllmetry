@@ -1,12 +1,13 @@
 import json
 import pytest
 from unittest.mock import Mock, patch
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.instrumentation.vertexai.span_utils import (
     set_input_attributes,
     set_input_attributes_sync,
 )
-
-GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
 
 
 class TestRoleAttributes:
@@ -28,8 +29,9 @@ class TestRoleAttributes:
 
     def _parse_input_messages(self):
         """Helper to parse gen_ai.input.messages JSON from span attributes"""
-        assert GEN_AI_INPUT_MESSAGES in self.span_attributes
-        return json.loads(self.span_attributes[GEN_AI_INPUT_MESSAGES])
+        key = GenAIAttributes.GEN_AI_INPUT_MESSAGES
+        assert key in self.span_attributes
+        return json.loads(self.span_attributes[key])
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     @pytest.mark.asyncio
@@ -44,10 +46,7 @@ class TestRoleAttributes:
         messages = self._parse_input_messages()
         assert len(messages) == 1
         assert messages[0]["role"] == "user"
-
-        # Verify content is also set
-        expected_content = json.dumps([{"type": "text", "text": "Hello, world!"}])
-        assert messages[0]["content"] == expected_content
+        assert messages[0]["parts"][0] == {"type": "text", "content": "Hello, world!"}
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     @pytest.mark.asyncio
@@ -91,9 +90,7 @@ class TestRoleAttributes:
         assert len(messages) == 1
         assert messages[0]["role"] == "user"
 
-        # Verify content is also set
-        expected_content = json.dumps([{"type": "text", "text": "Hello, world!"}])
-        assert messages[0]["content"] == expected_content
+        assert messages[0]["parts"][0] == {"type": "text", "content": "Hello, world!"}
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     def test_sync_role_attribute_for_multiple_args(self, mock_should_send_prompts):
@@ -187,7 +184,7 @@ class TestRoleAttributes:
         messages = self._parse_input_messages()
         assert len(messages) == 1
         assert messages[0]["role"] == "user"
-        assert messages[0]["content"]  # content should be set
+        assert messages[0]["parts"]
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     def test_sync_role_attribute_for_image_content(self, mock_should_send_prompts):
@@ -205,4 +202,4 @@ class TestRoleAttributes:
         messages = self._parse_input_messages()
         assert len(messages) == 1
         assert messages[0]["role"] == "user"
-        assert messages[0]["content"]  # content should be set
+        assert messages[0]["parts"]

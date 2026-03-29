@@ -32,11 +32,14 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    Meters
+    Meters,
 )
 from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.trace import SpanKind, get_tracer, StatusCode
 from wrapt import wrap_function_wrapper
+
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+_GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +98,9 @@ def _build_from_streaming_response(
     if should_emit_events() and event_logger:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(span, complete_response, llm_model)
+        set_response_attributes(
+            span, complete_response, llm_model, stream_last_chunk=last_chunk
+        )
     set_model_response_attributes(
         span, last_chunk or response, llm_model, token_histogram
     )
@@ -117,7 +122,9 @@ async def _abuild_from_streaming_response(
     if should_emit_events() and event_logger:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(span, complete_response, llm_model)
+        set_response_attributes(
+            span, complete_response, llm_model, stream_last_chunk=last_chunk
+        )
     set_model_response_attributes(
         span, last_chunk if last_chunk else response, llm_model, token_histogram
     )
@@ -203,8 +210,8 @@ async def _awrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
         },
     )
     start_time = time.perf_counter()
@@ -222,7 +229,7 @@ async def _awrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )
@@ -279,8 +286,8 @@ def _wrap(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
         },
     )
 
@@ -299,7 +306,7 @@ def _wrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )

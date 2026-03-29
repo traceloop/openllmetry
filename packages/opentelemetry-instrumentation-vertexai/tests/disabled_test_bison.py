@@ -47,10 +47,8 @@ def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert (
-        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
-        == response
-    )
+    out = json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["parts"]
+    assert "".join(p["content"] for p in out if p.get("type") == "text") == response
 
 
 @pytest.mark.vcr
@@ -90,10 +88,8 @@ def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert (
-        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
-        == response
-    )
+    out = json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["parts"]
+    assert "".join(p["content"] for p in out if p.get("type") == "text") == response
 
 
 @pytest.mark.vcr
@@ -127,7 +123,10 @@ def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
-    assert output_messages[0]["content"] == "".join(response)
+    parts = output_messages[0]["parts"]
+    assert "".join(p["content"] for p in parts if p.get("type") == "text") == "".join(
+        response
+    )
 
 
 @pytest.mark.vcr
@@ -166,7 +165,10 @@ def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
-    assert output_messages[0]["content"] == "".join(response)
+    parts = output_messages[0]["parts"]
+    assert "".join(p["content"] for p in parts if p.get("type") == "text") == "".join(
+        response
+    )
 
 
 @pytest.mark.vcr
@@ -211,10 +213,8 @@ def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
-    assert (
-        json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["content"]
-        == response
-    )
+    out = json.loads(vertexai_span.attributes["gen_ai.output.messages"])[0]["parts"]
+    assert "".join(p["content"] for p in out if p.get("type") == "text") == response
 
 
 @pytest.mark.vcr
@@ -259,14 +259,17 @@ def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
     output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
-    assert output_messages[0]["content"] == "".join(response)
+    parts = output_messages[0]["parts"]
+    assert "".join(p["content"] for p in parts if p.get("type") == "text") == "".join(
+        response
+    )
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == "vertex_ai"
+        == GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
     )
 
     if not expected_content:

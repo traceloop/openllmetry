@@ -17,6 +17,8 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+
 
 class Roles(Enum):
     USER = "user"
@@ -28,7 +30,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: "gcp.gen_ai"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI}
 """The attributes to be used for the event."""
 
 

@@ -14,7 +14,9 @@ from opentelemetry.semconv._incubating.attributes import (
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "gcp.gen_ai"
+    assert log.log_record.attributes.get(
+        GenAIAttributes.GEN_AI_PROVIDER_NAME
+    ) == GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
 
     if not expected_content:
         assert not log.log_record.body
@@ -41,8 +43,14 @@ def test_client_spans(exporter, genai_client):
 
     attrs = span.attributes
 
-    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "gcp.gen_ai"
-    assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
+    assert (
+        attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+        == GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+    )
+    assert (
+        attrs[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
+    )
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
@@ -51,12 +59,23 @@ def test_client_spans(exporter, genai_client):
     input_messages = json.loads(attrs["gen_ai.input.messages"])
     assert len(input_messages) > 0
     assert input_messages[0]["role"] == "user"
+    assert "parts" in input_messages[0]
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in input_messages[0]["parts"][0]
 
-    # Output messages are now a single JSON array
+    # Output messages are now a single JSON array (parts-based OTel schema)
     assert "gen_ai.output.messages" in attrs
     output_messages = json.loads(attrs["gen_ai.output.messages"])
     assert len(output_messages) > 0
     assert output_messages[0]["role"] == "assistant"
+    assert "parts" in output_messages[0]
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in output_messages[0]["parts"][0]
+
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in attrs
+    finish_reasons = attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert isinstance(finish_reasons, (list, tuple))
+    assert len(finish_reasons) > 0
 
     assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0

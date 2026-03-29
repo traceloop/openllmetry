@@ -18,6 +18,8 @@ from opentelemetry.semconv._incubating.attributes import (
 
 from vertexai.generative_models import GenerationResponse
 
+_GCP_VERTEX_AI = GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
+
 
 class Roles(Enum):
     USER = "user"
@@ -29,7 +31,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_VERTEX_AI}
 """The attributes to be used for the event."""
 
 

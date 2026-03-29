@@ -14,6 +14,7 @@ from opentelemetry.instrumentation.vertexai.event_emitter import (
     emit_response_events,
 )
 from opentelemetry.instrumentation.vertexai.span_utils import (
+    _map_vertex_finish_reason,
     set_input_attributes,
     set_input_attributes_sync,
     set_model_input_attributes,
@@ -31,6 +32,11 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
+
+_GCP_VERTEX_AI = GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
+_OP_CHAT = GenAIAttributes.GenAiOperationNameValues.CHAT.value
+_OP_GENERATE_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
+_OP_TEXT_COMPLETION = GenAIAttributes.GenAiOperationNameValues.TEXT_COMPLETION.value
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +130,14 @@ WRAPPED_METHODS = [
 ]
 
 
+def _gen_ai_operation_name(span_name: str) -> str:
+    if "predict" in span_name:
+        return _OP_TEXT_COMPLETION
+    if "send_message" in span_name:
+        return _OP_CHAT
+    return _OP_GENERATE_CONTENT
+
+
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
 
@@ -133,12 +147,23 @@ def is_async_streaming_response(response):
 
 
 @dont_throw
-def handle_streaming_response(span, event_logger, llm_model, response, token_usage):
-    set_model_response_attributes(span, llm_model, token_usage)
+def handle_streaming_response(
+    span, event_logger, llm_model, complete_response, token_usage, stream_last_chunk=None
+):
+    set_model_response_attributes(
+        span, llm_model, token_usage, response_meta=stream_last_chunk
+    )
+    finish_reason_otel = None
+    if stream_last_chunk and getattr(stream_last_chunk, "candidates", None):
+        finish_reason_otel = _map_vertex_finish_reason(
+            stream_last_chunk.candidates[0].finish_reason
+        )
     if should_emit_events():
-        emit_response_events(response, event_logger)
+        emit_response_events(complete_response, event_logger)
     else:
-        set_response_attributes(span, llm_model, response)
+        set_response_attributes(
+            span, llm_model, complete_response, finish_reason_otel=finish_reason_otel
+        )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
 
@@ -146,8 +171,10 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
 def _build_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
+    last_item = None
     for item in response:
         item_to_yield = item
+        last_item = item
         complete_response += str(item.text)
         if item.usage_metadata:
             token_usage = item.usage_metadata
@@ -155,7 +182,12 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
         yield item_to_yield
 
     handle_streaming_response(
-        span, event_logger, llm_model, complete_response, token_usage
+        span,
+        event_logger,
+        llm_model,
+        complete_response,
+        token_usage,
+        stream_last_chunk=last_item,
     )
 
     span.set_status(Status(StatusCode.OK))
@@ -165,15 +197,24 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
+    last_item = None
     async for item in response:
         item_to_yield = item
+        last_item = item
         complete_response += str(item.text)
         if item.usage_metadata:
             token_usage = item.usage_metadata
 
         yield item_to_yield
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(
+        span,
+        event_logger,
+        llm_model,
+        complete_response,
+        token_usage,
+        stream_last_chunk=last_item,
+    )
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -189,12 +230,23 @@ async def _handle_request(span, event_logger, args, kwargs, llm_model):
 
 
 def _handle_response(span, event_logger, response, llm_model):
-    set_model_response_attributes(span, llm_model, response.usage_metadata)
+    set_model_response_attributes(
+        span, llm_model, response.usage_metadata, response_meta=response
+    )
+    finish_reason_otel = None
+    if response.candidates:
+        finish_reason_otel = _map_vertex_finish_reason(
+            response.candidates[0].finish_reason
+        )
+    generation_text = response.candidates[0].text if response.candidates else ""
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
         set_response_attributes(
-            span, llm_model, response.candidates[0].text if response.candidates else ""
+            span,
+            llm_model,
+            generation_text,
+            finish_reason_otel=finish_reason_otel,
         )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -236,8 +288,8 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_VERTEX_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _gen_ai_operation_name(name),
         },
     )
 
@@ -285,8 +337,8 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "vertex_ai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_VERTEX_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _gen_ai_operation_name(name),
         },
     )
 
