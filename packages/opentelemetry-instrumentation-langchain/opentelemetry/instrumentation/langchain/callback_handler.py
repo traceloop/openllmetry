@@ -37,6 +37,7 @@ from opentelemetry.instrumentation.langchain.event_models import (
 )
 from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
+    _map_finish_reason,
     _set_span_attribute,
     extract_model_name_from_response_metadata,
     _extract_model_name_from_association_metadata,
@@ -1097,12 +1098,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     ):
         if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
             # Get finish reason
+            raw_finish_reason = None
             if hasattr(generation, "generation_info") and generation.generation_info:
-                finish_reason = generation.generation_info.get(
-                    "finish_reason", "unknown"
-                )
-            else:
-                finish_reason = "unknown"
+                raw_finish_reason = generation.generation_info.get("finish_reason")
+            finish_reason = _map_finish_reason(raw_finish_reason) if raw_finish_reason else None
 
             # Get tool calls
             if (
@@ -1143,12 +1142,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
         elif isinstance(generation, (Generation, GenerationChunk)):
             # Get finish reason
+            raw_finish_reason = None
             if hasattr(generation, "generation_info") and generation.generation_info:
-                finish_reason = generation.generation_info.get(
-                    "finish_reason", "unknown"
-                )
-            else:
-                finish_reason = "unknown"
+                raw_finish_reason = generation.generation_info.get("finish_reason")
+            finish_reason = _map_finish_reason(raw_finish_reason) if raw_finish_reason else None
 
             # Emit the event
             emit_event(

@@ -103,7 +103,8 @@ def _content_to_parts(content) -> list[dict]:
                         parts.append({"type": "text", "content": text})
                 elif block_type == "image_url":
                     url = (block.get("image_url") or {}).get("url", "")
-                    parts.append({"type": "uri", "modality": "image", "uri": url})
+                    if url:
+                        parts.append({"type": "uri", "modality": "image", "uri": url})
                 elif block_type == "image":
                     # base64 image block
                     parts.append({
