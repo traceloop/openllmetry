@@ -17,6 +17,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
+from .utils import should_send_prompts, _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
 
@@ -167,6 +168,11 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
 
             set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, str(instance.llm.model))
             set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.llm.model))
+            summary = instance._token_process.get_summary()
+            if summary.prompt_tokens:
+                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, summary.prompt_tokens)
+            if summary.completion_tokens:
+                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, summary.completion_tokens)
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -190,7 +196,8 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
-            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+            if should_send_prompts():
+                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -216,9 +223,19 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         start_time = time.time()
         try:
             CrewAISpanAttributes(span=span, instance=instance)
+            # Capture input messages before the call (args[0] is the messages param of LLM.call)
+            messages_arg = args[0] if args else kwargs.get("messages")
             result = wrapped(*args, **kwargs)
-            # Known gap: CrewAI LLM.call returns plain text; stop/finish reason is not exposed for mapping to
-            # gen_ai.response.finish_reasons without reaching into provider-specific internals.
+            # Known gap: CrewAI LLM.call returns plain text; stop/finish reason is not exposed
+            # for mapping to gen_ai.response.finish_reasons without provider-specific internals.
+
+            if should_send_prompts():
+                input_json = _messages_to_otel_input(messages_arg)
+                if input_json:
+                    set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, input_json)
+                output_json = _response_to_otel_output(result)
+                if output_json:
+                    set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
 
             if duration_histogram:
                 duration = time.time() - start_time
