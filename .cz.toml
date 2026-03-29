@@ -25,7 +25,7 @@ version_files = [
     "packages/opentelemetry-instrumentation-crewai/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-crewai/opentelemetry/instrumentation/crewai/version.py",
     "packages/opentelemetry-instrumentation-google-generativeai/pyproject.toml:^version",
-    "packages/opentelemetry-instrumentation-google-generativeai/opentelemetry/instrumentation/google-generativeai/version.py",
+    "packages/opentelemetry-instrumentation-google-generativeai/opentelemetry/instrumentation/google_generativeai/version.py",
     "packages/opentelemetry-instrumentation-haystack/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-haystack/opentelemetry/instrumentation/haystack/version.py",
     "packages/opentelemetry-instrumentation-langchain/pyproject.toml:^version",
