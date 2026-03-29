@@ -133,7 +133,7 @@ def test_agents_with_events_with_content(
     # Validate that the ai calls the tool
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -225,7 +225,7 @@ def test_agents_with_events_with_no_content(
     # Validate that the ai calls the tool
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [
             {

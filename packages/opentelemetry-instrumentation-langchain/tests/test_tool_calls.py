@@ -100,7 +100,7 @@ def test_tool_calls_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -146,7 +146,7 @@ def test_tool_calls_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [
             {
@@ -322,7 +322,7 @@ def test_tool_calls_with_history_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": ""},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_call["id"],
@@ -406,7 +406,7 @@ def test_tool_calls_with_history_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_call["id"],
@@ -528,7 +528,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"][0]["text"]},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -581,7 +581,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -787,7 +787,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"][0]["text"]},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -930,7 +930,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "tool_calls": [
             {
                 "id": result_dict["content"][1]["id"],
@@ -1045,7 +1045,7 @@ def test_parallel_tool_calls_with_events_with_content(
     choice_event = {
         "index": 0,
         "message": {"content": result_dict["content"]},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_calls[0]["id"],
@@ -1105,7 +1105,7 @@ def test_parallel_tool_calls_with_events_with_no_content(
     choice_event = {
         "index": 0,
         "message": {},
-        "finish_reason": "tool_calls",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": tool_calls[0]["id"],

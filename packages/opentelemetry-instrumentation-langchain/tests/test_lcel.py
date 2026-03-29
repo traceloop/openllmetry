@@ -200,7 +200,7 @@ def test_simple_lcel_with_events_with_content(
     # Validate AI choice Event
     _choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -280,7 +280,7 @@ def test_simple_lcel_with_events_with_no_content(
     # Validate AI choice Event
     _choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
@@ -922,7 +922,7 @@ def test_lcel_with_datetime_with_events_with_content(
     # Validate AI choice Event
     _choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -994,7 +994,7 @@ def test_lcel_with_datetime_with_events_with_no_content(
     # Validate AI choice Event
     _choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }

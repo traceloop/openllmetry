@@ -210,7 +210,7 @@ def test_custom_llm_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
@@ -254,7 +254,7 @@ def test_custom_llm_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)  # logs[1] may not exist
@@ -535,7 +535,7 @@ def test_openai_functions_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {"content": ""},
         "tool_calls": [
             {
@@ -603,7 +603,7 @@ def test_openai_functions_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "function_call",
+        "finish_reason": "tool_call",
         "message": {},
         "tool_calls": [{"function": {"name": "Joke"}, "id": "", "type": "function"}],
     }
@@ -719,7 +719,7 @@ def test_anthropic_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -770,7 +770,7 @@ def test_anthropic_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -898,7 +898,7 @@ def test_bedrock_with_events_with_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {"content": response.content},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
@@ -955,7 +955,7 @@ def test_bedrock_with_events_with_no_content(
     # Validate AI choice Event
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": None,
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)  # logs[2] does not exist
