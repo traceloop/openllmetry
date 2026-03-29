@@ -136,6 +136,8 @@ def test_generate_metrics(metrics_test_context, genai_client, exporter):
 
     # Required attributes (values are intentionally not hard-coded)
     assert GenAIAttributes.GEN_AI_PROVIDER_NAME in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_OPERATION_NAME in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_MODEL in duration_dp.attributes
     assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in duration_dp.attributes
 
     token_metric = metrics[Meters.LLM_TOKEN_USAGE]
@@ -157,6 +159,8 @@ def test_generate_metrics(metrics_test_context, genai_client, exporter):
 
         # Required semantic attributes
         assert GenAIAttributes.GEN_AI_PROVIDER_NAME in dp.attributes
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in dp.attributes
+        assert GenAIAttributes.GEN_AI_REQUEST_MODEL in dp.attributes
         assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in dp.attributes
 
 

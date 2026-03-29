@@ -17,6 +17,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace.status import Status, StatusCode
 
 _GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+_GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
 
 logger = logging.getLogger(__name__)
 
@@ -703,6 +704,8 @@ def set_model_response_attributes(
             um.prompt_token_count,
             attributes={
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
@@ -711,6 +714,8 @@ def set_model_response_attributes(
             um.candidates_token_count,
             attributes={
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
