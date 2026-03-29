@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.54.0"
+version = "0.55.0"
 description = "OpenTelemetry Milvus instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
