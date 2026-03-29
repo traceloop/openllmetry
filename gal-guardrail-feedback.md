@@ -138,8 +138,8 @@ result = await generate_summary("tell me about X")
 
 **Rationale:** This is how `asyncio.create_task(coro)`, `functools.partial(fn, *args)`, and `concurrent.futures.submit(fn, *args)` work in the stdlib. Python devs expect `run(fn, *args, **kwargs)`, not `run(lambda: fn(*args, **kwargs))`.
 
-- [ ] Address this suggestion
-- [ ] Test changes
+- [x] Address this suggestion
+- [x] Test changes
 
 ---
 

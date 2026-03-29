@@ -275,8 +275,9 @@ def guardrail(
                     name=name or func.__name__,
                 )
                 return await g.run(
-                    lambda: func(*args, **kwargs),
+                    func, *args,
                     input_mapper=input_mapper,
+                    **kwargs,
                 )
 
             return async_wrapper  # type: ignore[return-value]
@@ -292,8 +293,9 @@ def guardrail(
                 )
                 # Run async guardrail in event loop for sync functions
                 to_run = g.run(
-                    lambda: asyncio.to_thread(func, *args, **kwargs),
+                    asyncio.to_thread, func, *args,
                     input_mapper=input_mapper,
+                    **kwargs,
                 )
 
                 try:

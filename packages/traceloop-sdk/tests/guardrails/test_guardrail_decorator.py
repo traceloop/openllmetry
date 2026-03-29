@@ -41,8 +41,8 @@ class TestGuardrailDecoratorBasic:
         mock_guardrails_instance = MagicMock()
 
         # Capture the func_to_guard and execute it
-        async def run_side_effect(func_to_guard, input_mapper=None):
-            result = await func_to_guard()
+        async def run_side_effect(func_to_guard, *args, input_mapper=None, **kwargs):
+            result = await func_to_guard(*args, **kwargs)
             return result
 
         mock_guardrails_instance.run = AsyncMock(side_effect=run_side_effect)
