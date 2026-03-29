@@ -157,7 +157,6 @@ def handle_words(t: Type, guardrail, attrs, metric_params):
 
 def guardrail_converse(span, response, vendor, model, metric_params):
     attrs = {
-        "gen_ai.vendor": vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
         GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
     }
@@ -186,7 +185,6 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
     output_filters = []
     if "amazon-bedrock-guardrailAction" in response_body:
         attrs = {
-            "gen_ai.vendor": vendor,
             GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
         }

@@ -41,13 +41,21 @@ BEDROCK_FINISH_REASON_MAP = {
 def _map_finish_reason(reason):
     """Map provider-specific finish reason to OTel GenAI enum value."""
     if not reason:
-        return "stop"
+        return None
     return BEDROCK_FINISH_REASON_MAP.get(reason, reason)
 
 
 def _text_part(content):
     """Create a text part for the parts array."""
     return {"type": "text", "content": content}
+
+
+def _output_message(role, parts, finish_reason=None):
+    """Create an output message dict, omitting finish_reason when None."""
+    msg = {"role": role, "parts": parts}
+    if finish_reason:
+        msg["finish_reason"] = finish_reason
+    return msg
 
 
 def _anthropic_content_to_parts(content_blocks):
@@ -65,7 +73,7 @@ def _anthropic_content_to_parts(content_blocks):
                     "type": "tool_call",
                     "name": block.get("name"),
                     "id": block.get("id"),
-                    "arguments": json.dumps(block.get("input", {})),
+                    "arguments": block.get("input", {}),
                 })
             elif block_type == "tool_result":
                 parts.append({
@@ -74,7 +82,28 @@ def _anthropic_content_to_parts(content_blocks):
                     "response": block.get("content", ""),
                 })
             elif block_type == "image":
-                parts.append({"type": "image", "data": block.get("source", {})})
+                source = block.get("source", {})
+                source_type = source.get("type")
+                if source_type == "base64":
+                    parts.append({
+                        "type": "blob",
+                        "modality": "image",
+                        "mime_type": source.get("media_type", ""),
+                        "content": source.get("data", ""),
+                    })
+                elif source_type == "url":
+                    parts.append({
+                        "type": "uri",
+                        "modality": "image",
+                        "uri": source.get("url", ""),
+                    })
+                else:
+                    parts.append({
+                        "type": "blob",
+                        "modality": "image",
+                        "mime_type": source.get("media_type", ""),
+                        "content": source.get("data", ""),
+                    })
             else:
                 parts.append({"type": block_type, "content": json.dumps(block)})
         else:
@@ -101,6 +130,19 @@ def set_model_message_span_attributes(model_vendor, span, request_body):
         if "prompt" in request_body:
             _set_prompt_span_attributes(span, request_body)
         elif "messages" in request_body:
+            if "system" in request_body:
+                system_val = request_body["system"]
+                if isinstance(system_val, str):
+                    system_parts = [_text_part(system_val)]
+                elif isinstance(system_val, list):
+                    system_parts = _anthropic_content_to_parts(system_val)
+                else:
+                    system_parts = [_text_part(json.dumps(system_val))]
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                    json.dumps(system_parts),
+                )
             input_messages = []
             for message in request_body.get("messages"):
                 content = message.get("content")
@@ -261,17 +303,13 @@ def _set_generations_span_attributes(span, response_body):
     for generation in response_body.get("generations"):
         fr = _map_finish_reason(generation.get("finish_reason"))
         finish_reasons.append(fr)
-        output_messages.append({
-            "role": "assistant",
-            "parts": [_text_part(generation.get("text"))],
-            "finish_reason": fr,
-        })
+        output_messages.append(_output_message("assistant", [_text_part(generation.get("text"))], fr))
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(output_messages),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(finish_reasons))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
 
 
 def _set_anthropic_completion_span_attributes(
@@ -335,24 +373,17 @@ def _set_anthropic_response_span_attributes(span, response_body):
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([{
-                "role": "assistant",
-                "parts": [_text_part(response_body.get("completion"))],
-                "finish_reason": fr,
-            }]),
+            json.dumps([_output_message("assistant", [_text_part(response_body.get("completion"))], fr)]),
         )
     elif response_body.get("content") is not None:
         parts = _anthropic_content_to_parts(response_body.get("content"))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([{
-                "role": "assistant",
-                "parts": parts,
-                "finish_reason": fr,
-            }]),
+            json.dumps([_output_message("assistant", parts, fr)]),
         )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_anthropic_messages_span_attributes(
@@ -467,17 +498,13 @@ def _set_span_completions_attributes(span, response_body):
         raw_reason = fr_data.get("reason", "unknown") if isinstance(fr_data, dict) else str(fr_data)
         fr = _map_finish_reason(raw_reason)
         finish_reasons.append(fr)
-        output_messages.append({
-            "role": "assistant",
-            "parts": [_text_part(completion.get("data").get("text"))],
-            "finish_reason": fr,
-        })
+        output_messages.append(_output_message("assistant", [_text_part(completion.get("data").get("text"))], fr))
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(output_messages),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(finish_reasons))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
@@ -516,26 +543,19 @@ def _set_llama_response_span_attributes(span, response_body):
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([{
-                "role": "assistant",
-                "parts": [_text_part(response_body.get("generation"))],
-                "finish_reason": fr,
-            }]),
+            json.dumps([_output_message("assistant", [_text_part(response_body.get("generation"))], fr)]),
         )
     else:
         output_messages = []
         for generation in response_body.get("generations"):
-            output_messages.append({
-                "role": "assistant",
-                "parts": [_text_part(generation)],
-                "finish_reason": fr,
-            })
+            output_messages.append(_output_message("assistant", [_text_part(generation)], fr))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_amazon_span_attributes(
@@ -602,13 +622,13 @@ def _set_amazon_input_span_attributes(span, request_body):
             json.dumps([{"role": "user", "parts": [_text_part(request_body.get("inputText"))]}]),
         )
     else:
-        input_messages = []
         if "system" in request_body:
-            for prompt in request_body["system"]:
-                input_messages.append({
-                    "role": "system",
-                    "parts": [_text_part(prompt.get("text"))],
-                })
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                json.dumps([_text_part(prompt.get("text")) for prompt in request_body["system"]]),
+            )
+        input_messages = []
         for prompt in request_body["messages"]:
             content = prompt.get("content", "")
             if isinstance(content, str):
@@ -635,45 +655,35 @@ def _set_amazon_response_span_attributes(span, response_body):
         for result in response_body.get("results"):
             fr = _map_finish_reason(result.get("completionReason"))
             finish_reasons.append(fr)
-            output_messages.append({
-                "role": "assistant",
-                "parts": [_text_part(result.get("outputText"))],
-                "finish_reason": fr,
-            })
+            output_messages.append(_output_message("assistant", [_text_part(result.get("outputText"))], fr))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(finish_reasons))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
     elif "outputText" in response_body:
         fr = _map_finish_reason(response_body.get("completionReason"))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([{
-                "role": "assistant",
-                "parts": [_text_part(response_body.get("outputText"))],
-                "finish_reason": fr,
-            }]),
+            json.dumps([_output_message("assistant", [_text_part(response_body.get("outputText"))], fr)]),
         )
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+        if fr:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
     elif "output" in response_body:
         fr = _map_finish_reason(response_body.get("stopReason"))
         msgs = response_body.get("output").get("message", {}).get("content", [])
         output_messages = []
         for msg in msgs:
-            output_messages.append({
-                "role": "assistant",
-                "parts": [_text_part(msg.get("text"))],
-                "finish_reason": fr,
-            })
+            output_messages.append(_output_message("assistant", [_text_part(msg.get("text"))], fr))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+        if fr:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_imported_model_span_attributes(
@@ -716,13 +726,10 @@ def _set_imported_model_response_span_attributes(span, response_body):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-        json.dumps([{
-            "role": "assistant",
-            "parts": [_text_part(content)],
-            "finish_reason": fr,
-        }]),
+        json.dumps([_output_message("assistant", [_text_part(content)], fr)]),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def _set_imported_model_prompt_span_attributes(span, request_body):
@@ -791,10 +798,8 @@ def _metric_shared_attributes(
     response_vendor: str, response_model: str, is_streaming: bool = False
 ):
     return {
-        "vendor": response_vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
         GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.AWS_BEDROCK.value,
-        "stream": is_streaming,
     }
 
 
@@ -837,7 +842,7 @@ def _converse_content_to_parts(content_blocks):
                     "type": "tool_call",
                     "name": tool.get("name"),
                     "id": tool.get("toolUseId"),
-                    "arguments": json.dumps(tool.get("input", {})),
+                    "arguments": tool.get("input", {}),
                 })
             elif "toolResult" in block:
                 result = block["toolResult"]
@@ -858,13 +863,13 @@ def _converse_content_to_parts(content_blocks):
 def set_converse_input_prompt_span_attributes(kwargs, span):
     if not should_send_prompts():
         return
-    input_messages = []
     if "system" in kwargs:
-        for prompt in kwargs["system"]:
-            input_messages.append({
-                "role": "system",
-                "parts": [_text_part(prompt.get("text"))],
-            })
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+            json.dumps([_text_part(prompt.get("text")) for prompt in kwargs["system"]]),
+        )
+    input_messages = []
     if "messages" in kwargs:
         for prompt in kwargs["messages"]:
             content = prompt.get("content", "")
@@ -895,13 +900,10 @@ def set_converse_response_span_attributes(response, span):
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([{
-                "role": message.get("role"),
-                "parts": parts,
-                "finish_reason": fr,
-            }]),
+            json.dumps([_output_message(message.get("role"), parts, fr)]),
         )
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+        if fr:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def set_converse_streaming_response_span_attributes(response, role, span, finish_reason=None):
@@ -911,13 +913,10 @@ def set_converse_streaming_response_span_attributes(response, role, span, finish
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-        json.dumps([{
-            "role": role,
-            "parts": [_text_part("".join(response))],
-            "finish_reason": fr,
-        }]),
+        json.dumps([_output_message(role, [_text_part("".join(response))], fr)]),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def converse_usage_record(span, response, metric_params):

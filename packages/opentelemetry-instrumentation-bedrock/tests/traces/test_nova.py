@@ -55,12 +55,14 @@ def test_nova_completion(instrument_legacy, brt, span_exporter, log_exporter):
         == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
 
+    # Assert on system instructions
+    system_instructions = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system_list[0].get("text")
+
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system_list[0].get("text")
-    assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["parts"] == [{"type": "text", "content": "A camping trip"}]
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
 
     # Assert on response
     generated_text = response_body["output"]["message"]["content"]
@@ -295,21 +297,19 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
         == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
 
+    # Assert on system instructions
+    system_instructions = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system_list[0].get("text")
+
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system_list[0].get("text")
-    assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["parts"] == [{"type": "text", "content": "A camping trip"}]
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
 
     # Assert on response
     completion_msg = "".join(generated_text)
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output_messages[0]["parts"][0]["content"] == completion_msg
-    assert output_messages[0]["finish_reason"] == "stop"
-
-    # Assert on finish reasons
-    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -584,14 +584,16 @@ def test_nova_converse(instrument_legacy, brt, span_exporter, log_exporter):
     # Assert on request type
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
+    # Assert on system instructions
+    system_instructions = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system[0].get("text")
+
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system[0].get("text")
     # User content has 3 blocks: 2 guardContent + 1 text, each becomes a part
-    assert len(input_messages[1]["parts"]) == 3
-    assert input_messages[1]["parts"][0]["type"] == "text"
-    assert input_messages[1]["parts"][2]["content"] == "What is the capital of Japan?"
+    assert len(input_messages[0]["parts"]) == 3
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][2]["content"] == "What is the capital of Japan?"
 
     # Assert on response (guardrail_intervened maps to content_filter)
     generated_text = response["output"]["message"]["content"]
@@ -882,14 +884,16 @@ def test_nova_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
     # Assert on request type
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
+    # Assert on system instructions
+    system_instructions = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system[0].get("text")
+
     # Assert on prompt
     input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system[0].get("text")
     # User content has 3 blocks: 2 guardContent + 1 text, each becomes a part
-    assert len(input_messages[1]["parts"]) == 3
-    assert input_messages[1]["parts"][0]["type"] == "text"
-    assert input_messages[1]["parts"][2]["content"] == "What is the capital of Japan?"
+    assert len(input_messages[0]["parts"]) == 3
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][2]["content"] == "What is the capital of Japan?"
 
     # Assert on response (guardrail_intervened maps to content_filter)
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])

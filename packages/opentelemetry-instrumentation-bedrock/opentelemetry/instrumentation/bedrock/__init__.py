@@ -401,7 +401,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
-                    stop_reason = event.get("messageStop", {}).get("stopReason", "unknown")
+                    stop_reason = event.get("messageStop", {}).get("stopReason")
                     if should_emit_events() and event_logger:
                         emit_streaming_converse_response_event(
                             event_logger,
@@ -454,18 +454,18 @@ def _cross_region_check(value):
 
 
 class GuardrailMeters:
-    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
-    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
-    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
-    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
-    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
-    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
-    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
+    GEN_AI_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
+    GEN_AI_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
+    GEN_AI_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
+    GEN_AI_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
+    GEN_AI_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
+    GEN_AI_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
+    GEN_AI_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
 
 
 class PromptCaching:
     # will be moved under the AI SemConv. Not namespaced since also OpenAI supports this.
-    LLM_BEDROCK_PROMPT_CACHING = "gen_ai.prompt.caching"
+    GEN_AI_PROMPT_CACHING = "gen_ai.prompt.caching"
 
 
 def _create_metrics(meter: Meter):
@@ -488,58 +488,57 @@ def _create_metrics(meter: Meter):
     )
 
     exception_counter = meter.create_counter(
-        # TODO: will fix this in future as a consolidation for semantic convention
-        name="llm.bedrock.completions.exceptions",
+        name="gen_ai.bedrock.completions.exceptions",
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
 
     # Guardrail metrics
     guardrail_activation = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_ACTIVATION,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_ACTIVATION,
         unit="",
         description="Number of guardrail activation",
     )
 
     guardrail_latency_histogram = meter.create_histogram(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_LATENCY,
         unit="ms",
         description="GenAI guardrail latency",
     )
 
     guardrail_coverage = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_COVERAGE,
         unit="char",
         description="GenAI guardrail coverage",
     )
 
     guardrail_sensitive_info = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_SENSITIVE,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_SENSITIVE,
         unit="",
         description="GenAI guardrail sensitive information protection",
     )
 
     guardrail_topic = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_TOPICS,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_TOPICS,
         unit="",
         description="GenAI guardrail topics protection",
     )
 
     guardrail_content = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_CONTENT,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_CONTENT,
         unit="",
         description="GenAI guardrail content filter protection",
     )
 
     guardrail_words = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_WORDS,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_WORDS,
         unit="",
         description="GenAI guardrail words filter protection",
     )
 
     # Prompt Caching
     prompt_caching = meter.create_counter(
-        name=PromptCaching.LLM_BEDROCK_PROMPT_CACHING,
+        name=PromptCaching.GEN_AI_PROMPT_CACHING,
         unit="",
         description="Number of cached tokens",
     )

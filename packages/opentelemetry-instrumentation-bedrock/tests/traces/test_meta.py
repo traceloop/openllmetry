@@ -363,14 +363,16 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
         meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == response["usage"]["totalTokens"]
     )
+    # Assert on system instructions
+    system_instructions = json.loads(meta_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system_prompt
+
     input_messages = json.loads(
         meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert len(input_messages) == 2
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system_prompt
-    assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["parts"] == [
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"] == [
         {"type": "text", "content": "Tell me a joke about opentelemetry"}
     ]
 
@@ -579,14 +581,16 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
         meta_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
         == inputTokens + outputTokens
     )
+    # Assert on system instructions
+    system_instructions = json.loads(meta_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert system_instructions[0]["content"] == system_prompt
+
     input_messages = json.loads(
         meta_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
-    assert len(input_messages) == 2
-    assert input_messages[0]["role"] == "system"
-    assert input_messages[0]["parts"][0]["content"] == system_prompt
-    assert input_messages[1]["role"] == "user"
-    assert input_messages[1]["parts"] == [
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"] == [
         {"type": "text", "content": "Tell me a joke about opentelemetry"}
     ]
 
