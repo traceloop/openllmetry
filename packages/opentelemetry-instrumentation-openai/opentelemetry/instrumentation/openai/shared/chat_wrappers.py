@@ -444,9 +444,33 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
 @dont_throw
 async def _set_prompts(span, messages):
     if Config.use_messages_attributes:
+        if Config.upload_base64_image and messages:
+            messages = await _preprocess_base64_images(span, messages)
         _set_input_messages(span, messages)
     else:
         await _legacy_set_prompts(span, messages)
+
+
+async def _preprocess_base64_images(span, messages):
+    """Pre-process messages to upload base64 images before sync attribute setting."""
+    import copy
+    processed = []
+    for msg_idx, msg in enumerate(messages):
+        content = msg.get("content")
+        if not isinstance(content, list):
+            processed.append(msg)
+            continue
+        new_content = []
+        for j, item in enumerate(content):
+            if _is_base64_image(item):
+                item = await _process_image_item(
+                    copy.deepcopy(item),
+                    span.context.trace_id, span.context.span_id,
+                    msg_idx, j,
+                )
+            new_content.append(item)
+        processed.append({**msg, "content": new_content})
+    return processed
 
 def _map_content_block(block):
     """Map an OpenAI content block to an OTel-compliant part."""

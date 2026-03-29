@@ -221,17 +221,17 @@ def process_content_block(
 ) -> dict[str, Any]:
     block_type = block.get("type")
     if block_type in ["text", "input_text", "output_text"]:
-        return {"type": block_type, "text": block.get("text")}
+        return {"type": "text", "text": block.get("text")}
     elif block_type in ["image", "input_image", "output_image"]:
         return {
-            "type": block_type,
+            "type": "image",
             "image_url": block.get("image_url"),
             "detail": block.get("detail"),
             "file_id": block.get("file_id"),
         }
     elif block_type in ["file", "input_file", "output_file"]:
         return {
-            "type": block_type,
+            "type": "file",
             "file_id": block.get("file_id"),
             "filename": block.get("filename"),
             "file_data": block.get("file_data"),
