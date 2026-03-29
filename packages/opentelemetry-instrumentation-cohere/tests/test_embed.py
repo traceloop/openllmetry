@@ -7,6 +7,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 def test_cohere_v2_embed_legacy(
     span_exporter, log_exporter, instrument_legacy, cohere_client_v2
 ):
+    """Test that legacy embed attributes and token usage are captured for embed-english-light-v3.0."""
     texts = [
         "Carson City is the capital city of the American state of Nevada."
         + " At the  2010 United States Census, Carson City had a population of 55,274.",
@@ -55,6 +56,11 @@ def test_cohere_v2_embed_legacy(
         == "74d7aae4-2939-4002-b4d4-352dfcca03cf"
     )
 
+    # Assert token usage attributes are captured
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 208
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 208
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -66,6 +72,7 @@ def test_cohere_v2_embed_legacy(
 async def test_cohere_v2_embed_legacy_async(
     span_exporter, log_exporter, instrument_legacy, async_cohere_client_v2
 ):
+    """Test that legacy embed attributes and token usage are captured asynchronously."""
     texts = [
         "Carson City is the capital city of the American state of Nevada."
         + " At the  2010 United States Census, Carson City had a population of 55,274.",
@@ -113,6 +120,47 @@ async def test_cohere_v2_embed_legacy_async(
         cohere_span.attributes.get("gen_ai.response.id")
         == "3bc87f83-0534-4478-af7d-fee196c92758"
     )
+
+    # Assert token usage attributes are captured
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 208
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 208
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_cohere_v2_embed_token_usage(
+    span_exporter, log_exporter, instrument_legacy, cohere_client_v2
+):
+    """Test that token usage is captured for embed-english-v3.0 model."""
+    texts = [
+        "hello world",
+        "this is a test of the embedding model",
+    ]
+
+    cohere_client_v2.embed(
+        input_type="search_document",
+        texts=texts, model="embed-english-v3.0"
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    cohere_span = spans[0]
+    assert cohere_span.name == "cohere.embed"
+    assert cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) == "embedding"
+    assert (
+        cohere_span.attributes.get(SpanAttributes.LLM_REQUEST_MODEL)
+        == "embed-english-v3.0"
+    )
+
+    # Assert token usage attributes are captured for embed-english-v3.0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS) == 12
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS) == 0
+    assert cohere_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 12
 
     logs = log_exporter.get_finished_logs()
     assert (

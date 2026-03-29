@@ -1,0 +1,70 @@
+interactions:
+- request:
+    body: '{"texts": ["hello world", "this is a test of the embedding model"], "model":
+      "embed-english-v3.0", "input_type": "search_document"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '127'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-client-name:
+      - python
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.13.8
+    method: POST
+    uri: https://api.cohere.com/v2/embed
+  response:
+    body:
+      string: '{"id":"a1b2c3d4-5678-9012-abcd-ef1234567890","texts":["hello world","this
+        is a test of the embedding model"],"embeddings":{"float":[[0.032318115,-0.031188965,-0.06604004,0.028823853,-0.017730713,-0.07757568,0.02305603,0.008758545,-0.004558563,0.0725708,-0.112976074,-0.05142212,0.08526611,-0.11383057,-0.052337646,-0.010803223,0.02848816,-0.08453369,0.06365967,-0.0647583,-0.066467285,0.10449219,0.037841797,-0.01134491,-0.020523071,-0.15917969,-0.07720947,-0.015106201,-0.032836914,0.092041016,-0.018463135,-0.034179688,0.06137085,0.05404663,0.090270996,-0.061828613,0.058654785,-0.013000488,-0.046081543,0.0552063,0.022109985,0.12646484,0.0031318665,-0.083984375,-0.050231934,0.049804688,-0.059020996,-0.005924225,0.018157959,0.0066566467,0.07446289,0.015808105,0.014984131,0.050750732,-0.046936035,0.05807495,0.014465332,-0.038238525,-0.03869629,-0.017227173],[0.034454346,-0.03652954,0.121520996,-0.08618164,0.015960693,-0.0647583,0.07354736,0.061431885,0.020614624,0.0012788773,0.01612854,-0.06121826,-0.031555176,-0.012077332,0.011062622,0.028533936,-0.041137695,-0.0619812,-0.005203247,0.009513855,0.059814453,0.10748291,-0.10455322,-0.0046157837,0.07940674,-0.037994385,0.027359009,-0.013954163,0.03793335,-0.0154418945,-0.0038108826,-0.04257202,0.001666069,-0.023635864,0.04272461,0.0022354126,0.01902771,-0.033691406,0.04284668,-0.09857178,-0.047088623,0.046966553,0.04144287,0.056274414,0.0030555725,0.024154663,-0.089782715,-0.0038490295,-0.064941406,0.065979004,0.07495117,-0.07989502,-0.044799805,0.037628174,0.014404297,0.050598145,-0.0028591156,0.039276123,0.07159424,-0.005203247]]},"meta":{"api_version":{"version":"2"},"billed_units":{"input_tokens":12}},"response_type":"embeddings_by_type"}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 03:17:07 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '47'
+      num_tokens:
+      - '12'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 6af25e94670880a3e6e9ac76e2a6cba9
+      x-envoy-upstream-service-time:
+      - '42'
+    status:
+      code: 200
+      message: OK
+version: 1
