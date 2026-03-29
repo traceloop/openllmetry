@@ -127,7 +127,8 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
         == "gpt-3.5-turbo-instruct"
     )
-    assert openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+    input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -818,7 +819,7 @@ async def test_astream_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body
