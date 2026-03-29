@@ -645,7 +645,7 @@ def test_anthropic(instrument_legacy, span_exporter, log_exporter):
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
     output = json.loads(
@@ -699,7 +699,7 @@ def test_anthropic_with_events_with_content(
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
 
@@ -754,7 +754,7 @@ def test_anthropic_with_events_with_no_content(
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 22
     assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 41
     assert (
-        anthropic_span.attributes["gen_ai.response.id"]
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID]
         == "msg_017fMG9SRDFTBhcD1ibtN1nK"
     )
 
