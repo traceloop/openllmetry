@@ -40,7 +40,9 @@ def _messages_to_otel_input(messages) -> str | None:
                         url = (block.get("image_url") or {}).get("url", "")
                         parts.append({"type": "uri", "modality": "image", "uri": url})
                     else:
-                        parts.append(block)
+                        # Unknown block type — wrap as generic part rather than leaking raw provider format
+                        parts.append({"type": block.get("type", "unknown"),
+                                      **{k: v for k, v in block.items() if k != "type"}})
         else:
             parts = [{"type": "text", "content": str(content)}]
 

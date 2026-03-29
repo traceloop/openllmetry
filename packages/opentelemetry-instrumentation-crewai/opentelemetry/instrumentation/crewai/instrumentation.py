@@ -117,7 +117,7 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
         attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
@@ -143,10 +143,10 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
     agent_name = instance.role if hasattr(instance, "role") else "agent"
     with tracer.start_as_current_span(
         f"{agent_name}.agent",
-        kind=SpanKind.CLIENT,
+        kind=SpanKind.INTERNAL,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
@@ -157,7 +157,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     }
@@ -165,7 +165,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().completion_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     },
@@ -191,10 +191,10 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
 
     with tracer.start_as_current_span(
         f"{task_name}.task",
-        kind=SpanKind.CLIENT,
+        kind=SpanKind.INTERNAL,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
@@ -241,6 +241,15 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
                 output_json = _response_to_otel_output(result)
                 if output_json:
                     set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
+
+            set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.model))
+
+            if hasattr(instance, "last_token_usage") and instance.last_token_usage:
+                usage = instance.last_token_usage
+                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                                   getattr(usage, "prompt_tokens", None))
+                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                                   getattr(usage, "completion_tokens", None))
 
             if duration_histogram:
                 duration = time.time() - start_time
