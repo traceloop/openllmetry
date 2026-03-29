@@ -41,7 +41,7 @@ def test_streaming_with_api_usage_capture(
     # Check that token usage is captured from API response
     assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) > 0
     assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
-    assert span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) > 0
+    assert span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS) > 0
 
     # Verify that the response content is meaningful
     assert len(response_content) > 0

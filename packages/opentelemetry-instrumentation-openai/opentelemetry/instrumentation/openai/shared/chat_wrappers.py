@@ -9,8 +9,10 @@ from typing import List, Optional, Union
 from opentelemetry import context as context_api
 import pydantic
 from opentelemetry.instrumentation.openai.shared import (
+    OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
+    _parse_arguments,
     _set_client_attributes,
     _set_functions_attributes,
     _set_request_attributes,
@@ -45,9 +47,11 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, Tracer
@@ -59,7 +63,7 @@ SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
 
-LLM_REQUEST_TYPE = LLMRequestTypeValues.CHAT
+OPERATION_NAME = GenAiOperationNameValues.CHAT
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +91,7 @@ def chat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -185,7 +189,7 @@ async def achat_wrapper(
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -292,8 +296,8 @@ async def _handle_request(span, kwargs, instance):
     reasoning_effort = kwargs.get("reasoning_effort")
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_REQUEST_REASONING_EFFORT,
-        reasoning_effort or ()
+        SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
+        reasoning_effort,
     )
 
 
@@ -345,8 +349,8 @@ def _handle_response(
 
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_REASONING_TOKENS,
-        reasoning_tokens or 0,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+        reasoning_tokens,
     )
 
     if should_emit_events():
@@ -396,8 +400,9 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {**shared_attributes}
         if choice.get("finish_reason"):
-            attributes_with_reason[SpanAttributes.LLM_RESPONSE_FINISH_REASON] = (
-                choice.get("finish_reason")
+            raw_reason = choice.get("finish_reason")
+            attributes_with_reason[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON] = (
+                OPENAI_FINISH_REASON_MAP.get(raw_reason, raw_reason)
             )
         choice_counter.add(1, attributes=attributes_with_reason)
 
@@ -440,125 +445,170 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
 
 @dont_throw
 async def _set_prompts(span, messages):
+    if Config.upload_base64_image and messages:
+        messages = await _preprocess_base64_images(span, messages)
+    _set_input_messages(span, messages)
+
+
+async def _preprocess_base64_images(span, messages):
+    """Pre-process messages to upload base64 images before sync attribute setting."""
+    import copy
+    processed = []
+    for msg_idx, msg in enumerate(messages):
+        msg = model_as_dict(msg)
+        content = msg.get("content")
+        if not isinstance(content, list):
+            processed.append(msg)
+            continue
+        new_content = []
+        for j, item in enumerate(content):
+            if _is_base64_image(item):
+                item = await _process_image_item(
+                    copy.deepcopy(item),
+                    span.context.trace_id, span.context.span_id,
+                    msg_idx, j,
+                )
+            new_content.append(item)
+        processed.append({**msg, "content": new_content})
+    return processed
+
+def _map_content_block(block):
+    """Map an OpenAI content block to an OTel-compliant part."""
+    if not isinstance(block, dict):
+        return block
+    block_type = block.get("type")
+    if block_type == "text":
+        return {"type": "text", "content": block.get("text", "")}
+    elif block_type == "image_url":
+        url = ""
+        image_url = block.get("image_url")
+        if isinstance(image_url, dict):
+            url = image_url.get("url", "")
+        if url.startswith("data:"):
+            # Parse data URI: data:<mime_type>;base64,<content>
+            try:
+                header, content = url.split(",", 1)
+                mime_type = header.split(":", 1)[1].split(";", 1)[0]
+            except (ValueError, IndexError):
+                mime_type = "image/unknown"
+                content = url
+            return {"type": "blob", "modality": "image", "mime_type": mime_type, "content": content}
+        return {"type": "uri", "modality": "image", "uri": url}
+    # GenericPart: spread properties for unrecognized blocks
+    return {"type": block_type or "unknown", **{k: v for k, v in block.items() if k != "type"}}
+
+def _map_content_parts(content):
+    """Convert content to OTel parts list. Handles str, list, and None."""
+    if isinstance(content, str):
+        return [{"content": content, "type": "text"}]
+    if isinstance(content, list):
+        return [_map_content_block(block) for block in content]
+    return content or []
+
+def _set_input_messages(span, messages):
     if not span.is_recording() or messages is None:
         return
 
-    for i, msg in enumerate(messages):
-        prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{i}"
-        msg = msg if isinstance(msg, dict) else model_as_dict(msg)
-
-        _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-        if msg.get("content"):
-            content = copy.deepcopy(msg.get("content"))
-            if isinstance(content, list):
-                content = [
-                    (
-                        await _process_image_item(
-                            item, span.context.trace_id, span.context.span_id, i, j
-                        )
-                        if _is_base64_image(item)
-                        else item
-                    )
-                    for j, item in enumerate(content)
-                ]
-
-                content = json.dumps(content)
-            _set_span_attribute(span, f"{prefix}.content", content)
-        if msg.get("tool_call_id"):
-            _set_span_attribute(
-                span, f"{prefix}.tool_call_id", msg.get("tool_call_id"))
-        tool_calls = msg.get("tool_calls")
-        if tool_calls:
-            for i, tool_call in enumerate(tool_calls):
-                if is_openai_v1():
-                    tool_call = model_as_dict(tool_call)
-
-                function = tool_call.get("function")
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.id",
-                    tool_call.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.name",
-                    function.get("name"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.arguments",
-                    function.get("arguments"),
-                )
-
+    attr_messages = []
+    for msg in messages:
+        msg = model_as_dict(msg)
+        role = msg.get("role")
+        if role == "tool":
+            tool_call_id = msg.get("tool_call_id")
+            content = msg.get("content")
+            attr_messages.append({
+                "role": role,
+                "parts": [{"type": "tool_call_response", "id": tool_call_id, "response": content}],
+            })
+        elif role == "user":
+            content = msg.get("content")
+            parts = _map_content_parts(content)
+            attr_messages.append({
+                "role": role,
+                "parts": parts,
+            })
+        elif role in ["system", "developer"]:
+            content = msg.get("content")
+            parts = _map_content_parts(content)
+            attr_messages.append({
+                "role": role,
+                "parts": parts,
+            })
+        elif role == "assistant":
+            content = msg.get("content")
+            parts = _map_content_parts(content)
+            tool_calls = _parse_tool_calls(msg.get("tool_calls")) or []
+            for tool_call in tool_calls:
+                parts.append({
+                    "type": "tool_call",
+                    "name": tool_call["function"]["name"],
+                    "id": tool_call["id"],
+                    "arguments": _parse_arguments(tool_call["function"].get("arguments")),
+                })
+            attr_messages.append({
+                "role": "assistant",
+                "parts": parts,
+            })
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages))
 
 def _set_completions(span, choices):
-    if choices is None:
+    _set_output_messages(span, choices)
+
+def _map_finish_reason(reason):
+    if not reason:
+        return None
+    return OPENAI_FINISH_REASON_MAP.get(reason, reason)
+
+def _set_output_messages(span, choices):
+    if not span.is_recording() or choices is None:
         return
 
+    messages = []
     for choice in choices:
-        index = choice.get("index")
-        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-        _set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
-
-        if choice.get("content_filter_results"):
-            _set_span_attribute(
-                span,
-                f"{prefix}.{CONTENT_FILTER_KEY}",
-                json.dumps(choice.get("content_filter_results")),
-            )
-
-        if choice.get("finish_reason") == "content_filter":
-            _set_span_attribute(span, f"{prefix}.role", "assistant")
-            _set_span_attribute(span, f"{prefix}.content", "FILTERED")
-
-            return
-
         message = choice.get("message")
-        if not message:
-            return
-
-        _set_span_attribute(span, f"{prefix}.role", message.get("role"))
-
-        if message.get("refusal"):
-            _set_span_attribute(
-                span, f"{prefix}.refusal", message.get("refusal"))
-        else:
-            _set_span_attribute(
-                span, f"{prefix}.content", message.get("content"))
-
-        function_call = message.get("function_call")
-        if function_call:
-            _set_span_attribute(
-                span, f"{prefix}.tool_calls.0.name", function_call.get("name")
-            )
-            _set_span_attribute(
-                span,
-                f"{prefix}.tool_calls.0.arguments",
-                function_call.get("arguments"),
-            )
-
-        tool_calls = message.get("tool_calls")
-        if tool_calls:
-            for i, tool_call in enumerate(tool_calls):
-                function = tool_call.get("function")
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.id",
-                    tool_call.get("id"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.name",
-                    function.get("name"),
-                )
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.tool_calls.{i}.arguments",
-                    function.get("arguments"),
-                )
-
+        content_filter_results = choice.get("content_filter_results")
+        if not message and not content_filter_results:
+            continue
+        parts = []
+        if message:
+            content = message.get("content")
+            parts = _map_content_parts(content)
+            refusal = message.get("refusal")
+            if refusal:
+                parts.append({"type": "refusal", "content": refusal})
+            reasoning_content = message.get("reasoning_content")
+            if reasoning_content:
+                parts.append({"type": "reasoning", "content": reasoning_content})
+            tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
+            for tool_call in tool_calls:
+                parts.append({
+                    "type": "tool_call",
+                    "name": tool_call["function"]["name"],
+                    "id": tool_call["id"],
+                    "arguments": _parse_arguments(tool_call["function"].get("arguments")),
+                })
+            # Handle legacy function_call API (not tool_calls)
+            function_call = message.get("function_call")
+            if function_call:
+                if isinstance(function_call, dict):
+                    fc_name = function_call.get("name")
+                    fc_args = function_call.get("arguments")
+                else:
+                    # pydantic model
+                    fc_dict = model_as_dict(function_call)
+                    fc_name = fc_dict.get("name")
+                    fc_args = fc_dict.get("arguments")
+                parts.append({
+                    "type": "tool_call",
+                    "name": fc_name,
+                    "arguments": _parse_arguments(fc_args),
+                })
+        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
+        entry = {"role": "assistant", "parts": parts, "finish_reason": fr}
+        if content_filter_results:
+            entry["content_filter_results"] = content_filter_results
+        messages.append(entry)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 @dont_throw
 def _set_streaming_token_metrics(
@@ -714,7 +764,7 @@ class ChatStream(ObjectProxy):
 
     def _process_item(self, item):
         self._span.add_event(
-            name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
@@ -834,6 +884,11 @@ class ChatStream(ObjectProxy):
         if self._span and self._span.is_recording():
             _set_response_attributes(self._span, self._complete_response)
 
+            # Set output messages for partial streams (parity with happy path)
+            if should_send_prompts() and not should_emit_events():
+                _set_completions(
+                    self._span, self._complete_response.get("choices"))
+
         # Record partial token metrics if we have any data
         if self._complete_response.get("choices") or self._request_kwargs:
             _set_streaming_token_metrics(
@@ -875,7 +930,7 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         item_to_yield = item
 
@@ -946,7 +1001,7 @@ async def _abuild_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
         item_to_yield = item
 
@@ -1161,6 +1216,11 @@ def _accumulate_stream_items(item, complete_response):
 
         if delta and delta.get("content"):
             complete_choice["message"]["content"] += delta.get("content")
+
+        if delta and delta.get("reasoning_content"):
+            if "reasoning_content" not in complete_choice["message"]:
+                complete_choice["message"]["reasoning_content"] = ""
+            complete_choice["message"]["reasoning_content"] += delta.get("reasoning_content")
 
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")

@@ -1,4 +1,5 @@
 import httpx
+import json
 from opentelemetry.sdk.trace import Span
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace.propagation import get_current_span
@@ -15,6 +16,18 @@ def spy_decorator(method_to_decorate):
 
     wrapper.mock = mock
     return wrapper
+
+
+def get_input_messages(span):
+    return json.loads(span.attributes["gen_ai.input.messages"])
+
+
+def get_output_messages(span):
+    return json.loads(span.attributes["gen_ai.output.messages"])
+
+
+def get_tool_definitions(span):
+    return json.loads(span.attributes["gen_ai.tool.definitions"])
 
 
 def assert_request_contains_tracecontext(request: httpx.Request, expected_span: Span):
