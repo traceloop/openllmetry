@@ -1,3 +1,9 @@
+## v0.54.0 (2026-03-29)
+
+### Feat
+
+- **anthropic**: conform instrumentation to OTel GenAI semantic conventions (#3835)
+
 ## v0.53.4 (2026-03-29)
 
 ### Fix
