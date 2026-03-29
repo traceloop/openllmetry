@@ -18,7 +18,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv_ai import GenAISystem, SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
-from .utils import should_send_prompts, _messages_to_otel_input, _response_to_otel_output
+from .utils import _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
 
@@ -205,8 +205,7 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
-            if should_send_prompts():
-                set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
+            set_span_attribute(span, SpanAttributes.TRACELOOP_ENTITY_OUTPUT, str(result))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -239,13 +238,12 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
             # Known gap: CrewAI LLM.call returns plain text; stop/finish reason is not exposed
             # for mapping to gen_ai.response.finish_reasons without provider-specific internals.
 
-            if should_send_prompts():
-                input_json = _messages_to_otel_input(messages_arg)
-                if input_json:
-                    set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, input_json)
-                output_json = _response_to_otel_output(result)
-                if output_json:
-                    set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
+            input_json = _messages_to_otel_input(messages_arg)
+            if input_json:
+                set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, input_json)
+            output_json = _response_to_otel_output(result)
+            if output_json:
+                set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
 
             set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.model))
 
