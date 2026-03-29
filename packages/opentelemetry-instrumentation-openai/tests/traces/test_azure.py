@@ -781,8 +781,8 @@ def test_chat_reasoning(instrument_legacy, span_exporter,
     assert len(spans) >= 1
     span = spans[-1]
 
-    assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
-    assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
+    assert span.attributes["llm.request.reasoning_effort"] == "low"
+    assert span.attributes["llm.usage.reasoning_tokens"] > 0
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
