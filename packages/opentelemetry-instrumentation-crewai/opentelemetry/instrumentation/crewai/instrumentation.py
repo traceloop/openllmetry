@@ -215,59 +215,62 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
 
 @with_tracer_wrapper
 def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
-    llm = instance.model if hasattr(instance, "model") else "llm"
-    chat_provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
+    model = str(instance.model) if hasattr(instance, "model") else "llm"
+    provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
+
     span_attrs = {
         GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
-        GenAIAttributes.GEN_AI_REQUEST_MODEL: str(llm),
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: model,
     }
-    if chat_provider is not None:
-        span_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = chat_provider
+    if provider:
+        span_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = provider
 
     with tracer.start_as_current_span(
-        f"{llm}.llm",
-        kind=SpanKind.CLIENT,
-        attributes=span_attrs,
+        f"{model}.llm", kind=SpanKind.CLIENT, attributes=span_attrs,
     ) as span:
         start_time = time.time()
         try:
             CrewAISpanAttributes(span=span, instance=instance)
-            # Capture input messages before the call (args[0] is the messages param of LLM.call)
             messages_arg = args[0] if args else kwargs.get("messages")
             result = wrapped(*args, **kwargs)
-            # Known gap: CrewAI LLM.call returns plain text; stop/finish reason is not exposed
-            # for mapping to gen_ai.response.finish_reasons without provider-specific internals.
 
-            input_json = _messages_to_otel_input(messages_arg)
-            if input_json:
-                set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, input_json)
-            output_json = _response_to_otel_output(result)
-            if output_json:
-                set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
-
-            set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.model))
-
-            if hasattr(instance, "last_token_usage") and instance.last_token_usage:
-                usage = instance.last_token_usage
-                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                                   getattr(usage, "prompt_tokens", None))
-                set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                                   getattr(usage, "completion_tokens", None))
-
-            if duration_histogram:
-                duration = time.time() - start_time
-                metric_attrs = {
-                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model),
-                }
-                if chat_provider is not None:
-                    metric_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = chat_provider
-                duration_histogram.record(duration, attributes=metric_attrs)
+            _set_messages_attributes(span, messages_arg, result)
+            _set_response_attributes(span, instance)
+            _record_duration(duration_histogram, start_time, model, provider)
 
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
+
+
+def _set_messages_attributes(span, messages_arg, result):
+    input_json = _messages_to_otel_input(messages_arg)
+    if input_json:
+        set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, input_json)
+    output_json = _response_to_otel_output(result)
+    if output_json:
+        set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, output_json)
+
+
+def _set_response_attributes(span, instance):
+    set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, str(instance.model))
+    if hasattr(instance, "last_token_usage") and instance.last_token_usage:
+        usage = instance.last_token_usage
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
+                           getattr(usage, "prompt_tokens", None))
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
+                           getattr(usage, "completion_tokens", None))
+
+
+def _record_duration(duration_histogram, start_time, model, provider):
+    if not duration_histogram:
+        return
+    attrs = {GenAIAttributes.GEN_AI_RESPONSE_MODEL: model}
+    if provider:
+        attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = provider
+    duration_histogram.record(time.time() - start_time, attributes=attrs)
 
 
 def is_metrics_enabled() -> bool:

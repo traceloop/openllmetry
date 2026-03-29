@@ -2064,7 +2064,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-crewai"
-version = "0.54.0"
+version = "0.55.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
