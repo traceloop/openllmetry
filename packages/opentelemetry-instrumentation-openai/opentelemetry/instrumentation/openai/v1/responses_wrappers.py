@@ -293,7 +293,11 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                                 elif item.get("file_id"):
                                     parts.append({"type": "file", "modality": "image", "file_id": item.get("file_id")})
                             elif item_type in ("file", "input_file", "output_file"):
-                                parts.append({"type": "file", "file_id": item.get("file_id"), "filename": item.get("filename")})
+                                parts.append({
+                                    "type": "file",
+                                    "file_id": item.get("file_id"),
+                                    "filename": item.get("filename"),
+                                })
                             else:
                                 # GenericPart for unrecognized types — preserve type, wrap content
                                 parts.append({"type": item_type or "unknown", "content": item})
