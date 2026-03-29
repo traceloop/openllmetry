@@ -47,15 +47,23 @@ def _is_base64_image(item: Dict[str, Any]) -> bool:
 
 
 async def _process_image_item(item, trace_id, span_id, message_index, content_index):
-    if not Config.upload_base64_image:
-        return item
+    source = item.get("source", {})
+    media_type = source.get("media_type", "image/unknown")
 
-    image_format = item.get("source").get("media_type").split("/")[1]
+    if not Config.upload_base64_image:
+        return {
+            "type": "blob",
+            "modality": "image",
+            "mime_type": media_type,
+            "content": source.get("data", ""),
+        }
+
+    image_format = media_type.split("/")[1]
     image_name = f"message_{message_index}_content_{content_index}.{image_format}"
-    base64_string = item.get("source").get("data")
+    base64_string = source.get("data")
     url = await Config.upload_base64_image(trace_id, span_id, image_name, base64_string)
 
-    return {"type": "image_url", "image_url": {"url": url}}
+    return {"type": "uri", "modality": "image", "uri": url}
 
 
 async def _content_to_parts(message_index, content, span):
@@ -198,27 +206,32 @@ async def aset_input_attributes(span, kwargs):
 
 
 async def _dump_system_content(message_index, content, span):
-    """Convert system content to a string for gen_ai.system_instructions."""
+    """Convert system content to a JSON array of OTel spec parts for gen_ai.system_instructions.
+
+    Returns a JSON string containing a flat array of typed parts:
+      - Text:  {"type": "text", "content": "..."}
+      - Image: {"type": "uri", ...} or {"type": "blob", ...}
+    """
     if isinstance(content, str):
-        return content
+        return json.dumps([{"type": "text", "content": content}])
     elif isinstance(content, list):
-        if all([model_as_dict(item).get("type") == "text" for item in content]):
-            return "".join([model_as_dict(item).get("text") for item in content])
-        content = [
-            (
-                await _process_image_item(
-                    model_as_dict(item),
+        parts = []
+        for j, item in enumerate(content):
+            item_dict = model_as_dict(item) if not isinstance(item, dict) else dict(item)
+            if _is_base64_image(item_dict):
+                processed = await _process_image_item(
+                    item_dict,
                     span.context.trace_id,
                     span.context.span_id,
                     message_index,
                     j,
                 )
-                if _is_base64_image(model_as_dict(item))
-                else model_as_dict(item)
-            )
-            for j, item in enumerate(content)
-        ]
-        return json.dumps(content, cls=JSONEncoder)
+                parts.append(processed)
+            elif item_dict.get("type") == "text":
+                parts.append({"type": "text", "content": item_dict.get("text", "")})
+            else:
+                parts.append(item_dict)
+        return json.dumps(parts, cls=JSONEncoder)
 
 
 def _build_output_messages_from_content(response):
@@ -230,11 +243,14 @@ def _build_output_messages_from_content(response):
       - Reasoning: {"type": "reasoning", "content": "..."}
     """
     if response.get("completion"):
-        return [{
+        msg = {
             "role": response.get("role", "assistant"),
             "parts": [{"type": "text", "content": response.get("completion")}],
-            "finish_reason": _map_finish_reason(response.get("stop_reason")),
-        }]
+        }
+        mapped = _map_finish_reason(response.get("stop_reason"))
+        if mapped:
+            msg["finish_reason"] = mapped
+        return [msg]
 
     if not response.get("content"):
         return []
@@ -266,11 +282,14 @@ def _build_output_messages_from_content(response):
     if not parts:
         return []
 
-    return [{
+    msg = {
         "role": response.get("role", "assistant"),
         "parts": parts,
-        "finish_reason": _map_finish_reason(response.get("stop_reason")),
-    }]
+    }
+    mapped = _map_finish_reason(response.get("stop_reason"))
+    if mapped:
+        msg["finish_reason"] = mapped
+    return [msg]
 
 
 async def _aset_span_completions(span, response):
@@ -417,11 +436,13 @@ def set_streaming_response_attributes(span, complete_response_events):
 
     if parts:
         # Consolidate all parts into a single assistant message
-        output_messages = [{
+        msg = {
             "role": "assistant",
             "parts": parts,
-            "finish_reason": finish_reasons[-1] if finish_reasons else None,
-        }]
+        }
+        if finish_reasons:
+            msg["finish_reason"] = finish_reasons[-1]
+        output_messages = [msg]
         set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,

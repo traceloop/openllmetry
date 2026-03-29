@@ -102,7 +102,12 @@ def test_input_messages_multi_turn():
 
 
 def test_system_instructions_attribute():
-    """System prompt should be in gen_ai.system_instructions, NOT as a message."""
+    """gen_ai.system_instructions must be a JSON array of typed parts, NOT a plain string.
+
+    OTel spec: gen_ai.system_instructions is a flat array of parts
+    (NOT wrapped in {role, parts}).  Example:
+        [{"type": "text", "content": "You are a helpful assistant."}]
+    """
     span = make_span()
     kwargs = {
         "model": "claude-3-opus-20240229",
@@ -113,9 +118,11 @@ def test_system_instructions_attribute():
     asyncio.run(aset_input_attributes(span, kwargs))
 
     assert GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS in span.attributes
-    assert span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == (
-        "You are a helpful assistant."
-    )
+    system_val = span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS]
+    # Must be valid JSON containing an array of parts
+    parsed = json.loads(system_val)
+    assert isinstance(parsed, list)
+    assert parsed == [{"type": "text", "content": "You are a helpful assistant."}]
 
     # System should NOT appear as part of gen_ai.input.messages
     messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
@@ -811,3 +818,217 @@ def test_multiple_tool_use_blocks_in_single_message():
     # No text parts should be present
     text_parts = [p for p in assistant_msg["parts"] if p["type"] == "text"]
     assert len(text_parts) == 0
+
+
+# ---------------------------------------------------------------------------
+# Missing coverage tests — expose semconv compliance gaps
+# ---------------------------------------------------------------------------
+
+def test_system_instructions_list_of_text_blocks():
+    """When system is a list of text blocks, gen_ai.system_instructions must be
+    a JSON array of TextParts, NOT a concatenated string.
+
+    Anthropic allows system: [{type: "text", text: "..."},...].
+    Spec: [{"type": "text", "content": "Part 1"}, {"type": "text", "content": "Part 2"}]
+    """
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "system": [
+            {"type": "text", "text": "You are a helpful assistant."},
+            {"type": "text", "text": "Always be concise."},
+        ],
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    system_val = span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS]
+    parsed = json.loads(system_val)
+    assert isinstance(parsed, list)
+    assert len(parsed) == 2
+    assert parsed[0] == {"type": "text", "content": "You are a helpful assistant."}
+    assert parsed[1] == {"type": "text", "content": "Always be concise."}
+
+
+def test_finish_reason_none_not_set():
+    """When stop_reason is None, gen_ai.response.finish_reasons must NOT be set."""
+    span = make_span()
+    response = _make_response([_make_text_block("Hello")], stop_reason=None)
+    set_response_attributes(span, response)
+
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes
+
+
+def test_finish_reason_stop_sequence_mapping():
+    """Anthropic 'stop_sequence' must map to OTel 'stop'."""
+    span = make_span()
+    response = _make_response(
+        [_make_text_block("partial...")], stop_reason="stop_sequence"
+    )
+    set_response_attributes(span, response)
+
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
+
+
+def test_tool_result_in_input_as_tool_call_response():
+    """tool_result blocks in input must be mapped to tool_call_response parts."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [
+            {"role": "user", "content": "What's the weather in SF?"},
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "call_123",
+                        "name": "get_weather",
+                        "input": {"location": "San Francisco"},
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "call_123",
+                        "content": "72°F, sunny",
+                    }
+                ],
+            },
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    tool_result_msg = messages[2]
+    assert tool_result_msg["role"] == "user"
+    assert len(tool_result_msg["parts"]) == 1
+    assert tool_result_msg["parts"][0] == {
+        "type": "tool_call_response",
+        "id": "call_123",
+        "response": "72°F, sunny",
+    }
+    # No raw "tool_result" type should leak through
+    assert "tool_result" not in [p["type"] for p in tool_result_msg["parts"]]
+
+
+def test_image_with_upload_produces_uri_part():
+    """Uploaded base64 images must use OTel UriPart format, NOT OpenAI image_url."""
+    from opentelemetry.instrumentation.anthropic.config import Config
+
+    original = Config.upload_base64_image
+
+    async def mock_upload(*args):
+        return "https://example.com/uploaded.jpg"
+
+    Config.upload_base64_image = mock_upload
+
+    try:
+        span = make_span()
+        kwargs = {
+            "model": "claude-3-opus-20240229",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "What is in this image?"},
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": "iVBORw0KGgoAAAANSUhEUg==",
+                            },
+                        },
+                    ],
+                }
+            ],
+            "max_tokens": 1024,
+        }
+        asyncio.run(aset_input_attributes(span, kwargs))
+
+        messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+        image_part = messages[0]["parts"][1]
+        # OTel spec: UriPart
+        assert image_part == {
+            "type": "uri",
+            "modality": "image",
+            "uri": "https://example.com/uploaded.jpg",
+        }
+    finally:
+        Config.upload_base64_image = original
+
+
+def test_image_without_upload_produces_blob_part():
+    """Non-uploaded base64 images must use OTel BlobPart, NOT raw Anthropic format."""
+    from opentelemetry.instrumentation.anthropic.config import Config
+
+    original = Config.upload_base64_image
+    Config.upload_base64_image = None
+
+    try:
+        span = make_span()
+        kwargs = {
+            "model": "claude-3-opus-20240229",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "What is in this image?"},
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": "iVBORw0KGgoAAAANSUhEUg==",
+                            },
+                        },
+                    ],
+                }
+            ],
+            "max_tokens": 1024,
+        }
+        asyncio.run(aset_input_attributes(span, kwargs))
+
+        messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+        image_part = messages[0]["parts"][1]
+        # OTel spec: BlobPart
+        assert image_part == {
+            "type": "blob",
+            "modality": "image",
+            "mime_type": "image/png",
+            "content": "iVBORw0KGgoAAAANSUhEUg==",
+        }
+    finally:
+        Config.upload_base64_image = original
+
+
+def test_streaming_finish_reason_null_omitted_from_json():
+    """When no finish_reason is available, the key must be omitted from
+    gen_ai.output.messages JSON — NOT serialized as null."""
+    span = make_span()
+    # Event with no finish_reason key at all
+    events = [{"type": "text", "text": "Hello world", "index": 0}]
+    set_streaming_response_attributes(span, events)
+
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output) == 1
+    assert output[0]["role"] == "assistant"
+    assert output[0]["parts"] == [{"type": "text", "content": "Hello world"}]
+    # finish_reason key must be absent, not null
+    assert "finish_reason" not in output[0]
+
+
+def test_streaming_finish_reason_none_does_not_set_span_attr():
+    """When streaming events have no finish_reason, gen_ai.response.finish_reasons
+    must NOT be set on the span."""
+    span = make_span()
+    events = [{"type": "text", "text": "Hello", "index": 0}]
+    set_streaming_response_attributes(span, events)
+
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes

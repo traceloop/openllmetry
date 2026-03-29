@@ -265,7 +265,7 @@ def test_anthropic_multi_modal_legacy(
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["parts"] == [
         {"type": "text", "content": "What do you see?"},
-        {"type": "image_url", "image_url": {"url": "/some/url"}},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
     ]
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
@@ -452,7 +452,8 @@ def test_anthropic_image_with_history(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     # span 0: system + first user message
-    assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
     span0_input = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert span0_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
     assert span0_input[0]["role"] == "user"
@@ -465,7 +466,7 @@ def test_anthropic_image_with_history(
     )
 
     # span 1: system + multi-turn
-    assert spans[1].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    assert spans[1].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
     span1_input = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert span1_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
     assert span1_input[0]["role"] == "user"
@@ -473,7 +474,7 @@ def test_anthropic_image_with_history(
     assert span1_input[1]["role"] == "assistant"
     assert span1_input[2]["parts"] == [
         {"type": "text", "content": "What do you see?"},
-        {"type": "image_url", "image_url": {"url": "/some/url"}},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
     ]
     assert span1_input[2]["role"] == "user"
     span1_output = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
@@ -520,7 +521,7 @@ async def test_anthropic_async_multi_modal_legacy(
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["parts"] == [
         {"type": "text", "content": "What do you see?"},
-        {"type": "image_url", "image_url": {"url": "/some/url"}},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
     ]
     assert input_messages[0]["role"] == "user"
     output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])

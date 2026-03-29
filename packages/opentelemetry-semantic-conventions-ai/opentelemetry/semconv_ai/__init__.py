@@ -208,12 +208,6 @@ class SpanAttributes:
     # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_*_INPUT_TOKENS
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
-    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS_DEPRECATED = (
-        "gen_ai.usage.cache_creation_input_tokens"
-    )
-    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS_DEPRECATED = (
-        "gen_ai.usage.cache_read_input_tokens"
-    )
 
     # Chroma db
     CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"

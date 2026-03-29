@@ -99,8 +99,9 @@ def test_anthropic_prompt_caching_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
-    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
@@ -436,8 +437,9 @@ async def test_anthropic_prompt_caching_async_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
-    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
@@ -783,8 +785,9 @@ def test_anthropic_prompt_caching_stream_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
-    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
 
     cc_input = json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert cc_input[0]["role"] == "user"
@@ -1134,8 +1137,9 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
-    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == system_message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert cache_creation_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    assert cache_read_span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
     assert (
         cache_creation_span.attributes.get("gen_ai.response.id")
         == "msg_01KQCu5jXyou55u6YFNk6uqu"
