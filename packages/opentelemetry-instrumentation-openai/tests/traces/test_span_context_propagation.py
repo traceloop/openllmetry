@@ -20,7 +20,8 @@ def assert_event_has_span_context(log: ReadableLogRecord, expected_trace_id: int
     )
 
     # Verify it's a proper OpenAI event
-    assert log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == GenAIAttributes.GenAiSystemValues.OPENAI.value
+    provider = log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+    assert provider == GenAIAttributes.GenAiSystemValues.OPENAI.value
 
 
 def test_span_context_propagation_with_mock_client(

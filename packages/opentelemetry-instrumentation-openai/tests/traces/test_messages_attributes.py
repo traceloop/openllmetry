@@ -17,7 +17,6 @@ from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     _set_input_messages,
     _set_output_messages,
     _map_finish_reason,
-    OPENAI_FINISH_REASON_MAP,
 )
 from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
     _set_input_messages as _set_completion_input_messages,

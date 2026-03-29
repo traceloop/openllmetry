@@ -1720,10 +1720,10 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
 
     # Verify metric attributes
     attributes = data_point.attributes
-    assert attributes.get(
-        "gen_ai.provider.name") == "openai", f"Expected gen_ai.provider.name=openai, got {attributes.get('gen_ai.provider.name')}"
-    assert attributes.get(
-        "gen_ai.operation.name") == "chat", f"Expected operation=chat, got {attributes.get('gen_ai.operation.name')}"
+    provider = attributes.get("gen_ai.provider.name")
+    assert provider == "openai", f"Expected gen_ai.provider.name=openai, got {provider}"
+    operation = attributes.get("gen_ai.operation.name")
+    assert operation == "chat", f"Expected operation=chat, got {operation}"
 
     streaming_data_points = [
         dp for dp in duration_metric.data.data_points
@@ -1796,10 +1796,10 @@ def test_chat_streaming_partial_consumption(instrument_legacy, span_exporter, lo
     assert data_point.sum > 0, f"Duration should be greater than 0, got {data_point.sum}"
 
     attributes = data_point.attributes
-    assert attributes.get(
-        "gen_ai.provider.name") == "openai", f"Expected gen_ai.provider.name=openai, got {attributes.get('gen_ai.provider.name')}"
-    assert attributes.get(
-        "gen_ai.operation.name") == "chat", f"Expected operation=chat, got {attributes.get('gen_ai.operation.name')}"
+    provider = attributes.get("gen_ai.provider.name")
+    assert provider == "openai", f"Expected gen_ai.provider.name=openai, got {provider}"
+    operation = attributes.get("gen_ai.operation.name")
+    assert operation == "chat", f"Expected operation=chat, got {operation}"
 
     streaming_data_points = [
         dp for dp in duration_metric.data.data_points
