@@ -362,7 +362,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
 
-    # Tool definitions as JSON when use_messages_attributes is enabled
+    # Tool definitions as JSON
     if traced_response.tools:
         tool_defs = [
             d for tp in traced_response.tools

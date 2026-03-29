@@ -26,10 +26,6 @@ def test_responses(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
-    # assert (
-    #     span.attributes["gen_ai.prompt.0.content"] == "What is the capital of France?"
-    # )
-    # assert span.attributes["gen_ai.prompt.0.role"] == "user"
 
 
 @pytest.mark.vcr
@@ -110,23 +106,6 @@ def test_responses_with_input_history(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
-    # assert (
-    #     span.attributes["gen_ai.prompt.0.content"]
-    #     == "Come up with an adjective in English. Respond with just one word."
-    # )
-    # assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    # assert json.loads(span.attributes["gen_ai.prompt.1.content"]) == [
-    #     {
-    #         "type": "output_text",
-    #         "text": first_response.output[0].content[0].text,
-    #     }
-    # ]
-    # assert span.attributes["gen_ai.prompt.1.role"] == "assistant"
-    # assert (
-    #     span.attributes["gen_ai.prompt.2.content"]
-    #     == "Can you explain why you chose that word?"
-    # )
-    # assert span.attributes["gen_ai.prompt.2.role"] == "user"
 
 
 @pytest.mark.vcr
@@ -172,25 +151,6 @@ def test_responses_tool_calls(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
 
-    # assert span.attributes["gen_ai.prompt.0.content"] == "What's the weather in London?"
-    # assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    # assert span.attributes["llm.request.functions.0.name"] == "get_weather"
-    # assert json.loads(span.attributes["llm.request.functions.0.parameters"]) == {
-    #     "type": "object",
-    #     "properties": {
-    #         "location": {
-    #             "type": "string",
-    #             "description": "The city and state, e.g. San Francisco, CA"
-    #         }
-    #     },
-    #     "required": ["location"]
-    # }
-    # assert span.attributes["llm.request.functions.0.description"] == "Get the current weather for a location"
-
-    # assert (
-    #     span.attributes["gen_ai.completion.0.tool_calls.0.id"]
-    #     == "fc_685ff89422ec819a977b2ea385bc9b6601c537ddeff5c2a2"
-    # )
     assert (
         span.attributes["gen_ai.response.id"]
         == "resp_685ff8928dc4819aac45e085ba66838101c537ddeff5c2a2"
@@ -213,16 +173,6 @@ def test_responses_reasoning(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    span = spans[0]
-
-    # assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
-    # assert span.attributes["gen_ai.request.reasoning_summary"] == ()
-
-    # assert span.attributes["gen_ai.response.reasoning_effort"] == "low"
-    # When reasoning summary is None/empty, the attribute should not be set
-    assert "gen_ai.completion.0.reasoning" not in span.attributes
-
-    # assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
 
 
 @pytest.mark.vcr

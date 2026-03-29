@@ -88,9 +88,12 @@ def _parse_arguments(raw_args):
         return raw_args
 
 
-def _build_tool_def_dict(function_dict):
-    """Extract name/description/parameters from a function dict into a tool definition."""
+def _build_tool_def_dict(function_dict, tool_type=None):
+    """Build a tool definition dict matching OTel source system format."""
     tool_def = {}
+    t = tool_type or function_dict.get("type")
+    if t:
+        tool_def["type"] = t
     if function_dict.get("name"):
         tool_def["name"] = function_dict["name"]
     if function_dict.get("description"):
@@ -112,7 +115,10 @@ def _set_functions_attributes(span, functions):
     if not functions:
         return
 
-    tool_defs = [d for f in functions if (d := _build_tool_def_dict(f))]
+    tool_defs = [
+        d for f in functions
+        if (d := _build_tool_def_dict(f, tool_type="function"))
+    ]
     _set_tool_definitions_json(span, tool_defs)
 
 
@@ -122,7 +128,8 @@ def set_tools_attributes(span, tools):
 
     tool_defs = [
         d for tool in tools
-        if tool.get("function") and (d := _build_tool_def_dict(tool["function"]))
+        if tool.get("function")
+        and (d := _build_tool_def_dict(tool["function"], tool_type=tool.get("type")))
     ]
     _set_tool_definitions_json(span, tool_defs)
 

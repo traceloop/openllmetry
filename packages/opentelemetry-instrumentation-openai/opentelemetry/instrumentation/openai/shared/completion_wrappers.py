@@ -190,13 +190,12 @@ def _set_output_messages(span, choices):
 
     messages = []
     for choice in choices:
+        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
         entry = {
             "role": "assistant",
             "parts": [{"content": choice.get("text"), "type": "text"}],
+            "finish_reason": fr,
         }
-        fr = _map_finish_reason(choice.get("finish_reason"))
-        if fr is not None:
-            entry["finish_reason"] = fr
         messages.append(entry)
     _set_span_attribute(
         span,

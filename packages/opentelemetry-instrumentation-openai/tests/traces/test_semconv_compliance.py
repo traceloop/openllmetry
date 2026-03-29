@@ -177,8 +177,8 @@ class TestP1_2_ResponsesFinishReasons:
 # ---------------------------------------------------------------------------
 
 class TestP1_3_ResponsesMessagesAttributes:
-    """When Config.use_messages_attributes is True, set_data_attributes must
-    emit gen_ai.input.messages / gen_ai.output.messages as JSON."""
+    """set_data_attributes must emit gen_ai.input.messages /
+    gen_ai.output.messages as JSON."""
 
     def test_input_messages_json_when_flag_enabled(self, mock_span):
         from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
@@ -350,14 +350,14 @@ class TestP2_1_Base64ImageMapping:
 
 
 # ---------------------------------------------------------------------------
-# P2-2: gen_ai.tool.definitions must use JSON when use_messages_attributes
+# P2-2: gen_ai.tool.definitions must use JSON
 # ---------------------------------------------------------------------------
 
 class TestP2_2_ToolDefinitionsJson:
     """set_tools_attributes and _set_functions_attributes should emit a single
-    JSON string attribute when Config.use_messages_attributes is True."""
+    JSON string attribute for gen_ai.tool.definitions."""
 
-    def test_tools_as_json_when_flag_enabled(self, mock_span):
+    def test_tools_as_json(self, mock_span):
         tools = [
             {
                 "type": "function",
@@ -377,9 +377,10 @@ class TestP2_2_ToolDefinitionsJson:
         parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
         assert isinstance(parsed, list)
         assert len(parsed) == 1
+        assert parsed[0]["type"] == "function"
         assert parsed[0]["name"] == "get_weather"
 
-    def test_functions_as_json_when_flag_enabled(self, mock_span):
+    def test_functions_as_json(self, mock_span):
         functions = [
             {
                 "name": "search",
@@ -395,6 +396,7 @@ class TestP2_2_ToolDefinitionsJson:
         )
         parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
         assert isinstance(parsed, list)
+        assert parsed[0]["type"] == "function"
         assert parsed[0]["name"] == "search"
 
     def test_tools_emits_json_format(self, mock_span):

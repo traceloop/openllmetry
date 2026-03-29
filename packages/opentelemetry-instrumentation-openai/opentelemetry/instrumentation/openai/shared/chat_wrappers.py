@@ -604,10 +604,8 @@ def _set_output_messages(span, choices):
                     "id": "",
                     "arguments": _parse_arguments(fc_args),
                 })
-        entry = {"role": "assistant", "parts": parts}
-        fr = _map_finish_reason(choice.get("finish_reason"))
-        if fr is not None:
-            entry["finish_reason"] = fr
+        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
+        entry = {"role": "assistant", "parts": parts, "finish_reason": fr}
         if content_filter_results:
             entry["content_filter_results"] = content_filter_results
         messages.append(entry)
