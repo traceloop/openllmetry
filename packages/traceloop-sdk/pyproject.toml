@@ -1,6 +1,6 @@
 [project]
 name = "traceloop-sdk"
-version = "0.53.3"
+version = "0.54.0"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -21,7 +21,7 @@ dependencies = [
   "opentelemetry-instrumentation-urllib3>=0.59b0",
   "opentelemetry-instrumentation-threading>=0.59b0",
   "opentelemetry-instrumentation-redis>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.4.13,<=0.5.1",
+  "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
   "opentelemetry-instrumentation-agno",
   "opentelemetry-instrumentation-mistralai",
   "opentelemetry-instrumentation-openai",
@@ -143,9 +143,6 @@ ignore_missing_imports = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 120

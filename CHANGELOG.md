@@ -1,3 +1,17 @@
+## v0.54.0 (2026-03-29)
+
+### Feat
+
+- **anthropic**: conform instrumentation to OTel GenAI semantic conventions (#3835)
+
+## v0.53.4 (2026-03-29)
+
+### Fix
+
+- **release**: google_generativeai path in .cz.toml & trigger version bump in all instrumentations (#3896)
+- **llamaindex**: handle None content in StructuredLLM responses (#3513) (#3665)
+- **semconv**: migrating span attributes to OTel gen_ai convention (#3809)
+
 ## v0.53.3 (2026-03-19)
 
 ### Fix

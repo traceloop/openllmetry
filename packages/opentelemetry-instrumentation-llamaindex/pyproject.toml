@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.53.3"
+version = "0.54.0"
 description = "OpenTelemetry LlamaIndex instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -14,7 +14,7 @@ dependencies = [
   "inflection>=0.5.1,<0.6.0",
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
   "opentelemetry-semantic-conventions>=0.59b0",
 ]
 
@@ -84,3 +84,8 @@ select = ["E", "F", "W"]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+
+[tool.uv.sources]
+opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", editable = true }
+opentelemetry-instrumentation-cohere = { path = "../opentelemetry-instrumentation-cohere", editable = true }
+opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }

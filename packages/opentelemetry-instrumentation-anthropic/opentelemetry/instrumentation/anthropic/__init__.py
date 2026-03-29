@@ -13,6 +13,7 @@ from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_response_events,
 )
 from opentelemetry.instrumentation.anthropic.span_utils import (
+    _map_finish_reason,
     aset_input_attributes,
     set_response_attributes,
 )
@@ -39,9 +40,12 @@ from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     Meters,
     SpanAttributes,
 )
@@ -278,7 +282,9 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: _map_finish_reason(
+                    getattr(response, "stop_reason", None)
+                ),
             },
         )
 
@@ -286,7 +292,7 @@ async def _aset_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
@@ -392,7 +398,9 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.LLM_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: _map_finish_reason(
+                    getattr(response, "stop_reason", None)
+                ),
             },
         )
 
@@ -400,7 +408,7 @@ def _set_token_usage(
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
-    set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
+    set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
@@ -537,12 +545,17 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    operation_name = (
+        GenAiOperationNameValues.TEXT_COMPLETION.value
+        if name == "anthropic.completion"
+        else GenAiOperationNameValues.CHAT.value
+    )
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         },
     )
 
@@ -661,12 +674,17 @@ async def _awrap(
         return await wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    operation_name = (
+        GenAiOperationNameValues.TEXT_COMPLETION.value
+        if name == "anthropic.completion"
+        else GenAiOperationNameValues.CHAT.value
+    )
     span = tracer.start_span(
         name,
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Anthropic",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         },
     )
     await _ahandle_input(span, event_logger, kwargs)
