@@ -9,8 +9,6 @@ These validate that event emitter functions:
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from opentelemetry.instrumentation.bedrock.event_emitter import (
     emit_choice_events,
     emit_response_event_converse,

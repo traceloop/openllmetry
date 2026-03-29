@@ -6,8 +6,6 @@ the mapping logic in span_utils.py against the OTel GenAI semconv.
 
 import json
 
-import pytest
-
 from opentelemetry.instrumentation.bedrock.span_utils import (
     _anthropic_content_to_parts,
     _converse_content_to_parts,

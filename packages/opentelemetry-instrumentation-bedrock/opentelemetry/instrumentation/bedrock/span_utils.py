@@ -715,7 +715,8 @@ def _set_amazon_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(fr for fr in finish_reasons if fr))
+        filtered_reasons = tuple(fr for fr in finish_reasons if fr)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, filtered_reasons)
     elif "outputText" in response_body:
         fr = _map_finish_reason(response_body.get("completionReason"))
         _set_span_attribute(
