@@ -11,8 +11,9 @@ from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-
-GEN_AI_SYSTEM_ANTHROPIC = "anthropic"
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiSystemValues,
+)
 _PYDANTIC_VERSION = version("pydantic")
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
@@ -170,7 +171,7 @@ async def ashared_metrics_attributes(response):
 
     attrs = {
         **common_attributes,
-        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
     }
     # Only include model if not None — OTLP encoder rejects None attribute values
     if model is not None:
@@ -210,7 +211,7 @@ def shared_metrics_attributes(response):
 
     attrs = {
         **common_attributes,
-        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
     }
     # Only include model if not None — OTLP encoder rejects None attribute values
     if model is not None:
@@ -221,7 +222,7 @@ def shared_metrics_attributes(response):
 @dont_throw
 def error_metrics_attributes(exception):
     return {
-        GenAIAttributes.GEN_AI_SYSTEM: GEN_AI_SYSTEM_ANTHROPIC,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAiSystemValues.ANTHROPIC.value,
         "error.type": exception.__class__.__name__,
     }
 

@@ -1,3 +1,4 @@
+import json
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
@@ -44,20 +45,17 @@ def test_anthropic_thinking_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    reasoning_parts = [p for p in output_messages[0]["parts"] if p["type"] == "reasoning"]
+    assert reasoning_parts[0]["content"] == response.content[0].thinking
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[1].text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -121,7 +119,7 @@ def test_anthropic_thinking_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
             "word \"strawberry\" is spelled:\ns-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\ns - not an 'r'\nt - "
@@ -135,7 +133,7 @@ def test_anthropic_thinking_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "The letter 'r' appears 3 times in the word \"strawberry\".",
         },
@@ -195,7 +193,7 @@ def test_anthropic_thinking_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -203,7 +201,7 @@ def test_anthropic_thinking_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -247,20 +245,17 @@ async def test_async_anthropic_thinking_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].thinking
-    )
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.1.content"]
-        == response.content[1].text
-    )
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    reasoning_parts = [p for p in output_messages[0]["parts"] if p["type"] == "reasoning"]
+    assert reasoning_parts[0]["content"] == response.content[0].thinking
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[1].text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -325,7 +320,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
             "word \"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nLet me check for each 'r':\n1. The third letter is "
@@ -338,7 +333,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "The letter 'r' appears 3 times in the word \"strawberry\".",
         },
@@ -403,7 +398,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -411,7 +406,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -466,13 +461,16 @@ def test_anthropic_thinking_streaming_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert any(p["type"] == "reasoning" for p in output_messages[0]["parts"])
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -548,7 +546,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "thinking",
@@ -565,7 +563,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -640,7 +638,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -648,7 +646,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -704,13 +702,16 @@ async def test_async_anthropic_thinking_streaming_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["gen_ai.prompt.0.content"] == prompt
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == prompt
 
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "thinking"
-
-    assert anthropic_span.attributes["gen_ai.completion.1.role"] == "assistant"
-    assert anthropic_span.attributes["gen_ai.completion.1.content"] == text
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert any(p["type"] == "reasoning" for p in output_messages[0]["parts"])
+    text_parts = [p for p in output_messages[0]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == text
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -787,7 +788,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "thinking",
@@ -804,7 +805,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -885,7 +886,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -893,7 +894,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -902,7 +903,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
     )
 
