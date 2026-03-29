@@ -54,7 +54,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
                             == "openai"
                         )
 
@@ -68,7 +68,7 @@ def test_llm_chain_metrics(instrument_legacy, reader, chain):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
                             == "openai"
                         )
 
@@ -106,7 +106,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                         ]
                         assert data_point.sum > 0
                         assert (
-                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
                             == "openai"
                         )
 
@@ -120,7 +120,7 @@ def test_llm_chain_streaming_metrics(instrument_legacy, reader, llm):
                     )
                     for data_point in metric.data.data_points:
                         assert (
-                            data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM]
+                            data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
                             == "openai"
                         )
 
@@ -135,14 +135,14 @@ def verify_token_metrics(data_points):
             "input",
         ]
         assert data_point.sum > 0
-        assert data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        assert data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
 
 def verify_duration_metrics(data_points):
     assert any(data_point.count > 0 for data_point in data_points)
     assert any(data_point.sum > 0 for data_point in data_points)
     for data_point in data_points:
-        assert data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+        assert data_point.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
 
 def verify_langchain_metrics(reader):
@@ -236,6 +236,8 @@ def test_langgraph_metrics(instrument_legacy, reader, openai_client):
     assert token_usage_metric is not None
     token_usage_data_point = token_usage_metric.data.data_points[0]
     assert token_usage_data_point.sum > 0
+    # These metrics come from the OpenAI instrumentation (direct client usage),
+    # which still uses GEN_AI_SYSTEM
     assert (
         token_usage_data_point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
         and token_usage_data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in ["input", "output"]

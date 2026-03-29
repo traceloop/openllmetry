@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
@@ -24,6 +25,23 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace.span import Span
 
+logger = logging.getLogger(__name__)
+
+
+_FINISH_REASON_MAP = {
+    "stop": "stop",
+    "length": "length",
+    "tool_calls": "tool_call",
+    "function_call": "tool_call",
+    "content_filter": "content_filter",
+}
+
+
+def _map_finish_reason(reason):
+    if not reason:
+        return reason
+    return _FINISH_REASON_MAP.get(reason, reason)
+
 
 @dataclass
 class SpanHolder:
@@ -47,6 +65,8 @@ def _message_type_to_role(message_type: str) -> str:
         return "assistant"
     elif message_type == "tool":
         return "tool"
+    elif message_type == "function":
+        return "tool"
     else:
         return "unknown"
 
@@ -57,6 +77,35 @@ def _set_span_attribute(span: Span, key: str, value: Any) -> None:
             span.set_attribute(key, value)
         else:
             span.set_attribute(key, "")
+
+
+def _tool_calls_to_parts(tool_calls) -> list[dict]:
+    parts = []
+    if not tool_calls:
+        return parts
+    for tc in tool_calls:
+        tc_dict = dict(tc)
+        tool_id = tc_dict.get("id", "")
+        tool_name = tc_dict.get(
+            "name", tc_dict.get("function", {}).get("name", "")
+        )
+        tool_args = tc_dict.get(
+            "args", tc_dict.get("function", {}).get("arguments")
+        )
+        if isinstance(tool_args, str):
+            try:
+                tool_args = json.loads(tool_args)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        part = {
+            "type": "tool_call",
+            "id": tool_id,
+            "name": tool_name,
+        }
+        if tool_args is not None:
+            part["arguments"] = tool_args
+        parts.append(part)
+    return parts
 
 
 def set_request_params(span, kwargs, span_holder: SpanHolder):
@@ -97,22 +146,21 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
 
     tools = kwargs.get("invocation_params", {}).get("tools", [])
-    for i, tool in enumerate(tools):
-        tool_function = tool.get("function", tool)
+    if tools:
+        tool_defs = []
+        for tool in tools:
+            tool_function = tool.get("function", tool)
+            tool_def = {"name": tool_function.get("name")}
+            if tool_function.get("description"):
+                tool_def["description"] = tool_function.get("description")
+            params_val = tool_function.get("parameters", tool.get("input_schema"))
+            if params_val:
+                tool_def["parameters"] = params_val
+            tool_defs.append(tool_def)
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.name",
-            tool_function.get("name"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.description",
-            tool_function.get("description"),
-        )
-        _set_span_attribute(
-            span,
-            f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}.parameters",
-            json.dumps(tool_function.get("parameters", tool.get("input_schema"))),
+            GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+            json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder),
         )
 
 
@@ -126,16 +174,17 @@ def set_llm_request(
     set_request_params(span, kwargs, span_holder)
 
     if should_send_prompts():
-        for i, msg in enumerate(prompts):
+        input_messages = []
+        for msg in prompts:
+            input_messages.append({
+                "role": "user",
+                "parts": [{"type": "text", "content": msg}],
+            })
+        if input_messages:
             _set_span_attribute(
                 span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role",
-                "user",
-            )
-            _set_span_attribute(
-                span,
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
-                msg,
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder),
             )
 
 
@@ -149,80 +198,103 @@ def set_chat_request(
     set_request_params(span, serialized.get("kwargs", {}), span_holder)
 
     if should_send_prompts():
-        for i, function in enumerate(
-            kwargs.get("invocation_params", {}).get("functions", [])
-        ):
-            prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-
-            _set_span_attribute(span, f"{prefix}.name", function.get("name"))
+        # Tool definitions from functions
+        functions = kwargs.get("invocation_params", {}).get("functions", [])
+        if functions:
+            tool_defs = []
+            for function in functions:
+                tool_def = {"name": function.get("name")}
+                if function.get("description"):
+                    tool_def["description"] = function.get("description")
+                if function.get("parameters"):
+                    tool_def["parameters"] = function.get("parameters")
+                tool_defs.append(tool_def)
             _set_span_attribute(
-                span, f"{prefix}.description", function.get("description")
-            )
-            _set_span_attribute(
-                span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
+                span,
+                GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+                json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder),
             )
 
-        i = 0
+        input_messages = []
+        system_instructions = []
+
         for message in messages:
             for msg in message:
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role",
-                    _message_type_to_role(msg.type),
-                )
-                tool_calls = (
-                    msg.tool_calls
-                    if hasattr(msg, "tool_calls")
-                    else msg.additional_kwargs.get("tool_calls")
-                )
-
-                if tool_calls:
-                    _set_chat_tool_calls(
-                        span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}", tool_calls
-                    )
-
-                # Always set content if it exists, regardless of tool_calls presence
+                role = _message_type_to_role(msg.type)
                 content = (
                     msg.content
                     if isinstance(msg.content, str)
                     else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
                 )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
-                    content,
+
+                if role == "system":
+                    system_instructions.append({"type": "text", "content": content})
+                    continue
+
+                parts = []
+
+                # Text content
+                if content:
+                    parts.append({"type": "text", "content": content})
+
+                # Tool calls (for assistant messages)
+                tool_calls = (
+                    msg.tool_calls
+                    if hasattr(msg, "tool_calls")
+                    else msg.additional_kwargs.get("tool_calls")
                 )
+                if tool_calls:
+                    parts.extend(_tool_calls_to_parts(tool_calls))
 
-                if msg.type == "tool" and hasattr(msg, "tool_call_id"):
-                    _set_span_attribute(
-                        span,
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.tool_call_id",
-                        msg.tool_call_id,
-                    )
+                # Tool response (for tool messages)
+                if role == "tool" and hasattr(msg, "tool_call_id"):
+                    parts = [{
+                        "type": "tool_call_response",
+                        "id": msg.tool_call_id,
+                        "response": content,
+                    }]
 
-                i += 1
+                msg_obj = {"role": role, "parts": parts}
+                input_messages.append(msg_obj)
+
+        if system_instructions:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                json.dumps(system_instructions, cls=CallbackFilteredJSONEncoder),
+            )
+        if input_messages:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder),
+            )
 
 
 def set_chat_response(span: Span, response: LLMResult) -> None:
-    if not should_send_prompts():
-        return
+    send_prompts = should_send_prompts()
 
-    i = 0
+    output_messages = []
+    finish_reasons = []
+
     for generations in response.generations:
         for generation in generations:
-            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{i}"
+            # Finish reason — always collect (metadata, not content)
+            fr = None
+            if generation.generation_info and generation.generation_info.get("finish_reason"):
+                fr = _map_finish_reason(generation.generation_info["finish_reason"])
+                if fr not in finish_reasons:
+                    finish_reasons.append(fr)
+
+            if not send_prompts:
+                continue
 
             if hasattr(generation, "message") and generation.message and hasattr(generation.message, "type"):
                 role = _message_type_to_role(generation.message.type)
             else:
-                # For non-chat completions (Generation objects), default to assistant
                 role = "assistant"
 
-            _set_span_attribute(
-                span,
-                f"{prefix}.role",
-                role,
-            )
+            parts = []
 
             # Try to get content from various sources
             content = None
@@ -235,38 +307,25 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                     content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
 
             if content:
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.content",
-                    content,
-                )
-
-            # Set finish reason if available
-            if generation.generation_info and generation.generation_info.get("finish_reason"):
-                _set_span_attribute(
-                    span,
-                    f"{prefix}.finish_reason",
-                    generation.generation_info.get("finish_reason"),
-                )
+                parts.append({"type": "text", "content": content})
 
             # Handle tool calls and function calls
             if hasattr(generation, "message") and generation.message:
                 # Handle legacy function_call format (single function call)
-                if generation.message.additional_kwargs.get("function_call"):
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.tool_calls.0.name",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "name"
-                        ),
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.tool_calls.0.arguments",
-                        generation.message.additional_kwargs.get("function_call").get(
-                            "arguments"
-                        ),
-                    )
+                fc = generation.message.additional_kwargs.get("function_call")
+                if fc:
+                    fc_args = fc.get("arguments")
+                    if isinstance(fc_args, str):
+                        try:
+                            fc_args = json.loads(fc_args)
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                    parts.append({
+                        "type": "tool_call",
+                        "id": "",
+                        "name": fc.get("name"),
+                        "arguments": fc_args,
+                    })
 
                 # Handle new tool_calls format (multiple tool calls)
                 tool_calls = (
@@ -275,13 +334,21 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                     else generation.message.additional_kwargs.get("tool_calls")
                 )
                 if tool_calls and isinstance(tool_calls, list):
-                    _set_span_attribute(
-                        span,
-                        f"{prefix}.role",
-                        "assistant",
-                    )
-                    _set_chat_tool_calls(span, prefix, tool_calls)
-            i += 1
+                    parts.extend(_tool_calls_to_parts(tool_calls))
+
+            msg_obj = {"role": role, "parts": parts}
+            if fr:
+                msg_obj["finish_reason"] = fr
+            output_messages.append(msg_obj)
+
+    if output_messages:
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps(output_messages, cls=CallbackFilteredJSONEncoder),
+        )
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
 
 def set_chat_response_usage(
@@ -327,7 +394,7 @@ def set_chat_response_usage(
                         cache_read_tokens += input_token_details.get("cache_read", 0)
     except Exception as e:
         # If there's any issue processing usage metadata, continue without it
-        print(f"DEBUG: Error processing usage metadata: {e}")
+        logger.warning("Error processing usage metadata: %s", e)
         pass
 
     if (
@@ -348,22 +415,22 @@ def set_chat_response_usage(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             total_tokens,
         )
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
         )
         if record_token_usage:
-            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
 
             if input_tokens > 0:
                 token_histogram.record(
                     input_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
@@ -373,7 +440,7 @@ def set_chat_response_usage(
                 token_histogram.record(
                     output_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
                     },
@@ -395,30 +462,3 @@ def _extract_model_name_from_association_metadata(metadata: Optional[dict[str, A
     if metadata:
         return metadata.get("ls_model_name") or "unknown"
     return "unknown"
-
-
-def _set_chat_tool_calls(
-    span: Span, prefix: str, tool_calls: list[dict[str, Any]]
-) -> None:
-    for idx, tool_call in enumerate(tool_calls):
-        tool_call_prefix = f"{prefix}.tool_calls.{idx}"
-        tool_call_dict = dict(tool_call)
-        tool_id = tool_call_dict.get("id")
-        tool_name = tool_call_dict.get(
-            "name", tool_call_dict.get("function", {}).get("name")
-        )
-        tool_args = tool_call_dict.get(
-            "args", tool_call_dict.get("function", {}).get("arguments")
-        )
-
-        _set_span_attribute(span, f"{tool_call_prefix}.id", tool_id)
-        _set_span_attribute(
-            span,
-            f"{tool_call_prefix}.name",
-            tool_name,
-        )
-        _set_span_attribute(
-            span,
-            f"{tool_call_prefix}.arguments",
-            json.dumps(tool_args, cls=CallbackFilteredJSONEncoder),
-        )

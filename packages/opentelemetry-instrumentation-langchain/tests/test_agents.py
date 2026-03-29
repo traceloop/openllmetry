@@ -197,7 +197,7 @@ def test_agents_with_events_with_no_content(
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 8
     assert all(
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
         for log in logs
     )
 

@@ -451,10 +451,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _extract_class_name_from_serialized(serialized)
         )
 
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
-        _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, request_type.value)
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, vendor)
+        operation_name = (
+            GenAiOperationNameValues.CHAT.value
+            if request_type == LLMRequestTypeValues.CHAT
+            else GenAiOperationNameValues.TEXT_COMPLETION.value
+        )
         _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAICustomOperationName.LLM_REQUEST.value
+            span, GenAIAttributes.GEN_AI_OPERATION_NAME, operation_name
         )
 
         # we already have an LLM span by this point,
@@ -732,16 +736,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
             )
             _set_span_attribute(
-                span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens
+                span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens
             )
 
             # Record token usage metrics
-            vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
+            vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
@@ -751,7 +755,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
@@ -768,11 +772,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration before ending span
         duration = time.time() - self.spans[run_id].start_time
-        vendor = span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM, "Langchain")
+        vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
         self.duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: vendor,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
             },
         )
