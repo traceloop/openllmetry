@@ -2,7 +2,6 @@
 
 import json
 import os
-import re
 import pytest
 from traceloop.sdk import Traceloop
 from traceloop.sdk.instruments import Instruments
