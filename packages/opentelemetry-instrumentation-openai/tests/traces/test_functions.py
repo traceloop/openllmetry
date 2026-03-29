@@ -5,6 +5,8 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import SpanAttributes
 
+from .utils import get_input_messages, get_output_messages, get_tool_definitions
+
 
 @pytest.fixture
 def openai_tools():
@@ -61,22 +63,15 @@ def test_open_ai_function_calls(
 
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "What's the weather like in Boston?"
+    tool_defs = get_tool_definitions(open_ai_span)
+    assert tool_defs[0]["name"] == "get_current_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    output_messages = get_output_messages(open_ai_span)
+    tool_parts = [p for p in output_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert tool_parts[0]["name"] == "get_current_weather"
     assert (
         open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -240,26 +235,16 @@ def test_open_ai_function_calls_tools(
 
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "What's the weather like in Boston?"
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.description"]
-        == "Get the current weather"
-    )
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "What's the weather like in Boston?"
+    tool_defs = get_tool_definitions(open_ai_span)
+    assert tool_defs[0]["name"] == "get_current_weather"
+    assert tool_defs[0]["description"] == "Get the current weather"
+    output_messages = get_output_messages(open_ai_span)
+    tool_parts = [p for p in output_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert isinstance(tool_parts[0]["id"], str)
+    assert tool_parts[0]["name"] == "get_current_weather"
     assert (
         open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
@@ -392,30 +377,14 @@ async def test_open_ai_function_calls_tools_streaming(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
-        == "tool_calls"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        )
-        == '{"location":"San Francisco, CA"}'
-    )
+    tool_defs = get_tool_definitions(open_ai_span)
+    assert tool_defs[0]["name"] == "get_current_weather"
+    output_messages = get_output_messages(open_ai_span)
+    assert output_messages[0]["finish_reason"] == "tool_call"
+    tool_parts = [p for p in output_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert isinstance(tool_parts[0]["id"], str)
+    assert tool_parts[0]["name"] == "get_current_weather"
+    assert tool_parts[0]["arguments"] == {"location": "San Francisco, CA"}
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4TmLd49mPoD6c0EnGlhNAp8b0on"
@@ -559,48 +528,17 @@ def test_open_ai_function_calls_tools_parallel(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
+    tool_defs = get_tool_definitions(open_ai_span)
+    assert tool_defs[0]["name"] == "get_current_weather"
+    output_messages = get_output_messages(open_ai_span)
+    assert output_messages[0]["finish_reason"] == "tool_call"
+    tool_parts = [p for p in output_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert isinstance(tool_parts[0]["id"], str)
+    assert tool_parts[0]["name"] == "get_current_weather"
+    assert tool_parts[0]["arguments"] == {"location": "San Francisco"}
+    assert isinstance(tool_parts[1]["id"], str)
+    assert tool_parts[1]["name"] == "get_current_weather"
+    assert tool_parts[1]["arguments"] == {"location": "Boston"}
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g4cZhrW9CsqihSvXslk0EUtjASsO"
@@ -753,48 +691,17 @@ async def test_open_ai_function_calls_tools_streaming_parallel(
     spans = span_exporter.get_finished_spans()
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name")
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason")
-        == "tool_calls"
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.0.arguments"
-        )
-        == '{"location": "San Francisco"}'
-    )
-
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.id"],
-        str,
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.name"
-        )
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes.get(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.1.arguments"
-        )
-        == '{"location": "Boston"}'
-    )
+    tool_defs = get_tool_definitions(open_ai_span)
+    assert tool_defs[0]["name"] == "get_current_weather"
+    output_messages = get_output_messages(open_ai_span)
+    assert output_messages[0]["finish_reason"] == "tool_call"
+    tool_parts = [p for p in output_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert isinstance(tool_parts[0]["id"], str)
+    assert tool_parts[0]["name"] == "get_current_weather"
+    assert tool_parts[0]["arguments"] == {"location": "San Francisco"}
+    assert isinstance(tool_parts[1]["id"], str)
+    assert tool_parts[1]["name"] == "get_current_weather"
+    assert tool_parts[1]["arguments"] == {"location": "Boston"}
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9g58noIjRkOeNNxfFsFfcNjhXlul7"

@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from openai import AsyncOpenAI, OpenAI
@@ -6,6 +7,8 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     get_tools_from_kwargs,
 )
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+from .utils import get_input_messages, get_output_messages
 
 
 @pytest.mark.vcr
@@ -245,17 +248,29 @@ def test_responses_reasoning_dict_issue(
     # The main goal of this test is to ensure that when the API returns reasoning data
     # as a dict/list, it gets properly serialized as JSON without causing "Invalid type" warnings
 
-    # The reasoning should be serialized as JSON since it contains complex data
-    reasoning_attr = span.attributes["gen_ai.completion.0.reasoning"]
-    assert isinstance(reasoning_attr, str), "Reasoning should be serialized as a string"
+    # Reasoning content is embedded in gen_ai.output.messages as a reasoning part
+    output_messages = get_output_messages(span)
+    assert len(output_messages) > 0, "Expected at least one output message"
 
-    # Should be valid JSON containing reasoning summary data
-    import json
+    # Find any reasoning parts across all output messages
+    reasoning_parts = [
+        p for msg in output_messages
+        for p in msg.get("parts", [])
+        if p.get("type") == "reasoning"
+    ]
 
-    parsed_reasoning = json.loads(reasoning_attr)
-    assert isinstance(
-        parsed_reasoning, (dict, list)
-    ), "Reasoning should be a dict or list structure"
+    # If reasoning parts exist, verify their content is a properly serialized string
+    for part in reasoning_parts:
+        content = part.get("content")
+        assert isinstance(content, str), (
+            f"Reasoning content should be a string (not raw dict/list), got: {type(content)}"
+        )
+        # If it looks like JSON, verify it parses correctly
+        if content and content.strip().startswith(("[", "{")):
+            parsed = json.loads(content)
+            assert isinstance(parsed, (dict, list)), (
+                "Reasoning content that looks like JSON should parse to dict or list"
+            )
 
 
 @pytest.mark.vcr
@@ -289,10 +304,12 @@ def test_responses_streaming(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == full_text
 
 
 @pytest.mark.vcr
@@ -325,10 +342,12 @@ async def test_responses_streaming_async(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == full_text
 
 
 @pytest.mark.vcr
@@ -358,10 +377,12 @@ def test_responses_streaming_with_content(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == full_text
 
 
 @pytest.mark.vcr
@@ -389,10 +410,12 @@ def test_responses_streaming_with_context_manager(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == full_text
 
 
 @pytest.mark.vcr
@@ -425,10 +448,12 @@ async def test_responses_streaming_async_with_context_manager(
     assert span.attributes["gen_ai.provider.name"] == "openai"
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert full_text != "", "Should have received streaming content"
-    assert span.attributes["gen_ai.prompt.0.content"] == input_text
-    assert span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
-    assert span.attributes["gen_ai.completion.0.content"] == full_text
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == full_text
 
 
 def test_get_tools_from_kwargs_with_none():

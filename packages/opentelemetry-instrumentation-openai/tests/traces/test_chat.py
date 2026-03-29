@@ -1,5 +1,4 @@
 import asyncio
-import json
 from unittest.mock import patch
 
 import httpx
@@ -15,7 +14,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import StatusCode
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 
-from .utils import assert_request_contains_tracecontext, spy_decorator
+from .utils import assert_request_contains_tracecontext, spy_decorator, get_input_messages, get_output_messages
 
 
 @pytest.mark.vcr
@@ -32,12 +31,14 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["finish_reason"] == "stop"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -59,60 +60,6 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, openai_client):
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-
-
-@pytest.mark.vcr
-def test_chat_with_messages_attributes(
-    instrument_with_messages_attributes, span_exporter, log_exporter, openai_client
-):
-    openai_client.chat.completions.create(
-        model="gpt-5-nano",
-        messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
-    )
-
-    spans = span_exporter.get_finished_spans()
-
-    assert [span.name for span in spans] == [
-        "openai.chat",
-    ]
-    open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
-        == "https://api.openai.com/v1/"
-    )
-    assert open_ai_span.attributes.get(
-        SpanAttributes.GEN_AI_IS_STREAMING) is False
-    assert (
-        open_ai_span.attributes.get("gen_ai.response.id")
-        == "chatcmpl-D9X7ymcBweNWeadgkGyG69kVYY16t"
-    )
-
-    logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-    # Validate input messages shape
-    input_messages = json.loads(open_ai_span.attributes.get("gen_ai.input.messages"))
-    assert len(input_messages) == 1
-    assert input_messages[0]["role"] == "user"
-    assert len(input_messages[0]["parts"]) == 1
-    assert input_messages[0]["parts"][0]["type"] == "text"
-    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
-
-    # Validate output messages shape
-    output_messages = json.loads(open_ai_span.attributes.get("gen_ai.output.messages"))
-    assert len(output_messages) == 1
-    assert output_messages[0]["role"] == "assistant"
-    assert output_messages[0]["finish_reason"] == "stop"
-    assert len(output_messages[0]["parts"]) >= 1
-    assert output_messages[0]["parts"][0]["type"] == "text"
-    assert "content" in output_messages[0]["parts"][0]
-
-    # Legacy prompt/completion attributes must NOT be present alongside new format
-    assert not any(
-        k.startswith("gen_ai.prompt.") or k.startswith("gen_ai.completion.")
-        for k in open_ai_span.attributes.keys()
-    ), "Legacy gen_ai.prompt.*/gen_ai.completion.* should not be emitted with use_messages_attributes"
 
 
 @pytest.mark.vcr
@@ -248,25 +195,19 @@ def test_chat_tool_calls(instrument_legacy, span_exporter, log_exporter, openai_
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 2
+    # assistant message with tool call
+    assert input_messages[0]["role"] == "assistant"
+    tool_parts = [p for p in input_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert len(tool_parts) == 1
+    assert tool_parts[0]["name"] == "get_current_weather"
+    assert tool_parts[0]["arguments"] == {"location": "San Francisco"}
+    # tool response message
+    assert input_messages[1]["role"] == "tool"
+    assert input_messages[1]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[1]["parts"][0]["id"] == "1"
+    assert input_messages[1]["parts"][0]["response"] == "The weather in San Francisco is 70 degrees and sunny."
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
@@ -312,8 +253,6 @@ def test_chat_tool_calls_with_events_with_content(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
 
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
@@ -392,7 +331,6 @@ def test_chat_tool_calls_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9gKNZbUWSC4s2Uh2QfVV7PYiqWIuH"
@@ -466,25 +404,17 @@ def test_chat_pydantic_based_tool_calls(
     ]
     open_ai_span = spans[0]
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"]
-        == "get_current_weather"
-    )
-    assert (
-        open_ai_span.attributes[
-            f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.arguments"
-        ]
-        == '{"location": "San Francisco"}'
-    )
-
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == "The weather in San Francisco is 70 degrees and sunny."
-    )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_call_id"] == "1"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 2
+    assert input_messages[0]["role"] == "assistant"
+    tool_parts = [p for p in input_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert len(tool_parts) == 1
+    assert tool_parts[0]["name"] == "get_current_weather"
+    assert tool_parts[0]["arguments"] == {"location": "San Francisco"}
+    assert input_messages[1]["role"] == "tool"
+    assert input_messages[1]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[1]["parts"][0]["id"] == "1"
+    assert input_messages[1]["parts"][0]["response"] == "The weather in San Francisco is 70 degrees and sunny."
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -539,7 +469,6 @@ def test_chat_pydantic_based_tool_calls_with_events_with_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -625,7 +554,6 @@ def test_chat_pydantic_based_tool_calls_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in open_ai_span.attributes
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "chatcmpl-9lvGJKrBUPeJjHi3KKSEbGfcfomOP"
@@ -675,12 +603,13 @@ def test_chat_streaming(instrument_legacy, span_exporter, log_exporter, mock_ope
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
@@ -851,11 +780,13 @@ async def test_chat_async_streaming(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -1392,7 +1323,7 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
 
 
 @pytest.mark.vcr
-def test_chat_history_message_dict(span_exporter, openai_client):
+def test_chat_history_message_dict(instrument_legacy, span_exporter, openai_client):
     first_user_message = {
         "role": "user",
         "content": "Generate a random noun in Korean. Respond with just that word.",
@@ -1423,46 +1354,29 @@ def test_chat_history_message_dict(span_exporter, openai_client):
     assert len(spans) == 2
     first_span = spans[0]
     assert first_span.name == "openai.chat"
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == first_user_message["content"]
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]
-        == first_user_message["role"]
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == first_response.choices[0].message.content
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    first_input = get_input_messages(first_span)
+    assert first_input[0]["role"] == first_user_message["role"]
+    assert first_input[0]["parts"][0]["content"] == first_user_message["content"]
+    first_output = get_output_messages(first_span)
+    assert first_output[0]["role"] == "assistant"
+    assert first_output[0]["parts"][0]["content"] == first_response.choices[0].message.content
 
     second_span = spans[1]
     assert second_span.name == "openai.chat"
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == first_user_message["content"]
-    )
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == second_response.choices[0].message.content
-    )
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == first_response.choices[0].message.content
-    )
-    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
-        == second_user_message["content"]
-    )
-    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
+    second_input = get_input_messages(second_span)
+    assert second_input[0]["role"] == "user"
+    assert second_input[0]["parts"][0]["content"] == first_user_message["content"]
+    assert second_input[1]["role"] == "assistant"
+    assert second_input[1]["parts"][0]["content"] == first_response.choices[0].message.content
+    assert second_input[2]["role"] == "user"
+    assert second_input[2]["parts"][0]["content"] == second_user_message["content"]
+    second_output = get_output_messages(second_span)
+    assert second_output[0]["role"] == "assistant"
+    assert second_output[0]["parts"][0]["content"] == second_response.choices[0].message.content
 
 
 @pytest.mark.vcr
-def test_chat_history_message_pydantic(span_exporter, openai_client):
+def test_chat_history_message_pydantic(instrument_legacy, span_exporter, openai_client):
     first_user_message = {
         "role": "user",
         "content": "Generate a random noun in Korean. Respond with just that word.",
@@ -1490,42 +1404,25 @@ def test_chat_history_message_pydantic(span_exporter, openai_client):
     assert len(spans) == 2
     first_span = spans[0]
     assert first_span.name == "openai.chat"
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == first_user_message["content"]
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]
-        == first_user_message["role"]
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == first_response.choices[0].message.content
-    )
-    assert (
-        first_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    first_input = get_input_messages(first_span)
+    assert first_input[0]["role"] == first_user_message["role"]
+    assert first_input[0]["parts"][0]["content"] == first_user_message["content"]
+    first_output = get_output_messages(first_span)
+    assert first_output[0]["role"] == "assistant"
+    assert first_output[0]["parts"][0]["content"] == first_response.choices[0].message.content
 
     second_span = spans[1]
     assert second_span.name == "openai.chat"
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == first_user_message["content"]
-    )
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == second_response.choices[0].message.content
-    )
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == first_response.choices[0].message.content
-    )
-    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
-    assert (
-        second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
-        == second_user_message["content"]
-    )
-    assert second_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
+    second_input = get_input_messages(second_span)
+    assert second_input[0]["role"] == "user"
+    assert second_input[0]["parts"][0]["content"] == first_user_message["content"]
+    assert second_input[1]["role"] == "assistant"
+    assert second_input[1]["parts"][0]["content"] == first_response.choices[0].message.content
+    assert second_input[2]["role"] == "user"
+    assert second_input[2]["parts"][0]["content"] == second_user_message["content"]
+    second_output = get_output_messages(second_span)
+    assert second_output[0]["role"] == "assistant"
+    assert second_output[0]["parts"][0]["content"] == second_response.choices[0].message.content
 
 
 @pytest.mark.vcr
@@ -1588,10 +1485,9 @@ def test_chat_exception(instrument_legacy, span_exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -1628,10 +1524,9 @@ async def test_chat_async_exception(instrument_legacy, span_exporter, async_open
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -1688,10 +1583,9 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
     assert open_ai_span.attributes.get(
         GenAIAttributes.GEN_AI_OPERATION_NAME) == "chat"
 
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content") == "Tell me a joke about opentelemetry"
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.role") == "user"
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["role"] == "user"
 
     # Verify duration metric was recorded even without consuming the stream
     metrics_data = reader.get_metrics_data()
@@ -1710,9 +1604,18 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
     assert len(duration_metrics) == 1, "Duration metric should be recorded"
     duration_metric = duration_metrics[0]
 
-    # Verify metric data
+    # Verify metric data - filter for openai provider data points to avoid cross-test contamination
+    # (session-scoped reader may contain data points from Azure tests)
     assert duration_metric.data.data_points
-    data_point = duration_metric.data.data_points[0]
+    openai_data_points = [
+        dp for dp in duration_metric.data.data_points
+        if dp.attributes.get("gen_ai.provider.name") == "openai"
+    ]
+    assert len(openai_data_points) >= 1, (
+        f"Expected at least one openai data point, got data points with attributes: "
+        f"{[dict(dp.attributes) for dp in duration_metric.data.data_points]}"
+    )
+    data_point = openai_data_points[0]
     assert data_point.count >= 1, f"Expected count >= 1, got {data_point.count}"
     assert data_point.sum > 0, f"Duration should be greater than 0, got {data_point.sum}"
     assert data_point.min > 0, f"Min duration should be greater than 0, got {data_point.min}"
@@ -1727,7 +1630,7 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
 
     streaming_data_points = [
         dp for dp in duration_metric.data.data_points
-        if dp.attributes.get("stream") is True
+        if dp.attributes.get("stream") is True and dp.attributes.get("gen_ai.provider.name") == "openai"
     ]
     assert len(streaming_data_points) >= 1, (
         f"Expected at least one streaming data point, got data points with attributes: "

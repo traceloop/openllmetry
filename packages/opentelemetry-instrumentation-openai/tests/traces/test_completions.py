@@ -1,4 +1,3 @@
-import json
 from unittest.mock import patch
 
 import httpx
@@ -10,7 +9,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import SpanAttributes
 
-from .utils import assert_request_contains_tracecontext, spy_decorator
+from .utils import assert_request_contains_tracecontext, spy_decorator, get_input_messages, get_output_messages
 
 
 @pytest.mark.vcr
@@ -25,11 +24,13 @@ def test_completion(instrument_legacy, span_exporter, log_exporter, openai_clien
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -39,43 +40,6 @@ def test_completion(instrument_legacy, span_exporter, log_exporter, openai_clien
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
     )
-
-    logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
-
-
-@pytest.mark.vcr
-def test_completion_with_messages_attributes(
-    instrument_with_messages_attributes, span_exporter, log_exporter, openai_client
-):
-    openai_client.completions.create(
-        model="davinci-002",
-        prompt="Tell me a joke about opentelemetry",
-    )
-
-    spans = span_exporter.get_finished_spans()
-    assert [span.name for span in spans] == [
-        "openai.completion",
-    ]
-    open_ai_span = spans[0]
-    # Validate input messages shape
-    input_messages = json.loads(open_ai_span.attributes.get("gen_ai.input.messages"))
-    assert len(input_messages) == 1
-    assert input_messages[0]["role"] == "user"
-    assert len(input_messages[0]["parts"]) == 1
-    assert input_messages[0]["parts"][0]["type"] == "text"
-    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
-
-    # Validate output messages shape
-    output_messages = json.loads(open_ai_span.attributes.get("gen_ai.output.messages"))
-    assert len(output_messages) == 1
-    assert output_messages[0]["role"] == "assistant"
-    assert output_messages[0]["finish_reason"] == "length"
-    assert len(output_messages[0]["parts"]) >= 1
-    assert output_messages[0]["parts"][0]["type"] == "text"
-    assert "content" in output_messages[0]["parts"][0]
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -178,11 +142,12 @@ async def test_async_completion(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
@@ -286,11 +251,12 @@ def test_completion_langchain_style(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
@@ -396,13 +362,12 @@ def test_completion_streaming(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
@@ -562,11 +527,12 @@ async def test_async_completion_streaming(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
@@ -933,10 +899,9 @@ def test_completion_exception(instrument_legacy, span_exporter, openai_client):
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events
@@ -965,10 +930,9 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events

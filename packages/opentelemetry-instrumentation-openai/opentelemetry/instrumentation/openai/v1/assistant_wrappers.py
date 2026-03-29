@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 
@@ -141,7 +142,9 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             span.end()
             return response
 
-        prompt_index = 0
+        input_msgs = []
+        output_msgs = []
+        completion_index = 0
         if assistants.get(run["assistant_id"]) is not None or Config.enrich_assistant:
             if Config.enrich_assistant:
                 assistant = model_as_dict(
@@ -169,49 +172,31 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             if should_emit_events():
                 emit_event(MessageEvent(content=assistant["instructions"], role="system"))
             else:
-                _set_span_attribute(
-                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role", "system"
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
-                    assistant["instructions"],
-                )
-            prompt_index += 1
-        _set_span_attribute(
-            span, f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role", "system"
-        )
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
-            run["instructions"],
-        )
+                input_msgs.append({
+                    "role": "system",
+                    "parts": [{"type": "text", "content": assistant["instructions"]}],
+                })
+
         if should_emit_events():
             emit_event(MessageEvent(content=run["instructions"], role="system"))
-        prompt_index += 1
+        else:
+            input_msgs.append({
+                "role": "system",
+                "parts": [{"type": "text", "content": run["instructions"]}],
+            })
 
-        completion_index = 0
         for msg in messages:
-            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}"
             content = msg.get("content")
-
             message_content = content[0].get("text").get("value")
             message_role = msg.get("role")
             if message_role in ["user", "system"]:
                 if should_emit_events():
                     emit_event(MessageEvent(content=message_content, role=message_role))
                 else:
-                    _set_span_attribute(
-                        span,
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.role",
-                        message_role,
-                    )
-                    _set_span_attribute(
-                        span,
-                        f"{GenAIAttributes.GEN_AI_PROMPT}.{prompt_index}.content",
-                        message_content,
-                    )
-                prompt_index += 1
+                    input_msgs.append({
+                        "role": message_role,
+                        "parts": [{"type": "text", "content": message_content}],
+                    })
             else:
                 if should_emit_events():
                     emit_event(
@@ -221,12 +206,24 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
                         )
                     )
                 else:
-                    _set_span_attribute(span, f"{prefix}.role", msg.get("role"))
-                    _set_span_attribute(span, f"{prefix}.content", message_content)
+                    output_msgs.append({
+                        "role": message_role,
+                        "parts": [{"type": "text", "content": message_content}],
+                    })
                     _set_span_attribute(
                         span, f"gen_ai.response.{completion_index}.id", msg.get("id")
                     )
                 completion_index += 1
+
+        if not should_emit_events():
+            if input_msgs:
+                _set_span_attribute(
+                    span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs)
+                )
+            if output_msgs:
+                _set_span_attribute(
+                    span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_msgs)
+                )
 
         if run.get("usage"):
             usage_dict = model_as_dict(run.get("usage"))
@@ -262,7 +259,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
-        i = 0
+        input_msgs = []
         if assistants.get(assistant_id) is not None or Config.enrich_assistant:
             if Config.enrich_assistant:
                 assistant = model_as_dict(
@@ -292,21 +289,20 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
                     )
                 )
             else:
-                _set_span_attribute(
-                    span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", "system"
-                )
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content",
-                    assistants[assistant_id]["instructions"],
-                )
-            i += 1
+                input_msgs.append({
+                    "role": "system",
+                    "parts": [{"type": "text", "content": assistants[assistant_id]["instructions"]}],
+                })
         if should_emit_events():
             emit_event(MessageEvent(content=instructions, role="system"))
         else:
-            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.role", "system")
+            input_msgs.append({
+                "role": "system",
+                "parts": [{"type": "text", "content": instructions}],
+            })
+        if not should_emit_events() and input_msgs:
             _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", instructions
+                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs)
             )
 
         from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (

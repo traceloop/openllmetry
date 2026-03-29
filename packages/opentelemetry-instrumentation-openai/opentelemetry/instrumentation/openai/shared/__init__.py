@@ -112,43 +112,19 @@ def _set_functions_attributes(span, functions):
     if not functions:
         return
 
-    if Config.use_messages_attributes:
-        tool_defs = [d for f in functions if (d := _build_tool_def_dict(f))]
-        _set_tool_definitions_json(span, tool_defs)
-        return
-
-    for i, function in enumerate(functions):
-        prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
-        _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-        )
+    tool_defs = [d for f in functions if (d := _build_tool_def_dict(f))]
+    _set_tool_definitions_json(span, tool_defs)
 
 
 def set_tools_attributes(span, tools):
     if not tools:
         return
 
-    if Config.use_messages_attributes:
-        tool_defs = [
-            d for tool in tools
-            if tool.get("function") and (d := _build_tool_def_dict(tool["function"]))
-        ]
-        _set_tool_definitions_json(span, tool_defs)
-        return
-
-    for i, tool in enumerate(tools):
-        function = tool.get("function")
-        if not function:
-            continue
-
-        prefix = f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
-        _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-        )
+    tool_defs = [
+        d for tool in tools
+        if tool.get("function") and (d := _build_tool_def_dict(tool["function"]))
+    ]
+    _set_tool_definitions_json(span, tool_defs)
 
 
 def _set_request_attributes(span, kwargs, instance=None):

@@ -8,6 +8,8 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import SpanAttributes
 
+from .utils import get_input_messages, get_output_messages
+
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
 
@@ -25,11 +27,12 @@ def test_chat(instrument_legacy, span_exporter, log_exporter, azure_openai_clien
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -143,14 +146,9 @@ def test_chat_content_filtering(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == "FILTERED"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -161,13 +159,10 @@ def test_chat_content_filtering(
         == "chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo"
     )
 
-    content_filter_json = open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content_filter_results"
-    )
-
-    assert len(content_filter_json) > 0
-
-    content_filter_results = json.loads(content_filter_json)
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) > 0
+    content_filter_results = output_messages[0].get("content_filter_results")
+    assert content_filter_results is not None
 
     assert content_filter_results["hate"]["filtered"] is True
     assert content_filter_results["hate"]["severity"] == "high"
@@ -424,11 +419,12 @@ def test_chat_streaming(
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"
@@ -611,11 +607,12 @@ async def test_chat_async_streaming(
     ]
     open_ai_span = spans[0]
 
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://traceloop-stg.openai.azure.com/openai/"

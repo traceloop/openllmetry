@@ -161,10 +161,7 @@ def _handle_response(response, span, instance=None):
 
 
 def _set_prompts(span, prompt):
-    if Config.use_messages_attributes:
-        _set_input_messages(span, prompt)
-    else:
-        _legacy_set_prompts(span, prompt)
+    _set_input_messages(span, prompt)
 
 def _set_input_messages(span, prompt):
     if not span.is_recording() or prompt is None:
@@ -182,23 +179,9 @@ def _set_input_messages(span, prompt):
         json.dumps(messages),
     )
 
-def _legacy_set_prompts(span, prompt):
-    if not span.is_recording() or not prompt:
-        return
-
-    _set_span_attribute(
-        span,
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
-        prompt[0] if isinstance(prompt, list) else prompt,
-    )
-
-
 @dont_throw
 def _set_completions(span, choices):
-    if Config.use_messages_attributes:
-        _set_output_messages(span, choices)
-    else:
-        _legacy_set_completions(span, choices)
+    _set_output_messages(span, choices)
 
 
 def _set_output_messages(span, choices):
@@ -220,19 +203,6 @@ def _set_output_messages(span, choices):
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(messages),
     )
-
-
-def _legacy_set_completions(span, choices):
-    if not span.is_recording() or not choices:
-        return
-
-    for choice in choices:
-        index = choice.get("index")
-        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-        _set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
-        _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
 
 
 @dont_throw

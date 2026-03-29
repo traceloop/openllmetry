@@ -6,6 +6,8 @@ import json
 import pytest
 import pydantic
 
+from .utils import get_input_messages, get_output_messages
+
 
 class Joke(pydantic.BaseModel):
     joke: str
@@ -43,10 +45,11 @@ def test_chat_response_format(
     assert span.attributes.get("gen_ai.response.model") == "gpt-4.1-nano-2025-04-14"
     assert json.loads(span.attributes.get("gen_ai.request.structured_output_schema")) == Joke.model_json_schema()
 
-    # legacy input and output attributes
-    assert span.attributes.get("gen_ai.prompt.0.content") == "Tell me a joke about opentelemetry"
-    assert span.attributes.get("gen_ai.prompt.0.role") == "user"
-    assert span.attributes.get("gen_ai.completion.0.role") == "assistant"
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
 
 
 @pytest.mark.vcr
@@ -81,7 +84,8 @@ async def test_async_chat_response_format(
     assert span.attributes.get("gen_ai.response.model") == "gpt-4.1-nano-2025-04-14"
     assert json.loads(span.attributes.get("gen_ai.request.structured_output_schema")) == Joke.model_json_schema()
 
-    # legacy input and output attributes
-    assert span.attributes.get("gen_ai.prompt.0.content") == "Tell me a joke about opentelemetry"
-    assert span.attributes.get("gen_ai.prompt.0.role") == "user"
-    assert span.attributes.get("gen_ai.completion.0.role") == "assistant"
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"

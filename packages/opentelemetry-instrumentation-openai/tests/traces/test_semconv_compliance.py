@@ -30,7 +30,6 @@ from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     _map_content_block,
     _set_output_messages,
 )
-from opentelemetry.instrumentation.openai.shared.config import Config
 
 
 @pytest.fixture
@@ -188,41 +187,36 @@ class TestP1_3_ResponsesMessagesAttributes:
         )
 
         msg = _make_message_output("msg_001", "Hi there")
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            traced = TracedData(
-                start_time=1000,
-                response_id="resp_789",
-                input=[
-                    {"role": "user", "content": "Hello", "type": "message"},
-                ],
-                instructions="Be helpful",
-                tools=None,
-                output_blocks={"msg_001": msg},
-                usage=None,
-                output_text="Hi there",
-                request_model="gpt-4",
-                response_model="gpt-4",
-            )
-            set_data_attributes(traced, mock_span)
+        traced = TracedData(
+            start_time=1000,
+            response_id="resp_789",
+            input=[
+                {"role": "user", "content": "Hello", "type": "message"},
+            ],
+            instructions="Be helpful",
+            tools=None,
+            output_blocks={"msg_001": msg},
+            usage=None,
+            output_text="Hi there",
+            request_model="gpt-4",
+            response_model="gpt-4",
+        )
+        set_data_attributes(traced, mock_span)
 
-            assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in mock_span._attrs, (
-                f"Expected gen_ai.input.messages when use_messages_attributes=True, "
-                f"got keys: {list(mock_span._attrs.keys())}"
-            )
-            assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span._attrs, (
-                f"Expected gen_ai.output.messages when use_messages_attributes=True, "
-                f"got keys: {list(mock_span._attrs.keys())}"
-            )
+        assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in mock_span._attrs, (
+            f"Expected gen_ai.input.messages, "
+            f"got keys: {list(mock_span._attrs.keys())}"
+        )
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span._attrs, (
+            f"Expected gen_ai.output.messages, "
+            f"got keys: {list(mock_span._attrs.keys())}"
+        )
 
-            input_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-            assert isinstance(input_msgs, list)
+        input_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+        assert isinstance(input_msgs, list)
 
-            output_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-            assert isinstance(output_msgs, list)
-        finally:
-            Config.use_messages_attributes = previous
+        output_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert isinstance(output_msgs, list)
 
     def test_string_input_as_user_message(self, mock_span):
         from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
@@ -231,28 +225,23 @@ class TestP1_3_ResponsesMessagesAttributes:
         )
 
         msg = _make_message_output("msg_001", "4")
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            traced = TracedData(
-                start_time=1000,
-                response_id="resp_str",
-                input="What is 2+2?",
-                instructions=None,
-                tools=None,
-                output_blocks={"msg_001": msg},
-                usage=None,
-                output_text="4",
-                request_model="gpt-4",
-                response_model="gpt-4",
-            )
-            set_data_attributes(traced, mock_span)
+        traced = TracedData(
+            start_time=1000,
+            response_id="resp_str",
+            input="What is 2+2?",
+            instructions=None,
+            tools=None,
+            output_blocks={"msg_001": msg},
+            usage=None,
+            output_text="4",
+            request_model="gpt-4",
+            response_model="gpt-4",
+        )
+        set_data_attributes(traced, mock_span)
 
-            assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in mock_span._attrs
-            input_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-            assert input_msgs[0]["role"] == "user"
-        finally:
-            Config.use_messages_attributes = previous
+        assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in mock_span._attrs
+        input_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+        assert input_msgs[0]["role"] == "user"
 
 
 # ---------------------------------------------------------------------------
@@ -304,32 +293,27 @@ class TestP1_4_StreamingReasoningAccumulation:
         )
 
     def test_reasoning_content_in_output_messages(self, mock_span):
-        """When use_messages_attributes is on, reasoning should become a part."""
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            choices = [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": "3 r's",
-                        "reasoning_content": "Let me count...",
-                    },
-                    "finish_reason": "stop",
-                }
-            ]
-            _set_output_messages(mock_span, choices)
-            result = _get_output_messages(mock_span)
+        """Reasoning content should become a 'reasoning' part in output messages."""
+        choices = [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "3 r's",
+                    "reasoning_content": "Let me count...",
+                },
+                "finish_reason": "stop",
+            }
+        ]
+        _set_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
 
-            parts = result[0]["parts"]
-            reasoning_parts = [p for p in parts if p.get("type") == "reasoning"]
-            assert len(reasoning_parts) == 1, (
-                f"Expected 1 reasoning part, got parts: {parts}"
-            )
-            assert reasoning_parts[0]["content"] == "Let me count..."
-        finally:
-            Config.use_messages_attributes = previous
+        parts = result[0]["parts"]
+        reasoning_parts = [p for p in parts if p.get("type") == "reasoning"]
+        assert len(reasoning_parts) == 1, (
+            f"Expected 1 reasoning part, got parts: {parts}"
+        )
+        assert reasoning_parts[0]["content"] == "Let me count..."
 
 
 # ---------------------------------------------------------------------------
@@ -374,75 +358,66 @@ class TestP2_2_ToolDefinitionsJson:
     JSON string attribute when Config.use_messages_attributes is True."""
 
     def test_tools_as_json_when_flag_enabled(self, mock_span):
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_weather",
-                        "description": "Get weather",
-                        "parameters": {"type": "object", "properties": {}},
-                    },
-                }
-            ]
-            set_tools_attributes(mock_span, tools)
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "description": "Get weather",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            }
+        ]
+        set_tools_attributes(mock_span, tools)
 
-            assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in mock_span._attrs, (
-                f"Expected single '{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}' key, "
-                f"got: {list(mock_span._attrs.keys())}"
-            )
-            parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
-            assert isinstance(parsed, list)
-            assert len(parsed) == 1
-            assert parsed[0]["name"] == "get_weather"
-        finally:
-            Config.use_messages_attributes = previous
+        assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in mock_span._attrs, (
+            f"Expected single '{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}' key, "
+            f"got: {list(mock_span._attrs.keys())}"
+        )
+        parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+        assert isinstance(parsed, list)
+        assert len(parsed) == 1
+        assert parsed[0]["name"] == "get_weather"
 
     def test_functions_as_json_when_flag_enabled(self, mock_span):
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            functions = [
-                {
-                    "name": "search",
-                    "description": "Search the web",
+        functions = [
+            {
+                "name": "search",
+                "description": "Search the web",
+                "parameters": {"type": "object", "properties": {}},
+            }
+        ]
+        _set_functions_attributes(mock_span, functions)
+
+        assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in mock_span._attrs, (
+            f"Expected single '{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}' key, "
+            f"got: {list(mock_span._attrs.keys())}"
+        )
+        parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+        assert isinstance(parsed, list)
+        assert parsed[0]["name"] == "search"
+
+    def test_tools_emits_json_format(self, mock_span):
+        """Tools always use JSON format (gen_ai.tool.definitions as JSON array)."""
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "description": "Get weather",
                     "parameters": {"type": "object", "properties": {}},
-                }
-            ]
-            _set_functions_attributes(mock_span, functions)
+                },
+            }
+        ]
+        set_tools_attributes(mock_span, tools)
 
-            assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in mock_span._attrs, (
-                f"Expected single '{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}' key, "
-                f"got: {list(mock_span._attrs.keys())}"
-            )
-            parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
-            assert isinstance(parsed, list)
-            assert parsed[0]["name"] == "search"
-        finally:
-            Config.use_messages_attributes = previous
-
-    def test_tools_still_indexed_when_flag_disabled(self, mock_span):
-        """When use_messages_attributes is False, keep indexed format."""
-        previous = Config.use_messages_attributes
-        Config.use_messages_attributes = False
-        try:
-            tools = [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_weather",
-                        "description": "Get weather",
-                        "parameters": {"type": "object", "properties": {}},
-                    },
-                }
-            ]
-            set_tools_attributes(mock_span, tools)
-
-            assert f"{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}.0.name" in mock_span._attrs
-        finally:
-            Config.use_messages_attributes = previous
+        assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in mock_span._attrs, (
+            f"Expected '{GenAIAttributes.GEN_AI_TOOL_DEFINITIONS}' key, "
+            f"got: {list(mock_span._attrs.keys())}"
+        )
+        parsed = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+        assert isinstance(parsed, list)
+        assert parsed[0]["name"] == "get_weather"
 
 
 # ---------------------------------------------------------------------------
@@ -580,53 +555,48 @@ class TestPartialStreamCleanupOutputMessages:
             _accumulate_stream_items,
         )
 
-        previous_msg = Config.use_messages_attributes
-        Config.use_messages_attributes = True
-        try:
-            # Create a ChatStream with a MagicMock response (ObjectProxy needs a real object)
-            mock_response = MagicMock()
-            stream = ChatStream(
-                span=mock_span,
-                response=mock_response,
-                instance=None,
-                start_time=time.time(),
-                request_kwargs={"model": "gpt-4"},
-            )
+        # Create a ChatStream with a MagicMock response (ObjectProxy needs a real object)
+        mock_response = MagicMock()
+        stream = ChatStream(
+            span=mock_span,
+            response=mock_response,
+            instance=None,
+            start_time=time.time(),
+            request_kwargs={"model": "gpt-4"},
+        )
 
-            # Simulate partial accumulation (as if some chunks were received)
-            _accumulate_stream_items(
-                {
-                    "model": "gpt-4",
-                    "id": "cmpl-partial",
-                    "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
-                },
-                stream._complete_response,
-            )
-            _accumulate_stream_items(
-                {
-                    "model": "gpt-4",
-                    "id": "cmpl-partial",
-                    "choices": [{"index": 0, "delta": {"content": "Partial answer"}, "finish_reason": None}],
-                },
-                stream._complete_response,
-            )
+        # Simulate partial accumulation (as if some chunks were received)
+        _accumulate_stream_items(
+            {
+                "model": "gpt-4",
+                "id": "cmpl-partial",
+                "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
+            },
+            stream._complete_response,
+        )
+        _accumulate_stream_items(
+            {
+                "model": "gpt-4",
+                "id": "cmpl-partial",
+                "choices": [{"index": 0, "delta": {"content": "Partial answer"}, "finish_reason": None}],
+            },
+            stream._complete_response,
+        )
 
-            # Trigger cleanup (simulates GC or abrupt teardown)
-            stream._ensure_cleanup()
+        # Trigger cleanup (simulates GC or abrupt teardown)
+        stream._ensure_cleanup()
 
-            assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span._attrs, (
-                f"Expected gen_ai.output.messages after partial cleanup, "
-                f"got keys: {list(mock_span._attrs.keys())}"
-            )
-            output_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-            assert len(output_msgs) > 0
-            assert output_msgs[0]["role"] == "assistant"
-            text_parts = [p for p in output_msgs[0]["parts"] if p.get("type") == "text"]
-            assert any("Partial answer" in p.get("content", "") for p in text_parts), (
-                f"Expected partial content in output messages, got: {output_msgs}"
-            )
-        finally:
-            Config.use_messages_attributes = previous_msg
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span._attrs, (
+            f"Expected gen_ai.output.messages after partial cleanup, "
+            f"got keys: {list(mock_span._attrs.keys())}"
+        )
+        output_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert len(output_msgs) > 0
+        assert output_msgs[0]["role"] == "assistant"
+        text_parts = [p for p in output_msgs[0]["parts"] if p.get("type") == "text"]
+        assert any("Partial answer" in p.get("content", "") for p in text_parts), (
+            f"Expected partial content in output messages, got: {output_msgs}"
+        )
 
 
 # ---------------------------------------------------------------------------

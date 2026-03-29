@@ -6,6 +6,8 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from typing_extensions import override
 
+from .utils import get_input_messages, get_output_messages
+
 
 @pytest.fixture
 def assistant(openai_client):
@@ -64,46 +66,32 @@ def test_new_assistant(
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["parts"][0]["content"] == (
+        "You are a personal math tutor."
+        " Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+    assert input_messages[1]["role"] == "system"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "Please address the user as Jane Doe."
+        " The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "system"
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "user"
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
-        == user_message
-    )
+    assert input_messages[2]["role"] == "user"
+    assert input_messages[2]["parts"][0]["content"] == user_message
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 155
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 145
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    completion_index = 0
-    for message in messages.data:
-        if message.role in ["user", "system"]:
-            continue
+    output_messages = get_output_messages(open_ai_span)
+    assistant_messages = [m for m in messages.data if m.role not in ["user", "system"]]
+    for idx, message in enumerate(assistant_messages):
+        assert output_messages[idx]["role"] == message.role
+        assert output_messages[idx]["parts"][0]["content"] == message.content[0].text.value
         assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
-            ]
-            == message.content[0].text.value
-        )
-        assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
-            ]
-            == message.role
-        )
-        assert (
-            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
             == message.id
         )
-        completion_index += 1
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -300,43 +288,32 @@ def test_new_assistant_with_polling(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
     assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
-    assert (
-        open_ai_span.attributes["gen_ai.prompt.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["parts"][0]["content"] == (
+        "You are a personal math tutor."
+        " Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes["gen_ai.prompt.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get("gen_ai.prompt.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+    assert input_messages[1]["role"] == "system"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "Please address the user as Jane Doe."
+        " The user has a premium account."
     )
-    assert open_ai_span.attributes["gen_ai.prompt.1.role"] == "system"
-    assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
-    assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
+    assert input_messages[2]["role"] == "user"
+    assert input_messages[2]["parts"][0]["content"] == user_message
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 374
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    completion_index = 0
-    for message in messages.data:
-        if message.role in ["user", "system"]:
-            continue
+    output_messages = get_output_messages(open_ai_span)
+    assistant_messages = [m for m in messages.data if m.role not in ["user", "system"]]
+    for idx, message in enumerate(assistant_messages):
+        assert output_messages[idx]["role"] == message.role
+        assert output_messages[idx]["parts"][0]["content"] == message.content[0].text.value
         assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
-            ]
-            == message.content[0].text.value
-        )
-        assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
-            ]
-            == message.role
-        )
-        assert (
-            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
             == message.id
         )
-        completion_index += 1
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -522,43 +499,32 @@ def test_existing_assistant(
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["parts"][0]["content"] == (
+        "You are a personal math tutor."
+        " Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+    assert input_messages[1]["role"] == "system"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "Please address the user as Jane Doe."
+        " The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "system"
-    assert open_ai_span.attributes["gen_ai.prompt.2.role"] == "user"
-    assert open_ai_span.attributes["gen_ai.prompt.2.content"] == user_message
+    assert input_messages[2]["role"] == "user"
+    assert input_messages[2]["parts"][0]["content"] == user_message
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 170
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 639
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    completion_index = 0
-    for message in messages.data:
-        if message.role in ["user", "system"]:
-            continue
+    output_messages = get_output_messages(open_ai_span)
+    assistant_messages = [m for m in messages.data if m.role not in ["user", "system"]]
+    for idx, message in enumerate(assistant_messages):
+        assert output_messages[idx]["role"] == message.role
+        assert output_messages[idx]["parts"][0]["content"] == message.content[0].text.value
         assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.content"
-            ]
-            == message.content[0].text.value
-        )
-        assert (
-            open_ai_span.attributes[
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{completion_index}.role"
-            ]
-            == message.role
-        )
-        assert (
-            open_ai_span.attributes[f"gen_ai.response.{completion_index}.id"]
+            open_ai_span.attributes[f"gen_ai.response.{idx}.id"]
             == message.id
         )
-        completion_index += 1
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -780,30 +746,26 @@ def test_streaming_new_assistant(
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["parts"][0]["content"] == (
+        "You are a personal math tutor."
+        " Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+    assert input_messages[1]["role"] == "system"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "Please address the user as Jane Doe."
+        " The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "system"
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
+    output_messages = get_output_messages(open_ai_span)
     for idx, message in enumerate(assistant_messages):
-        assert (
-            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content"]
-            == message
-        )
-        assert (
-            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.role"]
-            == "assistant"
-        )
+        assert output_messages[idx]["role"] == "assistant"
+        assert output_messages[idx]["parts"][0]["content"] == message
         assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg")
 
     logs = log_exporter.get_finished_logs()
@@ -1030,29 +992,25 @@ def test_streaming_existing_assistant(
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
         == "gpt-4-turbo-preview"
     )
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "You are a personal math tutor. Write and run code to answer math questions."
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "system"
+    assert input_messages[0]["parts"][0]["content"] == (
+        "You are a personal math tutor."
+        " Write and run code to answer math questions."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content")
-        == "Please address the user as Jane Doe. The user has a premium account."
+    assert input_messages[1]["role"] == "system"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "Please address the user as Jane Doe."
+        " The user has a premium account."
     )
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "system"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
+    output_messages = get_output_messages(open_ai_span)
     for idx, message in enumerate(assistant_messages):
-        assert (
-            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.content"]
-            == message
-        )
-        assert (
-            open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{idx}.role"]
-            == "assistant"
-        )
+        assert output_messages[idx]["role"] == "assistant"
+        assert output_messages[idx]["parts"][0]["content"] == message
         assert open_ai_span.attributes[f"gen_ai.response.{idx}.id"].startswith("msg_")
 
     logs = log_exporter.get_finished_logs()
