@@ -3,6 +3,8 @@ from unittest.mock import patch
 import httpx
 import openai
 import pytest
+
+from .utils import get_input_messages
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -25,10 +27,10 @@ def test_embeddings(instrument_legacy, span_exporter, log_exporter, openai_clien
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
@@ -138,10 +140,10 @@ def test_embeddings_with_raw_response(
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
@@ -270,10 +272,10 @@ def test_azure_openai_embeddings(instrument_legacy, span_exporter, log_exporter)
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (

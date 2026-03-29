@@ -494,8 +494,8 @@ def _map_content_block(block):
                 content = url
             return {"type": "blob", "modality": "image", "mime_type": mime_type, "content": content}
         return {"type": "uri", "modality": "image", "uri": url}
-    # Preserve the type for unrecognized blocks
-    return {"type": block_type or "unknown", "content": block}
+    # GenericPart: spread properties for unrecognized blocks
+    return {"type": block_type or "unknown", **{k: v for k, v in block.items() if k != "type"}}
 
 def _map_content_parts(content):
     """Convert content to OTel parts list. Handles str, list, and None."""
@@ -601,7 +601,6 @@ def _set_output_messages(span, choices):
                 parts.append({
                     "type": "tool_call",
                     "name": fc_name,
-                    "id": "",
                     "arguments": _parse_arguments(fc_args),
                 })
         fr = _map_finish_reason(choice.get("finish_reason")) or "stop"

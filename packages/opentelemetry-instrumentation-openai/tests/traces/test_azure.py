@@ -11,7 +11,6 @@ from opentelemetry.semconv_ai import SpanAttributes
 from .utils import get_input_messages, get_output_messages
 
 PROMPT_FILTER_KEY = "prompt_filter_results"
-PROMPT_ERROR = "prompt_error"
 
 
 @pytest.mark.vcr
@@ -277,27 +276,8 @@ def test_prompt_content_filtering(
     ]
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
-    )
-
-    error = json.loads(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
-    )
-
-    assert "innererror" in error
-
-    assert "content_filter_result" in error["innererror"]
-
-    assert error["innererror"]["code"] == "ResponsibleAIPolicyViolation"
-
-    assert error["innererror"]["content_filter_result"]["hate"]["filtered"]
-
-    assert error["innererror"]["content_filter_result"]["hate"]["severity"] == "high"
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["filtered"] is False
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
+    assert open_ai_span.attributes.get("error.type") is not None
+    assert open_ai_span.status.status_code.name == "ERROR"
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -321,27 +301,8 @@ def test_prompt_content_filtering_with_events_with_content(
     ]
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
-    )
-
-    error = json.loads(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
-    )
-
-    assert "innererror" in error
-
-    assert "content_filter_result" in error["innererror"]
-
-    assert error["innererror"]["code"] == "ResponsibleAIPolicyViolation"
-
-    assert error["innererror"]["content_filter_result"]["hate"]["filtered"]
-
-    assert error["innererror"]["content_filter_result"]["hate"]["severity"] == "high"
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["filtered"] is False
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
+    assert open_ai_span.attributes.get("error.type") is not None
+    assert open_ai_span.status.status_code.name == "ERROR"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 1, "Should not have a response event because of the error."
@@ -370,27 +331,8 @@ def test_prompt_content_filtering_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
 
-    assert isinstance(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"], str
-    )
-
-    error = json.loads(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}"]
-    )
-
-    assert "innererror" in error
-
-    assert "content_filter_result" in error["innererror"]
-
-    assert error["innererror"]["code"] == "ResponsibleAIPolicyViolation"
-
-    assert error["innererror"]["content_filter_result"]["hate"]["filtered"]
-
-    assert error["innererror"]["content_filter_result"]["hate"]["severity"] == "high"
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["filtered"] is False
-
-    assert error["innererror"]["content_filter_result"]["sexual"]["severity"] == "safe"
+    assert open_ai_span.attributes.get("error.type") is not None
+    assert open_ai_span.status.status_code.name == "ERROR"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 1, "Should not have a response event because of the error."

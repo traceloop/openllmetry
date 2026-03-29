@@ -15,12 +15,12 @@ from opentelemetry.semconv._incubating.attributes import (
     openai_attributes as OpenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
-PROMPT_ERROR = "prompt_error"
 OPENAI_FINISH_REASON_MAP = {
     "tool_calls": "tool_call",
     "function_call": "tool_call",
@@ -225,11 +225,13 @@ def _set_response_attributes(span, response):
         return
 
     if "error" in response:
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}",
-            json.dumps(response.get("error")),
-        )
+        error_data = response.get("error")
+        if isinstance(error_data, dict):
+            error_type = error_data.get("type") or error_data.get("code") or "api_error"
+        else:
+            error_type = "api_error"
+        _set_span_attribute(span, "error.type", error_type)
+        span.set_status(Status(StatusCode.ERROR, str(error_data)))
         return
 
     response_model = response.get("model")

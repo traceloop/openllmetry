@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from collections.abc import Iterable
@@ -272,15 +273,16 @@ def _set_prompts(span, prompt):
     if not span.is_recording() or not prompt:
         return
 
-    if isinstance(prompt, list):
-        for i, p in enumerate(prompt):
-            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.{i}.content", p)
-    else:
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-            prompt,
-        )
+    prompts = prompt if isinstance(prompt, list) else [prompt]
+    messages = [
+        {"role": "user", "parts": [{"type": "text", "content": p}]}
+        for p in prompts
+    ]
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps(messages),
+    )
 
 
 def _emit_embeddings_message_event(embeddings) -> None:
