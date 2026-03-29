@@ -11,11 +11,7 @@ import pytest
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GenAiOperationNameValues,
-)
 from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS
-from opentelemetry.semconv_ai import SpanAttributes
 
 from openai.types.responses import (
     ResponseOutputMessage,
@@ -506,7 +502,7 @@ class TestP2_4_MetricsFinishReasonMapping:
             for key, val in attrs.items():
                 if "finish_reason" in key:
                     assert val != "tool_calls", (
-                        f"Expected mapped value, got raw 'tool_calls'"
+                        "Expected mapped value, got raw 'tool_calls'"
                     )
 
 
