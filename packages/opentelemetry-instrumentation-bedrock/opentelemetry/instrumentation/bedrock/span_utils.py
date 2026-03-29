@@ -69,11 +69,17 @@ def _anthropic_content_to_parts(content_blocks):
             if block_type == "text":
                 parts.append(_text_part(block.get("text", "")))
             elif block_type == "tool_use":
+                raw_input = block.get("input", {})
+                if isinstance(raw_input, str):
+                    try:
+                        raw_input = json.loads(raw_input)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
                 parts.append({
                     "type": "tool_call",
                     "name": block.get("name"),
                     "id": block.get("id"),
-                    "arguments": block.get("input", {}),
+                    "arguments": raw_input,
                 })
             elif block_type == "tool_result":
                 parts.append({
@@ -104,6 +110,8 @@ def _anthropic_content_to_parts(content_blocks):
                         "mime_type": source.get("media_type", ""),
                         "content": source.get("data", ""),
                     })
+            elif block_type == "thinking":
+                parts.append({"type": "reasoning", "content": block.get("thinking", "")})
             else:
                 parts.append({"type": block_type, "content": json.dumps(block)})
         else:
@@ -172,6 +180,7 @@ def set_model_message_span_attributes(model_vendor, span, request_body):
 
 
 def set_model_choice_span_attributes(model_vendor, span, response_body):
+    _set_finish_reasons_unconditionally(model_vendor, span, response_body)
     if not should_send_prompts():
         return
     if model_vendor == "cohere":
@@ -186,6 +195,51 @@ def set_model_choice_span_attributes(model_vendor, span, response_body):
         _set_amazon_response_span_attributes(span, response_body)
     elif model_vendor == "imported_model":
         _set_imported_model_response_span_attributes(span, response_body)
+
+
+def _set_finish_reasons_unconditionally(model_vendor, span, response_body):
+    """Set finish_reasons on span regardless of should_send_prompts() — it's metadata, not content."""
+    finish_reasons = []
+    if model_vendor == "cohere":
+        for gen in response_body.get("generations", []):
+            fr = _map_finish_reason(gen.get("finish_reason"))
+            if fr:
+                finish_reasons.append(fr)
+    elif model_vendor == "anthropic":
+        fr = _map_finish_reason(response_body.get("stop_reason"))
+        if fr:
+            finish_reasons.append(fr)
+    elif model_vendor == "ai21":
+        for comp in response_body.get("completions", []):
+            fr_data = comp.get("finishReason", {})
+            raw = fr_data.get("reason") if isinstance(fr_data, dict) else str(fr_data)
+            fr = _map_finish_reason(raw)
+            if fr:
+                finish_reasons.append(fr)
+    elif model_vendor == "meta":
+        fr = _map_finish_reason(response_body.get("stop_reason"))
+        if fr:
+            finish_reasons.append(fr)
+    elif model_vendor == "amazon":
+        if "results" in response_body:
+            for result in response_body.get("results", []):
+                fr = _map_finish_reason(result.get("completionReason"))
+                if fr:
+                    finish_reasons.append(fr)
+        elif "output" in response_body:
+            fr = _map_finish_reason(response_body.get("stopReason"))
+            if fr:
+                finish_reasons.append(fr)
+        else:
+            fr = _map_finish_reason(response_body.get("completionReason"))
+            if fr:
+                finish_reasons.append(fr)
+    elif model_vendor == "imported_model":
+        fr = _map_finish_reason(response_body.get("stop_reason"))
+        if fr:
+            finish_reasons.append(fr)
+    if finish_reasons:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(finish_reasons))
 
 
 def set_model_span_attributes(
@@ -851,6 +905,33 @@ def _converse_content_to_parts(content_blocks):
                     "id": result.get("toolUseId"),
                     "response": json.dumps(result.get("content", ""), default=str),
                 })
+            elif "image" in block:
+                img = block["image"]
+                fmt = img.get("format", "")
+                parts.append({
+                    "type": "blob",
+                    "modality": "image",
+                    "mime_type": f"image/{fmt}" if fmt else "",
+                    "content": "<image bytes>",
+                })
+            elif "video" in block:
+                vid = block["video"]
+                fmt = vid.get("format", "")
+                parts.append({
+                    "type": "blob",
+                    "modality": "video",
+                    "mime_type": f"video/{fmt}" if fmt else "",
+                    "content": "<video bytes>",
+                })
+            elif "document" in block:
+                doc = block["document"]
+                fmt = doc.get("format", "")
+                parts.append({
+                    "type": "blob",
+                    "modality": "document",
+                    "mime_type": fmt,
+                    "content": doc.get("name", ""),
+                })
             elif "guardContent" in block:
                 parts.append({"type": "text", "content": json.dumps(block, default=str)})
             else:
@@ -891,32 +972,32 @@ def set_converse_input_prompt_span_attributes(kwargs, span):
 
 
 def set_converse_response_span_attributes(response, span):
-    if not should_send_prompts():
-        return
     if "output" in response:
+        fr = _map_finish_reason(response.get("stopReason"))
+        if fr:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+        if not should_send_prompts():
+            return
         message = response["output"]["message"]
         parts = _converse_content_to_parts(message.get("content", []))
-        fr = _map_finish_reason(response.get("stopReason"))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps([_output_message(message.get("role"), parts, fr)]),
         )
-        if fr:
-            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def set_converse_streaming_response_span_attributes(response, role, span, finish_reason=None):
+    fr = _map_finish_reason(finish_reason)
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
     if not should_send_prompts():
         return
-    fr = _map_finish_reason(finish_reason)
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps([_output_message(role, [_text_part("".join(response))], fr)]),
     )
-    if fr:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
 
 
 def converse_usage_record(span, response, metric_params):

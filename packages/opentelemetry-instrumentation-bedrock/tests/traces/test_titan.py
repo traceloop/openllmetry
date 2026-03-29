@@ -165,7 +165,7 @@ def test_titan_completion_with_events_with_content(
     generated_text = response_body["results"][0]["outputText"]
     choice_event = {
         "index": 0,
-        "finish_reason": "FINISH",
+        "finish_reason": "stop",
         "message": {"content": generated_text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -232,7 +232,7 @@ def test_titan_completion_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "FINISH",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -410,7 +410,6 @@ def test_titan_invoke_stream_with_events_with_content(
     completion_text = "".join(generated_text)
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
         "message": {"content": completion_text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -491,7 +490,6 @@ def test_titan_invoke_stream_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -649,7 +647,7 @@ def test_titan_converse_with_events_with_content(
     generated_text = response["output"]["message"]["content"]
     choice_event = {
         "index": 0,
-        "finish_reason": "guardrail_intervened",
+        "finish_reason": "content_filter",
         "message": {"content": generated_text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -723,7 +721,7 @@ def test_titan_converse_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "guardrail_intervened",
+        "finish_reason": "content_filter",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -948,7 +946,7 @@ def test_titan_converse_stream_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "guardrail_intervened",
+        "finish_reason": "content_filter",
         "message": {"content": content},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1054,7 +1052,7 @@ def test_titan_converse_stream_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "guardrail_intervened",
+        "finish_reason": "content_filter",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

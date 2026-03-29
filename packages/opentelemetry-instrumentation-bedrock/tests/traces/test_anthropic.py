@@ -112,7 +112,7 @@ def test_anthropic_2_completion_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -164,7 +164,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -298,7 +298,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -360,7 +360,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -501,7 +501,7 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.get("body")._accumulating_body.get("content")},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -568,7 +568,7 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -693,7 +693,7 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -752,7 +752,7 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -876,7 +876,7 @@ def test_anthropic_cross_region_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response["output"]["message"]["content"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -934,7 +934,7 @@ def test_anthropic_cross_region_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
