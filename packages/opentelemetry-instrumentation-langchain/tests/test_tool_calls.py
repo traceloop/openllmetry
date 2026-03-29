@@ -240,7 +240,6 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_with_history_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
@@ -338,7 +337,6 @@ def test_tool_calls_with_history_with_events_with_content(
     assert_message_in_logs(logs[5], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_with_history_with_events_with_no_content(
@@ -487,7 +485,6 @@ def test_tool_calls_anthropic_text_block(
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
@@ -547,7 +544,6 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter
@@ -597,7 +593,6 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history(
@@ -701,8 +696,6 @@ def test_tool_calls_anthropic_text_block_and_history(
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
@@ -854,8 +847,6 @@ def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_ex
     )
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content(
@@ -1016,7 +1007,6 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_parallel_tool_calls_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter
@@ -1078,7 +1068,6 @@ def test_parallel_tool_calls_with_events_with_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-@pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
 def test_parallel_tool_calls_with_events_with_no_content(
