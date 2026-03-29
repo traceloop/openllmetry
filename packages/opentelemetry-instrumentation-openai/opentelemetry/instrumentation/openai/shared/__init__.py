@@ -23,6 +23,7 @@ PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
 OPENAI_FINISH_REASON_MAP = {
     "tool_calls": "tool_call",
+    "function_call": "tool_call",
 }
 
 _PYDANTIC_VERSION = version("pydantic")
