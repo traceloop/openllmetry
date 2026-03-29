@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "langchain"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: "langchain"}
 
 
 class CallbackFilteredJSONEncoder(json.JSONEncoder):
