@@ -1032,3 +1032,176 @@ def test_streaming_finish_reason_none_does_not_set_span_attr():
     set_streaming_response_attributes(span, events)
 
     assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes
+
+
+# ---------------------------------------------------------------------------
+# P2 #1 — Streaming: unknown block types (e.g. redacted_thinking) must be skipped
+# ---------------------------------------------------------------------------
+
+def test_streaming_redacted_thinking_skipped():
+    """redacted_thinking blocks must NOT produce a text part with content: None.
+
+    Anthropic returns redacted_thinking blocks during extended thinking.
+    These have no 'text' key.  The spec has no part type for them, so they
+    must be silently dropped — not emitted as {"type": "text", "content": None}.
+    """
+    span = make_span()
+    events = [
+        {"type": "thinking", "text": "Let me reason...", "index": 0, "finish_reason": "end_turn"},
+        {"type": "redacted_thinking", "index": 1, "finish_reason": "end_turn"},
+        {"type": "text", "text": "The answer is 42.", "index": 2, "finish_reason": "end_turn"},
+    ]
+    set_streaming_response_attributes(span, events)
+
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    parts = output[0]["parts"]
+
+    # Only reasoning + text parts — redacted_thinking must be absent
+    assert len(parts) == 2
+    assert parts[0] == {"type": "reasoning", "content": "Let me reason..."}
+    assert parts[1] == {"type": "text", "content": "The answer is 42."}
+
+    # No part should have content == None
+    for part in parts:
+        if "content" in part:
+            assert part["content"] is not None, f"Part has content: None — {part}"
+
+
+def test_streaming_unknown_block_type_skipped():
+    """Any unknown block type (not text, thinking, tool_use) must be skipped,
+    not emitted as a text part with content: None."""
+    span = make_span()
+    events = [
+        {"type": "text", "text": "Hello", "index": 0, "finish_reason": "end_turn"},
+        {"type": "some_future_block_type", "index": 1, "finish_reason": "end_turn"},
+    ]
+    set_streaming_response_attributes(span, events)
+
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    parts = output[0]["parts"]
+
+    # Only the text part — unknown type must be dropped
+    assert len(parts) == 1
+    assert parts[0] == {"type": "text", "content": "Hello"}
+
+
+# ---------------------------------------------------------------------------
+# P2 #2 — Cache token constants must resolve to valid SpanAttributes
+# ---------------------------------------------------------------------------
+
+def test_set_token_usage_writes_dotted_cache_attribute_keys():
+    """_set_token_usage must write the dotted cache attribute keys
+    (gen_ai.usage.cache_read.input_tokens), NOT the old underscore-separated
+    keys (gen_ai.usage.cache_read_input_tokens)."""
+    from opentelemetry.instrumentation.anthropic.streaming import _set_token_usage
+
+    span = make_span()
+    complete_response = {
+        "model": "claude-3-opus-20240229",
+        "usage": {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "cache_read_input_tokens": 30,
+            "cache_creation_input_tokens": 20,
+        },
+        "events": [],
+    }
+    _set_token_usage(span, complete_response, 100, 50)
+
+    # Dotted keys (correct, post-v0.5.0)
+    assert span.attributes.get("gen_ai.usage.cache_read.input_tokens") == 30, \
+        f"Expected dotted cache_read key; got attrs: {span.attributes}"
+    assert span.attributes.get("gen_ai.usage.cache_creation.input_tokens") == 20, \
+        f"Expected dotted cache_creation key; got attrs: {span.attributes}"
+
+    # Old underscore-separated keys must NOT be written
+    assert "gen_ai.usage.cache_read_input_tokens" not in span.attributes, \
+        "Old underscore-separated cache_read key should not be written"
+    assert "gen_ai.usage.cache_creation_input_tokens" not in span.attributes, \
+        "Old underscore-separated cache_creation key should not be written"
+
+
+# ---------------------------------------------------------------------------
+# P3 #3 — _handle_completion must not double-record metrics, and must work
+#          even without a duration_histogram
+# ---------------------------------------------------------------------------
+
+def _make_anthropic_stream(span, duration_histogram=None, event_logger=None):
+    """Helper to create an AnthropicStream for unit testing.
+
+    ObjectProxy (wrapt) needs a wrapped object that supports attribute
+    assignment, so we wrap a MagicMock rather than a bare iterator.
+    """
+    from opentelemetry.instrumentation.anthropic.streaming import AnthropicStream
+
+    wrapped = MagicMock()
+    wrapped.__iter__ = MagicMock(return_value=iter([]))
+    wrapped.__next__ = MagicMock(side_effect=StopIteration)
+
+    stream = AnthropicStream(
+        span=span,
+        response=wrapped,
+        instance=MagicMock(),
+        start_time=0,
+        duration_histogram=duration_histogram,
+        event_logger=event_logger,
+        kwargs={},
+    )
+    return stream
+
+
+def test_handle_completion_without_duration_histogram():
+    """_handle_completion must complete instrumentation (set response attrs,
+    end span) even when no duration_histogram is configured.
+
+    Current bug: all post-histogram logic is nested inside
+    `if self._duration_histogram:`, so without it nothing happens.
+    """
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    stream = _make_anthropic_stream(span, duration_histogram=None)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Hello", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-3-opus-20240229",
+        "usage": {},
+        "id": "msg_123",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._handle_completion()
+
+    # Span must be ended even without a histogram
+    span.end.assert_called_once()
+    assert stream._instrumentation_completed is True
+
+
+def test_handle_completion_records_duration_exactly_once():
+    """duration_histogram.record must be called exactly once, not twice."""
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    duration_histogram = MagicMock()
+
+    stream = _make_anthropic_stream(span, duration_histogram=duration_histogram)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Hi", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-3-opus-20240229",
+        "usage": {},
+        "id": "msg_456",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._handle_completion()
+
+    # duration_histogram.record must be called exactly once
+    assert duration_histogram.record.call_count == 1, \
+        f"Expected 1 call to duration_histogram.record, got {duration_histogram.record.call_count}"

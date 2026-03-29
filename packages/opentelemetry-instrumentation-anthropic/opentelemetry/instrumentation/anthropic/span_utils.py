@@ -425,7 +425,7 @@ def set_streaming_response_attributes(span, complete_response_events):
                     "name": event.get("name"),
                     "arguments": tool_arguments,
                 })
-            else:
+            elif event.get("type") == "text":
                 parts.append({
                     "type": "text",
                     "content": event.get("text"),

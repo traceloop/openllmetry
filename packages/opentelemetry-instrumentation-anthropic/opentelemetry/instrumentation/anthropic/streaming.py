@@ -95,10 +95,10 @@ def _set_token_usage(
     set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS_DEPRECATED, cache_read_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS_DEPRECATED, cache_creation_tokens
+        span, SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
     )
 
     set_span_attribute(
@@ -234,6 +234,7 @@ class AnthropicStream(ObjectProxy):
         """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
         set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
+
         if self._duration_histogram:
             duration = time.time() - self._start_time
             self._duration_histogram.record(
@@ -241,57 +242,46 @@ class AnthropicStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-            # This mirrors the logic from build_from_streaming_response
-            metric_attributes = shared_metrics_attributes(self._complete_response)
-            set_span_attribute(self._span, GenAIAttributes.GEN_AI_RESPONSE_ID, self._complete_response.get("id"))
+        # Calculate token usage
+        if Config.enrich_token_usage:
+            try:
+                if usage := self._complete_response.get("usage"):
+                    prompt_tokens = usage.get("input_tokens", 0) or 0
+                else:
+                    prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
 
-            if self._duration_histogram:
-                duration = time.time() - self._start_time
-                self._duration_histogram.record(
-                    duration,
-                    attributes=metric_attributes,
+                if usage := self._complete_response.get("usage"):
+                    completion_tokens = usage.get("output_tokens", 0) or 0
+                else:
+                    completion_content = ""
+                    if self._complete_response.get("events"):
+                        model_name = self._complete_response.get("model") or None
+                        for event in self._complete_response.get("events"):
+                            if event.get("text"):
+                                completion_content += event.get("text")
+
+                        if model_name and hasattr(self._instance, "count_tokens"):
+                            completion_tokens = self._instance.count_tokens(completion_content)
+
+                _set_token_usage(
+                    self._span,
+                    self._complete_response,
+                    prompt_tokens,
+                    completion_tokens,
+                    metric_attributes,
+                    self._token_histogram,
+                    self._choice_counter,
                 )
+            except Exception as e:
+                logger.warning("Failed to set token usage, error: %s", e)
 
-            # Calculate token usage
-            if Config.enrich_token_usage:
-                try:
-                    if usage := self._complete_response.get("usage"):
-                        prompt_tokens = usage.get("input_tokens", 0) or 0
-                    else:
-                        prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
+        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
 
-                    if usage := self._complete_response.get("usage"):
-                        completion_tokens = usage.get("output_tokens", 0) or 0
-                    else:
-                        completion_content = ""
-                        if self._complete_response.get("events"):
-                            model_name = self._complete_response.get("model") or None
-                            for event in self._complete_response.get("events"):
-                                if event.get("text"):
-                                    completion_content += event.get("text")
+        if self._span.is_recording():
+            self._span.set_status(Status(StatusCode.OK))
+            self._span.end()
 
-                            if model_name and hasattr(self._instance, "count_tokens"):
-                                completion_tokens = self._instance.count_tokens(completion_content)
-
-                    _set_token_usage(
-                        self._span,
-                        self._complete_response,
-                        prompt_tokens,
-                        completion_tokens,
-                        metric_attributes,
-                        self._token_histogram,
-                        self._choice_counter,
-                    )
-                except Exception as e:
-                    logger.warning("Failed to set token usage, error: %s", e)
-
-            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
-
-            if self._span.is_recording():
-                self._span.set_status(Status(StatusCode.OK))
-                self._span.end()
-
-            self._instrumentation_completed = True
+        self._instrumentation_completed = True
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
