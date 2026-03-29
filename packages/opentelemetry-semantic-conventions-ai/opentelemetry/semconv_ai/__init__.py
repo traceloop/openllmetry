@@ -140,6 +140,81 @@ class SpanAttributes:
     GEN_AI_WATSONX_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     GEN_AI_WATSONX_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
+    # -----------------------------------------------------------------------
+    # Legacy LLM_* aliases (old names with original string values)
+    # These constants were removed or renamed in v0.5.0.
+    # Kept so non-migrated instrumentation packages continue to work.
+    # TODO: Remove once all instrumentation packages are migrated.
+    # -----------------------------------------------------------------------
+
+    # Removed from SpanAttributes in v0.5.0 (now in upstream OTel gen_ai_attributes)
+    # TODO: migrate each to its GenAIAttributes.GEN_AI_* counterpart
+    LLM_SYSTEM = "gen_ai.system"
+    LLM_REQUEST_MODEL = "gen_ai.request.model"
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    LLM_TOKEN_TYPE = "gen_ai.token.type"
+    LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
+    LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
+    LLM_PRESENCE_PENALTY = "llm.presence_penalty"
+    LLM_TOP_K = "llm.top_k"
+    LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
+    LLM_REQUEST_FUNCTIONS = "llm.request.functions"
+    LLM_REQUEST_TYPE = "llm.request.type"
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name AND value changed: llm.* -> gen_ai.*)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_* counterpart
+    LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"
+    LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"
+    LLM_USER = "llm.user"
+    LLM_HEADERS = "llm.headers"
+    LLM_IS_STREAMING = "llm.is_streaming"
+    LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
+    LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
+    LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
+    LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
+    LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"
+    LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name changed, value UNCHANGED)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_* counterpart
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
+
+    # OpenAI (renamed LLM_OPENAI_* -> GEN_AI_OPENAI_* in v0.5.0, value unchanged)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_OPENAI_* counterpart
+    LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"
+    LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
+    LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
+
+    # Watsonx (renamed LLM_* -> GEN_AI_WATSONX_* in v0.5.0, value unchanged)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_WATSONX_* counterpart
+    LLM_DECODING_METHOD = "llm.watsonx.decoding_method"
+    LLM_RANDOM_SEED = "llm.watsonx.random_seed"
+    LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
+    LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
+    LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+
+    # Cache attributes — VALUE changed in v0.5.0 (underscore -> dot separator).
+    # LLM_* aliases: for packages using the old LLM_* constant name.
+    # GEN_AI_*_DEPRECATED: for packages already using GEN_AI_* name but expecting old value.
+    # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_*_INPUT_TOKENS
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS_DEPRECATED = (
+        "gen_ai.usage.cache_creation_input_tokens"
+    )
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS_DEPRECATED = (
+        "gen_ai.usage.cache_read_input_tokens"
+    )
+
     # Chroma db
     CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"
     CHROMADB_ADD_EMBEDDINGS_COUNT = "db.chroma.add.embeddings_count"

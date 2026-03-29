@@ -83,7 +83,8 @@ def test_client_spans(exporter, genai_client):
 
 
 @pytest.mark.vcr
-def test_generate_metrics(metrics_test_context, genai_client):
+def test_generate_metrics(metrics_test_context, genai_client, exporter):
+    """`exporter` fixture instruments with the session MeterProvider so metrics are recorded."""
     _, reader = metrics_test_context
 
     # ---- Trigger a generic GenAI request ----
@@ -98,13 +99,19 @@ def test_generate_metrics(metrics_test_context, genai_client):
     rm = resource_metrics[0]
     assert rm.scope_metrics, "No ScopeMetrics found"
 
-    scope_metrics = rm.scope_metrics[0]
+    # Aggregate across scopes: SDK internal metrics share the reader with app instrumentation.
+    metrics = {}
+    instrument_scope = None
+    for sm in rm.scope_metrics:
+        for m in sm.metrics:
+            metrics[m.name] = m
+        if any(
+            name in (Meters.LLM_OPERATION_DURATION, Meters.LLM_TOKEN_USAGE)
+            for name in (x.name for x in sm.metrics)
+        ):
+            instrument_scope = sm.scope
 
-    # ---- Instrumentation scope (generic check) ----
-    scope = scope_metrics.scope
-    assert scope.name, "Instrumentation scope name is missing"
-
-    metrics = {m.name: m for m in scope_metrics.metrics}
+    assert instrument_scope and instrument_scope.name, "GenAI metrics scope not found"
 
     # ---- Required metrics (semantic conventions) ----
     required_metrics = {
@@ -118,7 +125,9 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert duration_metric.unit is not None
     assert duration_metric.data.data_points
 
-    duration_dp = duration_metric.data.data_points[0]
+    duration_dp = next(
+        dp for dp in duration_metric.data.data_points if dp.count >= 1
+    )
 
     # Minimal semantic validation
     assert duration_dp.count >= 1

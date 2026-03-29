@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.53.3"
+version = "0.53.4"
 description = "OpenTelemetry Chroma DB instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -13,7 +13,7 @@ requires-python = ">=3.10,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
   "opentelemetry-semantic-conventions>=0.59b0",
 ]
 
