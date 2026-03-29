@@ -6,10 +6,8 @@ verify the names that actually land on emitted spans, not mock call arguments.
 
 Coverage:
   - CrewAISpanAttributes._process_llm: all field → attribute name mappings
-  - wrap_kickoff:            gen_ai.system, gen_ai.provider.name, gen_ai.operation.name
-  - wrap_agent_execute_task: same + operation invoke_agent
-  - wrap_task_execute:       same + operation invoke_agent
-  - wrap_llm_call:           same + operation chat
+  - wrap_* spans: gen_ai.provider.name + gen_ai.operation.name (not deprecated gen_ai.system)
+  - wrap_kickoff / agent / task: operation invoke_agent; wrap_llm_call: operation chat
   - Absence of every legacy llm.* attribute name
 """
 
@@ -18,6 +16,7 @@ from unittest.mock import MagicMock, patch
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 
 from opentelemetry.instrumentation.crewai.crewai_span_attributes import CrewAISpanAttributes
@@ -255,7 +254,7 @@ class TestProcessLlmNoLegacyNames:
 
 
 # ---------------------------------------------------------------------------
-# wrap_kickoff — gen_ai.system and gen_ai.provider.name on span
+# wrap_kickoff — gen_ai.provider.name on span (not deprecated gen_ai.system)
 # (CrewAISpanAttributes patched out — we're testing what the wrapper itself sets)
 # ---------------------------------------------------------------------------
 
@@ -271,9 +270,9 @@ class TestWrapKickoff:
         mock_wrapped = MagicMock(return_value=result)
         wrap_kickoff(tracer, None, None)(mock_wrapped, instance, [], {})
 
-    def test_gen_ai_system_is_crewai(self, tracer, exporter):
+    def test_deprecated_gen_ai_system_not_emitted(self, tracer, exporter):
         self._run(tracer)
-        assert span_attrs(exporter, "crewai.workflow").get("gen_ai.system") == "crewai"
+        assert GenAIAttributes.GEN_AI_SYSTEM not in span_attrs(exporter, "crewai.workflow")
 
     def test_gen_ai_provider_name_is_crewai(self, tracer, exporter):
         self._run(tracer)
@@ -300,7 +299,7 @@ class TestWrapKickoff:
 
 
 # ---------------------------------------------------------------------------
-# wrap_agent_execute_task — gen_ai.system and gen_ai.provider.name on span
+# wrap_agent_execute_task — gen_ai.provider.name on span
 # ---------------------------------------------------------------------------
 
 
@@ -315,9 +314,9 @@ class TestWrapAgentExecuteTask:
         mock_wrapped = MagicMock(return_value="done")
         wrap_agent_execute_task(tracer, None, None)(mock_wrapped, instance, [], {})
 
-    def test_gen_ai_system_is_crewai(self, tracer, exporter):
+    def test_deprecated_gen_ai_system_not_emitted(self, tracer, exporter):
         self._run(tracer)
-        assert span_attrs(exporter).get("gen_ai.system") == "crewai"
+        assert GenAIAttributes.GEN_AI_SYSTEM not in span_attrs(exporter)
 
     def test_gen_ai_provider_name_is_crewai(self, tracer, exporter):
         self._run(tracer)
@@ -364,13 +363,13 @@ class TestWrapTaskExecute:
     def test_gen_ai_provider_and_operation(self, tracer, exporter):
         self._run(tracer)
         attrs = span_attrs(exporter)
-        assert attrs.get("gen_ai.system") == "crewai"
+        assert GenAIAttributes.GEN_AI_SYSTEM not in attrs
         assert attrs.get("gen_ai.provider.name") == "crewai"
         assert attrs.get("gen_ai.operation.name") == GenAiOperationNameValues.INVOKE_AGENT.value
 
 
 # ---------------------------------------------------------------------------
-# wrap_llm_call — gen_ai.system and gen_ai.provider.name on span
+# wrap_llm_call — gen_ai.provider.name on span
 # ---------------------------------------------------------------------------
 
 
@@ -385,9 +384,9 @@ class TestWrapLlmCall:
         mock_wrapped = MagicMock(return_value="response text")
         wrap_llm_call(tracer, None, None)(mock_wrapped, instance, [], {})
 
-    def test_gen_ai_system_is_crewai(self, tracer, exporter):
+    def test_deprecated_gen_ai_system_not_emitted(self, tracer, exporter):
         self._run(tracer)
-        assert span_attrs(exporter).get("gen_ai.system") == "crewai"
+        assert GenAIAttributes.GEN_AI_SYSTEM not in span_attrs(exporter)
 
     def test_gen_ai_provider_name_is_crewai(self, tracer, exporter):
         self._run(tracer)

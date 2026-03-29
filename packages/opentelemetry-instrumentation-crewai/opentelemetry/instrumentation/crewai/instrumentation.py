@@ -71,7 +71,6 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         "crewai.workflow",
         kind=SpanKind.INTERNAL,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
@@ -101,7 +100,6 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
@@ -145,7 +143,6 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
-            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
@@ -168,7 +165,6 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         f"{llm}.llm",
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
         }
