@@ -12,7 +12,9 @@ from opentelemetry.instrumentation.crewai.version import __version__
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GEN_AI_PROVIDER_NAME
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
@@ -70,7 +72,8 @@ def wrap_kickoff(tracer: Tracer, duration_histogram: Histogram, token_histogram:
         kind=SpanKind.INTERNAL,
         attributes={
             GenAIAttributes.GEN_AI_SYSTEM: "crewai",
-            GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
         try:
@@ -99,7 +102,8 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
             GenAIAttributes.GEN_AI_SYSTEM: "crewai",
-            GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
         try:
@@ -109,7 +113,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().prompt_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     }
@@ -117,7 +121,7 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
                 token_histogram.record(
                     instance._token_process.get_summary().completion_tokens,
                     attributes={
-                        GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
                         GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.llm.model),
                     },
@@ -141,6 +145,9 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         kind=SpanKind.CLIENT,
         attributes={
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TASK.value,
+            GenAIAttributes.GEN_AI_SYSTEM: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.INVOKE_AGENT.value,
         }
     ) as span:
         try:
@@ -162,7 +169,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         kind=SpanKind.CLIENT,
         attributes={
             GenAIAttributes.GEN_AI_SYSTEM: "crewai",
-            GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
         }
     ) as span:
         start_time = time.time()
@@ -175,8 +183,8 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
                 duration_histogram.record(
                     duration,
                     attributes={
-                     GenAIAttributes.GEN_AI_SYSTEM: "crewai",
-                     GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model)
+                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
+                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model),
                     },
                 )
 

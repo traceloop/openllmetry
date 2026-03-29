@@ -6,9 +6,10 @@ verify the names that actually land on emitted spans, not mock call arguments.
 
 Coverage:
   - CrewAISpanAttributes._process_llm: all field → attribute name mappings
-  - wrap_kickoff:            gen_ai.system + gen_ai.provider.name present on span
-  - wrap_agent_execute_task: gen_ai.system + gen_ai.provider.name present on span
-  - wrap_llm_call:           gen_ai.system + gen_ai.provider.name present on span
+  - wrap_kickoff:            gen_ai.system, gen_ai.provider.name, gen_ai.operation.name
+  - wrap_agent_execute_task: same + operation invoke_agent
+  - wrap_task_execute:       same + operation invoke_agent
+  - wrap_llm_call:           same + operation chat
   - Absence of every legacy llm.* attribute name
 """
 
@@ -17,14 +18,14 @@ from unittest.mock import MagicMock, patch
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 
 from opentelemetry.instrumentation.crewai.crewai_span_attributes import CrewAISpanAttributes
 from opentelemetry.instrumentation.crewai.instrumentation import (
     wrap_kickoff,
     wrap_agent_execute_task,
     wrap_llm_call,
+    wrap_task_execute,
 )
 
 
@@ -278,6 +279,13 @@ class TestWrapKickoff:
         self._run(tracer)
         assert span_attrs(exporter, "crewai.workflow").get("gen_ai.provider.name") == "crewai"
 
+    def test_gen_ai_operation_name_is_invoke_agent(self, tracer, exporter):
+        self._run(tracer)
+        assert (
+            span_attrs(exporter, "crewai.workflow").get("gen_ai.operation.name")
+            == GenAiOperationNameValues.INVOKE_AGENT.value
+        )
+
     def test_span_name(self, tracer, exporter):
         self._run(tracer)
         assert any(s.name == "crewai.workflow" for s in exporter.get_finished_spans())
@@ -315,6 +323,13 @@ class TestWrapAgentExecuteTask:
         self._run(tracer)
         assert span_attrs(exporter).get("gen_ai.provider.name") == "crewai"
 
+    def test_gen_ai_operation_name_is_invoke_agent(self, tracer, exporter):
+        self._run(tracer)
+        assert (
+            span_attrs(exporter).get("gen_ai.operation.name")
+            == GenAiOperationNameValues.INVOKE_AGENT.value
+        )
+
     def test_span_name_includes_role(self, tracer, exporter):
         self._run(tracer, role="Analyst")
         assert exporter.get_finished_spans()[0].name == "Analyst.agent"
@@ -326,6 +341,32 @@ class TestWrapAgentExecuteTask:
         with pytest.raises(ValueError):
             wrap_agent_execute_task(tracer, None, None)(mock_wrapped, instance, [], {})
         assert exporter.get_finished_spans()[0].status.status_code == StatusCode.ERROR
+
+
+# ---------------------------------------------------------------------------
+# wrap_task_execute — gen_ai span attributes on task span
+# ---------------------------------------------------------------------------
+
+
+class TestWrapTaskExecute:
+    @pytest.fixture(autouse=True)
+    def _patch_span_attrs(self):
+        with patch("opentelemetry.instrumentation.crewai.instrumentation.CrewAISpanAttributes"):
+            yield
+
+    def _run(self, tracer, description="Do the thing"):
+        Task = type("Task", (), {})
+        instance = Task()
+        instance.description = description
+        mock_wrapped = MagicMock(return_value="task output")
+        wrap_task_execute(tracer, None, None)(mock_wrapped, instance, [], {})
+
+    def test_gen_ai_provider_and_operation(self, tracer, exporter):
+        self._run(tracer)
+        attrs = span_attrs(exporter)
+        assert attrs.get("gen_ai.system") == "crewai"
+        assert attrs.get("gen_ai.provider.name") == "crewai"
+        assert attrs.get("gen_ai.operation.name") == GenAiOperationNameValues.INVOKE_AGENT.value
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +392,13 @@ class TestWrapLlmCall:
     def test_gen_ai_provider_name_is_crewai(self, tracer, exporter):
         self._run(tracer)
         assert span_attrs(exporter).get("gen_ai.provider.name") == "crewai"
+
+    def test_gen_ai_operation_name_is_chat(self, tracer, exporter):
+        self._run(tracer)
+        assert (
+            span_attrs(exporter).get("gen_ai.operation.name")
+            == GenAiOperationNameValues.CHAT.value
+        )
 
     def test_span_name_includes_model(self, tracer, exporter):
         self._run(tracer, model="claude-3-5")
