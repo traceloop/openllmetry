@@ -48,8 +48,13 @@ def _messages_to_otel_input(messages) -> str | None:
                             url = (block.get("image_url") or {}).get("url", "")
                             parts.append({"type": "uri", "modality": "image", "uri": url})
                         else:
-                            parts.append({"type": block.get("type", "unknown"),
-                                          **{k: v for k, v in block.items() if k != "type"}})
+                            # Unknown block — emit narrow GenericPart with only type + stringified content
+                            generic = {"type": block.get("type", "unknown")}
+                            if "text" in block:
+                                generic["content"] = str(block["text"])
+                            elif "content" in block:
+                                generic["content"] = str(block["content"])
+                            parts.append(generic)
             else:
                 parts = [{"type": "text", "content": str(content)}]
 

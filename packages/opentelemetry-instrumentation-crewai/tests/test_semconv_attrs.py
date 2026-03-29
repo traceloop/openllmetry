@@ -486,3 +486,65 @@ class TestMessagesToOtelInput:
         assert len(parts) == 2
         assert parts[0] == {"type": "text", "content": "Let me search"}
         assert parts[1]["type"] == "tool_call"
+
+    def test_image_url_mapped_to_uri_part(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "user", "content": [
+            {"type": "text", "text": "What is this?"},
+            {"type": "image_url", "image_url": {"url": "https://example.com/img.png"}},
+        ]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        parts = result[0]["parts"]
+        assert parts[0] == {"type": "text", "content": "What is this?"}
+        assert parts[1] == {"type": "uri", "modality": "image", "uri": "https://example.com/img.png"}
+
+    def test_unknown_block_emits_narrow_generic_part(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "user", "content": [
+            {"type": "custom_widget", "text": "some data", "provider_key": "leaked?"},
+        ]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        part = result[0]["parts"][0]
+        assert part == {"type": "custom_widget", "content": "some data"}
+        assert "provider_key" not in part
+
+    def test_unknown_block_without_text_key(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "user", "content": [
+            {"type": "audio", "content": "base64data"},
+        ]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        assert result[0]["parts"][0] == {"type": "audio", "content": "base64data"}
+
+    def test_unknown_block_no_content_keys(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "user", "content": [{"type": "empty_thing"}]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        assert result[0]["parts"][0] == {"type": "empty_thing"}
+
+
+# ---------------------------------------------------------------------------
+# _response_to_otel_output — output message JSON schema
+# ---------------------------------------------------------------------------
+
+
+class TestResponseToOtelOutput:
+    def test_basic_text_response(self):
+        from opentelemetry.instrumentation.crewai.utils import _response_to_otel_output
+        result = json.loads(_response_to_otel_output("Hello world"))
+        assert len(result) == 1
+        assert result[0]["role"] == "assistant"
+        assert result[0]["parts"] == [{"type": "text", "content": "Hello world"}]
+
+    def test_none_returns_none(self):
+        from opentelemetry.instrumentation.crewai.utils import _response_to_otel_output
+        assert _response_to_otel_output(None) is None
+
+    def test_empty_string_returns_none(self):
+        from opentelemetry.instrumentation.crewai.utils import _response_to_otel_output
+        assert _response_to_otel_output("") is None
+
+    def test_non_string_coerced(self):
+        from opentelemetry.instrumentation.crewai.utils import _response_to_otel_output
+        result = json.loads(_response_to_otel_output(42))
+        assert result[0]["parts"][0]["content"] == "42"
