@@ -303,7 +303,10 @@ def set_external_prompt_tracing_context(
 
 
 def is_llm_span(span) -> bool:
-    return span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
+    return (
+        span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE) is not None
+        or span.attributes.get("gen_ai.operation.name") is not None
+    )
 
 
 def init_spans_exporter(api_endpoint: str, headers: Dict[str, str]) -> SpanExporter:
