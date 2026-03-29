@@ -52,11 +52,237 @@ def _map_vertex_finish_reason(finish_reason):
         "BLOCKLIST": "content_filter",
         "PROHIBITED_CONTENT": "content_filter",
         "SPII": "content_filter",
+        "IMAGE_SAFETY": "content_filter",
+        "IMAGE_PROHIBITED_CONTENT": "content_filter",
+        "IMAGE_RECITATION": "content_filter",
         "LANGUAGE": "content_filter",
         "FINISH_REASON_UNSPECIFIED": None,
+        "MALFORMED_FUNCTION_CALL": "error",
         "OTHER": "error",
+        "UNEXPECTED_TOOL_CALL": "error",
+        "NO_IMAGE": "error",
+        "IMAGE_OTHER": "error",
     }
     return mapping.get(name)
+
+
+def _normalize_message_role(role):
+    if role is None:
+        return "user"
+    r = str(role).lower()
+    if r == "model":
+        return "assistant"
+    return r
+
+
+def _parse_vertex_function_args(args):
+    if args is None:
+        return {}
+    if isinstance(args, dict):
+        return args
+    if isinstance(args, str):
+        try:
+            return json.loads(args)
+        except (json.JSONDecodeError, TypeError):
+            return {"_raw": args}
+    return {"_value": args}
+
+
+def _vertex_function_response_to_str(response):
+    if response is None:
+        return ""
+    if isinstance(response, str):
+        return response
+    try:
+        return json.dumps(response, default=str)
+    except TypeError:
+        return str(response)
+
+
+def accumulate_vertex_stream_finish_reasons(ordered, seen, chunk):
+    for cand in getattr(chunk, "candidates", None) or []:
+        mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
+        if mapped is not None and mapped not in seen:
+            seen.add(mapped)
+            ordered.append(mapped)
+
+
+def _parts_from_vertex_part_sync(part, span, part_index):
+    out = []
+    t = getattr(part, "text", None)
+    if isinstance(t, str) and t:
+        out.append({"type": "text", "content": t})
+    img = _otel_image_part_vertex_sync(part, span, part_index)
+    if img:
+        out.append(img)
+    fc = getattr(part, "function_call", None)
+    if fc is not None:
+        fid = getattr(fc, "id", None) or ""
+        fname = getattr(fc, "name", None) or ""
+        out.append(
+            {
+                "type": "tool_call",
+                "id": fid,
+                "name": fname,
+                "arguments": _parse_vertex_function_args(getattr(fc, "args", None)),
+            }
+        )
+    fr = getattr(part, "function_response", None)
+    if fr is not None:
+        fid = getattr(fr, "id", None) or ""
+        out.append(
+            {
+                "type": "tool_call_response",
+                "id": fid,
+                "response": _vertex_function_response_to_str(
+                    getattr(fr, "response", None)
+                ),
+            }
+        )
+    if not out:
+        out.append({"type": "text", "content": str(part)})
+    return out
+
+
+async def _parts_from_vertex_part_async(part, span, part_index):
+    out = []
+    t = getattr(part, "text", None)
+    if isinstance(t, str) and t:
+        out.append({"type": "text", "content": t})
+    if _is_base64_image_part(part):
+        img = await _otel_image_part_vertex_async(part, span, part_index)
+        if img:
+            out.append(img)
+    fc = getattr(part, "function_call", None)
+    if fc is not None:
+        fid = getattr(fc, "id", None) or ""
+        fname = getattr(fc, "name", None) or ""
+        out.append(
+            {
+                "type": "tool_call",
+                "id": fid,
+                "name": fname,
+                "arguments": _parse_vertex_function_args(getattr(fc, "args", None)),
+            }
+        )
+    fr = getattr(part, "function_response", None)
+    if fr is not None:
+        fid = getattr(fr, "id", None) or ""
+        out.append(
+            {
+                "type": "tool_call_response",
+                "id": fid,
+                "response": _vertex_function_response_to_str(
+                    getattr(fr, "response", None)
+                ),
+            }
+        )
+    if not out:
+        out.append({"type": "text", "content": str(part)})
+    return out
+
+
+def _vertex_parts_list_from_content_sync(content, span):
+    parts_acc = []
+    for idx, p in enumerate(content.parts):
+        parts_acc.extend(_parts_from_vertex_part_sync(p, span, idx))
+    return parts_acc
+
+
+async def _vertex_parts_list_from_content_async(content, span):
+    parts_acc = []
+    for idx, p in enumerate(content.parts):
+        parts_acc.extend(await _parts_from_vertex_part_async(p, span, idx))
+    return parts_acc
+
+
+def _vertex_expand_arg_to_messages_sync(argument, span):
+    messages = []
+    if hasattr(argument, "parts") and hasattr(argument, "role"):
+        parts = _vertex_parts_list_from_content_sync(argument, span)
+        if parts:
+            messages.append(
+                {"role": _normalize_message_role(argument.role), "parts": parts}
+            )
+        return messages
+    if isinstance(argument, list):
+        if argument and all(
+            hasattr(x, "parts") and hasattr(x, "role") for x in argument
+        ):
+            for c in argument:
+                parts = _vertex_parts_list_from_content_sync(c, span)
+                if parts:
+                    messages.append(
+                        {"role": _normalize_message_role(c.role), "parts": parts}
+                    )
+            return messages
+    processed = _process_vertexai_argument_sync(argument, span)
+    if processed:
+        messages.append({"role": "user", "parts": processed})
+    return messages
+
+
+async def _vertex_expand_arg_to_messages_async(argument, span):
+    messages = []
+    if hasattr(argument, "parts") and hasattr(argument, "role"):
+        parts = await _vertex_parts_list_from_content_async(argument, span)
+        if parts:
+            messages.append(
+                {"role": _normalize_message_role(argument.role), "parts": parts}
+            )
+        return messages
+    if isinstance(argument, list):
+        if argument and all(
+            hasattr(x, "parts") and hasattr(x, "role") for x in argument
+        ):
+            for c in argument:
+                parts = await _vertex_parts_list_from_content_async(c, span)
+                if parts:
+                    messages.append(
+                        {"role": _normalize_message_role(c.role), "parts": parts}
+                    )
+            return messages
+    processed = await _process_vertexai_argument(argument, span)
+    if processed:
+        messages.append({"role": "user", "parts": processed})
+    return messages
+
+
+def _output_messages_from_vertex_response(span, response):
+    messages = []
+    for cand in getattr(response, "candidates", None) or []:
+        parts = []
+        content = getattr(cand, "content", None)
+        if content and getattr(content, "parts", None):
+            for idx, p in enumerate(content.parts):
+                parts.extend(_parts_from_vertex_part_sync(p, span, idx))
+        fr = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
+        role = "assistant"
+        if content and getattr(content, "role", None):
+            role = _normalize_message_role(content.role)
+        msg = {"role": role, "parts": parts}
+        if fr is not None:
+            msg["finish_reason"] = fr
+        messages.append(msg)
+    if not messages and getattr(response, "text", None):
+        messages.append(
+            {
+                "role": "assistant",
+                "parts": [{"type": "text", "content": response.text}],
+            }
+        )
+    return messages
+
+
+def _vertex_system_instruction_to_parts(si, span):
+    if isinstance(si, str):
+        return [{"type": "text", "content": si}]
+    if hasattr(si, "parts") and si.parts:
+        out = []
+        for idx, p in enumerate(si.parts):
+            out.extend(_parts_from_vertex_part_sync(p, span, idx))
+        return out
+    return [{"type": "text", "content": str(si)}]
 
 
 async def _otel_image_part_vertex_async(item, span, item_index):
@@ -141,7 +367,11 @@ def run_async(method):
 
 
 def _process_image_part_sync(item, trace_id, span_id, content_index):
-    """Synchronous version of image part processing using OpenAI's pattern"""
+    """Sync upload path; uses ``run_async`` + thread when a loop is already running.
+
+    Can deadlock if the upload depends on the same event loop (e.g. some ASGI/Jupyter
+    setups). Prefer async request paths where possible.
+    """
     if not Config.upload_base64_image:
         return None
 
@@ -255,9 +485,7 @@ async def set_input_attributes(span, args):
     if should_send_prompts() and args is not None and len(args) > 0:
         messages = []
         for argument in args:
-            processed_content = await _process_vertexai_argument(argument, span)
-            if processed_content:
-                messages.append({"role": "user", "parts": processed_content})
+            messages.extend(await _vertex_expand_arg_to_messages_async(argument, span))
         if messages:
             _set_span_attribute(
                 span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
@@ -273,9 +501,7 @@ def set_input_attributes_sync(span, args):
     if should_send_prompts() and args is not None and len(args) > 0:
         messages = []
         for argument in args:
-            processed_content = _process_vertexai_argument_sync(argument, span)
-            if processed_content:
-                messages.append({"role": "user", "parts": processed_content})
+            messages.extend(_vertex_expand_arg_to_messages_sync(argument, span))
         if messages:
             _set_span_attribute(
                 span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
@@ -312,14 +538,47 @@ def set_model_input_attributes(span, kwargs, llm_model):
         span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
 
+    if should_send_prompts():
+        si = _vertex_system_instruction_from_kwargs(kwargs)
+        if si is not None:
+            try:
+                parts = _vertex_system_instruction_to_parts(si, span)
+                if parts:
+                    _set_span_attribute(
+                        span,
+                        GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                        json.dumps(parts),
+                    )
+            except Exception:
+                pass
+
+
+def _vertex_system_instruction_from_kwargs(kwargs):
+    si = kwargs.get("system_instruction")
+    if si is not None:
+        return si
+    config = kwargs.get("config")
+    if config is not None:
+        si = getattr(config, "system_instruction", None)
+        if si is not None:
+            return si
+    return None
+
 
 @dont_throw
-def set_response_attributes(span, llm_model, generation_text, finish_reason_otel=None):
+def set_response_attributes(span, llm_model, generation_or_text, finish_reason_otel=None):
     if not span.is_recording() or not should_send_prompts():
         return
+    if hasattr(generation_or_text, "candidates"):
+        messages = _output_messages_from_vertex_response(span, generation_or_text)
+        if messages:
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages)
+            )
+        return
     parts = []
-    if generation_text:
-        parts.append({"type": "text", "content": generation_text})
+    if generation_or_text:
+        parts.append({"type": "text", "content": generation_or_text})
     msg = {"role": "assistant", "parts": parts}
     if finish_reason_otel is not None:
         msg["finish_reason"] = finish_reason_otel
@@ -330,18 +589,22 @@ def set_response_attributes(span, llm_model, generation_text, finish_reason_otel
 
 
 @dont_throw
-def set_model_response_attributes(span, llm_model, token_usage, response_meta=None):
+def set_model_response_attributes(
+    span, llm_model, token_usage, response_meta=None, stream_finish_reasons=None
+):
     if not span.is_recording():
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
     if response_meta is not None:
-        candidates = getattr(response_meta, "candidates", None) or []
-        reasons = []
-        for cand in candidates:
-            mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
-            if mapped is not None:
-                reasons.append(mapped)
+        if stream_finish_reasons is not None:
+            reasons = stream_finish_reasons
+        else:
+            reasons = []
+            for cand in getattr(response_meta, "candidates", None) or []:
+                mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
+                if mapped is not None:
+                    reasons.append(mapped)
         if reasons:
             _set_span_attribute(
                 span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons

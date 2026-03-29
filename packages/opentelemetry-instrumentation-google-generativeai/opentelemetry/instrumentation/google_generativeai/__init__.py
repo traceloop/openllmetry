@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_message_events,
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
+    accumulate_stream_finish_reasons,
     set_input_attributes_sync,
     set_model_request_attributes,
     set_model_response_attributes,
@@ -86,23 +87,44 @@ def _build_from_streaming_response(
     event_logger,
     token_histogram,
 ):
-    complete_response = ""
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
     last_chunk = None
+    stream_finish_ordered = []
+    stream_finish_seen = set()
     for item in response:
         item_to_yield = item
         last_chunk = item
-        complete_response += str(item.text)
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
+        accumulate_stream_finish_reasons(
+            stream_finish_ordered, stream_finish_seen, item
+        )
 
         yield item_to_yield
 
-    if should_emit_events() and event_logger:
+    complete_response = "".join(text_parts)
+
+    if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(
-            span, complete_response, llm_model, stream_last_chunk=last_chunk
-        )
+        # Assumes the SDK aggregates candidate parts on each chunk; the last chunk with
+        # candidates should reflect the full model turn (incl. tool_call). Pure text deltas
+        # on the final chunk fall back to ``complete_response`` below.
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
     set_model_response_attributes(
-        span, last_chunk or response, llm_model, token_histogram
+        span,
+        last_chunk or response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_finish_ordered or None,
     )
     span.end()
 
@@ -110,23 +132,42 @@ def _build_from_streaming_response(
 async def _abuild_from_streaming_response(
     span, response: GenerateContentResponse, llm_model, event_logger, token_histogram
 ):
-    complete_response = ""
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
     last_chunk = None
+    stream_finish_ordered = []
+    stream_finish_seen = set()
     async for item in response:
         item_to_yield = item
         last_chunk = item
-        complete_response += str(item.text)
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
+        accumulate_stream_finish_reasons(
+            stream_finish_ordered, stream_finish_seen, item
+        )
 
         yield item_to_yield
 
-    if should_emit_events() and event_logger:
+    complete_response = "".join(text_parts)
+
+    if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(
-            span, complete_response, llm_model, stream_last_chunk=last_chunk
-        )
+        # Same aggregation assumption as sync streaming (see _build_from_streaming_response).
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
     set_model_response_attributes(
-        span, last_chunk if last_chunk else response, llm_model, token_histogram
+        span,
+        last_chunk if last_chunk else response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_finish_ordered or None,
     )
     span.end()
 
@@ -212,6 +253,7 @@ async def _awrap(
         attributes={
             GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
             GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
         },
     )
     start_time = time.perf_counter()
@@ -288,6 +330,7 @@ def _wrap(
         attributes={
             GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
             GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
         },
     )
 

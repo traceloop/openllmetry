@@ -193,6 +193,13 @@ def run_async(method):
 
 
 def _process_image_part_sync(item, trace_id, span_id, content_index):
+    """Sync path for optional image upload.
+
+    Uses ``run_async`` in a new thread when the current thread already has a
+    running event loop (e.g. FastAPI/Jupyter). That pattern can deadlock if the
+    async upload waits on the same loop — prefer async instrumentation paths
+    where possible.
+    """
     if not Config.upload_base64_image:
         return None
 
@@ -388,6 +395,15 @@ def _collect_finish_reasons_from_response(response):
     return reasons
 
 
+def accumulate_stream_finish_reasons(ordered, seen, chunk):
+    """Merge finish reasons from a streaming chunk; preserves first-seen order (metadata, not gated by prompts)."""
+    for cand in getattr(chunk, "candidates", None) or []:
+        mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
+        if mapped is not None and mapped not in seen:
+            seen.add(mapped)
+            ordered.append(mapped)
+
+
 def _output_messages_from_generate_response(span, response):
     messages = []
     candidates = getattr(response, "candidates", None) or []
@@ -555,6 +571,45 @@ def set_model_request_attributes(span, kwargs, llm_model):
         except Exception:
             pass
 
+    if should_send_prompts():
+        si = _system_instruction_from_kwargs(kwargs)
+        if si is not None:
+            try:
+                parts = _system_instruction_to_parts(si, span)
+                if parts:
+                    _set_span_attribute(
+                        span,
+                        GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                        json.dumps(parts),
+                    )
+            except Exception:
+                pass
+
+
+def _system_instruction_from_kwargs(kwargs):
+    """Top-level kwarg or unified-client ``config.system_instruction``."""
+    si = kwargs.get("system_instruction")
+    if si is not None:
+        return si
+    config = kwargs.get("config")
+    if config is not None:
+        si = getattr(config, "system_instruction", None)
+        if si is not None:
+            return si
+    return None
+
+
+def _system_instruction_to_parts(si, span):
+    """OTel: flat array of parts for gen_ai.system_instructions."""
+    if isinstance(si, str):
+        return [{"type": "text", "content": si}]
+    if hasattr(si, "parts") and si.parts:
+        out = []
+        for idx, p in enumerate(si.parts):
+            out.extend(_parts_from_genai_part_sync(p, span, idx))
+        return out
+    return [{"type": "text", "content": str(si)}]
+
 
 @dont_throw
 def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
@@ -604,7 +659,9 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
         )
 
 
-def set_model_response_attributes(span, response, llm_model, token_histogram):
+def set_model_response_attributes(
+    span, response, llm_model, token_histogram, stream_finish_reasons=None
+):
     if not span.is_recording():
         return
 
@@ -614,7 +671,10 @@ def set_model_response_attributes(span, response, llm_model, token_histogram):
     if rid:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, rid)
 
-    reasons = _collect_finish_reasons_from_response(response)
+    if stream_finish_reasons is not None:
+        reasons = stream_finish_reasons
+    else:
+        reasons = _collect_finish_reasons_from_response(response)
     if reasons:
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons

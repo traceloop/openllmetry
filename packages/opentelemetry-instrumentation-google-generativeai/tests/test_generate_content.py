@@ -1,5 +1,6 @@
-
 import json
+from unittest.mock import MagicMock
+
 import pytest
 from opentelemetry.trace import StatusCode, SpanKind
 from opentelemetry.semconv_ai import (
@@ -157,3 +158,27 @@ def test_generate_metrics(metrics_test_context, genai_client, exporter):
         # Required semantic attributes
         assert GenAIAttributes.GEN_AI_PROVIDER_NAME in dp.attributes
         assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in dp.attributes
+
+
+def test_set_model_request_attributes_reads_system_instruction_from_config(monkeypatch):
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    class GenerateContentConfig:
+        system_instruction = "Reply in one sentence."
+
+    su.set_model_request_attributes(span, {"config": GenerateContentConfig()}, "gemini-pro")
+
+    sys_attr_calls = [
+        c[0]
+        for c in span.set_attribute.call_args_list
+        if c[0][0] == GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS
+    ]
+    assert len(sys_attr_calls) == 1
+    parts = json.loads(sys_attr_calls[0][1])
+    assert parts[0]["type"] == "text"
+    assert parts[0]["content"] == "Reply in one sentence."
