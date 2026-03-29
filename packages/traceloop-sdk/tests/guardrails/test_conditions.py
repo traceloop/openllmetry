@@ -7,6 +7,8 @@ Note: In the new design, conditions receive the extracted field value directly
 (not the full result object). The field extraction is done by the evaluator's
 as_guard method using the condition_field setting.
 """
+import warnings
+
 from traceloop.sdk.guardrail.condition import Condition
 
 
@@ -321,3 +323,56 @@ class TestConditionBetween:
         """Test between when value is None."""
         condition = Condition.between(50, 200)
         assert condition(None) is False
+
+
+class TestConditionDeprecation:
+    """Tests that all Condition methods emit DeprecationWarning."""
+
+    def _assert_deprecation(self, func, *args):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = func(*args)
+            assert len(w) == 1
+            assert issubclass(w[0].category, DeprecationWarning)
+            assert "deprecated" in str(w[0].message).lower()
+        return result
+
+    def test_is_true_deprecation(self):
+        condition = self._assert_deprecation(Condition.is_true)
+        assert condition(True) is True
+
+    def test_is_false_deprecation(self):
+        condition = self._assert_deprecation(Condition.is_false)
+        assert condition(False) is True
+
+    def test_is_truthy_deprecation(self):
+        condition = self._assert_deprecation(Condition.is_truthy)
+        assert condition(1) is True
+
+    def test_is_falsy_deprecation(self):
+        condition = self._assert_deprecation(Condition.is_falsy)
+        assert condition(0) is True
+
+    def test_between_deprecation(self):
+        condition = self._assert_deprecation(Condition.between, 0.3, 0.7)
+        assert condition(0.5) is True
+
+    def test_equals_deprecation(self):
+        condition = self._assert_deprecation(Condition.equals, "approved")
+        assert condition("approved") is True
+
+    def test_greater_than_deprecation(self):
+        condition = self._assert_deprecation(Condition.greater_than, 0.5)
+        assert condition(0.8) is True
+
+    def test_less_than_deprecation(self):
+        condition = self._assert_deprecation(Condition.less_than, 0.5)
+        assert condition(0.3) is True
+
+    def test_greater_than_or_equal_deprecation(self):
+        condition = self._assert_deprecation(Condition.greater_than_or_equal, 0.8)
+        assert condition(0.8) is True
+
+    def test_less_than_or_equal_deprecation(self):
+        condition = self._assert_deprecation(Condition.less_than_or_equal, 0.5)
+        assert condition(0.5) is True

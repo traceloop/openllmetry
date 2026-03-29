@@ -21,7 +21,7 @@ dependencies = [
   "opentelemetry-instrumentation-urllib3>=0.59b0",
   "opentelemetry-instrumentation-threading>=0.59b0",
   "opentelemetry-instrumentation-redis>=0.59b0",
-  "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
+  "opentelemetry-semantic-conventions-ai>=0.4.13,<=0.5.1",
   "opentelemetry-instrumentation-agno",
   "opentelemetry-instrumentation-mistralai",
   "opentelemetry-instrumentation-openai",

@@ -1,195 +1,129 @@
 """
-Built-in conditions for evaluating guard results.
+Deprecated: Use the module-level helpers in traceloop.sdk.guardrail.conditions instead.
 
-Conditions are functions that take an evaluator result value and return a boolean
-indicating whether the guard should pass (True) or fail (False).
-
-The condition_field is extracted by the guard function before passing to these
-conditions, so conditions receive the field value directly.
+This module is kept for backward compatibility. All methods emit DeprecationWarning
+and delegate to the new helpers.
 """
+
+import warnings
 from typing import Any, Callable
+
+from . import conditions
 
 
 class Condition:
-    """Built-in conditions for common evaluator result patterns."""
+    """
+    Deprecated: Use module-level helpers from traceloop.sdk.guardrail.conditions instead.
+
+    Example migration:
+        # Before
+        from traceloop.sdk.guardrail import Condition
+        condition = Condition.greater_than(0.8)
+
+        # After
+        from traceloop.sdk.guardrail.conditions import gt
+        condition = gt(0.8)
+
+        # Or use a plain lambda
+        condition = lambda v: v > 0.8
+    """
 
     @staticmethod
     def is_true() -> Callable[[Any], bool]:
-        """
-        Pass if value is exactly True (must be a bool).
-
-        Rejects non-boolean types like 1 or "yes".
-        For truthy checking, use is_truthy() instead.
-
-        Example:
-            toxicity_guard(condition=Condition.is_true())
-        """
-
-        def check(value: bool) -> bool:
-            return isinstance(value, bool) and value is True
-
-        return check
+        warnings.warn(
+            "Condition.is_true() is deprecated. Use is_true() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.is_true()
 
     @staticmethod
     def is_false() -> Callable[[Any], bool]:
-        """
-        Pass if value is exactly False (must be a bool).
-
-        Rejects non-boolean types like 0 or "".
-        For falsy checking, use is_falsy() instead.
-
-        Example:
-            pii_guard(condition=Condition.is_false())
-        """
-
-        def check(value: bool) -> bool:
-            return isinstance(value, bool) and value is False
-
-        return check
+        warnings.warn(
+            "Condition.is_false() is deprecated. Use is_false() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.is_false()
 
     @staticmethod
     def is_truthy() -> Callable[[Any], bool]:
-        """
-        Pass if value is truthy (bool(value) is True).
-
-        Unlike is_true(), this accepts truthy values like 1, "yes",
-        non-empty lists.
-
-        Example:
-            guard(condition=Condition.is_truthy())
-        """
-
-        def check(value: Any) -> bool:
-            return bool(value)
-
-        return check
+        warnings.warn(
+            "Condition.is_truthy() is deprecated. Use is_truthy() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.is_truthy()
 
     @staticmethod
     def is_falsy() -> Callable[[Any], bool]:
-        """
-        Pass if value is falsy (bool(value) is False).
-
-        Unlike is_false(), this accepts falsy values like 0, "",
-        empty lists.
-
-        Example:
-            guard(condition=Condition.is_falsy())
-        """
-
-        def check(value: Any) -> bool:
-            return not bool(value)
-
-        return check
+        warnings.warn(
+            "Condition.is_falsy() is deprecated. Use is_falsy() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.is_falsy()
 
     @staticmethod
     def between(min_val: float, max_val: float) -> Callable[[Any], bool]:
-        """
-        Pass if min_val <= value <= max_val.
-
-        Args:
-            min_val: Minimum acceptable value (inclusive)
-            max_val: Maximum acceptable value (inclusive)
-
-        Example:
-            condition=Condition.between(50, 200)
-        """
-
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(min_val <= value <= max_val)
-
-        return check
+        warnings.warn(
+            "Condition.between() is deprecated. Use between() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.between(min_val, max_val)
 
     @staticmethod
     def equals(expected: Any) -> Callable[[Any], bool]:
-        """
-        Pass if value == expected.
-
-        Args:
-            expected: The expected value
-
-        Example:
-            condition=Condition.equals("approved")
-        """
-
-        def check(value: Any) -> bool:
-            return bool(value == expected)
-
-        return check
+        warnings.warn(
+            "Condition.equals() is deprecated. Use eq() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.eq(expected)
 
     @staticmethod
     def greater_than(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value > threshold.
-
-        Args:
-            threshold: The threshold (exclusive)
-
-        Example:
-            condition=Condition.greater_than(0.8)
-        """
-
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value > threshold)
-
-        return check
+        warnings.warn(
+            "Condition.greater_than() is deprecated. Use gt() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.gt(threshold)
 
     @staticmethod
     def less_than(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value < threshold.
-
-        Args:
-            threshold: The threshold (exclusive)
-
-        Example:
-            condition=Condition.less_than(0.5)
-        """
-
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value < threshold)
-
-        return check
+        warnings.warn(
+            "Condition.less_than() is deprecated. Use lt() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.lt(threshold)
 
     @staticmethod
     def greater_than_or_equal(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value >= threshold.
-
-        Args:
-            threshold: The threshold (inclusive)
-
-        Example:
-            condition=Condition.greater_than_or_equal(0.8)
-        """
-
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value >= threshold)
-
-        return check
+        warnings.warn(
+            "Condition.greater_than_or_equal() is deprecated. Use gte() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.gte(threshold)
 
     @staticmethod
     def less_than_or_equal(threshold: float) -> Callable[[Any], bool]:
-        """
-        Pass if value <= threshold.
-
-        Args:
-            threshold: The threshold (inclusive)
-
-        Example:
-            condition=Condition.less_than_or_equal(0.5)
-        """
-
-        def check(value: Any) -> bool:
-            if value is None:
-                return False
-            return bool(value <= threshold)
-
-        return check
+        warnings.warn(
+            "Condition.less_than_or_equal() is deprecated. Use lte() from "
+            "traceloop.sdk.guardrail.conditions or pass a lambda instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return conditions.lte(threshold)

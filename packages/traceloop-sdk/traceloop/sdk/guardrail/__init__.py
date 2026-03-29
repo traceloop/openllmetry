@@ -44,6 +44,18 @@ from .model import (
     GuardedFunctionResult,
 )
 from .condition import Condition
+from .conditions import (
+    gt,
+    lt,
+    gte,
+    lte,
+    between,
+    eq,
+    is_true,
+    is_false,
+    is_truthy,
+    is_falsy,
+)
 from .on_failure import OnFailure, OnFailureInput, resolve_on_failure
 from .guards import (
     custom_evaluator_guard,
@@ -98,6 +110,17 @@ __all__ = [
     "GuardInput",
     "GuardedFunctionResult",
     "Condition",
+    # Condition helpers
+    "gt",
+    "lt",
+    "gte",
+    "lte",
+    "between",
+    "eq",
+    "is_true",
+    "is_false",
+    "is_truthy",
+    "is_falsy",
     "OnFailure",
     "OnFailureInput",
     "resolve_on_failure",

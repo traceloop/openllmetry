@@ -4104,7 +4104,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-weaviate", editable = "../opentelemetry-instrumentation-weaviate" },
     { name = "opentelemetry-instrumentation-writer", editable = "../opentelemetry-instrumentation-writer" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
-    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<0.5.0" },
+    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.4.13,<=0.5.1" },
     { name = "pandas", marker = "extra == 'datasets'" },
     { name = "pydantic", specifier = ">=1" },
     { name = "tenacity", specifier = ">=8.2.3,<10.0" },
