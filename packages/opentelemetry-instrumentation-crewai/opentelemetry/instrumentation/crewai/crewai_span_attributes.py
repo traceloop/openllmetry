@@ -42,6 +42,8 @@ class CrewAISpanAttributes:
     def _process_crew(self):
         self._populate_crew_attributes()
         for key, value in self.crew.items():
+            if isinstance(value, list):
+                value = json.dumps(value)
             self._set_attribute(f"crewai.crew.{key}", value)
 
     def _process_agent(self):
