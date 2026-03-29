@@ -1205,3 +1205,334 @@ def test_handle_completion_records_duration_exactly_once():
     # duration_histogram.record must be called exactly once
     assert duration_histogram.record.call_count == 1, \
         f"Expected 1 call to duration_histogram.record, got {duration_histogram.record.call_count}"
+
+
+# ---------------------------------------------------------------------------
+# P2 #2 — _content_to_parts must map thinking blocks to ReasoningPart
+# ---------------------------------------------------------------------------
+
+def test_input_thinking_block_mapped_to_reasoning_part():
+    """In multi-turn extended-thinking conversations, assistant messages can
+    contain type: 'thinking' blocks (echoed from previous turn).  These must
+    be mapped to {"type": "reasoning", "content": "..."} — NOT fall through
+    to the else clause that emits raw Anthropic dicts."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-7-sonnet-20250219",
+        "messages": [
+            {"role": "user", "content": "What is 2+2?"},
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "thinking", "thinking": "Let me calculate..."},
+                    {"type": "text", "text": "The answer is 4."},
+                ],
+            },
+            {"role": "user", "content": "And 3+3?"},
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assistant_msg = messages[1]
+    assert assistant_msg["role"] == "assistant"
+
+    parts = assistant_msg["parts"]
+    assert len(parts) == 2
+    assert parts[0] == {"type": "reasoning", "content": "Let me calculate..."}
+    assert parts[1] == {"type": "text", "content": "The answer is 4."}
+    # No raw "thinking" type should leak through
+    assert "thinking" not in [p["type"] for p in parts]
+
+
+# ---------------------------------------------------------------------------
+# P2 #3 — URL-referenced images must be handled in _content_to_parts
+#          and _dump_system_content
+# ---------------------------------------------------------------------------
+
+def test_url_image_in_input_produces_uri_part():
+    """Anthropic source.type == 'url' images must produce OTel UriPart,
+    NOT fall through to the raw else clause."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Describe this image"},
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "url",
+                            "url": "https://example.com/photo.jpg",
+                        },
+                    },
+                ],
+            }
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    image_part = messages[0]["parts"][1]
+    assert image_part == {
+        "type": "uri",
+        "modality": "image",
+        "uri": "https://example.com/photo.jpg",
+    }
+
+
+def test_url_image_in_system_produces_uri_part():
+    """URL images in system instructions must also produce OTel UriPart."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "system": [
+            {"type": "text", "text": "You are a helpful assistant."},
+            {
+                "type": "image",
+                "source": {
+                    "type": "url",
+                    "url": "https://example.com/logo.png",
+                },
+            },
+        ],
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    system_val = json.loads(span.attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert len(system_val) == 2
+    assert system_val[0] == {"type": "text", "content": "You are a helpful assistant."}
+    assert system_val[1] == {
+        "type": "uri",
+        "modality": "image",
+        "uri": "https://example.com/logo.png",
+    }
+
+
+def test_file_image_falls_through_gracefully():
+    """Unknown source types (e.g. file) should fall through to raw dict."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Describe this"},
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "file",
+                            "file_id": "file_abc123",
+                        },
+                    },
+                ],
+            }
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    image_part = messages[0]["parts"][1]
+    # Unknown source type falls through — raw dict preserved
+    assert image_part["type"] == "image"
+    assert image_part["source"]["type"] == "file"
+
+
+# ---------------------------------------------------------------------------
+# P2 #4 — Streaming metric choice_counter must use mapped finish_reason
+# ---------------------------------------------------------------------------
+
+def test_streaming_metric_choice_counter_uses_mapped_finish_reason():
+    """The choice_counter in _set_token_usage must apply _map_finish_reason
+    to the raw Anthropic stop_reason, not emit it verbatim."""
+    from opentelemetry.instrumentation.anthropic.streaming import _set_token_usage
+    from opentelemetry.semconv_ai import SpanAttributes as SA
+
+    span = make_span()
+    choice_counter = MagicMock()
+
+    complete_response = {
+        "model": "claude-3-opus-20240229",
+        "usage": {"input_tokens": 100, "output_tokens": 50},
+        "events": [
+            {"type": "text", "text": "Hello", "finish_reason": "end_turn"},
+        ],
+    }
+    _set_token_usage(span, complete_response, 100, 50, {}, None, choice_counter)
+
+    # choice_counter.add must have been called with mapped "stop", not raw "end_turn"
+    assert choice_counter.add.call_count == 1
+    call_attrs = choice_counter.add.call_args[1]["attributes"]
+    assert call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON] == "stop", \
+        f"Expected mapped 'stop', got '{call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON]}'"
+
+
+# ---------------------------------------------------------------------------
+# Finding 1 — Non-streaming _set_token_usage / _aset_token_usage in __init__
+#              must use GEN_AI_RESPONSE_FINISH_REASON (not STOP_REASON)
+#              and apply _map_finish_reason()
+# ---------------------------------------------------------------------------
+
+def test_nonstreaming_sync_choice_counter_uses_mapped_finish_reason():
+    """_set_token_usage in __init__.py must use GEN_AI_RESPONSE_FINISH_REASON
+    with a mapped OTel value, not GEN_AI_RESPONSE_STOP_REASON with raw Anthropic value."""
+    from opentelemetry.instrumentation.anthropic import _set_token_usage
+    from opentelemetry.semconv_ai import SpanAttributes as SA
+
+    span = make_span()
+    choice_counter = MagicMock()
+
+    # Mock Anthropic response object
+    usage = SimpleNamespace(input_tokens=100, output_tokens=50,
+                            cache_read_input_tokens=0, cache_creation_input_tokens=0)
+    response = SimpleNamespace(
+        usage=usage,
+        content=[SimpleNamespace(type="text", text="Hello")],
+        completion=None,
+        stop_reason="end_turn",
+        model="claude-3-opus-20240229",
+    )
+
+    # Mock anthropic client (no count_tokens needed since usage is present)
+    anthropic_client = MagicMock()
+
+    _set_token_usage(span, anthropic_client, {}, response, {}, None, choice_counter)
+
+    assert choice_counter.add.call_count == 1
+    call_attrs = choice_counter.add.call_args[1]["attributes"]
+
+    # Must use GEN_AI_RESPONSE_FINISH_REASON, NOT GEN_AI_RESPONSE_STOP_REASON
+    assert SA.GEN_AI_RESPONSE_FINISH_REASON in call_attrs, \
+        f"Expected GEN_AI_RESPONSE_FINISH_REASON in attrs, got keys: {list(call_attrs.keys())}"
+    assert SA.GEN_AI_RESPONSE_STOP_REASON not in call_attrs, \
+        "GEN_AI_RESPONSE_STOP_REASON should not be used — use GEN_AI_RESPONSE_FINISH_REASON"
+
+    # Must be mapped: end_turn → stop
+    assert call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON] == "stop", \
+        f"Expected mapped 'stop', got '{call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON]}'"
+
+
+def test_nonstreaming_async_choice_counter_uses_mapped_finish_reason():
+    """_aset_token_usage in __init__.py must use GEN_AI_RESPONSE_FINISH_REASON
+    with a mapped OTel value."""
+    from opentelemetry.instrumentation.anthropic import _aset_token_usage
+    from opentelemetry.semconv_ai import SpanAttributes as SA
+
+    span = make_span()
+    choice_counter = MagicMock()
+
+    usage = SimpleNamespace(input_tokens=100, output_tokens=50,
+                            cache_read_input_tokens=0, cache_creation_input_tokens=0)
+    response = SimpleNamespace(
+        usage=usage,
+        content=[SimpleNamespace(type="text", text="Hello")],
+        completion=None,
+        stop_reason="tool_use",
+        model="claude-3-opus-20240229",
+    )
+
+    anthropic_client = MagicMock()
+
+    asyncio.run(_aset_token_usage(span, anthropic_client, {}, response, {}, None, choice_counter))
+
+    assert choice_counter.add.call_count == 1
+    call_attrs = choice_counter.add.call_args[1]["attributes"]
+
+    assert SA.GEN_AI_RESPONSE_FINISH_REASON in call_attrs
+    assert SA.GEN_AI_RESPONSE_STOP_REASON not in call_attrs
+    # tool_use → tool_call
+    assert call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON] == "tool_call", \
+        f"Expected mapped 'tool_call', got '{call_attrs[SA.GEN_AI_RESPONSE_FINISH_REASON]}'"
+
+
+# ---------------------------------------------------------------------------
+# Finding 2 — redacted_thinking blocks in input must be skipped,
+#              not fall through to raw dict (checklist §1: no raw provider blocks)
+# ---------------------------------------------------------------------------
+
+def test_input_redacted_thinking_block_skipped():
+    """redacted_thinking blocks in input content should be skipped,
+    not emitted as raw Anthropic dicts."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-7-sonnet-20250219",
+        "messages": [
+            {"role": "user", "content": "What is 2+2?"},
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "thinking", "thinking": "Let me think..."},
+                    {"type": "redacted_thinking", "data": "ENCRYPTED_DATA"},
+                    {"type": "text", "text": "The answer is 4."},
+                ],
+            },
+            {"role": "user", "content": "Thanks!"},
+        ],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assistant_msg = messages[1]
+    parts = assistant_msg["parts"]
+
+    # Should have 2 parts: reasoning + text (redacted_thinking skipped)
+    assert len(parts) == 2, f"Expected 2 parts, got {len(parts)}: {parts}"
+    assert parts[0] == {"type": "reasoning", "content": "Let me think..."}
+    assert parts[1] == {"type": "text", "content": "The answer is 4."}
+    # No raw Anthropic types should leak through
+    part_types = [p["type"] for p in parts]
+    assert "redacted_thinking" not in part_types, \
+        "redacted_thinking must be skipped, not emitted as raw dict"
+
+
+# ---------------------------------------------------------------------------
+# §6 — Metric and event attributes must use GEN_AI_PROVIDER_NAME,
+#       not deprecated GEN_AI_SYSTEM
+# ---------------------------------------------------------------------------
+
+def test_shared_metrics_attributes_uses_provider_name_not_system():
+    """shared_metrics_attributes must use gen_ai.provider.name, not deprecated gen_ai.system."""
+    from opentelemetry.instrumentation.anthropic.utils import shared_metrics_attributes
+
+    response = SimpleNamespace(model="claude-3-opus-20240229")
+    attrs = shared_metrics_attributes(response)
+
+    assert GenAIAttributes.GEN_AI_PROVIDER_NAME in attrs, \
+        f"Expected GEN_AI_PROVIDER_NAME in metric attrs, got keys: {list(attrs.keys())}"
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
+    # Deprecated key must NOT be present
+    assert GenAIAttributes.GEN_AI_SYSTEM not in attrs, \
+        "Deprecated GEN_AI_SYSTEM should not be in metric attributes"
+
+
+def test_error_metrics_attributes_uses_provider_name_not_system():
+    """error_metrics_attributes must use gen_ai.provider.name, not deprecated gen_ai.system."""
+    from opentelemetry.instrumentation.anthropic.utils import error_metrics_attributes
+
+    attrs = error_metrics_attributes(ValueError("test"))
+
+    assert GenAIAttributes.GEN_AI_PROVIDER_NAME in attrs, \
+        f"Expected GEN_AI_PROVIDER_NAME in error metric attrs, got keys: {list(attrs.keys())}"
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
+    assert GenAIAttributes.GEN_AI_SYSTEM not in attrs, \
+        "Deprecated GEN_AI_SYSTEM should not be in error metric attributes"
+
+
+def test_event_attributes_uses_provider_name_not_system():
+    """EVENT_ATTRIBUTES in event_emitter must use gen_ai.provider.name."""
+    from opentelemetry.instrumentation.anthropic.event_emitter import EVENT_ATTRIBUTES
+
+    assert GenAIAttributes.GEN_AI_PROVIDER_NAME in EVENT_ATTRIBUTES, \
+        f"Expected GEN_AI_PROVIDER_NAME in EVENT_ATTRIBUTES, got keys: {list(EVENT_ATTRIBUTES.keys())}"
+    assert EVENT_ATTRIBUTES[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
+    assert GenAIAttributes.GEN_AI_SYSTEM not in EVENT_ATTRIBUTES, \
+        "Deprecated GEN_AI_SYSTEM should not be in EVENT_ATTRIBUTES"

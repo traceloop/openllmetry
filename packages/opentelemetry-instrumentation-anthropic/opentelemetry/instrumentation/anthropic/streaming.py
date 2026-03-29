@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_streaming_response_events,
 )
 from opentelemetry.instrumentation.anthropic.span_utils import (
+    _map_finish_reason,
     set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.anthropic.utils import (
@@ -129,8 +130,8 @@ def _set_token_usage(
                 1,
                 attributes={
                     **metric_attributes,
-                    SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: event.get(
-                        "finish_reason"
+                    SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: _map_finish_reason(
+                        event.get("finish_reason")
                     ),
                 },
             )

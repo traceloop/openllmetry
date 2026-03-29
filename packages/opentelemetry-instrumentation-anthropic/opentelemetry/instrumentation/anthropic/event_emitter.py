@@ -29,7 +29,7 @@ VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
 EVENT_ATTRIBUTES = {
-    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
 }
 """The attributes to be used for the event."""
 

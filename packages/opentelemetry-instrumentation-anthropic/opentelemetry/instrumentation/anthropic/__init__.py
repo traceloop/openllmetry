@@ -13,6 +13,7 @@ from opentelemetry.instrumentation.anthropic.event_emitter import (
     emit_response_events,
 )
 from opentelemetry.instrumentation.anthropic.span_utils import (
+    _map_finish_reason,
     aset_input_attributes,
     set_response_attributes,
 )
@@ -281,7 +282,9 @@ async def _aset_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: _map_finish_reason(
+                    getattr(response, "stop_reason", None)
+                ),
             },
         )
 
@@ -395,7 +398,9 @@ def _set_token_usage(
             choices,
             attributes={
                 **metric_attributes,
-                SpanAttributes.GEN_AI_RESPONSE_STOP_REASON: getattr(response, "stop_reason", None),
+                SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: _map_finish_reason(
+                    getattr(response, "stop_reason", None)
+                ),
             },
         )
 

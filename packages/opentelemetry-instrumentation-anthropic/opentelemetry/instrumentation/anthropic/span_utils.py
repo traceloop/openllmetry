@@ -33,19 +33,6 @@ def _map_finish_reason(anthropic_reason):
     return _FINISH_REASON_MAP.get(anthropic_reason, anthropic_reason)
 
 
-def _is_base64_image(item: Dict[str, Any]) -> bool:
-    if not isinstance(item, dict):
-        return False
-
-    if not isinstance(item.get("source"), dict):
-        return False
-
-    if item.get("type") != "image" or item["source"].get("type") != "base64":
-        return False
-
-    return True
-
-
 async def _process_image_item(item, trace_id, span_id, message_index, content_index):
     source = item.get("source", {})
     media_type = source.get("media_type", "image/unknown")
@@ -70,9 +57,10 @@ async def _content_to_parts(message_index, content, span):
     """Convert Anthropic message content into OTel spec parts array.
 
     Returns a list of parts following the gen-ai-input-messages.json schema:
-      - Text:     {"type": "text", "content": "..."}
-      - ToolCall: {"type": "tool_call", "id": "...", "name": "...", "arguments": {...}}
-      - Image:    passed through as-is (image_url format)
+      - Text:      {"type": "text", "content": "..."}
+      - Reasoning: {"type": "reasoning", "content": "..."}
+      - ToolCall:  {"type": "tool_call", "id": "...", "name": "...", "arguments": {...}}
+      - Image:     {"type": "blob", ...} or {"type": "uri", ...}
     """
     if isinstance(content, str):
         return [{"type": "text", "content": content}]
@@ -95,18 +83,32 @@ async def _content_to_parts(message_index, content, span):
                     "name": item_dict.get("name"),
                     "arguments": tool_input,
                 })
+            elif block_type == "thinking":
+                parts.append({
+                    "type": "reasoning",
+                    "content": item_dict.get("thinking", ""),
+                })
+            elif block_type == "redacted_thinking":
+                continue
             elif block_type == "text":
                 text_value = item_dict.get("text", "")
                 parts.append({"type": "text", "content": text_value})
-            elif _is_base64_image(item_dict):
-                processed = await _process_image_item(
-                    item_dict,
-                    span.context.trace_id,
-                    span.context.span_id,
-                    message_index,
-                    j,
-                )
-                parts.append(processed)
+            elif block_type == "image":
+                source = item_dict.get("source", {})
+                src_type = source.get("type")
+                if src_type == "base64":
+                    processed = await _process_image_item(
+                        item_dict,
+                        span.context.trace_id,
+                        span.context.span_id,
+                        message_index,
+                        j,
+                    )
+                    parts.append(processed)
+                elif src_type == "url":
+                    parts.append({"type": "uri", "modality": "image", "uri": source.get("url", "")})
+                else:
+                    parts.append(item_dict)
             elif block_type == "tool_result":
                 parts.append({
                     "type": "tool_call_response",
@@ -218,17 +220,25 @@ async def _dump_system_content(message_index, content, span):
         parts = []
         for j, item in enumerate(content):
             item_dict = model_as_dict(item) if not isinstance(item, dict) else dict(item)
-            if _is_base64_image(item_dict):
-                processed = await _process_image_item(
-                    item_dict,
-                    span.context.trace_id,
-                    span.context.span_id,
-                    message_index,
-                    j,
-                )
-                parts.append(processed)
-            elif item_dict.get("type") == "text":
+            block_type = item_dict.get("type")
+            if block_type == "text":
                 parts.append({"type": "text", "content": item_dict.get("text", "")})
+            elif block_type == "image":
+                source = item_dict.get("source", {})
+                src_type = source.get("type")
+                if src_type == "base64":
+                    processed = await _process_image_item(
+                        item_dict,
+                        span.context.trace_id,
+                        span.context.span_id,
+                        message_index,
+                        j,
+                    )
+                    parts.append(processed)
+                elif src_type == "url":
+                    parts.append({"type": "uri", "modality": "image", "uri": source.get("url", "")})
+                else:
+                    parts.append(item_dict)
             else:
                 parts.append(item_dict)
         return json.dumps(parts, cls=JSONEncoder)
