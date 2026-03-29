@@ -18,9 +18,13 @@ Example:
 
 from __future__ import annotations
 
+import json
 from typing import Any, Callable, Awaitable
 
+from opentelemetry import trace
+
 from .conditions import is_true, is_false, gte
+from .span_attributes import GEN_AI_GUARDRAIL_OUTPUT
 from ..generated.evaluators.definitions import EvaluatorMadeByTraceloop
 from ..evaluator.config import EvaluatorDetails
 
@@ -74,10 +78,20 @@ def _create_guard(
             timeout_in_sec=timeout_in_sec,
         )
 
+        evaluator_result = eval_response.result.evaluator_result
+
+        # Record the evaluator result on the current span
+        span = trace.get_current_span()
+        if span is not None:
+            try:
+                span.set_attribute(GEN_AI_GUARDRAIL_OUTPUT, json.dumps(evaluator_result))
+            except (TypeError, ValueError):
+                span.set_attribute(GEN_AI_GUARDRAIL_OUTPUT, str(evaluator_result))
+
         if condition_field:
-            result_to_validate = eval_response.result.evaluator_result[condition_field]
+            result_to_validate = evaluator_result[condition_field]
         else:
-            result_to_validate = eval_response.result.evaluator_result
+            result_to_validate = evaluator_result
 
         return condition(result_to_validate)
 
