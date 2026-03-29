@@ -230,12 +230,12 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-                usage_dict.get("completion_tokens"),
+                usage_dict.get("prompt_tokens"),
             )
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-                usage_dict.get("prompt_tokens"),
+                usage_dict.get("completion_tokens"),
             )
 
     span.end(run.get("end_time"))
