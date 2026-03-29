@@ -84,14 +84,15 @@ def exporter_with_custom_span_postprocess_callback(exporter):
     def span_postprocess_callback(span: ReadableSpan) -> None:
         prompt_pattern = re.compile(r"gen_ai\.prompt\.\d+\.content$")
         completion_pattern = re.compile(r"gen_ai\.completion\.\d+\.content$")
+        content_keys = {"gen_ai.input.messages", "gen_ai.output.messages"}
         if hasattr(span, "_attributes"):
             attributes = span._attributes if span._attributes else {}
-            # Find and encode all matching attributes
             for key, value in attributes.items():
                 if (
                     prompt_pattern.match(key) or completion_pattern.match(key)
+                    or key in content_keys
                 ) and isinstance(value, str):
-                    attributes[key] = "REDACTED"  # Modify the attributes directly
+                    attributes[key] = "REDACTED"
 
     Traceloop.init(
         exporter=exporter,

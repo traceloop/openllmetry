@@ -43,7 +43,8 @@ def test_structured_llm_model_attributes(instrument_with_content, span_exporter)
     llm_span = None
     for span in spans:
         if (
-            span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
+            span.attributes.get("gen_ai.operation.name") == "chat"
+            or span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
             == LLMRequestTypeValues.CHAT.value
         ):
             llm_span = span
@@ -89,7 +90,8 @@ async def test_structured_llm_achat_model_attributes(
     llm_span = None
     for span in spans:
         if (
-            span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
+            span.attributes.get("gen_ai.operation.name") == "chat"
+            or span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
             == LLMRequestTypeValues.CHAT.value
         ):
             llm_span = span

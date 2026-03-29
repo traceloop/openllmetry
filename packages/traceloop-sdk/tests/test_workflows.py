@@ -47,8 +47,8 @@ def test_simple_workflow(exporter, openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    assert "Tell me a joke about OpenTelemetry" in open_ai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"
@@ -93,8 +93,8 @@ async def test_simple_aworkflow(exporter, async_openai_client):
         "pirate_joke_generator.workflow",
     ]
     open_ai_span = next(span for span in spans if span.name == "openai.chat")
-    assert open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "Tell me a joke about OpenTelemetry"
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    assert "Tell me a joke about OpenTelemetry" in open_ai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     assert open_ai_span.attributes.get("traceloop.prompt.template") == "Tell me a {what} about {subject}"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.what") == "joke"
     assert open_ai_span.attributes.get("traceloop.prompt.template_variables.subject") == "OpenTelemetry"

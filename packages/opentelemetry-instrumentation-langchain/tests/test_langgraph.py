@@ -59,26 +59,21 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o"
 
     # The openai_span comes from the OpenAI instrumentation (direct SDK call),
-    # which still uses the old indexed attribute format
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-    ) == "You are a mathematician."
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "system"
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-    ) == user_request
-    assert (openai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"]) == "user"
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == response
-    )
-    assert (
-        openai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"]
-    ) == "assistant"
+    # which now uses the parts-based JSON message format
+    import json as _json
+    input_msgs = _json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    system_content = next(m for m in input_msgs if m["role"] == "system")["parts"][0]["content"]
+    assert system_content == "You are a mathematician."
+    user_content = next(m for m in input_msgs if m["role"] == "user")["parts"][0]["content"]
+    assert user_content == user_request
+
+    output_msgs = _json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_msgs[0]["role"] == "assistant"
+    assert output_msgs[0]["parts"][0]["content"] == response
 
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 24
     assert openai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 11
-    assert openai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 35
+    assert openai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 35
 
 
 @pytest.mark.vcr

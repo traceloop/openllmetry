@@ -114,8 +114,8 @@ def test_span_postprocess_callback(exporter_with_custom_span_postprocess_callbac
 
     spans = exporter_with_custom_span_postprocess_callback.get_finished_spans()
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["gen_ai.prompt.0.content"] == "REDACTED"
-    assert open_ai_span.attributes["gen_ai.completion.0.content"] == "REDACTED"
+    assert open_ai_span.attributes["gen_ai.input.messages"] == "REDACTED"
+    assert open_ai_span.attributes["gen_ai.output.messages"] == "REDACTED"
 
 
 def test_instruments(exporter_with_custom_instrumentations):
