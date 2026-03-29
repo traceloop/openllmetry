@@ -29,11 +29,17 @@ logger = logging.getLogger(__name__)
 
 
 _FINISH_REASON_MAP = {
+    # OpenAI / LangChain-native
     "stop": "stop",
     "length": "length",
     "tool_calls": "tool_call",
     "function_call": "tool_call",
     "content_filter": "content_filter",
+    # Anthropic (surfaced through langchain-anthropic)
+    "end_turn": "stop",
+    "stop_sequence": "stop",
+    "tool_use": "tool_call",
+    "max_tokens": "length",
 }
 
 
@@ -77,6 +83,43 @@ def _set_span_attribute(span: Span, key: str, value: Any) -> None:
             span.set_attribute(key, value)
         else:
             span.set_attribute(key, "")
+
+
+def _content_to_parts(content) -> list[dict]:
+    """Convert LangChain message content (str or list-of-blocks) into OTel parts."""
+    if isinstance(content, str):
+        return [{"type": "text", "content": content}] if content else []
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                if block:
+                    parts.append({"type": "text", "content": block})
+            elif isinstance(block, dict):
+                block_type = block.get("type", "")
+                if block_type == "text":
+                    text = block.get("text", "")
+                    if text:
+                        parts.append({"type": "text", "content": text})
+                elif block_type == "image_url":
+                    url = (block.get("image_url") or {}).get("url", "")
+                    parts.append({"type": "uri", "modality": "image", "uri": url})
+                elif block_type == "image":
+                    # base64 image block
+                    parts.append({
+                        "type": "blob",
+                        "modality": "image",
+                        "mime_type": block.get("media_type", block.get("mime_type", "")),
+                        "content": block.get("data", ""),
+                    })
+                else:
+                    # Unknown block type — preserve as text with JSON
+                    parts.append({"type": "text", "content": json.dumps(block, cls=CallbackFilteredJSONEncoder)})
+            else:
+                parts.append({"type": "text", "content": str(block)})
+        return parts
+    # Fallback: single non-string value
+    return [{"type": "text", "content": str(content)}] if content else []
 
 
 def _tool_calls_to_parts(tool_calls) -> list[dict]:
@@ -221,38 +264,34 @@ def set_chat_request(
         for message in messages:
             for msg in message:
                 role = _message_type_to_role(msg.type)
-                content = (
-                    msg.content
-                    if isinstance(msg.content, str)
-                    else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
-                )
 
                 if role == "system":
-                    system_instructions.append({"type": "text", "content": content})
+                    system_instructions.extend(_content_to_parts(msg.content))
                     continue
-
-                parts = []
-
-                # Text content
-                if content:
-                    parts.append({"type": "text", "content": content})
-
-                # Tool calls (for assistant messages)
-                tool_calls = (
-                    msg.tool_calls
-                    if hasattr(msg, "tool_calls")
-                    else msg.additional_kwargs.get("tool_calls")
-                )
-                if tool_calls:
-                    parts.extend(_tool_calls_to_parts(tool_calls))
 
                 # Tool response (for tool messages)
                 if role == "tool" and hasattr(msg, "tool_call_id"):
+                    content_str = (
+                        msg.content
+                        if isinstance(msg.content, str)
+                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                    )
                     parts = [{
                         "type": "tool_call_response",
                         "id": msg.tool_call_id,
-                        "response": content,
+                        "response": content_str,
                     }]
+                else:
+                    parts = _content_to_parts(msg.content)
+
+                    # Tool calls (for assistant messages)
+                    tool_calls = (
+                        msg.tool_calls
+                        if hasattr(msg, "tool_calls")
+                        else msg.additional_kwargs.get("tool_calls")
+                    )
+                    if tool_calls:
+                        parts.extend(_tool_calls_to_parts(tool_calls))
 
                 msg_obj = {"role": role, "parts": parts}
                 input_messages.append(msg_obj)
@@ -297,17 +336,10 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
             parts = []
 
             # Try to get content from various sources
-            content = None
             if hasattr(generation, "text") and generation.text:
-                content = generation.text
+                parts.append({"type": "text", "content": generation.text})
             elif hasattr(generation, "message") and generation.message and generation.message.content:
-                if isinstance(generation.message.content, str):
-                    content = generation.message.content
-                else:
-                    content = json.dumps(generation.message.content, cls=CallbackFilteredJSONEncoder)
-
-            if content:
-                parts.append({"type": "text", "content": content})
+                parts.extend(_content_to_parts(generation.message.content))
 
             # Handle tool calls and function calls
             if hasattr(generation, "message") and generation.message:

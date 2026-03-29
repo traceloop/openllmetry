@@ -193,7 +193,7 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
 
     tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "get_weather"
-    assert tool_defs[0]["input_schema"] == {
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -449,7 +449,7 @@ def test_tool_calls_anthropic_text_block(
 
     tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "get_weather"
-    assert tool_defs[0]["input_schema"] == {
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -458,7 +458,7 @@ def test_tool_calls_anthropic_text_block(
     }
 
     assert tool_defs[1]["name"] == "get_news"
-    assert tool_defs[1]["input_schema"] == {
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -653,7 +653,7 @@ def test_tool_calls_anthropic_text_block_and_history(
 
     tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "get_weather"
-    assert tool_defs[0]["input_schema"] == {
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -662,7 +662,7 @@ def test_tool_calls_anthropic_text_block_and_history(
     }
 
     assert tool_defs[1]["name"] == "get_news"
-    assert tool_defs[1]["input_schema"] == {
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -976,7 +976,7 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
 
     tool_defs = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     assert tool_defs[0]["name"] == "get_weather"
-    assert tool_defs[0]["input_schema"] == {
+    assert tool_defs[0]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
@@ -985,7 +985,7 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     }
 
     assert tool_defs[1]["name"] == "get_news"
-    assert tool_defs[1]["input_schema"] == {
+    assert tool_defs[1]["parameters"] == {
         "properties": {
             "location": {"type": "string"},
         },
