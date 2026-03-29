@@ -43,7 +43,7 @@ class CrewAISpanAttributes:
         self._populate_crew_attributes()
         for key, value in self.crew.items():
             if isinstance(value, list):
-                value = json.dumps(value)
+                value = json.dumps(value, default=str)
             self._set_attribute(f"crewai.crew.{key}", value)
 
     def _process_agent(self):
