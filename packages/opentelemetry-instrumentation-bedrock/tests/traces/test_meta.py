@@ -633,7 +633,7 @@ def test_meta_converse_stream_with_events_with_content(
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
     assert meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
-        "end_turn",
+        "stop",
     )
 
     logs = log_exporter.get_finished_logs()
@@ -716,7 +716,7 @@ def test_meta_converse_stream_with_events_with_no_content(
     )
     assert meta_span.attributes.get("gen_ai.response.id") is None
     assert meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
-        "end_turn",
+        "stop",
     )
 
     logs = log_exporter.get_finished_logs()

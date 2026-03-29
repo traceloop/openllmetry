@@ -89,6 +89,7 @@ class CrewAISpanAttributes:
             elif field == "stop":
                 self._set_attribute(GEN_AI_REQUEST_STOP_SEQUENCES, value)
             elif field == "n":
+                # Still on semconv-ai; upstream incubating has no GEN_AI_REQUEST_N yet (verify on semconv bumps).
                 self._set_attribute(SpanAttributes.GEN_AI_REQUEST_N, value)
             elif field == "max_completion_tokens":
                 self._set_attribute(SpanAttributes.GEN_AI_REQUEST_MAX_COMPLETION_TOKENS, value)
@@ -176,4 +177,6 @@ class CrewAISpanAttributes:
 
     def _set_attribute(self, key, value):
         if value is not None:
-            set_span_attribute(self.span, key, str(value) if isinstance(value, list) else value)
+            if isinstance(value, list):
+                value = tuple(value)
+            set_span_attribute(self.span, key, value)

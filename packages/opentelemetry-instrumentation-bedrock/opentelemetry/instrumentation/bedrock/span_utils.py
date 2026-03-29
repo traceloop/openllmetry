@@ -723,10 +723,22 @@ def set_converse_response_span_attributes(response, span):
             )
 
 
+def map_bedrock_converse_stream_stop_reason(stop_reason: str) -> str:
+    """Map Bedrock Converse messageStop.stopReason to OTel gen_ai.response.finish_reasons values."""
+    return {
+        "end_turn": "stop",
+        "tool_use": "tool_call",
+        "max_tokens": "length",
+        "guardrail_intervened": "content_filter",
+    }.get(stop_reason, stop_reason)
+
+
 def set_converse_streaming_response_span_attributes(response, role, span, finish_reason=None):
     if finish_reason is not None:
         _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, [finish_reason]
+            span,
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+            [map_bedrock_converse_stream_stop_reason(finish_reason)],
         )
     if not should_send_prompts():
         return

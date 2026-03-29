@@ -898,7 +898,7 @@ def test_titan_converse_stream_with_events_with_content(
         == inputTokens + outputTokens
     )
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
-        "guardrail_intervened",
+        "content_filter",
     )
 
     logs = log_exporter.get_finished_logs()
@@ -1009,7 +1009,7 @@ def test_titan_converse_stream_with_events_with_no_content(
         == inputTokens + outputTokens
     )
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == (
-        "guardrail_intervened",
+        "content_filter",
     )
 
     logs = log_exporter.get_finished_logs()

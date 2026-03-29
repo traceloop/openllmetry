@@ -174,6 +174,7 @@ class TestProcessLlmFallbackFields:
             CrewAISpanAttributes(span=span, instance=make_llm_instance(stop=["END", "STOP"]))
         attrs = span_attrs(exporter)
         assert "gen_ai.request.stop_sequences" in attrs
+        assert attrs["gen_ai.request.stop_sequences"] == ("END", "STOP")
         assert "llm.stop" not in attrs
 
     def test_n_attribute_name(self, tracer, exporter):
@@ -369,7 +370,7 @@ class TestWrapTaskExecute:
 
 
 # ---------------------------------------------------------------------------
-# wrap_llm_call — gen_ai.provider.name on span
+# wrap_llm_call — inferred gen_ai.provider.name for underlying LLM (not "crewai")
 # ---------------------------------------------------------------------------
 
 
@@ -388,9 +389,17 @@ class TestWrapLlmCall:
         self._run(tracer)
         assert GenAIAttributes.GEN_AI_SYSTEM not in span_attrs(exporter)
 
-    def test_gen_ai_provider_name_is_crewai(self, tracer, exporter):
-        self._run(tracer)
-        assert span_attrs(exporter).get("gen_ai.provider.name") == "crewai"
+    def test_gen_ai_provider_name_inferred_openai_for_gpt(self, tracer, exporter):
+        self._run(tracer, model="gpt-4")
+        assert span_attrs(exporter).get("gen_ai.provider.name") == "openai"
+
+    def test_gen_ai_provider_name_inferred_anthropic_for_claude(self, tracer, exporter):
+        self._run(tracer, model="claude-3-5-sonnet")
+        assert span_attrs(exporter).get("gen_ai.provider.name") == "anthropic"
+
+    def test_gen_ai_provider_name_omitted_when_unknown_model(self, tracer, exporter):
+        self._run(tracer, model="custom-local-model")
+        assert "gen_ai.provider.name" not in span_attrs(exporter)
 
     def test_gen_ai_operation_name_is_chat(self, tracer, exporter):
         self._run(tracer)

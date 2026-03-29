@@ -21,6 +21,46 @@ from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 _instruments = ("crewai >= 1.0.0",)
 
 
+def _infer_llm_provider_from_model(model: object | None) -> str | None:
+    """Best-effort gen_ai.provider.name for the underlying LLM (chat span), not CrewAI itself."""
+    if model is None:
+        return None
+    s = str(model).strip()
+    if not s:
+        return None
+    lower = s.lower()
+    if "/" in lower:
+        vendor, _ = lower.split("/", 1)
+        vendor_aliases = {
+            "openai": "openai",
+            "anthropic": "anthropic",
+            "azure": "azure.ai.openai",
+            "google": "gcp.gen_ai",
+            "gemini": "gcp.gen_ai",
+            "vertex_ai": "gcp.vertex_ai",
+            "bedrock": "aws.bedrock",
+            "groq": "groq",
+            "mistral": "mistral_ai",
+            "cohere": "cohere",
+            "ollama": "ollama",
+        }
+        if vendor in vendor_aliases:
+            return vendor_aliases[vendor]
+    if (
+        lower.startswith("gpt-")
+        or "gpt-3" in lower
+        or "gpt-4" in lower
+        or lower.startswith("o1")
+        or lower.startswith("o3")
+    ):
+        return "openai"
+    if "claude" in lower:
+        return "anthropic"
+    if "gemini" in lower:
+        return "gcp.gen_ai"
+    return None
+
+
 class CrewAIInstrumentor(BaseInstrumentor):
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -161,28 +201,33 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
 @with_tracer_wrapper
 def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
     llm = instance.model if hasattr(instance, "model") else "llm"
+    chat_provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
+    span_attrs = {
+        GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+    }
+    if chat_provider is not None:
+        span_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = chat_provider
+
     with tracer.start_as_current_span(
         f"{llm}.llm",
         kind=SpanKind.CLIENT,
-        attributes={
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
-        }
+        attributes=span_attrs,
     ) as span:
         start_time = time.time()
         try:
             CrewAISpanAttributes(span=span, instance=instance)
             result = wrapped(*args, **kwargs)
+            # Known gap: CrewAI LLM.call returns plain text; stop/finish reason is not exposed for mapping to
+            # gen_ai.response.finish_reasons without reaching into provider-specific internals.
 
             if duration_histogram:
                 duration = time.time() - start_time
-                duration_histogram.record(
-                    duration,
-                    attributes={
-                        GenAIAttributes.GEN_AI_PROVIDER_NAME: "crewai",
-                        GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model),
-                    },
-                )
+                metric_attrs = {
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: str(instance.model),
+                }
+                if chat_provider is not None:
+                    metric_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = chat_provider
+                duration_histogram.record(duration, attributes=metric_attrs)
 
             span.set_status(Status(StatusCode.OK))
             return result
