@@ -11,6 +11,7 @@ Coverage:
   - Absence of every legacy llm.* attribute name
 """
 
+import json
 import pytest
 from unittest.mock import MagicMock, patch
 from opentelemetry.sdk.trace import TracerProvider
@@ -334,6 +335,17 @@ class TestWrapAgentExecuteTask:
         self._run(tracer, role="Analyst")
         assert exporter.get_finished_spans()[0].name == "Analyst.agent"
 
+    def test_gen_ai_agent_name_set(self, tracer, exporter):
+        self._run(tracer, role="Analyst")
+        assert span_attrs(exporter).get("gen_ai.agent.name") == "Analyst"
+
+    def test_gen_ai_agent_id_set(self, tracer, exporter):
+        instance = make_agent_instance(role="Writer")
+        instance.id = "agent-uuid-123"
+        mock_wrapped = MagicMock(return_value="done")
+        wrap_agent_execute_task(tracer, None, None)(mock_wrapped, instance, [], {})
+        assert span_attrs(exporter).get("gen_ai.agent.id") == "agent-uuid-123"
+
     def test_error_sets_error_status(self, tracer, exporter):
         from opentelemetry.trace import StatusCode
         instance = make_agent_instance()
@@ -412,6 +424,11 @@ class TestWrapLlmCall:
         self._run(tracer, model="claude-3-5")
         assert exporter.get_finished_spans()[0].name == "claude-3-5.llm"
 
+    def test_gen_ai_request_model_set_at_creation(self, tracer, exporter):
+        """gen_ai.request.model must be in span-creation attributes for sampling."""
+        self._run(tracer, model="gpt-4o")
+        assert span_attrs(exporter).get("gen_ai.request.model") == "gpt-4o"
+
     def test_error_sets_error_status(self, tracer, exporter):
         from opentelemetry.trace import StatusCode
         instance = make_llm_instance(model="gpt-4")
@@ -419,3 +436,53 @@ class TestWrapLlmCall:
         with pytest.raises(ConnectionError):
             wrap_llm_call(tracer, None, None)(mock_wrapped, instance, [], {})
         assert exporter.get_finished_spans()[0].status.status_code == StatusCode.ERROR
+
+
+# ---------------------------------------------------------------------------
+# _messages_to_otel_input — tool call and tool result mapping
+# ---------------------------------------------------------------------------
+
+
+class TestMessagesToOtelInput:
+    def test_tool_calls_in_assistant_message(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "assistant", "content": None, "tool_calls": [
+            {"id": "call_1", "function": {"name": "search", "arguments": '{"q": "weather"}'}}
+        ]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        assert len(result) == 1
+        assert result[0]["role"] == "assistant"
+        parts = result[0]["parts"]
+        assert len(parts) == 1
+        assert parts[0]["type"] == "tool_call"
+        assert parts[0]["id"] == "call_1"
+        assert parts[0]["name"] == "search"
+        assert parts[0]["arguments"] == {"q": "weather"}
+
+    def test_tool_result_message(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "tool", "tool_call_id": "call_1", "content": "72F sunny"}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        assert len(result) == 1
+        assert result[0]["role"] == "tool"
+        parts = result[0]["parts"]
+        assert parts[0]["type"] == "tool_call_response"
+        assert parts[0]["id"] == "call_1"
+        assert parts[0]["response"] == "72F sunny"
+
+    def test_text_message_unchanged(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "user", "content": "hello"}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        assert result[0]["parts"] == [{"type": "text", "content": "hello"}]
+
+    def test_assistant_with_content_and_tool_calls(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        msgs = [{"role": "assistant", "content": "Let me search", "tool_calls": [
+            {"id": "call_2", "function": {"name": "lookup", "arguments": "{}"}}
+        ]}]
+        result = json.loads(_messages_to_otel_input(msgs))
+        parts = result[0]["parts"]
+        assert len(parts) == 2
+        assert parts[0] == {"type": "text", "content": "Let me search"}
+        assert parts[1]["type"] == "tool_call"

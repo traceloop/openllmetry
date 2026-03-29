@@ -152,6 +152,10 @@ def wrap_agent_execute_task(tracer, duration_histogram, token_histogram, wrapped
     ) as span:
         try:
             CrewAISpanAttributes(span=span, instance=instance)
+            if hasattr(instance, "role") and instance.role:
+                set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_NAME, instance.role)
+            if hasattr(instance, "id"):
+                set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_ID, str(instance.id))
             result = wrapped(*args, **kwargs)
             if token_histogram:
                 token_histogram.record(
@@ -216,6 +220,7 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
     chat_provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
     span_attrs = {
         GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: str(llm),
     }
     if chat_provider is not None:
         span_attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] = chat_provider

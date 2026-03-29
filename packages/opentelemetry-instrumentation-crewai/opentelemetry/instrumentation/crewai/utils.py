@@ -24,29 +24,50 @@ def _messages_to_otel_input(messages) -> str | None:
     for msg in messages:
         role = msg.get("role", "user")
         content = msg.get("content")
-        if content is None:
-            continue
-        # content can be a string or a list of content blocks (multimodal)
-        if isinstance(content, str):
-            parts = [{"type": "text", "content": content}]
-        elif isinstance(content, list):
-            parts = []
-            for block in content:
-                if isinstance(block, dict):
-                    btype = block.get("type", "")
-                    if btype == "text":
-                        parts.append({"type": "text", "content": block.get("text", "")})
-                    elif btype == "image_url":
-                        url = (block.get("image_url") or {}).get("url", "")
-                        parts.append({"type": "uri", "modality": "image", "uri": url})
-                    else:
-                        # Unknown block type — wrap as generic part rather than leaking raw provider format
-                        parts.append({"type": block.get("type", "unknown"),
-                                      **{k: v for k, v in block.items() if k != "type"}})
-        else:
-            parts = [{"type": "text", "content": str(content)}]
+        parts = []
 
-        result.append({"role": role, "parts": parts})
+        # Tool result messages (role: "tool") → tool_call_response part
+        if role == "tool":
+            tool_call_id = msg.get("tool_call_id", "")
+            response_text = str(content) if content is not None else ""
+            parts.append({"type": "tool_call_response", "id": tool_call_id, "response": response_text})
+            result.append({"role": role, "parts": parts})
+            continue
+
+        # Build content parts from the content field
+        if content is not None:
+            if isinstance(content, str):
+                parts = [{"type": "text", "content": content}]
+            elif isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict):
+                        btype = block.get("type", "")
+                        if btype == "text":
+                            parts.append({"type": "text", "content": block.get("text", "")})
+                        elif btype == "image_url":
+                            url = (block.get("image_url") or {}).get("url", "")
+                            parts.append({"type": "uri", "modality": "image", "uri": url})
+                        else:
+                            parts.append({"type": block.get("type", "unknown"),
+                                          **{k: v for k, v in block.items() if k != "type"}})
+            else:
+                parts = [{"type": "text", "content": str(content)}]
+
+        # Assistant tool_calls → tool_call parts
+        tool_calls = msg.get("tool_calls")
+        if tool_calls and isinstance(tool_calls, list):
+            for tc in tool_calls:
+                fn = tc.get("function") or {}
+                raw_args = fn.get("arguments", "{}")
+                try:
+                    args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+                except (json.JSONDecodeError, TypeError):
+                    args = raw_args
+                parts.append({"type": "tool_call", "id": tc.get("id", ""),
+                              "name": fn.get("name", ""), "arguments": args})
+
+        if parts:
+            result.append({"role": role, "parts": parts})
 
     return json.dumps(result) if result else None
 
