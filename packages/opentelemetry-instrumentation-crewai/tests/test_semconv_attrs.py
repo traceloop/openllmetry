@@ -470,6 +470,17 @@ class TestMessagesToOtelInput:
         assert parts[0]["id"] == "call_1"
         assert parts[0]["response"] == "72F sunny"
 
+    def test_plain_string_wrapped_as_user_message(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        result = json.loads(_messages_to_otel_input("What is 2+2?"))
+        assert len(result) == 1
+        assert result[0]["role"] == "user"
+        assert result[0]["parts"] == [{"type": "text", "content": "What is 2+2?"}]
+
+    def test_none_returns_none(self):
+        from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
+        assert _messages_to_otel_input(None) is None
+
     def test_text_message_unchanged(self):
         from opentelemetry.instrumentation.crewai.utils import _messages_to_otel_input
         msgs = [{"role": "user", "content": "hello"}]

@@ -2,7 +2,7 @@ import json
 
 
 def _messages_to_otel_input(messages) -> str | None:
-    """Convert CrewAI input messages (str or list[dict]) to OTel gen_ai.input.messages JSON."""
+    """Convert CrewAI input messages to OTel gen_ai.input.messages JSON."""
     if messages is None:
         return None
     if isinstance(messages, str):
@@ -10,61 +10,78 @@ def _messages_to_otel_input(messages) -> str | None:
     if not isinstance(messages, list):
         return None
 
-    result = []
-    for msg in messages:
-        role = msg.get("role", "user")
-        content = msg.get("content")
-        parts = []
-
-        # Tool result messages (role: "tool") → tool_call_response part
-        if role == "tool":
-            tool_call_id = msg.get("tool_call_id", "")
-            response_text = str(content) if content is not None else ""
-            parts.append({"type": "tool_call_response", "id": tool_call_id, "response": response_text})
-            result.append({"role": role, "parts": parts})
-            continue
-
-        # Build content parts from the content field
-        if content is not None:
-            if isinstance(content, str):
-                parts = [{"type": "text", "content": content}]
-            elif isinstance(content, list):
-                for block in content:
-                    if isinstance(block, dict):
-                        btype = block.get("type", "")
-                        if btype == "text":
-                            parts.append({"type": "text", "content": block.get("text", "")})
-                        elif btype == "image_url":
-                            url = (block.get("image_url") or {}).get("url", "")
-                            parts.append({"type": "uri", "modality": "image", "uri": url})
-                        else:
-                            # Unknown block — emit narrow GenericPart with only type + stringified content
-                            generic = {"type": block.get("type", "unknown")}
-                            if "text" in block:
-                                generic["content"] = str(block["text"])
-                            elif "content" in block:
-                                generic["content"] = str(block["content"])
-                            parts.append(generic)
-            else:
-                parts = [{"type": "text", "content": str(content)}]
-
-        # Assistant tool_calls → tool_call parts
-        tool_calls = msg.get("tool_calls")
-        if tool_calls and isinstance(tool_calls, list):
-            for tc in tool_calls:
-                fn = tc.get("function") or {}
-                raw_args = fn.get("arguments", "{}")
-                try:
-                    args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
-                except (json.JSONDecodeError, TypeError):
-                    args = raw_args
-                parts.append({"type": "tool_call", "id": tc.get("id", ""),
-                              "name": fn.get("name", ""), "arguments": args})
-
-        if parts:
-            result.append({"role": role, "parts": parts})
-
+    result = [_convert_message(msg) for msg in messages]
+    result = [m for m in result if m is not None]
     return json.dumps(result) if result else None
+
+
+def _convert_message(msg) -> dict | None:
+    role = msg.get("role", "user")
+
+    if role == "tool":
+        return _convert_tool_result(msg)
+
+    parts = _extract_content_parts(msg.get("content"))
+    parts += _extract_tool_call_parts(msg.get("tool_calls"))
+
+    return {"role": role, "parts": parts} if parts else None
+
+
+def _convert_tool_result(msg) -> dict:
+    content = msg.get("content")
+    return {
+        "role": "tool",
+        "parts": [{
+            "type": "tool_call_response",
+            "id": msg.get("tool_call_id", ""),
+            "response": str(content) if content is not None else "",
+        }],
+    }
+
+
+def _extract_content_parts(content) -> list:
+    if content is None:
+        return []
+    if isinstance(content, str):
+        return [{"type": "text", "content": content}]
+    if isinstance(content, list):
+        return [_convert_content_block(b) for b in content if isinstance(b, dict)]
+    return [{"type": "text", "content": str(content)}]
+
+
+def _convert_content_block(block) -> dict:
+    btype = block.get("type", "")
+
+    if btype == "text":
+        return {"type": "text", "content": block.get("text", "")}
+
+    if btype == "image_url":
+        url = (block.get("image_url") or {}).get("url", "")
+        return {"type": "uri", "modality": "image", "uri": url}
+
+    # Unknown block — narrow GenericPart, don't leak raw provider fields
+    generic = {"type": block.get("type", "unknown")}
+    if "text" in block:
+        generic["content"] = str(block["text"])
+    elif "content" in block:
+        generic["content"] = str(block["content"])
+    return generic
+
+
+def _extract_tool_call_parts(tool_calls) -> list:
+    if not tool_calls or not isinstance(tool_calls, list):
+        return []
+    return [_convert_tool_call(tc) for tc in tool_calls]
+
+
+def _convert_tool_call(tc) -> dict:
+    fn = tc.get("function") or {}
+    raw_args = fn.get("arguments", "{}")
+    try:
+        args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+    except (json.JSONDecodeError, TypeError):
+        args = raw_args
+    return {"type": "tool_call", "id": tc.get("id", ""), "name": fn.get("name", ""), "arguments": args}
 
 
 def _response_to_otel_output(response) -> str | None:
@@ -74,9 +91,7 @@ def _response_to_otel_output(response) -> str | None:
     text = str(response)
     if not text:
         return None
-    return json.dumps([
-        {
-            "role": "assistant",
-            "parts": [{"type": "text", "content": text}],
-        }
-    ])
+    return json.dumps([{
+        "role": "assistant",
+        "parts": [{"type": "text", "content": text}],
+    }])
