@@ -207,11 +207,14 @@ def _set_output_messages(span, choices):
 
     messages = []
     for choice in choices:
-        messages.append({
+        entry = {
             "role": "assistant",
             "parts": [{"content": choice.get("text"), "type": "text"}],
-            "finish_reason": _map_finish_reason(choice.get("finish_reason")),
-        })
+        }
+        fr = _map_finish_reason(choice.get("finish_reason"))
+        if fr is not None:
+            entry["finish_reason"] = fr
+        messages.append(entry)
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,

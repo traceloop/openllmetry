@@ -22,6 +22,7 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _build_tool_def_dict,
     _extract_model_name_from_provider_format,
+    _parse_arguments,
     _set_request_attributes,
     _set_span_attribute,
     _set_tool_definitions_json,
@@ -286,8 +287,16 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                             item_type = item.get("type", "")
                             if item_type in ("text", "input_text", "output_text"):
                                 parts.append({"type": "text", "content": item.get("text", "")})
+                            elif item_type in ("image", "input_image", "output_image"):
+                                if item.get("image_url"):
+                                    parts.append({"type": "uri", "modality": "image", "uri": item.get("image_url")})
+                                elif item.get("file_id"):
+                                    parts.append({"type": "file", "modality": "image", "file_id": item.get("file_id")})
+                            elif item_type in ("file", "input_file", "output_file"):
+                                parts.append({"type": "file", "file_id": item.get("file_id"), "filename": item.get("filename")})
                             else:
-                                parts.append(item)
+                                # GenericPart for unrecognized types — preserve type, wrap content
+                                parts.append({"type": item_type or "unknown", "content": item})
                         else:
                             parts.append({"type": "text", "content": str(item)})
                 input_messages.append({
@@ -301,7 +310,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                         "type": "tool_call",
                         "name": block_dict.get("name"),
                         "id": block_dict.get("id") or block_dict.get("call_id"),
-                        "arguments": block_dict.get("arguments", ""),
+                        "arguments": _parse_arguments(block_dict.get("arguments")),
                     }],
                 })
             elif block_type == "function_call_output":
@@ -330,7 +339,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     "type": "tool_call",
                     "name": block_dict.get("name"),
                     "id": block_dict.get("id"),
-                    "arguments": block_dict.get("arguments", ""),
+                    "arguments": _parse_arguments(block_dict.get("arguments")),
                 })
             elif block_type == "reasoning":
                 summary = block_dict.get("summary")
@@ -340,9 +349,12 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
+            has_tool_call = any(p.get("type") == "tool_call" for p in parts)
+            finish_reason = "tool_call" if has_tool_call else "stop"
             output_messages.append({
                 "role": "assistant",
                 "parts": parts,
+                "finish_reason": finish_reason,
             })
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
@@ -367,9 +379,8 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     if usage := traced_response.usage:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
         _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
-        _set_span_attribute(
-            span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens
-        )
+        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens)
+
         if usage.input_tokens_details:
             _set_span_attribute(
                 span,
@@ -382,18 +393,12 @@ def set_data_attributes(traced_response: TracedData, span: Span):
             usage.get("output_tokens_details") if isinstance(usage, dict)
             else getattr(usage, "output_tokens_details", None)
         )
-
         if tokens_details:
             reasoning_tokens = (
-                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
+                tokens_details.get("reasoning_tokens") if isinstance(tokens_details, dict)
                 else getattr(tokens_details, "reasoning_tokens", None)
             )
-
-        _set_span_attribute(
-            span,
-            SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
-            reasoning_tokens or 0,
-        )
+        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens)
 
     _set_span_attribute(
         span,

@@ -12,6 +12,7 @@ from opentelemetry.instrumentation.openai.shared import (
     OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
+    _parse_arguments,
     _set_client_attributes,
     _set_functions_attributes,
     _set_request_attributes,
@@ -349,7 +350,7 @@ def _handle_response(
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
-        reasoning_tokens or 0,
+        reasoning_tokens,
     )
 
     if should_emit_events():
@@ -609,17 +610,6 @@ def _set_completions(span, choices):
     else:
         _legacy_set_completions(span, choices)
 
-def _parse_arguments(raw_args):
-    """Best-effort parse of JSON argument string to dict. Falls back to raw string."""
-    if raw_args is None:
-        return None
-    if isinstance(raw_args, dict):
-        return raw_args
-    try:
-        return json.loads(raw_args)
-    except (json.JSONDecodeError, TypeError):
-        return raw_args
-
 def _map_finish_reason(reason):
     if not reason:
         return None
@@ -650,11 +640,11 @@ def _set_output_messages(span, choices):
                 "id": tool_call["id"],
                 "arguments": _parse_arguments(tool_call["function"].get("arguments")),
             })
-        messages.append({
-            "role": "assistant",
-            "parts": parts,
-            "finish_reason": _map_finish_reason(choice.get("finish_reason")),
-        })
+        entry = {"role": "assistant", "parts": parts}
+        fr = _map_finish_reason(choice.get("finish_reason"))
+        if fr is not None:
+            entry["finish_reason"] = fr
+        messages.append(entry)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 def _legacy_set_completions(span, choices):

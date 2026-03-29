@@ -76,6 +76,18 @@ def _set_api_attributes(span):
     return
 
 
+def _parse_arguments(raw_args):
+    """Best-effort parse of a JSON argument string to dict. Falls back to raw string."""
+    if raw_args is None:
+        return None
+    if isinstance(raw_args, dict):
+        return raw_args
+    try:
+        return json.loads(raw_args)
+    except (json.JSONDecodeError, TypeError):
+        return raw_args
+
+
 def _build_tool_def_dict(function_dict):
     """Extract name/description/parameters from a function dict into a tool definition."""
     tool_def = {}
