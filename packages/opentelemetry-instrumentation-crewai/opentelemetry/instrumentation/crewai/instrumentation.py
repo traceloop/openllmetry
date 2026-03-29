@@ -18,7 +18,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 
-_instruments = ("crewai >= 0.70.0",)
+_instruments = ("crewai >= 1.0.0",)
 
 
 class CrewAIInstrumentor(BaseInstrumentor):
