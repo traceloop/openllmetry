@@ -89,24 +89,18 @@ def test_anthropic_message_create_legacy(
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -153,7 +147,7 @@ def test_anthropic_message_create_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -171,7 +165,7 @@ def test_anthropic_message_create_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Sure, here's a joke about OpenTelemetry:\n\nWhy did the developer adopt OpenTelemetry?"
             "\nBecause they wanted to trace their steps and meter their progress!\n\nExplanation:\nOpenTelemetry "
@@ -218,7 +212,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -236,7 +230,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -268,28 +262,21 @@ def test_anthropic_multi_modal_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == json.dumps(
-        [
-            {"type": "text", "text": "What do you see?"},
-            {"type": "image_url", "image_url": {"url": "/some/url"}},
-        ]
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
+    ]
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -343,7 +330,7 @@ def test_anthropic_multi_modal_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -356,7 +343,7 @@ def test_anthropic_multi_modal_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -404,7 +391,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -418,7 +405,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -463,55 +450,37 @@ def test_anthropic_image_with_history(
 
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.chat" for span in spans)
-    assert (
-        spans[0].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system_message
-    )
-    assert spans[0].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        spans[0].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == "Are you capable of describing an image?"
-    )
-    assert spans[0].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-    assert (
-        spans[0].attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == response1.content[0].text
-    )
-    assert (
-        spans[0].attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+
+    # span 0: system + first user message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    span0_input = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert span0_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
+    assert span0_input[0]["role"] == "user"
+    span0_output = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in span0_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response1.content[0].text
+    assert span0_output[-1]["role"] == "assistant"
     assert (
         spans[0].attributes.get("gen_ai.response.id") == "msg_01Ctc62hUPvikvYASXZqTo9q"
     )
 
-    assert (
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == system_message
-    )
-    assert spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "system"
-    assert (
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
-        == "Are you capable of describing an image?"
-    )
-    assert spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "user"
-    assert (
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"]
-        == response1.content[0].text
-    )
-    assert spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "assistant"
-    assert json.loads(
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.content"]
-    ) == [
-        {"type": "text", "text": "What do you see?"},
-        {"type": "image_url", "image_url": {"url": "/some/url"}},
+    # span 1: system + multi-turn
+    assert spans[1].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    span1_input = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert span1_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
+    assert span1_input[0]["role"] == "user"
+    assert span1_input[1]["parts"][0]["content"] == response1.content[0].text
+    assert span1_input[1]["role"] == "assistant"
+    assert span1_input[2]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
     ]
-    assert spans[1].attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.role"] == "user"
-
-    assert (
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == response2.content[0].text
-    )
-    assert (
-        spans[1].attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] == "assistant"
-    )
+    assert span1_input[2]["role"] == "user"
+    span1_output = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in span1_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response2.content[0].text
+    assert span1_output[-1]["role"] == "assistant"
     assert (
         spans[1].attributes.get("gen_ai.response.id") == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
     )
@@ -549,28 +518,21 @@ async def test_anthropic_async_multi_modal_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert anthropic_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == json.dumps(
-        [
-            {"type": "text", "text": "What do you see?"},
-            {"type": "image_url", "image_url": {"url": "/some/url"}},
-        ]
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
+    ]
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -625,7 +587,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -638,7 +600,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -687,7 +649,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     logs = log_exporter.get_finished_logs()
@@ -700,7 +662,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -738,24 +700,18 @@ def test_anthropic_message_streaming_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -809,7 +765,7 @@ def test_anthropic_message_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -827,7 +783,7 @@ def test_anthropic_message_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -874,7 +830,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -892,7 +848,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -925,24 +881,18 @@ async def test_async_anthropic_message_create_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response.content[0].text
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -989,7 +939,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1006,7 +956,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1047,7 +997,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1064,7 +1014,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1103,24 +1053,18 @@ async def test_async_anthropic_message_streaming_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -1174,7 +1118,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1191,7 +1135,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": {"type": "text", "content": response_content}},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1238,7 +1182,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -1255,7 +1199,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1295,97 +1239,60 @@ def test_anthropic_tools_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify request and inputs
-    assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
-        == "What is the weather like right now in New York? Also what time is it there now?"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == (
+        "What is the weather like right now in New York? Also what time is it there now?"
     )
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
-    assert (
-        anthropic_span.attributes["llm.request.functions.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.0.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                },
+    assert input_messages[0]["role"] == "user"
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
             },
-            "required": ["location"],
-        }
-    )
-    assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
-    assert (
-        anthropic_span.attributes["llm.request.functions.1.description"]
-        == "Get the current time in a given time zone"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.1.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "timezone": {
-                    "type": "string",
-                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                }
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
             },
-            "required": ["timezone"],
-        }
-    )
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
 
     # verify response and output
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.finish_reason"]
-        == response.stop_reason
-    )
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == response.content[0].text
-    )
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
-
-    assert (
-        (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"])
-        == response.content[1].id
-    )
-    assert (
-        (anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"])
-        == response.content[1].name
-    )
-    response_input = json.dumps(response.content[1].input)
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
-        == response_input
-    )
-
-    assert (
-        (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.id"])
-        == response.content[2].id
-    )
-    assert (
-        (anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.name"])
-        == response.content[2].name
-    )
-    response_input = json.dumps(response.content[2].input)
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.1.arguments"]
-        == response_input
-    )
+    finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert "tool_call" in finish_reasons
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
+    assert tool_calls[0]["id"] == response.content[1].id
+    assert tool_calls[0]["name"] == response.content[1].name
+    assert tool_calls[0]["arguments"] == response.content[1].input
+    assert tool_calls[1]["id"] == response.content[2].id
+    assert tool_calls[1]["name"] == response.content[2].name
+    assert tool_calls[1]["arguments"] == response.content[2].input
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_01RBkXFe9TmDNNWThMz2HmGt"
@@ -1435,7 +1342,7 @@ def test_anthropic_tools_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1458,7 +1365,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {
             "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current "
             "time there. Let's use the available tools to get this information for you."
@@ -1469,7 +1376,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
@@ -1487,7 +1394,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
@@ -1537,7 +1444,7 @@ def test_anthropic_tools_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1559,7 +1466,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
@@ -1567,7 +1474,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
@@ -1584,7 +1491,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
@@ -1658,7 +1565,7 @@ def test_anthropic_tools_history_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1667,84 +1574,62 @@ def test_anthropic_tools_history_legacy(
     verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
 
     # verify request and inputs
-    assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
-        == "What is the weather and current time in San Francisco?"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "I'll help you get the weather and current time in San Francisco."
     )
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    prompt_1_content = json.loads(anthropic_span.attributes["gen_ai.prompt.1.content"])
-    assert prompt_1_content[0]["text"] == "I'll help you get the weather and current time in San Francisco."
-    assert anthropic_span.attributes["gen_ai.prompt.1.role"] == "assistant"
-    assert json.loads(anthropic_span.attributes["gen_ai.prompt.2.content"]) == [
+    assert input_messages[1]["role"] == "assistant"
+    assert input_messages[2]["parts"] == [
         {
-            "type": "tool_result",
-            "content": "Sunny and 65 degrees Fahrenheit",
-            "tool_use_id": "call_1",
+            "type": "tool_call_response",
+            "id": "call_1",
+            "response": "Sunny and 65 degrees Fahrenheit",
         }
     ]
-    assert anthropic_span.attributes["gen_ai.prompt.2.role"] == "user"
-    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
-    assert (
-        anthropic_span.attributes["llm.request.functions.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.0.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                },
+    assert input_messages[2]["role"] == "user"
+
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
             },
-            "required": ["location"],
-        }
-    )
-    assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
-    assert (
-        anthropic_span.attributes["llm.request.functions.1.description"]
-        == "Get the current time in a given time zone"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.1.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "timezone": {
-                    "type": "string",
-                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                }
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
             },
-            "required": ["timezone"],
-        }
-    )
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
 
     # verify response and output
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.finish_reason"]
-        == response.stop_reason
-    )
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
-
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
-    ) == response.content[0].id
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]
-    ) == response.content[0].name
-    response_input = json.dumps(response.content[0].input)
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
-        == response_input
-    )
+    finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert "tool_call" in finish_reasons
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["role"] == "assistant"
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
+    assert tool_calls[0]["id"] == response.content[0].id
+    assert tool_calls[0]["name"] == response.content[0].name
+    assert tool_calls[0]["arguments"] == response.content[0].input
 
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -1814,7 +1699,7 @@ def test_anthropic_tools_history_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1843,7 +1728,7 @@ def test_anthropic_tools_history_with_events_with_content(
     # Validate the second tool call
     tool_call = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_013CVavAKjSN7RZoE2ZN4xQJ",
@@ -1916,7 +1801,7 @@ def test_anthropic_tools_history_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -1942,7 +1827,7 @@ def test_anthropic_tools_history_with_events_with_no_content(
     # Validate the second tool call
     tool_call = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01S4zmdHhnEuStnkkoyVdiv6",
@@ -1998,7 +1883,7 @@ def test_anthropic_tools_streaming_legacy(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -2007,73 +1892,58 @@ def test_anthropic_tools_streaming_legacy(
     verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
 
     # verify request and inputs
-    assert (
-        anthropic_span.attributes["gen_ai.prompt.0.content"]
-        == "What is the weather and current time in San Francisco?"
-    )
-    assert anthropic_span.attributes["gen_ai.prompt.0.role"] == "user"
-    assert anthropic_span.attributes["llm.request.functions.0.name"] == "get_weather"
-    assert (
-        anthropic_span.attributes["llm.request.functions.0.description"]
-        == "Get the current weather in a given location"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.0.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
-                },
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["role"] == "user"
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
             },
-            "required": ["location"],
-        }
-    )
-    assert anthropic_span.attributes["llm.request.functions.1.name"] == "get_time"
-    assert (
-        anthropic_span.attributes["llm.request.functions.1.description"]
-        == "Get the current time in a given time zone"
-    )
-    assert anthropic_span.attributes[
-        "llm.request.functions.1.input_schema"
-    ] == json.dumps(
-        {
-            "type": "object",
-            "properties": {
-                "timezone": {
-                    "type": "string",
-                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
-                }
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
             },
-            "required": ["timezone"],
-        }
-    )
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
 
-    # verify response and output
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.content"]
-        == "Certainly! I can help you with that information. "
+    # verify response and output - all parts consolidated into single assistant message
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output_messages) == 1
+    msg = output_messages[0]
+    assert msg["role"] == "assistant"
+    text_parts = [p for p in msg["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == (
+        "Certainly! I can help you with that information. "
         "To get the weather and current time in San Francisco, I'll need to use "
         "two separate functions. Let me fetch that data for you."
     )
-    assert anthropic_span.attributes["gen_ai.completion.0.role"] == "assistant"
-
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.id"]
-    ) == "toolu_0121kXsENLvoDZ72LCuAnCCz"
-    assert (
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.name"]
-    ) == "get_time"
-    assert json.loads(
-        anthropic_span.attributes["gen_ai.completion.0.tool_calls.0.arguments"]
-    ) == {"timezone": "America/Los_Angeles"}
+    tool_calls = [p for p in msg["parts"] if p["type"] == "tool_call"]
+    assert len(tool_calls) == 2
+    assert tool_calls[0]["id"] == "toolu_014x5X91kx3fvdhpLvwXZWE2"
+    assert tool_calls[0]["name"] == "get_weather"
+    assert tool_calls[1]["id"] == "toolu_0121kXsENLvoDZ72LCuAnCCz"
+    assert tool_calls[1]["name"] == "get_time"
+    assert tool_calls[1]["arguments"] == {"timezone": "America/Los_Angeles"}
 
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2124,7 +1994,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -2147,7 +2017,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {
             "content": {
                 "content": "Certainly! I'd be happy to help you with both the current "
@@ -2164,7 +2034,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01UGYEgvuRFeXbTZKyDyqo9P",
@@ -2182,7 +2052,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01VCGwdaiXbGQJHRCzoWgK2U",
@@ -2236,7 +2106,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     assert (
         anthropic_span.attributes["gen_ai.usage.output_tokens"]
         + anthropic_span.attributes["gen_ai.usage.input_tokens"]
-        == anthropic_span.attributes["llm.usage.total_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
     )
 
     # verify metrics
@@ -2255,7 +2125,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.user.message", {})
 
     assert_message_in_logs(logs[2], "gen_ai.choice", {
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "index": 0,
         "message": {},
     })
@@ -2263,7 +2133,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01YUs66wivdF51ENZFX8gX9S",
@@ -2282,7 +2152,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01NRtod2L7M7TBDj9GCzsZCx",
@@ -2379,7 +2249,7 @@ def test_with_asyncio_run_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "I apologize, but I don't have access to real-time weather information. As an AI language "
             "model, I don't have the ability to check current weather conditions or forecasts. To get accurate and "
@@ -2433,7 +2303,7 @@ def test_with_asyncio_run_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -2442,7 +2312,7 @@ def test_with_asyncio_run_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
     )
 
@@ -2484,24 +2354,18 @@ def test_anthropic_message_stream_manager_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2554,7 +2418,7 @@ def test_anthropic_message_stream_manager_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2572,7 +2436,7 @@ def test_anthropic_message_stream_manager_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -2618,7 +2482,7 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2636,7 +2500,7 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -2674,24 +2538,18 @@ async def test_async_anthropic_message_stream_manager_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert (anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"]) == "user"
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == response_content
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role")
-        == "assistant"
-    )
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
@@ -2744,7 +2602,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_content(
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2761,7 +2619,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": {"type": "text", "content": response_content}},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -2807,7 +2665,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        == anthropic_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
 
     metrics_data = reader.get_metrics_data()
@@ -2824,7 +2682,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -2941,11 +2799,9 @@ async def test_async_anthropic_beta_message_stream_manager_legacy(
         "anthropic.chat",
     ]
     anthropic_span = spans[0]
-    assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about OpenTelemetry"
-    )
-    assert anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, (

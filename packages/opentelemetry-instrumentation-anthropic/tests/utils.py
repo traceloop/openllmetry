@@ -61,7 +61,7 @@ def verify_metrics(
                         assert data_point.attributes["error.type"] == "TypeError"
 
                 assert all(
-                    data_point.attributes.get("gen_ai.system") == "anthropic"
+                    data_point.attributes.get("gen_ai.provider.name") == "anthropic"
                     for data_point in metric.data.data_points
                 )
 

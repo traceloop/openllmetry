@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.53.4"
+version = "0.54.0"
 description = "OpenTelemetry Anthropic instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -34,7 +34,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "anthropic[bedrock]>=0.74.0",
+  "anthropic[bedrock]>=0.86.0",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=0.23.7,<0.24.0",
   "pytest-recording>=0.13.1,<0.14.0",
