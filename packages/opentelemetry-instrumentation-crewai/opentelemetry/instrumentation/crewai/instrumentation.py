@@ -14,51 +14,56 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
+    GenAiSystemValues,
 )
-from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues, Meters
+from opentelemetry.semconv_ai import GenAISystem, SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 from .utils import should_send_prompts, _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
 
+# Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
+# Uses GenAISystem (semconv-ai) and GenAiSystemValues (OTel upstream) — no raw strings.
+_LITELLM_PREFIX_TO_OTEL_PROVIDER = {
+    "openai":      GenAISystem.OPENAI.value,
+    "anthropic":   GenAISystem.ANTHROPIC.value,
+    "gemini":      GenAiSystemValues.GCP_GEMINI.value,
+    "vertex_ai":   GenAiSystemValues.GCP_VERTEX_AI.value,
+    "bedrock":     GenAISystem.AWS.value,
+    "azure":       GenAiSystemValues.AZURE_AI_OPENAI.value,
+    "groq":        GenAISystem.GROQ.value,
+    "mistral":     GenAISystem.MISTRALAI.value,
+    "cohere":      GenAISystem.COHERE.value,
+    "ollama":      GenAISystem.OLLAMA.value,
+}
+
+# Maps bare model name patterns to OTel provider name values.
+_MODEL_PATTERN_TO_OTEL_PROVIDER = [
+    ("claude",   GenAISystem.ANTHROPIC.value),
+    ("gemini",   GenAiSystemValues.GCP_GEMINI.value),
+    ("mistral",  GenAISystem.MISTRALAI.value),
+    ("command",  GenAISystem.COHERE.value),
+]
+
 
 def _infer_llm_provider_from_model(model: object | None) -> str | None:
-    """Best-effort gen_ai.provider.name for the underlying LLM (chat span), not CrewAI itself."""
-    if model is None:
+    """Resolve gen_ai.provider.name for the underlying LLM on a chat span.
+
+    LiteLLM-prefixed strings ("openai/gpt-4") use the prefix via
+    _LITELLM_PREFIX_TO_OTEL_PROVIDER. Bare model names use pattern matching
+    via _MODEL_PATTERN_TO_OTEL_PROVIDER. Returns None when unknown — never guesses.
+    """
+    if not model:
         return None
     s = str(model).strip()
-    if not s:
-        return None
+    if "/" in s:
+        return _LITELLM_PREFIX_TO_OTEL_PROVIDER.get(s.split("/")[0].lower())
     lower = s.lower()
-    if "/" in lower:
-        vendor, _ = lower.split("/", 1)
-        vendor_aliases = {
-            "openai": "openai",
-            "anthropic": "anthropic",
-            "azure": "azure.ai.openai",
-            "google": "gcp.gen_ai",
-            "gemini": "gcp.gen_ai",
-            "vertex_ai": "gcp.vertex_ai",
-            "bedrock": "aws.bedrock",
-            "groq": "groq",
-            "mistral": "mistral_ai",
-            "cohere": "cohere",
-            "ollama": "ollama",
-        }
-        if vendor in vendor_aliases:
-            return vendor_aliases[vendor]
-    if (
-        lower.startswith("gpt-")
-        or "gpt-3" in lower
-        or "gpt-4" in lower
-        or lower.startswith("o1")
-        or lower.startswith("o3")
-    ):
-        return "openai"
-    if "claude" in lower:
-        return "anthropic"
-    if "gemini" in lower:
-        return "gcp.gen_ai"
+    if lower.startswith(("gpt-", "o1", "o3", "o4")):
+        return GenAISystem.OPENAI.value
+    for pattern, provider in _MODEL_PATTERN_TO_OTEL_PROVIDER:
+        if pattern in lower:
+            return provider
     return None
 
 
