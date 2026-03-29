@@ -5,6 +5,7 @@ Each test class maps to an issue ID from the review document.
 """
 
 import json
+import time
 from unittest.mock import MagicMock, AsyncMock
 
 import pytest
@@ -167,7 +168,9 @@ class TestP1_2_ResponsesFinishReasons:
 
         assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in mock_span._attrs
         reasons = mock_span._attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
-        assert "tool_calls" in reasons or "tool_call" in reasons
+        assert reasons == ("tool_call",), (
+            f"Expected exactly ('tool_call',) per OTel spec, got: {reasons}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -498,12 +501,132 @@ class TestP2_4_MetricsFinishReasonMapping:
         # The attribute key used should be the mapped key
         for call in calls:
             attrs = call.kwargs.get("attributes") or call[1].get("attributes", {})
-            # Check that finish_reason value is mapped
+            # Check that finish_reason value is the OTel canonical value
             for key, val in attrs.items():
                 if "finish_reason" in key:
-                    assert val != "tool_calls", (
-                        "Expected mapped value, got raw 'tool_calls'"
+                    assert val == "tool_call", (
+                        f"Expected OTel canonical 'tool_call', got '{val}'"
                     )
+
+
+# ---------------------------------------------------------------------------
+# Reasoning attrs must be ABSENT (not empty tuple) when value is None
+# ---------------------------------------------------------------------------
+
+class TestReasoningAttrsOmittedWhenNone:
+    """When reasoning fields are None, _set_span_attribute must skip them
+    entirely — not emit an empty tuple ()."""
+
+    def test_responses_reasoning_attrs_absent_when_none(self, mock_span):
+        from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+            set_data_attributes,
+            TracedData,
+        )
+        from opentelemetry.semconv_ai import SpanAttributes
+
+        traced = TracedData(
+            start_time=1000,
+            response_id="resp_none",
+            input="Hi",
+            instructions=None,
+            tools=None,
+            output_blocks={},
+            usage=None,
+            output_text="Hello",
+            request_model="gpt-4",
+            response_model="gpt-4",
+            request_reasoning_summary=None,
+            request_reasoning_effort=None,
+            response_reasoning_effort=None,
+        )
+        set_data_attributes(traced, mock_span)
+
+        for attr_name in (
+            SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY,
+            SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
+            SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT,
+        ):
+            assert attr_name not in mock_span._attrs, (
+                f"Attribute '{attr_name}' should be ABSENT when value is None, "
+                f"but it was set to: {mock_span._attrs.get(attr_name)!r}"
+            )
+
+    def test_chat_reasoning_effort_absent_when_none(self, mock_span):
+        from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
+            _handle_request,
+        )
+        from opentelemetry.semconv_ai import SpanAttributes
+
+        # Simulate a request without reasoning_effort
+        _handle_request(mock_span, {"model": "gpt-4", "messages": []})
+
+        assert SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT not in mock_span._attrs, (
+            f"Attribute should be ABSENT when reasoning_effort not provided, "
+            f"but was set to: {mock_span._attrs.get(SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT)!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# P2-3b: Partial stream cleanup must emit gen_ai.output.messages
+# ---------------------------------------------------------------------------
+
+class TestPartialStreamCleanupOutputMessages:
+    """ChatStream._ensure_cleanup must call _set_completions so that
+    gen_ai.output.messages is emitted even on abrupt stream teardown."""
+
+    def test_ensure_cleanup_sets_output_messages(self, mock_span):
+        from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
+            ChatStream,
+            _accumulate_stream_items,
+        )
+
+        previous_msg = Config.use_messages_attributes
+        Config.use_messages_attributes = True
+        try:
+            # Create a ChatStream with a MagicMock response (ObjectProxy needs a real object)
+            mock_response = MagicMock()
+            stream = ChatStream(
+                span=mock_span,
+                response=mock_response,
+                instance=None,
+                start_time=time.time(),
+                request_kwargs={"model": "gpt-4"},
+            )
+
+            # Simulate partial accumulation (as if some chunks were received)
+            _accumulate_stream_items(
+                {
+                    "model": "gpt-4",
+                    "id": "cmpl-partial",
+                    "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
+                },
+                stream._complete_response,
+            )
+            _accumulate_stream_items(
+                {
+                    "model": "gpt-4",
+                    "id": "cmpl-partial",
+                    "choices": [{"index": 0, "delta": {"content": "Partial answer"}, "finish_reason": None}],
+                },
+                stream._complete_response,
+            )
+
+            # Trigger cleanup (simulates GC or abrupt teardown)
+            stream._ensure_cleanup()
+
+            assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in mock_span._attrs, (
+                f"Expected gen_ai.output.messages after partial cleanup, "
+                f"got keys: {list(mock_span._attrs.keys())}"
+            )
+            output_msgs = json.loads(mock_span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+            assert len(output_msgs) > 0
+            assert output_msgs[0]["role"] == "assistant"
+            text_parts = [p for p in output_msgs[0]["parts"] if p.get("type") == "text"]
+            assert any("Partial answer" in p.get("content", "") for p in text_parts), (
+                f"Expected partial content in output messages, got: {output_msgs}"
+            )
+        finally:
+            Config.use_messages_attributes = previous_msg
 
 
 # ---------------------------------------------------------------------------

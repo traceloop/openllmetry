@@ -398,17 +398,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_REQUEST_REASONING_SUMMARY,
-        traced_response.request_reasoning_summary or (),
+        traced_response.request_reasoning_summary,
     )
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
-        traced_response.request_reasoning_effort or (),
+        traced_response.request_reasoning_effort,
     )
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_RESPONSE_REASONING_EFFORT,
-        traced_response.response_reasoning_effort or (),
+        traced_response.response_reasoning_effort,
     )
 
     # P1-2: Derive finish_reasons from output blocks
@@ -424,7 +424,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                                 "computer_call", "code_interpreter_call"):
                 has_tool_call = True
         if has_tool_call:
-            finish_reasons.append("tool_calls")
+            finish_reasons.append("tool_call")
         if finish_reasons:
             _set_span_attribute(
                 span,

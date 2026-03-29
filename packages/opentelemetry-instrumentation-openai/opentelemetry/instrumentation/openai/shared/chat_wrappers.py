@@ -9,6 +9,7 @@ from typing import List, Optional, Union
 from opentelemetry import context as context_api
 import pydantic
 from opentelemetry.instrumentation.openai.shared import (
+    OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
     _get_openai_base_url,
     _set_client_attributes,
@@ -295,7 +296,7 @@ async def _handle_request(span, kwargs, instance):
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT,
-        reasoning_effort or ()
+        reasoning_effort,
     )
 
 
@@ -607,10 +608,6 @@ def _set_completions(span, choices):
         _set_output_messages(span, choices)
     else:
         _legacy_set_completions(span, choices)
-
-OPENAI_FINISH_REASON_MAP = {
-    "tool_calls": "tool_call",
-}
 
 def _parse_arguments(raw_args):
     """Best-effort parse of JSON argument string to dict. Falls back to raw string."""
@@ -1002,6 +999,11 @@ class ChatStream(ObjectProxy):
         # Record basic span attributes even without complete response
         if self._span and self._span.is_recording():
             _set_response_attributes(self._span, self._complete_response)
+
+            # Set output messages for partial streams (parity with happy path)
+            if should_send_prompts() and not should_emit_events():
+                _set_completions(
+                    self._span, self._complete_response.get("choices"))
 
         # Record partial token metrics if we have any data
         if self._complete_response.get("choices") or self._request_kwargs:

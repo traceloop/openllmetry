@@ -318,6 +318,10 @@ class TestMapFinishReason:
     def test_content_filter_passthrough(self):
         assert _map_finish_reason("content_filter") == "content_filter"
 
+    def test_function_call_mapped_to_tool_call(self):
+        """Legacy 'function_call' must map to OTel 'tool_call'."""
+        assert _map_finish_reason("function_call") == "tool_call"
+
 
 # ---------------------------------------------------------------------------
 # P1: Tool call arguments must be parsed objects
