@@ -21,6 +21,9 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
+OPENAI_FINISH_REASON_MAP = {
+    "tool_calls": "tool_call",
+}
 
 _PYDANTIC_VERSION = version("pydantic")
 
@@ -206,6 +209,19 @@ def _set_response_attributes(span, response):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
+    # Set gen_ai.response.finish_reasons (top-level, not gated by content opt-in)
+    choices = response.get("choices")
+    if choices:
+        finish_reasons = tuple(
+            OPENAI_FINISH_REASON_MAP.get(c.get("finish_reason"), c.get("finish_reason"))
+            for c in choices
+            if c.get("finish_reason")
+        )
+        if finish_reasons:
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+            )
+
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
@@ -292,7 +308,7 @@ def _get_vendor_from_url(base_url):
         return "openai"
 
     if "openai.azure.com" in base_url:
-        return "az.ai.openai"
+        return "azure.ai.openai"
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
         return "aws.bedrock"
     elif "googleapis.com" in base_url or "vertex" in base_url:
