@@ -24,6 +24,7 @@ from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
 from opentelemetry.instrumentation.openai.shared import (
     _get_vendor_from_url,
     _set_request_attributes,
+    _set_response_attributes,
     metric_shared_attributes,
 )
 
@@ -462,8 +463,8 @@ class TestGetVendorFromUrl:
 
     def test_azure_openai(self):
         result = _get_vendor_from_url("https://myendpoint.openai.azure.com/")
-        # Must NOT be mixed-case "Azure" — OTel well-known value
-        assert result == "az.ai.openai", f"Expected 'az.ai.openai', got '{result}'"
+        # OTel GenAiSystemValues.AZURE_AI_OPENAI — "az.ai.openai" is deprecated
+        assert result == "azure.ai.openai", f"Expected 'azure.ai.openai', got '{result}'"
 
     def test_aws_bedrock(self):
         result = _get_vendor_from_url("https://bedrock-runtime.us-east-1.amazonaws.com/")
@@ -522,3 +523,86 @@ class TestRequestAttributesSerialization:
         """kwargs with user=None should not record attribute."""
         _set_request_attributes(mock_span, {"model": "gpt-4"})
         assert SpanAttributes.GEN_AI_USER not in mock_span._attrs
+
+
+# ---------------------------------------------------------------------------
+# P1: gen_ai.response.finish_reasons must be set as top-level span attribute
+# ---------------------------------------------------------------------------
+
+class TestFinishReasonsTopLevel:
+    """gen_ai.response.finish_reasons is a Recommended top-level string[]
+    span attribute per OTel GenAI semconv. It must be set by
+    _set_response_attributes, independently of should_send_prompts."""
+
+    def test_single_stop_reason(self, mock_span):
+        """Single choice with finish_reason='stop' sets ['stop']."""
+        response = {
+            "model": "gpt-4",
+            "id": "chatcmpl-123",
+            "choices": [
+                {"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "Hi"}},
+            ],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 1, "total_tokens": 6},
+        }
+        _set_response_attributes(mock_span, response)
+        assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in mock_span._attrs, (
+            f"Expected '{GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS}' in span attrs, "
+            f"got: {list(mock_span._attrs.keys())}"
+        )
+        assert mock_span._attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
+    def test_tool_calls_mapped_to_tool_call(self, mock_span):
+        """finish_reason='tool_calls' must be mapped to 'tool_call' (singular)."""
+        response = {
+            "model": "gpt-4",
+            "id": "chatcmpl-456",
+            "choices": [
+                {"index": 0, "finish_reason": "tool_calls", "message": {"role": "assistant"}},
+            ],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 1, "total_tokens": 6},
+        }
+        _set_response_attributes(mock_span, response)
+        assert mock_span._attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("tool_call",)
+
+    def test_multiple_choices(self, mock_span):
+        """Multiple choices produce an array of mapped finish reasons."""
+        response = {
+            "model": "gpt-4",
+            "id": "chatcmpl-789",
+            "choices": [
+                {"index": 0, "finish_reason": "stop", "message": {"role": "assistant"}},
+                {"index": 1, "finish_reason": "length", "message": {"role": "assistant"}},
+            ],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7},
+        }
+        _set_response_attributes(mock_span, response)
+        assert mock_span._attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop", "length")
+
+    def test_content_filter_reason(self, mock_span):
+        """content_filter finish reason passes through unchanged."""
+        response = {
+            "model": "gpt-4",
+            "id": "chatcmpl-cf",
+            "choices": [
+                {"index": 0, "finish_reason": "content_filter", "message": {"role": "assistant"}},
+            ],
+            "usage": {"prompt_tokens": 5, "completion_tokens": 1, "total_tokens": 6},
+        }
+        _set_response_attributes(mock_span, response)
+        assert mock_span._attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
+
+    def test_no_choices_no_finish_reasons(self, mock_span):
+        """Response without choices should not set finish_reasons."""
+        response = {
+            "model": "gpt-4",
+            "id": "chatcmpl-empty",
+            "usage": {"prompt_tokens": 5, "completion_tokens": 0, "total_tokens": 5},
+        }
+        _set_response_attributes(mock_span, response)
+        assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in mock_span._attrs
+
+    def test_error_response_no_finish_reasons(self, mock_span):
+        """Error response should not set finish_reasons."""
+        response = {"error": {"message": "Rate limit exceeded", "type": "rate_limit_error"}}
+        _set_response_attributes(mock_span, response)
+        assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in mock_span._attrs

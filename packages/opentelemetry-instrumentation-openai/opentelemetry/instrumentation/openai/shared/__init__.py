@@ -21,6 +21,9 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
 PROMPT_ERROR = "prompt_error"
+OPENAI_FINISH_REASON_MAP = {
+    "tool_calls": "tool_call",
+}
 
 _PYDANTIC_VERSION = version("pydantic")
 
@@ -72,8 +75,33 @@ def _set_api_attributes(span):
     return
 
 
+def _build_tool_def_dict(function_dict):
+    """Extract name/description/parameters from a function dict into a tool definition."""
+    tool_def = {}
+    if function_dict.get("name"):
+        tool_def["name"] = function_dict["name"]
+    if function_dict.get("description"):
+        tool_def["description"] = function_dict["description"]
+    if function_dict.get("parameters"):
+        tool_def["parameters"] = function_dict["parameters"]
+    return tool_def
+
+
+def _set_tool_definitions_json(span, tool_defs):
+    """Set gen_ai.tool.definitions as a single JSON string attribute."""
+    if tool_defs:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+        )
+
+
 def _set_functions_attributes(span, functions):
     if not functions:
+        return
+
+    if Config.use_messages_attributes:
+        tool_defs = [d for f in functions if (d := _build_tool_def_dict(f))]
+        _set_tool_definitions_json(span, tool_defs)
         return
 
     for i, function in enumerate(functions):
@@ -87,6 +115,14 @@ def _set_functions_attributes(span, functions):
 
 def set_tools_attributes(span, tools):
     if not tools:
+        return
+
+    if Config.use_messages_attributes:
+        tool_defs = [
+            d for tool in tools
+            if tool.get("function") and (d := _build_tool_def_dict(tool["function"]))
+        ]
+        _set_tool_definitions_json(span, tool_defs)
         return
 
     for i, tool in enumerate(tools):
@@ -206,6 +242,19 @@ def _set_response_attributes(span, response):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
+    # Set gen_ai.response.finish_reasons (top-level, not gated by content opt-in)
+    choices = response.get("choices")
+    if choices:
+        finish_reasons = tuple(
+            OPENAI_FINISH_REASON_MAP.get(c.get("finish_reason"), c.get("finish_reason"))
+            for c in choices
+            if c.get("finish_reason")
+        )
+        if finish_reasons:
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+            )
+
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
@@ -292,7 +341,7 @@ def _get_vendor_from_url(base_url):
         return "openai"
 
     if "openai.azure.com" in base_url:
-        return "az.ai.openai"
+        return "azure.ai.openai"
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
         return "aws.bedrock"
     elif "googleapis.com" in base_url or "vertex" in base_url:

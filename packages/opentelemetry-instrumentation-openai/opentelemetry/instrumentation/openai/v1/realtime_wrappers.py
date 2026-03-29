@@ -540,10 +540,13 @@ class RealtimeSessionWrapper:
                             session_config["temperature"],
                         )
                     if "instructions" in session_config:
+                        instructions_parts = json.dumps([
+                            {"type": "text", "content": session_config["instructions"]}
+                        ])
                         _set_span_attribute(
                             self._state.session_span,
                             GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
-                            session_config["instructions"],
+                            instructions_parts,
                         )
 
         return result

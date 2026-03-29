@@ -398,8 +398,9 @@ def _set_choice_counter_metrics(choice_counter, choices, shared_attributes):
     for choice in choices:
         attributes_with_reason = {**shared_attributes}
         if choice.get("finish_reason"):
+            raw_reason = choice.get("finish_reason")
             attributes_with_reason[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON] = (
-                choice.get("finish_reason")
+                OPENAI_FINISH_REASON_MAP.get(raw_reason, raw_reason)
             )
         choice_counter.add(1, attributes=attributes_with_reason)
 
@@ -443,9 +444,33 @@ async def _process_image_item(item, trace_id, span_id, message_index, content_in
 @dont_throw
 async def _set_prompts(span, messages):
     if Config.use_messages_attributes:
+        if Config.upload_base64_image and messages:
+            messages = await _preprocess_base64_images(span, messages)
         _set_input_messages(span, messages)
     else:
         await _legacy_set_prompts(span, messages)
+
+
+async def _preprocess_base64_images(span, messages):
+    """Pre-process messages to upload base64 images before sync attribute setting."""
+    import copy
+    processed = []
+    for msg_idx, msg in enumerate(messages):
+        content = msg.get("content")
+        if not isinstance(content, list):
+            processed.append(msg)
+            continue
+        new_content = []
+        for j, item in enumerate(content):
+            if _is_base64_image(item):
+                item = await _process_image_item(
+                    copy.deepcopy(item),
+                    span.context.trace_id, span.context.span_id,
+                    msg_idx, j,
+                )
+            new_content.append(item)
+        processed.append({**msg, "content": new_content})
+    return processed
 
 def _map_content_block(block):
     """Map an OpenAI content block to an OTel-compliant part."""
@@ -459,8 +484,18 @@ def _map_content_block(block):
         image_url = block.get("image_url")
         if isinstance(image_url, dict):
             url = image_url.get("url", "")
+        if url.startswith("data:"):
+            # Parse data URI: data:<mime_type>;base64,<content>
+            try:
+                header, content = url.split(",", 1)
+                mime_type = header.split(":", 1)[1].split(";", 1)[0]
+            except (ValueError, IndexError):
+                mime_type = "image/unknown"
+                content = url
+            return {"type": "blob", "modality": "image", "mime_type": mime_type, "content": content}
         return {"type": "uri", "modality": "image", "uri": url}
-    return block
+    # Preserve the type for unrecognized blocks
+    return {"type": block_type or "unknown", "content": block}
 
 def _map_content_parts(content):
     """Convert content to OTel parts list. Handles str, list, and None."""
@@ -604,6 +639,12 @@ def _set_output_messages(span, choices):
             continue
         content = message.get("content")
         parts = _map_content_parts(content)
+        refusal = message.get("refusal")
+        if refusal:
+            parts.append({"type": "refusal", "content": refusal})
+        reasoning_content = message.get("reasoning_content")
+        if reasoning_content:
+            parts.append({"type": "reasoning", "content": reasoning_content})
         tool_calls = _parse_tool_calls(message.get("tool_calls")) or []
         for tool_call in tool_calls:
             parts.append({
@@ -1289,6 +1330,11 @@ def _accumulate_stream_items(item, complete_response):
 
         if delta and delta.get("content"):
             complete_choice["message"]["content"] += delta.get("content")
+
+        if delta and delta.get("reasoning_content"):
+            if "reasoning_content" not in complete_choice["message"]:
+                complete_choice["message"]["reasoning_content"] = ""
+            complete_choice["message"]["reasoning_content"] += delta.get("reasoning_content")
 
         if delta and delta.get("role"):
             complete_choice["message"]["role"] = delta.get("role")
