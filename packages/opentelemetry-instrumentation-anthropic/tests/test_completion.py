@@ -93,7 +93,7 @@ def test_anthropic_completion_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {"content": " Hello!"},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -136,7 +136,7 @@ def test_anthropic_completion_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

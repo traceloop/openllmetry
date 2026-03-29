@@ -235,7 +235,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
     # Validate the first the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
             "extends OpenTelemetry with LLM functionality, enabling developers to monitor AI model performance in "
@@ -285,7 +285,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
     # Validate the second the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
             "extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, "
@@ -378,7 +378,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
         # Validate the the ai response
         choice_event = {
             "index": 0,
-            "finish_reason": "end_turn",
+            "finish_reason": "stop",
             "message": {},
         }
         assert_message_in_logs(logs[i], "gen_ai.choice", choice_event)
@@ -569,7 +569,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
     # Validate the first the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
             "extending OpenTelemetry with LLM functionality. Developed by Traceloop, it provides LLM-specific metrics "
@@ -619,7 +619,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
     # Validate the second the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Here are concise summaries of the three articles:\n\n1. OpenLLMetry: New open-source library "
             "extending OpenTelemetry with LLM functionality. Key features include LLM-specific metrics/traces, "
@@ -723,7 +723,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
         # Validate the the ai response
         choice_event = {
             "index": 0,
-            "finish_reason": "end_turn",
+            "finish_reason": "stop",
             "message": {},
         }
         assert_message_in_logs(logs[i], "gen_ai.choice", choice_event)
@@ -920,7 +920,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
     # Validate the first the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -973,7 +973,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
     # Validate the second the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -1074,7 +1074,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
         # Validate the the ai response
         choice_event = {
             "index": 0,
-            "finish_reason": "end_turn",
+            "finish_reason": "stop",
             "message": {},
         }
         assert_message_in_logs(logs[i], "gen_ai.choice", choice_event)
@@ -1272,7 +1272,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
     # Validate the first the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -1328,7 +1328,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
     # Validate the second the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -1437,7 +1437,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
         # Validate the the ai response
         choice_event = {
             "index": 0,
-            "finish_reason": "end_turn",
+            "finish_reason": "stop",
             "message": {},
         }
         assert_message_in_logs(logs[i], "gen_ai.choice", choice_event)

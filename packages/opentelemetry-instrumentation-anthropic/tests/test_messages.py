@@ -165,7 +165,7 @@ def test_anthropic_message_create_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Sure, here's a joke about OpenTelemetry:\n\nWhy did the developer adopt OpenTelemetry?"
             "\nBecause they wanted to trace their steps and meter their progress!\n\nExplanation:\nOpenTelemetry "
@@ -230,7 +230,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -343,7 +343,7 @@ def test_anthropic_multi_modal_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -405,7 +405,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -600,7 +600,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -662,7 +662,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -783,7 +783,7 @@ def test_anthropic_message_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -848,7 +848,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -956,7 +956,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response.content[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1014,7 +1014,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1135,7 +1135,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": {"type": "text", "content": response_content}},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1199,7 +1199,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1365,7 +1365,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {
             "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current "
             "time there. Let's use the available tools to get this information for you."
@@ -1376,7 +1376,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
@@ -1394,7 +1394,7 @@ def test_anthropic_tools_with_events_with_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
@@ -1466,7 +1466,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
@@ -1474,7 +1474,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
@@ -1491,7 +1491,7 @@ def test_anthropic_tools_with_events_with_no_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
@@ -1728,7 +1728,7 @@ def test_anthropic_tools_history_with_events_with_content(
     # Validate the second tool call
     tool_call = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_013CVavAKjSN7RZoE2ZN4xQJ",
@@ -1827,7 +1827,7 @@ def test_anthropic_tools_history_with_events_with_no_content(
     # Validate the second tool call
     tool_call = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01S4zmdHhnEuStnkkoyVdiv6",
@@ -2017,7 +2017,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the ai response
     ideal_response = {
         "index": 0,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "message": {
             "content": {
                 "content": "Certainly! I'd be happy to help you with both the current "
@@ -2034,7 +2034,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01UGYEgvuRFeXbTZKyDyqo9P",
@@ -2052,7 +2052,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01VCGwdaiXbGQJHRCzoWgK2U",
@@ -2125,7 +2125,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.user.message", {})
 
     assert_message_in_logs(logs[2], "gen_ai.choice", {
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "index": 0,
         "message": {},
     })
@@ -2133,7 +2133,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     # Validate the first tool call
     tool_call_0 = {
         "index": 1,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01YUs66wivdF51ENZFX8gX9S",
@@ -2152,7 +2152,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     # Validate the second tool call
     tool_call_1 = {
         "index": 2,
-        "finish_reason": "tool_use",
+        "finish_reason": "tool_call",
         "tool_calls": [
             {
                 "id": "toolu_01NRtod2L7M7TBDj9GCzsZCx",
@@ -2249,7 +2249,7 @@ def test_with_asyncio_run_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "I apologize, but I don't have access to real-time weather information. As an AI language "
             "model, I don't have the ability to check current weather conditions or forecasts. To get accurate and "
@@ -2303,7 +2303,7 @@ def test_with_asyncio_run_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -2436,7 +2436,7 @@ def test_anthropic_message_stream_manager_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -2500,7 +2500,7 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -2619,7 +2619,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": {"type": "text", "content": response_content}},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -2682,7 +2682,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

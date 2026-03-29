@@ -119,7 +119,7 @@ def test_anthropic_thinking_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
             "word \"strawberry\" is spelled:\ns-t-r-a-w-b-e-r-r-y\n\nGoing through each letter:\ns - not an 'r'\nt - "
@@ -133,7 +133,7 @@ def test_anthropic_thinking_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "The letter 'r' appears 3 times in the word \"strawberry\".",
         },
@@ -193,7 +193,7 @@ def test_anthropic_thinking_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -201,7 +201,7 @@ def test_anthropic_thinking_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -320,7 +320,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "Let me count the number of times the letter 'r' appears in the word \"strawberry\".\n\nThe "
             "word \"strawberry\" is spelled: s-t-r-a-w-b-e-r-r-y\n\nLet me check for each 'r':\n1. The third letter is "
@@ -333,7 +333,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": "The letter 'r' appears 3 times in the word \"strawberry\".",
         },
@@ -398,7 +398,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -406,7 +406,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -546,7 +546,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "thinking",
@@ -563,7 +563,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -638,7 +638,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -646,7 +646,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
@@ -788,7 +788,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "thinking",
@@ -805,7 +805,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {
             "content": {
                 "type": "text",
@@ -886,7 +886,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai thinking event
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -894,7 +894,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     # Validate the ai response event
     choice_event = {
         "index": 1,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
