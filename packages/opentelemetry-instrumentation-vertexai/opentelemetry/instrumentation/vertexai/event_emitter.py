@@ -37,19 +37,19 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_VERTEX_AI}
 
 def _parse_vertex_finish_reason(reason):
     if reason is None:
-        return "unknown"
+        return None
 
     finish_reason_map = {
-        0: "unspecified",
-        1: "stop",
-        2: "max_tokens",
-        3: "safety",
-        4: "recitation",
-        5: "other",
-        6: "blocklist",
-        7: "prohibited_content",
-        8: "spii",
-        9: "malformed_function_call",
+        0: None,                # FINISH_REASON_UNSPECIFIED
+        1: "stop",              # STOP
+        2: "length",            # MAX_TOKENS
+        3: "content_filter",    # SAFETY
+        4: "content_filter",    # RECITATION
+        5: "error",             # OTHER
+        6: "content_filter",    # BLOCKLIST
+        7: "content_filter",    # PROHIBITED_CONTENT
+        8: "content_filter",    # SPII
+        9: "error",             # MALFORMED_FUNCTION_CALL
     }
 
     if hasattr(reason, "value"):
@@ -57,7 +57,7 @@ def _parse_vertex_finish_reason(reason):
     else:
         reason_value = reason
 
-    return finish_reason_map.get(reason_value, "unknown")
+    return finish_reason_map.get(reason_value)
 
 
 @dont_throw

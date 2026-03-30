@@ -8,6 +8,9 @@ from opentelemetry.instrumentation.google_generativeai.event_models import (
     ChoiceEvent,
     MessageEvent,
 )
+from opentelemetry.instrumentation.google_generativeai.span_utils import (
+    _map_gemini_finish_reason,
+)
 from opentelemetry.instrumentation.google_generativeai.utils import (
     part_to_dict,
     should_emit_events,
@@ -67,7 +70,7 @@ def emit_choice_events(
                     "content": [part_to_dict(i) for i in candidate.content.parts],
                     "role": candidate.content.role,
                 },
-                finish_reason=candidate.finish_reason.name,
+                finish_reason=_map_gemini_finish_reason(candidate.finish_reason),
             ),
             event_logger,
         )

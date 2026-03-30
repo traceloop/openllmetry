@@ -260,15 +260,14 @@ def _output_messages_from_vertex_response(span, response):
         role = "assistant"
         if content and getattr(content, "role", None):
             role = _normalize_message_role(content.role)
-        msg = {"role": role, "parts": parts}
-        if fr is not None:
-            msg["finish_reason"] = fr
+        msg = {"role": role, "parts": parts, "finish_reason": fr}
         messages.append(msg)
     if not messages and getattr(response, "text", None):
         messages.append(
             {
                 "role": "assistant",
                 "parts": [{"type": "text", "content": response.text}],
+                "finish_reason": None,
             }
         )
     return messages
@@ -301,7 +300,7 @@ async def _otel_image_part_vertex_async(item, span, item_index):
             }
     binary_data = item.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
 
 
 def _otel_image_part_vertex_sync(item, span, item_index):
@@ -320,7 +319,7 @@ def _otel_image_part_vertex_sync(item, span, item_index):
             }
     binary_data = item.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
 
 
 async def _process_image_part(item, trace_id, span_id, content_index):
@@ -579,9 +578,7 @@ def set_response_attributes(span, llm_model, generation_or_text, finish_reason_o
     parts = []
     if generation_or_text:
         parts.append({"type": "text", "content": generation_or_text})
-    msg = {"role": "assistant", "parts": parts}
-    if finish_reason_otel is not None:
-        msg["finish_reason"] = finish_reason_otel
+    msg = {"role": "assistant", "parts": parts, "finish_reason": finish_reason_otel}
     if parts or finish_reason_otel is not None:
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([msg])

@@ -130,7 +130,7 @@ def _otel_image_part_from_genai_part(part, span, part_index, sync):
             }
     binary_data = part.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
 
 
 async def _otel_image_part_from_genai_part_async(part, span, part_index):
@@ -153,7 +153,7 @@ async def _otel_image_part_from_genai_part_async(part, span, part_index):
             }
     binary_data = part.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
 
 
 async def _process_image_part(item, trace_id, span_id, content_index):
@@ -418,14 +418,12 @@ def _output_messages_from_generate_response(span, response):
         role = "assistant"
         if content and getattr(content, "role", None):
             role = _normalize_message_role(content.role)
-        msg = {"role": role, "parts": parts}
-        if fr is not None:
-            msg["finish_reason"] = fr
+        msg = {"role": role, "parts": parts, "finish_reason": fr}
         messages.append(msg)
     if not messages and hasattr(response, "text") and response.text:
         text = response.text
         if isinstance(text, str) and text:
-            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}]}
+            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": None}
             messages.append(msg)
     return messages
 
@@ -627,8 +625,7 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
         msg = {"role": "assistant", "parts": []}
         if response:
             msg["parts"].append({"type": "text", "content": response})
-        if fr is not None:
-            msg["finish_reason"] = fr
+        msg["finish_reason"] = fr
         if msg["parts"] or fr is not None:
             _set_span_attribute(
                 span,
