@@ -300,7 +300,7 @@ async def _otel_image_part_vertex_async(item, span, item_index):
             }
     binary_data = item.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
 
 
 def _otel_image_part_vertex_sync(item, span, item_index):
@@ -319,7 +319,7 @@ def _otel_image_part_vertex_sync(item, span, item_index):
             }
     binary_data = item.inline_data.data
     b64 = base64.b64encode(binary_data).decode("utf-8")
-    return {"type": "blob", "modality": "image", "mime_type": mime, "data": b64}
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
 
 
 async def _process_image_part(item, trace_id, span_id, content_index):
