@@ -220,16 +220,21 @@ class TestP1_1_SpanCreationAttributes:
         ("meta", "meta.llama2-13b-chat-v1", {"prompt": "Hi", "max_gen_len": 100}),
         ("amazon", "amazon.titan-text-express-v1", {"inputText": "Hi", "textGenerationConfig": {"maxTokenCount": 100}}),
     ])
-    def test_all_vendors_set_operation_name(self, model_vendor, model_id, request_body):
-        """Every vendor path must set gen_ai.operation.name."""
+    def test_all_vendors_preserve_operation_name(self, model_vendor, model_id, request_body):
+        """Vendor-specific attribute functions must NOT override gen_ai.operation.name.
+        The operation name is set at span creation by _derive_operation_name()
+        and must be preserved through the vendor attribute-setting path (P2-2)."""
         span = _mock_span()
+        # Simulate span creation: operation name is set before vendor functions run
+        span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] = GenAiOperationNameValues.TEXT_COMPLETION.value
         response_body = self._make_minimal_response(model_vendor)
         set_model_span_attributes(
             GenAiSystemValues.AWS_BEDROCK.value, model_vendor, model_id,
             span, request_body, response_body, None, _mock_metric_params(), {},
         )
-        assert GenAIAttributes.GEN_AI_OPERATION_NAME in span._attrs, (
-            f"gen_ai.operation.name must be set for vendor '{model_vendor}'"
+        # operation name must still be the value set at span creation
+        assert span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.TEXT_COMPLETION.value, (
+            f"gen_ai.operation.name must be preserved for vendor '{model_vendor}'"
         )
 
     @pytest.mark.parametrize("model_vendor,model_id,request_body", [
