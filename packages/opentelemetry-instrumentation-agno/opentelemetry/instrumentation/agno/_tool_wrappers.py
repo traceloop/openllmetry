@@ -40,6 +40,7 @@ class _FunctionCallExecuteWrapper:
                 span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
                                    TraceloopSpanKindValues.TOOL.value)
                 span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, function_name)
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_NAME, function_name)
 
                 if hasattr(instance.function, 'description') and instance.function.description:
                     span.set_attribute("tool.description", instance.function.description)
@@ -109,6 +110,7 @@ class _FunctionCallAExecuteWrapper:
                 span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND,
                                    TraceloopSpanKindValues.TOOL.value)
                 span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, function_name)
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_NAME, function_name)
 
                 if hasattr(instance.function, 'description') and instance.function.description:
                     span.set_attribute("tool.description", instance.function.description)
