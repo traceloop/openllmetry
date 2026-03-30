@@ -36,8 +36,8 @@ test = [
   "boto3>=1.34.120,<2",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest-sugar==1.1.1",
+  "pytest>=8.2.2,<10",
   "vcrpy>=8.0.0,<9",
 ]
 
