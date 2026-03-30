@@ -29,6 +29,8 @@ from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
 from opentelemetry.instrumentation.bedrock.span_utils import (
     converse_usage_record,
     set_converse_input_prompt_span_attributes,
+    _set_converse_finish_reasons,
+    _set_finish_reasons_unconditionally,
     set_converse_model_span_attributes,
     set_converse_response_span_attributes,
     set_converse_streaming_response_span_attributes,
@@ -48,6 +50,13 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
@@ -104,8 +113,9 @@ WRAPPED_METHODS = [
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
-_BEDROCK_INVOKE_SPAN_NAME = "bedrock.completion"
-_BEDROCK_CONVERSE_SPAN_NAME = "bedrock.converse"
+def _span_name(operation_name, model):
+    """Build span name per OTel semconv: '{operation_name} {model}'."""
+    return f"{operation_name} {model}" if model else operation_name
 
 
 def is_metrics_enabled() -> bool:
@@ -200,8 +210,15 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
         with tracer.start_as_current_span(
-            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
+            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
             response = fn(*args, **kwargs)
             _handle_call(span, kwargs, response, metric_params, event_logger)
@@ -218,7 +235,18 @@ def _instrumented_model_invoke_with_response_stream(
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        span = tracer.start_span(
+            _span_name(operation_name, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
 
         response = fn(*args, **kwargs)
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
@@ -237,8 +265,16 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
         with tracer.start_as_current_span(
-            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
         ) as span:
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params, event_logger)
@@ -254,7 +290,17 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        span = tracer.start_span(
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
         response = fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
@@ -299,6 +345,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
         if should_emit_events() and event_logger:
             emit_message_events(event_logger, kwargs)
             emit_streaming_response_event(response_body, event_logger)
+            _set_finish_reasons_unconditionally(model_vendor, span, response_body)
         else:
             set_model_message_span_attributes(model_vendor, span, request_body)
             set_model_choice_span_attributes(model_vendor, span, response_body)
@@ -345,6 +392,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
     if should_emit_events() and event_logger:
         emit_message_events(event_logger, kwargs)
         emit_choice_events(event_logger, response)
+        _set_finish_reasons_unconditionally(model_vendor, span, response_body)
     else:
         set_model_message_span_attributes(model_vendor, span, request_body)
         set_model_choice_span_attributes(model_vendor, span, response_body)
@@ -362,6 +410,7 @@ def _handle_converse(span, kwargs, response, metric_params, event_logger):
     if should_emit_events() and event_logger:
         emit_input_events_converse(kwargs, event_logger)
         emit_response_event_converse(response, event_logger)
+        _set_converse_finish_reasons(span, response.get("stopReason"))
     else:
         set_converse_input_prompt_span_attributes(kwargs, span)
         set_converse_response_span_attributes(response, span)
@@ -385,11 +434,28 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
         def handler(func):
             def wrap(*args, **kwargs):
                 response_msg = kwargs.pop("response_msg")
+                tool_blocks = kwargs.pop("tool_blocks")
+                reasoning_blocks = kwargs.pop("reasoning_blocks")
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
                 nonlocal role
-                if "contentBlockDelta" in event and "text" in event["contentBlockDelta"].get("delta", {}):
-                    response_msg.append(event["contentBlockDelta"]["delta"]["text"])
+                if "contentBlockDelta" in event:
+                    delta = event["contentBlockDelta"].get("delta", {})
+                    if "text" in delta:
+                        response_msg.append(delta["text"])
+                    if "toolUse" in delta:
+                        # Merge delta input into the last tool block (created by contentBlockStart)
+                        if tool_blocks:
+                            tool_blocks[-1].setdefault("input", "")
+                            tool_blocks[-1]["input"] += delta["toolUse"].get("input", "")
+                        else:
+                            tool_blocks.append(delta["toolUse"])
+                    if "reasoningContent" in delta:
+                        reasoning_blocks.append(delta["reasoningContent"].get("text", ""))
+                elif "contentBlockStart" in event:
+                    start = event["contentBlockStart"].get("start", {})
+                    if "toolUse" in start:
+                        tool_blocks.append(start["toolUse"])
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
@@ -398,21 +464,28 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
+                    stop_reason = event.get("messageStop", {}).get("stopReason")
                     if should_emit_events() and event_logger:
                         emit_streaming_converse_response_event(
                             event_logger,
                             response_msg,
                             role,
-                            event.get("messageStop", {}).get("stopReason", "unknown"),
+                            stop_reason,
                         )
+                        _set_converse_finish_reasons(span, stop_reason)
                     else:
                         set_converse_streaming_response_span_attributes(
-                            response_msg, role, span
+                            response_msg,
+                            role,
+                            span,
+                            finish_reason=stop_reason,
+                            tool_blocks=tool_blocks,
+                            reasoning_blocks=reasoning_blocks,
                         )
 
                 return event
 
-            return partial(wrap, response_msg=[], span=span)
+            return partial(wrap, response_msg=[], tool_blocks=[], reasoning_blocks=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
 
@@ -420,7 +493,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
-    provider = "AWS"
+    provider = GenAiSystemValues.AWS_BEDROCK.value
     model_vendor = "imported_model"
     model = modelId
 
@@ -449,19 +522,32 @@ def _cross_region_check(value):
     return model_vendor, model
 
 
+def _derive_operation_name(kwargs):
+    """Derive operation name for invoke_model spans prior to creation."""
+    body_str = kwargs.get("body")
+    if body_str:
+        try:
+            body = json.loads(body_str)
+            if isinstance(body, dict) and "messages" in body:
+                return GenAiOperationNameValues.CHAT.value
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return GenAiOperationNameValues.TEXT_COMPLETION.value
+
+
 class GuardrailMeters:
-    LLM_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
-    LLM_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
-    LLM_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
-    LLM_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
-    LLM_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
-    LLM_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
-    LLM_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
+    GEN_AI_BEDROCK_GUARDRAIL_ACTIVATION = "gen_ai.bedrock.guardrail.activation"
+    GEN_AI_BEDROCK_GUARDRAIL_LATENCY = "gen_ai.bedrock.guardrail.latency"
+    GEN_AI_BEDROCK_GUARDRAIL_COVERAGE = "gen_ai.bedrock.guardrail.coverage"
+    GEN_AI_BEDROCK_GUARDRAIL_SENSITIVE = "gen_ai.bedrock.guardrail.sensitive_info"
+    GEN_AI_BEDROCK_GUARDRAIL_TOPICS = "gen_ai.bedrock.guardrail.topics"
+    GEN_AI_BEDROCK_GUARDRAIL_CONTENT = "gen_ai.bedrock.guardrail.content"
+    GEN_AI_BEDROCK_GUARDRAIL_WORDS = "gen_ai.bedrock.guardrail.words"
 
 
 class PromptCaching:
     # will be moved under the AI SemConv. Not namespaced since also OpenAI supports this.
-    LLM_BEDROCK_PROMPT_CACHING = "gen_ai.prompt.caching"
+    GEN_AI_PROMPT_CACHING = "gen_ai.prompt.caching"
 
 
 def _create_metrics(meter: Meter):
@@ -484,58 +570,57 @@ def _create_metrics(meter: Meter):
     )
 
     exception_counter = meter.create_counter(
-        # TODO: will fix this in future as a consolidation for semantic convention
-        name="llm.bedrock.completions.exceptions",
+        name="gen_ai.bedrock.completions.exceptions",
         unit="time",
         description="Number of exceptions occurred during chat completions",
     )
 
     # Guardrail metrics
     guardrail_activation = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_ACTIVATION,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_ACTIVATION,
         unit="",
         description="Number of guardrail activation",
     )
 
     guardrail_latency_histogram = meter.create_histogram(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_LATENCY,
         unit="ms",
         description="GenAI guardrail latency",
     )
 
     guardrail_coverage = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_COVERAGE,
         unit="char",
         description="GenAI guardrail coverage",
     )
 
     guardrail_sensitive_info = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_SENSITIVE,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_SENSITIVE,
         unit="",
         description="GenAI guardrail sensitive information protection",
     )
 
     guardrail_topic = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_TOPICS,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_TOPICS,
         unit="",
         description="GenAI guardrail topics protection",
     )
 
     guardrail_content = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_CONTENT,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_CONTENT,
         unit="",
         description="GenAI guardrail content filter protection",
     )
 
     guardrail_words = meter.create_counter(
-        name=GuardrailMeters.LLM_BEDROCK_GUARDRAIL_WORDS,
+        name=GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_WORDS,
         unit="",
         description="GenAI guardrail words filter protection",
     )
 
     # Prompt Caching
     prompt_caching = meter.create_counter(
-        name=PromptCaching.LLM_BEDROCK_PROMPT_CACHING,
+        name=PromptCaching.GEN_AI_PROMPT_CACHING,
         unit="",
         description="Number of cached tokens",
     )

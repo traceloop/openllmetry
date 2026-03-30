@@ -16,6 +16,9 @@ from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry import context as context_api
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GEN_AI_TOOL_NAME,
+)
 
 from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
 from traceloop.sdk.tracing.tracing import (
@@ -141,7 +144,6 @@ def _setup_span(entity_name, tlp_span_kind, version):
         set_workflow_name(entity_name)
 
     if tlp_span_kind == TraceloopSpanKindValues.AGENT:
-        print(f"Setting agent name: {entity_name}")
         set_agent_name(entity_name)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
@@ -160,6 +162,8 @@ def _setup_span(entity_name, tlp_span_kind, version):
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+        if tlp_span_kind == TraceloopSpanKindValues.TOOL:
+            span.set_attribute(GEN_AI_TOOL_NAME, entity_name)
         if version:
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 

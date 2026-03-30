@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 
 from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.instrumentation.bedrock.event_models import ChoiceEvent, MessageEvent
+from opentelemetry.instrumentation.bedrock.span_utils import _map_finish_reason
 from opentelemetry.instrumentation.bedrock.utils import (
     should_emit_events,
     should_send_prompts,
@@ -25,7 +26,7 @@ VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
 EVENT_ATTRIBUTES = {
-    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
+    GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
 }
 """The attributes to be used for the event."""
 
@@ -73,8 +74,8 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                         "content": message.get("data", {}).get("text"),
                         "role": "assistant",
                     },
-                    finish_reason=message.get("finishReason", {}).get(
-                        "reason", "unknown"
+                    finish_reason=_map_finish_reason(
+                        message.get("finishReason", {}).get("reason")
                     ),
                 ),
                 event_logger,
@@ -91,7 +92,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                     or response_body.get("generation"),
                     "role": "assistant",
                 },
-                finish_reason=response_body.get("stop_reason", "unknown"),
+                finish_reason=_map_finish_reason(response_body.get("stop_reason")),
             ),
             event_logger,
         )
@@ -101,7 +102,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                 ChoiceEvent(
                     index=i,
                     message={"content": message.get("text"), "role": "assistant"},
-                    finish_reason=message.get("finish_reason", "unknown"),
+                    finish_reason=_map_finish_reason(message.get("finish_reason")),
                 ),
                 event_logger,
             )
@@ -111,7 +112,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                 ChoiceEvent(
                     index=i,
                     message={"content": message.get("text"), "role": "assistant"},
-                    finish_reason=message.get("finish_reason", "unknown"),
+                    finish_reason=_map_finish_reason(message.get("finish_reason")),
                 ),
                 event_logger,
             )
@@ -125,7 +126,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                     .get("content"),
                     "role": "assistant",
                 },
-                finish_reason=response_body.get("stopReason", "unknown"),
+                finish_reason=_map_finish_reason(response_body.get("stopReason")),
             ),
             event_logger,
         )
@@ -135,7 +136,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
                 ChoiceEvent(
                     index=i,
                     message={"content": message.get("outputText"), "role": "assistant"},
-                    finish_reason=message.get("completionReason", "unknown"),
+                    finish_reason=_map_finish_reason(message.get("completionReason")),
                 ),
                 event_logger,
             )
@@ -144,7 +145,7 @@ def emit_choice_events(event_logger: Optional[Logger], response):
             ChoiceEvent(
                 index=0,
                 message={"content": response_body.get("content"), "role": "assistant"},
-                finish_reason=response_body.get("stop_reason", "unknown"),
+                finish_reason=_map_finish_reason(response_body.get("stop_reason")),
             ),
             event_logger,
         )
@@ -184,7 +185,7 @@ def emit_response_event_converse(response, event_logger):
                 "content": response.get("output", {}).get("message", {}).get("content"),
                 "role": response.get("output", {}).get("message", {}).get("role"),
             },
-            finish_reason=response.get("stopReason", "unknown"),
+            finish_reason=_map_finish_reason(response.get("stopReason")),
         ),
         event_logger,
     )
@@ -199,8 +200,7 @@ def emit_streaming_response_event(response_body, event_logger):
                 or response_body.get("outputText"),
                 "role": "assistant",
             },
-            # Sometimes, the value is None, what goes agains the semantic conventions
-            finish_reason=response_body.get("stop_reason") or "unknown",
+            finish_reason=_map_finish_reason(response_body.get("stop_reason")),
         ),
         event_logger,
     )
@@ -210,14 +210,14 @@ def emit_streaming_converse_response_event(
     event_logger: Optional[Logger],
     response_msg: List[str],
     role: str,
-    finish_reason: str,
+    finish_reason: Optional[str],
 ):
     accumulated_text = "".join(response_msg)
     emit_event(
         ChoiceEvent(
             index=0,
             message={"content": accumulated_text, "role": role},
-            finish_reason=finish_reason,
+            finish_reason=_map_finish_reason(finish_reason),
         ),
         event_logger,
     )
@@ -279,6 +279,8 @@ def _emit_message_event(
 
 def _emit_choice_event(event: ChoiceEvent, event_logger: Optional[Logger]) -> None:
     body = asdict(event)
+    if event.finish_reason is None:
+        body.pop("finish_reason", None)
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to "assistant", so remove the role from the body if it is "assistant".

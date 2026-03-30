@@ -1,8 +1,17 @@
 import json
 
 import pytest
-from opentelemetry.semconv_ai import SpanAttributes
-from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
+from opentelemetry.instrumentation.bedrock.span_utils import (
+    BEDROCK_GUARDRAIL_INPUT_FILTER,
+    BEDROCK_GUARDRAIL_OUTPUT_FILTER,
+)
 from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )
@@ -40,29 +49,32 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []
@@ -111,28 +123,31 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
     # Assert on model name
     assert (
-            bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+            bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
             == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes.get(f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}") is None
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes.get(BEDROCK_GUARDRAIL_OUTPUT_FILTER) is None
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
 
     assert input_guardrail["topic"] == ["topic-1"]
     assert input_guardrail["content"] == []
@@ -180,29 +195,29 @@ def test_guardrail_converse(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
     # Assert on model name
     assert (
-        bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []
@@ -263,29 +278,29 @@ def test_guardrail_converse_stream(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
     # Assert on model name
     assert (
-            bedrock_span.attributes[SpanAttributes.LLM_REQUEST_MODEL]
+            bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
             == "titan-text-express-v1"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes[SpanAttributes.LLM_SYSTEM] == "AWS"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     # Assert on request type
-    assert bedrock_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_PROMPTS}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{SpanAttributes.LLM_COMPLETIONS}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []

@@ -2,11 +2,13 @@ import json
 
 import pytest
 from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues, GenAiSystemValues
 from opentelemetry.semconv_ai import SpanAttributes
+
+from tests.traces import assert_message_in_logs
 
 
 @pytest.mark.vcr
@@ -30,24 +32,36 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
     completion = response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
+
+    # Assert on vendor and operation (P3-4: enforce spec on every span)
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert (
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Human: Tell me a joke about opentelemetry Assistant:"
-    )
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == completion
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
     )
 
+    input_messages = json.loads(
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    )
+    assert input_messages[0]["parts"][0]["content"] == "Human: Tell me a joke about opentelemetry Assistant:"
+    assert input_messages[0]["role"] == "user"
+
+    output_messages = json.loads(
+        anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    )
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -80,7 +94,7 @@ def test_anthropic_2_completion_with_events_with_content(
     completion = response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -89,7 +103,7 @@ def test_anthropic_2_completion_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -107,7 +121,7 @@ def test_anthropic_2_completion_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -136,7 +150,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
     response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -145,7 +159,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -159,7 +173,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "stop_sequence",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -192,32 +206,32 @@ def test_anthropic_3_completion_complex_content(
         contentType="application/json",
     )
 
-    response_body = json.loads(response.get("body").read())
-    completion = response_body.get("content")
+    json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-    ) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
-
-    assert (
-        json.loads(
-            anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        )
-        == completion
+    input_messages = json.loads(
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["parts"][0]["type"] == "text"
 
+    output_messages = json.loads(
+        anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    )
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW"
@@ -260,7 +274,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
     completion = response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -269,7 +283,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW"
@@ -293,7 +307,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -330,7 +344,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
     response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -339,7 +353,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01Q6Z4xmUkMigo9K4qd1fshW"
@@ -355,7 +369,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -397,30 +411,29 @@ def test_anthropic_3_completion_streaming(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
-    assert json.loads(
-        anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-    ) == [
-        {"type": "text", "text": "Tell me a joke about opentelemetry"},
-    ]
+    input_messages = json.loads(
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    )
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    assert input_messages[0]["parts"][0]["type"] == "text"
 
-    assert json.loads(
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-    ) == [
-        {
-            "type": "text",
-            "text": completion,
-        }
-    ]
+    output_messages = json.loads(
+        anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    )
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_014eJfxWXNnxFKhmuiT8FYf7"
@@ -468,7 +481,7 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -477,7 +490,7 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_014eJfxWXNnxFKhmuiT8FYf7"
@@ -497,7 +510,7 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": "stop",
         "message": {"content": response.get("body")._accumulating_body.get("content")},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -539,7 +552,7 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -548,7 +561,7 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_014eJfxWXNnxFKhmuiT8FYf7"
@@ -564,7 +577,7 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "unknown",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -595,31 +608,31 @@ def test_anthropic_3_completion_string_content(
         contentType="application/json",
     )
 
-    response_body = json.loads(response.get("body").read())
-    completion = response_body.get("content")
+    json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
-    assert (
-        json.loads(anthropic_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"])
-        == "Tell me a joke about opentelemetry"
+    input_messages = json.loads(
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
-    assert (
-        json.loads(
-            anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        )
-        == completion
+    output_messages = json.loads(
+        anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
     )
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 16
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
@@ -660,7 +673,7 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
     completion = response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -669,7 +682,7 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
@@ -689,7 +702,7 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": completion},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -723,7 +736,7 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
     json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -732,7 +745,7 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     assert (
         anthropic_span.attributes.get("gen_ai.response.id")
         == "msg_bdrk_01WR9VHqpyBzBhzgwCDapaQD"
@@ -748,7 +761,7 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -777,29 +790,32 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    assert anthropic_span.attributes[
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"
-    ] == json.dumps(messages[0]["content"])
-    assert (
-        anthropic_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-        == completion
+    input_messages = json.loads(
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
+    assert input_messages[0]["parts"][0]["content"] is not None
+    output_messages = json.loads(
+        anthropic_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    )
+    assert output_messages[0]["parts"][0]["content"] == completion
+    assert output_messages[0]["finish_reason"] == "stop"
 
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -833,21 +849,21 @@ def test_anthropic_cross_region_with_events_with_content(
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -869,7 +885,7 @@ def test_anthropic_cross_region_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {"content": response["output"]["message"]["content"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -899,21 +915,21 @@ def test_anthropic_cross_region_with_events_with_no_content(
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "claude-3-7-sonnet-20250219-v1"
     )
-    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "AWS"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
     assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + anthropic_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
-    ) == anthropic_span.attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
+    ) == anthropic_span.attributes.get(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS)
     # Bedrock does not return the response id for claude-v2:1
     assert anthropic_span.attributes.get("gen_ai.response.id") is None
 
@@ -927,7 +943,7 @@ def test_anthropic_cross_region_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "end_turn",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -1034,21 +1050,27 @@ def test_anthropic_converse_stream_with_tool_use(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat claude-3-sonnet-20240229-v1:0"
 
     bedrock_span = spans[0]
 
     # Assert on model name
     assert (
-        bedrock_span.attributes.get("gen_ai.request.model")
+        bedrock_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL)
         == "claude-3-sonnet-20240229-v1:0"
     )
 
     # Assert on vendor
-    assert bedrock_span.attributes.get("gen_ai.system") == "AWS"
+    assert (
+        bedrock_span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAiSystemValues.AWS_BEDROCK.value
+    )
 
     # Assert on request type
-    assert bedrock_span.attributes.get("llm.request.type") == "chat"
+    assert (
+        bedrock_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)
+        == GenAiOperationNameValues.CHAT.value
+    )
 
     # tool use should have been triggered
     # (This test validates that non-text deltas don't crash the instrumentation)
@@ -1059,16 +1081,3 @@ def test_anthropic_converse_stream_with_tool_use(
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
-        == GenAIAttributes.GenAiSystemValues.AWS_BEDROCK.value
-    )
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content

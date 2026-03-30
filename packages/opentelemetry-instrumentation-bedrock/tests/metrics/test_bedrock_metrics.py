@@ -62,10 +62,11 @@ def test_invoke_model_metrics(test_context, brt):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                assert (
-                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
-                    == "bedrock"
-                )
+                if metric.name.startswith(("gen_ai.", "llm.")):
+                    assert (
+                        metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+                        == "aws.bedrock"
+                    )
 
     assert found_token_metric is True
     assert found_duration_metric is True

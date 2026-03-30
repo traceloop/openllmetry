@@ -1,9 +1,12 @@
 import json
+import logging
 
 from opentelemetry.instrumentation.bedrock.utils import (
     dont_throw,
 )
 from wrapt import ObjectProxy
+
+logger = logging.getLogger(__name__)
 
 
 class StreamingWrapper(ObjectProxy):
@@ -47,16 +50,34 @@ class StreamingWrapper(ObjectProxy):
                 decoded_chunk.get("content_block")
             )
         elif type == "content_block_delta":
-            self._accumulating_body["content"][-1]["text"] += decoded_chunk.get(
-                "delta"
-            ).get("text")
+            delta = decoded_chunk.get("delta", {})
+            if delta.get("text") is not None:
+                self._accumulating_body["content"][-1]["text"] += delta["text"]
+            elif delta.get("type") == "input_json_delta":
+                partial_json = delta.get("partial_json", "")
+                current = self._accumulating_body["content"][-1]
+                current.setdefault("input", "")
+                current["input"] += partial_json
+            elif delta.get("type") == "thinking_delta":
+                thinking_text = delta.get("thinking", "")
+                current = self._accumulating_body["content"][-1]
+                current.setdefault("thinking", "")
+                current["thinking"] += thinking_text
+        elif type == "message_delta":
+            delta = decoded_chunk.get("delta", {})
+            if delta.get("stop_reason"):
+                self._accumulating_body["stop_reason"] = delta["stop_reason"]
+            if decoded_chunk.get("usage"):
+                usage = self._accumulating_body.get("usage", {})
+                usage.update(decoded_chunk["usage"])
+                self._accumulating_body["usage"] = usage
         elif type == "message_stop":
             self._accumulating_body["invocation_metrics"] = decoded_chunk.get(
                 "amazon-bedrock-invocationMetrics"
             )
 
     def _accumulate_events(self, event):
-        print(self._accumulating_body)
+        logger.debug("Accumulating body: %s", self._accumulating_body)
         for key in event:
             if key == "contentBlockDelta":
                 delta = event.get(key).get("delta", {}).get("text")

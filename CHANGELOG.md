@@ -1,3 +1,15 @@
+## v0.57.0 (2026-03-30)
+
+### Feat
+
+- **bedrock**: Instrumentation adjustment for Otel GenAI semconv support  (#3845)
+
+## v0.56.1 (2026-03-30)
+
+### Fix
+
+- **SDK + Agno**: set gen_ai.tool.name on @tool() decorator and Agno tool spans (#3904)
+
 ## v0.56.0 (2026-03-30)
 
 ### Feat

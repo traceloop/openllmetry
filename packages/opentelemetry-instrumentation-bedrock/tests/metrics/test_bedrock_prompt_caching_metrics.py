@@ -52,7 +52,7 @@ def assert_metric(reader, usage):
     resource_metrics = metrics_data.resource_metrics
     assert len(resource_metrics) > 0
 
-    m = get_metric(resource_metrics, PromptCaching.LLM_BEDROCK_PROMPT_CACHING)
+    m = get_metric(resource_metrics, PromptCaching.GEN_AI_PROMPT_CACHING)
     for data_point in m.data.data_points:
         assert data_point.attributes[CacheSpanAttrs.TYPE] in [
             "read",

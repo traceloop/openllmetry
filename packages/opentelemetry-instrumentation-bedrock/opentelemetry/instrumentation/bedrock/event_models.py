@@ -37,5 +37,5 @@ class ChoiceEvent:
 
     index: int
     message: CompletionMessage
-    finish_reason: str = "unknown"
+    finish_reason: Optional[str] = None
     tool_calls: Optional[List[ToolCall]] = None

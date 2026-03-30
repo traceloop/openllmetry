@@ -88,6 +88,7 @@ def test_agent_with_tools(instrument, span_exporter, reader):
     # so we just check that if they exist, they have the right attributes
     for tool_span in tool_spans:
         assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "add_numbers"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_TOOL_NAME) == "add_numbers"
         assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
 
 
@@ -179,6 +180,7 @@ def test_agent_run_streaming_with_tools(instrument, span_exporter, reader):
     tool_spans = [s for s in spans if s.name == "multiply.tool"]
     for tool_span in tool_spans:
         assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "multiply"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_TOOL_NAME) == "multiply"
         assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
 
 
@@ -244,4 +246,5 @@ async def test_agent_arun_streaming_with_tools(instrument, span_exporter, reader
     tool_spans = [s for s in spans if s.name == "multiply.tool"]
     for tool_span in tool_spans:
         assert tool_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_NAME) == "multiply"
+        assert tool_span.attributes.get(GenAIAttributes.GEN_AI_TOOL_NAME) == "multiply"
         assert tool_span.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "agno"
