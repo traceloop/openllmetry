@@ -8,7 +8,10 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
-from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY, BEDROCK_GUARDRAIL_INPUT_FILTER, BEDROCK_GUARDRAIL_OUTPUT_FILTER
+from opentelemetry.instrumentation.bedrock.span_utils import (
+    BEDROCK_GUARDRAIL_INPUT_FILTER,
+    BEDROCK_GUARDRAIL_OUTPUT_FILTER,
+)
 from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )

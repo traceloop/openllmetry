@@ -36,8 +36,6 @@ from opentelemetry.instrumentation.bedrock.span_utils import (
     set_model_span_attributes,
 )
 from opentelemetry.instrumentation.bedrock.event_emitter import (
-    emit_choice_events,
-    emit_message_events,
     emit_response_event_converse,
     emit_streaming_converse_response_event,
     emit_streaming_response_event,
@@ -411,7 +409,6 @@ class TestP1_3_AI21FinishReasonMapping:
         """
         # These are known provider values that are also valid OTel values
         # and can safely pass through
-        safe_passthrough = {"stop", "length", "error"}
         # This test documents the expectation that ALL provider reasons are
         # either explicitly mapped or happen to match an OTel value
         known_provider_reasons = [
@@ -507,7 +504,7 @@ class TestP2_1_ConverseStreamingToolUse:
     @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
     def test_streaming_response_with_tool_use_has_tool_call_parts(self, _mock):
         """When streaming response contains toolUse, output messages must include tool_call parts."""
-        span = _mock_span()
+        _mock_span()
         # Simulate what set_converse_streaming_response_span_attributes produces
         # for a tool call response. Currently it only takes text, so this test
         # verifies the gap: tool calls should appear in output.
@@ -1185,7 +1182,6 @@ class TestP1_1_SpanCreationTimeAttributes:
 
     def test_invoke_model_passes_attributes_at_span_creation(self):
         """_instrumented_model_invoke must pass provider/operation to start_as_current_span."""
-        from functools import partial
         from opentelemetry.instrumentation.bedrock import _instrumented_model_invoke
 
         mock_tracer = MagicMock()
@@ -1271,7 +1267,6 @@ class TestP2_1_StreamingToolUseAccumulation:
         This exercises the actual _handle_converse_stream handler, not just
         the _converse_content_to_parts helper.
         """
-        from functools import partial
         from opentelemetry.instrumentation.bedrock import _handle_converse_stream
 
         span = _mock_span()
