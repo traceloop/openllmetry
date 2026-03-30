@@ -965,39 +965,28 @@ class TestConverseOutputStructure:
 class TestP2_7_FinishReasonsInEventMode:
     """gen_ai.response.finish_reasons must be set on spans even when events are emitted."""
 
-    def test_invoke_model_finish_reasons_set_regardless_of_event_mode(self):
-        """finish_reasons must be on the span whether events are emitted or not.
+    def test_set_model_span_attributes_does_not_write_finish_reasons(self):
+        """set_model_span_attributes must NOT write finish_reasons (P2-6: no double write).
 
-        Currently, _set_finish_reasons_unconditionally() is only called from
-        set_model_choice_span_attributes(), which is in the `else` (non-event)
-        branch of _handle_call(). This test documents the requirement that
-        finish_reasons should also be written when events are emitted.
+        finish_reasons is written by the caller: either set_model_choice_span_attributes
+        (non-event branch) or _set_finish_reasons_unconditionally (event branch).
         """
         span = _mock_span()
-        # Simulate what happens in event mode: set_model_span_attributes is
-        # called (both branches), but set_model_choice_span_attributes is NOT.
-        # The fix should ensure finish_reasons are written by one of:
-        # (a) moving _set_finish_reasons_unconditionally into set_model_span_attributes, or
-        # (b) calling it separately in the event branch
         response_body = {
             "completion": "Hello!",
             "stop_reason": "end_turn",
         }
-        # Call what the event branch calls:
         set_model_span_attributes(
             GenAiSystemValues.AWS_BEDROCK.value, "anthropic", "anthropic.claude-v2:1",
             span, {"prompt": "Hi", "max_tokens_to_sample": 100},
             response_body, None, _mock_metric_params(), {},
         )
-        # In current code, set_model_span_attributes does NOT write finish_reasons.
-        # This test will fail until the fix is applied.
+        # finish_reasons must NOT be set here — the caller handles it
         reasons = span._attrs.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
-        assert reasons is not None, (
-            "gen_ai.response.finish_reasons must be set even when events are emitted. "
-            "Currently _set_finish_reasons_unconditionally() is only called in the "
-            "non-event branch (set_model_choice_span_attributes)."
+        assert reasons is None, (
+            "set_model_span_attributes must not write finish_reasons (P2-6). "
+            "The caller (_handle_call / _handle_stream_call) writes it explicitly."
         )
-        assert "stop" in reasons
 
     def test_converse_finish_reasons_set_regardless_of_event_mode(self):
         """Converse path: finish_reasons must be on span even in event mode.

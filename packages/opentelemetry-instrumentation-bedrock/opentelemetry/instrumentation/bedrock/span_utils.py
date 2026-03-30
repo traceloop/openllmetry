@@ -19,6 +19,10 @@ from opentelemetry.semconv_ai import SpanAttributes
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
 
+# Bedrock guardrail attribute keys (vendor namespace, replacing deprecated gen_ai.prompt/gen_ai.completion prefix)
+BEDROCK_GUARDRAIL_INPUT_FILTER = "gen_ai.bedrock.guardrail.input_filter"
+BEDROCK_GUARDRAIL_OUTPUT_FILTER = "gen_ai.bedrock.guardrail.output_filter"
+
 # Bedrock finish reason → OTel GenAI enum mapping
 # OTel values: stop, length, content_filter, tool_call, error
 BEDROCK_FINISH_REASON_MAP = {
@@ -98,7 +102,7 @@ def _anthropic_content_to_parts(content_blocks):
                         "type": "blob",
                         "modality": "image",
                         "mime_type": source.get("media_type", ""),
-                        "content": source.get("data", ""),
+                        "data": source.get("data", ""),
                     })
                 elif source_type == "url":
                     parts.append({
@@ -111,7 +115,7 @@ def _anthropic_content_to_parts(content_blocks):
                         "type": "blob",
                         "modality": "image",
                         "mime_type": source.get("media_type", ""),
-                        "content": source.get("data", ""),
+                        "data": source.get("data", ""),
                     })
             elif block_type == "thinking":
                 parts.append({"type": "reasoning", "content": block.get("thinking", "")})
@@ -267,7 +271,6 @@ def set_model_span_attributes(
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
-    _set_finish_reasons_unconditionally(model_vendor, span, response_body)
 
     if model_vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
@@ -306,13 +309,13 @@ def set_guardrail_attributes(span, input_filters, output_filters):
     if input_filters:
         _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
+            BEDROCK_GUARDRAIL_INPUT_FILTER,
             json.dumps(input_filters, default=str)
         )
     if output_filters:
         _set_span_attribute(
             span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}",
+            BEDROCK_GUARDRAIL_OUTPUT_FILTER,
             json.dumps(output_filters, default=str)
         )
 
@@ -927,7 +930,6 @@ def _converse_content_to_parts(content_blocks):
                     "type": "blob",
                     "modality": "image",
                     "mime_type": f"image/{fmt}" if fmt else "",
-                    "content": "<image bytes>",
                 })
             elif "video" in block:
                 vid = block["video"]
@@ -936,7 +938,6 @@ def _converse_content_to_parts(content_blocks):
                     "type": "blob",
                     "modality": "video",
                     "mime_type": f"video/{fmt}" if fmt else "",
-                    "content": "<video bytes>",
                 })
             elif "document" in block:
                 doc = block["document"]

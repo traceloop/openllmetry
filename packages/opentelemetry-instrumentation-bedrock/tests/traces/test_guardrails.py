@@ -8,7 +8,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
-from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY
+from opentelemetry.instrumentation.bedrock.span_utils import PROMPT_FILTER_KEY, CONTENT_FILTER_KEY, BEDROCK_GUARDRAIL_INPUT_FILTER, BEDROCK_GUARDRAIL_OUTPUT_FILTER
 from opentelemetry.semconv._incubating.attributes.aws_attributes import (
     AWS_BEDROCK_GUARDRAIL_ID
 )
@@ -67,11 +67,11 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []
@@ -141,10 +141,10 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}") is None
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes.get(BEDROCK_GUARDRAIL_OUTPUT_FILTER) is None
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
 
     assert input_guardrail["topic"] == ["topic-1"]
     assert input_guardrail["content"] == []
@@ -210,11 +210,11 @@ def test_guardrail_converse(
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []
@@ -293,11 +293,11 @@ def test_guardrail_converse_stream(
 
     # Assert on guardrail data
     assert bedrock_span.attributes[AWS_BEDROCK_GUARDRAIL_ID] == f"{guardrailId}:{guardrailVersion}"
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"] != ""
-    assert bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER] != ""
+    assert bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER] != ""
 
-    input_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}"])
-    output_guardrail = json.loads(bedrock_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.{CONTENT_FILTER_KEY}"])
+    input_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_INPUT_FILTER])
+    output_guardrail = json.loads(bedrock_span.attributes[BEDROCK_GUARDRAIL_OUTPUT_FILTER])
 
     assert input_guardrail["topic"] == []
     assert input_guardrail["content"] == []
