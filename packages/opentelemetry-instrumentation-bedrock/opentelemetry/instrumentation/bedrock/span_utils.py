@@ -1,7 +1,8 @@
 import json
+import logging
 import time
 
-import anthropic
+logger = logging.getLogger(__name__)
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
@@ -49,7 +50,15 @@ def _map_finish_reason(reason):
     """Map provider-specific finish reason to OTel GenAI enum value."""
     if not reason:
         return None
-    return BEDROCK_FINISH_REASON_MAP.get(reason, reason)
+    mapped = BEDROCK_FINISH_REASON_MAP.get(reason)
+    if mapped is None:
+        logger.warning(
+            "Unmapped Bedrock finish reason '%s' — passing through verbatim. "
+            "Consider adding it to BEDROCK_FINISH_REASON_MAP.",
+            reason,
+        )
+        return reason
+    return mapped
 
 
 def _text_part(content):
@@ -58,11 +67,8 @@ def _text_part(content):
 
 
 def _output_message(role, parts, finish_reason=None):
-    """Create an output message dict, omitting finish_reason when None."""
-    msg = {"role": role, "parts": parts}
-    if finish_reason:
-        msg["finish_reason"] = finish_reason
-    return msg
+    """Create an output message dict. finish_reason is required per OTel spec."""
+    return {"role": role, "parts": parts, "finish_reason": finish_reason if finish_reason else ""}
 
 
 def _anthropic_content_to_parts(content_blocks):
@@ -102,7 +108,7 @@ def _anthropic_content_to_parts(content_blocks):
                         "type": "blob",
                         "modality": "image",
                         "mime_type": source.get("media_type", ""),
-                        "data": source.get("data", ""),
+                        "content": source.get("data", ""),
                     })
                 elif source_type == "url":
                     parts.append({
@@ -115,7 +121,7 @@ def _anthropic_content_to_parts(content_blocks):
                         "type": "blob",
                         "modality": "image",
                         "mime_type": source.get("media_type", ""),
-                        "data": source.get("data", ""),
+                        "content": source.get("data", ""),
                     })
             elif block_type == "thinking":
                 parts.append({"type": "reasoning", "content": block.get("thinking", "")})
@@ -128,7 +134,7 @@ def _anthropic_content_to_parts(content_blocks):
     return parts
 
 
-anthropic_client = None
+_anthropic_client = [None]  # mutable container for lazy-initialized client
 
 
 def _set_span_attribute(span, name, value):
@@ -502,26 +508,25 @@ def _set_anthropic_messages_span_attributes(
 
 
 def _count_anthropic_tokens(messages: list[str]):
-    global anthropic_client
+    try:
+        import anthropic
+    except ImportError:
+        logger.debug("anthropic package not installed — skipping token counting")
+        return 0
 
     # Lazy initialization of the Anthropic client
-    if anthropic_client is None:
+    if _anthropic_client[0] is None:
         try:
-            anthropic_client = anthropic.Anthropic()
+            _anthropic_client[0] = anthropic.Anthropic()
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"Failed to initialize Anthropic client for token counting: {e}")
-            # Return 0 if we can't create the client
             return 0
 
     count = 0
     try:
         for message in messages:
-            count += anthropic_client.count_tokens(text=message)
+            count += _anthropic_client[0].count_tokens(text=message)
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.debug(f"Failed to count tokens with Anthropic client: {e}")
         return 0
 
@@ -619,9 +624,10 @@ def _set_llama_response_span_attributes(span, response_body):
 def _set_amazon_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
+    if "messages" not in request_body:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
+        )
 
     if "textGenerationConfig" in request_body:
         config = request_body.get("textGenerationConfig", {})
@@ -918,10 +924,16 @@ def _converse_content_to_parts(content_blocks):
                 })
             elif "toolResult" in block:
                 result = block["toolResult"]
+                content = result.get("content", [])
+                if isinstance(content, list):
+                    text_parts = [item["text"] for item in content if isinstance(item, dict) and "text" in item]
+                    response_str = " ".join(text_parts) if text_parts else json.dumps(content, default=str)
+                else:
+                    response_str = str(content)
                 parts.append({
                     "type": "tool_call_response",
                     "id": result.get("toolUseId"),
-                    "response": json.dumps(result.get("content", ""), default=str),
+                    "response": response_str,
                 })
             elif "image" in block:
                 img = block["image"]
@@ -930,6 +942,7 @@ def _converse_content_to_parts(content_blocks):
                     "type": "blob",
                     "modality": "image",
                     "mime_type": f"image/{fmt}" if fmt else "",
+                    "content": "",
                 })
             elif "video" in block:
                 vid = block["video"]
@@ -938,6 +951,7 @@ def _converse_content_to_parts(content_blocks):
                     "type": "blob",
                     "modality": "video",
                     "mime_type": f"video/{fmt}" if fmt else "",
+                    "content": "",
                 })
             elif "document" in block:
                 doc = block["document"]

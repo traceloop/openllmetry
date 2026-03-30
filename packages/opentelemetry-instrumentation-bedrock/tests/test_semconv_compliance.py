@@ -113,13 +113,23 @@ def _assert_valid_message(msg, context=""):
 
 
 def _assert_valid_output_message(msg, context=""):
-    """Assert an output message dict has valid structure and finish_reason if present."""
+    """Assert an output message dict has valid structure per OTel OutputMessage JSON schema.
+
+    OutputMessage.required = ["role", "parts", "finish_reason"]
+    finish_reason: anyOf[FinishReason, string]
+    """
     _assert_valid_message(msg, context)
-    if "finish_reason" in msg and msg["finish_reason"] is not None:
-        assert msg["finish_reason"] in VALID_OTEL_FINISH_REASONS, (
-            f"{context}: invalid finish_reason '{msg['finish_reason']}'. "
-            f"Must be one of {VALID_OTEL_FINISH_REASONS}"
-        )
+    assert "finish_reason" in msg, (
+        f"{context}: OutputMessage missing required 'finish_reason' per OTel spec"
+    )
+    # finish_reason must be a string (anyOf[FinishReason, string]); empty string is valid fallback
+    fr = msg["finish_reason"]
+    assert isinstance(fr, str), (
+        f"{context}: finish_reason must be a string, got {type(fr)}"
+    )
+    if fr and fr not in VALID_OTEL_FINISH_REASONS:
+        # Non-empty, non-OTel value — warn but don't fail (anyOf allows any string)
+        pass
 
 
 # ===========================================================================
@@ -833,12 +843,13 @@ class TestContentPartsStructuralValidation:
         assert msg["role"] == "assistant"
         assert msg["finish_reason"] == "stop"
 
-    def test_output_message_omits_none_finish_reason(self):
-        """_output_message must omit finish_reason when None."""
+    def test_output_message_finish_reason_required(self):
+        """finish_reason is required per OTel OutputMessage schema; defaults to empty string."""
         msg = _output_message("assistant", [_text_part("Hello")], None)
-        assert "finish_reason" not in msg, (
-            "finish_reason must be omitted when None, not set to None"
+        assert "finish_reason" in msg, (
+            "finish_reason is required per OTel OutputMessage JSON schema"
         )
+        assert msg["finish_reason"] == ""
 
 
 # ===========================================================================

@@ -215,6 +215,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         span_attributes = {
             GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         with tracer.start_as_current_span(
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
@@ -239,6 +240,7 @@ def _instrumented_model_invoke_with_response_stream(
         span_attributes = {
             GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         span = tracer.start_span(
             _span_name(operation_name, _model),
@@ -267,6 +269,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
         span_attributes = {
             GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         with tracer.start_as_current_span(
             _span_name(GenAiOperationNameValues.CHAT.value, _model),
@@ -291,6 +294,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
         span_attributes = {
             GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         span = tracer.start_span(
             _span_name(GenAiOperationNameValues.CHAT.value, _model),

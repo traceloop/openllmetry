@@ -50,10 +50,10 @@ def test_nova_completion(instrument_legacy, brt, span_exporter, log_exporter):
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on system instructions
@@ -128,10 +128,10 @@ def test_nova_completion_with_events_with_content(
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on response
@@ -210,10 +210,10 @@ def test_nova_completion_with_events_with_no_content(
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on other request parameters
@@ -292,10 +292,10 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on system instructions
@@ -382,10 +382,10 @@ def test_nova_invoke_stream_with_events_with_content(
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on response
@@ -483,10 +483,10 @@ def test_nova_invoke_stream_with_events_with_no_content(
     # Assert on vendor
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on other request parameters
@@ -1207,10 +1207,10 @@ def test_nova_cross_region_invoke(instrument_legacy, brt, span_exporter, log_exp
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on prompt
@@ -1278,10 +1278,10 @@ def test_nova_cross_region_invoke_with_events_with_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on other request parameters
@@ -1345,10 +1345,10 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
 
-    # Assert on request type
+    # Assert on request type — messages-based request → chat
     assert (
         bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.TEXT_COMPLETION.value
+        == GenAiOperationNameValues.CHAT.value
     )
 
     # Assert on other request parameters

@@ -45,8 +45,8 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
 
     output_messages = json.loads(imported_model_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output_messages[0]["role"] == "assistant"
-    # This cassette has no stop_reason, so finish_reason is omitted
-    assert "finish_reason" not in output_messages[0]
+    # finish_reason is required per OTel OutputMessage schema; empty string when provider has no stop_reason
+    assert output_messages[0]["finish_reason"] == ""
 
     assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in imported_model_span.attributes
 

@@ -76,7 +76,7 @@ class TestAnthropicContentToParts:
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "image"
         assert parts[0]["mime_type"] == "image/png"
-        assert parts[0]["data"] == "iVBORw0KGgo="
+        assert parts[0]["content"] == "iVBORw0KGgo="
 
     def test_image_url_block(self):
         blocks = [
@@ -206,7 +206,7 @@ class TestConverseContentToParts:
         assert parts[0]["id"] == "call_123"
 
     def test_image_block_bytes_source(self):
-        """#14: Converse API image blocks must map to BlobPart without placeholder data."""
+        """#14: Converse API image blocks must map to BlobPart with required 'content' field."""
         blocks = [
             {
                 "image": {
@@ -220,9 +220,8 @@ class TestConverseContentToParts:
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "image"
         assert parts[0]["mime_type"] == "image/png"
-        # P2-2: Binary content must NOT have placeholder strings
-        assert "content" not in parts[0]
-        assert "data" not in parts[0]
+        # 'content' is required per OTel BlobPart schema; empty string when raw bytes can't be base64'd
+        assert "content" in parts[0]
 
     def test_image_block_jpeg_format(self):
         """#14: JPEG image format mapping."""
@@ -254,9 +253,8 @@ class TestConverseContentToParts:
         assert len(parts) == 1
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "video"
-        # P2-2: Binary content must NOT have placeholder strings
-        assert "content" not in parts[0]
-        assert "data" not in parts[0]
+        # 'content' is required per OTel BlobPart schema
+        assert "content" in parts[0]
 
     def test_document_block(self):
         """#18: Converse API document blocks must map to a part with document info."""
@@ -359,17 +357,21 @@ class TestMapFinishReason:
 
 
 class TestOutputMessage:
-    """Verify conditional finish_reason inclusion."""
+    """OutputMessage schema: required=[role, parts, finish_reason] per OTel spec."""
 
     def test_with_finish_reason(self):
         msg = _output_message("assistant", [_text_part("hi")], "stop")
         assert msg["finish_reason"] == "stop"
         assert msg["role"] == "assistant"
 
-    def test_without_finish_reason(self):
+    def test_without_finish_reason_defaults_to_empty_string(self):
+        """finish_reason is required per spec; defaults to empty string when unavailable."""
         msg = _output_message("assistant", [_text_part("hi")], None)
-        assert "finish_reason" not in msg
+        assert "finish_reason" in msg
+        assert msg["finish_reason"] == ""
 
-    def test_without_finish_reason_default(self):
+    def test_without_finish_reason_arg_defaults_to_empty_string(self):
+        """finish_reason is required per spec; defaults to empty string when omitted."""
         msg = _output_message("assistant", [_text_part("hi")])
-        assert "finish_reason" not in msg
+        assert "finish_reason" in msg
+        assert msg["finish_reason"] == ""
