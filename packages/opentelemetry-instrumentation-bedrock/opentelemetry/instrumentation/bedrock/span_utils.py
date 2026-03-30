@@ -1043,11 +1043,15 @@ def set_converse_streaming_response_span_attributes(
     span,
     finish_reason=None,
     tool_blocks=None,
+    reasoning_blocks=None,
 ):
     fr = _set_converse_finish_reasons(span, finish_reason)
     if not should_send_prompts():
         return
     parts = []
+    reasoning_content = "".join(reasoning_blocks or [])
+    if reasoning_content:
+        parts.append({"type": "reasoning", "content": reasoning_content})
     text_content = "".join(response)
     if text_content:
         parts.append(_text_part(text_content))

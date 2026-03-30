@@ -548,6 +548,108 @@ class TestP2_1_ConverseStreamingToolUse:
 
 
 # ===========================================================================
+# P2-4: Converse streaming must accumulate reasoning/thinking blocks
+# ===========================================================================
+
+
+class TestP2_4_ConverseStreamingReasoning:
+    """Converse streaming handler must capture reasoning content deltas."""
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_streaming_reasoning_only_creates_reasoning_part(self, _mock):
+        """Streaming response with only reasoning content must produce a reasoning part."""
+        span = _mock_span()
+        set_converse_streaming_response_span_attributes(
+            [],  # no text
+            "assistant",
+            span,
+            finish_reason="end_turn",
+            reasoning_blocks=["Let me think", " about this", " carefully."],
+        )
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in span._attrs
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert len(output) == 1
+        msg = output[0]
+        _assert_valid_output_message(msg, "streaming reasoning-only response")
+        reasoning_parts = [p for p in msg["parts"] if p["type"] == "reasoning"]
+        assert len(reasoning_parts) == 1
+        assert reasoning_parts[0]["content"] == "Let me think about this carefully."
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_streaming_text_and_reasoning_creates_both_parts(self, _mock):
+        """Streaming response with text + reasoning must produce both part types."""
+        span = _mock_span()
+        set_converse_streaming_response_span_attributes(
+            ["The answer", " is 42."],
+            "assistant",
+            span,
+            finish_reason="end_turn",
+            reasoning_blocks=["I need to compute", " the answer."],
+        )
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        msg = output[0]
+        _assert_valid_output_message(msg, "streaming text+reasoning response")
+        types = [p["type"] for p in msg["parts"]]
+        assert "text" in types
+        assert "reasoning" in types
+        text_part = next(p for p in msg["parts"] if p["type"] == "text")
+        reasoning_part = next(p for p in msg["parts"] if p["type"] == "reasoning")
+        assert text_part["content"] == "The answer is 42."
+        assert reasoning_part["content"] == "I need to compute the answer."
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_streaming_empty_reasoning_blocks_omitted(self, _mock):
+        """Empty reasoning_blocks list should not produce a reasoning part."""
+        span = _mock_span()
+        set_converse_streaming_response_span_attributes(
+            ["Hello"],
+            "assistant",
+            span,
+            finish_reason="end_turn",
+            reasoning_blocks=[],
+        )
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        msg = output[0]
+        reasoning_parts = [p for p in msg["parts"] if p["type"] == "reasoning"]
+        assert len(reasoning_parts) == 0
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_streaming_reasoning_with_tool_blocks(self, _mock):
+        """Streaming response with reasoning + tool_use must include both."""
+        span = _mock_span()
+        tool_blocks = [{"toolUseId": "call_1", "name": "get_weather", "input": {"city": "NYC"}}]
+        set_converse_streaming_response_span_attributes(
+            [],
+            "assistant",
+            span,
+            finish_reason="tool_use",
+            tool_blocks=tool_blocks,
+            reasoning_blocks=["I should check the weather."],
+        )
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        msg = output[0]
+        _assert_valid_output_message(msg, "streaming reasoning+tool response")
+        types = [p["type"] for p in msg["parts"]]
+        assert "reasoning" in types
+        assert "tool_call" in types
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_streaming_none_reasoning_blocks_backward_compat(self, _mock):
+        """When reasoning_blocks is not provided (None), behavior is unchanged."""
+        span = _mock_span()
+        set_converse_streaming_response_span_attributes(
+            ["Hello"],
+            "assistant",
+            span,
+            finish_reason="end_turn",
+        )
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        msg = output[0]
+        reasoning_parts = [p for p in msg["parts"] if p["type"] == "reasoning"]
+        assert len(reasoning_parts) == 0
+
+
+# ===========================================================================
 # P2-2: Unknown block types must not emit non-OTel part types
 # ===========================================================================
 

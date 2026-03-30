@@ -435,6 +435,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
             def wrap(*args, **kwargs):
                 response_msg = kwargs.pop("response_msg")
                 tool_blocks = kwargs.pop("tool_blocks")
+                reasoning_blocks = kwargs.pop("reasoning_blocks")
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
                 nonlocal role
@@ -444,6 +445,8 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                         response_msg.append(delta["text"])
                     if "toolUse" in delta:
                         tool_blocks.append(delta["toolUse"])
+                    if "reasoningContent" in delta:
+                        reasoning_blocks.append(delta["reasoningContent"].get("text", ""))
                 elif "contentBlockStart" in event:
                     start = event["contentBlockStart"].get("start", {})
                     if "toolUse" in start:
@@ -472,11 +475,12 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                             span,
                             finish_reason=stop_reason,
                             tool_blocks=tool_blocks,
+                            reasoning_blocks=reasoning_blocks,
                         )
 
                 return event
 
-            return partial(wrap, response_msg=[], tool_blocks=[], span=span)
+            return partial(wrap, response_msg=[], tool_blocks=[], reasoning_blocks=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
 
