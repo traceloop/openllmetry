@@ -1,3 +1,5 @@
+import json
+
 from opentelemetry.instrumentation.openai.shared import _set_span_attribute
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import ChoiceEvent
@@ -21,6 +23,7 @@ class EventHandleWrapper(AssistantEventHandler):
         super().__init__()
         self._original_handler = original_handler
         self._span = span
+        self._output_messages = []
 
     @override
     def on_end(self):
@@ -34,6 +37,12 @@ class EventHandleWrapper(AssistantEventHandler):
             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
             self._completion_tokens,
         )
+        if not should_emit_events() and self._output_messages:
+            _set_span_attribute(
+                self._span,
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                json.dumps(self._output_messages),
+            )
         self._original_handler.on_end()
         self._span.end()
 
@@ -118,16 +127,10 @@ class EventHandleWrapper(AssistantEventHandler):
     def on_text_done(self, text):
         self._original_handler.on_text_done(text)
         if not should_emit_events():
-            _set_span_attribute(
-                self._span,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.role",
-                "assistant",
-            )
-            _set_span_attribute(
-                self._span,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.{self._current_text_index}.content",
-                text.value,
-            )
+            self._output_messages.append({
+                "role": "assistant",
+                "parts": [{"type": "text", "content": text.value}],
+            })
 
     @override
     def on_image_file_done(self, image_file):

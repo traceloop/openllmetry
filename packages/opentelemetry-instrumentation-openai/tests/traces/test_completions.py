@@ -9,7 +9,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.trace import StatusCode
 from opentelemetry.semconv_ai import SpanAttributes
 
-from .utils import assert_request_contains_tracecontext, spy_decorator
+from .utils import assert_request_contains_tracecontext, spy_decorator, get_input_messages, get_output_messages
 
 
 @pytest.mark.vcr
@@ -24,16 +24,18 @@ def test_completion(instrument_legacy, span_exporter, log_exporter, openai_clien
         "openai.completion",
     ]
     open_ai_span = spans[0]
+    input_messages = get_input_messages(open_ai_span)
+    assert len(input_messages) == 1
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-    assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -60,10 +62,10 @@ def test_completion_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -104,10 +106,10 @@ def test_completion_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
-    assert open_ai_span.attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
+    assert open_ai_span.attributes.get(SpanAttributes.GEN_AI_IS_STREAMING) is False
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq42D1Socatcl1rCmgYZOFX7dFZw"
@@ -140,11 +142,12 @@ async def test_async_completion(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43c8U5ZZCQBX5lrSpsANwcd3OF"
@@ -248,11 +251,12 @@ def test_completion_langchain_style(
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
         open_ai_span.attributes.get("gen_ai.response.id")
         == "cmpl-8wq43QD6R2WqfxXLpYsRvSAIn9LB9"
@@ -358,15 +362,14 @@ def test_completion_streaming(
         "openai.completion",
     ]
     open_ai_span = spans[0]
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(
-        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-    )
-    assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "http://localhost:5002/v1/"
     )
 
@@ -378,7 +381,7 @@ def test_completion_streaming(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert if token usage is available (depends on API support)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -409,7 +412,7 @@ def test_completion_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
 
@@ -420,7 +423,7 @@ def test_completion_streaming_with_events_with_content(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -471,7 +474,7 @@ def test_completion_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
 
@@ -483,7 +486,7 @@ def test_completion_streaming_with_events_with_no_content(
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS
     )
     total_tokens = open_ai_span.attributes.get(
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS
+        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
     )
     # Only assert token usage if API provides it (modern OpenAI API includes usage in streaming)
     if completion_tokens and prompt_tokens and total_tokens:
@@ -524,13 +527,14 @@ async def test_async_completion_streaming(
         "openai.completion",
     ]
     open_ai_span = spans[0]
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
-    assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -564,7 +568,7 @@ async def test_async_completion_streaming_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -614,7 +618,7 @@ async def test_async_completion_streaming_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes.get(SpanAttributes.LLM_OPENAI_API_BASE)
+        open_ai_span.attributes.get(SpanAttributes.GEN_AI_OPENAI_API_BASE)
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -895,10 +899,9 @@ def test_completion_exception(instrument_legacy, span_exporter, openai_client):
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events
@@ -927,10 +930,9 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
         "openai.completion",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.status.status_code == StatusCode.ERROR
     assert open_ai_span.status.description.startswith("Error code: 401")
     events = open_ai_span.events
@@ -948,7 +950,7 @@ async def test_async_completion_exception(instrument_legacy, span_exporter, asyn
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 

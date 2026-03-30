@@ -71,33 +71,29 @@ async def test_agents_and_tools(instrument_legacy, span_exporter, log_exporter):
     assert len(llm_spans) >= 1
     assert all(span.parent is not None for span in llm_spans)
 
-    # Check the first LLM span has correct attributes (same fields as before, values may differ)
+    # Check the first LLM span has correct attributes
     llm_span_1 = llm_spans[0]
-    assert llm_span_1.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
-    assert GenAIAttributes.GEN_AI_REQUEST_MODEL in llm_span_1.attributes
+    assert llm_span_1.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert llm_span_1.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
     assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in llm_span_1.attributes
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in llm_span_1.attributes
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.content" in llm_span_1.attributes
-    assert llm_span_1.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"] == (
-        "What is 2 times 3?"
-    )
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_1.attributes
+    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in llm_span_1.attributes
+    assert "What is 2 times 3?" in llm_span_1.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in llm_span_1.attributes
     assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 43
     assert llm_span_1.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 479
-    assert llm_span_1.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 522
+    assert llm_span_1.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 522
 
     # Verify second LLM span
     assert len(llm_spans) >= 2, "Expected at least 2 LLM spans"
     llm_span_2 = llm_spans[1]
-    assert llm_span_2.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "chat"
+    assert llm_span_2.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert llm_span_2.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
     assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in llm_span_2.attributes
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in llm_span_2.attributes
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" in llm_span_2.attributes
+    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in llm_span_2.attributes
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in llm_span_2.attributes
     assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 32
     assert llm_span_2.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 535
-    assert llm_span_2.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 567
+    assert llm_span_2.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 567
 
     # Verify tool.name and tool.arguments are set on call_tool spans
     call_tool_spans = [span for span in spans if span.name == "call_tool.task"]
@@ -225,11 +221,12 @@ async def test_agent_with_multiple_tools(
             len(completion_keys) > 0
         ), f"Expected completion attributes in {cohere_span.name}"
 
-        # Check that llm.request.type exists
+        # Check that operation name exists (gen_ai.operation.name or legacy llm.request.type)
         assert (
-            SpanAttributes.LLM_REQUEST_TYPE in cohere_span.attributes
+            GenAIAttributes.GEN_AI_OPERATION_NAME in cohere_span.attributes
+            or SpanAttributes.LLM_REQUEST_TYPE in cohere_span.attributes
             or "llm.request.type" in cohere_span.attributes
-        ), f"Expected llm.request.type in {cohere_span.name}"
+        ), f"Expected gen_ai.operation.name or llm.request.type in {cohere_span.name}"
 
         # Check for token usage attributes (restored with Cohere format support)
         assert (

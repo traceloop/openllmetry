@@ -23,10 +23,14 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace import SpanKind, Status, StatusCode, Tracer
 
 from opentelemetry.instrumentation.openai.shared import (
+    _parse_arguments,
     _set_span_attribute,
     model_as_dict,
 )
@@ -119,11 +123,11 @@ class RealtimeEventProcessor:
             self._state.session_config.update(session_dict)
 
             if self._state.session_span and self._state.session_span.is_recording():
-                if hasattr(session, "modalities"):
+                if hasattr(session, "modalities") and session.modalities:
                     _set_span_attribute(
                         self._state.session_span,
-                        f"{SpanAttributes.LLM_REQUEST_TYPE}.modalities",
-                        json.dumps(session.modalities) if session.modalities else None,
+                        GenAIAttributes.GEN_AI_OUTPUT_TYPE,
+                        json.dumps(session.modalities),
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
                     _set_span_attribute(
@@ -199,67 +203,42 @@ class RealtimeEventProcessor:
                     )
                     _set_span_attribute(
                         span,
-                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                        SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
                         total,
                     )
 
-                # Set output content if tracing is enabled
+                # Build output message in OTel JSON format
+                parts = []
+                if self._state.accumulated_text:
+                    parts.append({"type": "text", "content": self._state.accumulated_text})
+                elif self._state.accumulated_audio_transcript:
+                    parts.append({"type": "text", "content": self._state.accumulated_audio_transcript})
+
+                if self._state.function_calls:
+                    finish_reason = "tool_call"
+                    for call in self._state.function_calls:
+                        parts.append({
+                            "type": "tool_call",
+                            "name": call.get("name"),
+                            "id": call.get("call_id"),
+                            "arguments": _parse_arguments(call.get("arguments")),
+                        })
+                else:
+                    finish_reason = "stop"
+
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                    (finish_reason,),
+                )
+
                 if should_send_prompts():
-                    # Always set role for completions
+                    output_messages = [{"role": "assistant", "parts": parts, "finish_reason": finish_reason}]
                     _set_span_attribute(
                         span,
-                        f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-                        "assistant",
+                        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                        json.dumps(output_messages),
                     )
-
-                    # Set content (text or audio transcript)
-                    if self._state.accumulated_text:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                            self._state.accumulated_text,
-                        )
-                    elif self._state.accumulated_audio_transcript:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-                            self._state.accumulated_audio_transcript,
-                        )
-
-                    # Set tool calls and finish_reason
-                    if self._state.function_calls:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
-                            "tool_calls",
-                        )
-                        for i, call in enumerate(self._state.function_calls):
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.type",
-                                "function",
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.name",
-                                call.get("name"),
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.id",
-                                call.get("call_id"),
-                            )
-                            _set_span_attribute(
-                                span,
-                                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.tool_calls.{i}.arguments",
-                                call.get("arguments"),
-                            )
-                    else:
-                        _set_span_attribute(
-                            span,
-                            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason",
-                            "stop",
-                        )
 
             span.set_status(Status(StatusCode.OK))
 
@@ -302,7 +281,7 @@ class RealtimeEventProcessor:
         if self._state.response_span.is_recording():
             _set_span_attribute(
                 self._state.response_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(
@@ -312,21 +291,20 @@ class RealtimeEventProcessor:
             )
             _set_span_attribute(
                 self._state.response_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
-                "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
+                GenAiOperationNameValues.CHAT.value,
             )
 
             # Set input if available and requested
             if set_input and should_send_prompts() and self._state.input_text:
+                input_messages = [{
+                    "role": "user",
+                    "parts": [{"type": "text", "content": self._state.input_text}],
+                }]
                 _set_span_attribute(
                     self._state.response_span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content",
-                    self._state.input_text,
-                )
-                _set_span_attribute(
-                    self._state.response_span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role",
-                    "user",
+                    GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                    json.dumps(input_messages),
                 )
 
     def reset_response_state(self):
@@ -537,10 +515,13 @@ class RealtimeSessionWrapper:
                             session_config["temperature"],
                         )
                     if "instructions" in session_config:
+                        instructions_parts = json.dumps([
+                            {"type": "text", "content": session_config["instructions"]}
+                        ])
                         _set_span_attribute(
                             self._state.session_span,
                             GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
-                            session_config["instructions"],
+                            instructions_parts,
                         )
 
         return result
@@ -668,7 +649,7 @@ class RealtimeConnectionManagerWrapper:
         if self._state.session_span.is_recording():
             _set_span_attribute(
                 self._state.session_span,
-                GenAIAttributes.GEN_AI_SYSTEM,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME,
                 "openai",
             )
             _set_span_attribute(
@@ -678,8 +659,8 @@ class RealtimeConnectionManagerWrapper:
             )
             _set_span_attribute(
                 self._state.session_span,
-                SpanAttributes.LLM_REQUEST_TYPE,
-                "realtime",
+                GenAIAttributes.GEN_AI_OPERATION_NAME,
+                GenAiOperationNameValues.CHAT.value,
             )
 
         # Enter the underlying connection manager

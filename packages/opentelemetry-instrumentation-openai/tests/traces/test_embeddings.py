@@ -3,6 +3,8 @@ from unittest.mock import patch
 import httpx
 import openai
 import pytest
+
+from .utils import get_input_messages
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -25,17 +27,17 @@ def test_embeddings(instrument_legacy, span_exporter, log_exporter, openai_clien
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "text-embedding-ada-002"
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -65,7 +67,7 @@ def test_embeddings_with_events_with_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -109,7 +111,7 @@ def test_embeddings_with_events_with_no_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -138,10 +140,10 @@ def test_embeddings_with_raw_response(
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
 
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
@@ -149,7 +151,7 @@ def test_embeddings_with_raw_response(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -182,7 +184,7 @@ def test_embeddings_with_raw_response_with_events_with_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -229,7 +231,7 @@ def test_embeddings_with_raw_response_with_events_with_no_content(
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
 
@@ -270,18 +272,18 @@ def test_azure_openai_embeddings(instrument_legacy, span_exporter, log_exporter)
         "openai.embeddings",
     ]
     open_ai_span = spans[0]
-    assert (
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-        == "Tell me a joke about opentelemetry"
-    )
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about opentelemetry"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
@@ -318,11 +320,11 @@ def test_azure_openai_embeddings_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
@@ -373,11 +375,11 @@ def test_azure_openai_embeddings_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "embedding"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 8
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == f"https://{azure_resource}.openai.azure.com/openai/deployments/{azure_deployment}/"
     )
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_VERSION]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_VERSION]
         == "2023-07-01-preview"
     )
 
@@ -648,7 +650,7 @@ async def test_async_embeddings_exception(instrument_legacy, span_exporter, asyn
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 

@@ -2,10 +2,11 @@
 Test for the fix of the issue where assistant message content is missing
 when tool calls are present in LangGraph/LangChain instrumentation.
 
-This test reproduces the issue reported in GitHub where gen_ai.prompt.X.content
-attributes were missing for assistant messages that contained tool_calls.
+This test reproduces the issue reported in GitHub where gen_ai.input_messages
+attributes were missing content for assistant messages that contained tool_calls.
 """
 
+import json
 from unittest.mock import Mock
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from opentelemetry.instrumentation.langchain.span_utils import set_chat_request
@@ -51,46 +52,38 @@ def test_assistant_message_with_tool_calls_includes_content():
     call_args = [call[0] for call in mock_span.set_attribute.call_args_list]
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
+    input_messages = json.loads(attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+
+    # Message 0: user message
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
     assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+        input_messages[0]["parts"][0]["content"]
         == "what is the current time? First greet me."
     )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.role"] == "assistant"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.content" in attributes
+
+    # Message 1: assistant message with content and tool_calls
+    assert input_messages[1]["role"] == "assistant"
+    assert input_messages[1]["parts"][0]["type"] == "text"
     assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.content"]
+        input_messages[1]["parts"][0]["content"]
         == "Hello! Let me check the current time for you."
     )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.id" in attributes
+    assert input_messages[1]["parts"][1]["type"] == "tool_call"
+    assert input_messages[1]["parts"][1]["id"] == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
+    assert input_messages[1]["parts"][1]["name"] == "get_current_time"
+
+    # Message 2: tool response message
+    assert input_messages[2]["role"] == "tool"
+    assert input_messages[2]["parts"][0]["type"] == "tool_call_response"
+    assert input_messages[2]["parts"][0]["id"] == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
+    assert input_messages[2]["parts"][0]["response"] == "2025-08-15 08:15:21"
+
+    # Message 3: assistant message with only content
+    assert input_messages[3]["role"] == "assistant"
+    assert input_messages[3]["parts"][0]["type"] == "text"
     assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.id"]
-        == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
-    )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.name" in attributes
-    assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.1.tool_calls.0.name"]
-        == "get_current_time"
-    )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.role"] == "tool"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.content" in attributes
-    assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.content"] == "2025-08-15 08:15:21"
-    )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id" in attributes
-    assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.2.tool_call_id"]
-        == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
-    )
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.3.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.role"] == "assistant"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.3.content" in attributes
-    assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.3.content"]
+        input_messages[3]["parts"][0]["content"]
         == "The current time is 2025-08-15 08:15:21"
     )
 
@@ -98,7 +91,7 @@ def test_assistant_message_with_tool_calls_includes_content():
 def test_assistant_message_with_only_tool_calls_no_content():
     """
     Test that when an assistant message has only tool_calls and no content,
-    the tool_calls are still included and no content attribute is set.
+    the tool_calls are still included and no text part is set.
     """
     mock_span = Mock()
     mock_span.set_attribute = Mock()
@@ -121,22 +114,23 @@ def test_assistant_message_with_only_tool_calls_no_content():
     call_args = [call[0] for call in mock_span.set_attribute.call_args_list]
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "assistant"
-    # Content is being set as empty string, so we expect it to be present
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.id" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.id"] == "call_123"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name" in attributes
-    assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.tool_calls.0.name"] == "some_tool"
-    )
+    input_messages = json.loads(attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+
+    assert input_messages[0]["role"] == "assistant"
+    # No text part since content is empty; only tool_call parts
+    tool_call_parts = [p for p in input_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert len(tool_call_parts) == 1
+    assert tool_call_parts[0]["id"] == "call_123"
+    assert tool_call_parts[0]["name"] == "some_tool"
+
+    text_parts = [p for p in input_messages[0]["parts"] if p["type"] == "text"]
+    assert len(text_parts) == 0
 
 
 def test_assistant_message_with_only_content_no_tool_calls():
     """
     Test that when an assistant message has only content and no tool_calls,
-    the content is included and no tool_calls attributes are set.
+    the content is included and no tool_call parts are set.
     """
     mock_span = Mock()
     mock_span.set_attribute = Mock()
@@ -148,16 +142,16 @@ def test_assistant_message_with_only_content_no_tool_calls():
     set_chat_request(mock_span, {}, messages, {}, mock_span_holder)
 
     call_args = [call[0] for call in mock_span.set_attribute.call_args_list]
-
     attributes = {args[0]: args[1] for args in call_args}
 
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.role" in attributes
-    assert attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "assistant"
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" in attributes
+    input_messages = json.loads(attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+
+    assert input_messages[0]["role"] == "assistant"
+    assert input_messages[0]["parts"][0]["type"] == "text"
     assert (
-        attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
+        input_messages[0]["parts"][0]["content"]
         == "Just a regular response with no tool calls"
     )
 
-    tool_call_attributes = [attr for attr in attributes.keys() if "tool_calls" in attr]
-    assert len(tool_call_attributes) == 0
+    tool_call_parts = [p for p in input_messages[0]["parts"] if p["type"] == "tool_call"]
+    assert len(tool_call_parts) == 0

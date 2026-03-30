@@ -1,7 +1,7 @@
 """Unit tests configuration module."""
 
+import json
 import os
-import re
 import pytest
 from traceloop.sdk import Traceloop
 from traceloop.sdk.instruments import Instruments
@@ -82,16 +82,18 @@ def exporter_with_custom_span_postprocess_callback(exporter):
         del TracerWrapper.instance
 
     def span_postprocess_callback(span: ReadableSpan) -> None:
-        prompt_pattern = re.compile(r"gen_ai\.prompt\.\d+\.content$")
-        completion_pattern = re.compile(r"gen_ai\.completion\.\d+\.content$")
-        if hasattr(span, "_attributes"):
-            attributes = span._attributes if span._attributes else {}
-            # Find and encode all matching attributes
-            for key, value in attributes.items():
-                if (
-                    prompt_pattern.match(key) or completion_pattern.match(key)
-                ) and isinstance(value, str):
-                    attributes[key] = "REDACTED"  # Modify the attributes directly
+        content_keys = {"gen_ai.input.messages", "gen_ai.output.messages"}
+        if not hasattr(span, "_attributes") or not span._attributes:
+            return
+        attributes = span._attributes
+        for key, value in attributes.items():
+            if key not in content_keys or not isinstance(value, str):
+                continue
+            messages = json.loads(value)
+            for msg in messages:
+                for part in msg["parts"]:
+                    part["content"] = "REDACTED"
+            attributes[key] = json.dumps(messages)
 
     Traceloop.init(
         exporter=exporter,

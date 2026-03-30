@@ -1,3 +1,22 @@
+## v0.56.0 (2026-03-30)
+
+### Feat
+
+- **crewai**: trigger version bump for GenAI semconv compliance (#3903)
+
+## v0.55.0 (2026-03-29)
+
+### Feat
+
+- **open-ai**: instrumentation to support OTel GenAI Semantic Conventions 0.5.0 (#3844)
+- **langchain**: new semnconv langchain (#3900)
+
+## v0.54.0 (2026-03-29)
+
+### Feat
+
+- **anthropic**: conform instrumentation to OTel GenAI semantic conventions (#3835)
+
 ## v0.53.4 (2026-03-29)
 
 ### Fix
