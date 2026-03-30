@@ -142,9 +142,12 @@ class TestP1_1_SpanCreationAttributes:
     """gen_ai.operation.name and gen_ai.provider.name must be set on every span."""
 
     def test_invoke_model_prompt_sets_operation_name_text_completion(self):
-        """invoke_model with prompt-based API must have gen_ai.operation.name = text_completion."""
+        """invoke_model with prompt-based API must have gen_ai.operation.name = text_completion.
+        Operation name is set at span creation by _derive_operation_name(), not
+        by vendor functions. Vendor functions must preserve it."""
         span = _mock_span()
-        # Anthropic prompt-based invoke_model
+        # Simulate span creation: _derive_operation_name sets text_completion for prompt-based
+        span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] = GenAiOperationNameValues.TEXT_COMPLETION.value
         request_body = {
             "prompt": "Hello",
             "max_tokens_to_sample": 100,
@@ -157,9 +160,6 @@ class TestP1_1_SpanCreationAttributes:
             GenAiSystemValues.AWS_BEDROCK.value, "anthropic", "anthropic.claude-v2:1",
             span, request_body, response_body, None, _mock_metric_params(), {},
         )
-        assert GenAIAttributes.GEN_AI_OPERATION_NAME in span._attrs, (
-            "gen_ai.operation.name must be set on invoke_model spans"
-        )
         assert span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.TEXT_COMPLETION.value
 
     def test_invoke_model_messages_sets_operation_name_chat(self):
@@ -167,9 +167,11 @@ class TestP1_1_SpanCreationAttributes:
 
         Reviewer comment on P1-1: invoke_model is NOT always text_completion.
         When the request body uses Anthropic 'messages' (not 'prompt'), the
-        operation is 'chat'.
+        operation is 'chat'. Set at span creation by _derive_operation_name().
         """
         span = _mock_span()
+        # Simulate span creation: _derive_operation_name sets chat for messages-based
+        span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] = GenAiOperationNameValues.CHAT.value
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
             "messages": [{"role": "user", "content": "Hello"}],
@@ -214,26 +216,69 @@ class TestP1_1_SpanCreationAttributes:
         )
         assert span._attrs.get(GenAIAttributes.GEN_AI_OPERATION_NAME) == GenAiOperationNameValues.CHAT.value
 
-    @pytest.mark.parametrize("model_vendor,model_id,request_body", [
-        ("cohere", "cohere.command-text-v14", {"prompt": "Hi", "max_tokens": 100}),
-        ("ai21", "ai21.j2-mid-v1", {"prompt": "Hi", "maxTokens": 100}),
-        ("meta", "meta.llama2-13b-chat-v1", {"prompt": "Hi", "max_gen_len": 100}),
-        ("amazon", "amazon.titan-text-express-v1", {"inputText": "Hi", "textGenerationConfig": {"maxTokenCount": 100}}),
-    ])
-    def test_all_vendors_preserve_operation_name(self, model_vendor, model_id, request_body):
+    @pytest.mark.parametrize(
+        "model_vendor,model_id,request_body,pre_set_op",
+        [
+            (
+                "cohere", "cohere.command-text-v14",
+                {"prompt": "Hi", "max_tokens": 100},
+                "text_completion",
+            ),
+            (
+                "ai21", "ai21.j2-mid-v1",
+                {"prompt": "Hi", "maxTokens": 100},
+                "text_completion",
+            ),
+            (
+                "meta", "meta.llama2-13b-chat-v1",
+                {"prompt": "Hi", "max_gen_len": 100},
+                "text_completion",
+            ),
+            (
+                "amazon", "amazon.titan-text-express-v1",
+                {"inputText": "Hi", "textGenerationConfig": {"maxTokenCount": 100}},
+                "text_completion",
+            ),
+            (
+                "anthropic", "anthropic.claude-v2",
+                {"prompt": "\n\nHuman: Hi\n\nAssistant:", "max_tokens_to_sample": 100},
+                "text_completion",
+            ),
+            (
+                "anthropic", "anthropic.claude-3-sonnet-20240229-v1:0",
+                {"messages": [{"role": "user", "content": "Hi"}],
+                 "max_tokens": 100, "anthropic_version": "bedrock-2023-05-31"},
+                "chat",
+            ),
+            # P2-2b: completion path must NOT overwrite a pre-set 'chat'
+            (
+                "anthropic", "anthropic.claude-v2",
+                {"prompt": "\n\nHuman: Hi\n\nAssistant:", "max_tokens_to_sample": 100},
+                "chat",
+            ),
+            # P2-2b: messages path must NOT overwrite a pre-set 'text_completion'
+            (
+                "anthropic", "anthropic.claude-3-sonnet-20240229-v1:0",
+                {"messages": [{"role": "user", "content": "Hi"}],
+                 "max_tokens": 100, "anthropic_version": "bedrock-2023-05-31"},
+                "text_completion",
+            ),
+        ],
+    )
+    def test_all_vendors_preserve_operation_name(self, model_vendor, model_id, request_body, pre_set_op):
         """Vendor-specific attribute functions must NOT override gen_ai.operation.name.
         The operation name is set at span creation by _derive_operation_name()
         and must be preserved through the vendor attribute-setting path (P2-2)."""
         span = _mock_span()
         # Simulate span creation: operation name is set before vendor functions run
-        span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] = GenAiOperationNameValues.TEXT_COMPLETION.value
+        span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] = pre_set_op
         response_body = self._make_minimal_response(model_vendor)
         set_model_span_attributes(
             GenAiSystemValues.AWS_BEDROCK.value, model_vendor, model_id,
             span, request_body, response_body, None, _mock_metric_params(), {},
         )
         # operation name must still be the value set at span creation
-        assert span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.TEXT_COMPLETION.value, (
+        assert span._attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == pre_set_op, (
             f"gen_ai.operation.name must be preserved for vendor '{model_vendor}'"
         )
 
@@ -270,6 +315,14 @@ class TestP1_1_SpanCreationAttributes:
             return {"generation": "Hi", "stop_reason": "stop", "prompt_token_count": 5, "generation_token_count": 2}
         elif vendor == "amazon":
             return {"results": [{"outputText": "Hi", "completionReason": "FINISH"}]}
+        elif vendor == "anthropic":
+            return {
+                "content": [{"type": "text", "text": "Hi"}],
+                "stop_reason": "end_turn",
+                "model": "claude-3-sonnet",
+                "id": "msg_123",
+                "usage": {"input_tokens": 5, "output_tokens": 2},
+            }
         return {}
 
 

@@ -382,9 +382,6 @@ def _set_anthropic_completion_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
-    _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
     _set_span_attribute(
@@ -453,9 +450,6 @@ def _set_anthropic_response_span_attributes(span, response_body):
 def _set_anthropic_messages_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.CHAT.value
-    )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
