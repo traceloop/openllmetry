@@ -49,7 +49,7 @@ def test_guardrail_invoke(instrument_legacy, brt, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -123,7 +123,7 @@ def test_guardrail_invoke_stream(instrument_legacy, brt, span_exporter, log_expo
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -195,7 +195,7 @@ def test_guardrail_converse(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -278,7 +278,7 @@ def test_guardrail_converse_stream(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 

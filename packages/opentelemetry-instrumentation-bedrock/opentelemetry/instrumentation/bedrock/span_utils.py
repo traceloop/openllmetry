@@ -1058,13 +1058,11 @@ def set_converse_streaming_response_span_attributes(
 
 
 def converse_usage_record(span, response, metric_params):
-    prompt_tokens = 0
-    completion_tokens = 0
-    if "usage" in response:
-        if "inputTokens" in response["usage"]:
-            prompt_tokens = response["usage"]["inputTokens"]
-        if "outputTokens" in response["usage"]:
-            completion_tokens = response["usage"]["outputTokens"]
+    if "usage" not in response:
+        return
+
+    prompt_tokens = response["usage"].get("inputTokens", 0)
+    completion_tokens = response["usage"].get("outputTokens", 0)
 
     _record_usage_to_span(
         span,

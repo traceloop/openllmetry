@@ -32,7 +32,7 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
     completion = response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -94,7 +94,7 @@ def test_anthropic_2_completion_with_events_with_content(
     completion = response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -150,7 +150,7 @@ def test_anthropic_2_completion_with_events_with_no_content(
     response_body.get("completion")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion claude-v2:1" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -209,7 +209,7 @@ def test_anthropic_3_completion_complex_content(
     json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
     input_messages = json.loads(
@@ -274,7 +274,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_content(
     completion = response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -344,7 +344,7 @@ def test_anthropic_3_completion_complex_content_with_events_with_no_content(
     response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -411,7 +411,7 @@ def test_anthropic_3_completion_streaming(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
     input_messages = json.loads(
@@ -481,7 +481,7 @@ def test_anthropic_3_completion_streaming_with_events_with_content(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -552,7 +552,7 @@ def test_anthropic_3_completion_streaming_with_events_with_no_content(
                 completion += decoded_chunk.get("delta").get("text") or ""
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -611,7 +611,7 @@ def test_anthropic_3_completion_string_content(
     json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
     input_messages = json.loads(
@@ -673,7 +673,7 @@ def test_anthropic_3_completion_string_content_with_events_with_content(
     completion = response_body.get("content")
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -736,7 +736,7 @@ def test_anthropic_3_completion_string_content_with_events_with_no_content(
     json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "chat claude-3-sonnet-20240229-v1:0" for span in spans)
 
     anthropic_span = spans[0]
 
@@ -790,7 +790,7 @@ def test_anthropic_cross_region(instrument_legacy, brt, span_exporter, log_expor
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
@@ -849,7 +849,7 @@ def test_anthropic_cross_region_with_events_with_content(
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
@@ -915,7 +915,7 @@ def test_anthropic_cross_region_with_events_with_no_content(
     assert len(spans) == 1
 
     anthropic_span = spans[0]
-    assert anthropic_span.name == "bedrock.converse"
+    assert anthropic_span.name == "chat claude-3-7-sonnet-20250219-v1"
 
     # Assert on model name and vendor
     assert (
@@ -1050,7 +1050,7 @@ def test_anthropic_converse_stream_with_tool_use(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat claude-3-sonnet-20240229-v1:0"
 
     bedrock_span = spans[0]
 

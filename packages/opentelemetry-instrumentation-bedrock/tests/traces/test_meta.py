@@ -37,7 +37,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     response_body = json.loads(response.get("body").read())
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
 
@@ -95,7 +95,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     response_body = json.loads(response.get("body").read())
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -152,7 +152,7 @@ There's a llama in my garden  What should I do? [/INST]"""
 
     response_body = json.loads(response.get("body").read())
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -199,7 +199,7 @@ def test_meta_llama3_completion(instrument_legacy, brt, span_exporter, log_expor
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -256,7 +256,7 @@ def test_meta_llama3_completion_with_events_with_content(
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -305,7 +305,7 @@ def test_meta_llama3_completion_with_events_with_no_content(
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name.startswith("text_completion ") for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -361,7 +361,7 @@ def test_meta_converse(instrument_legacy, brt, span_exporter, log_exporter):
     generated_text = response["output"]["message"]["content"]
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -436,7 +436,7 @@ def test_meta_converse_with_events_with_content(
     generated_text = response["output"]["message"]["content"]
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -503,7 +503,7 @@ def test_meta_converse_with_events_with_no_content(
     )
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert (
@@ -583,7 +583,7 @@ def test_meta_converse_stream(instrument_legacy, brt, span_exporter, log_exporte
                     outputTokens = metadata["usage"]["outputTokens"]
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
@@ -669,7 +669,7 @@ def test_meta_converse_stream_with_events_with_content(
                     outputTokens = metadata["usage"]["outputTokens"]
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
@@ -749,7 +749,7 @@ def test_meta_converse_stream_with_events_with_no_content(
                     outputTokens = metadata["usage"]["outputTokens"]
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.converse" for span in spans)
+    assert all(span.name == "chat llama3-2-1b-instruct-v1:0" for span in spans)
 
     meta_span = spans[0]
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens

@@ -42,7 +42,7 @@ def test_ai21_j2_completion_string_content(
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion j2-mid-v1" for span in spans)
 
     meta_span = spans[0]
 
@@ -106,7 +106,7 @@ def test_ai21_j2_completion_string_content_with_events_with_content(
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion j2-mid-v1" for span in spans)
 
     meta_span = spans[0]
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(
@@ -165,7 +165,7 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
     response_body = json.loads(response.get("body").read())
 
     spans = span_exporter.get_finished_spans()
-    assert all(span.name == "bedrock.completion" for span in spans)
+    assert all(span.name == "text_completion j2-mid-v1" for span in spans)
 
     meta_span = spans[0]
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(

@@ -23,7 +23,7 @@ def test_imported_model_completion(instrument_legacy, brt, span_exporter, log_ex
     data = json.loads(response["body"].read().decode("utf-8"))
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name.startswith("text_completion ")
     imported_model_span = spans[0]
 
     assert (
@@ -72,7 +72,7 @@ def test_imported_model_completion_with_events_with_content(
     data = json.loads(response["body"].read().decode("utf-8"))
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name.startswith("text_completion ")
     imported_model_span = spans[0]
 
     assert (
@@ -121,7 +121,7 @@ def test_imported_model_completion_with_events_with_no_content(
     data = json.loads(response["body"].read().decode("utf-8"))
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name.startswith("text_completion ")
     imported_model_span = spans[0]
 
     assert (

@@ -39,7 +39,7 @@ def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -121,7 +121,7 @@ def test_titan_completion_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -196,7 +196,7 @@ def test_titan_completion_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -275,7 +275,7 @@ def test_titan_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -367,7 +367,7 @@ def test_titan_invoke_stream_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -454,7 +454,7 @@ def test_titan_invoke_stream_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.completion"
+    assert spans[0].name == "text_completion titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -536,7 +536,7 @@ def test_titan_converse(instrument_legacy, brt, span_exporter, log_exporter):
     )
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -619,7 +619,7 @@ def test_titan_converse_with_events_with_content(
     )
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -696,7 +696,7 @@ def test_titan_converse_with_events_with_no_content(
     )
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -791,7 +791,7 @@ def test_titan_converse_stream(instrument_legacy, brt, span_exporter, log_export
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -906,7 +906,7 @@ def test_titan_converse_stream_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 
@@ -1014,7 +1014,7 @@ def test_titan_converse_stream_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
-    assert spans[0].name == "bedrock.converse"
+    assert spans[0].name == "chat titan-text-express-v1"
 
     bedrock_span = spans[0]
 

@@ -113,8 +113,9 @@ WRAPPED_METHODS = [
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
 ]
 
-_BEDROCK_INVOKE_SPAN_NAME = "bedrock.completion"
-_BEDROCK_CONVERSE_SPAN_NAME = "bedrock.converse"
+def _span_name(operation_name, model):
+    """Build span name per OTel semconv: '{operation_name} {model}'."""
+    return f"{operation_name} {model}" if model else operation_name
 
 
 def is_metrics_enabled() -> bool:
@@ -216,7 +217,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         }
         with tracer.start_as_current_span(
-            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT, attributes=span_attributes
+            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
             response = fn(*args, **kwargs)
             _handle_call(span, kwargs, response, metric_params, event_logger)
@@ -240,7 +241,7 @@ def _instrumented_model_invoke_with_response_stream(
             GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
         }
         span = tracer.start_span(
-            _BEDROCK_INVOKE_SPAN_NAME,
+            _span_name(operation_name, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
@@ -268,7 +269,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
         }
         with tracer.start_as_current_span(
-            _BEDROCK_CONVERSE_SPAN_NAME,
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         ) as span:
@@ -292,7 +293,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
         }
         span = tracer.start_span(
-            _BEDROCK_CONVERSE_SPAN_NAME,
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
