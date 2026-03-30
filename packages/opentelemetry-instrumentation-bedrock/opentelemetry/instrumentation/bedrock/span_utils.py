@@ -2,7 +2,6 @@ import json
 import logging
 import time
 
-logger = logging.getLogger(__name__)
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
@@ -16,6 +15,8 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiSystemValues,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+
+logger = logging.getLogger(__name__)
 
 PROMPT_FILTER_KEY = "prompt_filter_results"
 CONTENT_FILTER_KEY = "content_filter_results"
