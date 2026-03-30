@@ -20,8 +20,7 @@ from opentelemetry.semconv_ai import (
 )
 
 if TYPE_CHECKING:
-    from together.types.chat_completions import ChatCompletionResponse
-    from together.types.completions import CompletionResponse
+    from together.types import ChatCompletionResponse, CompletionResponse
 
 
 class Roles(Enum):
