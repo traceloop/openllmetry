@@ -1,3 +1,9 @@
+## v0.56.0 (2026-03-30)
+
+### Feat
+
+- **crewai**: trigger version bump for GenAI semconv compliance (#3903)
+
 ## v0.55.0 (2026-03-29)
 
 ### Feat
