@@ -444,7 +444,12 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     if "text" in delta:
                         response_msg.append(delta["text"])
                     if "toolUse" in delta:
-                        tool_blocks.append(delta["toolUse"])
+                        # Merge delta input into the last tool block (created by contentBlockStart)
+                        if tool_blocks:
+                            tool_blocks[-1].setdefault("input", "")
+                            tool_blocks[-1]["input"] += delta["toolUse"].get("input", "")
+                        else:
+                            tool_blocks.append(delta["toolUse"])
                     if "reasoningContent" in delta:
                         reasoning_blocks.append(delta["reasoningContent"].get("text", ""))
                 elif "contentBlockStart" in event:

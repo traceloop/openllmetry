@@ -223,8 +223,9 @@ class TestConverseContentToParts:
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "image"
         assert parts[0]["mime_type"] == "image/png"
-        # 'content' is required per OTel BlobPart schema; empty string when raw bytes can't be base64'd
-        assert "content" in parts[0]
+        # 'content' is required per OTel BlobPart schema; empty string to avoid
+        # bloating spans with base64-encoded binary data
+        assert parts[0]["content"] == ""
 
     def test_image_block_jpeg_format(self):
         """#14: JPEG image format mapping."""
@@ -256,11 +257,13 @@ class TestConverseContentToParts:
         assert len(parts) == 1
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "video"
-        # 'content' is required per OTel BlobPart schema
-        assert "content" in parts[0]
+        # 'content' is required per OTel BlobPart schema; empty to avoid span bloat
+        assert parts[0]["content"] == ""
 
     def test_document_block(self):
-        """#18: Converse API document blocks must map to a part with document info."""
+        """#18: Converse API document blocks must map to BlobPart with document info.
+        P3-1: content should be empty (not the filename) since BlobPart.content
+        is for base64-encoded binary data. The document name is stored separately."""
         blocks = [
             {
                 "document": {
@@ -275,7 +278,10 @@ class TestConverseContentToParts:
         assert parts[0]["type"] == "blob"
         assert parts[0]["modality"] == "document"
         assert parts[0]["mime_type"] == "application/pdf"
-        assert parts[0]["content"] == "report.pdf"
+        # content is empty — BlobPart.content is for base64 binary, not filenames
+        assert parts[0]["content"] == ""
+        # document name stored in additional property (additionalProperties: true)
+        assert parts[0]["name"] == "report.pdf"
 
     def test_document_block_csv(self):
         """Document format 'csv' maps to 'text/csv'."""
@@ -529,3 +535,119 @@ class TestStreamingWrapperThinkingDelta:
         ]
         body = self._build_stream(events)
         assert body["content"][0]["input"] == '{"q":"test"}'
+
+
+# ─── P2-4 regression: dead finish_reasons list in "results" path ──────────
+
+
+class TestAmazonResultsPathNoDeadCode:
+    """P2-4: _set_amazon_response_span_attributes 'results' path should not
+    build an unused finish_reasons list."""
+
+    def test_results_path_produces_single_output_messages_attribute(self):
+        """Verify the 'results' path sets GEN_AI_OUTPUT_MESSAGES correctly
+        and doesn't rely on a dead finish_reasons list."""
+        from unittest.mock import MagicMock
+        from opentelemetry.instrumentation.bedrock.span_utils import (
+            _set_amazon_response_span_attributes,
+        )
+
+        span = MagicMock()
+        response_body = {
+            "results": [
+                {"outputText": "Hello", "completionReason": "FINISH"},
+                {"outputText": "World"},
+            ],
+            "inputTextTokenCount": 5,
+        }
+        _set_amazon_response_span_attributes(span, response_body)
+        # Should have called set_attribute with GEN_AI_OUTPUT_MESSAGES
+        calls = [c for c in span.set_attribute.call_args_list]
+        assert len(calls) >= 1
+
+
+# ─── P2-3 regression: converse streaming tool block merging ───────────────
+
+
+class TestConverseStreamingToolBlockMerging:
+    """P2-3: contentBlockStart metadata (name/toolUseId) and contentBlockDelta
+    input must be merged into a single tool block, not appended as separate entries.
+    This tests the downstream consumer set_converse_streaming_response_span_attributes."""
+
+    def test_merged_tool_blocks_produce_complete_tool_call_part(self):
+        """A properly merged tool block should produce a tool_call part with
+        name, id, AND arguments."""
+        from unittest.mock import MagicMock
+        from opentelemetry.instrumentation.bedrock.span_utils import (
+            set_converse_streaming_response_span_attributes,
+        )
+
+        span = MagicMock()
+        span.set_attribute = MagicMock()
+
+        # Simulating a properly merged tool block (after P2-3 fix)
+        tool_blocks = [
+            {"name": "get_weather", "toolUseId": "t1", "input": '{"location": "Barcelona"}'},
+        ]
+        set_converse_streaming_response_span_attributes(
+            response=[],
+            role="assistant",
+            span=span,
+            finish_reason="tool_use",
+            tool_blocks=tool_blocks,
+        )
+        # Find the GEN_AI_OUTPUT_MESSAGES call
+        import json as _json
+        for call_args in span.set_attribute.call_args_list:
+            args = call_args[0]
+            if args[0] == "gen_ai.output.messages":
+                output_messages = _json.loads(args[1])
+                assert len(output_messages) == 1
+                parts = output_messages[0]["parts"]
+                tool_parts = [p for p in parts if p["type"] == "tool_call"]
+                assert len(tool_parts) == 1
+                assert tool_parts[0]["name"] == "get_weather"
+                assert tool_parts[0]["id"] == "t1"
+                assert tool_parts[0]["arguments"] == {"location": "Barcelona"}
+                return
+        raise AssertionError("GEN_AI_OUTPUT_MESSAGES not set on span")
+
+    def test_multiple_tool_calls_merged_correctly(self):
+        """Two sequential tool calls should each produce a complete tool_call part
+        with name, id, and arguments after merging."""
+        from unittest.mock import MagicMock
+        from opentelemetry.instrumentation.bedrock.span_utils import (
+            set_converse_streaming_response_span_attributes,
+        )
+
+        span = MagicMock()
+        span.set_attribute = MagicMock()
+
+        # Two merged tool blocks (start metadata + accumulated delta input each)
+        tool_blocks = [
+            {"name": "get_weather", "toolUseId": "t1", "input": '{"location": "Barcelona"}'},
+            {"name": "get_time", "toolUseId": "t2", "input": '{"timezone": "CET"}'},
+        ]
+        set_converse_streaming_response_span_attributes(
+            response=["Let me check that for you."],
+            role="assistant",
+            span=span,
+            finish_reason="tool_use",
+            tool_blocks=tool_blocks,
+        )
+        import json as _json
+        for call_args in span.set_attribute.call_args_list:
+            args = call_args[0]
+            if args[0] == "gen_ai.output.messages":
+                output_messages = _json.loads(args[1])
+                parts = output_messages[0]["parts"]
+                tool_parts = [p for p in parts if p["type"] == "tool_call"]
+                assert len(tool_parts) == 2
+                assert tool_parts[0]["name"] == "get_weather"
+                assert tool_parts[0]["id"] == "t1"
+                assert tool_parts[0]["arguments"] == {"location": "Barcelona"}
+                assert tool_parts[1]["name"] == "get_time"
+                assert tool_parts[1]["id"] == "t2"
+                assert tool_parts[1]["arguments"] == {"timezone": "CET"}
+                return
+        raise AssertionError("GEN_AI_OUTPUT_MESSAGES not set on span")

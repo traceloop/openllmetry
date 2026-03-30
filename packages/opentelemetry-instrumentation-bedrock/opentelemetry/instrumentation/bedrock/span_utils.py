@@ -336,9 +336,6 @@ def _set_prompt_span_attributes(span, request_body):
 
 
 def _set_cohere_span_attributes(span, request_body, response_body, metric_params):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("p"))
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
@@ -536,9 +533,6 @@ def _count_anthropic_tokens(messages: list[str]):
 
 def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
-    _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
     )
     _set_span_attribute(
@@ -574,9 +568,6 @@ def _set_span_completions_attributes(span, response_body):
 
 
 def _set_llama_span_attributes(span, request_body, response_body, metric_params):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
     )
@@ -625,11 +616,6 @@ def _set_llama_response_span_attributes(span, response_body):
 def _set_amazon_span_attributes(
     span, request_body, response_body, headers, metric_params
 ):
-    if "messages" not in request_body:
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-        )
-
     if "textGenerationConfig" in request_body:
         config = request_body.get("textGenerationConfig", {})
         _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, config.get("topP"))
@@ -716,10 +702,8 @@ def _set_amazon_input_span_attributes(span, request_body):
 def _set_amazon_response_span_attributes(span, response_body):
     if "results" in response_body:
         output_messages = []
-        finish_reasons = []
         for result in response_body.get("results"):
             fr = _map_finish_reason(result.get("completionReason"))
-            finish_reasons.append(fr)
             output_messages.append(_output_message("assistant", [_text_part(result.get("outputText"))], fr))
         _set_span_attribute(
             span,
@@ -747,9 +731,6 @@ def _set_amazon_response_span_attributes(span, response_body):
 def _set_imported_model_span_attributes(
     span, request_body, response_body, metric_params
 ):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.TEXT_COMPLETION.value
-    )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("topP")
     )
@@ -937,6 +918,9 @@ def _converse_content_to_parts(content_blocks):
             elif "image" in block:
                 img = block["image"]
                 fmt = img.get("format", "")
+                # BlobPart.content left empty to avoid bloating spans with
+                # base64-encoded image data. Schema requires the field but
+                # empty string satisfies the constraint.
                 parts.append({
                     "type": "blob",
                     "modality": "image",
@@ -946,6 +930,7 @@ def _converse_content_to_parts(content_blocks):
             elif "video" in block:
                 vid = block["video"]
                 fmt = vid.get("format", "")
+                # BlobPart.content left empty — same rationale as image blocks.
                 parts.append({
                     "type": "blob",
                     "modality": "video",
@@ -969,12 +954,19 @@ def _converse_content_to_parts(content_blocks):
                     "md": "text/markdown",
                 }
                 mime_type = mime_map.get(fmt, f"application/{fmt}" if fmt else "")
-                parts.append({
+                # BlobPart.content is for base64-encoded binary data; left empty to
+                # avoid bloating spans. Document name stored as additional property
+                # (additionalProperties: true in BlobPart schema).
+                part = {
                     "type": "blob",
                     "modality": "document",
                     "mime_type": mime_type,
-                    "content": doc.get("name", ""),
-                })
+                    "content": "",
+                }
+                name = doc.get("name")
+                if name:
+                    part["name"] = name
+                parts.append(part)
             elif "guardContent" in block:
                 parts.append({"type": "text", "content": json.dumps(block, default=str)})
             else:
