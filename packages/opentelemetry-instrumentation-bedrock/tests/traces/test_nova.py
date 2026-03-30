@@ -65,12 +65,13 @@ def test_nova_completion(instrument_legacy, brt, span_exporter, log_exporter):
     assert input_messages[0]["role"] == "user"
     assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
 
-    # Assert on response
+    # Assert on response — one OutputMessage with all content blocks as parts
     generated_text = response_body["output"]["message"]["content"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    for i in range(0, len(generated_text)):
-        assert output_messages[i]["parts"][0]["content"] == generated_text[i]["text"]
-        assert output_messages[i]["finish_reason"] == "stop"
+    assert len(output_messages) == 1
+    assert output_messages[0]["finish_reason"] == "stop"
+    for i in range(len(generated_text)):
+        assert output_messages[0]["parts"][i]["content"] == generated_text[i]["text"]
 
     # Assert on finish reasons
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
@@ -596,12 +597,13 @@ def test_nova_converse(instrument_legacy, brt, span_exporter, log_exporter):
     assert input_messages[0]["parts"][0]["type"] == "text"
     assert input_messages[0]["parts"][2]["content"] == "What is the capital of Japan?"
 
-    # Assert on response (guardrail_intervened maps to content_filter)
+    # Assert on response (guardrail_intervened maps to content_filter) — one OutputMessage
     generated_text = response["output"]["message"]["content"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    for i in range(0, len(generated_text)):
-        assert output_messages[i]["parts"][0]["content"] == generated_text[i]["text"]
-        assert output_messages[i]["finish_reason"] == "content_filter"
+    assert len(output_messages) == 1
+    assert output_messages[0]["finish_reason"] == "content_filter"
+    for i in range(len(generated_text)):
+        assert output_messages[0]["parts"][i]["content"] == generated_text[i]["text"]
 
     # Assert on finish reasons
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
@@ -1218,12 +1220,13 @@ def test_nova_cross_region_invoke(instrument_legacy, brt, span_exporter, log_exp
     assert input_messages[0]["role"] == "user"
     assert input_messages[0]["parts"] == [{"type": "text", "content": "Tell me a joke about OpenTelemetry"}]
 
-    # Assert on response
+    # Assert on response — one OutputMessage with all content blocks as parts
     generated_text = response_body["output"]["message"]["content"]
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    for i in range(0, len(generated_text)):
-        assert output_messages[i]["parts"][0]["content"] == generated_text[i]["text"]
-        assert output_messages[i]["finish_reason"] == "stop"
+    assert len(output_messages) == 1
+    assert output_messages[0]["finish_reason"] == "stop"
+    for i in range(len(generated_text)):
+        assert output_messages[0]["parts"][i]["content"] == generated_text[i]["text"]
 
     # Assert on finish reasons
     assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)

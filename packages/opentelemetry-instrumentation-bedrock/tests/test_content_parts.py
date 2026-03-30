@@ -4,6 +4,8 @@ These are pure unit tests (no VCR cassettes, no boto3) that validate
 the mapping logic in span_utils.py against the OTel GenAI semconv.
 """
 
+import json
+
 from opentelemetry.instrumentation.bedrock.span_utils import (
     _anthropic_content_to_parts,
     _converse_content_to_parts,
@@ -11,6 +13,7 @@ from opentelemetry.instrumentation.bedrock.span_utils import (
     _output_message,
     _text_part,
 )
+from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
 
 
 # ─── _anthropic_content_to_parts ───────────────────────────────────────────
@@ -375,3 +378,154 @@ class TestOutputMessage:
         msg = _output_message("assistant", [_text_part("hi")])
         assert "finish_reason" in msg
         assert msg["finish_reason"] == ""
+
+
+# ─── P1-1 regression: Nova output → single OutputMessage ─────────────────
+
+
+class TestNovaOutputMessageCollapse:
+    """P1-1: Amazon Nova 'output' path must produce ONE OutputMessage with
+    multiple parts (via _converse_content_to_parts), not one per content block."""
+
+    def test_multi_text_blocks_become_single_message(self):
+        """Multiple text content blocks → one OutputMessage with multiple text parts."""
+        from opentelemetry.instrumentation.bedrock.span_utils import (
+            _converse_content_to_parts,
+        )
+
+        content_blocks = [
+            {"text": "First paragraph."},
+            {"text": "Second paragraph."},
+        ]
+        parts = _converse_content_to_parts(content_blocks)
+        assert len(parts) == 2
+        assert parts[0] == {"type": "text", "content": "First paragraph."}
+        assert parts[1] == {"type": "text", "content": "Second paragraph."}
+
+        msg = _output_message("assistant", parts, "stop")
+        assert len(msg["parts"]) == 2
+        assert msg["finish_reason"] == "stop"
+
+    def test_mixed_text_and_tool_use_blocks(self):
+        """Nova output with text + toolUse → single OutputMessage, multiple parts."""
+        content_blocks = [
+            {"text": "Let me look that up."},
+            {"toolUse": {"name": "search", "toolUseId": "t1", "input": {"q": "weather"}}},
+        ]
+        parts = _converse_content_to_parts(content_blocks)
+        assert len(parts) == 2
+        assert parts[0]["type"] == "text"
+        assert parts[1]["type"] == "tool_call"
+        assert parts[1]["name"] == "search"
+
+    def test_single_text_block(self):
+        """Single text block → one OutputMessage with one part (no regression)."""
+        content_blocks = [{"text": "Hello"}]
+        parts = _converse_content_to_parts(content_blocks)
+        assert len(parts) == 1
+        msg = _output_message("assistant", parts, "stop")
+        assert len(msg["parts"]) == 1
+        assert msg["parts"][0]["content"] == "Hello"
+
+
+# ─── P1-2 regression: StreamingWrapper thinking_delta accumulation ────────
+
+
+def _make_chunk(payload):
+    """Helper: wrap a dict as a streaming chunk event."""
+    return {"chunk": {"bytes": json.dumps(payload).encode()}}
+
+
+class _IterableList(list):
+    """A list subclass that supports arbitrary attribute assignment,
+    needed because StreamingWrapper (ObjectProxy) proxies setattr
+    to the wrapped object."""
+
+    def __iter__(self):
+        return super().__iter__()
+
+
+class TestStreamingWrapperThinkingDelta:
+    """P1-2: StreamingWrapper must accumulate thinking_delta blocks so that
+    Anthropic extended thinking content is captured in the invoke_model
+    streaming path."""
+
+    def _build_stream(self, events):
+        """Build a StreamingWrapper from a list of raw chunk dicts."""
+        results = {}
+
+        def callback(body):
+            results["body"] = body
+
+        wrapper = StreamingWrapper(_IterableList(events), stream_done_callback=callback)
+        for _ in wrapper:
+            pass
+        return results.get("body", {})
+
+    def test_thinking_delta_accumulated(self):
+        """thinking_delta chunks must be concatenated into the content block."""
+        events = [
+            _make_chunk({"type": "message_start", "message": {
+                "content": [], "usage": {}, "stop_reason": None,
+            }}),
+            _make_chunk({"type": "content_block_start", "content_block": {
+                "type": "thinking", "thinking": "",
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "type": "thinking_delta", "thinking": "Step 1: ",
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "type": "thinking_delta", "thinking": "analyze the question.",
+            }}),
+            _make_chunk({"type": "content_block_start", "content_block": {
+                "type": "text", "text": "",
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "text": "The answer is 42.",
+            }}),
+            _make_chunk({"type": "message_delta", "delta": {"stop_reason": "end_turn"}, "usage": {}}),
+            _make_chunk({"type": "message_stop", "amazon-bedrock-invocationMetrics": {}}),
+        ]
+        body = self._build_stream(events)
+        assert len(body["content"]) == 2
+        assert body["content"][0]["thinking"] == "Step 1: analyze the question."
+        assert body["content"][1]["text"] == "The answer is 42."
+
+    def test_thinking_delta_empty(self):
+        """Empty thinking deltas should not crash — just append empty strings."""
+        events = [
+            _make_chunk({"type": "message_start", "message": {
+                "content": [], "usage": {},
+            }}),
+            _make_chunk({"type": "content_block_start", "content_block": {
+                "type": "thinking", "thinking": "",
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "type": "thinking_delta", "thinking": "",
+            }}),
+            _make_chunk({"type": "message_delta", "delta": {"stop_reason": "end_turn"}, "usage": {}}),
+            _make_chunk({"type": "message_stop", "amazon-bedrock-invocationMetrics": {}}),
+        ]
+        body = self._build_stream(events)
+        assert body["content"][0]["thinking"] == ""
+
+    def test_text_and_input_json_still_work(self):
+        """Ensure text and input_json_delta handling are not broken."""
+        events = [
+            _make_chunk({"type": "message_start", "message": {
+                "content": [], "usage": {},
+            }}),
+            _make_chunk({"type": "content_block_start", "content_block": {
+                "type": "tool_use", "id": "t1", "name": "search",
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "type": "input_json_delta", "partial_json": '{"q":',
+            }}),
+            _make_chunk({"type": "content_block_delta", "delta": {
+                "type": "input_json_delta", "partial_json": '"test"}',
+            }}),
+            _make_chunk({"type": "message_delta", "delta": {"stop_reason": "tool_use"}, "usage": {}}),
+            _make_chunk({"type": "message_stop", "amazon-bedrock-invocationMetrics": {}}),
+        ]
+        body = self._build_stream(events)
+        assert body["content"][0]["input"] == '{"q":"test"}'

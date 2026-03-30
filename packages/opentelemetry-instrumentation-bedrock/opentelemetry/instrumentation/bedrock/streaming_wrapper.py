@@ -58,6 +58,11 @@ class StreamingWrapper(ObjectProxy):
                 current = self._accumulating_body["content"][-1]
                 current.setdefault("input", "")
                 current["input"] += partial_json
+            elif delta.get("type") == "thinking_delta":
+                thinking_text = delta.get("thinking", "")
+                current = self._accumulating_body["content"][-1]
+                current.setdefault("thinking", "")
+                current["thinking"] += thinking_text
         elif type == "message_delta":
             delta = decoded_chunk.get("delta", {})
             if delta.get("stop_reason"):

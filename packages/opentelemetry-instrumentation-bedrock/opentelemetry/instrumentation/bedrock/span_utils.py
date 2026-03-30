@@ -735,14 +735,12 @@ def _set_amazon_response_span_attributes(span, response_body):
         )
     elif "output" in response_body:
         fr = _map_finish_reason(response_body.get("stopReason"))
-        msgs = response_body.get("output").get("message", {}).get("content", [])
-        output_messages = []
-        for msg in msgs:
-            output_messages.append(_output_message("assistant", [_text_part(msg.get("text"))], fr))
+        content_blocks = response_body.get("output", {}).get("message", {}).get("content", [])
+        parts = _converse_content_to_parts(content_blocks)
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(output_messages),
+            json.dumps([_output_message("assistant", parts, fr)]),
         )
 
 
