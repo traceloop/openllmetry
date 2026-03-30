@@ -29,6 +29,8 @@ from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
 from opentelemetry.instrumentation.bedrock.span_utils import (
     converse_usage_record,
     set_converse_input_prompt_span_attributes,
+    _set_converse_finish_reasons,
+    _set_finish_reasons_unconditionally,
     set_converse_model_span_attributes,
     set_converse_response_span_attributes,
     set_converse_streaming_response_span_attributes,
@@ -48,7 +50,11 @@ from opentelemetry.instrumentation.utils import (
     unwrap,
 )
 from opentelemetry.metrics import Counter, Histogram, Meter, get_meter
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
     GenAiSystemValues,
 )
 from opentelemetry.semconv_ai import (
@@ -203,8 +209,14 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+        }
         with tracer.start_as_current_span(
-            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT
+            _BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
             response = fn(*args, **kwargs)
             _handle_call(span, kwargs, response, metric_params, event_logger)
@@ -221,7 +233,17 @@ def _instrumented_model_invoke_with_response_stream(
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_INVOKE_SPAN_NAME, kind=SpanKind.CLIENT)
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+        }
+        span = tracer.start_span(
+            _BEDROCK_INVOKE_SPAN_NAME,
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
 
         response = fn(*args, **kwargs)
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
@@ -240,8 +262,15 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+        }
         with tracer.start_as_current_span(
-            _BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT
+            _BEDROCK_CONVERSE_SPAN_NAME,
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
         ) as span:
             response = fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params, event_logger)
@@ -257,7 +286,16 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
-        span = tracer.start_span(_BEDROCK_CONVERSE_SPAN_NAME, kind=SpanKind.CLIENT)
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+        }
+        span = tracer.start_span(
+            _BEDROCK_CONVERSE_SPAN_NAME,
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
         response = fn(*args, **kwargs)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
@@ -302,6 +340,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
         if should_emit_events() and event_logger:
             emit_message_events(event_logger, kwargs)
             emit_streaming_response_event(response_body, event_logger)
+            _set_finish_reasons_unconditionally(model_vendor, span, response_body)
         else:
             set_model_message_span_attributes(model_vendor, span, request_body)
             set_model_choice_span_attributes(model_vendor, span, response_body)
@@ -348,6 +387,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
     if should_emit_events() and event_logger:
         emit_message_events(event_logger, kwargs)
         emit_choice_events(event_logger, response)
+        _set_finish_reasons_unconditionally(model_vendor, span, response_body)
     else:
         set_model_message_span_attributes(model_vendor, span, request_body)
         set_model_choice_span_attributes(model_vendor, span, response_body)
@@ -365,6 +405,7 @@ def _handle_converse(span, kwargs, response, metric_params, event_logger):
     if should_emit_events() and event_logger:
         emit_input_events_converse(kwargs, event_logger)
         emit_response_event_converse(response, event_logger)
+        _set_converse_finish_reasons(span, response.get("stopReason"))
     else:
         set_converse_input_prompt_span_attributes(kwargs, span)
         set_converse_response_span_attributes(response, span)
@@ -388,11 +429,20 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
         def handler(func):
             def wrap(*args, **kwargs):
                 response_msg = kwargs.pop("response_msg")
+                tool_blocks = kwargs.pop("tool_blocks")
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
                 nonlocal role
-                if "contentBlockDelta" in event and "text" in event["contentBlockDelta"].get("delta", {}):
-                    response_msg.append(event["contentBlockDelta"]["delta"]["text"])
+                if "contentBlockDelta" in event:
+                    delta = event["contentBlockDelta"].get("delta", {})
+                    if "text" in delta:
+                        response_msg.append(delta["text"])
+                    if "toolUse" in delta:
+                        tool_blocks.append(delta["toolUse"])
+                elif "contentBlockStart" in event:
+                    start = event["contentBlockStart"].get("start", {})
+                    if "toolUse" in start:
+                        tool_blocks.append(start["toolUse"])
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
@@ -409,14 +459,19 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                             role,
                             stop_reason,
                         )
+                        _set_converse_finish_reasons(span, stop_reason)
                     else:
                         set_converse_streaming_response_span_attributes(
-                            response_msg, role, span, finish_reason=stop_reason
+                            response_msg,
+                            role,
+                            span,
+                            finish_reason=stop_reason,
+                            tool_blocks=tool_blocks,
                         )
 
                 return event
 
-            return partial(wrap, response_msg=[], span=span)
+            return partial(wrap, response_msg=[], tool_blocks=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
 
@@ -451,6 +506,19 @@ def _cross_region_check(value):
     else:
         (model_vendor, model) = value.split(".", 1)
     return model_vendor, model
+
+
+def _derive_operation_name(kwargs):
+    """Derive operation name for invoke_model spans prior to creation."""
+    body_str = kwargs.get("body")
+    if body_str:
+        try:
+            body = json.loads(body_str)
+            if isinstance(body, dict) and "messages" in body:
+                return GenAiOperationNameValues.CHAT.value
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return GenAiOperationNameValues.TEXT_COMPLETION.value
 
 
 class GuardrailMeters:

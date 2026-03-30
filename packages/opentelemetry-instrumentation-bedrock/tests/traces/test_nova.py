@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -10,6 +9,8 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiSystemValues,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+
+from tests.traces import assert_message_in_logs
 
 
 @pytest.mark.vcr
@@ -1373,16 +1374,3 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == GenAiSystemValues.AWS_BEDROCK.value
-    )
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content

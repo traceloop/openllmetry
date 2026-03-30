@@ -34,6 +34,8 @@ BEDROCK_FINISH_REASON_MAP = {
     "ERROR": "error",
     # Amazon Titan
     "FINISH": "stop",
+    # AI21
+    "endoftext": "stop",
     # Converse API
     "guardrail_intervened": "content_filter",
 }
@@ -114,10 +116,9 @@ def _anthropic_content_to_parts(content_blocks):
             elif block_type == "thinking":
                 parts.append({"type": "reasoning", "content": block.get("thinking", "")})
             else:
-                # Stopgap: unknown Anthropic block types are passed through
-                # with their raw type string. This may emit non-OTel types
-                # but avoids data loss until explicit mappings are added.
-                parts.append({"type": block_type, "content": json.dumps(block)})
+                # Stopgap: unknown Anthropic block types are encoded as text
+                # to avoid emitting non-OTel part types.
+                parts.append({"type": "text", "content": json.dumps(block)})
         else:
             parts.append(_text_part(str(block)))
     return parts
@@ -266,6 +267,7 @@ def set_model_span_attributes(
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
+    _set_finish_reasons_unconditionally(model_vendor, span, response_body)
 
     if model_vendor == "cohere":
         _set_cohere_span_attributes(span, request_body, response_body, metric_params)
@@ -872,6 +874,27 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
         span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
     )
 
+    tool_config = kwargs.get("toolConfig", {})
+    tools = tool_config.get("tools", []) if tool_config else []
+    if tools:
+        tool_defs = []
+        for tool in tools:
+            spec = tool.get("toolSpec", {}) if isinstance(tool, dict) else {}
+            if not spec:
+                continue
+            tool_def = {"name": spec.get("name", "")}
+            if "description" in spec:
+                tool_def["description"] = spec.get("description")
+            if "inputSchema" in spec:
+                tool_def["parameters"] = spec.get("inputSchema", {}).get("json", {})
+            tool_defs.append(tool_def)
+        if tool_defs:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+                json.dumps(tool_defs),
+            )
+
 
 def _converse_content_to_parts(content_blocks):
     """Convert Bedrock Converse API content blocks to OTel parts format."""
@@ -978,11 +1001,16 @@ def set_converse_input_prompt_span_attributes(kwargs, span):
         )
 
 
+def _set_converse_finish_reasons(span, stop_reason):
+    fr = _map_finish_reason(stop_reason)
+    if fr:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+    return fr
+
+
 def set_converse_response_span_attributes(response, span):
     if "output" in response:
-        fr = _map_finish_reason(response.get("stopReason"))
-        if fr:
-            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+        fr = _set_converse_finish_reasons(span, response.get("stopReason"))
         if not should_send_prompts():
             return
         message = response["output"]["message"]
@@ -994,16 +1022,37 @@ def set_converse_response_span_attributes(response, span):
         )
 
 
-def set_converse_streaming_response_span_attributes(response, role, span, finish_reason=None):
-    fr = _map_finish_reason(finish_reason)
-    if fr:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (fr,))
+def set_converse_streaming_response_span_attributes(
+    response,
+    role,
+    span,
+    finish_reason=None,
+    tool_blocks=None,
+):
+    fr = _set_converse_finish_reasons(span, finish_reason)
     if not should_send_prompts():
         return
+    parts = []
+    text_content = "".join(response)
+    if text_content:
+        parts.append(_text_part(text_content))
+    for tool in tool_blocks or []:
+        raw_input = tool.get("input", {})
+        if isinstance(raw_input, str):
+            try:
+                raw_input = json.loads(raw_input)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        parts.append({
+            "type": "tool_call",
+            "name": tool.get("name"),
+            "id": tool.get("toolUseId"),
+            "arguments": raw_input,
+        })
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-        json.dumps([_output_message(role, [_text_part("".join(response))], fr)]),
+        json.dumps([_output_message(role, parts, fr)]),
     )
 
 

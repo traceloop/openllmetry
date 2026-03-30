@@ -2,12 +2,13 @@ import json
 
 import pytest
 from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues, GenAiSystemValues
 from opentelemetry.semconv_ai import SpanAttributes
+
+from tests.traces import assert_message_in_logs
 
 
 @pytest.mark.vcr
@@ -34,6 +35,14 @@ def test_anthropic_2_completion(instrument_legacy, brt, span_exporter, log_expor
     assert all(span.name == "bedrock.completion" for span in spans)
 
     anthropic_span = spans[0]
+
+    # Assert on vendor and operation (P3-4: enforce spec on every span)
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
     input_messages = json.loads(
         anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
@@ -1072,16 +1081,3 @@ def test_anthropic_converse_stream_with_tool_use(
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == GenAiSystemValues.AWS_BEDROCK.value
-    )
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content

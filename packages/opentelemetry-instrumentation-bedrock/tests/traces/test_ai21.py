@@ -1,14 +1,16 @@
 import json
 
 import pytest
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
     GenAiSystemValues,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+
+from tests.traces import assert_message_in_logs
 
 
 @pytest.mark.vcr
@@ -43,6 +45,14 @@ def test_ai21_j2_completion_string_content(
     assert all(span.name == "bedrock.completion" for span in spans)
 
     meta_span = spans[0]
+
+    # Assert on vendor and operation (P3-4: enforce spec on every span)
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+    assert (
+        meta_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
     assert meta_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == len(
         response_body.get("prompt").get("tokens")
     )
@@ -57,6 +67,9 @@ def test_ai21_j2_completion_string_content(
     # It is apparently always 1234, but for the sake of consistency,
     # we should not assert on it.
     assert meta_span.attributes.get("gen_ai.response.id") == 1234
+
+    # Assert on finish reasons (P3-1: AI21 'endoftext' must map to OTel 'stop')
+    assert meta_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -121,7 +134,7 @@ def test_ai21_j2_completion_string_content_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "endoftext",
+        "finish_reason": "stop",
         "message": {"content": response_body["completions"][0]["data"]["text"]},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -180,21 +193,8 @@ def test_ai21_j2_completion_string_content_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "endoftext",
+        "finish_reason": "stop",
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == GenAiSystemValues.AWS_BEDROCK.value
-    )
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content
