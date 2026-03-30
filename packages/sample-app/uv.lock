@@ -236,14 +236,14 @@ wheels = [
 
 [[package]]
 name = "authlib"
-version = "1.6.6"
+version = "1.6.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bb/9b/b1661026ff24bc641b76b78c5222d614776b0c085bcfdac9bd15a1cb4b35/authlib-1.6.6.tar.gz", hash = "sha256:45770e8e056d0f283451d9996fbb59b70d45722b45d854d58f32878d0a40c38e", size = 164894, upload-time = "2025-12-12T08:01:41.464Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/af/98/00d3dd826d46959ad8e32af2dbb2398868fd9fd0683c26e56d0789bd0e68/authlib-1.6.9.tar.gz", hash = "sha256:d8f2421e7e5980cc1ddb4e32d3f5fa659cfaf60d8eaf3281ebed192e4ab74f04", size = 165134, upload-time = "2026-03-02T07:44:01.998Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/51/321e821856452f7386c4e9df866f196720b1ad0c5ea1623ea7399969ae3b/authlib-1.6.6-py2.py3-none-any.whl", hash = "sha256:7d9e9bc535c13974313a87f53e8430eb6ea3d1cf6ae4f6efcd793f2e949143fd", size = 244005, upload-time = "2025-12-12T08:01:40.209Z" },
+    { url = "https://files.pythonhosted.org/packages/53/23/b65f568ed0c22f1efacb744d2db1a33c8068f384b8c9b482b52ebdbc3ef6/authlib-1.6.9-py2.py3-none-any.whl", hash = "sha256:f08b4c14e08f0861dc18a32357b33fbcfd2ea86cfe3fe149484b4d764c4a0ac3", size = 244197, upload-time = "2026-03-02T07:44:00.307Z" },
 ]
 
 [[package]]
@@ -2428,7 +2428,7 @@ wheels = [
 
 [[package]]
 name = "langgraph"
-version = "1.0.7"
+version = "1.0.10rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
@@ -2438,9 +2438,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/5b/f72655717c04e33d3b62f21b166dc063d192b53980e9e3be0e2a117f1c9f/langgraph-1.0.7.tar.gz", hash = "sha256:0cfdfee51e6e8cfe503ecc7367c73933437c505b03fa10a85c710975c8182d9a", size = 497098, upload-time = "2026-01-22T16:57:47.303Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/33/34c8ab47938ac2ac6df1d2696e28b6000e98c2a783b89655fe2261b7f93b/langgraph-1.0.10rc1.tar.gz", hash = "sha256:4042dc1f33297ccbd593bddc5a4e77dc7e0f37c7ac19d48551c53a22287bacaa", size = 511667, upload-time = "2026-02-26T20:13:38.38Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/0e/fe80144e3e4048e5d19ccdb91ac547c1a7dc3da8dbd1443e210048194c14/langgraph-1.0.7-py3-none-any.whl", hash = "sha256:9d68e8f8dd8f3de2fec45f9a06de05766d9b075b78fb03171779893b7a52c4d2", size = 157353, upload-time = "2026-01-22T16:57:45.997Z" },
+    { url = "https://files.pythonhosted.org/packages/df/61/b6e7fd50c70116369874d681e3aa14bf32adbdde6c05014e5260c081452f/langgraph-1.0.10rc1-py3-none-any.whl", hash = "sha256:10750c035cc48b6809a4657ad0c9fd63fb6ee47dd2f1f2a57adb940381d096e5", size = 160950, upload-time = "2026-02-26T20:13:37.223Z" },
 ]
 
 [[package]]
@@ -2458,15 +2458,15 @@ wheels = [
 
 [[package]]
 name = "langgraph-prebuilt"
-version = "1.0.7"
+version = "1.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
     { name = "langgraph-checkpoint" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/59/711aecd1a50999456850dc328f3cad72b4372d8218838d8d5326f80cb76f/langgraph_prebuilt-1.0.7.tar.gz", hash = "sha256:38e097e06de810de4d0e028ffc0e432bb56d1fb417620fb1dfdc76c5e03e4bf9", size = 163692, upload-time = "2026-01-22T16:45:22.801Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/06/dd61a5c2dce009d1b03b1d56f2a85b3127659fdddf5b3be5d8f1d60820fb/langgraph_prebuilt-1.0.8.tar.gz", hash = "sha256:0cd3cf5473ced8a6cd687cc5294e08d3de57529d8dd14fdc6ae4899549efcf69", size = 164442, upload-time = "2026-02-19T18:14:39.083Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/49/5e37abb3f38a17a3487634abc2a5da87c208cc1d14577eb8d7184b25c886/langgraph_prebuilt-1.0.7-py3-none-any.whl", hash = "sha256:e14923516504405bb5edc3977085bc9622c35476b50c1808544490e13871fe7c", size = 35324, upload-time = "2026-01-22T16:45:21.784Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/41/ec966424ad3f2ed3996d24079d3342c8cd6c0bd0653c12b2a917a685ec6c/langgraph_prebuilt-1.0.8-py3-none-any.whl", hash = "sha256:d16a731e591ba4470f3e313a319c7eee7dbc40895bcf15c821f985a3522a7ce0", size = 35648, upload-time = "2026-02-19T18:14:37.611Z" },
 ]
 
 [[package]]
@@ -3226,7 +3226,7 @@ wheels = [
 
 [[package]]
 name = "nltk"
-version = "3.9.3"
+version = "3.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -3234,9 +3234,9 @@ dependencies = [
     { name = "regex" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/8f/915e1c12df07c70ed779d18ab83d065718a926e70d3ea33eb0cd66ffb7c0/nltk-3.9.3.tar.gz", hash = "sha256:cb5945d6424a98d694c2b9a0264519fab4363711065a46aa0ae7a2195b92e71f", size = 2923673, upload-time = "2026-02-24T12:05:53.833Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/a1/b3b4adf15585a5bc4c357adde150c01ebeeb642173ded4d871e89468767c/nltk-3.9.4.tar.gz", hash = "sha256:ed03bc098a40481310320808b2db712d95d13ca65b27372f8a403949c8b523d0", size = 2946864, upload-time = "2026-03-24T06:13:40.641Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/7e/9af5a710a1236e4772de8dfcc6af942a561327bb9f42b5b4a24d0cf100fd/nltk-3.9.3-py3-none-any.whl", hash = "sha256:60b3db6e9995b3dd976b1f0fa7dec22069b2677e759c28eb69b62ddd44870522", size = 1525385, upload-time = "2026-02-24T12:05:46.54Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/91/04e965f8e717ba0ab4bdca5c112deeab11c9e750d94c4d4602f050295d39/nltk-3.9.4-py3-none-any.whl", hash = "sha256:f2fa301c3a12718ce4a0e9305c5675299da5ad9e26068218b69d692fda84828f", size = 1552087, upload-time = "2026-03-24T06:13:38.47Z" },
 ]
 
 [[package]]
@@ -3654,7 +3654,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-agno"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-agno" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3694,7 +3694,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-alephalpha"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-alephalpha" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3732,7 +3732,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-anthropic"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-anthropic" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3770,28 +3770,25 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-bedrock"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-bedrock" }
 dependencies = [
-    { name = "anthropic" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-semantic-conventions" },
     { name = "opentelemetry-semantic-conventions-ai" },
-    { name = "tokenizers" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = ">=0.17.0" },
+    { name = "anthropic", marker = "extra == 'enrichment'", specifier = ">=0.17.0" },
     { name = "boto3", marker = "extra == 'instruments'" },
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.5.1,<0.6.0" },
-    { name = "tokenizers", specifier = ">=0.13.0" },
 ]
-provides-extras = ["instruments"]
+provides-extras = ["instruments", "enrichment"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.4.0" }]
@@ -3806,7 +3803,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-chromadb" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3841,7 +3838,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-cohere" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3879,7 +3876,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-crewai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-crewai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3915,7 +3912,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-google-generativeai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3952,7 +3949,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-groq"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-groq" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -3990,7 +3987,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-haystack" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4027,7 +4024,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-lancedb"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-lancedb" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4067,7 +4064,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-langchain"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-langchain" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4121,7 +4118,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-llamaindex" }
 dependencies = [
     { name = "inflection" },
@@ -4184,7 +4181,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-marqo"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-marqo" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4222,7 +4219,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-mcp"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-mcp" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4262,7 +4259,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-milvus"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-milvus" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4298,7 +4295,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-mistralai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-mistralai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4335,7 +4332,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-ollama"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-ollama" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4373,7 +4370,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-openai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4410,7 +4407,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai-agents"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-openai-agents" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4449,7 +4446,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-pinecone"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-pinecone" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4488,7 +4485,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-qdrant" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4536,7 +4533,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-replicate" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4588,7 +4585,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-sagemaker"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-sagemaker" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4653,7 +4650,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-together"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-together" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4691,7 +4688,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-transformers" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4738,7 +4735,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-vertexai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-vertexai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4776,7 +4773,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-voyageai"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-voyageai" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4814,7 +4811,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-watsonx"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-watsonx" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4852,7 +4849,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-weaviate"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-weaviate" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -4891,7 +4888,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-writer"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../opentelemetry-instrumentation-writer" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -5512,11 +5509,11 @@ wheels = [
 
 [[package]]
 name = "pyasn1"
-version = "0.6.2"
+version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fe/b6/6e630dff89739fcd427e3f72b3d905ce0acb85a45d4ec3e2678718a3487f/pyasn1-0.6.2.tar.gz", hash = "sha256:9b59a2b25ba7e4f8197db7686c09fb33e658b98339fadb826e9512629017833b", size = 146586, upload-time = "2026-01-16T18:04:18.534Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/5f/6583902b6f79b399c9c40674ac384fd9cd77805f9e6205075f828ef11fb2/pyasn1-0.6.3.tar.gz", hash = "sha256:697a8ecd6d98891189184ca1fa05d1bb00e2f84b5977c481452050549c8a72cf", size = 148685, upload-time = "2026-03-17T01:06:53.382Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/b5/a96872e5184f354da9c84ae119971a0a4c221fe9b27a4d94bd43f2596727/pyasn1-0.6.2-py3-none-any.whl", hash = "sha256:1eb26d860996a18e9b6ed05e7aae0e9fc21619fcee6af91cca9bad4fbea224bf", size = 83371, upload-time = "2026-01-16T18:04:17.174Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/a0/7d793dce3fa811fe047d6ae2431c672364b462850c6235ae306c0efd025f/pyasn1-0.6.3-py3-none-any.whl", hash = "sha256:a80184d120f0864a52a073acc6fc642847d0be408e7c7252f31390c0f4eadcde", size = 83997, upload-time = "2026-03-17T01:06:52.036Z" },
 ]
 
 [[package]]
@@ -5804,14 +5801,14 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.7.4"
+version = "6.9.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/dc/f52deef12797ad58b88e4663f097a343f53b9361338aef6573f135ac302f/pypdf-6.7.4.tar.gz", hash = "sha256:9edd1cd47938bb35ec87795f61225fd58a07cfaf0c5699018ae1a47d6f8ab0e3", size = 5304821, upload-time = "2026-02-27T10:44:39.395Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/31/83/691bdb309306232362503083cb15777491045dd54f45393a317dc7d8082f/pypdf-6.9.2.tar.gz", hash = "sha256:7f850faf2b0d4ab936582c05da32c52214c2b089d61a316627b5bfb5b0dab46c", size = 5311837, upload-time = "2026-03-23T14:53:27.983Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/be/cded021305f5c81b47265b8c5292b99388615a4391c21ff00fd538d34a56/pypdf-6.7.4-py3-none-any.whl", hash = "sha256:527d6da23274a6c70a9cb59d1986d93946ba8e36a6bc17f3f7cce86331492dda", size = 331496, upload-time = "2026-02-27T10:44:37.527Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/7e/c85f41243086a8fe5d1baeba527cb26a1918158a565932b41e0f7c0b32e9/pypdf-6.9.2-py3-none-any.whl", hash = "sha256:662cf29bcb419a36a1365232449624ab40b7c2d0cfc28e54f42eeecd1fd7e844", size = 333744, upload-time = "2026-03-23T14:53:26.573Z" },
 ]
 
 [[package]]
@@ -6162,7 +6159,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.32.5"
+version = "2.33.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -6170,9 +6167,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/64/8860370b167a9721e8956ae116825caff829224fbca0ca6e7bf8ddef8430/requests-2.33.0.tar.gz", hash = "sha256:c7ebc5e8b0f21837386ad0e1c8fe8b829fa5f544d8df3b2253bff14ef29d7652", size = 134232, upload-time = "2026-03-25T15:10:41.586Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
+    { url = "https://files.pythonhosted.org/packages/56/5d/c814546c2333ceea4ba42262d8c4d55763003e767fa169adc693bd524478/requests-2.33.0-py3-none-any.whl", hash = "sha256:3324635456fa185245e24865e810cecec7b4caf933d7eb133dcde67d48cee69b", size = 65017, upload-time = "2026-03-25T15:10:40.382Z" },
 ]
 
 [[package]]
@@ -7032,7 +7029,7 @@ wheels = [
 
 [[package]]
 name = "traceloop-sdk"
-version = "0.54.0"
+version = "0.57.0"
 source = { editable = "../traceloop-sdk" }
 dependencies = [
     { name = "aiohttp" },
