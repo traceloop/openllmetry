@@ -15,7 +15,7 @@ def assistant(openai_client):
         name="Math Tutor",
         instructions="You are a personal math tutor. Write and run code to answer math questions.",
         tools=[{"type": "code_interpreter"}],
-        model="gpt-4-turbo-preview",
+        model="gpt-4o-mini",
     )
 
 
@@ -60,11 +60,11 @@ def test_new_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -143,11 +143,11 @@ def test_new_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
@@ -224,11 +224,11 @@ def test_new_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
@@ -286,8 +286,8 @@ def test_new_assistant_with_polling(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
     assert input_messages[0]["parts"][0]["content"] == (
@@ -355,8 +355,8 @@ def test_new_assistant_with_polling_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
@@ -429,8 +429,8 @@ def test_new_assistant_with_polling_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
@@ -493,11 +493,11 @@ def test_existing_assistant(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -572,11 +572,11 @@ def test_existing_assistant_with_events_with_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
@@ -667,11 +667,11 @@ def test_existing_assistant_with_events_with_no_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
@@ -740,11 +740,11 @@ def test_streaming_new_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -814,11 +814,11 @@ def test_streaming_new_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
@@ -917,11 +917,11 @@ def test_streaming_new_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
@@ -986,11 +986,11 @@ def test_streaming_existing_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -1059,11 +1059,11 @@ def test_streaming_existing_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
@@ -1147,11 +1147,11 @@ def test_streaming_existing_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
