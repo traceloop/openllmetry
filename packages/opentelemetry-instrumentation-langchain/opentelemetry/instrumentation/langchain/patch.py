@@ -137,7 +137,7 @@ def _set_graph_span_io(
             graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
             graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_INPUT, input_json)
         except Exception:
-            pass
+            logger.debug("Failed to set graph span input attributes", exc_info=True)
 
     if last_output is not None:
         try:
@@ -149,7 +149,7 @@ def _set_graph_span_io(
             graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
             graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
         except Exception:
-            pass
+            logger.debug("Failed to set graph span output attributes", exc_info=True)
 
 
 def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
