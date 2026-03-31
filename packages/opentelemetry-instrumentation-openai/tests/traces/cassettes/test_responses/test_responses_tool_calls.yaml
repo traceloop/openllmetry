@@ -110,4 +110,115 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"input":[{"type":"message","role":"user","content":"What''s the weather
+      in London?"}],"model":"gpt-4.1-nano","tool_choice":"auto","tools":[{"type":"function","name":"get_weather","description":"Get
+      the current weather for a location","parameters":{"type":"object","properties":{"location":{"type":"string","description":"The
+      city and state, e.g. San Francisco, CA"}},"required":["location"]}}]}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '394'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/81VTW/bOBC951cIOtuB5EiO1VtRoEWBBOi2e9huUwgUOVKYUKTKD2+NwP99h5T1
+        5STF7q0XQZpHPs28eUM+XURRzFn8Joo1mK5M6k2WJtsrWm+zdEt3SbItaEUrSIt6R3dpUVS7TZFD
+        kZOrLK+v8iJeeQpVPQC1A42SBvo41UAssJJ4LL2+zort1XaXBsxYYp3xe6hqOwG4rt9UEfrYaOWk
+        z6smwkAf5kJw2WDsCT8x0JEDaL+fwR6E6vADgWP/44Hy7NebgILWyu+UTogQqDX8cCDpoexAEmEP
+        CCaXScC4HMhKBpZwYeY7uTRWO2o5Fj2Pt+RnqZztnC2teoTnoFVKlJSIJV2rGAhfU9PZdXaZriWR
+        ar1JNvk6ydZpdpI7EOOyb0GJXo+xkzV9vY+bapf0fSSszvKiyqo8LZI0DcSBxB46CDROhrJCkhP8
+        WtsCSHTjWpA24E93sVCUeI67+M1dfKMk86/Hab2nLvusw2ujm6Y2nxNKP6tb+tchvW7Mg9t+nHZI
+        0obsGrDlP2iu+77rp77/Xy3SXdACzQ27alNRqKDOq99Di4c/sr3Ib/++Se7z/Iv68akV9devB/Zf
+        tMDn9+CUjmjkArG0Gzq2n6kOxxVtDy/YHqE9V86Uw0T3uY1O7TSWbJGS3kP5CIdXMY2ySF/4fAWe
+        C0bJxThDXSttZ4u8wK5tiR64x+k2pAZ7wIQ8cc1hMcsG9J5jSZYPp0NNnLDx6dBRGuYKWGjx4MA2
+        hnB6Kt7CTztlhnm1ZPqe+SKsm9sv3oOulOFByrgFxl07nUp9E+4Vpudh4qyKR8A8n+dz+02tZ2Co
+        5t1J1vgD2AjbH1GnNWoSndwQYeYRiQbn/do5I+g902LTtJmVPMvmdNivJgT7jSKi4MsdiIy/XsZn
+        bHh8ehusluhZfX/62lDUiEgW+amDVQSXzWX0hcjovSaSckPVKnr3Np7xHMf34yxZf9RzDWyU+zzV
+        Mfh9toswxj1KxKd5seF6ujj7SagpXIfeZmcTaVVXCtWgZJUnSMZgN/efxo4PwsWMG1KJ4Xp0hjQw
+        mZPLxR2TF6vn8dnF9TQdNzicbNqYLGx8fnVl+UvAS7zjZL9GbZUlYgLTJBvnw5nlKKMLCSOWeP7j
+        xfFfa9tKq64IAAA=
+    headers:
+      CF-RAY:
+      - 9e4fb1df6cf60f0a-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:28:02 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1197'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=VRZI18HGK5HFTVTCidDWcvW9Zp9jKxoOdJ_cWD3GVZ8-1774963681.187256-1.0.1.1-nG6Zn3L2YueU43YJSLQCTxLhNdYVUgUML0.88Om3qaANgW4RLAvLuH8FinpzcuodkXst2Q.IPttbMEf9stq7D2s9nsRjGQhN1oRapY7yZbcj7QGXJ90WVcVpX2H_E_HV;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:58:02 GMT
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999725'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_397abe496a7e4eb9bc82162a22e783c5
+    status:
+      code: 200
+      message: OK
 version: 1

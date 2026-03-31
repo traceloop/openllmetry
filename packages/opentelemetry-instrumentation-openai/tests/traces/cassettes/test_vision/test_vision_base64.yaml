@@ -18828,4 +18828,147 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.5
+    method: GET
+    uri: https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg
+  response:
+    body:
+      string: 'Please set a user-agent and respect our robot policy https://w.wiki/4wJS.
+        See also https://phabricator.wikimedia.org/T400119.
+
+        '
+    headers:
+      content-length:
+      - '126'
+      content-type:
+      - text/plain
+      server:
+      - HAProxy
+      x-analytics:
+      - ''
+      x-cache:
+      - cp3081 int
+      x-cache-status:
+      - int-tls
+      x-request-id:
+      - 8ce9dcaf-8a51-43f0-a4db-e5c1a6bc4fe9
+    status:
+      code: 403
+      message: Forbidden
+- request:
+    body: '{"messages":[{"role":"user","content":[{"type":"text","text":"What is in
+      this image?"},{"type":"image_url","image_url":{"url":"data:image/jpeg;base64,UGxlYXNlIHNldCBhIHVzZXItYWdlbnQgYW5kIHJlc3BlY3Qgb3VyIHJvYm90IHBvbGljeSBodHRwczovL3cud2lraS80d0pTLiBTZWUgYWxzbyBodHRwczovL3BoYWJyaWNhdG9yLndpa2ltZWRpYS5vcmcvVDQwMDExOS4K"}}]}],"model":"gpt-4o-mini"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '347'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-38c90325085a3c8eb41546c8c86b3084-8fa520ccb9993743-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"error\": {\n    \"message\": \"You uploaded an unsupported image.
+        Please make sure your image has of one the following formats: ['png', 'jpeg',
+        'gif', 'webp'].\",\n    \"type\": \"invalid_request_error\",\n    \"param\":
+        null,\n    \"code\": \"invalid_image_format\"\n  }\n}"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fb2ea99e62968-LHR
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '258'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:28:44 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '15'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=u4J_yjLGSA9a8jaAchT8m8ktxbFyLqVtGUxtv_NEZgo-1774963723.9373062-1.0.1.1-Wke848YS1CMl38Oxwt3L8SprvP0wI6ojCRD1QBWykS3wZIYSEM2Tid47sbUJlhbHwtr5kAoluno2XtHi0YfHJmccJJlZCvjZU9jBlIYbTku2uuXQTwxvFFlCvcTEx23E;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:58:44 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-input-images:
+      - '50000'
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-input-images:
+      - '49999'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999227'
+      x-ratelimit-reset-input-images:
+      - 1ms
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c7ac859a6e5e4c41a1450bcee424ad2f
+    status:
+      code: 400
+      message: Bad Request
 version: 1
