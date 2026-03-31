@@ -317,7 +317,17 @@ async def _parts_from_genai_part_async(part, span, part_index):
 
 async def _process_content_item(content_item, span):
     parts_acc = []
-    if hasattr(content_item, "parts"):
+    if isinstance(content_item, dict):
+        for p in content_item.get("parts", []):
+            if isinstance(p, dict):
+                text = p.get("text")
+                if text is not None:
+                    parts_acc.append({"type": "text", "content": text})
+                else:
+                    parts_acc.append({"type": "text", "content": str(p)})
+            else:
+                parts_acc.extend(await _parts_from_genai_part_async(p, span, 0))
+    elif hasattr(content_item, "parts"):
         for part_index, part in enumerate(content_item.parts):
             parts_acc.extend(await _parts_from_genai_part_async(part, span, part_index))
     elif isinstance(content_item, str):
@@ -354,7 +364,17 @@ async def _process_argument(argument, span):
 
 def _process_content_item_sync(content_item, span):
     parts_acc = []
-    if hasattr(content_item, "parts"):
+    if isinstance(content_item, dict):
+        for p in content_item.get("parts", []):
+            if isinstance(p, dict):
+                text = p.get("text")
+                if text is not None:
+                    parts_acc.append({"type": "text", "content": text})
+                else:
+                    parts_acc.append({"type": "text", "content": str(p)})
+            else:
+                parts_acc.extend(_parts_from_genai_part_sync(p, span, 0))
+    elif hasattr(content_item, "parts"):
         for part_index, part in enumerate(content_item.parts):
             parts_acc.extend(_parts_from_genai_part_sync(part, span, part_index))
     elif isinstance(content_item, str):
@@ -455,7 +475,8 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                     messages.append(
                         {
                             "role": _normalize_message_role(
-                                getattr(content_item, "role", "user")
+                                content_item.get("role", "user") if isinstance(content_item, dict)
+                                else getattr(content_item, "role", "user")
                             ),
                             "parts": parts,
                         }
@@ -504,7 +525,10 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                 if parts:
                     messages.append(
                         {
-                            "role": _normalize_message_role(getattr(content, "role", "user")),
+                            "role": _normalize_message_role(
+                                content.get("role", "user") if isinstance(content, dict)
+                                else getattr(content, "role", "user")
+                            ),
                             "parts": parts,
                         }
                     )
