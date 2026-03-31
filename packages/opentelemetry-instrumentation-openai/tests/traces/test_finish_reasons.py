@@ -9,7 +9,6 @@ Based on finish_reasons_review_report.md findings:
 - P2-1: Missing _map_finish_reason function in completion_wrappers.py
 """
 
-import json
 import pytest
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -262,7 +261,7 @@ class TestFinishReasonMapping:
         self, instrument_legacy, span_exporter, openai_client
     ):
         """finish_reason must come from response, not inferred from parts.
-        
+
         This test validates that we use the actual finish_reason from the
         provider response (e.g., "length", "content_filter") rather than
         deriving it from the presence of tool_calls or other content.
@@ -293,7 +292,7 @@ class TestFinishReasonMapping:
         self, instrument_legacy, span_exporter, openai_client
     ):
         """finish_reason "tool_calls" must be mapped to "tool_call"."""
-        response = openai_client.chat.completions.create(
+        openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "What's the weather in Boston?"}],
             tools=[
@@ -364,7 +363,11 @@ class TestFinishReasonDeduplication:
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Tell me a joke"}],
             n=2,  # Request 2 completions
+            stream=True,
         )
+
+        for _ in response:
+            pass
 
         spans = span_exporter.get_finished_spans()
         span = spans[0]
@@ -372,7 +375,7 @@ class TestFinishReasonDeduplication:
         finish_reasons = span.attributes.get(
             GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
         )
-        
+
         if finish_reasons:
             # Should be deduplicated (no duplicate "stop" entries)
             assert len(finish_reasons) == len(set(finish_reasons))
@@ -385,7 +388,7 @@ class TestFinishReasonOmission:
         self, instrument_legacy, span_exporter, openai_client
     ):
         """When no finish_reasons available, attribute should be omitted entirely.
-        
+
         This test validates that we don't set an empty array when there are
         no meaningful finish_reasons (e.g., all None values filtered out).
         """
@@ -402,7 +405,7 @@ class TestResponsesAPIFinishReasons:
         self, instrument_legacy, span_exporter, openai_client
     ):
         """Responses API must extract finish_reason from provider response.
-        
+
         This test validates that finish_reason comes from the actual response
         object, not derived from the presence of tool_calls or message types.
         """
@@ -415,7 +418,7 @@ class TestResponsesAPIFinishReasons:
         self, instrument_legacy, span_exporter, openai_client
     ):
         """Responses API must extract top-level finish_reasons from response choices.
-        
+
         This test validates that finish_reasons are read from response.choices[]
         rather than fabricated from output block types.
         """

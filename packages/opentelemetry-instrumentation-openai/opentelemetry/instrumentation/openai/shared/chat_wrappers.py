@@ -564,7 +564,6 @@ def _set_output_messages(span, choices):
         return
 
     messages = []
-    finish_reasons = []
     for choice in choices:
         message = choice.get("message")
         content_filter_results = choice.get("content_filter_results")
@@ -609,18 +608,8 @@ def _set_output_messages(span, choices):
         if content_filter_results:
             entry["content_filter_results"] = content_filter_results
         messages.append(entry)
-        
-        if fr and fr not in finish_reasons:
-            finish_reasons.append(fr)
-    
+
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
-    
-    if finish_reasons:
-        _set_span_attribute(
-            span,
-            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-            finish_reasons,
-        )
 
 @dont_throw
 def _set_streaming_token_metrics(

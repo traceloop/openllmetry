@@ -189,7 +189,6 @@ def _set_output_messages(span, choices):
         return
 
     messages = []
-    finish_reasons = []
     for choice in choices:
         fr = _map_finish_reason(choice.get("finish_reason"))
         entry = {
@@ -198,22 +197,12 @@ def _set_output_messages(span, choices):
             "finish_reason": fr,
         }
         messages.append(entry)
-        
-        if fr and fr not in finish_reasons:
-            finish_reasons.append(fr)
-    
+
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps(messages),
     )
-    
-    if finish_reasons:
-        _set_span_attribute(
-            span,
-            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-            finish_reasons,
-        )
 
 
 @dont_throw
