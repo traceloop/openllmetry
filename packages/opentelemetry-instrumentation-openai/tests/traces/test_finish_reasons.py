@@ -384,43 +384,129 @@ class TestFinishReasonDeduplication:
 class TestFinishReasonOmission:
     """Test that top-level finish_reasons is omitted when no meaningful values"""
 
-    def test_finish_reasons_omitted_when_empty(
+    def test_finish_reasons_omitted_when_all_none(
         self, instrument_legacy, span_exporter, openai_client
     ):
-        """When no finish_reasons available, attribute should be omitted entirely.
+        """When all finish_reasons are None, attribute should be omitted entirely.
 
-        This test validates that we don't set an empty array when there are
-        no meaningful finish_reasons (e.g., all None values filtered out).
+        Uses _set_output_messages directly with a mocked choice list where
+        every choice has finish_reason=None to verify the attribute is not set.
         """
-        # This would require a mocked scenario where all finish_reasons are None
-        # For now, this is a placeholder test that documents the expected behavior
-        pass
+        from unittest.mock import MagicMock
+        from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
+            _set_output_messages,
+        )
+
+        span = MagicMock()
+        span.is_recording.return_value = True
+
+        # Simulate two choices where finish_reason is None
+        choices = [
+            {
+                "message": {"role": "assistant", "content": "Hello"},
+                "finish_reason": None,
+            },
+            {
+                "message": {"role": "assistant", "content": "World"},
+                "finish_reason": None,
+            },
+        ]
+
+        _set_output_messages(span, choices)
+
+        # Collect all set_attribute calls
+        attr_calls = {call[0][0]: call[0][1] for call in span.set_attribute.call_args_list}
+
+        # gen_ai.response.finish_reasons must NOT be set
+        assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in attr_calls, (
+            "gen_ai.response.finish_reasons should be omitted when all values are None"
+        )
 
 
 class TestResponsesAPIFinishReasons:
     """Test finish_reason handling in Responses API (P1-1, P1-2)"""
 
     @pytest.mark.vcr
-    def test_responses_api_extracts_finish_reason_from_provider(
+    def test_responses_api_stop_finish_reason(
         self, instrument_legacy, span_exporter, openai_client
     ):
-        """Responses API must extract finish_reason from provider response.
+        """Responses API must derive finish_reason="stop" for a completed text response.
 
-        This test validates that finish_reason comes from the actual response
-        object, not derived from the presence of tool_calls or message types.
+        A simple text completion should produce status="completed" with no tool
+        calls, which maps to finish_reason="stop".
         """
-        # This test requires the Responses API which may not be in all OpenAI versions
-        # Placeholder for when Responses API tests are available
-        pass
+        openai_client.responses.create(
+            model="gpt-4.1-nano",
+            input="Say hello in one word.",
+        )
+
+        spans = span_exporter.get_finished_spans()
+        assert len(spans) == 1
+        span = spans[0]
+
+        # Top-level finish_reasons must be set and contain "stop"
+        finish_reasons = span.attributes.get(
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        )
+        assert finish_reasons is not None, "gen_ai.response.finish_reasons must be set"
+        assert "stop" in finish_reasons
+
+        # Output messages should also carry finish_reason="stop"
+        output_messages = get_output_messages(span)
+        assert len(output_messages) > 0
+        assert output_messages[0]["finish_reason"] == "stop"
 
     @pytest.mark.vcr
-    def test_responses_api_sets_top_level_finish_reasons_from_response(
+    def test_responses_api_tool_call_finish_reason(
         self, instrument_legacy, span_exporter, openai_client
     ):
-        """Responses API must extract top-level finish_reasons from response choices.
+        """Responses API must derive finish_reason="tool_call" when tool calls are present.
 
-        This test validates that finish_reasons are read from response.choices[]
-        rather than fabricated from output block types.
+        When the model decides to call a function, the response status is
+        "completed" and the output contains a function_call block, which
+        should map to finish_reason="tool_call".
         """
-        # Placeholder for Responses API test
-        pass
+        openai_client.responses.create(
+            model="gpt-4.1-nano",
+            input=[
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": "What's the weather in Paris?",
+                }
+            ],
+            tools=[
+                {
+                    "type": "function",
+                    "name": "get_weather",
+                    "description": "Get the current weather for a location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "City name",
+                            }
+                        },
+                        "required": ["location"],
+                    },
+                }
+            ],
+            tool_choice="required",
+        )
+
+        spans = span_exporter.get_finished_spans()
+        assert len(spans) == 1
+        span = spans[0]
+
+        # Top-level finish_reasons must contain "tool_call"
+        finish_reasons = span.attributes.get(
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        )
+        assert finish_reasons is not None, "gen_ai.response.finish_reasons must be set"
+        assert "tool_call" in finish_reasons
+
+        # Output messages should carry finish_reason="tool_call"
+        output_messages = get_output_messages(span)
+        assert len(output_messages) > 0
+        assert output_messages[0]["finish_reason"] == "tool_call"
