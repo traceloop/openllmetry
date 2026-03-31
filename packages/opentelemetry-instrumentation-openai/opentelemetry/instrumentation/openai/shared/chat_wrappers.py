@@ -603,7 +603,7 @@ def _set_output_messages(span, choices):
                     "name": fc_name,
                     "arguments": _parse_arguments(fc_args),
                 })
-        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
+        fr = _map_finish_reason(choice.get("finish_reason")) or ""
         entry = {"role": "assistant", "parts": parts, "finish_reason": fr}
         if content_filter_results:
             entry["content_filter_results"] = content_filter_results

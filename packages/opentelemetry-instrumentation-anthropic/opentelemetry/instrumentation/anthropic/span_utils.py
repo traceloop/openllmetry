@@ -257,8 +257,7 @@ def _build_output_messages_from_content(response):
             "parts": [{"type": "text", "content": response.get("completion")}],
         }
         mapped = _map_finish_reason(response.get("stop_reason"))
-        if mapped:
-            msg["finish_reason"] = mapped
+        msg["finish_reason"] = mapped if mapped else ""
         return [msg]
 
     if not response.get("content"):
@@ -296,8 +295,7 @@ def _build_output_messages_from_content(response):
         "parts": parts,
     }
     mapped = _map_finish_reason(response.get("stop_reason"))
-    if mapped:
-        msg["finish_reason"] = mapped
+    msg["finish_reason"] = mapped if mapped else ""
     return [msg]
 
 
@@ -449,8 +447,7 @@ def set_streaming_response_attributes(span, complete_response_events):
             "role": "assistant",
             "parts": parts,
         }
-        if finish_reasons:
-            msg["finish_reason"] = finish_reasons[-1]
+        msg["finish_reason"] = finish_reasons[-1] if finish_reasons else ""
         output_messages = [msg]
         set_span_attribute(
             span,

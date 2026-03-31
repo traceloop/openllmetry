@@ -455,6 +455,62 @@ class TestP2_3_OutputRefusal:
 
 
 # ---------------------------------------------------------------------------
+# finish_reason fallback: must be "" when unknown, not fabricated "stop"
+# ---------------------------------------------------------------------------
+
+class TestFinishReasonFallback:
+    """finish_reason in output messages must be '' when unknown (Bedrock convention)."""
+
+    def test_chat_missing_finish_reason_uses_empty_string(self, mock_span):
+        choices = [
+            {
+                "message": {"role": "assistant", "content": "Hello"},
+                "finish_reason": None,
+            }
+        ]
+        _set_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
+        assert result[0]["finish_reason"] == "", (
+            f"Expected '' for missing finish_reason, got '{result[0]['finish_reason']}'"
+        )
+
+    def test_chat_present_finish_reason_preserved(self, mock_span):
+        choices = [
+            {
+                "message": {"role": "assistant", "content": "Hi"},
+                "finish_reason": "stop",
+            }
+        ]
+        _set_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
+        assert result[0]["finish_reason"] == "stop"
+
+    def test_chat_tool_calls_finish_reason_mapped(self, mock_span):
+        choices = [
+            {
+                "message": {"role": "assistant", "content": None, "tool_calls": [
+                    {"id": "call_1", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+                ]},
+                "finish_reason": "tool_calls",
+            }
+        ]
+        _set_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
+        assert result[0]["finish_reason"] == "tool_call"
+
+    def test_completion_missing_finish_reason_uses_empty_string(self, mock_span):
+        from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
+            _set_output_messages as _set_completion_output_messages,
+        )
+        choices = [{"text": "Hello world", "finish_reason": None}]
+        _set_completion_output_messages(mock_span, choices)
+        result = _get_output_messages(mock_span)
+        assert result[0]["finish_reason"] == "", (
+            f"Expected '' for missing finish_reason, got '{result[0]['finish_reason']}'"
+        )
+
+
+# ---------------------------------------------------------------------------
 # P2-4: Metrics must map finish reason values correctly
 # ---------------------------------------------------------------------------
 
