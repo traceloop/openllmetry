@@ -215,7 +215,7 @@ class RealtimeTracingState:
         """End a tool span."""
         if tool_name in self.tool_spans:
             span = self.tool_spans[tool_name]
-            if output is not None:
+            if output is not None and should_send_prompts():
                 span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output))
             if error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))

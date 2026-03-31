@@ -651,7 +651,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     @dont_throw
     def on_span_end(self, span):
         """Called when a span ends - finish OpenTelemetry span."""
-        from agents import GenerationSpanData
+        from agents import FunctionSpanData, GenerationSpanData
 
         if not span or not hasattr(span, "span_data"):
             return
@@ -665,6 +665,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 or isinstance(span_data, GenerationSpanData)
             ):
                 self._end_generation_span(otel_span, span_data, trace_content)
+
+            elif span_data and isinstance(span_data, FunctionSpanData):
+                self._end_function_span(otel_span, span_data, trace_content)
 
             elif trace_content and span_data and _has_realtime_spans:
                 if SpeechSpanData and isinstance(span_data, SpeechSpanData):
@@ -861,6 +864,30 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if response:
             model_settings = _extract_response_attributes(otel_span, response, trace_content)
             self._last_model_settings = model_settings
+
+    def _end_function_span(self, otel_span, span_data, trace_content):
+        """Handle on_span_end logic for function/tool spans.
+
+        Sets ``gen_ai.tool.call.arguments`` and ``gen_ai.tool.call.result``
+        from ``FunctionSpanData.input`` / ``.output``.  Both are content
+        attributes and are only emitted when *trace_content* is True.
+        """
+        if not trace_content:
+            return
+
+        tool_input = getattr(span_data, "input", None)
+        if tool_input is not None:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS,
+                str(tool_input),
+            )
+
+        tool_output = getattr(span_data, "output", None)
+        if tool_output is not None:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_TOOL_CALL_RESULT,
+                str(tool_output),
+            )
 
     def _set_realtime_io_attributes(self, otel_span, span_data, has_output=True):
         """Set input/output message attributes for realtime spans."""

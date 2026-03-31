@@ -307,6 +307,70 @@ class TestStartFunctionSpan:
 
 
 # ---------------------------------------------------------------------------
+# Tests: _end_function_span
+# ---------------------------------------------------------------------------
+
+class TestEndFunctionSpan:
+    """Unit tests for _end_function_span — sets tool call arguments/result."""
+
+    def test_sets_tool_call_arguments_and_result(self, tracer_and_exporter, processor):
+        """Must set gen_ai.tool.call.arguments and gen_ai.tool.call.result."""
+        from agents import FunctionSpanData
+
+        func_data = FunctionSpanData(
+            name="get_weather", input='{"city": "NYC"}', output='{"temp": 72}'
+        )
+        otel_span = processor._start_function_span(func_data, parent_context=None)
+        processor._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        attrs = dict(otel_span.attributes)
+        assert attrs[GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS] == '{"city": "NYC"}'
+        assert attrs[GenAIAttributes.GEN_AI_TOOL_CALL_RESULT] == '{"temp": 72}'
+
+    def test_content_gated_when_false(self, tracer_and_exporter, processor):
+        """Must NOT set arguments/result when trace_content is False."""
+        from agents import FunctionSpanData
+
+        func_data = FunctionSpanData(
+            name="get_weather", input='{"city": "NYC"}', output='{"temp": 72}'
+        )
+        otel_span = processor._start_function_span(func_data, parent_context=None)
+        processor._end_function_span(otel_span, func_data, trace_content=False)
+        otel_span.end()
+
+        attrs = dict(otel_span.attributes)
+        assert GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS not in attrs
+        assert GenAIAttributes.GEN_AI_TOOL_CALL_RESULT not in attrs
+
+    def test_none_input_output_omitted(self, tracer_and_exporter, processor):
+        """None input/output must not produce attributes."""
+        from agents import FunctionSpanData
+
+        func_data = FunctionSpanData(name="noop", input=None, output=None)
+        otel_span = processor._start_function_span(func_data, parent_context=None)
+        processor._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        attrs = dict(otel_span.attributes)
+        assert GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS not in attrs
+        assert GenAIAttributes.GEN_AI_TOOL_CALL_RESULT not in attrs
+
+    def test_non_string_output_coerced(self, tracer_and_exporter, processor):
+        """Non-string output must be str()-converted."""
+        from agents import FunctionSpanData
+
+        func_data = FunctionSpanData(name="calc", input="2+2", output=4)
+        otel_span = processor._start_function_span(func_data, parent_context=None)
+        processor._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        attrs = dict(otel_span.attributes)
+        assert attrs[GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS] == "2+2"
+        assert attrs[GenAIAttributes.GEN_AI_TOOL_CALL_RESULT] == "4"
+
+
+# ---------------------------------------------------------------------------
 # Tests: _start_generation_span
 # ---------------------------------------------------------------------------
 
