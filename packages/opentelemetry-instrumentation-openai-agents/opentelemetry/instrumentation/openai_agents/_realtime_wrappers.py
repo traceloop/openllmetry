@@ -373,6 +373,11 @@ class RealtimeTracingState:
                     GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
                     self.pending_usage["output_tokens"],
                 )
+            if self.pending_usage.get("total_tokens"):
+                span.set_attribute(
+                    SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
+                    self.pending_usage["total_tokens"],
+                )
             self.pending_usage = None
 
         if should_send_prompts():
@@ -395,6 +400,10 @@ class RealtimeTracingState:
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
                 json.dumps([out_msg]),
             )
+
+        # Realtime API does not provide finish reasons; set top-level
+        # attribute only when a meaningful value is available (consistent
+        # with _hooks.py which omits the attribute when mapped value is None).
 
         span.set_status(Status(StatusCode.OK))
         span.end()
