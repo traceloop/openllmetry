@@ -61,6 +61,14 @@ class MockGenerationSpanData:
         self.response = response
 
 
+class ResponseSpanData:
+    """Lightweight stub whose __name__ is 'ResponseSpanData' (no MagicMock mutation)."""
+
+    def __init__(self, input=None, response=None):
+        self.input = input or []
+        self.response = response
+
+
 class MockResponseOutput:
     """Mock for a response output item with text content."""
 
@@ -897,11 +905,8 @@ class TestOperationName:
         mock_trace.trace_id = "test-op-2"
         proc.on_trace_start(mock_trace)
 
-        # Create a mock ResponseSpanData
-        response_data = MagicMock()
-        type(response_data).__name__ = "ResponseSpanData"
-        response_data.input = []
-        response_data.response = None
+        # Create a lightweight ResponseSpanData stub (avoids mutating MagicMock.__name__)
+        response_data = ResponseSpanData(input=[], response=None)
 
         span = MockAgentSpan(response_data, trace_id="test-op-2")
 
