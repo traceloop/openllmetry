@@ -194,7 +194,7 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         graph_span_ctx = context_api.attach(ctx_with_span)
 
         # Capture input from args and track last output from generator
-        graph_input = args[0] if args else None
+        graph_input = args[0] if args else kwargs.get("input")
         last_output = None
 
         try:
@@ -242,7 +242,7 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         graph_span_ctx = context_api.attach(ctx_with_span)
 
         # Capture input from args and track last output from generator
-        graph_input = args[0] if args else None
+        graph_input = args[0] if args else kwargs.get("input")
         last_output = None
 
         try:
