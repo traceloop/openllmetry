@@ -30,9 +30,12 @@ def _set_span_attribute(span, name, value):
 
 
 def _map_gemini_finish_reason(finish_reason):
-    """Map Gemini FinishReason to OTel; None / UNSPECIFIED -> None (never fabricate stop)."""
+    """Map Gemini FinishReason to OTel finish reason string.
+
+    Returns ``"unknown"`` for ``None``, unspecified, and unmapped values.
+    """
     if finish_reason is None:
-        return None
+        return "unknown"
     name = getattr(finish_reason, "name", None) or str(finish_reason)
     mapping = {
         "STOP": "stop",
@@ -46,14 +49,14 @@ def _map_gemini_finish_reason(finish_reason):
         "IMAGE_PROHIBITED_CONTENT": "content_filter",
         "IMAGE_RECITATION": "content_filter",
         "LANGUAGE": "content_filter",
-        "FINISH_REASON_UNSPECIFIED": None,
+        "FINISH_REASON_UNSPECIFIED": "unknown",
         "MALFORMED_FUNCTION_CALL": "error",
         "OTHER": "error",
         "UNEXPECTED_TOOL_CALL": "error",
         "NO_IMAGE": "error",
         "IMAGE_OTHER": "error",
     }
-    return mapping.get(name)
+    return mapping.get(name, "unknown")
 
 
 def _normalize_message_role(role):
@@ -391,7 +394,7 @@ def _collect_finish_reasons_from_response(response):
     candidates = getattr(response, "candidates", None) or []
     for cand in candidates:
         mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped is not None:
+        if mapped != "unknown":
             reasons.append(mapped)
     return reasons
 
@@ -400,7 +403,7 @@ def accumulate_stream_finish_reasons(ordered, seen, chunk):
     """Merge finish reasons from a streaming chunk; preserves first-seen order (metadata, not gated by prompts)."""
     for cand in getattr(chunk, "candidates", None) or []:
         mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped is not None and mapped not in seen:
+        if mapped != "unknown" and mapped not in seen:
             seen.add(mapped)
             ordered.append(mapped)
 
@@ -423,7 +426,7 @@ def _output_messages_from_generate_response(span, response):
     if not messages and hasattr(response, "text") and response.text:
         text = response.text
         if isinstance(text, str) and text:
-            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": None}
+            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": "unknown"}
             messages.append(msg)
     return messages
 
@@ -618,20 +621,21 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
         return
 
     if isinstance(response, str):
-        fr = None
+        fr = "unknown"
         if stream_last_chunk is not None:
             reasons = _collect_finish_reasons_from_response(stream_last_chunk)
-            fr = reasons[0] if reasons else None
+            fr = reasons[0] if reasons else "unknown"
         msg = {"role": "assistant", "parts": []}
         if response:
             msg["parts"].append({"type": "text", "content": response})
         msg["finish_reason"] = fr
-        if msg["parts"] or fr is not None:
-            _set_span_attribute(
-                span,
-                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                json.dumps([msg]),
-            )
+        if not msg["parts"] and fr == "unknown":
+            return
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([msg]),
+        )
         return
 
     if isinstance(response, list):
@@ -642,6 +646,7 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
                     {
                         "role": "assistant",
                         "parts": [{"type": "text", "content": item}],
+                        "finish_reason": "unknown",
                     }
                 )
             else:

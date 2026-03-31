@@ -41,8 +41,12 @@ def _is_base64_image_part(item):
 
 
 def _map_vertex_finish_reason(finish_reason):
+    """Map VertexAI FinishReason to OTel finish reason string.
+
+    Returns ``"unknown"`` for ``None``, unspecified, and unmapped values.
+    """
     if finish_reason is None:
-        return None
+        return "unknown"
     name = getattr(finish_reason, "name", None) or str(finish_reason)
     mapping = {
         "STOP": "stop",
@@ -56,14 +60,14 @@ def _map_vertex_finish_reason(finish_reason):
         "IMAGE_PROHIBITED_CONTENT": "content_filter",
         "IMAGE_RECITATION": "content_filter",
         "LANGUAGE": "content_filter",
-        "FINISH_REASON_UNSPECIFIED": None,
+        "FINISH_REASON_UNSPECIFIED": "unknown",
         "MALFORMED_FUNCTION_CALL": "error",
         "OTHER": "error",
         "UNEXPECTED_TOOL_CALL": "error",
         "NO_IMAGE": "error",
         "IMAGE_OTHER": "error",
     }
-    return mapping.get(name)
+    return mapping.get(name, "unknown")
 
 
 def _normalize_message_role(role):
@@ -102,7 +106,7 @@ def _vertex_function_response_to_str(response):
 def accumulate_vertex_stream_finish_reasons(ordered, seen, chunk):
     for cand in getattr(chunk, "candidates", None) or []:
         mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped is not None and mapped not in seen:
+        if mapped != "unknown" and mapped not in seen:
             seen.add(mapped)
             ordered.append(mapped)
 
@@ -139,6 +143,8 @@ def _parts_from_vertex_part_sync(part, span, part_index):
                 ),
             }
         )
+    if getattr(part, "thought", None):
+        out.append({"type": "reasoning", "content": str(part.thought)})
     if not out:
         out.append({"type": "text", "content": str(part)})
     return out
@@ -177,6 +183,8 @@ async def _parts_from_vertex_part_async(part, span, part_index):
                 ),
             }
         )
+    if getattr(part, "thought", None):
+        out.append({"type": "reasoning", "content": str(part.thought)})
     if not out:
         out.append({"type": "text", "content": str(part)})
     return out
@@ -267,7 +275,7 @@ def _output_messages_from_vertex_response(span, response):
             {
                 "role": "assistant",
                 "parts": [{"type": "text", "content": response.text}],
-                "finish_reason": None,
+                "finish_reason": "unknown",
             }
         )
     return messages
@@ -578,11 +586,13 @@ def set_response_attributes(span, llm_model, generation_or_text, finish_reason_o
     parts = []
     if generation_or_text:
         parts.append({"type": "text", "content": generation_or_text})
-    msg = {"role": "assistant", "parts": parts, "finish_reason": finish_reason_otel}
-    if parts or finish_reason_otel is not None:
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([msg])
-        )
+    fr = finish_reason_otel or "unknown"
+    if not parts and fr == "unknown":
+        return
+    msg = {"role": "assistant", "parts": parts, "finish_reason": fr}
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([msg])
+    )
 
 
 @dont_throw
@@ -593,19 +603,21 @@ def set_model_response_attributes(
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
+    if stream_finish_reasons is not None:
+        reasons = stream_finish_reasons
+    elif response_meta is not None:
+        reasons = []
+        for cand in getattr(response_meta, "candidates", None) or []:
+            mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
+            if mapped != "unknown":
+                reasons.append(mapped)
+    else:
+        reasons = []
+    if reasons:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons
+        )
     if response_meta is not None:
-        if stream_finish_reasons is not None:
-            reasons = stream_finish_reasons
-        else:
-            reasons = []
-            for cand in getattr(response_meta, "candidates", None) or []:
-                mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
-                if mapped is not None:
-                    reasons.append(mapped)
-        if reasons:
-            _set_span_attribute(
-                span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons
-            )
         rid = getattr(response_meta, "response_id", None)
         if rid:
             _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, rid)

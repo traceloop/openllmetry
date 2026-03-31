@@ -271,7 +271,7 @@ async def _handle_request(span, event_logger, args, kwargs, llm_model):
 
 def _handle_response(span, event_logger, response, llm_model):
     set_model_response_attributes(
-        span, llm_model, response.usage_metadata, response_meta=response
+        span, llm_model, getattr(response, "usage_metadata", None), response_meta=response
     )
     if should_emit_events():
         emit_response_events(response, event_logger)
