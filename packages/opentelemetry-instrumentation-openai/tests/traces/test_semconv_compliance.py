@@ -134,6 +134,7 @@ class TestP1_2_ResponsesFinishReasons:
             output_text="Hi there",
             request_model="gpt-4",
             response_model="gpt-4",
+            response_status="completed",
         )
         set_data_attributes(traced, mock_span)
 
@@ -162,6 +163,7 @@ class TestP1_2_ResponsesFinishReasons:
             output_text=None,
             request_model="gpt-4",
             response_model="gpt-4",
+            response_status="completed",
         )
         set_data_attributes(traced, mock_span)
 

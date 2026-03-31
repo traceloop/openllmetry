@@ -66,10 +66,10 @@ class TestCompletionsFinishReasons:
 
     @pytest.mark.vcr
     def test_completions_streaming_sets_top_level_finish_reasons(
-        self, instrument_legacy, span_exporter, mock_openai_client
+        self, instrument_legacy, span_exporter, openai_client
     ):
         """Streaming completions must accumulate and set finish_reasons."""
-        response = mock_openai_client.completions.create(
+        response = openai_client.completions.create(
             model="davinci-002",
             prompt="Tell me a joke about opentelemetry",
             stream=True,
