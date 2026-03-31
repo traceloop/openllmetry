@@ -80,7 +80,7 @@ def _recorded_output_messages(span_mock):
 
 class TestMapGeminiFinishReason:
     def test_none_returns_unknown(self):
-        assert su._map_gemini_finish_reason(None) == "unknown"
+        assert su._map_gemini_finish_reason(None) == ""
 
     def test_stop(self):
         assert su._map_gemini_finish_reason(_make_enum("STOP")) == "stop"
@@ -103,7 +103,7 @@ class TestMapGeminiFinishReason:
         assert su._map_gemini_finish_reason(_make_enum(name)) == "content_filter"
 
     def test_finish_reason_unspecified(self):
-        assert su._map_gemini_finish_reason(_make_enum("FINISH_REASON_UNSPECIFIED")) == "unknown"
+        assert su._map_gemini_finish_reason(_make_enum("FINISH_REASON_UNSPECIFIED")) == ""
 
     def test_malformed_function_call(self):
         assert su._map_gemini_finish_reason(_make_enum("MALFORMED_FUNCTION_CALL")) == "error"
@@ -112,7 +112,7 @@ class TestMapGeminiFinishReason:
         assert su._map_gemini_finish_reason(_make_enum("OTHER")) == "error"
 
     def test_unmapped_enum_returns_unknown(self):
-        assert su._map_gemini_finish_reason(_make_enum("TOTALLY_NEW_VALUE")) == "unknown"
+        assert su._map_gemini_finish_reason(_make_enum("TOTALLY_NEW_VALUE")) == ""
 
 
 # ===========================================================================
@@ -220,7 +220,7 @@ class TestOutputMessagesFromGenerateResponse:
         span = MagicMock()
         resp = _make_response(candidates=[_make_candidate(None, text="hi")])
         messages = su._output_messages_from_generate_response(span, resp)
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
 
     def test_stop_finish_reason(self):
         span = MagicMock()
@@ -234,7 +234,7 @@ class TestOutputMessagesFromGenerateResponse:
         resp = _make_response(candidates=None, text="fallback text")
         messages = su._output_messages_from_generate_response(span, resp)
         assert len(messages) == 1
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
         assert messages[0]["parts"][0]["content"] == "fallback text"
 
 
@@ -254,7 +254,7 @@ class TestSetResponseAttributes:
         assert messages is not None
         assert len(messages) == 1
         assert "finish_reason" in messages[0]
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
 
     def test_string_empty_no_stream_chunk_no_output(self, monkeypatch):
         """Empty string with no stream_last_chunk and unknown finish_reason -> nothing emitted."""
@@ -292,5 +292,5 @@ class TestSetResponseAttributes:
         assert messages is not None
         assert len(messages) == 3
         for msg in messages:
-            assert msg["finish_reason"] == "unknown"
+            assert msg["finish_reason"] == ""
             assert msg["role"] == "assistant"

@@ -32,10 +32,10 @@ def _set_span_attribute(span, name, value):
 def _map_gemini_finish_reason(finish_reason):
     """Map Gemini FinishReason to OTel finish reason string.
 
-    Returns ``"unknown"`` for ``None``, unspecified, and unmapped values.
+    Returns ``""`` for ``None``, unspecified, and unmapped values.
     """
     if finish_reason is None:
-        return "unknown"
+        return ""
     name = getattr(finish_reason, "name", None) or str(finish_reason)
     mapping = {
         "STOP": "stop",
@@ -49,14 +49,14 @@ def _map_gemini_finish_reason(finish_reason):
         "IMAGE_PROHIBITED_CONTENT": "content_filter",
         "IMAGE_RECITATION": "content_filter",
         "LANGUAGE": "content_filter",
-        "FINISH_REASON_UNSPECIFIED": "unknown",
+        "FINISH_REASON_UNSPECIFIED": "",
         "MALFORMED_FUNCTION_CALL": "error",
         "OTHER": "error",
         "UNEXPECTED_TOOL_CALL": "error",
         "NO_IMAGE": "error",
         "IMAGE_OTHER": "error",
     }
-    return mapping.get(name, "unknown")
+    return mapping.get(name, "")
 
 
 def _normalize_message_role(role):
@@ -168,7 +168,7 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         image_format = (
             item.inline_data.mime_type.split("/")[1]
             if item.inline_data.mime_type
-            else "unknown"
+            else ""
         )
         image_name = f"content_{content_index}.{image_format}"
         binary_data = item.inline_data.data
@@ -211,7 +211,7 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         image_format = (
             item.inline_data.mime_type.split("/")[1]
             if item.inline_data.mime_type
-            else "unknown"
+            else ""
         )
         image_name = f"content_{content_index}.{image_format}"
         binary_data = item.inline_data.data
@@ -394,7 +394,7 @@ def _collect_finish_reasons_from_response(response):
     candidates = getattr(response, "candidates", None) or []
     for cand in candidates:
         mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped != "unknown":
+        if mapped:
             reasons.append(mapped)
     return reasons
 
@@ -403,7 +403,7 @@ def accumulate_stream_finish_reasons(ordered, seen, chunk):
     """Merge finish reasons from a streaming chunk; preserves first-seen order (metadata, not gated by prompts)."""
     for cand in getattr(chunk, "candidates", None) or []:
         mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped != "unknown" and mapped not in seen:
+        if mapped and mapped not in seen:
             seen.add(mapped)
             ordered.append(mapped)
 
@@ -426,7 +426,7 @@ def _output_messages_from_generate_response(span, response):
     if not messages and hasattr(response, "text") and response.text:
         text = response.text
         if isinstance(text, str) and text:
-            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": "unknown"}
+            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": ""}
             messages.append(msg)
     return messages
 
@@ -621,15 +621,15 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
         return
 
     if isinstance(response, str):
-        fr = "unknown"
+        fr = ""
         if stream_last_chunk is not None:
             reasons = _collect_finish_reasons_from_response(stream_last_chunk)
-            fr = reasons[0] if reasons else "unknown"
+            fr = reasons[0] if reasons else ""
         msg = {"role": "assistant", "parts": []}
         if response:
             msg["parts"].append({"type": "text", "content": response})
         msg["finish_reason"] = fr
-        if not msg["parts"] and fr == "unknown":
+        if not msg["parts"] and not fr:
             return
         _set_span_attribute(
             span,
@@ -646,7 +646,7 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
                     {
                         "role": "assistant",
                         "parts": [{"type": "text", "content": item}],
-                        "finish_reason": "unknown",
+                        "finish_reason": "",
                     }
                 )
             else:

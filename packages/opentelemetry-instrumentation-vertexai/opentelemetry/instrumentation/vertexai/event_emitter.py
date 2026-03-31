@@ -58,7 +58,7 @@ def emit_response_events(response, event_logger):
             ChoiceEvent(
                 index=0,
                 message={"content": response, "role": Roles.ASSISTANT.value},
-                finish_reason="unknown",
+                finish_reason="",
             ),
             event_logger,
         )

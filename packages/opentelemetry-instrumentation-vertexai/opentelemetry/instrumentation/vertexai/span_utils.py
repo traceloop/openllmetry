@@ -43,10 +43,10 @@ def _is_base64_image_part(item):
 def _map_vertex_finish_reason(finish_reason):
     """Map VertexAI FinishReason to OTel finish reason string.
 
-    Returns ``"unknown"`` for ``None``, unspecified, and unmapped values.
+    Returns ``""`` for ``None``, unspecified, and unmapped values.
     """
     if finish_reason is None:
-        return "unknown"
+        return ""
     name = getattr(finish_reason, "name", None) or str(finish_reason)
     mapping = {
         "STOP": "stop",
@@ -60,14 +60,14 @@ def _map_vertex_finish_reason(finish_reason):
         "IMAGE_PROHIBITED_CONTENT": "content_filter",
         "IMAGE_RECITATION": "content_filter",
         "LANGUAGE": "content_filter",
-        "FINISH_REASON_UNSPECIFIED": "unknown",
+        "FINISH_REASON_UNSPECIFIED": "",
         "MALFORMED_FUNCTION_CALL": "error",
         "OTHER": "error",
         "UNEXPECTED_TOOL_CALL": "error",
         "NO_IMAGE": "error",
         "IMAGE_OTHER": "error",
     }
-    return mapping.get(name, "unknown")
+    return mapping.get(name, "")
 
 
 def _normalize_message_role(role):
@@ -106,7 +106,7 @@ def _vertex_function_response_to_str(response):
 def accumulate_vertex_stream_finish_reasons(ordered, seen, chunk):
     for cand in getattr(chunk, "candidates", None) or []:
         mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped != "unknown" and mapped not in seen:
+        if mapped and mapped not in seen:
             seen.add(mapped)
             ordered.append(mapped)
 
@@ -275,7 +275,7 @@ def _output_messages_from_vertex_response(span, response):
             {
                 "role": "assistant",
                 "parts": [{"type": "text", "content": response.text}],
-                "finish_reason": "unknown",
+                "finish_reason": "",
             }
         )
     return messages
@@ -586,8 +586,8 @@ def set_response_attributes(span, llm_model, generation_or_text, finish_reason_o
     parts = []
     if generation_or_text:
         parts.append({"type": "text", "content": generation_or_text})
-    fr = finish_reason_otel or "unknown"
-    if not parts and fr == "unknown":
+    fr = finish_reason_otel or ""
+    if not parts and not fr:
         return
     msg = {"role": "assistant", "parts": parts, "finish_reason": fr}
     _set_span_attribute(
@@ -609,7 +609,7 @@ def set_model_response_attributes(
         reasons = []
         for cand in getattr(response_meta, "candidates", None) or []:
             mapped = _map_vertex_finish_reason(getattr(cand, "finish_reason", None))
-            if mapped != "unknown":
+            if mapped:
                 reasons.append(mapped)
     else:
         reasons = []

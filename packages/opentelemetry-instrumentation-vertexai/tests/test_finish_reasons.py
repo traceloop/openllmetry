@@ -42,7 +42,7 @@ def _make_span():
 # ---------------------------------------------------------------------------
 class TestMapVertexFinishReason:
     def test_none_returns_unknown(self):
-        assert _map_vertex_finish_reason(None) == "unknown"
+        assert _map_vertex_finish_reason(None) == ""
 
     def test_stop_enum(self):
         assert _map_vertex_finish_reason(_make_enum("STOP")) == "stop"
@@ -78,7 +78,7 @@ class TestMapVertexFinishReason:
         assert _map_vertex_finish_reason(_make_enum("LANGUAGE")) == "content_filter"
 
     def test_finish_reason_unspecified_enum(self):
-        assert _map_vertex_finish_reason(_make_enum("FINISH_REASON_UNSPECIFIED")) == "unknown"
+        assert _map_vertex_finish_reason(_make_enum("FINISH_REASON_UNSPECIFIED")) == ""
 
     def test_malformed_function_call_enum(self):
         assert _map_vertex_finish_reason(_make_enum("MALFORMED_FUNCTION_CALL")) == "error"
@@ -96,7 +96,7 @@ class TestMapVertexFinishReason:
         assert _map_vertex_finish_reason(_make_enum("IMAGE_OTHER")) == "error"
 
     def test_unmapped_enum_returns_unknown(self):
-        assert _map_vertex_finish_reason(_make_enum("TOTALLY_NEW_REASON")) == "unknown"
+        assert _map_vertex_finish_reason(_make_enum("TOTALLY_NEW_REASON")) == ""
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ class TestAccumulateVertexStreamFinishReasons:
         seen = set()
         chunk = Mock()
         cand = Mock()
-        cand.finish_reason = None  # maps to "unknown"
+        cand.finish_reason = None  # maps to ""
         chunk.candidates = [cand]
 
         accumulate_vertex_stream_finish_reasons(ordered, seen, chunk)
@@ -223,7 +223,7 @@ class TestOutputMessagesFromVertexResponse:
         messages = _output_messages_from_vertex_response(span, response)
 
         assert len(messages) == 1
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
 
     def test_stop_finish_reason(self):
         span = _make_span()
@@ -245,7 +245,7 @@ class TestOutputMessagesFromVertexResponse:
         messages = _output_messages_from_vertex_response(span, response)
 
         assert len(messages) == 1
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
         assert messages[0]["parts"][0]["content"] == "Fallback text"
 
 
@@ -309,7 +309,7 @@ class TestSetResponseAttributes:
         assert key in span._attrs
         messages = json.loads(span._attrs[key])
         assert len(messages) == 1
-        assert messages[0]["finish_reason"] == "unknown"
+        assert messages[0]["finish_reason"] == ""
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     def test_empty_text_no_finish_reason_no_output(self, mock_should_send):
