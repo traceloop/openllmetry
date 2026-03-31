@@ -111,70 +111,16 @@ def _get_graph_name(instance, args, kwargs) -> str:
     return "LangGraph"
 
 
-def _extract_messages(data: Any) -> list[dict] | None:
-    """Extract messages from a graph input or stream output chunk.
-
-    Handles these shapes:
-      - ``{"messages": [...]}``  (graph input)
-      - ``("values", {"messages": [...]})``  (Pregel stream chunk as tuple/list)
-      - ``{"messages": [...]}``  (Pregel stream chunk as dict)
-    """
-    if isinstance(data, dict):
-        msgs = data.get("messages")
-        if isinstance(msgs, list):
-            return msgs
-    if isinstance(data, (list, tuple)):
-        for item in data:
-            if isinstance(item, dict):
-                msgs = item.get("messages")
-                if isinstance(msgs, list):
-                    return msgs
-    return None
-
-
-def _to_genai_message(msg: Any) -> dict | None:
-    """Convert a LangChain message to OpenTelemetry gen_ai message format.
-
-    Handles both dict messages (``{"role": "user", "content": "..."}``) and
-    LangChain constructor-serialized messages
-    (``{"kwargs": {"type": "human", "content": "..."}}``)."""
-    role = None
-    content = None
-
-    if isinstance(msg, dict):
-        # Direct format: {"role": "user", "content": "..."}
-        if "role" in msg:
-            role = msg["role"]
-            content = msg.get("content", "")
-        # LangChain constructor: {"kwargs": {"type": "human", "content": "..."}}
-        elif "kwargs" in msg:
-            kwargs = msg["kwargs"]
-            if isinstance(kwargs, dict):
-                lc_type = kwargs.get("type", "")
-                role = {"human": "user", "ai": "assistant", "system": "system", "tool": "tool"}.get(lc_type, lc_type)
-                content = kwargs.get("content", "")
-        # Runnable message object serialized as dict with type/content
-        elif "type" in msg:
-            lc_type = msg.get("type", "")
-            role = {"human": "user", "ai": "assistant", "system": "system", "tool": "tool"}.get(lc_type, lc_type)
-            content = msg.get("content", "")
-
-    if role is None:
-        return None
-
-    return {
-        "role": role,
-        "parts": [{"type": "text", "content": str(content) if content else ""}],
-    }
-
-
 def _set_graph_span_io(
     graph_span: Span,
     graph_input: Any,
     last_output: Any,
 ) -> None:
-    """Set ``gen_ai.input.messages`` and ``gen_ai.output.messages`` on the
-    graph wrapper span using the standard OpenTelemetry GenAI format.
+    """Set input/output attributes on the graph wrapper span.
+
+    Uses the same format as the callback handler (``on_chain_start``/
+    ``on_chain_end``) so that downstream consumers see a consistent
+    structure regardless of which span they read from.
 
     Respects the ``should_send_prompts()`` privacy gate.
     """
@@ -183,29 +129,25 @@ def _set_graph_span_io(
 
     if graph_input is not None:
         try:
-            input_msgs = _extract_messages(graph_input)
-            if input_msgs:
-                genai_msgs = [m for m in (_to_genai_message(msg) for msg in input_msgs) if m]
-                if genai_msgs:
-                    graph_span.set_attribute(
-                        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps(genai_msgs, ensure_ascii=False, cls=CallbackFilteredJSONEncoder),
-                    )
+            input_json = json.dumps(
+                {"inputs": graph_input},
+                ensure_ascii=False,
+                cls=CallbackFilteredJSONEncoder,
+            )
+            graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
+            graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_INPUT, input_json)
         except Exception:
             pass
 
     if last_output is not None:
         try:
-            output_msgs = _extract_messages(last_output)
-            if output_msgs:
-                # Take the last message as the output
-                last_msg = _to_genai_message(output_msgs[-1])
-                if last_msg:
-                    last_msg["finish_reason"] = "stop"
-                    graph_span.set_attribute(
-                        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps([last_msg], ensure_ascii=False, cls=CallbackFilteredJSONEncoder),
-                    )
+            output_json = json.dumps(
+                {"outputs": last_output},
+                ensure_ascii=False,
+                cls=CallbackFilteredJSONEncoder,
+            )
+            graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
+            graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
         except Exception:
             pass
 
