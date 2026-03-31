@@ -258,7 +258,7 @@ class RealtimeTracingState:
             kind=SpanKind.CLIENT,
             context=parent_context,
             attributes={
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
+                SpanAttributes.LLM_REQUEST_TYPE: "chat",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai",
             },
         )
