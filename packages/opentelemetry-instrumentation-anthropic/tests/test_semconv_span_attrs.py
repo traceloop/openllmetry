@@ -1564,3 +1564,32 @@ def test_event_attributes_uses_provider_name_not_system():
     assert EVENT_ATTRIBUTES[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
     assert GenAIAttributes.GEN_AI_SYSTEM not in EVENT_ATTRIBUTES, \
         "Deprecated GEN_AI_SYSTEM should not be in EVENT_ATTRIBUTES"
+
+
+# ---------------------------------------------------------------------------
+# _map_finish_reason must return "" for falsy input, mapped value for known
+# reasons, and the original string as-is for unknown reasons.
+# ---------------------------------------------------------------------------
+
+class TestMapFinishReason:
+    from opentelemetry.instrumentation.anthropic.span_utils import _map_finish_reason
+    _map_finish_reason = staticmethod(_map_finish_reason)
+
+    @pytest.mark.parametrize("falsy_input", [None, "", 0, False])
+    def test_returns_empty_string_for_falsy(self, falsy_input):
+        assert self._map_finish_reason(falsy_input) == ""
+
+    def test_maps_end_turn_to_stop(self):
+        assert self._map_finish_reason("end_turn") == "stop"
+
+    def test_maps_tool_use_to_tool_call(self):
+        assert self._map_finish_reason("tool_use") == "tool_call"
+
+    def test_maps_max_tokens_to_length(self):
+        assert self._map_finish_reason("max_tokens") == "length"
+
+    def test_maps_stop_sequence_to_stop(self):
+        assert self._map_finish_reason("stop_sequence") == "stop"
+
+    def test_passes_through_unknown_reason(self):
+        assert self._map_finish_reason("some_new_reason") == "some_new_reason"

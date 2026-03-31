@@ -190,7 +190,7 @@ def _set_output_messages(span, choices):
 
     messages = []
     for choice in choices:
-        fr = _map_finish_reason(choice.get("finish_reason")) or ""
+        fr = _map_finish_reason(choice.get("finish_reason"))
         entry = {
             "role": "assistant",
             "parts": [{"content": choice.get("text"), "type": "text"}],

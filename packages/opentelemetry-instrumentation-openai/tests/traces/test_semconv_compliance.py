@@ -730,3 +730,34 @@ class TestP3_2_UnrecognizedBlockWrapping:
         assert result != block or "type" in result, (
             "Unrecognized blocks should be wrapped, not passed through raw"
         )
+
+
+# ---------------------------------------------------------------------------
+# _map_finish_reason must return "" for falsy input, mapped value for known
+# reasons, and the original string as-is for unknown reasons.
+# ---------------------------------------------------------------------------
+
+class TestMapFinishReason:
+    from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
+        _map_finish_reason,
+    )
+    _map_finish_reason = staticmethod(_map_finish_reason)
+
+    @pytest.mark.parametrize("falsy_input", [None, "", 0, False])
+    def test_returns_empty_string_for_falsy(self, falsy_input):
+        assert self._map_finish_reason(falsy_input) == ""
+
+    def test_maps_tool_calls_to_tool_call(self):
+        assert self._map_finish_reason("tool_calls") == "tool_call"
+
+    def test_maps_function_call_to_tool_call(self):
+        assert self._map_finish_reason("function_call") == "tool_call"
+
+    def test_passes_through_stop(self):
+        assert self._map_finish_reason("stop") == "stop"
+
+    def test_passes_through_length(self):
+        assert self._map_finish_reason("length") == "length"
+
+    def test_passes_through_unknown_reason(self):
+        assert self._map_finish_reason("some_new_reason") == "some_new_reason"
