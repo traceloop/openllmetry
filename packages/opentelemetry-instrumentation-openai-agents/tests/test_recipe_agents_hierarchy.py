@@ -293,9 +293,9 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
         )
 
         # Check specific expected attributes
-        assert "gen_ai.system" in response_span.attributes, f"Response span {i} should have gen_ai.system"
-        assert response_span.attributes["gen_ai.system"] == "openai", (
-            f"Response span {i} gen_ai.system should be 'openai'"
+        assert "gen_ai.provider.name" in response_span.attributes, f"Response span {i} should have gen_ai.provider.name"
+        assert response_span.attributes["gen_ai.provider.name"] == "openai", (
+            f"Response span {i} gen_ai.provider.name should be 'openai'"
         )
 
         pass  # Validation passed

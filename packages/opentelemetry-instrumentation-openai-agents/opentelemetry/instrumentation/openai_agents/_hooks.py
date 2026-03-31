@@ -45,117 +45,272 @@ except ImportError:
     SpeechGroupSpanData = None
 
 
-def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
+# ---------------------------------------------------------------------------
+# Finish-reason mapping: OpenAI → OTel GenAI semconv
+# ---------------------------------------------------------------------------
+_FINISH_REASON_MAP = {
+    "stop": "stop",
+    "tool_calls": "tool_call",    # plural → singular per OTel spec
+    "function_call": "tool_call",  # legacy → OTel value
+    "length": "length",
+    "content_filter": "content_filter",
+    "error": "error",
+}
+
+
+def _map_finish_reason(raw):
+    """Map a provider-specific finish reason to the OTel enum value."""
+    if raw is None:
+        return None
+    return _FINISH_REASON_MAP.get(raw, raw)
+
+
+def _parse_arguments(args):
+    """Best-effort parse of tool-call arguments to a dict (object) or None.
+
+    Per OTel spec, arguments must be objects, never raw JSON strings.
+    Falls back to ``{"_raw": args}`` when the string is not valid JSON
+    or parses to a non-dict type.
     """
-    Extract prompt/input data from messages and set as a single GEN_AI_INPUT_MESSAGES
-    JSON array attribute.
+    if args is None:
+        return None
+    if isinstance(args, dict):
+        return args
+    if isinstance(args, str):
+        if not args.strip():
+            return None
+        try:
+            parsed = json.loads(args)
+            if isinstance(parsed, dict):
+                return parsed
+            # Parsed OK but not a dict (e.g. array, scalar) – wrap
+            return {"_raw": args}
+        except (json.JSONDecodeError, ValueError):
+            return {"_raw": args}
+    return {"_raw": str(args)}
+
+
+def _normalize_tool_call(tool_call):
+    """Normalize a tool call (object or dict) into a flat {id, name, arguments} dict."""
+    if isinstance(tool_call, dict):
+        tc = dict(tool_call)
+        if "function" in tc:
+            function = tc["function"]
+            if isinstance(function, dict):
+                tc = {
+                    "id": tc.get("id"),
+                    "name": function.get("name"),
+                    "arguments": function.get("arguments"),
+                }
+            else:
+                tc = {
+                    "id": tc.get("id"),
+                    "name": getattr(function, "name", None),
+                    "arguments": getattr(function, "arguments", None),
+                }
+        return tc
+    # Object with attributes
+    tc_dict: dict = {}
+    if hasattr(tool_call, "id"):
+        tc_dict["id"] = tool_call.id
+    if hasattr(tool_call, "function"):
+        func = tool_call.function
+        if hasattr(func, "name"):
+            tc_dict["name"] = func.name
+        if hasattr(func, "arguments"):
+            tc_dict["arguments"] = func.arguments
+    elif hasattr(tool_call, "name"):
+        tc_dict["name"] = tool_call.name
+    if hasattr(tool_call, "arguments") and "arguments" not in tc_dict:
+        tc_dict["arguments"] = tool_call.arguments
+    return tc_dict
+
+
+_MESSAGE_ATTRS = (
+    "role", "content", "tool_call_id", "tool_calls",
+    "type", "name", "arguments", "call_id", "output",
+)
+
+
+def _msg_to_dict(message) -> dict:
+    """Normalize a message (dict or SDK object) into a plain dict."""
+    if isinstance(message, dict):
+        return message
+    return {
+        attr: getattr(message, attr)
+        for attr in _MESSAGE_ATTRS
+        if hasattr(message, attr)
+    }
+
+
+def _stringify_content(content) -> str:
+    """Coerce non-string content to a string for simple text parts."""
+    if isinstance(content, str):
+        return content
+    return json.dumps(content)
+
+
+def _content_block_to_part(block) -> dict:
+    """Convert a single multimodal content block to an OTel part.
+
+    Handles dict blocks (OpenAI chat format) and SDK objects.
+    """
+    if isinstance(block, str):
+        return {"type": "text", "content": block}
+
+    if isinstance(block, dict):
+        return _dict_block_to_part(block)
+
+    return _object_block_to_part(block)
+
+
+def _dict_block_to_part(block: dict) -> dict:
+    """Map a dict-based content block (OpenAI format) to an OTel part.
+
+    Spec mapping (openllmetry-semconv-review.md §1 / Part Types):
+      OpenAI image_url  → OTel UriPart  {type:uri, modality:image, uri:...}
+      OpenAI input_audio → OTel BlobPart {type:blob, modality:audio, ...}
+    """
+    btype = block.get("type", "text")
+    if btype == "text":
+        return {"type": "text", "content": block.get("text", "")}
+    if btype == "image_url":
+        url_info = block.get("image_url", {})
+        url = (
+            url_info.get("url", "")
+            if isinstance(url_info, dict)
+            else str(url_info)
+        )
+        return {"type": "uri", "modality": "image", "uri": url}
+    if btype == "input_audio":
+        audio_info = block.get("input_audio", {})
+        return {
+            "type": "blob",
+            "modality": "audio",
+            "data": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
+        }
+    return {"type": btype, "data": json.dumps(block)}
+
+
+def _object_block_to_part(block) -> dict:
+    """Map an SDK-object content block via getattr."""
+    btype = getattr(block, "type", "text")
+    if btype == "text":
+        return {
+            "type": "text",
+            "content": getattr(block, "text", str(block)),
+        }
+    if btype == "image_url":
+        url_obj = getattr(block, "image_url", None)
+        url = getattr(url_obj, "url", str(url_obj)) if url_obj else ""
+        return {"type": "uri", "modality": "image", "uri": url}
+    if btype == "input_audio":
+        audio_obj = getattr(block, "input_audio", None)
+        data = getattr(audio_obj, "data", str(audio_obj)) if audio_obj else ""
+        return {"type": "blob", "modality": "audio", "data": data}
+    return {"type": btype, "data": str(block)}
+
+
+def _content_to_parts(content) -> list:
+    """Convert message content (str | list | scalar) into a list of OTel parts."""
+    if isinstance(content, str):
+        return [{"type": "text", "content": content}]
+    if isinstance(content, list):
+        return [_content_block_to_part(block) for block in content]
+    return [{"type": "text", "content": str(content)}]
+
+
+def _tool_call_to_part(tool_call) -> dict:
+    """Convert a single tool call to an OTel tool_call part."""
+    tc = _normalize_tool_call(tool_call)
+    part: dict = {"type": "tool_call"}
+    if tc.get("id"):
+        part["id"] = tc["id"]
+    if tc.get("name"):
+        part["name"] = tc["name"]
+    if tc.get("arguments") is not None:
+        part["arguments"] = _parse_arguments(tc["arguments"])
+    return part
+
+
+def _build_tool_response_part(call_id, content) -> dict:
+    """Build a tool_call_response part from an id and optional content."""
+    part: dict = {"type": "tool_call_response", "id": call_id}
+    if content is not None:
+        part["response"] = _stringify_content(content)
+    return part
+
+
+def _convert_chat_message(msg: dict):
+    """Convert a role-based chat message to (role, parts) or None."""
+    role = msg["role"]
+    content = msg.get("content")
+    tool_call_id = msg.get("tool_call_id")
+    tool_calls = msg.get("tool_calls")
+
+    if role == "tool" and tool_call_id:
+        return role, [_build_tool_response_part(tool_call_id, content)]
+
+    parts = []
+    if tool_calls:
+        if content is not None:
+            text = _stringify_content(content)
+            if text:
+                parts.append({"type": "text", "content": text})
+        parts.extend(_tool_call_to_part(tc) for tc in tool_calls)
+    elif content is not None:
+        parts = _content_to_parts(content)
+
+    return role, parts
+
+
+def _convert_agents_sdk_message(msg: dict):
+    """Convert an Agents SDK type-based message to (role, parts) or None."""
+    msg_type = msg["type"]
+    if msg_type == "function_call":
+        part: dict = {
+            "type": "tool_call",
+            "id": msg.get("id", ""),
+            "name": msg.get("name", ""),
+        }
+        if msg.get("arguments") is not None:
+            part["arguments"] = _parse_arguments(msg["arguments"])
+        return "assistant", [part]
+
+    if msg_type == "function_call_output":
+        part = _build_tool_response_part(
+            msg.get("call_id"),
+            msg.get("output"),
+        )
+        return "tool", [part]
+
+    return None, []
+
+
+def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
+    """Set ``gen_ai.input.messages`` using the OTel parts-based schema.
 
     Handles both OpenAI chat format (role/content) and Agents SDK format
     (type/function_call/function_call_output).
+
+    Only emitted when *trace_content* is True (opt-in content attribute).
     """
-    if not input_data:
+    if not input_data or not trace_content:
         return
 
     messages = []
-
     for message in input_data:
-        # Convert message to dict for unified handling
-        if isinstance(message, dict):
-            msg = message
-        else:
-            msg = {}
-            for attr in [
-                "role", "content", "tool_call_id", "tool_calls",
-                "type", "name", "arguments", "call_id", "output",
-            ]:
-                if hasattr(message, attr):
-                    msg[attr] = getattr(message, attr)
-
-        role = None
-        content = None
-        tool_call_id = None
-        tool_calls = None
+        msg = _msg_to_dict(message)
 
         if "role" in msg:
-            role = msg["role"]
-            content = msg.get("content")
-            tool_call_id = msg.get("tool_call_id")
-            tool_calls = msg.get("tool_calls")
+            role, parts = _convert_chat_message(msg)
         elif "type" in msg:
-            msg_type = msg["type"]
-            if msg_type == "function_call":
-                role = "assistant"
-                tool_calls = [
-                    {
-                        "id": msg.get("id", ""),
-                        "name": msg.get("name", ""),
-                    } | (
-                        {"arguments": msg.get("arguments", "")}
-                        if trace_content else {}
-                    )
-                ]
-            elif msg_type == "function_call_output" and trace_content:
-                role = "tool"
-                content = msg.get("output")
-                tool_call_id = msg.get("call_id")
-
-        if not role:
+            role, parts = _convert_agents_sdk_message(msg)
+        else:
             continue
 
-        msg_obj: dict = {"role": role}
-
-        if content is not None and trace_content:
-            if not isinstance(content, str):
-                content = json.dumps(content)
-            msg_obj["content"] = content
-
-        if tool_call_id:
-            msg_obj["tool_call_id"] = tool_call_id
-
-        if tool_calls:
-            processed_calls = []
-            for tool_call in tool_calls:
-                if not isinstance(tool_call, dict):
-                    tc_dict: dict = {}
-                    if hasattr(tool_call, "id"):
-                        tc_dict["id"] = tool_call.id
-                    if hasattr(tool_call, "function"):
-                        func = tool_call.function
-                        if hasattr(func, "name"):
-                            tc_dict["name"] = func.name
-                        if hasattr(func, "arguments"):
-                            tc_dict["arguments"] = func.arguments
-                    elif hasattr(tool_call, "name"):
-                        tc_dict["name"] = tool_call.name
-                    if hasattr(tool_call, "arguments"):
-                        tc_dict["arguments"] = tool_call.arguments
-                    tool_call = tc_dict
-
-                if "function" in tool_call:
-                    function = tool_call["function"]
-                    tool_call = {
-                        "id": tool_call.get("id"),
-                        "name": function.get("name"),
-                        "arguments": function.get("arguments"),
-                    }
-
-                call_obj: dict = {}
-                if tool_call.get("id"):
-                    call_obj["id"] = tool_call["id"]
-                if tool_call.get("name"):
-                    call_obj["name"] = tool_call["name"]
-                if tool_call.get("arguments") and trace_content:
-                    args = tool_call["arguments"]
-                    if not isinstance(args, str):
-                        args = json.dumps(args)
-                    call_obj["arguments"] = args
-                if call_obj:
-                    processed_calls.append(call_obj)
-
-            if processed_calls:
-                msg_obj["tool_calls"] = processed_calls
-
-        messages.append(msg_obj)
+        if role:
+            messages.append({"role": role, "parts": parts})
 
     if messages:
         otel_span.set_attribute(
@@ -166,7 +321,7 @@ def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
 def _extract_response_attributes(otel_span, response, trace_content: bool):
     """
     Extract model settings, completions, and usage from a response object
-    and set them as span attributes.
+    and set them as span attributes using the OTel parts-based schema.
 
     Returns a dict of model_settings for potential use by parent spans.
     """
@@ -198,52 +353,113 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
     if hasattr(response, "model") and response.model:
         model_settings["model"] = response.model
         otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, response.model)
+        otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.model)
+
+    if hasattr(response, "id") and response.id:
+        otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_ID, response.id)
 
     if (
         hasattr(response, "frequency_penalty")
         and response.frequency_penalty is not None
     ):
         model_settings["frequency_penalty"] = response.frequency_penalty
+        otel_span.set_attribute(
+            GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+            response.frequency_penalty,
+        )
 
-    # Extract completions from response.output as a JSON array
-    if hasattr(response, "output") and response.output:
+    # Map finish reason (top-level)
+    raw_finish_reason = getattr(response, "finish_reason", None)
+    mapped_finish_reason = _map_finish_reason(raw_finish_reason)
+
+    # Set top-level finish_reasons attribute (even when trace_content=False)
+    if mapped_finish_reason is not None:
+        otel_span.set_attribute(
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+            (mapped_finish_reason,),
+        )
+
+    # Extract completions from response.output as a JSON array (parts-based)
+    # Only emit output messages when trace_content is enabled (opt-in content)
+    if trace_content and hasattr(response, "output") and response.output:
         output_messages = []
         for output in response.output:
             if hasattr(output, "content") and output.content:
                 # Text message with content array (ResponseOutputMessage)
-                content_text = ""
+                parts = []
                 for content_item in output.content:
-                    if hasattr(content_item, "text"):
-                        content_text += content_item.text
+                    item_type = getattr(content_item, "type", None)
+                    if item_type == "output_text" or (
+                        hasattr(content_item, "text") and content_item.text
+                    ):
+                        parts.append({
+                            "type": "text",
+                            "content": content_item.text,
+                        })
+                    elif item_type == "refusal":
+                        refusal_text = getattr(content_item, "refusal", "")
+                        parts.append({
+                            "type": "refusal",
+                            "content": refusal_text,
+                        })
+                    elif item_type == "reasoning":
+                        # Reasoning/thinking content
+                        summary = getattr(content_item, "summary", None)
+                        text = ""
+                        if isinstance(summary, list):
+                            text = " ".join(
+                                getattr(s, "text", str(s))
+                                for s in summary
+                            )
+                        elif summary:
+                            text = str(summary)
+                        parts.append({
+                            "type": "reasoning",
+                            "content": text,
+                        })
+                    elif item_type is not None:
+                        # Unknown part type – preserve type and best-effort content
+                        parts.append({
+                            "type": item_type,
+                            "data": str(content_item),
+                        })
 
-                msg: dict = {"role": getattr(output, "role", "assistant")}
-                if content_text and trace_content:
-                    msg["content"] = content_text
-                if hasattr(response, "finish_reason") and response.finish_reason:
-                    msg["finish_reason"] = response.finish_reason
+                msg = {
+                    "role": getattr(output, "role", "assistant"),
+                    "parts": parts,
+                    "finish_reason": mapped_finish_reason,
+                }
                 output_messages.append(msg)
 
             elif hasattr(output, "name"):
                 # Function/tool call (ResponseFunctionToolCall)
                 tool_name = getattr(output, "name", "unknown_tool")
                 tool_call_id = getattr(output, "call_id", "")
-                call_obj: dict = {"name": tool_name, "id": tool_call_id}
-                if trace_content:
-                    call_obj["arguments"] = getattr(output, "arguments", "{}")
+                part = {
+                    "type": "tool_call",
+                    "name": tool_name,
+                    "id": tool_call_id,
+                }
+                raw_args = getattr(output, "arguments", None)
+                part["arguments"] = _parse_arguments(raw_args)
+
                 msg = {
                     "role": "assistant",
-                    "finish_reason": "tool_calls",
-                    "tool_calls": [call_obj],
+                    "parts": [part],
+                    "finish_reason": _map_finish_reason("tool_calls"),
                 }
                 output_messages.append(msg)
 
             elif hasattr(output, "text"):
                 # Direct text content
-                msg = {"role": getattr(output, "role", "assistant")}
-                if trace_content:
-                    msg["content"] = output.text
-                if hasattr(response, "finish_reason") and response.finish_reason:
-                    msg["finish_reason"] = response.finish_reason
+                parts = []
+                if output.text:
+                    parts.append({"type": "text", "content": output.text})
+                msg = {
+                    "role": getattr(output, "role", "assistant"),
+                    "parts": parts,
+                    "finish_reason": mapped_finish_reason,
+                }
                 output_messages.append(msg)
 
         if output_messages:
@@ -307,7 +523,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             kind=SpanKind.CLIENT,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Agent Workflow",
             },
         )
@@ -364,7 +580,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             if handoff_parent:
@@ -409,7 +625,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             handoff_attributes = {
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             if from_agent and from_agent != "unknown":
@@ -436,7 +652,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             if hasattr(span_data, "description") and span_data.description:
@@ -458,8 +674,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 parent_context = set_span_in_context(current_agent_span)
 
             response_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "response",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             otel_span = self.tracer.start_span(
@@ -477,7 +693,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             response_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             otel_span = self.tracer.start_span(
@@ -497,9 +713,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if current_agent_span:
                 parent_context = set_span_in_context(current_agent_span)
 
+            # NOTE: "speech", "transcription", "speech_group" are OpenAI
+            # Realtime API-specific operations with no well-known OTel
+            # equivalents.  Kept as custom operation names intentionally.
             speech_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             model = getattr(span_data, "model", None)
@@ -525,7 +744,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             transcription_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "transcription",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             model = getattr(span_data, "model", None)
@@ -551,7 +770,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             speech_group_attributes = {
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "speech_group",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             }
 
             otel_span = self.tracer.start_span(
@@ -591,7 +810,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 # Add function/tool specifications to the request using OpenAI semantic conventions
                 response = getattr(span_data, "response", None)
                 if (
-                    response
+                    trace_content
+                    and response
                     and hasattr(response, "tools")
                     and response.tools
                 ):
@@ -600,12 +820,16 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                     for tool in response.tools:
                         if hasattr(tool, "function"):
                             function = tool.function
-                            tool_def = {
+                            func_def = {
                                 "name": getattr(function, "name", ""),
                                 "description": getattr(function, "description", ""),
                             }
                             if hasattr(function, "parameters"):
-                                tool_def["parameters"] = function.parameters
+                                func_def["parameters"] = function.parameters
+                            tool_def = {
+                                "type": getattr(tool, "type", "function"),
+                                "function": func_def,
+                            }
                             tool_defs.append(tool_def)
                         elif hasattr(tool, "name"):
                             # Direct function format
@@ -634,14 +858,19 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if input_text:
                     otel_span.set_attribute(
                         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "content": input_text}]),
+                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": input_text}]}]),
                     )
 
                 output_audio = getattr(span_data, "output", None)
                 if output_audio and not isinstance(output_audio, (bytes, bytearray)):
+                    out_msg = {
+                        "role": "assistant",
+                        "parts": [{"type": "text", "content": str(output_audio)}],
+                        "finish_reason": None,
+                    }
                     otel_span.set_attribute(
                         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps([{"role": "assistant", "content": str(output_audio)}]),
+                        json.dumps([out_msg]),
                     )
 
             elif (
@@ -654,14 +883,19 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if input_audio and not isinstance(input_audio, (bytes, bytearray)):
                     otel_span.set_attribute(
                         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "content": str(input_audio)}]),
+                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": str(input_audio)}]}]),
                     )
 
                 output_text = getattr(span_data, "output", None)
                 if output_text:
+                    out_msg = {
+                        "role": "assistant",
+                        "parts": [{"type": "text", "content": output_text}],
+                        "finish_reason": None,
+                    }
                     otel_span.set_attribute(
                         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps([{"role": "assistant", "content": output_text}]),
+                        json.dumps([out_msg]),
                     )
 
             elif (
@@ -674,7 +908,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if input_text:
                     otel_span.set_attribute(
                         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "content": input_text}]),
+                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": input_text}]}]),
                     )
 
             if hasattr(span, "error") and span.error:

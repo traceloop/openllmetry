@@ -91,7 +91,7 @@ def test_agent_spans(exporter, test_agent):
     assert agent_span.kind == agent_span.kind.CLIENT
     assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
     assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
-    assert agent_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai_agents"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
     assert agent_span.status.status_code == StatusCode.OK
 
     # Agent span should NOT contain LLM parameters
@@ -106,13 +106,15 @@ def test_agent_spans(exporter, test_agent):
     response_span = response_spans[0]
 
     # Test proper semantic conventions
-    assert response_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "response"
-    assert response_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
+    assert response_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
+    assert response_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    # Test input messages (JSON array)
+    # Test input messages (JSON array with parts-based schema)
     input_messages = json.loads(response_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
-    assert input_messages[0]["content"] == "What is AI?"
+    assert "parts" in input_messages[0], "Input messages must use parts-based schema"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "What is AI?"
 
     # Test usage tokens
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
@@ -122,11 +124,14 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
     assert response_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
 
-    # Test output messages (JSON array)
+    # Test output messages (JSON array with parts-based schema)
     output_messages = json.loads(response_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert output_messages[0]["content"] is not None
-    assert len(output_messages[0]["content"]) > 0
+    assert "parts" in output_messages[0], "Output messages must use parts-based schema"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert len(output_messages[0]["parts"][0]["content"]) > 0
     assert output_messages[0]["role"] is not None
+    assert "finish_reason" in output_messages[0], "Output messages must have finish_reason"
 
     # Test model settings are in the response span
     assert response_span.attributes["gen_ai.request.temperature"] == 0.3
@@ -444,7 +449,7 @@ def test_tool_call_and_result_attributes(exporter):
     second_response_span = response_spans[1]
 
     # The tool call and result appear in the SECOND response span as part of conversation history
-    # Parse the input messages JSON array
+    # Parse the input messages JSON array (parts-based schema)
     input_messages = json.loads(
         second_response_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
     )
@@ -454,30 +459,43 @@ def test_tool_call_and_result_attributes(exporter):
 
     for msg in input_messages:
         role = msg.get("role")
+        parts = msg.get("parts", [])
 
         if role == "assistant" and not tool_call_found:
-            tool_calls = msg.get("tool_calls", [])
-            if tool_calls:
-                tool_call_found = True
-                assert tool_calls[0]["name"] == "get_city_info", (
-                    f"Expected tool name 'get_city_info', got '{tool_calls[0]['name']}'"
-                )
-                tool_call_id = tool_calls[0].get("id", "")
-                assert len(tool_call_id) > 0, "Tool call ID should not be empty"
-                arguments = tool_calls[0].get("arguments", "")
-                assert "London" in arguments or "london" in arguments.lower(), (
-                    f"Expected 'London' in arguments, got: {arguments}"
-                )
+            # Look for tool_call parts
+            for part in parts:
+                if part.get("type") == "tool_call":
+                    tool_call_found = True
+                    assert part["name"] == "get_city_info", (
+                        f"Expected tool name 'get_city_info', got '{part['name']}'"
+                    )
+                    tool_call_id = part.get("id", "")
+                    assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+                    arguments = part.get("arguments", "")
+                    if isinstance(arguments, dict):
+                        arguments = json.dumps(arguments)
+                    assert "London" in arguments or "london" in arguments.lower(), (
+                        f"Expected 'London' in arguments, got: {arguments}"
+                    )
+                    break
 
         elif role == "tool" and not tool_result_found:
-            tool_result_found = True
-            content = msg.get("content", "")
-            assert len(content) > 0, "Tool result content should not be empty"
-            assert "London" in content or "9000000" in content or "United Kingdom" in content, (
-                f"Expected tool result to contain city info, got: {content}"
-            )
-            tool_call_id = msg.get("tool_call_id", "")
-            assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+            # Look for tool_call_response parts
+            for part in parts:
+                if part.get("type") == "tool_call_response":
+                    tool_result_found = True
+                    response_text = part.get("response", "")
+                    assert len(response_text) > 0, "Tool result response should not be empty"
+                    assert (
+                        "London" in response_text
+                        or "9000000" in response_text
+                        or "United Kingdom" in response_text
+                    ), (
+                        f"Expected tool result to contain city info, got: {response_text}"
+                    )
+                    tool_call_id = part.get("id", "")
+                    assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+                    break
 
-    assert tool_call_found, "No assistant message with tool_calls found in second response span"
-    assert tool_result_found, "No tool message found in second response span"
+    assert tool_call_found, "No assistant message with tool_call parts found in second response span"
+    assert tool_result_found, "No tool message with tool_call_response parts found in second response span"

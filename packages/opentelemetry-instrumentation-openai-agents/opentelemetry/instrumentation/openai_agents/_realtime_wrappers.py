@@ -120,7 +120,7 @@ class RealtimeTracingState:
             kind=SpanKind.CLIENT,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Realtime Session",
             },
         )
@@ -176,7 +176,7 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             },
         )
         self.agent_spans[agent_name] = span
@@ -203,7 +203,7 @@ class RealtimeTracingState:
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             },
         )
         self.tool_spans[tool_name] = span
@@ -240,7 +240,7 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 GEN_AI_HANDOFF_FROM_AGENT: from_agent,
                 GEN_AI_HANDOFF_TO_AGENT: to_agent,
             },
@@ -260,7 +260,7 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             },
         )
         self.audio_spans[span_key] = span
@@ -353,7 +353,7 @@ class RealtimeTracingState:
             start_time=start_time,
             attributes={
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 GenAIAttributes.GEN_AI_REQUEST_MODEL: model_name_str,
             },
         )
@@ -373,14 +373,23 @@ class RealtimeTracingState:
 
         if should_send_prompts():
             if prompt_content:
-                input_messages = [{"role": prompt_role or "user", "content": prompt_content}]
+                input_msg = {
+                    "role": prompt_role or "user",
+                    "parts": [{"type": "text", "content": prompt_content}],
+                }
                 span.set_attribute(
-                    GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages)
+                    GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                    json.dumps([input_msg]),
                 )
 
-            output_messages = [{"role": "assistant", "content": completion_content, "finish_reason": "stop"}]
+            out_msg = {
+                "role": "assistant",
+                "parts": [{"type": "text", "content": completion_content}],
+                "finish_reason": None,
+            }
             span.set_attribute(
-                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages)
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                json.dumps([out_msg]),
             )
 
         span.set_status(Status(StatusCode.OK))
