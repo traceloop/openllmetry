@@ -172,7 +172,7 @@ def _dict_block_to_part(block: dict) -> dict:
       OpenAI input_audio → OTel BlobPart {type:blob, modality:audio, ...}
     """
     btype = block.get("type", "text")
-    if btype == "text":
+    if btype in ("text", "input_text", "output_text"):
         return {"type": "text", "content": block.get("text", "")}
     if btype == "image_url":
         url_info = block.get("image_url", {})
@@ -195,7 +195,7 @@ def _dict_block_to_part(block: dict) -> dict:
 def _object_block_to_part(block) -> dict:
     """Map an SDK-object content block via getattr."""
     btype = getattr(block, "type", "text")
-    if btype == "text":
+    if btype in ("text", "input_text", "output_text"):
         return {
             "type": "text",
             "content": getattr(block, "text", str(block)),
@@ -236,8 +236,7 @@ def _tool_call_to_part(tool_call) -> dict:
 def _build_tool_response_part(call_id, content) -> dict:
     """Build a tool_call_response part from an id and optional content."""
     part: dict = {"type": "tool_call_response", "id": call_id}
-    if content is not None:
-        part["response"] = _stringify_content(content)
+    part["response"] = _stringify_content(content) if content is not None else ""
     return part
 
 
@@ -427,7 +426,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 msg = {
                     "role": getattr(output, "role", "assistant"),
                     "parts": parts,
-                    "finish_reason": mapped_finish_reason,
+                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
                 }
                 output_messages.append(msg)
 
@@ -458,7 +457,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 msg = {
                     "role": getattr(output, "role", "assistant"),
                     "parts": parts,
-                    "finish_reason": mapped_finish_reason,
+                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
                 }
                 output_messages.append(msg)
 
@@ -496,6 +495,40 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
             )
 
     return model_settings
+
+
+def _extract_tool_definitions(tools):
+    """Extract tool/function specs into a JSON-serializable list.
+
+    Handles both function-wrapped tools (tool.function.name) and
+    direct function tools (tool.name).
+    """
+    if not tools:
+        return []
+    tool_defs = []
+    for tool in tools:
+        if hasattr(tool, "function"):
+            function = tool.function
+            func_def = {
+                "name": getattr(function, "name", ""),
+                "description": getattr(function, "description", ""),
+            }
+            if hasattr(function, "parameters"):
+                func_def["parameters"] = function.parameters
+            tool_def = {
+                "type": getattr(tool, "type", "function"),
+                "function": func_def,
+            }
+            tool_defs.append(tool_def)
+        elif hasattr(tool, "name"):
+            # Direct function format
+            tool_def = {"name": tool.name}
+            if hasattr(tool, "description"):
+                tool_def["description"] = tool.description
+            if hasattr(tool, "parameters"):
+                tool_def["parameters"] = tool.parameters
+            tool_defs.append(tool_def)
+    return tool_defs
 
 
 class OpenTelemetryTracingProcessor(TracingProcessor):
@@ -563,174 +596,30 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         otel_span = None
 
         if isinstance(span_data, AgentSpanData):
-            agent_name = getattr(span_data, "name", None) or "unknown_agent"
-
-            if set_agent_name is not None:
-                set_agent_name(agent_name)
-
-            handoff_parent = None
-            trace_id = getattr(span, "trace_id", None)
-            if trace_id:
-                handoff_key = f"{agent_name}:{trace_id}"
-                if parent_agent_name := self._reverse_handoffs_dict.pop(
-                    handoff_key, None
-                ):
-                    handoff_parent = parent_agent_name
-
-            attributes = {
-                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-                GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            if handoff_parent:
-                attributes["gen_ai.agent.handoff_parent"] = handoff_parent
-
-            if hasattr(span_data, "handoffs") and span_data.handoffs:
-                for i, handoff_agent in enumerate(span_data.handoffs):
-                    handoff_info = {
-                        "name": getattr(handoff_agent, "name", "unknown"),
-                        "instructions": getattr(
-                            handoff_agent, "instructions", "No instructions"
-                        ),
-                    }
-                    attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
-
-            otel_span = self.tracer.start_span(
-                f"{agent_name}.agent",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=attributes,
-            )
+            otel_span = self._start_agent_span(span_data, parent_context, trace_id)
 
         elif isinstance(span_data, HandoffSpanData):
-            from_agent = getattr(span_data, "from_agent", None)
-            to_agent = getattr(span_data, "to_agent", None)
-
-            from_agent = from_agent or "unknown"
-
-            to_agent = to_agent or "unknown"
-
-            trace_id = getattr(span, "trace_id", None)
-            if to_agent and to_agent != "unknown" and trace_id:
-                handoff_key = f"{to_agent}:{trace_id}"
-                self._reverse_handoffs_dict[handoff_key] = from_agent
-
-                if len(self._reverse_handoffs_dict) > 1000:
-                    self._reverse_handoffs_dict.popitem(last=False)
-
-            from_agent_span = self._find_agent_span(from_agent)
-            if from_agent_span:
-                parent_context = set_span_in_context(from_agent_span)
-
-            handoff_attributes = {
-                SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            if from_agent and from_agent != "unknown":
-                handoff_attributes[GEN_AI_HANDOFF_FROM_AGENT] = from_agent
-                handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
-            if to_agent and to_agent != "unknown":
-                handoff_attributes[GEN_AI_HANDOFF_TO_AGENT] = to_agent
-
-            otel_span = self.tracer.start_span(
-                f"{from_agent} → {to_agent}.handoff",
-                kind=SpanKind.INTERNAL,
-                context=parent_context,
-                attributes=handoff_attributes,
-            )
+            otel_span = self._start_handoff_span(span_data, parent_context, trace_id)
 
         elif isinstance(span_data, FunctionSpanData):
-            tool_name = getattr(span_data, "name", None) or "unknown_tool"
+            agent_ctx = self._resolve_agent_parent(parent_context)
+            otel_span = self._start_function_span(span_data, agent_ctx)
 
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            tool_attributes = {
-                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
-                GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
-                GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            if hasattr(span_data, "description") and span_data.description:
-                # Only use description if it's not a generic class description
-                desc = span_data.description
-                if desc and not desc.startswith("Represents a Function Span"):
-                    tool_attributes[GenAIAttributes.GEN_AI_TOOL_DESCRIPTION] = desc
-
-            otel_span = self.tracer.start_span(
-                f"{tool_name}.tool",
-                kind=SpanKind.INTERNAL,
-                context=parent_context,
-                attributes=tool_attributes,
-            )
-
-        elif type(span_data).__name__ == "ResponseSpanData":
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            response_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            otel_span = self.tracer.start_span(
-                "openai.response",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=response_attributes,
-                start_time=time.time_ns(),
-            )
-
-        elif isinstance(span_data, GenerationSpanData):
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            response_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            otel_span = self.tracer.start_span(
-                "openai.response",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=response_attributes,
-                start_time=time.time_ns(),
-            )
+        elif (
+            type(span_data).__name__ == "ResponseSpanData"
+            or isinstance(span_data, GenerationSpanData)
+        ):
+            agent_ctx = self._resolve_agent_parent(parent_context)
+            otel_span = self._start_generation_span(agent_ctx, span_data)
 
         elif (
             _has_realtime_spans
             and SpeechSpanData
             and isinstance(span_data, SpeechSpanData)
         ):
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            # NOTE: "speech", "transcription", "speech_group" are OpenAI
-            # Realtime API-specific operations with no well-known OTel
-            # equivalents.  Kept as custom operation names intentionally.
-            speech_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "speech",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            model = getattr(span_data, "model", None)
-            if model:
-                speech_attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
-
-            otel_span = self.tracer.start_span(
-                "openai.realtime.speech",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=speech_attributes,
-                start_time=time.time_ns(),
+            agent_ctx = self._resolve_agent_parent(parent_context)
+            otel_span = self._start_realtime_span(
+                span_data, agent_ctx, "openai.realtime.speech", "speech",
             )
 
         elif (
@@ -738,25 +627,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             and TranscriptionSpanData
             and isinstance(span_data, TranscriptionSpanData)
         ):
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            transcription_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "transcription",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            model = getattr(span_data, "model", None)
-            if model:
-                transcription_attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
-
-            otel_span = self.tracer.start_span(
-                "openai.realtime.transcription",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=transcription_attributes,
-                start_time=time.time_ns(),
+            agent_ctx = self._resolve_agent_parent(parent_context)
+            otel_span = self._start_realtime_span(
+                span_data, agent_ctx, "openai.realtime.transcription", "transcription",
             )
 
         elif (
@@ -764,21 +637,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             and SpeechGroupSpanData
             and isinstance(span_data, SpeechGroupSpanData)
         ):
-            current_agent_span = self._find_current_agent_span()
-            if current_agent_span:
-                parent_context = set_span_in_context(current_agent_span)
-
-            speech_group_attributes = {
-                GenAIAttributes.GEN_AI_OPERATION_NAME: "speech_group",
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            }
-
-            otel_span = self.tracer.start_span(
-                "openai.realtime.speech_group",
-                kind=SpanKind.CLIENT,
-                context=parent_context,
-                attributes=speech_group_attributes,
-                start_time=time.time_ns(),
+            agent_ctx = self._resolve_agent_parent(parent_context)
+            otel_span = self._start_realtime_span(
+                span_data, agent_ctx, "openai.realtime.speech_group", "speech_group",
             )
 
         if otel_span:
@@ -803,113 +664,15 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 type(span_data).__name__ == "ResponseSpanData"
                 or isinstance(span_data, GenerationSpanData)
             ):
-                # Extract prompt data from input
-                input_data = getattr(span_data, "input", [])
-                _extract_prompt_attributes(otel_span, input_data, trace_content)
+                self._end_generation_span(otel_span, span_data, trace_content)
 
-                # Add function/tool specifications to the request using OpenAI semantic conventions
-                response = getattr(span_data, "response", None)
-                if (
-                    trace_content
-                    and response
-                    and hasattr(response, "tools")
-                    and response.tools
-                ):
-                    # Extract tool specifications as a JSON array
-                    tool_defs = []
-                    for tool in response.tools:
-                        if hasattr(tool, "function"):
-                            function = tool.function
-                            func_def = {
-                                "name": getattr(function, "name", ""),
-                                "description": getattr(function, "description", ""),
-                            }
-                            if hasattr(function, "parameters"):
-                                func_def["parameters"] = function.parameters
-                            tool_def = {
-                                "type": getattr(tool, "type", "function"),
-                                "function": func_def,
-                            }
-                            tool_defs.append(tool_def)
-                        elif hasattr(tool, "name"):
-                            # Direct function format
-                            tool_def = {"name": tool.name}
-                            if hasattr(tool, "description"):
-                                tool_def["description"] = tool.description
-                            if hasattr(tool, "parameters"):
-                                tool_def["parameters"] = tool.parameters
-                            tool_defs.append(tool_def)
-                    if tool_defs:
-                        otel_span.set_attribute(
-                            GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
-                        )
-
-                if response:
-                    model_settings = _extract_response_attributes(otel_span, response, trace_content)
-                    self._last_model_settings = model_settings
-
-            elif (
-                _has_realtime_spans
-                and SpeechSpanData
-                and isinstance(span_data, SpeechSpanData)
-                and trace_content
-            ):
-                input_text = getattr(span_data, "input", None)
-                if input_text:
-                    otel_span.set_attribute(
-                        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": input_text}]}]),
-                    )
-
-                output_audio = getattr(span_data, "output", None)
-                if output_audio and not isinstance(output_audio, (bytes, bytearray)):
-                    out_msg = {
-                        "role": "assistant",
-                        "parts": [{"type": "text", "content": str(output_audio)}],
-                        "finish_reason": None,
-                    }
-                    otel_span.set_attribute(
-                        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps([out_msg]),
-                    )
-
-            elif (
-                _has_realtime_spans
-                and TranscriptionSpanData
-                and isinstance(span_data, TranscriptionSpanData)
-                and trace_content
-            ):
-                input_audio = getattr(span_data, "input", None)
-                if input_audio and not isinstance(input_audio, (bytes, bytearray)):
-                    otel_span.set_attribute(
-                        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": str(input_audio)}]}]),
-                    )
-
-                output_text = getattr(span_data, "output", None)
-                if output_text:
-                    out_msg = {
-                        "role": "assistant",
-                        "parts": [{"type": "text", "content": output_text}],
-                        "finish_reason": None,
-                    }
-                    otel_span.set_attribute(
-                        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps([out_msg]),
-                    )
-
-            elif (
-                _has_realtime_spans
-                and SpeechGroupSpanData
-                and isinstance(span_data, SpeechGroupSpanData)
-                and trace_content
-            ):
-                input_text = getattr(span_data, "input", None)
-                if input_text:
-                    otel_span.set_attribute(
-                        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                        json.dumps([{"role": "user", "parts": [{"type": "text", "content": input_text}]}]),
-                    )
+            elif trace_content and span_data and _has_realtime_spans:
+                if SpeechSpanData and isinstance(span_data, SpeechSpanData):
+                    self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
+                elif TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
+                    self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
+                elif SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
+                    self._set_realtime_io_attributes(otel_span, span_data, has_output=False)
 
             if hasattr(span, "error") and span.error:
                 otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
@@ -921,6 +684,211 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if span in self._span_contexts:
                 context.detach(self._span_contexts[span])
                 del self._span_contexts[span]
+
+    # ------------------------------------------------------------------
+    # on_span_start handlers (extracted from the former if-elif chain)
+    # ------------------------------------------------------------------
+
+    def _resolve_agent_parent(self, fallback_context):
+        """Resolve parent context, preferring the current agent span."""
+        current = self._find_current_agent_span()
+        if current:
+            return set_span_in_context(current)
+        return fallback_context
+
+    def _start_agent_span(self, span_data, parent_context, trace_id):
+        """Create an OTel span for an AgentSpanData."""
+        agent_name = getattr(span_data, "name", None) or "unknown_agent"
+
+        if set_agent_name is not None:
+            set_agent_name(agent_name)
+
+        handoff_parent = None
+        if trace_id:
+            handoff_key = f"{agent_name}:{trace_id}"
+            if parent_agent_name := self._reverse_handoffs_dict.pop(
+                handoff_key, None
+            ):
+                handoff_parent = parent_agent_name
+
+        attributes = {
+            SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
+            GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+        }
+
+        if handoff_parent:
+            attributes["gen_ai.agent.handoff_parent"] = handoff_parent
+
+        if hasattr(span_data, "handoffs") and span_data.handoffs:
+            for i, handoff_agent in enumerate(span_data.handoffs):
+                handoff_info = {
+                    "name": getattr(handoff_agent, "name", "unknown"),
+                    "instructions": getattr(
+                        handoff_agent, "instructions", "No instructions"
+                    ),
+                }
+                attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
+
+        return self.tracer.start_span(
+            f"{agent_name}.agent",
+            kind=SpanKind.CLIENT,
+            context=parent_context,
+            attributes=attributes,
+        )
+
+    def _start_handoff_span(self, span_data, parent_context, trace_id):
+        """Create an OTel span for a HandoffSpanData."""
+        from_agent = getattr(span_data, "from_agent", None) or "unknown"
+        to_agent = getattr(span_data, "to_agent", None) or "unknown"
+
+        if to_agent and to_agent != "unknown" and trace_id:
+            handoff_key = f"{to_agent}:{trace_id}"
+            self._reverse_handoffs_dict[handoff_key] = from_agent
+
+            if len(self._reverse_handoffs_dict) > 1000:
+                self._reverse_handoffs_dict.popitem(last=False)
+
+        from_agent_span = self._find_agent_span(from_agent)
+        if from_agent_span:
+            parent_context = set_span_in_context(from_agent_span)
+
+        handoff_attributes = {
+            SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+        }
+
+        if from_agent and from_agent != "unknown":
+            handoff_attributes[GEN_AI_HANDOFF_FROM_AGENT] = from_agent
+            handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
+        if to_agent and to_agent != "unknown":
+            handoff_attributes[GEN_AI_HANDOFF_TO_AGENT] = to_agent
+
+        return self.tracer.start_span(
+            f"{from_agent} → {to_agent}.handoff",
+            kind=SpanKind.INTERNAL,
+            context=parent_context,
+            attributes=handoff_attributes,
+        )
+
+    def _start_function_span(self, span_data, parent_context):
+        """Create an OTel span for a FunctionSpanData."""
+        tool_name = getattr(span_data, "name", None) or "unknown_tool"
+
+        tool_attributes = {
+            SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
+            GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+            GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+        }
+
+        if hasattr(span_data, "description") and span_data.description:
+            # Only use description if it's not a generic class description
+            desc = span_data.description
+            if desc and not desc.startswith("Represents a Function Span"):
+                tool_attributes[GenAIAttributes.GEN_AI_TOOL_DESCRIPTION] = desc
+
+        return self.tracer.start_span(
+            f"{tool_name}.tool",
+            kind=SpanKind.INTERNAL,
+            context=parent_context,
+            attributes=tool_attributes,
+        )
+
+    def _start_generation_span(self, parent_context, span_data=None):
+        """Create an OTel span for a GenerationSpanData or ResponseSpanData."""
+        attributes = {
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+        }
+        model = getattr(span_data, "model", None) if span_data else None
+        if model:
+            attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
+        return self.tracer.start_span(
+            "openai.response",
+            kind=SpanKind.CLIENT,
+            context=parent_context,
+            attributes=attributes,
+            start_time=time.time_ns(),
+        )
+
+    def _start_realtime_span(self, span_data, parent_context, span_name, operation):
+        """Create an OTel span for a realtime span (Speech/Transcription/SpeechGroup).
+
+        NOTE: "speech", "transcription", "speech_group" are OpenAI
+        Realtime API-specific operations with no well-known OTel
+        equivalents.  Kept as custom operation names intentionally.
+        """
+        attributes = {
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+        }
+
+        model = getattr(span_data, "model", None)
+        if model:
+            attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
+
+        return self.tracer.start_span(
+            span_name,
+            kind=SpanKind.CLIENT,
+            context=parent_context,
+            attributes=attributes,
+            start_time=time.time_ns(),
+        )
+
+    # ------------------------------------------------------------------
+    # on_span_end helpers (extracted from the former if-elif chain)
+    # ------------------------------------------------------------------
+
+    def _end_generation_span(self, otel_span, span_data, trace_content):
+        """Handle on_span_end logic for generation/response spans."""
+        input_data = getattr(span_data, "input", [])
+        _extract_prompt_attributes(otel_span, input_data, trace_content)
+
+        response = getattr(span_data, "response", None)
+        if (
+            trace_content
+            and response
+            and hasattr(response, "tools")
+            and response.tools
+        ):
+            tool_defs = _extract_tool_definitions(response.tools)
+            if tool_defs:
+                otel_span.set_attribute(
+                    GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+                )
+
+        if response:
+            model_settings = _extract_response_attributes(otel_span, response, trace_content)
+            self._last_model_settings = model_settings
+
+    def _set_realtime_io_attributes(self, otel_span, span_data, has_output=True):
+        """Set input/output message attributes for realtime spans."""
+        input_val = getattr(span_data, "input", None)
+        if input_val and not isinstance(input_val, (bytes, bytearray)):
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                json.dumps([{"role": "user", "parts": [{"type": "text", "content": str(input_val)}]}]),
+            )
+
+        if not has_output:
+            return
+
+        output_val = getattr(span_data, "output", None)
+        if output_val and not isinstance(output_val, (bytes, bytearray)):
+            out_msg = {
+                "role": "assistant",
+                "parts": [{"type": "text", "content": str(output_val)}],
+                "finish_reason": "",
+            }
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                json.dumps([out_msg]),
+            )
+
+    # ------------------------------------------------------------------
+    # Span lookup helpers
+    # ------------------------------------------------------------------
 
     def _find_agent_span(self, agent_name: str):
         """Find the OpenTelemetry span for a given agent."""

@@ -592,8 +592,8 @@ class TestOutputMessagePartsFormat:
 
         span.end()
 
-    def test_output_finish_reason_none_when_unknown(self, tracer_and_exporter):
-        """finish_reason must be None (not fabricated 'stop') when unknown."""
+    def test_output_finish_reason_empty_when_unknown(self, tracer_and_exporter):
+        """finish_reason must be '' (not fabricated 'stop') when unknown."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -617,9 +617,9 @@ class TestOutputMessagePartsFormat:
 
         msg = messages[0]
         assert "finish_reason" in msg, "finish_reason must always be present (required by schema)"
-        # When finish_reason is unknown, it should be None, NOT fabricated "stop"
-        assert msg["finish_reason"] is None, (
-            f"finish_reason should be None when unknown, got '{msg['finish_reason']}'"
+        # When finish_reason is unknown, it should be empty string, NOT fabricated "stop"
+        assert msg["finish_reason"] == "", (
+            f"finish_reason should be '' when unknown, got '{msg['finish_reason']}'"
         )
 
         span.end()
@@ -1163,9 +1163,9 @@ class TestRealtimeMessageFormat:
         if raw_output:
             messages = json.loads(raw_output)
             msg = messages[0]
-            # finish_reason should be None, not fabricated "stop"
+            # finish_reason should be empty string, not fabricated "stop"
             fr = msg.get("finish_reason")
-            assert fr is None, (
+            assert fr == "", (
                 f"Realtime should not fabricate finish_reason, got '{fr}'"
             )
 
@@ -1788,7 +1788,7 @@ class TestOutputNonTextParts:
         span.end()
 
     def test_output_finish_reason_always_present_in_json(self, tracer_and_exporter):
-        """Spec §4: finish_reason key MUST always exist in output JSON (even if None)."""
+        """Spec §4: finish_reason key MUST always exist in output JSON (even if unknown)."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -1825,7 +1825,7 @@ class TestOutputNonTextParts:
         assert "finish_reason" in messages[0], (
             "finish_reason key must always be present in output JSON per schema"
         )
-        assert messages[0]["finish_reason"] is None
+        assert messages[0]["finish_reason"] == ""
 
         span.end()
 
@@ -2148,3 +2148,328 @@ class TestAgentsSdkUnknownType:
         assert GenAIAttributes.GEN_AI_INPUT_MESSAGES not in span.attributes
 
         span.end()
+
+
+# ---------------------------------------------------------------------------
+# P1-1: input_text / output_text blocks must map to TextPart in input path
+# ---------------------------------------------------------------------------
+
+class TestInputTextOutputTextMapping:
+    """Verify Responses API input_text/output_text blocks map to TextPart."""
+
+    def test_dict_input_text_maps_to_text_part(self):
+        """input_text dict block must produce {type: 'text', content: '...'}."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _dict_block_to_part,
+        )
+
+        block = {"type": "input_text", "text": "Hello from user"}
+        result = _dict_block_to_part(block)
+
+        assert result["type"] == "text", (
+            f"input_text should map to type='text', got '{result['type']}'"
+        )
+        assert result["content"] == "Hello from user", (
+            f"input_text content should be the text value, got '{result.get('content')}'"
+        )
+        assert "data" not in result, (
+            "input_text should NOT fall through to generic path with 'data' key"
+        )
+
+    def test_dict_output_text_maps_to_text_part(self):
+        """output_text dict block must produce {type: 'text', content: '...'}."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _dict_block_to_part,
+        )
+
+        block = {"type": "output_text", "text": "Here is my response"}
+        result = _dict_block_to_part(block)
+
+        assert result["type"] == "text", (
+            f"output_text should map to type='text', got '{result['type']}'"
+        )
+        assert result["content"] == "Here is my response"
+        assert "data" not in result
+
+    def test_object_input_text_maps_to_text_part(self):
+        """input_text SDK object must produce {type: 'text', content: '...'}."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _object_block_to_part,
+        )
+
+        block = MagicMock()
+        block.type = "input_text"
+        block.text = "Hello from user"
+
+        result = _object_block_to_part(block)
+
+        assert result["type"] == "text", (
+            f"input_text object should map to type='text', got '{result['type']}'"
+        )
+        assert result["content"] == "Hello from user"
+        assert "data" not in result
+
+    def test_object_output_text_maps_to_text_part(self):
+        """output_text SDK object must produce {type: 'text', content: '...'}."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _object_block_to_part,
+        )
+
+        block = MagicMock()
+        block.type = "output_text"
+        block.text = "Here is my response"
+
+        result = _object_block_to_part(block)
+
+        assert result["type"] == "text", (
+            f"output_text object should map to type='text', got '{result['type']}'"
+        )
+        assert result["content"] == "Here is my response"
+        assert "data" not in result
+
+    def test_input_text_in_full_input_message_pipeline(self, tracer_and_exporter):
+        """input_text blocks in chat messages must produce valid TextPart in gen_ai.input.messages."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [
+            {"role": "user", "content": [{"type": "input_text", "text": "Hello, can you help me?"}]},
+            {"role": "assistant", "content": [{"type": "output_text", "text": "Of course!"}]},
+        ]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+
+        # User message: input_text → TextPart
+        user_parts = messages[0]["parts"]
+        assert user_parts[0]["type"] == "text", (
+            f"input_text in pipeline should be type='text', got '{user_parts[0]['type']}'"
+        )
+        assert user_parts[0]["content"] == "Hello, can you help me?"
+
+        # Assistant message: output_text → TextPart
+        assistant_parts = messages[1]["parts"]
+        assert assistant_parts[0]["type"] == "text", (
+            f"output_text in pipeline should be type='text', got '{assistant_parts[0]['type']}'"
+        )
+        assert assistant_parts[0]["content"] == "Of course!"
+
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# P2 (was P1-2): gen_ai.request.model set at span start from span_data.model
+# ---------------------------------------------------------------------------
+
+class TestRequestModelAtSpanStart:
+    """Verify gen_ai.request.model is set at span creation from span_data."""
+
+    def test_request_model_set_from_span_data(self, tracer_and_exporter):
+        """gen_ai.request.model must be set at span start from span_data.model."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import GenerationSpanData
+
+        tracer, exporter = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        mock_trace = MagicMock()
+        mock_trace.trace_id = "test-reqmodel-1"
+        proc.on_trace_start(mock_trace)
+
+        gen_data = GenerationSpanData(model="gpt-4o-mini", model_config={})
+        span = MockAgentSpan(gen_data, trace_id="test-reqmodel-1")
+
+        proc.on_span_start(span)
+        # Don't call on_span_end — check span attributes right after creation
+        otel_span = proc._otel_spans.get(span)
+        assert otel_span is not None, "OTel span should exist after on_span_start"
+
+        attrs = dict(otel_span.attributes)
+        assert GenAIAttributes.GEN_AI_REQUEST_MODEL in attrs, (
+            f"gen_ai.request.model should be set at span start, got keys: {list(attrs.keys())}"
+        )
+        assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
+
+        # Clean up
+        proc.on_span_end(span)
+        proc.on_trace_end(mock_trace)
+
+    def test_request_model_fallback_when_response_model_missing(self, tracer_and_exporter):
+        """gen_ai.request.model must persist even if response.model is None."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import GenerationSpanData
+
+        tracer, exporter = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        mock_trace = MagicMock()
+        mock_trace.trace_id = "test-reqmodel-2"
+        proc.on_trace_start(mock_trace)
+
+        gen_data = GenerationSpanData(model="gpt-4o", model_config={})
+        # Simulate a response with no model
+        gen_data.response = MagicMock()
+        gen_data.response.model = None
+        gen_data.response.id = None
+        gen_data.response.temperature = None
+        gen_data.response.max_output_tokens = None
+        gen_data.response.top_p = None
+        gen_data.response.frequency_penalty = None
+        gen_data.response.finish_reason = None
+        gen_data.response.output = []
+        gen_data.response.usage = None
+        gen_data.response.tools = []
+
+        span = MockAgentSpan(gen_data, trace_id="test-reqmodel-2")
+        proc.on_span_start(span)
+        proc.on_span_end(span)
+        proc.on_trace_end(mock_trace)
+
+        spans = exporter.get_finished_spans()
+        response_span = next((s for s in spans if s.name == "openai.response"), None)
+        assert response_span is not None
+
+        attrs = dict(response_span.attributes)
+        assert GenAIAttributes.GEN_AI_REQUEST_MODEL in attrs, (
+            "gen_ai.request.model should be set even when response.model is None"
+        )
+        assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o"
+
+
+# ---------------------------------------------------------------------------
+# P2-1: Tool-call response parts include response key even when content=None
+# ---------------------------------------------------------------------------
+
+class TestToolResponseNoneContent:
+    """Verify tool_call_response includes response key when content is None."""
+
+    def test_tool_response_part_has_response_key_when_none(self):
+        """tool_call_response must include 'response' key even when content is None."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _build_tool_response_part,
+        )
+
+        part = _build_tool_response_part("call_123", None)
+
+        assert part["type"] == "tool_call_response"
+        assert part["id"] == "call_123"
+        assert "response" in part, (
+            "tool_call_response must include 'response' key even when content is None"
+        )
+        assert part["response"] == ""
+
+    def test_tool_response_part_has_response_key_when_present(self):
+        """tool_call_response with content must include 'response' key."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _build_tool_response_part,
+        )
+
+        part = _build_tool_response_part("call_456", "72 degrees")
+
+        assert part["type"] == "tool_call_response"
+        assert part["id"] == "call_456"
+        assert part["response"] == "72 degrees"
+
+    def test_tool_response_none_content_in_full_pipeline(self, tracer_and_exporter):
+        """Tool message with content=None must still produce response key in gen_ai.input.messages."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [
+            {"role": "tool", "tool_call_id": "call_789", "content": None},
+        ]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+
+        tool_part = messages[0]["parts"][0]
+        assert tool_part["type"] == "tool_call_response"
+        assert "response" in tool_part, (
+            "tool_call_response must include 'response' key even with None content"
+        )
+
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# P2-2: Realtime LLM spans set response metadata
+# ---------------------------------------------------------------------------
+
+class TestRealtimeResponseMetadata:
+    """Verify realtime LLM spans set recommended response attributes."""
+
+    def test_realtime_span_sets_response_model(self, tracer_and_exporter):
+        """Realtime LLM spans should set gen_ai.response.model."""
+        from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (
+            RealtimeTracingState,
+        )
+
+        tracer, exporter = tracer_and_exporter
+        state = RealtimeTracingState(tracer)
+        state.model_name = "gpt-4o-realtime-preview-2024-12-17"
+
+        # Create a parent span for context
+        parent = tracer.start_span("parent")
+        state.pending_prompts.append(("user", "Hello"))
+        state.prompt_start_time = 1000
+
+        state.create_llm_span("Hi there!")
+        parent.end()
+
+        finished = exporter.get_finished_spans()
+        rt_span = next((s for s in finished if s.name == "openai.realtime"), None)
+        assert rt_span is not None
+
+        attrs = dict(rt_span.attributes)
+        assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in attrs, (
+            "Realtime LLM span should set gen_ai.response.model"
+        )
+
+    def test_realtime_span_sets_finish_reason_empty(self, tracer_and_exporter):
+        """Realtime LLM spans should use '' finish_reason, NOT fabricate 'stop'."""
+        from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (
+            RealtimeTracingState,
+        )
+
+        tracer, exporter = tracer_and_exporter
+        state = RealtimeTracingState(tracer)
+        state.model_name = "gpt-4o-realtime-preview"
+
+        parent = tracer.start_span("parent")
+        state.pending_prompts.append(("user", "Hello"))
+        state.prompt_start_time = 1000
+
+        with patch(
+            "opentelemetry.instrumentation.openai_agents._realtime_wrappers.should_send_prompts",
+            return_value=True,
+        ):
+            state.create_llm_span("Hi there!")
+
+        parent.end()
+
+        finished = exporter.get_finished_spans()
+        rt_span = next((s for s in finished if s.name == "openai.realtime"), None)
+        assert rt_span is not None
+
+        raw = rt_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        assert messages[0]["finish_reason"] == "", (
+            f"Realtime finish_reason should be '' (not fabricated), got '{messages[0].get('finish_reason')}'"
+        )

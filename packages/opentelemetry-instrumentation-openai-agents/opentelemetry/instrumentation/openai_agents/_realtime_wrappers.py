@@ -358,6 +358,10 @@ class RealtimeTracingState:
             },
         )
 
+        span.set_attribute(
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name_str,
+        )
+
         if self.pending_usage:
             if self.pending_usage.get("input_tokens"):
                 span.set_attribute(
@@ -385,7 +389,7 @@ class RealtimeTracingState:
             out_msg = {
                 "role": "assistant",
                 "parts": [{"type": "text", "content": completion_content}],
-                "finish_reason": None,
+                "finish_reason": "",
             }
             span.set_attribute(
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
