@@ -486,7 +486,15 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                 tools = args[1]
             if tools:
                 tool_definitions = []
-                for tool in tools:
+                if hasattr(tools, "tools_by_name"):
+                 iterable_tools = tools.tools_by_name.values()
+                elif isinstance(tools, (list, tuple, set)):
+                            iterable_tools = tools
+                else:
+                    iterable_tools = [tools]
+
+                for tool in iterable_tools:
+                    tool_def = _extract_tool_definition(tool)
                     tool_def = _extract_tool_definition(tool)
                     if tool_def:
                         tool_definitions.append(tool_def)
