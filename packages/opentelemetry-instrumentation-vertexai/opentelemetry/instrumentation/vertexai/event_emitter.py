@@ -12,16 +12,11 @@ from opentelemetry.instrumentation.vertexai.utils import (
     should_emit_events,
     should_send_prompts,
 )
-from opentelemetry.instrumentation.vertexai.span_utils import (
-    _map_vertex_finish_reason,
-)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
 from vertexai.generative_models import GenerationResponse
-
-_GCP_VERTEX_AI = GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
 
 
 class Roles(Enum):
@@ -34,9 +29,35 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_VERTEX_AI}
+EVENT_ATTRIBUTES = {
+    GenAIAttributes.GEN_AI_SYSTEM: GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
+}
 """The attributes to be used for the event."""
 
+
+def _parse_vertex_finish_reason(reason):
+    if reason is None:
+        return "unknown"
+
+    finish_reason_map = {
+        0: "unspecified",
+        1: "stop",
+        2: "max_tokens",
+        3: "safety",
+        4: "recitation",
+        5: "other",
+        6: "blocklist",
+        7: "prohibited_content",
+        8: "spii",
+        9: "malformed_function_call",
+    }
+
+    if hasattr(reason, "value"):
+        reason_value = reason.value
+    else:
+        reason_value = reason
+
+    return finish_reason_map.get(reason_value, "unknown")
 
 
 @dont_throw
@@ -58,7 +79,7 @@ def emit_response_events(response, event_logger):
             ChoiceEvent(
                 index=0,
                 message={"content": response, "role": Roles.ASSISTANT.value},
-                finish_reason="",
+                finish_reason="unknown",
             ),
             event_logger,
         )
@@ -71,7 +92,7 @@ def emit_response_events(response, event_logger):
                         "content": candidate.text,
                         "role": Roles.ASSISTANT.value,
                     },
-                    finish_reason=_map_vertex_finish_reason(candidate.finish_reason),
+                    finish_reason=_parse_vertex_finish_reason(candidate.finish_reason),
                 ),
                 event_logger,
             )

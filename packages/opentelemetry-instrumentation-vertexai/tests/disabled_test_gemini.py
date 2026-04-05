@@ -7,7 +7,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
-import json
 from vertexai.preview.generative_models import GenerativeModel, Part
 
 vertexai.init()
@@ -31,18 +30,16 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
     ]
 
     vertexai_span = spans[0]
-    input_messages = json.loads(vertexai_span.attributes["gen_ai.input.messages"])
-    assert any(
-        "what is shown in this image?" in part.get("content", "")
-        for msg in input_messages
-        for part in msg.get("parts", [])
+    assert (
+        "what is shown in this image?"
+        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
     )
     assert (
         vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
         == "gemini-2.0-flash-lite"
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        vertexai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
@@ -53,8 +50,10 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
         vertexai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         == response._raw_response.usage_metadata.candidates_token_count
     )
-    output_messages = json.loads(vertexai_span.attributes["gen_ai.output.messages"])
-    assert output_messages[0]["parts"][0]["content"] == response.text
+    assert (
+        vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
+        == response.text
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -89,7 +88,7 @@ def test_vertexai_generate_content_with_events_with_content(
         == "gemini-2.0-flash-lite"
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        vertexai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
@@ -149,7 +148,7 @@ def test_vertexai_generate_content_with_events_with_no_content(
         == "gemini-2.0-flash-lite"
     )
     assert (
-        vertexai_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        vertexai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS]
         == response._raw_response.usage_metadata.total_token_count
     )
     assert (
@@ -175,8 +174,8 @@ def test_vertexai_generate_content_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
-        == GenAIAttributes.GenAiProviderNameValues.GCP_VERTEX_AI.value
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        == GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
     )
 
     if not expected_content:
