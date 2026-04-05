@@ -147,47 +147,31 @@ class TestCollectFinishReasonsFromResponse:
 
 
 # ===========================================================================
-# 3. accumulate_stream_finish_reasons
+# 3. Streaming finish reasons (via _collect_finish_reasons_from_response on last chunk)
 # ===========================================================================
 
-class TestAccumulateStreamFinishReasons:
-    def test_unknown_not_added(self):
-        ordered, seen = [], set()
-        chunk = _make_response(candidates=[_make_candidate(None)])
-        su.accumulate_stream_finish_reasons(ordered, seen, chunk)
-        assert ordered == []
-        assert seen == set()
+class TestStreamingFinishReasonsFromLastChunk:
+    def test_multiple_candidates_same_reason_preserved(self):
+        """Two candidates both with STOP should produce ["stop", "stop"] — no dedup."""
+        last_chunk = _make_response(candidates=[
+            _make_candidate("STOP", text="a"),
+            _make_candidate("STOP", text="b"),
+        ])
+        reasons = su._collect_finish_reasons_from_response(last_chunk)
+        assert reasons == ["stop", "stop"]
 
-    def test_real_values_added(self):
-        ordered, seen = [], set()
-        chunk = _make_response(candidates=[_make_candidate("STOP")])
-        su.accumulate_stream_finish_reasons(ordered, seen, chunk)
-        assert ordered == ["stop"]
-        assert "stop" in seen
+    def test_mixed_reasons_preserve_order(self):
+        last_chunk = _make_response(candidates=[
+            _make_candidate("MAX_TOKENS", text="a"),
+            _make_candidate("STOP", text="b"),
+        ])
+        reasons = su._collect_finish_reasons_from_response(last_chunk)
+        assert reasons == ["length", "stop"]
 
-    def test_deduplication(self):
-        ordered, seen = [], set()
-        chunk1 = _make_response(candidates=[_make_candidate("STOP")])
-        chunk2 = _make_response(candidates=[_make_candidate("STOP")])
-        su.accumulate_stream_finish_reasons(ordered, seen, chunk1)
-        su.accumulate_stream_finish_reasons(ordered, seen, chunk2)
-        assert ordered == ["stop"]
-
-    def test_order_preserved(self):
-        ordered, seen = [], set()
-        su.accumulate_stream_finish_reasons(
-            ordered, seen,
-            _make_response(candidates=[_make_candidate("MAX_TOKENS")]),
-        )
-        su.accumulate_stream_finish_reasons(
-            ordered, seen,
-            _make_response(candidates=[_make_candidate("STOP")]),
-        )
-        su.accumulate_stream_finish_reasons(
-            ordered, seen,
-            _make_response(candidates=[_make_candidate("MAX_TOKENS")]),
-        )
-        assert ordered == ["length", "stop"]
+    def test_none_candidates_returns_empty(self):
+        last_chunk = _make_response(candidates=[_make_candidate(None)])
+        reasons = su._collect_finish_reasons_from_response(last_chunk)
+        assert reasons == []
 
 
 # ===========================================================================
@@ -294,3 +278,53 @@ class TestSetResponseAttributes:
         for msg in messages:
             assert msg["finish_reason"] == ""
             assert msg["role"] == "assistant"
+
+
+# ===========================================================================
+# 6. _parts_from_genai_part_sync — thinking/reasoning
+# ===========================================================================
+
+class TestPartsFromGenaiPartThinking:
+    def _make_thinking_part(self, text="Let me think...", thought=True):
+        part = MagicMock()
+        part.text = text
+        part.thought = thought
+        part.function_call = None
+        part.function_response = None
+        part.inline_data = None
+        part.executable_code = None
+        part.code_execution_result = None
+        return part
+
+    def test_thought_true_emits_reasoning_with_text_content(self):
+        """When thought=True, emit a single reasoning part with the text content."""
+        part = self._make_thinking_part("Let me analyze the problem...")
+        span = MagicMock()
+        result = su._parts_from_genai_part_sync(part, span, 0)
+        assert len(result) == 1
+        assert result[0]["type"] == "reasoning"
+        assert result[0]["content"] == "Let me analyze the problem..."
+
+    def test_thought_false_emits_text(self):
+        """When thought=False, emit a normal text part."""
+        part = self._make_thinking_part("Hello world", thought=False)
+        result = su._parts_from_genai_part_sync(part, MagicMock(), 0)
+        assert len(result) == 1
+        assert result[0]["type"] == "text"
+        assert result[0]["content"] == "Hello world"
+
+    def test_thought_none_emits_text(self):
+        """When thought=None, emit a normal text part."""
+        part = self._make_thinking_part("Hello world", thought=None)
+        result = su._parts_from_genai_part_sync(part, MagicMock(), 0)
+        assert len(result) == 1
+        assert result[0]["type"] == "text"
+        assert result[0]["content"] == "Hello world"
+
+    def test_no_duplicate_parts_for_thinking(self):
+        """Must NOT produce both a text and reasoning part for the same thinking block."""
+        part = self._make_thinking_part("Deep thoughts here")
+        result = su._parts_from_genai_part_sync(part, MagicMock(), 0)
+        types_emitted = [r["type"] for r in result]
+        assert types_emitted.count("text") == 0
+        assert types_emitted.count("reasoning") == 1

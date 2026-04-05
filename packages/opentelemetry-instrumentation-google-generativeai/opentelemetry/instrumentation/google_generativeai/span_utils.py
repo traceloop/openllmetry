@@ -232,13 +232,13 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         return None
 
 
-def _parts_from_genai_part_sync(part, span, part_index):
+def _extract_non_image_parts(part):
+    """Extract all non-image OTel parts from a GenAI Part object (shared by sync/async)."""
     out = []
-    if getattr(part, "text", None):
+    if getattr(part, "thought", False) and getattr(part, "text", None):
+        out.append({"type": "reasoning", "content": part.text})
+    elif getattr(part, "text", None):
         out.append({"type": "text", "content": part.text})
-    img = _otel_image_part_from_genai_part(part, span, part_index, sync=True)
-    if img:
-        out.append(img)
     fc = getattr(part, "function_call", None)
     if fc is not None:
         fid = getattr(fc, "id", None) or ""
@@ -261,58 +261,62 @@ def _parts_from_genai_part_sync(part, span, part_index):
                 "response": _function_response_to_str(getattr(fr, "response", None)),
             }
         )
-    if getattr(part, "thought", None):
-        out.append({"type": "reasoning", "content": str(part.thought)})
-    if not out:
-        if getattr(part, "executable_code", None):
-            out.append({"type": "text", "content": str(part.executable_code)})
-        elif getattr(part, "code_execution_result", None):
-            out.append({"type": "text", "content": str(part.code_execution_result)})
-        else:
-            out.append({"type": "text", "content": str(part)})
     return out
 
 
+def _fallback_part(part):
+    """Fallback when no structured parts were extracted."""
+    if getattr(part, "executable_code", None):
+        return {"type": "text", "content": str(part.executable_code)}
+    if getattr(part, "code_execution_result", None):
+        return {"type": "text", "content": str(part.code_execution_result)}
+    return {"type": "text", "content": str(part)}
+
+
+def _parts_from_genai_part_sync(part, span, part_index):
+    out = _extract_non_image_parts(part)
+    img = _otel_image_part_from_genai_part(part, span, part_index, sync=True)
+    if img:
+        out.append(img)
+    return out or [_fallback_part(part)]
+
+
 async def _parts_from_genai_part_async(part, span, part_index):
-    out = []
-    if getattr(part, "text", None):
-        out.append({"type": "text", "content": part.text})
+    out = _extract_non_image_parts(part)
     if _is_image_part(part):
         img = await _otel_image_part_from_genai_part_async(part, span, part_index)
         if img:
             out.append(img)
-    fc = getattr(part, "function_call", None)
+    return out or [_fallback_part(part)]
+
+
+def _map_dict_part(p):
+    """Map a dict-based part to OTel part schema, preserving semantics."""
+    text = p.get("text")
+    if text is not None:
+        return {"type": "text", "content": text}
+    fc = p.get("functionCall")
     if fc is not None:
-        fid = getattr(fc, "id", None) or ""
-        fname = getattr(fc, "name", None) or ""
-        out.append(
-            {
-                "type": "tool_call",
-                "id": fid,
-                "name": fname,
-                "arguments": _parse_function_call_arguments(getattr(fc, "args", None)),
-            }
-        )
-    fr = getattr(part, "function_response", None)
+        return {
+            "type": "tool_call",
+            "id": fc.get("id", ""),
+            "name": fc.get("name", ""),
+            "arguments": _parse_function_call_arguments(fc.get("args")),
+        }
+    fr = p.get("functionResponse")
     if fr is not None:
-        fid = getattr(fr, "id", None) or ""
-        out.append(
-            {
-                "type": "tool_call_response",
-                "id": fid,
-                "response": _function_response_to_str(getattr(fr, "response", None)),
-            }
-        )
-    if getattr(part, "thought", None):
-        out.append({"type": "reasoning", "content": str(part.thought)})
-    if not out:
-        if getattr(part, "executable_code", None):
-            out.append({"type": "text", "content": str(part.executable_code)})
-        elif getattr(part, "code_execution_result", None):
-            out.append({"type": "text", "content": str(part.code_execution_result)})
-        else:
-            out.append({"type": "text", "content": str(part)})
-    return out
+        return {
+            "type": "tool_call_response",
+            "id": fr.get("id", ""),
+            "response": _function_response_to_str(fr.get("response")),
+        }
+    inline = p.get("inlineData")
+    if inline is not None:
+        mime = inline.get("mimeType", "application/octet-stream")
+        data = inline.get("data", "")
+        modality = next((m for m in ("image", "video", "audio") if f"{m}/" in mime), "data")
+        return {"type": "blob", "modality": modality, "mime_type": mime, "content": data}
+    return {"type": "text", "content": str(p)}
 
 
 async def _process_content_item(content_item, span):
@@ -320,11 +324,7 @@ async def _process_content_item(content_item, span):
     if isinstance(content_item, dict):
         for p in content_item.get("parts", []):
             if isinstance(p, dict):
-                text = p.get("text")
-                if text is not None:
-                    parts_acc.append({"type": "text", "content": text})
-                else:
-                    parts_acc.append({"type": "text", "content": str(p)})
+                parts_acc.append(_map_dict_part(p))
             else:
                 parts_acc.extend(await _parts_from_genai_part_async(p, span, 0))
     elif hasattr(content_item, "parts"):
@@ -367,11 +367,7 @@ def _process_content_item_sync(content_item, span):
     if isinstance(content_item, dict):
         for p in content_item.get("parts", []):
             if isinstance(p, dict):
-                text = p.get("text")
-                if text is not None:
-                    parts_acc.append({"type": "text", "content": text})
-                else:
-                    parts_acc.append({"type": "text", "content": str(p)})
+                parts_acc.append(_map_dict_part(p))
             else:
                 parts_acc.extend(_parts_from_genai_part_sync(p, span, 0))
     elif hasattr(content_item, "parts"):
@@ -418,14 +414,6 @@ def _collect_finish_reasons_from_response(response):
             reasons.append(mapped)
     return reasons
 
-
-def accumulate_stream_finish_reasons(ordered, seen, chunk):
-    """Merge finish reasons from a streaming chunk; preserves first-seen order (metadata, not gated by prompts)."""
-    for cand in getattr(chunk, "candidates", None) or []:
-        mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped and mapped not in seen:
-            seen.add(mapped)
-            ordered.append(mapped)
 
 
 def _output_messages_from_generate_response(span, response):
@@ -556,7 +544,6 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
 def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
@@ -611,6 +598,17 @@ def set_model_request_attributes(span, kwargs, llm_model):
             except Exception:
                 pass
 
+        tools = _tool_definitions_from_kwargs(kwargs)
+        if tools:
+            try:
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+                    json.dumps(tools),
+                )
+            except Exception:
+                pass
+
 
 def _system_instruction_from_kwargs(kwargs):
     """Top-level kwarg or unified-client ``config.system_instruction``."""
@@ -635,6 +633,26 @@ def _system_instruction_to_parts(si, span):
             out.extend(_parts_from_genai_part_sync(p, span, idx))
         return out
     return [{"type": "text", "content": str(si)}]
+
+
+def _tool_definitions_from_kwargs(kwargs):
+    """Extract tool definitions from kwargs — source system representation per OTel spec."""
+    tools = kwargs.get("tools")
+    if tools is None:
+        config = kwargs.get("config")
+        if config is not None:
+            tools = getattr(config, "tools", None)
+    if not tools:
+        return None
+    defs = []
+    for tool in tools:
+        if hasattr(tool, "model_dump"):
+            defs.append(tool.model_dump(exclude_none=True, mode="json"))
+        elif isinstance(tool, dict):
+            defs.append(tool)
+        elif callable(tool):
+            defs.append({"name": getattr(tool, "__name__", str(tool))})
+    return defs or None
 
 
 @dont_throw

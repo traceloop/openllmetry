@@ -15,7 +15,7 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_message_events,
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
-    accumulate_stream_finish_reasons,
+    _collect_finish_reasons_from_response,
     set_input_attributes_sync,
     set_model_request_attributes,
     set_model_response_attributes,
@@ -49,25 +49,21 @@ WRAPPED_METHODS = [
         "package": "google.genai.models",
         "object": "Models",
         "method": "generate_content",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "AsyncModels",
         "method": "generate_content",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "Models",
         "method": "generate_content_stream",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "AsyncModels",
         "method": "generate_content_stream",
-        "span_name": "gemini.generate_content",
     },
 ]
 
@@ -90,8 +86,6 @@ def _build_from_streaming_response(
     emit_events = should_emit_events() and event_logger
     text_parts = []
     last_chunk = None
-    stream_finish_ordered = []
-    stream_finish_seen = set()
     for item in response:
         item_to_yield = item
         last_chunk = item
@@ -99,9 +93,6 @@ def _build_from_streaming_response(
             t = getattr(item, "text", None)
             if isinstance(t, str):
                 text_parts.append(t)
-        accumulate_stream_finish_reasons(
-            stream_finish_ordered, stream_finish_seen, item
-        )
 
         yield item_to_yield
 
@@ -110,21 +101,22 @@ def _build_from_streaming_response(
     if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        # Assumes the SDK aggregates candidate parts on each chunk; the last chunk with
-        # candidates should reflect the full model turn (incl. tool_call). Pure text deltas
-        # on the final chunk fall back to ``complete_response`` below.
         if last_chunk is not None and getattr(last_chunk, "candidates", None):
             set_response_attributes(span, last_chunk, llm_model)
         else:
             set_response_attributes(
                 span, complete_response, llm_model, stream_last_chunk=last_chunk
             )
+
+    # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
+    # so the last chunk reflects all candidates without deduplication artifacts.
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
     set_model_response_attributes(
         span,
         last_chunk or response,
         llm_model,
         token_histogram,
-        stream_finish_reasons=stream_finish_ordered or None,
+        stream_finish_reasons=stream_reasons or None,
     )
     span.end()
 
@@ -135,8 +127,6 @@ async def _abuild_from_streaming_response(
     emit_events = should_emit_events() and event_logger
     text_parts = []
     last_chunk = None
-    stream_finish_ordered = []
-    stream_finish_seen = set()
     async for item in response:
         item_to_yield = item
         last_chunk = item
@@ -144,9 +134,6 @@ async def _abuild_from_streaming_response(
             t = getattr(item, "text", None)
             if isinstance(t, str):
                 text_parts.append(t)
-        accumulate_stream_finish_reasons(
-            stream_finish_ordered, stream_finish_seen, item
-        )
 
         yield item_to_yield
 
@@ -155,19 +142,20 @@ async def _abuild_from_streaming_response(
     if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        # Same aggregation assumption as sync streaming (see _build_from_streaming_response).
         if last_chunk is not None and getattr(last_chunk, "candidates", None):
             set_response_attributes(span, last_chunk, llm_model)
         else:
             set_response_attributes(
                 span, complete_response, llm_model, stream_last_chunk=last_chunk
             )
+
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
     set_model_response_attributes(
         span,
         last_chunk if last_chunk else response,
         llm_model,
         token_histogram,
-        stream_finish_reasons=stream_finish_ordered or None,
+        stream_finish_reasons=stream_reasons or None,
     )
     span.end()
 
@@ -246,9 +234,8 @@ async def _awrap(
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
-    name = to_wrap.get("span_name")
     span = tracer.start_span(
-        name,
+        f"{_GEN_CONTENT} {llm_model}",
         kind=SpanKind.CLIENT,
         attributes={
             GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
@@ -325,9 +312,8 @@ def _wrap(
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
-    name = to_wrap.get("span_name")
     span = tracer.start_span(
-        name,
+        f"{_GEN_CONTENT} {llm_model}",
         kind=SpanKind.CLIENT,
         attributes={
             GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,

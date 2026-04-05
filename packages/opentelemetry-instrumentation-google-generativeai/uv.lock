@@ -466,7 +466,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.53.4"
+version = "0.57.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },

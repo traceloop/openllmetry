@@ -34,10 +34,10 @@ def test_client_spans(exporter, genai_client):
     assert len(spans) > 0, "No spans were recorded"
 
     span = next(
-        (s for s in spans if s.name == "gemini.generate_content"),
+        (s for s in spans if s.name.startswith("generate_content ")),
         None,
     )
-    assert span is not None, "gemini.generate_content span not found"
+    assert span is not None, "generate_content span not found"
 
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.OK
