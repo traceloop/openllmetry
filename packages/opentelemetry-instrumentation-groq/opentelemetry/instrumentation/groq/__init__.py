@@ -352,7 +352,7 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return await _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(response, span, event_logger)
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
