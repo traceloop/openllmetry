@@ -136,6 +136,52 @@ def _otel_image_part_from_genai_part(part, span, part_index, sync):
     return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
 
 
+async def _otel_image_part_from_genai_part_async(part, span, part_index):
+    if not _is_image_part(part):
+        return None
+    mime = (
+        part.inline_data.mime_type
+        if hasattr(part, "inline_data") and part.inline_data
+        else None
+    ) or "application/octet-stream"
+    if Config.upload_base64_image:
+        uploaded = await _process_image_part(
+            part, span.context.trace_id, span.context.span_id, part_index
+        )
+        if uploaded and uploaded.get("image_url") and uploaded["image_url"].get("url"):
+            return {
+                "type": "uri",
+                "modality": "image",
+                "uri": uploaded["image_url"]["url"],
+            }
+    binary_data = part.inline_data.data
+    b64 = base64.b64encode(binary_data).decode("utf-8")
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+
+
+async def _process_image_part(item, trace_id, span_id, content_index):
+    """Upload image when configured; used only from async content processing."""
+    if not Config.upload_base64_image:
+        return None
+
+    try:
+        image_format = (
+            item.inline_data.mime_type.split("/")[1]
+            if item.inline_data.mime_type
+            else ""
+        )
+        image_name = f"content_{content_index}.{image_format}"
+        binary_data = item.inline_data.data
+        base64_string = base64.b64encode(binary_data).decode("utf-8")
+        url = await Config.upload_base64_image(
+            str(trace_id), str(span_id), image_name, base64_string
+        )
+        return {"type": "image_url", "image_url": {"url": url}}
+    except Exception as e:
+        logger.warning(f"Failed to process image part: {e}")
+        return None
+
+
 def run_async(method):
     try:
         loop = asyncio.get_running_loop()
@@ -235,6 +281,15 @@ def _parts_from_genai_part_sync(part, span, part_index):
     return out or [_fallback_part(part)]
 
 
+async def _parts_from_genai_part_async(part, span, part_index):
+    out = _extract_non_image_parts(part)
+    if _is_image_part(part):
+        img = await _otel_image_part_from_genai_part_async(part, span, part_index)
+        if img:
+            out.append(img)
+    return out or [_fallback_part(part)]
+
+
 def _map_dict_part(p):
     """Map a dict-based part to OTel part schema, preserving semantics."""
     text = p.get("text")
@@ -262,6 +317,49 @@ def _map_dict_part(p):
         modality = next((m for m in ("image", "video", "audio") if f"{m}/" in mime), "data")
         return {"type": "blob", "modality": modality, "mime_type": mime, "content": data}
     return {"type": "text", "content": str(p)}
+
+
+async def _process_content_item(content_item, span):
+    parts_acc = []
+    if isinstance(content_item, dict):
+        for p in content_item.get("parts", []):
+            if isinstance(p, dict):
+                parts_acc.append(_map_dict_part(p))
+            else:
+                parts_acc.extend(await _parts_from_genai_part_async(p, span, 0))
+    elif hasattr(content_item, "parts"):
+        for part_index, part in enumerate(content_item.parts):
+            parts_acc.extend(await _parts_from_genai_part_async(part, span, part_index))
+    elif isinstance(content_item, str):
+        parts_acc.append({"type": "text", "content": content_item})
+    elif _is_image_part(content_item):
+        img = await _otel_image_part_from_genai_part_async(content_item, span, 0)
+        if img:
+            parts_acc.append(img)
+    else:
+        parts_acc.append({"type": "text", "content": str(content_item)})
+    return parts_acc
+
+
+async def _process_argument(argument, span):
+    if isinstance(argument, str):
+        return [{"type": "text", "content": argument}]
+    if isinstance(argument, list):
+        parts_acc = []
+        for sub_index, sub_item in enumerate(argument):
+            if isinstance(sub_item, str):
+                parts_acc.append({"type": "text", "content": sub_item})
+            elif _is_image_part(sub_item):
+                img = await _otel_image_part_from_genai_part_async(sub_item, span, sub_index)
+                if img:
+                    parts_acc.append(img)
+            else:
+                parts_acc.append({"type": "text", "content": str(sub_item)})
+        return parts_acc
+    if _is_image_part(argument):
+        img = await _otel_image_part_from_genai_part_async(argument, span, 0)
+        return [img] if img else []
+    return [{"type": "text", "content": str(argument)}]
 
 
 def _process_content_item_sync(content_item, span):
@@ -339,6 +437,57 @@ def _output_messages_from_generate_response(span, response):
             msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": ""}
             messages.append(msg)
     return messages
+
+
+@dont_throw
+async def set_input_attributes(span, args, kwargs, llm_model):
+    if not span.is_recording():
+        return
+    if not should_send_prompts():
+        return
+
+    messages = []
+    if "contents" in kwargs:
+        contents = kwargs["contents"]
+        if isinstance(contents, str):
+            messages.append(
+                {
+                    "role": "user",
+                    "parts": [{"type": "text", "content": contents}],
+                }
+            )
+        elif isinstance(contents, list):
+            for content_item in contents:
+                parts = await _process_content_item(content_item, span)
+                if parts:
+                    messages.append(
+                        {
+                            "role": _normalize_message_role(
+                                content_item.get("role", "user") if isinstance(content_item, dict)
+                                else getattr(content_item, "role", "user")
+                            ),
+                            "parts": parts,
+                        }
+                    )
+    elif args and len(args) > 0:
+        for argument in args:
+            parts = await _process_argument(argument, span)
+            if parts:
+                messages.append({"role": "user", "parts": parts})
+    elif "prompt" in kwargs:
+        messages.append(
+            {
+                "role": "user",
+                "parts": [{"type": "text", "content": kwargs["prompt"]}],
+            }
+        )
+
+    if messages:
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+            json.dumps(messages),
+        )
 
 
 @dont_throw
