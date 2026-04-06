@@ -410,8 +410,7 @@ def _collect_finish_reasons_from_response(response):
     candidates = getattr(response, "candidates", None) or []
     for cand in candidates:
         mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        if mapped:
-            reasons.append(mapped)
+        reasons.append(mapped)
     return reasons
 
 
@@ -720,7 +719,7 @@ def set_model_response_attributes(
         reasons = stream_finish_reasons
     else:
         reasons = _collect_finish_reasons_from_response(response)
-    if reasons:
+    if reasons and any(reason != "" for reason in reasons):
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons
         )

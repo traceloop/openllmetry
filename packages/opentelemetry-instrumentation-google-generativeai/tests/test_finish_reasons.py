@@ -120,10 +120,10 @@ class TestMapGeminiFinishReason:
 # ===========================================================================
 
 class TestCollectFinishReasonsFromResponse:
-    def test_all_none_returns_empty(self):
-        """When every candidate has finish_reason=None the result is empty (unknown filtered out)."""
+    def test_all_none_returns_unknown_entries(self):
+        """Keep 1:1 candidate alignment even when finish reasons are unavailable."""
         resp = _make_response(candidates=[_make_candidate(None), _make_candidate(None)])
-        assert su._collect_finish_reasons_from_response(resp) == []
+        assert su._collect_finish_reasons_from_response(resp) == ["", ""]
 
     def test_meaningful_values_included(self):
         resp = _make_response(candidates=[
@@ -133,13 +133,13 @@ class TestCollectFinishReasonsFromResponse:
         assert su._collect_finish_reasons_from_response(resp) == ["stop", "length"]
 
     def test_mixed_candidates(self):
-        """Only real (non-unknown) reasons are returned."""
+        """Preserve candidate order and include unknown placeholders."""
         resp = _make_response(candidates=[
             _make_candidate(None),
             _make_candidate("STOP"),
             _make_candidate(None),
         ])
-        assert su._collect_finish_reasons_from_response(resp) == ["stop"]
+        assert su._collect_finish_reasons_from_response(resp) == ["", "stop", ""]
 
     def test_no_candidates_attribute(self):
         resp = MagicMock(spec=[])  # no attributes at all
@@ -168,10 +168,10 @@ class TestStreamingFinishReasonsFromLastChunk:
         reasons = su._collect_finish_reasons_from_response(last_chunk)
         assert reasons == ["length", "stop"]
 
-    def test_none_candidates_returns_empty(self):
+    def test_none_candidates_returns_unknown(self):
         last_chunk = _make_response(candidates=[_make_candidate(None)])
         reasons = su._collect_finish_reasons_from_response(last_chunk)
-        assert reasons == []
+        assert reasons == [""]
 
 
 # ===========================================================================
@@ -278,6 +278,41 @@ class TestSetResponseAttributes:
         for msg in messages:
             assert msg["finish_reason"] == ""
             assert msg["role"] == "assistant"
+
+
+# ===========================================================================
+# 5b. set_model_response_attributes finish reason emission
+# ===========================================================================
+
+class TestSetModelResponseAttributes:
+    def test_omit_top_level_finish_reasons_when_all_unknown(self):
+        span = MagicMock()
+        span.is_recording.return_value = True
+
+        response = _make_response(candidates=[_make_candidate(None), _make_candidate(None)])
+        su.set_model_response_attributes(span, response, "gemini-pro", token_histogram=None)
+
+        finish_reason_calls = [
+            c[0]
+            for c in span.set_attribute.call_args_list
+            if c[0][0] == GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        ]
+        assert finish_reason_calls == []
+
+    def test_set_top_level_finish_reasons_with_alignment(self):
+        span = MagicMock()
+        span.is_recording.return_value = True
+
+        response = _make_response(candidates=[_make_candidate(None), _make_candidate("STOP")])
+        su.set_model_response_attributes(span, response, "gemini-pro", token_histogram=None)
+
+        finish_reason_calls = [
+            c[0]
+            for c in span.set_attribute.call_args_list
+            if c[0][0] == GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+        ]
+        assert len(finish_reason_calls) == 1
+        assert finish_reason_calls[0][1] == ["", "stop"]
 
 
 # ===========================================================================
