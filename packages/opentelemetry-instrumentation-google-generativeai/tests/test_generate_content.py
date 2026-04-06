@@ -1,3 +1,4 @@
+import json
 
 import pytest
 from opentelemetry.trace import StatusCode, SpanKind
@@ -45,11 +46,15 @@ def test_client_spans(exporter, genai_client):
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
-    assert "gen_ai.prompt.0.content" in attrs
-    assert attrs["gen_ai.prompt.0.role"] == "user"
+    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in attrs
+    input_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert len(input_msgs) > 0
+    assert input_msgs[0]["role"] == "user"
 
-    assert "gen_ai.completion.0.content" in attrs
-    assert attrs["gen_ai.completion.0.role"] == "assistant"
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in attrs
+    output_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output_msgs) > 0
+    assert output_msgs[0]["role"] == "assistant"
 
     assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
