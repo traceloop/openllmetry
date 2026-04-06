@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
     _collect_finish_reasons_from_response,
+    set_input_attributes,
     set_input_attributes_sync,
     set_model_request_attributes,
     set_model_response_attributes,
@@ -171,6 +172,16 @@ def _handle_request(span, args, kwargs, llm_model, event_logger):
 
 
 @dont_throw
+async def _handle_request_async(span, args, kwargs, llm_model, event_logger):
+    if should_emit_events() and event_logger:
+        emit_message_events(args, kwargs, event_logger)
+    else:
+        await set_input_attributes(span, args, kwargs, llm_model)
+
+    set_model_request_attributes(span, kwargs, llm_model)
+
+
+@dont_throw
 def _handle_response(span, response, llm_model, event_logger, token_histogram):
     if should_emit_events() and event_logger:
         emit_choice_events(response, event_logger)
@@ -244,7 +255,7 @@ async def _awrap(
         },
     )
     start_time = time.perf_counter()
-    _handle_request(span, args, kwargs, llm_model, event_logger)
+    await _handle_request_async(span, args, kwargs, llm_model, event_logger)
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
