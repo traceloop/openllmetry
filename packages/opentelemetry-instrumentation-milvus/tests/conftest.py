@@ -35,9 +35,7 @@ def clear_exporter(exporter):
 
 @pytest.fixture(scope="session")
 def reader():
-    reader = InMemoryMetricReader(
-        {Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA}
-    )
+    reader = InMemoryMetricReader({Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA})
     return reader
 
 
