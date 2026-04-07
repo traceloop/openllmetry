@@ -1,6 +1,5 @@
 """OpenTelemetry Milvus DB instrumentation"""
 
-import logging
 import pymilvus
 
 from typing import Collection
@@ -16,13 +15,11 @@ from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.milvus.wrapper import _wrap
 from opentelemetry.instrumentation.milvus.version import __version__
-from opentelemetry.instrumentation.milvus.utils import is_metrics_enabled
-
-logger = logging.getLogger(__name__)
+from opentelemetry.instrumentation.milvus.utils import is_metrics_enabled, pymilvus_supports_async_milvus_client
 
 _instruments = ("pymilvus >= 2.4.1",)
 
-WRAPPED_METHODS = [
+_MILVUS_CLIENT_WRAPPED_METHODS = [
     {
         "package": pymilvus,
         "object": "MilvusClient",
@@ -71,6 +68,9 @@ WRAPPED_METHODS = [
         "method": "hybrid_search",
         "span_name": "milvus.hybrid_search",
     },
+]
+
+_ASYNC_MILVUS_CLIENT_WRAPPED_METHODS = [
     {
         "package": pymilvus,
         "object": "AsyncMilvusClient",
@@ -120,6 +120,11 @@ WRAPPED_METHODS = [
         "span_name": "milvus.hybrid_search",
     },
 ]
+
+
+WRAPPED_METHODS = list(_MILVUS_CLIENT_WRAPPED_METHODS)
+if pymilvus_supports_async_milvus_client():
+    WRAPPED_METHODS.extend(_ASYNC_MILVUS_CLIENT_WRAPPED_METHODS)
 
 
 class MilvusInstrumentor(BaseInstrumentor):

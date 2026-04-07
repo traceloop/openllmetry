@@ -1,4 +1,4 @@
-"""Tests for AsyncMilvusClient instrumentation (async _async_with_tracer path)."""
+"""Tests for AsyncMilvusClient instrumentation (pymilvus>=2.6.0; async _async_with_tracer path)."""
 
 import os
 import random
@@ -59,6 +59,7 @@ async def hybrid_collection(client):
 
     await client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
     yield collection_name
+    await client.drop_collection(collection_name=collection_name)
 
 
 async def insert_data(client: AsyncMilvusClient, collection: str) -> None:

@@ -1,7 +1,17 @@
 import logging
+import pymilvus
 import traceback
 import os
+
 from opentelemetry.instrumentation.milvus.config import Config
+
+
+def pymilvus_supports_async_milvus_client():
+    """True when pymilvus is new enough and exposes ``AsyncMilvusClient``.
+
+    @note: AsyncMilvusClient was added in pymilvus>=2.6.0.
+    """
+    return hasattr(pymilvus, "AsyncMilvusClient")
 
 
 def dont_throw(func):
