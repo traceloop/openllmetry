@@ -433,6 +433,21 @@ def set_model_request_attributes(span, kwargs, llm_model):
             pass
 
 
+
+def _serialize_response_part(part):
+    """Serialize a single response Part to a dict for gen_ai.output.messages."""
+    if hasattr(part, "text") and part.text:
+        return {"type": "text", "content": part.text}
+    if hasattr(part, "function_call") and part.function_call:
+        fc = part.function_call
+        return {
+            "type": "function_call",
+            "name": fc.name,
+            "arguments": dict(fc.args) if hasattr(fc, "args") else {},
+        }
+    return {"type": "text", "content": str(part)}
+
+
 @dont_throw
 def set_response_attributes(span, response, llm_model):
     if not should_send_prompts():
@@ -441,30 +456,49 @@ def set_response_attributes(span, response, llm_model):
     output_messages = []
 
     if hasattr(response, "usage_metadata"):
-        # Non-streaming: extract finish_reason from candidates when available
-        _finish_reason = None
+        # Non-streaming: iterate over candidates, serialize all part types, and
+        # use each candidate's own finish_reason.
         _candidates = getattr(response, "candidates", None)
-        if _candidates and _candidates[0].finish_reason:
-            fr = _candidates[0].finish_reason
-            _finish_reason = fr.name.lower() if hasattr(fr, "name") else str(fr)
-
-        if isinstance(response.text, list):
-            for index, item in enumerate(response):
-                msg = {
-                    "role": "assistant",
-                    "parts": [{"type": "text", "content": item.text}],
-                }
-                if _finish_reason:
-                    msg["finish_reason"] = _finish_reason
-                output_messages.append(msg)
-        elif isinstance(response.text, str):
-            msg = {
-                "role": "assistant",
-                "parts": [{"type": "text", "content": response.text}],
-            }
-            if _finish_reason:
-                msg["finish_reason"] = _finish_reason
-            output_messages.append(msg)
+        if _candidates:
+            for candidate in _candidates:
+                _finish_reason = None
+                fr = getattr(candidate, "finish_reason", None)
+                if fr:
+                    _finish_reason = fr.name.lower() if hasattr(fr, "name") else str(fr)
+                parts = []
+                content = getattr(candidate, "content", None)
+                if content and hasattr(content, "parts"):
+                    for part in content.parts:
+                        parts.append(_serialize_response_part(part))
+                if not parts:
+                    # Fallback: try response.text for simple single-part responses
+                    try:
+                        text = response.text
+                        if text:
+                            parts = [{"type": "text", "content": text}]
+                    except Exception:
+                        pass
+                if parts:
+                    msg = {"role": "assistant", "parts": parts}
+                    if _finish_reason:
+                        msg["finish_reason"] = _finish_reason
+                    output_messages.append(msg)
+        else:
+            # No candidates field: fall back to response.text
+            try:
+                if isinstance(response.text, list):
+                    for item in response:
+                        output_messages.append({
+                            "role": "assistant",
+                            "parts": [{"type": "text", "content": item.text}],
+                        })
+                elif isinstance(response.text, str):
+                    output_messages.append({
+                        "role": "assistant",
+                        "parts": [{"type": "text", "content": response.text}],
+                    })
+            except Exception:
+                pass
     else:
         # Streaming path: omit finish_reason (not reliably available per-chunk)
         if isinstance(response, list):
