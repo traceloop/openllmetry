@@ -50,11 +50,17 @@ def test_client_spans(exporter, genai_client):
     input_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert len(input_msgs) > 0
     assert input_msgs[0]["role"] == "user"
+    assert isinstance(input_msgs[0].get("parts"), list) and len(input_msgs[0]["parts"]) > 0
+    assert input_msgs[0]["parts"][0]["type"] == "text"
+    assert "content" in input_msgs[0]["parts"][0]
 
     assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in attrs
     output_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert len(output_msgs) > 0
     assert output_msgs[0]["role"] == "assistant"
+    assert isinstance(output_msgs[0].get("parts"), list) and len(output_msgs[0]["parts"]) > 0
+    assert output_msgs[0]["parts"][0]["type"] == "text"
+    assert "content" in output_msgs[0]["parts"][0]
 
     assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
