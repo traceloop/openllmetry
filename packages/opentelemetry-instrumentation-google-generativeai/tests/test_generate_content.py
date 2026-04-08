@@ -61,6 +61,9 @@ def test_client_spans(exporter, genai_client):
     assert isinstance(output_msgs[0].get("parts"), list) and len(output_msgs[0]["parts"]) > 0
     assert output_msgs[0]["parts"][0]["type"] == "text"
     assert "content" in output_msgs[0]["parts"][0]
+    # Verify deprecated indexed attributes are NOT emitted (migration guard)
+    assert not any(key.startswith("gen_ai.prompt.") for key in attrs.keys())
+    assert not any(key.startswith("gen_ai.completion.") for key in attrs.keys())
 
     assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
