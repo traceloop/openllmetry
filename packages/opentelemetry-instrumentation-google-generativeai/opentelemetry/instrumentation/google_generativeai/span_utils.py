@@ -404,32 +404,42 @@ def set_response_attributes(span, response, llm_model):
     output_messages = []
 
     if hasattr(response, "usage_metadata"):
+        # Non-streaming: extract finish_reason from candidates when available
+        _finish_reason = None
+        _candidates = getattr(response, "candidates", None)
+        if _candidates and _candidates[0].finish_reason:
+            fr = _candidates[0].finish_reason
+            _finish_reason = fr.name.lower() if hasattr(fr, "name") else str(fr)
+
         if isinstance(response.text, list):
             for index, item in enumerate(response):
-                output_messages.append({
+                msg = {
                     "role": "assistant",
                     "parts": [{"type": "text", "content": item.text}],
-                    "finish_reason": "stop",
-                })
+                }
+                if _finish_reason:
+                    msg["finish_reason"] = _finish_reason
+                output_messages.append(msg)
         elif isinstance(response.text, str):
-            output_messages.append({
+            msg = {
                 "role": "assistant",
                 "parts": [{"type": "text", "content": response.text}],
-                "finish_reason": "stop",
-            })
+            }
+            if _finish_reason:
+                msg["finish_reason"] = _finish_reason
+            output_messages.append(msg)
     else:
+        # Streaming path: omit finish_reason (not reliably available per-chunk)
         if isinstance(response, list):
             for index, item in enumerate(response):
                 output_messages.append({
                     "role": "assistant",
                     "parts": [{"type": "text", "content": item}],
-                    "finish_reason": "stop",
                 })
         elif isinstance(response, str):
             output_messages.append({
                 "role": "assistant",
                 "parts": [{"type": "text", "content": response}],
-                "finish_reason": "stop",
             })
 
     if output_messages:
