@@ -207,14 +207,35 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                 "role": "user",
                 "parts": [{"type": "text", "content": contents}],
             })
+        elif hasattr(contents, "parts"):
+            # Single Content object (not a list)
+            processed_content = await _process_content_item(contents, span)
+            if processed_content:
+                input_messages.append({
+                    "role": getattr(contents, "role", "user"),
+                    "parts": processed_content,
+                })
         elif isinstance(contents, list):
-            for content_item in contents:
-                processed_content = await _process_content_item(content_item, span)
-                if processed_content:
-                    role = getattr(content_item, "role", "user")
+            if contents and hasattr(contents[0], "parts"):
+                # Multi-turn: list of Content objects
+                for content_item in contents:
+                    processed_content = await _process_content_item(content_item, span)
+                    if processed_content:
+                        role = getattr(content_item, "role", "user")
+                        input_messages.append({
+                            "role": role,
+                            "parts": processed_content,
+                        })
+            else:
+                # Single-turn: list of Part objects or strings
+                parts = []
+                for content_item in contents:
+                    items = await _process_content_item(content_item, span)
+                    parts.extend(items)
+                if parts:
                     input_messages.append({
-                        "role": role,
-                        "parts": processed_content,
+                        "role": "user",
+                        "parts": parts,
                     })
     elif args and len(args) > 0:
         # Handle args - process each argument
@@ -258,48 +279,64 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                 "role": "user",
                 "parts": [{"type": "text", "content": contents}],
             })
+        elif hasattr(contents, "parts"):
+            # Single Content object (not a list)
+            processed_content = []
+            for j, part in enumerate(contents.parts):
+                if hasattr(part, "text") and part.text:
+                    processed_content.append({"type": "text", "content": part.text})
+                elif _is_image_part(part):
+                    processed_image = _process_image_part_sync(
+                        part, span.context.trace_id, span.context.span_id, j
+                    )
+                    if processed_image is not None:
+                        processed_content.append(processed_image)
+                else:
+                    processed_content.append({"type": "text", "content": str(part)})
+            if processed_content:
+                input_messages.append({
+                    "role": getattr(contents, "role", "user"),
+                    "parts": processed_content,
+                })
         elif isinstance(contents, list):
-            # Process content list - could be mixed text and Part objects
-            for content in contents:
-                processed_content = []
-                if hasattr(content, "parts"):
-                    # Content with parts (Google GenAI Content object)
+            if contents and hasattr(contents[0], "parts"):
+                # Multi-turn: list of Content objects
+                for content in contents:
+                    processed_content = []
                     for j, part in enumerate(content.parts):
                         if hasattr(part, "text") and part.text:
                             processed_content.append({"type": "text", "content": part.text})
                         elif _is_image_part(part):
                             processed_image = _process_image_part_sync(
-                                part,
-                                span.context.trace_id,
-                                span.context.span_id,
-                                j
+                                part, span.context.trace_id, span.context.span_id, j
                             )
                             if processed_image is not None:
                                 processed_content.append(processed_image)
                         else:
-                            # Other part types
                             processed_content.append({"type": "text", "content": str(part)})
-                elif isinstance(content, str):
-                    # Direct string in the list
-                    processed_content.append({"type": "text", "content": content})
-                elif _is_image_part(content):
-                    # Direct Part object that's an image
-                    processed_image = _process_image_part_sync(
-                        content,
-                        span.context.trace_id,
-                        span.context.span_id,
-                        0
-                    )
-                    if processed_image is not None:
-                        processed_content.append(processed_image)
-                else:
-                    # Other content types
-                    processed_content.append({"type": "text", "content": str(content)})
-
-                if processed_content:
+                    if processed_content:
+                        input_messages.append({
+                            "role": getattr(content, "role", "user"),
+                            "parts": processed_content,
+                        })
+            else:
+                # Single-turn: list of Part objects or strings
+                parts = []
+                for content in contents:
+                    if isinstance(content, str):
+                        parts.append({"type": "text", "content": content})
+                    elif _is_image_part(content):
+                        processed_image = _process_image_part_sync(
+                            content, span.context.trace_id, span.context.span_id, 0
+                        )
+                        if processed_image is not None:
+                            parts.append(processed_image)
+                    else:
+                        parts.append({"type": "text", "content": str(content)})
+                if parts:
                     input_messages.append({
-                        "role": getattr(content, "role", "user"),
-                        "parts": processed_content,
+                        "role": "user",
+                        "parts": parts,
                     })
     elif args and len(args) > 0:
         # Handle args - process each argument
