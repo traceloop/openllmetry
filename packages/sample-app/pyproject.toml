@@ -47,7 +47,7 @@ dependencies = [
   "mcp>=1.26.0,<2",
   "crewai>=1.0.0,<2",
   "openai-agents>=0.2.7,<0.3.0",
-  "fastmcp>=2.12.3,<3",
+  "fastmcp>=2.12.3,<4",
   "agno>=2.4.0,<3",
   "voyageai>=0.3.7",
   "opentelemetry-instrumentation-openai",
