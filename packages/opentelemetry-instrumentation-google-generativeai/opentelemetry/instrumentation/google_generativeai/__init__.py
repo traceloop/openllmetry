@@ -15,6 +15,8 @@ from opentelemetry.instrumentation.google_generativeai.event_emitter import (
     emit_message_events,
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
+    _collect_finish_reasons_from_response,
+    set_input_attributes,
     set_input_attributes_sync,
     set_model_request_attributes,
     set_model_response_attributes,
@@ -32,13 +34,14 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
-    Meters
+    Meters,
 )
 from opentelemetry.metrics import Meter, get_meter
 from opentelemetry.trace import SpanKind, get_tracer, StatusCode
 from wrapt import wrap_function_wrapper
+
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+_GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
 
 logger = logging.getLogger(__name__)
 
@@ -47,25 +50,21 @@ WRAPPED_METHODS = [
         "package": "google.genai.models",
         "object": "Models",
         "method": "generate_content",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "AsyncModels",
         "method": "generate_content",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "Models",
         "method": "generate_content_stream",
-        "span_name": "gemini.generate_content",
     },
     {
         "package": "google.genai.models",
         "object": "AsyncModels",
         "method": "generate_content_stream",
-        "span_name": "gemini.generate_content",
     },
 ]
 
@@ -85,21 +84,40 @@ def _build_from_streaming_response(
     event_logger,
     token_histogram,
 ):
-    complete_response = ""
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
     last_chunk = None
     for item in response:
         item_to_yield = item
         last_chunk = item
-        complete_response += str(item.text)
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
 
         yield item_to_yield
 
-    if should_emit_events() and event_logger:
+    complete_response = "".join(text_parts)
+
+    if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(span, complete_response, llm_model)
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
+
+    # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
+    # so the last chunk reflects all candidates without deduplication artifacts.
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
     set_model_response_attributes(
-        span, last_chunk or response, llm_model, token_histogram
+        span,
+        last_chunk or response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_reasons or None,
     )
     span.end()
 
@@ -107,21 +125,38 @@ def _build_from_streaming_response(
 async def _abuild_from_streaming_response(
     span, response: GenerateContentResponse, llm_model, event_logger, token_histogram
 ):
-    complete_response = ""
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
     last_chunk = None
     async for item in response:
         item_to_yield = item
         last_chunk = item
-        complete_response += str(item.text)
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
 
         yield item_to_yield
 
-    if should_emit_events() and event_logger:
+    complete_response = "".join(text_parts)
+
+    if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        set_response_attributes(span, complete_response, llm_model)
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
+
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
     set_model_response_attributes(
-        span, last_chunk if last_chunk else response, llm_model, token_histogram
+        span,
+        last_chunk if last_chunk else response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_reasons or None,
     )
     span.end()
 
@@ -132,6 +167,16 @@ def _handle_request(span, args, kwargs, llm_model, event_logger):
         emit_message_events(args, kwargs, event_logger)
     else:
         set_input_attributes_sync(span, args, kwargs, llm_model)
+
+    set_model_request_attributes(span, kwargs, llm_model)
+
+
+@dont_throw
+async def _handle_request_async(span, args, kwargs, llm_model, event_logger):
+    if should_emit_events() and event_logger:
+        emit_message_events(args, kwargs, event_logger)
+    else:
+        await set_input_attributes(span, args, kwargs, llm_model)
 
     set_model_request_attributes(span, kwargs, llm_model)
 
@@ -200,17 +245,17 @@ async def _awrap(
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
-    name = to_wrap.get("span_name")
     span = tracer.start_span(
-        name,
+        f"{_GEN_CONTENT} {llm_model}",
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
         },
     )
     start_time = time.perf_counter()
-    _handle_request(span, args, kwargs, llm_model, event_logger)
+    await _handle_request_async(span, args, kwargs, llm_model, event_logger)
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
@@ -224,7 +269,9 @@ async def _awrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )
@@ -276,13 +323,13 @@ def _wrap(
     if "model" in kwargs:
         llm_model = kwargs["model"].replace("models/", "")
 
-    name = to_wrap.get("span_name")
     span = tracer.start_span(
-        name,
+        f"{_GEN_CONTENT} {llm_model}",
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "Google",
-            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
         },
     )
 
@@ -301,7 +348,9 @@ def _wrap(
         duration_histogram.record(
             duration,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )

@@ -14,7 +14,7 @@ def predict_text() -> str:
     """Ideation example with a Large Language Model"""
 
     response = client.models.generate_content(
-        model="gemini-1.5-pro-002",
+        model="gemini-2.5-flash",
         contents="Give me ten interview questions for the role of program manager.",
     )
 
@@ -26,7 +26,7 @@ async def async_predict_text() -> str:
     """Async Ideation example with a Large Language Model"""
 
     response = client.models.generate_content(
-        model="gemini-1.5-pro-002",
+        model="gemini-2.5-flash",
         contents="Give me ten interview questions for the role of program manager.",
     )
 
@@ -39,7 +39,7 @@ def chat() -> str:
 
     # First message
     response1 = client.models.generate_content(
-        model="gemini-1.5-pro-002",
+        model="gemini-2.5-flash",
         contents="Hello, how are you?",
     )
 
@@ -51,7 +51,7 @@ def chat() -> str:
     ]
 
     response2 = client.models.generate_content(
-        model="gemini-1.5-pro-002",
+        model="gemini-2.5-flash",
         contents=conversation,
     )
 
