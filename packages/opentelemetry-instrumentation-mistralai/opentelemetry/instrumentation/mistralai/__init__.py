@@ -414,7 +414,13 @@ def _wrap(
 
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if to_wrap.get("streaming"):
@@ -460,10 +466,16 @@ async def _awrap(
 
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
-    if to_wrap.get("streaming"):
-        response = await wrapped(*args, **kwargs)
-    else:
-        response = await wrapped(*args, **kwargs)
+    try:
+        if to_wrap.get("streaming"):
+            response = await wrapped(*args, **kwargs)
+        else:
+            response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if to_wrap.get("streaming"):

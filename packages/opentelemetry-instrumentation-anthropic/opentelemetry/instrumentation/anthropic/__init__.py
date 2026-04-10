@@ -575,6 +575,9 @@ def _wrap(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
         raise e
 
     end_time = time.time()
@@ -703,6 +706,9 @@ async def _awrap(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
         raise e
 
     if is_streaming_response(response):
