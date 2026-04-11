@@ -222,14 +222,13 @@ async def _aset_token_usage(
 
     if usage:
         prompt_tokens = getattr(usage, "input_tokens", 0)
-        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
-        cache_read_tokens = 0
-        cache_creation_tokens = 0
 
-    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+    input_tokens = prompt_tokens
+
+    cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0 if usage else 0
+    cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0 if usage else 0
 
     if token_histogram and isinstance(input_tokens, int) and input_tokens >= 0:
         token_histogram.record(
@@ -338,14 +337,12 @@ def _set_token_usage(
 
     if usage:
         prompt_tokens = getattr(usage, "input_tokens", 0)
-        cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
-        cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
     else:
         prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
-        cache_read_tokens = 0
-        cache_creation_tokens = 0
 
-    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+    input_tokens = prompt_tokens
+    cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0 if usage else 0
+    cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0 if usage else 0
 
     if token_histogram and isinstance(input_tokens, int) and input_tokens >= 0:
         token_histogram.record(
