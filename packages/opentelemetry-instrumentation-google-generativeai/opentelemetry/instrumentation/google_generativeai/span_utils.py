@@ -3,6 +3,7 @@ import base64
 import logging
 import asyncio
 import threading
+from opentelemetry.instrumentation.google_generativeai.config import Config
 from opentelemetry.instrumentation.google_generativeai.utils import (
     dont_throw,
     should_send_prompts,
@@ -10,7 +11,6 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.instrumentation.google_generativeai.config import Config
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
@@ -26,30 +26,146 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _map_gemini_finish_reason(finish_reason):
+    """Map Gemini FinishReason to OTel finish reason string.
+
+    Returns ``""`` for ``None``, unspecified, and unmapped values.
+    """
+    if finish_reason is None:
+        return ""
+    name = getattr(finish_reason, "name", None) or str(finish_reason)
+    mapping = {
+        "STOP": "stop",
+        "MAX_TOKENS": "length",
+        "SAFETY": "content_filter",
+        "RECITATION": "content_filter",
+        "BLOCKLIST": "content_filter",
+        "PROHIBITED_CONTENT": "content_filter",
+        "SPII": "content_filter",
+        "IMAGE_SAFETY": "content_filter",
+        "IMAGE_PROHIBITED_CONTENT": "content_filter",
+        "IMAGE_RECITATION": "content_filter",
+        "LANGUAGE": "content_filter",
+        "FINISH_REASON_UNSPECIFIED": "",
+        "MALFORMED_FUNCTION_CALL": "error",
+        "OTHER": "error",
+        "UNEXPECTED_TOOL_CALL": "error",
+        "NO_IMAGE": "error",
+        "IMAGE_OTHER": "error",
+    }
+    return mapping.get(name, "")
+
+
+def _normalize_message_role(role):
+    if role is None:
+        return "user"
+    r = str(role).lower()
+    if r == "model":
+        return "assistant"
+    return r
+
+
+def _parse_function_call_arguments(args):
+    if args is None:
+        return {}
+    if isinstance(args, dict):
+        return args
+    if isinstance(args, str):
+        try:
+            return json.loads(args)
+        except (json.JSONDecodeError, TypeError):
+            return {"_raw": args}
+    return {"_value": args}
+
+
+def _function_response_to_str(response):
+    if response is None:
+        return ""
+    if isinstance(response, str):
+        return response
+    try:
+        return json.dumps(response, default=str)
+    except TypeError:
+        return str(response)
+
+
 def _is_image_part(item):
     """Check if item is a Google GenAI Part object containing image data"""
     try:
-        # Check if it has the Part attributes we expect for new Google GenAI SDK
-        if hasattr(item, 'inline_data') and item.inline_data is not None:
-            # Check if it's an image mime type and has data
-            if (hasattr(item.inline_data, 'mime_type') and
-                    item.inline_data.mime_type and
-                    'image/' in item.inline_data.mime_type and
-                    hasattr(item.inline_data, 'data') and
-                    item.inline_data.data):
+        if hasattr(item, "inline_data") and item.inline_data is not None:
+            if (
+                hasattr(item.inline_data, "mime_type")
+                and item.inline_data.mime_type
+                and "image/" in item.inline_data.mime_type
+                and hasattr(item.inline_data, "data")
+                and item.inline_data.data
+            ):
                 return True
         return False
     except Exception:
         return False
 
 
+def _otel_image_part_from_genai_part(part, span, part_index, sync):
+    """BlobPart after upload attempt, or UriPart when upload is configured and succeeds."""
+    if not _is_image_part(part):
+        return None
+    mime = (
+        part.inline_data.mime_type
+        if hasattr(part, "inline_data") and part.inline_data
+        else None
+    ) or "application/octet-stream"
+    if Config.upload_base64_image:
+        if sync:
+            uploaded = _process_image_part_sync(
+                part, span.context.trace_id, span.context.span_id, part_index
+            )
+        else:
+            return None  # async path must use _otel_image_part_from_genai_part_async
+        if uploaded and uploaded.get("image_url") and uploaded["image_url"].get("url"):
+            return {
+                "type": "uri",
+                "modality": "image",
+                "uri": uploaded["image_url"]["url"],
+            }
+    binary_data = part.inline_data.data
+    b64 = base64.b64encode(binary_data).decode("utf-8")
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+
+
+async def _otel_image_part_from_genai_part_async(part, span, part_index):
+    if not _is_image_part(part):
+        return None
+    mime = (
+        part.inline_data.mime_type
+        if hasattr(part, "inline_data") and part.inline_data
+        else None
+    ) or "application/octet-stream"
+    if Config.upload_base64_image:
+        uploaded = await _process_image_part(
+            part, span.context.trace_id, span.context.span_id, part_index
+        )
+        if uploaded and uploaded.get("image_url") and uploaded["image_url"].get("url"):
+            return {
+                "type": "uri",
+                "modality": "image",
+                "uri": uploaded["image_url"]["url"],
+            }
+    binary_data = part.inline_data.data
+    b64 = base64.b64encode(binary_data).decode("utf-8")
+    return {"type": "blob", "modality": "image", "mime_type": mime, "content": b64}
+
+
 async def _process_image_part(item, trace_id, span_id, content_index):
-    """Process a Google GenAI Part object containing image data"""
+    """Upload image when configured; used only from async content processing."""
     if not Config.upload_base64_image:
         return None
     try:
-        # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
-        image_format = item.inline_data.mime_type.split('/')[1] if item.inline_data.mime_type else 'unknown'
+        image_format = (
+            item.inline_data.mime_type.split("/")[1]
+            if item.inline_data.mime_type
+            else ""
+        )
         image_name = f"content_{content_index}.{image_format}"
         # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
@@ -63,12 +179,10 @@ async def _process_image_part(item, trace_id, span_id, content_index):
         }
     except Exception as e:
         logger.warning(f"Failed to process image part: {e}")
-        # Return None to skip adding this image to the span
         return None
 
 
 def run_async(method):
-    """Handle async method in sync context, following OpenAI's battle-tested approach"""
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -83,12 +197,21 @@ def run_async(method):
 
 
 def _process_image_part_sync(item, trace_id, span_id, content_index):
-    """Synchronous version of image part processing using OpenAI's pattern"""
+    """Sync path for optional image upload.
+
+    Uses ``run_async`` in a new thread when the current thread already has a
+    running event loop (e.g. FastAPI/Jupyter). That pattern can deadlock if the
+    async upload waits on the same loop — prefer async instrumentation paths
+    where possible.
+    """
     if not Config.upload_base64_image:
         return None
     try:
-        # Extract format from mime type (e.g., 'image/jpeg' -> 'jpeg')
-        image_format = item.inline_data.mime_type.split('/')[1] if item.inline_data.mime_type else 'unknown'
+        image_format = (
+            item.inline_data.mime_type.split("/")[1]
+            if item.inline_data.mime_type
+            else ""
+        )
         image_name = f"content_{content_index}.{image_format}"
         # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
@@ -98,7 +221,9 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
 
         async def upload_task():
             nonlocal url
-            url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
+            url = await Config.upload_base64_image(
+                str(trace_id), str(span_id), image_name, base64_string
+            )
 
         run_async(upload_task())
         return {
@@ -107,7 +232,6 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
         }
     except Exception as e:
         logger.warning(f"Failed to process image part sync: {e}")
-        # Return None to skip adding this image to the span
         return None
 
 
@@ -117,9 +241,7 @@ async def _process_content_item(content_item, span):
     if hasattr(content_item, "parts"):
         # Content with parts (Google GenAI Content object)
         for part_index, part in enumerate(content_item.parts):
-            processed_part = await _process_content_part(part, span, part_index)
-            if processed_part is not None:
-                processed_content.append(processed_part)
+            parts_acc.extend(await _parts_from_genai_part_async(part, span, part_index))
     elif isinstance(content_item, str):
         # Direct string in the list
         processed_content.append({"type": "text", "content": content_item})
@@ -191,7 +313,6 @@ async def _process_argument(argument, span):
 
 @dont_throw
 async def set_input_attributes(span, args, kwargs, llm_model):
-    """Process input arguments, handling both text and image content"""
     if not span.is_recording():
         return
     if not should_send_prompts():
@@ -260,10 +381,8 @@ async def set_input_attributes(span, args, kwargs, llm_model):
         )
 
 
-# Keep sync version for backward compatibility
 @dont_throw
 def set_input_attributes_sync(span, args, kwargs, llm_model):
-    """Synchronous version with image processing support"""
     if not span.is_recording():
         return
     if not should_send_prompts():
@@ -393,7 +512,6 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
 def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
@@ -417,7 +535,7 @@ def set_model_request_attributes(span, kwargs, llm_model):
         try:
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(generation_config.response_schema),
             )
         except Exception:
@@ -426,11 +544,81 @@ def set_model_request_attributes(span, kwargs, llm_model):
         try:
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(kwargs.get("response_schema")),
             )
         except Exception:
             pass
+
+    if should_send_prompts():
+        si = _system_instruction_from_kwargs(kwargs)
+        if si is not None:
+            try:
+                parts = _system_instruction_to_parts(si, span)
+                if parts:
+                    _set_span_attribute(
+                        span,
+                        GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
+                        json.dumps(parts),
+                    )
+            except Exception:
+                pass
+
+        tools = _tool_definitions_from_kwargs(kwargs)
+        if tools:
+            try:
+                _set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
+                    json.dumps(tools),
+                )
+            except Exception:
+                pass
+
+
+def _system_instruction_from_kwargs(kwargs):
+    """Top-level kwarg or unified-client ``config.system_instruction``."""
+    si = kwargs.get("system_instruction")
+    if si is not None:
+        return si
+    config = kwargs.get("config")
+    if config is not None:
+        si = getattr(config, "system_instruction", None)
+        if si is not None:
+            return si
+    return None
+
+
+def _system_instruction_to_parts(si, span):
+    """OTel: flat array of parts for gen_ai.system_instructions."""
+    if isinstance(si, str):
+        return [{"type": "text", "content": si}]
+    if hasattr(si, "parts") and si.parts:
+        out = []
+        for idx, p in enumerate(si.parts):
+            out.extend(_parts_from_genai_part_sync(p, span, idx))
+        return out
+    return [{"type": "text", "content": str(si)}]
+
+
+def _tool_definitions_from_kwargs(kwargs):
+    """Extract tool definitions from kwargs — source system representation per OTel spec."""
+    tools = kwargs.get("tools")
+    if tools is None:
+        config = kwargs.get("config")
+        if config is not None:
+            tools = getattr(config, "tools", None)
+    if not tools:
+        return None
+    defs = []
+    for tool in tools:
+        if hasattr(tool, "model_dump"):
+            defs.append(tool.model_dump(exclude_none=True, mode="json"))
+        elif isinstance(tool, dict):
+            defs.append(tool)
+        elif callable(tool):
+            defs.append({"name": getattr(tool, "__name__", str(tool))})
+    return defs or None
 
 
 
@@ -449,7 +637,9 @@ def _serialize_response_part(part):
 
 
 @dont_throw
-def set_response_attributes(span, response, llm_model):
+def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
+    if not span.is_recording():
+        return
     if not should_send_prompts():
         return
 
@@ -521,34 +711,38 @@ def set_response_attributes(span, response, llm_model):
         )
 
 
-def set_model_response_attributes(span, response, llm_model, token_histogram):
+def set_model_response_attributes(
+    span, response, llm_model, token_histogram, stream_finish_reasons=None
+):
     if not span.is_recording():
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
     if hasattr(response, "usage_metadata"):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-            response.usage_metadata.total_token_count,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
+            um.total_token_count,
         )
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-            response.usage_metadata.candidates_token_count,
+            um.candidates_token_count,
         )
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-            response.usage_metadata.prompt_token_count,
+            um.prompt_token_count,
         )
     if token_histogram and hasattr(response, "usage_metadata"):
         token_histogram.record(
-            response.usage_metadata.prompt_token_count,
+            um.prompt_token_count,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            }
+            },
         )
         token_histogram.record(
             response.usage_metadata.candidates_token_count,

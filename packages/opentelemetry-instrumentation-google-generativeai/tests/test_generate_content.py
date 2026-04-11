@@ -14,7 +14,9 @@ from opentelemetry.semconv._incubating.attributes import (
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "gemini"
+    assert log.log_record.attributes.get(
+        GenAIAttributes.GEN_AI_PROVIDER_NAME
+    ) == GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
 
     if not expected_content:
         assert not log.log_record.body
@@ -31,18 +33,24 @@ def test_client_spans(exporter, genai_client):
     assert len(spans) > 0, "No spans were recorded"
 
     span = next(
-        (s for s in spans if s.name == "gemini.generate_content"),
+        (s for s in spans if s.name.startswith("generate_content ")),
         None,
     )
-    assert span is not None, "gemini.generate_content span not found"
+    assert span is not None, "generate_content span not found"
 
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.OK
 
     attrs = span.attributes
 
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "Google"
-    assert attrs[SpanAttributes.LLM_REQUEST_TYPE] == "completion"
+    assert (
+        attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+        == GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+    )
+    assert (
+        attrs[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
+    )
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
@@ -71,7 +79,8 @@ def test_client_spans(exporter, genai_client):
 
 
 @pytest.mark.vcr
-def test_generate_metrics(metrics_test_context, genai_client):
+def test_generate_metrics(metrics_test_context, genai_client, exporter):
+    """`exporter` fixture instruments with the session MeterProvider so metrics are recorded."""
     _, reader = metrics_test_context
 
     # ---- Trigger a generic GenAI request ----
@@ -86,13 +95,19 @@ def test_generate_metrics(metrics_test_context, genai_client):
     rm = resource_metrics[0]
     assert rm.scope_metrics, "No ScopeMetrics found"
 
-    scope_metrics = rm.scope_metrics[0]
+    # Aggregate across scopes: SDK internal metrics share the reader with app instrumentation.
+    metrics = {}
+    instrument_scope = None
+    for sm in rm.scope_metrics:
+        for m in sm.metrics:
+            metrics[m.name] = m
+        if any(
+            name in (Meters.LLM_OPERATION_DURATION, Meters.LLM_TOKEN_USAGE)
+            for name in (x.name for x in sm.metrics)
+        ):
+            instrument_scope = sm.scope
 
-    # ---- Instrumentation scope (generic check) ----
-    scope = scope_metrics.scope
-    assert scope.name, "Instrumentation scope name is missing"
-
-    metrics = {m.name: m for m in scope_metrics.metrics}
+    assert instrument_scope and instrument_scope.name, "GenAI metrics scope not found"
 
     # ---- Required metrics (semantic conventions) ----
     required_metrics = {
@@ -106,7 +121,9 @@ def test_generate_metrics(metrics_test_context, genai_client):
     assert duration_metric.unit is not None
     assert duration_metric.data.data_points
 
-    duration_dp = duration_metric.data.data_points[0]
+    duration_dp = next(
+        dp for dp in duration_metric.data.data_points if dp.count >= 1
+    )
 
     # Minimal semantic validation
     assert duration_dp.count >= 1
@@ -114,6 +131,8 @@ def test_generate_metrics(metrics_test_context, genai_client):
 
     # Required attributes (values are intentionally not hard-coded)
     assert GenAIAttributes.GEN_AI_PROVIDER_NAME in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_OPERATION_NAME in duration_dp.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_MODEL in duration_dp.attributes
     assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in duration_dp.attributes
 
     token_metric = metrics[Meters.LLM_TOKEN_USAGE]
@@ -135,4 +154,30 @@ def test_generate_metrics(metrics_test_context, genai_client):
 
         # Required semantic attributes
         assert GenAIAttributes.GEN_AI_PROVIDER_NAME in dp.attributes
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in dp.attributes
+        assert GenAIAttributes.GEN_AI_REQUEST_MODEL in dp.attributes
         assert GenAIAttributes.GEN_AI_RESPONSE_MODEL in dp.attributes
+
+
+def test_set_model_request_attributes_reads_system_instruction_from_config(monkeypatch):
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    class GenerateContentConfig:
+        system_instruction = "Reply in one sentence."
+
+    su.set_model_request_attributes(span, {"config": GenerateContentConfig()}, "gemini-pro")
+
+    sys_attr_calls = [
+        c[0]
+        for c in span.set_attribute.call_args_list
+        if c[0][0] == GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS
+    ]
+    assert len(sys_attr_calls) == 1
+    parts = json.loads(sys_attr_calls[0][1])
+    assert parts[0]["type"] == "text"
+    assert parts[0]["content"] == "Reply in one sentence."
