@@ -2840,3 +2840,4 @@ def test_anthropic_streaming_base64_image_token_count_legacy(
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
+    
