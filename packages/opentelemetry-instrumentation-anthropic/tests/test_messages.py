@@ -2822,14 +2822,14 @@ def test_anthropic_streaming_base64_image_token_count_legacy(
             ],
         }
     ]
-    response = anthropic_client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=100,
-        messages=messages,
-        stream=True,
-    )
-    for _ in response:
-        pass
+    
+    with anthropic_client.messages.stream(
+    model="claude-haiku-4-5-20251001",
+    max_tokens=100,
+    messages=messages,
+    ) as stream:
+        for _ in stream:
+            pass
 
     spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
@@ -2840,4 +2840,3 @@ def test_anthropic_streaming_base64_image_token_count_legacy(
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
         == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
     )
-    
