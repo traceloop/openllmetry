@@ -394,4 +394,404 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You help generate concise
+      summaries of news articles and blog posts that user sends you.\"},{\"role\":\"user\",\"content\":\"test_openai_prompt_caching
+      <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\\nOpen-Source Library OpenLLMetry
+      Brings LLM Functionality to OpenTelemetry\\nTraceloop, a YCombinator-backed
+      company, has announced the release of OpenLLMetry, a new open-source\\nlibrary
+      designed to extend OpenTelemetry with Large Language Model (LLM) functionality.
+      This innovative\\ntool aims to bridge the gap between traditional application
+      monitoring and the rapidly evolving field\\nof AI-powered systems. OpenLLMetry
+      builds upon the widely-adopted OpenTelemetry framework, which provides\\na standardized
+      approach to collecting and exporting telemetry data from cloud-native applications.
+      By\\nintegrating LLM-specific features, OpenLLMetry enables developers to gain
+      deeper insights into\\nthe performance and behavior of AI models within their
+      applications.\\n\\nKey features of OpenLLMetry include:\\n\\nLLM-specific metrics
+      and traces\\nSeamless integration with existing OpenTelemetry setups\\nSupport
+      for popular LLM frameworks and platforms\\n\\nThe open-source nature of OpenLLMetry
+      is expected to foster community contributions and rapid adoption\\namong developers
+      working with LLMs. As AI continues to transform the software landscape, tools\\nlike
+      OpenLLMetry are poised to play a vital role in ensuring the reliability and
+      performance of\\nnext-generation applications.\\n\\n========================================================================\\n\\nMajor
+      LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\\n\\nIn
+      a significant development for the artificial intelligence industry, leading
+      Large Language Model (LLM) providers,\\nincluding Anthropic, have announced
+      the implementation of prompt caching. This new feature promises to dramatically\\nimprove
+      the speed and cost-effectiveness of LLM API calls, particularly for applications
+      with repetitive prompt patterns.\\n\\nUnderstanding Prompt Caching\\nPrompt
+      caching is a technique that allows LLM providers to store and quickly retrieve
+      responses for frequently used prompts.\\nInstead of processing the same or similar
+      prompts repeatedly, the system can serve pre-computed responses,\\nsignificantly
+      reducing computation time and resources.\\n\\nBenefits of Prompt Caching\\n1.
+      Improved Response Times\\n\\nWith prompt caching, response times for cached
+      prompts can be reduced from seconds to milliseconds. This dramatic speed\\nimprovement
+      enables near-instantaneous responses in many scenarios, enhancing user experience
+      in AI-powered applications.\\n\\n2. Cost Reduction\\nBy eliminating the need
+      to reprocess identical or highly similar prompts, prompt caching can substantially
+      reduce the\\ncomputational resources required. This efficiency translates directly
+      into cost savings for developers and businesses\\nutilizing LLM APIs.\\n\\n3.
+      Scalability\\nThe reduced computational load allows LLM providers to handle
+      a higher volume of requests with existing infrastructure,\\nimproving the scalability
+      of their services.\\n\\nUse Cases and Impact\\nPrompt caching is particularly
+      beneficial for applications with repetitive prompt patterns. Some key use cases
+      include:\\n\\nCustomer service chatbots handling common queries\\nContent moderation
+      systems processing similar types of content\\nLanguage translation services
+      for frequently translated phrases or sentences\\nAutomated coding assistants
+      dealing with standard programming tasks\\n\\nImplementation by Major Providers\\nWhile
+      the specific implementation details vary among providers, the general approach
+      involves:\\n\\nIdentifying frequently used prompts\\nStoring pre-computed responses\\nImplementing
+      efficient lookup mechanisms\\nBalancing cache freshness with performance gains\\n\\nAnthropic,
+      known for its Claude AI model, has been at the forefront of this technology.\\n\\nFuture
+      Implications\\nThe introduction of prompt caching by major LLM providers is
+      likely to have far-reaching effects on the AI industry:\\n\\nBroader Adoption:
+      Reduced costs and improved performance could lead to wider adoption of LLM technologies
+      across various sectors.\\nNew Application Paradigms: Developers may create new
+      types of applications that leverage the near-instantaneous response times of
+      cached prompts.\\nEvolution of Pricing Models: LLM providers might introduce
+      new pricing structures that reflect the efficiency gains of prompt caching.\\n\\nAs
+      the technology matures, we can expect to see further refinements and innovative
+      applications of prompt caching, potentially\\nreshaping the landscape of AI-powered
+      services and applications.\\n\\n========================================================================\\n\\n\U0001F4CA
+      Why Unit Testing is Non-Negotiable in Software Development \U0001F5A5\uFE0F\\nAs
+      a software professional, I can't stress enough how crucial unit testing is to
+      our craft. Here's why it's a must-have practice:\\n\\n\U0001F41B Catches bugs
+      early: Identify and fix issues before they snowball into major problems.\\n\U0001F4B0
+      Saves time and money: Less debugging time means faster development and lower
+      costs.\\n\U0001F3D7\uFE0F Improves code quality: Writing testable code inherently
+      leads to better architecture.\\n\U0001F504 Facilitates refactoring: Tests give
+      you confidence to improve your code without breaking functionality.\\n\U0001F4DA
+      Serves as documentation: Well-written tests explain how your code should behave.\\n\U0001F91D
+      Enhances collaboration: New team members can understand and contribute to the
+      codebase faster.\\n\\nRemember: The time invested in unit testing pays off multifold
+      in the long run. It's not just good practice\u2014it's professional responsibility.\\nWhat's
+      your take on unit testing? Share your experiences below! \U0001F447\\n\\n========================================================================\\n\\nThe
+      Rise of Reasoning Models: How \\\"Think First\\\" AI Is Transforming Capabilities\\n\\nA
+      new generation of reasoning models designed to think before responding is dramatically
+      expanding the\\nfrontiers of artificial intelligence. These advanced systems,
+      which employ sophisticated deliberative\\nprocesses before generating output,
+      are solving problems previously thought to be beyond AI's reach.\\n\\n\\nUnlike
+      earlier models that produced immediate responses, these reasoning-enhanced AIs
+      take a structured\\napproach to complex problems. By breaking down questions
+      into component parts, exploring multiple solution paths,\\nand critically evaluating
+      their own reasoning, they achieve significantly higher accuracy on tasks requiring
+      logical\\nanalysis, mathematical problem-solving, and nuanced judgment.\"}],\"model\":\"gpt-4o-mini\"}"
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '6643'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-c84d36dea2cdf1fc490d88a6cd9b963a-67bcdaeb8f0137ee-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkICQjwLwAAAAD//3RWXU8rNxB951eMwkuL
+        EkRCxMd9Q1UfkEC9orRV1XsVOd7ZXYPX3mt7A6Hiv/eMnS/a2wdW2bU9c+acM2NmD+uHh8er53N7
+        2//hHq9+/3O2fpuNxnLCL59Yp+2pU+1xjpPxrizrwCqxRJ1eXs6vL84vptd5ofMVWznW9Gky95PO
+        ODOZnc3mk7PLyfRqc7r1RnPEtr/wSvR3fgpOV/ErPp+Nt186jlE1jG/bTfgYvJUvIxWjiUm5NBrv
+        F7V3iV2Gfnx8TL8OXafCmnxNNyEZbTl++uK+uOkpnZz80rO7u7vnhA13anC6PTn5RI9Babbe99Sq
+        SIEtq8gVHWwek3Lk8T6JfgiayZplkCzsWuW0cU3e/YijXQ7+YlKLDKFhPF0zoCS6F6roB4T8kbTq
+        1dJYkwzHU3psTaTkvQXqmkMk7JnEnrWpjSaJaHQEhIoMam0CpIgUWXUoLtpNNn4FN4Ikchr6CMim
+        k9fkyXR98Cum1DL1HGofOqDmzNEtZQljDmIcqb63RiuRPiNjghe6wZm0nlTBrDhvCV7ploCaXwET
+        zpA08rsyiUlVvpcAGbLoE8xyKBFFiplI8TnAYol+QhxBicwoOooc9+rJB3kjQW0qEDLGurZDJTtv
+        XGqD740eQy4UBUqCrwYNDH2JqUvMMb20Bihj8oELfUGo5BWLyrEHHvwCG1QH/jbAROByiLtASLvX
+        F3JgoQRBNvmkfUzl/M3nW2S1dqslJGs9dlvrX7BDxcRhl5KSgcvHFE3jRGD4OYeiqFYIK8qJ0kWz
+        iiICF6/AhpxdgbhrWrJjnMZLhnCoG+z5DN3QyEufSuV268IUlIs278tinIsYIvNt1/uQtr74DYLT
+        I2dHiSg3FH2dXlRgIaeG7xAAqbnr0TTmDUSKuxxrWUq5/8Q0lEoMiGWa1uIve9QAlnS16A7QxQPL
+        oYGhVLAotHCRqdq4KIoehZVCfsX0bVCFl1ppYUjl4IHxCtFzWjm8VzGhaXDUglEfCgl061YFY8kG
+        RIfAxeQVo60h58fSN3qaok0mcy5k/twx+n7D4wNmiXcSJ7d/NvhNtRKaxUnbxU0PIjcaUkjOMkmj
+        5loPpgUt10K69evsyhQGnYZQPLvE+MGEspmgbZeWAcPwXVzDh534Qdn1W+GVV8oOmCeQ15YWRTYQ
+        OFhRYU+30nrAmFwLxKTis8itEknfGMC1voH5bAmNIZ1ju6GU+TRUTYfuGqPMHGzJa4911IhxUcg0
+        HRg2ADLZtUnh5PRw1guwqOS+cQB4sKCc86mYX26Zr5uV9929AoBCUPzX0VGN+yq2i6KE3CGYFv0o
+        r77j+TXfX8OHK2lUpsMi+WfO6abT+XUJONrfm/vl2cV0s5qA0R6cm083F9/HkIuKkzI2HlyCI5lp
+        XB2cxRW7K0JhMvr92tnRQe3/hfS98DsnHkT53/D7Ba25x/Bf9DCg0R/L3m8L/JTviO9v23GdAY8i
+        hxX+WVjA60H0qNDMgy03/qg4eAHRGg49Gjxf+3W/qM/rK72cnV/q0dH70T8AAAD//wMAcQQMyAQJ
+        AAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fb05b4b73ef31-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:27:05 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '5780'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=pdo0jHzcJy3RO5n_JbdMhV6UBJEWctrkWxA3Idw0wW0-1774963619.0900223-1.0.1.1-_Y.ZPclKZTF7So9TBLDbOc50j.iEEd5nzxg2THTMEQd7CoGCam3dgG7hHbbeCCzQpFeGdgN6vB0aABzenxo_hxGRqFhGS_UwQVvqM1UDnm9mYb55yb0iP0Y4xcPnpFwu;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:57:05 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149998385'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_c177ede789484efca6ee1f24b693ea34
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"system\",\"content\":\"You help generate concise
+      summaries of news articles and blog posts that user sends you.\"},{\"role\":\"user\",\"content\":\"test_openai_prompt_caching
+      <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\\nOpen-Source Library OpenLLMetry
+      Brings LLM Functionality to OpenTelemetry\\nTraceloop, a YCombinator-backed
+      company, has announced the release of OpenLLMetry, a new open-source\\nlibrary
+      designed to extend OpenTelemetry with Large Language Model (LLM) functionality.
+      This innovative\\ntool aims to bridge the gap between traditional application
+      monitoring and the rapidly evolving field\\nof AI-powered systems. OpenLLMetry
+      builds upon the widely-adopted OpenTelemetry framework, which provides\\na standardized
+      approach to collecting and exporting telemetry data from cloud-native applications.
+      By\\nintegrating LLM-specific features, OpenLLMetry enables developers to gain
+      deeper insights into\\nthe performance and behavior of AI models within their
+      applications.\\n\\nKey features of OpenLLMetry include:\\n\\nLLM-specific metrics
+      and traces\\nSeamless integration with existing OpenTelemetry setups\\nSupport
+      for popular LLM frameworks and platforms\\n\\nThe open-source nature of OpenLLMetry
+      is expected to foster community contributions and rapid adoption\\namong developers
+      working with LLMs. As AI continues to transform the software landscape, tools\\nlike
+      OpenLLMetry are poised to play a vital role in ensuring the reliability and
+      performance of\\nnext-generation applications.\\n\\n========================================================================\\n\\nMajor
+      LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\\n\\nIn
+      a significant development for the artificial intelligence industry, leading
+      Large Language Model (LLM) providers,\\nincluding Anthropic, have announced
+      the implementation of prompt caching. This new feature promises to dramatically\\nimprove
+      the speed and cost-effectiveness of LLM API calls, particularly for applications
+      with repetitive prompt patterns.\\n\\nUnderstanding Prompt Caching\\nPrompt
+      caching is a technique that allows LLM providers to store and quickly retrieve
+      responses for frequently used prompts.\\nInstead of processing the same or similar
+      prompts repeatedly, the system can serve pre-computed responses,\\nsignificantly
+      reducing computation time and resources.\\n\\nBenefits of Prompt Caching\\n1.
+      Improved Response Times\\n\\nWith prompt caching, response times for cached
+      prompts can be reduced from seconds to milliseconds. This dramatic speed\\nimprovement
+      enables near-instantaneous responses in many scenarios, enhancing user experience
+      in AI-powered applications.\\n\\n2. Cost Reduction\\nBy eliminating the need
+      to reprocess identical or highly similar prompts, prompt caching can substantially
+      reduce the\\ncomputational resources required. This efficiency translates directly
+      into cost savings for developers and businesses\\nutilizing LLM APIs.\\n\\n3.
+      Scalability\\nThe reduced computational load allows LLM providers to handle
+      a higher volume of requests with existing infrastructure,\\nimproving the scalability
+      of their services.\\n\\nUse Cases and Impact\\nPrompt caching is particularly
+      beneficial for applications with repetitive prompt patterns. Some key use cases
+      include:\\n\\nCustomer service chatbots handling common queries\\nContent moderation
+      systems processing similar types of content\\nLanguage translation services
+      for frequently translated phrases or sentences\\nAutomated coding assistants
+      dealing with standard programming tasks\\n\\nImplementation by Major Providers\\nWhile
+      the specific implementation details vary among providers, the general approach
+      involves:\\n\\nIdentifying frequently used prompts\\nStoring pre-computed responses\\nImplementing
+      efficient lookup mechanisms\\nBalancing cache freshness with performance gains\\n\\nAnthropic,
+      known for its Claude AI model, has been at the forefront of this technology.\\n\\nFuture
+      Implications\\nThe introduction of prompt caching by major LLM providers is
+      likely to have far-reaching effects on the AI industry:\\n\\nBroader Adoption:
+      Reduced costs and improved performance could lead to wider adoption of LLM technologies
+      across various sectors.\\nNew Application Paradigms: Developers may create new
+      types of applications that leverage the near-instantaneous response times of
+      cached prompts.\\nEvolution of Pricing Models: LLM providers might introduce
+      new pricing structures that reflect the efficiency gains of prompt caching.\\n\\nAs
+      the technology matures, we can expect to see further refinements and innovative
+      applications of prompt caching, potentially\\nreshaping the landscape of AI-powered
+      services and applications.\\n\\n========================================================================\\n\\n\U0001F4CA
+      Why Unit Testing is Non-Negotiable in Software Development \U0001F5A5\uFE0F\\nAs
+      a software professional, I can't stress enough how crucial unit testing is to
+      our craft. Here's why it's a must-have practice:\\n\\n\U0001F41B Catches bugs
+      early: Identify and fix issues before they snowball into major problems.\\n\U0001F4B0
+      Saves time and money: Less debugging time means faster development and lower
+      costs.\\n\U0001F3D7\uFE0F Improves code quality: Writing testable code inherently
+      leads to better architecture.\\n\U0001F504 Facilitates refactoring: Tests give
+      you confidence to improve your code without breaking functionality.\\n\U0001F4DA
+      Serves as documentation: Well-written tests explain how your code should behave.\\n\U0001F91D
+      Enhances collaboration: New team members can understand and contribute to the
+      codebase faster.\\n\\nRemember: The time invested in unit testing pays off multifold
+      in the long run. It's not just good practice\u2014it's professional responsibility.\\nWhat's
+      your take on unit testing? Share your experiences below! \U0001F447\\n\\n========================================================================\\n\\nThe
+      Rise of Reasoning Models: How \\\"Think First\\\" AI Is Transforming Capabilities\\n\\nA
+      new generation of reasoning models designed to think before responding is dramatically
+      expanding the\\nfrontiers of artificial intelligence. These advanced systems,
+      which employ sophisticated deliberative\\nprocesses before generating output,
+      are solving problems previously thought to be beyond AI's reach.\\n\\n\\nUnlike
+      earlier models that produced immediate responses, these reasoning-enhanced AIs
+      take a structured\\napproach to complex problems. By breaking down questions
+      into component parts, exploring multiple solution paths,\\nand critically evaluating
+      their own reasoning, they achieve significantly higher accuracy on tasks requiring
+      logical\\nanalysis, mathematical problem-solving, and nuanced judgment.\"}],\"model\":\"gpt-4o-mini\"}"
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '6643'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=pdo0jHzcJy3RO5n_JbdMhV6UBJEWctrkWxA3Idw0wW0-1774963619.0900223-1.0.1.1-_Y.ZPclKZTF7So9TBLDbOc50j.iEEd5nzxg2THTMEQd7CoGCam3dgG7hHbbeCCzQpFeGdgN6vB0aABzenxo_hxGRqFhGS_UwQVvqM1UDnm9mYb55yb0iP0Y4xcPnpFwu
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-41b611299f58160f5c7fcbba82e37e18-2320efa11c77a967-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkICQjzdgQAAAD//41WTXPbNhC951fsKJfE
+        I2ksW46To9tD6mkySVrnkiajgcAlCRsEGHzIYTr5730LUpbcj5lepCGBXbx97+2CN3q4XL18d/v6
+        0+vtp/W7uw+vf7n89etsLhF+e8s67aOW2iOOk/FuXNaBVWLJurq8XL96cf7i7KIsdL5iK2FNnxZr
+        v+iMM4uz07P14vRysXo5RbfeaI7Y9gceif4sv4LTVfwNr0/n+zcdx6gaxrv9JrwM3sqbmYrRxKRc
+        ms0Pi9q7xK5Af/r0Kf2eu06FgXxNVyEZbTl+dp/dakknJ+96dm/evOWE9TcqO92enHx2SHITlGbr
+        fU+tihTYsopc0dH+OSlHHs+L6HPQTNZsg5yTQBcZQGgCGIrIGxrGr2sy6qC3wg89Q5bnpFWvtsaa
+        ZLAPIR7BXA65wYldgVUH1fG9D3dLumlNpOS9JXatciCQOu9M8sG4hmof6Oqa4hATd5G2A/XB70wl
+        azhtEXvWpjaaJK/RcU6RVQc24gNaqEv3JrXE30CrBEZOuY9Sa0Ux970PqRzU+z5bFQ7osKdWWmpR
+        JdC4aJo2TWUBV/EF9RwQ3gn4pahwJiq8DzBXop+VbiUUyIGX3hf0HOIkyVt1i4Nlpd+vzJFd21xK
+        vHKpDb43GmADk6p8X4D0Y3I9JQcY00kCpqv316VySF0q5xrsGHZ62FPNunXma0Y2a/19LOpE0C06
+        CiNfs9F3cAf45J2yYrHAsfcuQhqhqQ6McJfsQFn8M4IBbmzLdiIKD1XWWN3HUjJwPT2rsRsKwM+V
+        6E6dsdZMz8/nBEgcSBozp6IdEGgf0yTX5BHoppUdbYbCPiK9VrH4TajDU0ZJHTJFDjt0JUm/bz2k
+        kyxTMxX5RofMIb68MiAFbg/KRZG0kAt+ILVFIA7tUQgkyU1L2+AV4idVwLWkdnwPQkA5Ios7YrHE
+        uVjiuhOrCX4h9SNMTjdcLLlvUBzlGC0QUZbsybInjXuE1OjrdC9OqHiHTu47qQKictejpc13EIPO
+        RkzLto/gJGngzA12qGDR3lHtwJJIUdCi0xhvJ/MgAIhhACW0HnmfZVrgaWxKKKGFyEiV11kgTBQe
+        CSQ+Ux3yWajkR46XdO12Uy0FAQp6XGAkISioYaxDibVqYaPYYHKSGVUfR9Jg2MJH1rtmAdN3tGXH
+        tUkj62th/araCSLBKf6g3zD1MGBwXpla+068KtI1CJ9mhozWaxy63z2qOaf71oBUaAwyEignLf+w
+        IxAZd1eanWEengBXhTLpvGNXIfXxoFzSTwP4U3b4PvX31srAw1hrfSXZ7TDyi5bM4zSqTF1zEAdE
+        b7NgBjq4Fc0wYiUZDzAKNeVeg1O1zhgMg9BgfVNAl0Nx4cypUwjGT3k9IcA9YHej5mLuPDbfba4a
+        4XOOmdqrUmFpExTYFG8nFe/iWKPDZeMqyzKJcPca+HZYHt9scFaOSm5Xl609WlDO+dFa5U79Mq38
+        eLhFUYLAjH8LndW4nWO7GaWTGxOzoJ+V1R/4/VJu6/zoAp6NQ2yT/B2X41ar9asx4ezwlXBYPj9d
+        TasJGO1R3PpiuuYfp9xUnJSx8ejKn8n45uoQe/g+UBj//mjhyVHh/8Tzb7kffPt/0h8WtOYeX0Cb
+        HuPb6Mc1H7YFls+o/9r2QHQBPJsm8AY2DyJGhUmCa2L8Zhov9g0Uazigp8YvnLrf8LZe88X5Wf1q
+        9uTHk78AH3mtxe8JAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fb082191ce900-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:27:12 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '6757'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149998385'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_ff753ed2ca15456f98ebfd434b54b9e3
+    status:
+      code: 200
+      message: OK
 version: 1

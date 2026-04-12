@@ -369,9 +369,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                 if tool_calls and isinstance(tool_calls, list):
                     parts.extend(_tool_calls_to_parts(tool_calls))
 
-            msg_obj = {"role": role, "parts": parts}
-            if fr:
-                msg_obj["finish_reason"] = fr
+            msg_obj = {"role": role, "parts": parts, "finish_reason": fr if fr else ""}
             output_messages.append(msg_obj)
 
     if output_messages:

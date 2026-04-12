@@ -556,7 +556,7 @@ def _set_completions(span, choices):
 
 def _map_finish_reason(reason):
     if not reason:
-        return None
+        return ""
     return OPENAI_FINISH_REASON_MAP.get(reason, reason)
 
 def _set_output_messages(span, choices):
@@ -603,11 +603,12 @@ def _set_output_messages(span, choices):
                     "name": fc_name,
                     "arguments": _parse_arguments(fc_args),
                 })
-        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
+        fr = _map_finish_reason(choice.get("finish_reason"))
         entry = {"role": "assistant", "parts": parts, "finish_reason": fr}
         if content_filter_results:
             entry["content_filter_results"] = content_filter_results
         messages.append(entry)
+
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
 
 @dont_throw

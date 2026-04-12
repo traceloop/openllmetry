@@ -133,4 +133,140 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"input":"Explain why the sky is blue","model":"gpt-5-nano","reasoning":{"effort":"medium","summary":"auto"}}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '109'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        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
+        ArmMklb4/OzzH8no9hcAGQAA
+    headers:
+      CF-RAY:
+      - 9e4fb1fa7e9a63b2-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:28:23 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '17416'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=ygnU5mx7bptE5zcpnw.F1YreTZvdyE4GD5wsD92Bp6s-1774963685.52042-1.0.1.1-TUgmTmEvP86gpvniqCym5h_nCFWg6sAt5xLijzWlC9ZuvbzKItsWImpfCY9wDB_mGOar6EQlRfi00U2Rloza3f2sP_ohFhZ292.su.M.KpvfvnGIdBOuI_PQW1M2WGqI;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:58:23 GMT
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '180000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '179999376'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_cd60dfd1235d4d09bec67feada3ca539
+    status:
+      code: 200
+      message: OK
 version: 1
