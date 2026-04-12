@@ -51,7 +51,6 @@ def _create_guard(
     """
 
     evaluator_slug = evaluator_details.slug
-    evaluator_version = evaluator_details.version
     evaluator_config = evaluator_details.config
     condition_field = evaluator_details.condition_field
 
@@ -74,12 +73,11 @@ def _create_guard(
             evaluator_slug=evaluator_slug,
             input=input_dict,
             async_http_client=client._async_http,
-            evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
             timeout_in_sec=timeout_in_sec,
         )
 
-        evaluator_result = eval_response.result.evaluator_result
+        evaluator_result = eval_response.result
 
         # Record the evaluator result on the current span
         span = trace.get_current_span()

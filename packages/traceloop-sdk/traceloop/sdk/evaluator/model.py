@@ -1,6 +1,6 @@
 import datetime
 from typing import Dict, Any, Optional, TypeVar, Type
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, Field, RootModel
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -25,7 +25,7 @@ class ExecuteEvaluatorInExperimentRequest(BaseModel):
     experiment_run_id: str
 
 class ExecuteEvaluatorRequest(BaseModel):
-    input: InputSchemaMapping
+    input: Dict[str, Any]
     evaluator_version: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
 
@@ -68,3 +68,10 @@ class ExecutionResponse(BaseModel):
             print(pii.has_pii)  # IDE autocomplete works!
         """
         return model(**self.result.evaluator_result)
+
+
+class GuardrailResponse(BaseModel):
+    """Response from the guardrails execute route."""
+
+    result: Dict[str, Any]
+    passed: bool = Field(alias="pass")

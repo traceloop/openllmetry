@@ -29,13 +29,8 @@ from .span_attributes import (
 from .on_failure import OnFailureInput, resolve_on_failure
 from .default_mapper import default_input_mapper
 from traceloop.sdk.evaluator.model import (
-    InputExtractor,
-    InputSchemaMapping,
-    ExecuteEvaluatorRequest,
-    ExecuteEvaluatorResponse,
-    ExecutionResponse,
+    GuardrailResponse,
 )
-from traceloop.sdk.evaluator.stream_client import SSEClient
 from traceloop.sdk.evaluator.evaluator import _validate_evaluator_input, _extract_error_from_response
 from .model import (
     GuardedResult,
@@ -232,9 +227,8 @@ class Guardrails:
         input: Dict[str, Any],
         async_http_client: httpx.AsyncClient,
         timeout_in_sec: int = 120,
-        evaluator_version: Optional[str] = None,
         evaluator_config: Optional[Dict[str, Any]] = None,
-    ) -> ExecutionResponse:
+    ) -> GuardrailResponse:
         """
         Execute an evaluator as a guardrail (without experiment context).
 
@@ -247,33 +241,19 @@ class Guardrails:
                    Values can be any type (str, int, dict, etc.)
             async_http_client: The HTTP client to use for the request
             timeout_in_sec: Timeout in seconds for execution
-            evaluator_version: Version of the evaluator to execute (optional)
             evaluator_config: Configuration for the evaluator (optional)
 
         Returns:
-            ExecutionResponse: The evaluation result
+            GuardrailResponse: The evaluation result
         """
         _validate_evaluator_input(evaluator_slug, input)
 
-        schema_mapping = InputSchemaMapping(
-            root={k: InputExtractor(source=v) for k, v in input.items()}
-        )
+        body: Dict[str, Any] = {"input": input}
+        if evaluator_config is not None:
+            body["config"] = evaluator_config
 
-        request = ExecuteEvaluatorRequest(
-            input=schema_mapping,
-            evaluator_version=evaluator_version,
-            config=evaluator_config,
-        )
-
-        execute_response = await self._execute_evaluator_request(
-            evaluator_slug, request, async_http_client, timeout_in_sec
-        )
-
-        sse_client = SSEClient(shared_client=async_http_client)
-        return await sse_client.wait_for_result(
-            execute_response.execution_id,
-            execute_response.stream_url,
-            timeout_in_sec,
+        return await self._execute_guardrail_request(
+            evaluator_slug, body, async_http_client, timeout_in_sec
         )
 
     def _resolve_dict_inputs(self, mapped: dict[str, Any]) -> list[Any]:
@@ -478,15 +458,14 @@ class Guardrails:
 
         return all_passed, failed_indices
 
-    async def _execute_evaluator_request(
+    async def _execute_guardrail_request(
         self,
         evaluator_slug: str,
-        request: ExecuteEvaluatorRequest,
+        body: Dict[str, Any],
         async_http_client: httpx.AsyncClient,
         timeout_in_sec: int = 120,
-    ) -> ExecuteEvaluatorResponse:
+    ) -> GuardrailResponse:
         """Execute guardrail evaluator request and return response."""
-        body = request.model_dump()
         full_url = f"/v2/guardrails/{evaluator_slug}/execute"
         response = await async_http_client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
@@ -498,4 +477,4 @@ class Guardrails:
                 f"{response.status_code} - {error_detail}"
             )
         result_data = response.json()
-        return ExecuteEvaluatorResponse(**result_data)
+        return GuardrailResponse(**result_data)
