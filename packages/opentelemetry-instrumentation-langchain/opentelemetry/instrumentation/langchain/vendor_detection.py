@@ -26,7 +26,7 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"AzureChatOpenAI", "AzureOpenAI", "AzureOpenAIEmbeddings"},
             patterns=["azure"],
-            vendor_name="Azure"
+            vendor_name="azure.ai.openai"
         ),
         VendorRule(
             exact_matches={"ChatOpenAI", "OpenAI", "OpenAIEmbeddings"},
@@ -36,25 +36,30 @@ def _get_vendor_rules() -> List[VendorRule]:
         VendorRule(
             exact_matches={"ChatBedrock", "BedrockEmbeddings", "Bedrock", "BedrockChat"},
             patterns=["bedrock", "aws"],
-            vendor_name="AWS"
+            vendor_name="aws.bedrock"
         ),
         VendorRule(
             exact_matches={"ChatAnthropic", "AnthropicLLM"},
             patterns=["anthropic"],
-            vendor_name="Anthropic"
+            vendor_name="anthropic"
+        ),
+        VendorRule(
+            exact_matches={"ChatVertexAI", "VertexAI", "VertexAIEmbeddings"},
+            patterns=["vertex"],
+            vendor_name="gcp.vertex_ai"
         ),
         VendorRule(
             exact_matches={
-                "ChatVertexAI", "VertexAI", "VertexAIEmbeddings", "ChatGoogleGenerativeAI",
-                "GoogleGenerativeAI", "GooglePaLM", "ChatGooglePaLM"
+                "ChatGoogleGenerativeAI", "GoogleGenerativeAI",
+                "GooglePaLM", "ChatGooglePaLM"
             },
-            patterns=["vertex", "google", "palm", "gemini"],
-            vendor_name="Google"
+            patterns=["google", "palm", "gemini"],
+            vendor_name="gcp.gen_ai"
         ),
         VendorRule(
             exact_matches={"ChatCohere", "CohereEmbeddings", "Cohere"},
             patterns=["cohere"],
-            vendor_name="Cohere"
+            vendor_name="cohere"
         ),
         VendorRule(
             exact_matches={
@@ -62,37 +67,37 @@ def _get_vendor_rules() -> List[VendorRule]:
                 "HuggingFaceEmbeddings", "ChatHuggingFace"
             },
             patterns=["huggingface"],
-            vendor_name="HuggingFace"
+            vendor_name="hugging_face"
         ),
         VendorRule(
             exact_matches={"ChatOllama", "OllamaEmbeddings", "Ollama"},
             patterns=["ollama"],
-            vendor_name="Ollama"
+            vendor_name="ollama"
         ),
         VendorRule(
             exact_matches={"Together", "ChatTogether"},
             patterns=["together"],
-            vendor_name="Together"
+            vendor_name="together_ai"
         ),
         VendorRule(
             exact_matches={"Replicate", "ChatReplicate"},
             patterns=["replicate"],
-            vendor_name="Replicate"
+            vendor_name="replicate"
         ),
         VendorRule(
             exact_matches={"ChatFireworks", "Fireworks"},
             patterns=["fireworks"],
-            vendor_name="Fireworks"
+            vendor_name="fireworks"
         ),
         VendorRule(
             exact_matches={"ChatGroq"},
             patterns=["groq"],
-            vendor_name="Groq"
+            vendor_name="groq"
         ),
         VendorRule(
             exact_matches={"ChatMistralAI", "MistralAI"},
             patterns=["mistral"],
-            vendor_name="MistralAI"
+            vendor_name="mistral_ai"
         ),
     ]
 
@@ -106,10 +111,10 @@ def detect_vendor_from_class(class_name: str) -> str:
         class_name: The class name extracted from serialized model information
 
     Returns:
-        Vendor string, defaults to "Langchain" if no match found
+        Vendor string, defaults to "langchain" if no match found
     """
     if not class_name:
-        return "Langchain"
+        return "langchain"
 
     vendor_rules = _get_vendor_rules()
 
@@ -117,4 +122,4 @@ def detect_vendor_from_class(class_name: str) -> str:
         if rule.matches(class_name):
             return rule.vendor_name
 
-    return "Langchain"
+    return "langchain"

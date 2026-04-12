@@ -15,12 +15,16 @@ from opentelemetry.semconv._incubating.attributes import (
     openai_attributes as OpenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 OPENAI_LLM_USAGE_TOKEN_TYPES = ["prompt_tokens", "completion_tokens"]
 PROMPT_FILTER_KEY = "prompt_filter_results"
-PROMPT_ERROR = "prompt_error"
+OPENAI_FINISH_REASON_MAP = {
+    "tool_calls": "tool_call",
+    "function_call": "tool_call",
+}
 
 _PYDANTIC_VERSION = version("pydantic")
 
@@ -48,11 +52,11 @@ def _set_client_attributes(span, instance):
     client = instance._client  # pylint: disable=protected-access
     if isinstance(client, (openai.AsyncOpenAI, openai.OpenAI)):
         _set_span_attribute(
-            span, SpanAttributes.LLM_OPENAI_API_BASE, str(client.base_url)
+            span, SpanAttributes.GEN_AI_OPENAI_API_BASE, str(client.base_url)
         )
     if isinstance(client, (openai.AsyncAzureOpenAI, openai.AzureOpenAI)):
         _set_span_attribute(
-            span, SpanAttributes.LLM_OPENAI_API_VERSION, client._api_version
+            span, SpanAttributes.GEN_AI_OPENAI_API_VERSION, client._api_version
         )  # pylint: disable=protected-access
 
 
@@ -65,41 +69,69 @@ def _set_api_attributes(span):
 
     base_url = openai.base_url if hasattr(openai, "base_url") else openai.api_base
 
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_BASE, base_url)
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_TYPE, openai.api_type)
-    _set_span_attribute(span, SpanAttributes.LLM_OPENAI_API_VERSION, openai.api_version)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_BASE, base_url)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_TYPE, openai.api_type)
+    _set_span_attribute(span, SpanAttributes.GEN_AI_OPENAI_API_VERSION, openai.api_version)
 
     return
+
+
+def _parse_arguments(raw_args):
+    """Best-effort parse of a JSON argument string to dict. Falls back to raw string."""
+    if raw_args is None:
+        return None
+    if isinstance(raw_args, dict):
+        return raw_args
+    try:
+        return json.loads(raw_args)
+    except (json.JSONDecodeError, TypeError):
+        return raw_args
+
+
+def _build_tool_def_dict(function_dict, tool_type=None):
+    """Build a tool definition dict matching OTel source system format."""
+    tool_def = {}
+    t = tool_type or function_dict.get("type")
+    if t:
+        tool_def["type"] = t
+    if function_dict.get("name"):
+        tool_def["name"] = function_dict["name"]
+    if function_dict.get("description"):
+        tool_def["description"] = function_dict["description"]
+    if function_dict.get("parameters"):
+        tool_def["parameters"] = function_dict["parameters"]
+    return tool_def
+
+
+def _set_tool_definitions_json(span, tool_defs):
+    """Set gen_ai.tool.definitions as a single JSON string attribute."""
+    if tool_defs:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+        )
 
 
 def _set_functions_attributes(span, functions):
     if not functions:
         return
 
-    for i, function in enumerate(functions):
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
-        _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-        )
+    tool_defs = [
+        d for f in functions
+        if (d := _build_tool_def_dict(f, tool_type="function"))
+    ]
+    _set_tool_definitions_json(span, tool_defs)
 
 
 def set_tools_attributes(span, tools):
     if not tools:
         return
 
-    for i, tool in enumerate(tools):
-        function = tool.get("function")
-        if not function:
-            continue
-
-        prefix = f"{SpanAttributes.LLM_REQUEST_FUNCTIONS}.{i}"
-        _set_span_attribute(span, f"{prefix}.name", function.get("name"))
-        _set_span_attribute(span, f"{prefix}.description", function.get("description"))
-        _set_span_attribute(
-            span, f"{prefix}.parameters", json.dumps(function.get("parameters"))
-        )
+    tool_defs = [
+        d for tool in tools
+        if tool.get("function")
+        and (d := _build_tool_def_dict(tool["function"], tool_type=tool.get("type")))
+    ]
+    _set_tool_definitions_json(span, tool_defs)
 
 
 def _set_request_attributes(span, kwargs, instance=None):
@@ -110,12 +142,12 @@ def _set_request_attributes(span, kwargs, instance=None):
 
     base_url = _get_openai_base_url(instance) if instance else ""
     vendor = _get_vendor_from_url(base_url)
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, vendor)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, vendor)
 
     model = kwargs.get("model")
-    if vendor == "AWS" and model and "." in model:
+    if vendor == "aws.bedrock" and model and "." in model:
         model = _cross_region_check(model)
-    elif vendor == "OpenRouter":
+    elif vendor == "openrouter":
         model = _extract_model_name_from_provider_format(model)
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
@@ -127,20 +159,17 @@ def _set_request_attributes(span, kwargs, instance=None):
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
-    _set_span_attribute(span, SpanAttributes.LLM_USER, kwargs.get("user"))
-    _set_span_attribute(span, SpanAttributes.LLM_HEADERS, str(kwargs.get("headers")))
-    # The new OpenAI SDK removed the `headers` and create new field called `extra_headers`
-    if kwargs.get("extra_headers") is not None:
-        _set_span_attribute(
-            span, SpanAttributes.LLM_HEADERS, str(kwargs.get("extra_headers"))
-        )
+    _set_span_attribute(span, SpanAttributes.GEN_AI_USER, kwargs.get("user"))
+    headers = kwargs.get("extra_headers") or kwargs.get("headers")
+    if headers is not None:
+        _set_span_attribute(span, SpanAttributes.GEN_AI_HEADERS, str(headers))
     _set_span_attribute(
-        span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
+        span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream") or False
     )
     _set_span_attribute(
         span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, kwargs.get("service_tier")
@@ -157,7 +186,7 @@ def _set_request_attributes(span, kwargs, instance=None):
             if schema:
                 _set_span_attribute(
                     span,
-                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                     json.dumps(schema),
                 )
         elif (
@@ -169,7 +198,7 @@ def _set_request_attributes(span, kwargs, instance=None):
         ):
             _set_span_attribute(
                 span,
-                SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                 json.dumps(response_format.model_json_schema()),
             )
         else:
@@ -185,7 +214,7 @@ def _set_request_attributes(span, kwargs, instance=None):
             if schema:
                 _set_span_attribute(
                     span,
-                    SpanAttributes.LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
+                    SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
                     schema,
                 )
 
@@ -196,11 +225,13 @@ def _set_response_attributes(span, response):
         return
 
     if "error" in response:
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_ERROR}",
-            json.dumps(response.get("error")),
-        )
+        error_data = response.get("error")
+        if isinstance(error_data, dict):
+            error_type = error_data.get("type") or error_data.get("code") or "api_error"
+        else:
+            error_type = "api_error"
+        _set_span_attribute(span, "error.type", error_type)
+        span.set_status(Status(StatusCode.ERROR, str(error_data)))
         return
 
     response_model = response.get("model")
@@ -209,9 +240,22 @@ def _set_response_attributes(span, response):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response.get("id"))
 
+    # Set gen_ai.response.finish_reasons (top-level, not gated by content opt-in)
+    choices = response.get("choices")
+    if choices:
+        finish_reasons = tuple(
+            OPENAI_FINISH_REASON_MAP.get(c.get("finish_reason"), c.get("finish_reason"))
+            for c in choices
+            if c.get("finish_reason")
+        )
+        if finish_reasons:
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+            )
+
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
+        GenAIAttributes.GEN_AI_OPENAI_RESPONSE_SYSTEM_FINGERPRINT,
         response.get("system_fingerprint"),
     )
     _set_span_attribute(
@@ -228,7 +272,7 @@ def _set_response_attributes(span, response):
         usage = usage.__dict__
 
     _set_span_attribute(
-        span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
+        span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.get("total_tokens")
     )
     _set_span_attribute(
         span,
@@ -241,7 +285,7 @@ def _set_response_attributes(span, response):
     prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
     _set_span_attribute(
         span,
-        SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
         prompt_tokens_details.get("cached_tokens", 0),
     )
     return
@@ -276,7 +320,7 @@ def _set_span_stream_usage(span, prompt_tokens, completion_tokens):
     ):
         _set_span_attribute(
             span,
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
             completion_tokens + prompt_tokens,
         )
 
@@ -295,13 +339,13 @@ def _get_vendor_from_url(base_url):
         return "openai"
 
     if "openai.azure.com" in base_url:
-        return "Azure"
+        return "azure.ai.openai"
     elif "amazonaws.com" in base_url or "bedrock" in base_url:
-        return "AWS"
+        return "aws.bedrock"
     elif "googleapis.com" in base_url or "vertex" in base_url:
-        return "Google"
+        return "gcp.vertex_ai"
     elif "openrouter.ai" in base_url:
-        return "OpenRouter"
+        return "openrouter"
 
     return "openai"
 
@@ -378,9 +422,9 @@ def metric_shared_attributes(
 
     return {
         **attributes,
-        GenAIAttributes.GEN_AI_SYSTEM: vendor,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
-        "gen_ai.operation.name": operation,
+        GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
         "server.address": server_address,
         "stream": is_streaming,
     }

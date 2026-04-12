@@ -1,3 +1,40 @@
+## v0.58.1 (2026-04-12)
+
+### Fix
+
+- **evaluators**: update route api (#3977)
+
+## v0.58.0 (2026-04-09)
+
+### Feat
+
+- **gemini**: migrate google-generativeai to latest OTel GenAI semantic conventions (#3840)
+
+## v0.57.0 (2026-03-30)
+
+### Feat
+
+- **bedrock**: Instrumentation adjustment for Otel GenAI semconv support  (#3845)
+
+## v0.56.1 (2026-03-30)
+
+### Fix
+
+- **SDK + Agno**: set gen_ai.tool.name on @tool() decorator and Agno tool spans (#3904)
+
+## v0.56.0 (2026-03-30)
+
+### Feat
+
+- **crewai**: trigger version bump for GenAI semconv compliance (#3903)
+
+## v0.55.0 (2026-03-29)
+
+### Feat
+
+- **open-ai**: instrumentation to support OTel GenAI Semantic Conventions 0.5.0 (#3844)
+- **langchain**: new semnconv langchain (#3900)
+
 ## v0.54.0 (2026-03-29)
 
 ### Feat

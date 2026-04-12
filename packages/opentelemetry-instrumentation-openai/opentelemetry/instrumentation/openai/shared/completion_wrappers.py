@@ -1,3 +1,4 @@
+import json
 import logging
 
 from opentelemetry import context as context_api
@@ -14,6 +15,7 @@ from opentelemetry.instrumentation.openai.shared import (
     propagate_trace_context,
 )
 from opentelemetry.instrumentation.openai.shared.config import Config
+from opentelemetry.instrumentation.openai.shared.chat_wrappers import _map_finish_reason
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.instrumentation.openai.shared.event_emitter import emit_event
 from opentelemetry.instrumentation.openai.shared.event_models import (
@@ -31,16 +33,17 @@ from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
-    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 SPAN_NAME = "openai.completion"
-LLM_REQUEST_TYPE = LLMRequestTypeValues.COMPLETION
+OPERATION_NAME = GenAiOperationNameValues.TEXT_COMPLETION
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +59,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -92,7 +95,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
     span = tracer.start_span(
         name=SPAN_NAME,
         kind=SpanKind.CLIENT,
-        attributes={SpanAttributes.LLM_REQUEST_TYPE: LLM_REQUEST_TYPE.value},
+        attributes={GenAIAttributes.GEN_AI_OPERATION_NAME: OPERATION_NAME.value},
     )
 
     # Use the span as current context to ensure events get proper trace context
@@ -158,28 +161,47 @@ def _handle_response(response, span, instance=None):
 
 
 def _set_prompts(span, prompt):
-    if not span.is_recording() or not prompt:
+    _set_input_messages(span, prompt)
+
+def _set_input_messages(span, prompt):
+    if not span.is_recording() or prompt is None:
         return
 
+    prompts = prompt if isinstance(prompt, list) else [prompt]
+
+    messages = [
+        {"role": "user", "parts": [{"content": p, "type": "text"}]}
+        for p in prompts
+    ]
     _set_span_attribute(
         span,
-        f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
-        prompt[0] if isinstance(prompt, list) else prompt,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps(messages),
     )
-
 
 @dont_throw
 def _set_completions(span, choices):
+    _set_output_messages(span, choices)
+
+
+def _set_output_messages(span, choices):
     if not span.is_recording() or not choices:
         return
 
+    messages = []
     for choice in choices:
-        index = choice.get("index")
-        prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-        _set_span_attribute(
-            span, f"{prefix}.finish_reason", choice.get("finish_reason")
-        )
-        _set_span_attribute(span, f"{prefix}.content", choice.get("text"))
+        fr = _map_finish_reason(choice.get("finish_reason")) or "stop"
+        entry = {
+            "role": "assistant",
+            "parts": [{"content": choice.get("text"), "type": "text"}],
+            "finish_reason": fr,
+        }
+        messages.append(entry)
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps(messages),
+    )
 
 
 @dont_throw

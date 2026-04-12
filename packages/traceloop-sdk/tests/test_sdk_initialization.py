@@ -1,3 +1,4 @@
+import json
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
@@ -114,8 +115,15 @@ def test_span_postprocess_callback(exporter_with_custom_span_postprocess_callbac
 
     spans = exporter_with_custom_span_postprocess_callback.get_finished_spans()
     open_ai_span = spans[0]
-    assert open_ai_span.attributes["gen_ai.prompt.0.content"] == "REDACTED"
-    assert open_ai_span.attributes["gen_ai.completion.0.content"] == "REDACTED"
+    input_msgs = json.loads(open_ai_span.attributes["gen_ai.input.messages"])
+    input_contents = [p["content"] for m in input_msgs for p in m["parts"] if "content" in p]
+    assert len(input_contents) > 0, "Expected at least one content part in input messages"
+    assert all(c == "REDACTED" for c in input_contents), f"Not all input contents redacted: {input_contents}"
+
+    output_msgs = json.loads(open_ai_span.attributes["gen_ai.output.messages"])
+    output_contents = [p["content"] for m in output_msgs for p in m["parts"] if "content" in p]
+    assert len(output_contents) > 0, "Expected at least one content part in output messages"
+    assert all(c == "REDACTED" for c in output_contents), f"Not all output contents redacted: {output_contents}"
 
 
 def test_instruments(exporter_with_custom_instrumentations):

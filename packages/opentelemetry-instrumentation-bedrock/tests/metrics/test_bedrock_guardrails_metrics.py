@@ -94,13 +94,13 @@ def assert_guardrails(reader):
         for sm in rm.scope_metrics:
             for metric in sm.metrics:
 
-                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_ACTIVATION:
+                if metric.name == GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_ACTIVATION:
                     found_activations = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes["gen_ai.guardrail"] != ""
                         assert data_point.value > 0
 
-                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_LATENCY:
+                if metric.name == GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_LATENCY:
                     found_latency = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
@@ -114,7 +114,7 @@ def assert_guardrails(reader):
                         data_point.sum > 0 for data_point in metric.data.data_points
                     )
 
-                if metric.name == GuardrailMeters.LLM_BEDROCK_GUARDRAIL_COVERAGE:
+                if metric.name == GuardrailMeters.GEN_AI_BEDROCK_GUARDRAIL_COVERAGE:
                     found_coverage = True
                     for data_point in metric.data.data_points:
                         assert data_point.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE] in [
@@ -123,10 +123,11 @@ def assert_guardrails(reader):
                         ]
                         assert data_point.value > 0
 
-                assert (
-                    metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_SYSTEM]
-                    == "bedrock"
-                )
+                if metric.name.startswith(("gen_ai.", "llm.")):
+                    assert (
+                        metric.data.data_points[0].attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+                        == "aws.bedrock"
+                    )
 
     assert found_activations is True
     assert found_latency is True

@@ -21,7 +21,7 @@ def test_set_embeddings_metrics_handles_none_values():
     duration = 1.23
 
     expected_attributes = {
-        'gen_ai.system': 'openai',
+        'gen_ai.provider.name': 'openai',
         'gen_ai.response.model': 'text-embedding-ada-002',
         'gen_ai.operation.name': 'embeddings',
         'server.address': '',

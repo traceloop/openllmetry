@@ -1,4 +1,7 @@
 from opentelemetry import trace
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 class CachingHeaders:
@@ -13,8 +16,8 @@ class CacheSpanAttrs:  # TODO: move it under SemConv pkg
 
 def prompt_caching_handling(headers, vendor, model, metric_params):
     base_attrs = {
-        "gen_ai.system": vendor,
-        "gen_ai.response.model": model,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
     span = trace.get_current_span()
     if not isinstance(span, trace.Span):

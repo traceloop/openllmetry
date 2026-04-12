@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-crewai"
-version = "0.54.0"
+version = "0.58.1"
 description = "OpenTelemetry crewAI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -20,7 +20,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-crewai"
 
 [project.optional-dependencies]
-instruments = ["crewai"]
+instruments = ["crewai>=1.0.0,<2"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 crewai = "opentelemetry.instrumentation.crewai:CrewAIInstrumentor"
@@ -33,12 +33,11 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "crewai>=0.80.0,<0.81.0",
+  "crewai>=1.0.0,<2",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
-  "setuptools",
 ]
 
 [build-system]

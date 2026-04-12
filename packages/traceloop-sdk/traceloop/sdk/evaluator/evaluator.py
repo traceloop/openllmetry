@@ -122,6 +122,7 @@ class Evaluator:
     async def run_experiment_evaluator(
         self,
         evaluator_slug: str,
+        experiment_slug: str,
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
@@ -168,6 +169,7 @@ class Evaluator:
     async def trigger_experiment_evaluator(
         self,
         evaluator_slug: str,
+        experiment_slug: str,
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,

@@ -1,5 +1,4 @@
 import base64
-import json
 
 import pytest
 import requests
@@ -8,6 +7,8 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
+
+from .utils import get_input_messages, get_output_messages
 
 
 @pytest.mark.vcr
@@ -38,19 +39,19 @@ def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "https://source.unsplash.com/8xznAGy4HcY/800x400"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    parts = input_messages[0]["parts"]
+    text_parts = [p for p in parts if p.get("type") == "text"]
+    uri_parts = [p for p in parts if p.get("type") == "uri"]
+    assert text_parts[0]["content"] == "What is in this image?"
+    assert len(uri_parts) == 1
+    assert uri_parts[0]["uri"] == "https://source.unsplash.com/8xznAGy4HcY/800x400"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -95,7 +96,7 @@ def test_vision_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -166,7 +167,7 @@ def test_vision_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -224,19 +225,20 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
         "openai.chat",
     ]
     open_ai_span = spans[0]
-    assert json.loads(
-        open_ai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
-    ) == [
-        {"type": "text", "text": "What is in this image?"},
-        {
-            "type": "image_url",
-            "image_url": {"url": "/some/url"},
-        },
-    ]
-
-    assert open_ai_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    input_messages = get_input_messages(open_ai_span)
+    assert input_messages[0]["role"] == "user"
+    parts = input_messages[0]["parts"]
+    text_parts = [p for p in parts if p.get("type") == "text"]
+    uri_parts = [p for p in parts if p.get("type") == "uri"]
+    assert text_parts[0]["content"] == "What is in this image?"
+    assert len(uri_parts) == 1
+    # base64 images are replaced with /some/url
+    assert uri_parts[0]["uri"] == "/some/url"
+    output_messages = get_output_messages(open_ai_span)
+    assert len(output_messages) == 1
+    assert output_messages[0]["role"] == "assistant"
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -291,7 +293,7 @@ def test_vision_base64_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -370,7 +372,7 @@ def test_vision_base64_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert (
-        open_ai_span.attributes[SpanAttributes.LLM_OPENAI_API_BASE]
+        open_ai_span.attributes[SpanAttributes.GEN_AI_OPENAI_API_BASE]
         == "https://api.openai.com/v1/"
     )
     assert (
@@ -393,7 +395,7 @@ def test_vision_base64_with_events_with_no_content(
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
         == GenAIAttributes.GenAiSystemValues.OPENAI.value
     )
 

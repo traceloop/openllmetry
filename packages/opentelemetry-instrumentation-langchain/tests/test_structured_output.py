@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 import pytest
@@ -32,7 +33,8 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
 
     chat_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
 
-    assert chat_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == query_text
+    input_messages = json.loads(chat_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == query_text
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -104,7 +106,7 @@ def test_structured_output_with_events_with_no_content(
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "langchain"
+    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
 
     if not expected_content:
         assert not log.log_record.body
