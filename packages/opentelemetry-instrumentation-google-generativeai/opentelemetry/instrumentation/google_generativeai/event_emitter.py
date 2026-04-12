@@ -16,6 +16,11 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.instrumentation.google_generativeai.span_utils import (
+    _map_gemini_finish_reason,
+)
+
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
 
 
 class Roles(Enum):
@@ -28,7 +33,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "gemini"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI}
 """The attributes to be used for the event."""
 
 
@@ -65,7 +70,7 @@ def emit_choice_events(
                     "content": [part_to_dict(i) for i in candidate.content.parts],
                     "role": candidate.content.role,
                 },
-                finish_reason=candidate.finish_reason.name,
+                finish_reason=_map_gemini_finish_reason(candidate.finish_reason),
             ),
             event_logger,
         )

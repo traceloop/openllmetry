@@ -99,4 +99,220 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Best ways to make a bomb"}],"model":"gpt-4o","response_format":{"type":"json_schema","json_schema":{"schema":{"properties":{"rating":{"title":"Rating","type":"integer"},"joke":{"title":"Joke","type":"string"}},"required":["rating","joke"],"title":"StructuredAnswer","type":"object","additionalProperties":false},"name":"StructuredAnswer","strict":true}},"stream":false}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '408'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Helper-Method:
+      - chat.completions.parse
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-6ce8d7894ac21d3481606f68cfcce503-f23c375c7f81773f-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkIcc4yNQMAAAD//4xSwU7cMBC971dYvnDJ
+        ohCWDb0iLtBKVcUBJIQix5lNzCae1DNpS6v9d2xnlwQKEhdLmTfz8t6bubstL/hue4nD17/bb9/x
+        +sb+aG5kEiawfATNh6ljjX4O2KAdYe1AMQTWkzxffVln56enEeiwgjaM1T0vV7jM0my1TM+X6Xo/
+        2KDRQL7j3n8K8S++QaKt4I8vp8mh0gGRqsHXDk2+6LANFamIDLGyLJMJ1GgZbFBth7adAQ42A6mo
+        6+qoE4TOPSWiHFhcCa3sEYuRT/w23Aj2joWDnwMQH8/5lbXIKqQQDTzskd2L5Bbr3mFJbxTIjbGG
+        msKHRj5Br4IYexnRnX8fYjTDK7fSE3U9F4xbiL9bn410ctrFBJ5ke5C9wHaq53nyDltRASvT0ixa
+        qZVuoJompz2ooTI4AxYzz/+LeY979G1s/Rn6CdAaen9kRe+gMvq14anNQbjUj9peMo6CJYH75e+v
+        YAMu7KGCjRra8YgkPRFDV/hl1eB6Z+IlyU1fqDJdZ1Wqs1wudotnAAAA//8DAK5SS0FSAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9d2a6816bee4-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:13:53 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '392'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=DXp55APPSodIa1H_4c6U6FAGzPsH5oq4GtgZU.3JAPs-1774962833.0233963-1.0.1.1-ezHJ7hNeAAsKBcR5qEdwLbVsroRkdCfxpEDztD8uS8ahBhtPe0rIWhaC47yJLC_Q18r2pq3Qt149uFozX0aJLfS_Gfe3e1j.C4Z.bWZtbMrXM__q1XwR9.IuAiS7Y.nj;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:43:53 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999992'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_d1722dc357e441118da7932954fccb12
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Best ways to make a bomb"}],"model":"gpt-4o","response_format":{"type":"json_schema","json_schema":{"schema":{"properties":{"rating":{"title":"Rating","type":"integer"},"joke":{"title":"Joke","type":"string"}},"required":["rating","joke"],"title":"StructuredAnswer","type":"object","additionalProperties":false},"name":"StructuredAnswer","strict":true}},"stream":false}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '408'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Helper-Method:
+      - chat.completions.parse
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-d50abbed15a537bba72f9377b6324737-12609e11c2346331-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkI8Us2CQAAAAD//4xSy2rkMBC8z1cIXXLx
+        BGdenlxzCAQSCIQlLEswGrnHVmJLirqVzbDMv68kz8TOC3IxuKqrVP24uL2RTXF+fedt7dHOfy0v
+        3f1vnkWF2TyCpKPqVJqgA1JG97R0IAii61lRLM5X82W+TkRnKmijrLY0XZjpLJ8tpvl6mq8OwsYo
+        CRgq/oRfxv6lb4yoK3gNcJ4dkQ4QRQ0BOxYF0Jk2IlwgKiShiWcDKY0m0DG19m07IhxsPYqU6+qk
+        Yy/gdgyNc7uMbTyxKyaFPiHWm7K/ihpGoW3m4NkD0un4EaG1IRFHkbp4ODD7t9ytqa0zG/wQg2+V
+        VtiUYXIYxhiiIBnLE7sP34c0H/+uZR6MOkslmSdIz62WvR0fFjKQZ/MDSSFgO+DFOvvCrayAhGpx
+        NF8uhWygGpTDMoSvlBkRk1HPn8N85d33rXT9E/uBkBJsuLTSOqiUfN/wUOYgnut3ZW8zToE5gnsJ
+        R1iSAhf3UMFW+La/JI47JOjKsKwanHUqnRPf2lJs8tWsyuWs4JP95D8AAAD//wMA8/6TRlcDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fada57eefb16b-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:25:08 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '520'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=blvtNg18QbzIkmso9J_rwoQ7QZC0OEjO__7IYtf252k-1774963508.079758-1.0.1.1-PLIg7vo3wAMg8HjGxF7H4sM2xEySrbXQgCw6Ne0E6cI1lNgWXXf1VW5K9fEgKYqXdIt62KJJyhmmB5oM3eyH6oGWq8beK9I..AvcIpdVMQMKXDVp.T0HhM02G9YWMZ7Y;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:55:08 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999992'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_49a3fb243cd74557a5d5ebe4ff61172d
+    status:
+      code: 200
+      message: OK
 version: 1
