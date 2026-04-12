@@ -54,6 +54,7 @@ class Evaluator:
 
     @staticmethod
     def _build_evaluator_request(
+        evaluator_slug: str,
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
@@ -69,6 +70,7 @@ class Evaluator:
             input_schema_mapping=schema_mapping,
             evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
+            evaluator_slug=evaluator_slug,
             task_id=task_id,
             experiment_id=experiment_id,
             experiment_run_id=experiment_run_id,
@@ -130,7 +132,7 @@ class Evaluator:
         _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_request(
-            task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
+            evaluator_slug, task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
         execute_response = await self._execute_experiment_evaluator_request(
@@ -175,7 +177,7 @@ class Evaluator:
         _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_request(
-            task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
+            evaluator_slug, task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
         execute_response = await self._execute_experiment_evaluator_request(
