@@ -1,3 +1,15 @@
+## v0.58.1 (2026-04-12)
+
+### Fix
+
+- **evaluators**: update route api (#3977)
+
+## v0.58.0 (2026-04-09)
+
+### Feat
+
+- **gemini**: migrate google-generativeai to latest OTel GenAI semantic conventions (#3840)
+
 ## v0.57.0 (2026-03-30)
 
 ### Feat

@@ -19,6 +19,7 @@ class ExecuteEvaluatorRequest(BaseModel):
     input_schema_mapping: InputSchemaMapping
     evaluator_version: Optional[str] = None
     evaluator_config: Optional[Dict[str, Any]] = None
+    evaluator_slug: str
     task_id: str
     experiment_id: str
     experiment_run_id: str

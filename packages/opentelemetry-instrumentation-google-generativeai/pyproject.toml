@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.57.0"
+version = "0.58.1"
 description = "OpenTelemetry Google Generative AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -35,6 +35,7 @@ dev = [
 test = [
   "google-genai>=1.0.0,<2",
   "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-asyncio>=1.2.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
