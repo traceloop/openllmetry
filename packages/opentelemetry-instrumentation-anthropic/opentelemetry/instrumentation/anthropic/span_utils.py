@@ -28,7 +28,7 @@ _FINISH_REASON_MAP = {
 def _map_finish_reason(anthropic_reason):
     """Map an Anthropic stop_reason to the OTel GenAI FinishReason enum value."""
     if not anthropic_reason:
-        return anthropic_reason
+        return ""
     return _FINISH_REASON_MAP.get(anthropic_reason, anthropic_reason)
 
 
@@ -256,9 +256,7 @@ def _build_output_messages_from_content(response):
             "role": response.get("role", "assistant"),
             "parts": [{"type": "text", "content": response.get("completion")}],
         }
-        mapped = _map_finish_reason(response.get("stop_reason"))
-        if mapped:
-            msg["finish_reason"] = mapped
+        msg["finish_reason"] = _map_finish_reason(response.get("stop_reason"))
         return [msg]
 
     if not response.get("content"):
@@ -295,9 +293,7 @@ def _build_output_messages_from_content(response):
         "role": response.get("role", "assistant"),
         "parts": parts,
     }
-    mapped = _map_finish_reason(response.get("stop_reason"))
-    if mapped:
-        msg["finish_reason"] = mapped
+    msg["finish_reason"] = _map_finish_reason(response.get("stop_reason"))
     return [msg]
 
 
@@ -449,8 +445,7 @@ def set_streaming_response_attributes(span, complete_response_events):
             "role": "assistant",
             "parts": parts,
         }
-        if finish_reasons:
-            msg["finish_reason"] = finish_reasons[-1]
+        msg["finish_reason"] = finish_reasons[-1] if finish_reasons else ""
         output_messages = [msg]
         set_span_attribute(
             span,

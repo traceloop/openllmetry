@@ -375,6 +375,34 @@ def test_streaming_finish_reasons_set_when_content_tracing_disabled():
     assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in span.attributes
 
 
+def test_finish_reason_empty_string_when_none():
+    """finish_reason must be '' (not omitted) when stop_reason is None (Bedrock convention)."""
+    span = make_span()
+    response = _make_response([_make_text_block("Hello")], stop_reason=None)
+    set_response_attributes(span, response)
+
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output) == 1
+    assert "finish_reason" in output[0], "finish_reason key must always be present"
+    assert output[0]["finish_reason"] == "", (
+        f"Expected '' for missing stop_reason, got '{output[0]['finish_reason']}'"
+    )
+
+
+def test_streaming_finish_reason_empty_string_when_none():
+    """Streaming: finish_reason must be '' when no finish_reason in events."""
+    span = make_span()
+    events = [{"type": "text", "text": "Hello", "index": 0}]
+    set_streaming_response_attributes(span, events)
+
+    raw = span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    if raw:
+        output = json.loads(raw)
+        assert output[0]["finish_reason"] == "", (
+            f"Expected '' for missing streaming finish_reason, got '{output[0]['finish_reason']}'"
+        )
+
+
 def test_output_messages_tool_use_response():
     """Tool use in the response should appear as tool_call parts."""
     span = make_span()
@@ -1009,8 +1037,8 @@ def test_image_without_upload_produces_blob_part():
 
 
 def test_streaming_finish_reason_null_omitted_from_json():
-    """When no finish_reason is available, the key must be omitted from
-    gen_ai.output.messages JSON — NOT serialized as null."""
+    """When no finish_reason is available, the key must be present with empty
+    string value — NOT serialized as null, NOT omitted (Bedrock convention)."""
     span = make_span()
     # Event with no finish_reason key at all
     events = [{"type": "text", "text": "Hello world", "index": 0}]
@@ -1020,8 +1048,8 @@ def test_streaming_finish_reason_null_omitted_from_json():
     assert len(output) == 1
     assert output[0]["role"] == "assistant"
     assert output[0]["parts"] == [{"type": "text", "content": "Hello world"}]
-    # finish_reason key must be absent, not null
-    assert "finish_reason" not in output[0]
+    # finish_reason key must be present with empty string fallback
+    assert output[0]["finish_reason"] == ""
 
 
 def test_streaming_finish_reason_none_does_not_set_span_attr():
@@ -1536,3 +1564,32 @@ def test_event_attributes_uses_provider_name_not_system():
     assert EVENT_ATTRIBUTES[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "anthropic"
     assert GenAIAttributes.GEN_AI_SYSTEM not in EVENT_ATTRIBUTES, \
         "Deprecated GEN_AI_SYSTEM should not be in EVENT_ATTRIBUTES"
+
+
+# ---------------------------------------------------------------------------
+# _map_finish_reason must return "" for falsy input, mapped value for known
+# reasons, and the original string as-is for unknown reasons.
+# ---------------------------------------------------------------------------
+
+class TestMapFinishReason:
+    from opentelemetry.instrumentation.anthropic.span_utils import _map_finish_reason
+    _map_finish_reason = staticmethod(_map_finish_reason)
+
+    @pytest.mark.parametrize("falsy_input", [None, "", 0, False])
+    def test_returns_empty_string_for_falsy(self, falsy_input):
+        assert self._map_finish_reason(falsy_input) == ""
+
+    def test_maps_end_turn_to_stop(self):
+        assert self._map_finish_reason("end_turn") == "stop"
+
+    def test_maps_tool_use_to_tool_call(self):
+        assert self._map_finish_reason("tool_use") == "tool_call"
+
+    def test_maps_max_tokens_to_length(self):
+        assert self._map_finish_reason("max_tokens") == "length"
+
+    def test_maps_stop_sequence_to_stop(self):
+        assert self._map_finish_reason("stop_sequence") == "stop"
+
+    def test_passes_through_unknown_reason(self):
+        assert self._map_finish_reason("some_new_reason") == "some_new_reason"

@@ -188,4 +188,109 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":[{"type":"text","text":"What is in
+      this image?"},{"type":"image_url","image_url":{"url":"https://source.unsplash.com/8xznAGy4HcY/800x400"}}]}],"model":"gpt-4o-mini"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '203'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-1afe21a8ed514fc19b8fa389dd5e5071-284aa07bba449c18-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: "{\n  \"error\": {\n    \"message\": \"Error while downloading https://source.unsplash.com/8xznAGy4HcY/800x400.\",\n
+        \   \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\":
+        \"invalid_image_url\"\n  }\n}"
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fb2df8997d094-LHR
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '199'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:28:43 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '704'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=1gb.9Y.CVSrYmFU6ROeWEN3oakJjVKlwghKG4wjxp14-1774963722.167322-1.0.1.1-dAh.shTY.Eqta3Sy16xQPj0RORpJefolIQMPsL2Zl_AjV0e044RLhC63p.yEEbbpSn_YjGosuE5WSUVRseKkXyQVpEnwkXq3gaMsKUFIv3tU.HTXhlvzKy7nA2VuA6C.;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:58:43 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-input-images:
+      - '50000'
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-input-images:
+      - '49999'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999227'
+      x-ratelimit-reset-input-images:
+      - 1ms
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_27be20945b4644a797fd787d7eed810d
+    status:
+      code: 400
+      message: Bad Request
 version: 1

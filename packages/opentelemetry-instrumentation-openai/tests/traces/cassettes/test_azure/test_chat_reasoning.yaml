@@ -78,4 +78,187 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Count r''s in strawberry"}],"model":"gpt-5-nano","reasoning_effort":"low"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '112'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-5b57815a9fca7738da2b0fb4e0cb985e-286bef8a554b69a5-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/gpt-5-nano/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"code\":
+        \"DeploymentNotFound\",\n    \"message\": \"The API deployment for this resource
+        does not exist. If you created the deployment within the last 5 minutes, please
+        wait a moment and try again.\"\n  }\n}"
+    headers:
+      Date:
+      - Tue, 31 Mar 2026 13:12:53 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      apim-request-id:
+      - 229984e1-2885-42a2-9668-09b5037db6ea
+      x-content-type-options:
+      - nosniff
+      x-ms-region:
+      - East US 2
+    status:
+      code: 404
+      message: Not Found
+- request:
+    body: '{"messages":[{"role":"user","content":"Count r''s in strawberry"}],"model":"gpt-5-nano","reasoning_effort":"low"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '112'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-44c40d6a81c6e0aa94b3f61485ca4ba7-17dc98cb9b11cce4-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/gpt-5-nano/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"code\":
+        \"DeploymentNotFound\",\n    \"message\": \"The API deployment for this resource
+        does not exist. If you created the deployment within the last 5 minutes, please
+        wait a moment and try again.\"\n  }\n}"
+    headers:
+      Date:
+      - Tue, 31 Mar 2026 13:20:53 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      apim-request-id:
+      - 8d6cb129-7d84-4f23-b7e8-de0e575ce84f
+      x-content-type-options:
+      - nosniff
+      x-ms-region:
+      - East US 2
+    status:
+      code: 404
+      message: Not Found
+- request:
+    body: '{"messages":[{"role":"user","content":"Count r''s in strawberry"}],"model":"gpt-5-nano","reasoning_effort":"low"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '112'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-82e7f475c2e66579ce451c56f408c852-705fdf932474fa8c-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/gpt-5-nano/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"code\":
+        \"DeploymentNotFound\",\n    \"message\": \"The API deployment for this resource
+        does not exist. If you created the deployment within the last 5 minutes, please
+        wait a moment and try again.\"\n  }\n}"
+    headers:
+      Date:
+      - Tue, 31 Mar 2026 13:24:16 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      apim-request-id:
+      - 59d1d1d2-300f-4bc6-bf92-c391731b29f5
+      x-content-type-options:
+      - nosniff
+      x-ms-region:
+      - East US 2
+    status:
+      code: 404
+      message: Not Found
 version: 1

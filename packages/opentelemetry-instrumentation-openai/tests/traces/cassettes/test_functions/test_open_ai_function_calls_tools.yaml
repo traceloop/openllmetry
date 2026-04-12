@@ -105,4 +105,223 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"What''s the weather like in Boston?"}],"model":"gpt-4","tool_choice":"auto","tools":[{"type":"function","function":{"name":"get_current_weather","description":"Get
+      the current weather","parameters":{"type":"object","properties":{"location":{"type":"string","description":"The
+      city and state, e.g. San Francisco, CA"}},"required":["location"]}}}]}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '384'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-269dd52bd462d26656304b9a1f9de172-de58f48874b4ce9b-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkIcSlLzQIAAAD//4xTTW+bQBC98yvQnkll
+        19TYvSWqIrVpovZSVS0RWi8DbLrsoN2lrWv5v2dYbMCOK4UDgnkzb958PTxxFd9+xsV2tYaHW7u5
+        w4/xPYu6CNw8gXDHqDcCKQ6cRN3DwgB30LHOkyReL9+uZ4kHasxBdWFl467iq9lyvjhEVCgFWIJ+
+        0m8Y7vy706Zz+EvmWXS01GAtL4FsRycyGlSdhXFrpXVcOxaNoEDtQHdydavUBHCIKhNcqTFx/+wm
+        32ODyDHT2w/fv/6YX+PC3Mmi+JTE/yqN375M8vXU28YLKlothsZM8MH+/iwZYZrXPrYEl4nWGNKe
+        /aGOVmDOaMiZm7KtyaMrge1SHYYpUyh4R56SLWU3aB3qKLy/Tlmq9+yEYR9c+n6cNMlA0VquXnaP
+        a43O5/Htezwg+2FSCsvG4MaehbJCammrjJbE+gZM5xAchXgJrD0ZNSO6unGZw1/gky6TnpSNGziC
+        89UBdCRTjfbVu+gCW5aD49JvwrB8gosK8jFyXELe5hInQDCp/KWYS9x99VKXr6EfASGgodPKGgO5
+        FKcFj24Guvv8n9vQYy+YWTC/6fgyJ2m/aBo5FLxV/QUxu7UO6oxGVoJpjBzOKNgHzwAAAP//AwCY
+        2sa+PQQAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9efb991524ec-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:15:09 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1588'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=Lcp_POg_6noXCh8Wzo3VTs.Kp_waiqLQTQDGCbM0Ufc-1774962907.459749-1.0.1.1-BP6bIEZd5qKosBQeqpGUdf4KIgYtXStP71gAJ52kG6Uchb24Sv5wNXzOciHyFe1KLFCkRtLj4cnMiRanAeUN4kSn2d8pTbkJsWVuecQQWGXtSIjVTEASGUvTOPrM43D7;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:45:09 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '1000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '999989'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_cfc0a238a0574ce58b41aad3d589b677
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"What''s the weather like in Boston?"}],"model":"gpt-4","tool_choice":"auto","tools":[{"type":"function","function":{"name":"get_current_weather","description":"Get
+      the current weather","parameters":{"type":"object","properties":{"location":{"type":"string","description":"The
+      city and state, e.g. San Francisco, CA"}},"required":["location"]}}}]}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '384'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-289b2a6fff8f0386f8d8fe928caf377b-5806610cefb8c0a0-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/4xTyW7bMBC96ysEnuUibrwlt3QJggZGfDBySBUQDDWW2HARSMp2YPjfO6JsSXZc
+        oDoI0ryZN2+2XRTHRGTkNia8YJ6rUg5+LJZP72K7dOP5o/q+ucuFnD8MlbqfPCyeSVJHmLc/wP0x
+        6gs3GAdeGN3A3ALzULMOp9PRzeR6PJ0FQJkMZB2Wl34wGlxNhteHiMIIDg6h3/gbx7vwrrXpDLZo
+        vkqOFgXOsRzQdnRCozWythDmnHCeaU+SDuRGe9C1XF1J2QO8MZJyJmWXuHl2ve+uQehI5ePNz+0v
+        qTbwUqwX29HT1/X98nlmevka6o8yCFpVmreN6eGt/fYsGWKaqRCbg6e8sha10w12tAB7RoPOzOaV
+        Qo+6BLJLdRynRBrOavIUbSn5Zpw3OonndylJ9Z6cMOyjS9+vvSZZWFWOyc/dY1obH/KE9r0ekH07
+        KWny0po3dxZKVkILV1BcEhca0J9DdBQSJJDqZNQE6VTpqTfvEJJOpg0p6TawA4ezA+hRpuzss3Fy
+        gY1m4JkIm9AuH2e8gKyL7JaQVZkwPSDqVf5ZzCXupnqh8/+h7wDOocTToqWFTPDTgjs3C/V9/sut
+        7XEQTBzYNR4f9QL3C6eRwYpVsrkg4j6cB0VxZDnY0or2jKJ99BcAAP//AwA6BQKDPQQAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4faf5f3c0c2059-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:26:19 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '961'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=gDLL3h_Awj1oiXYhwqdPf7LkTE5Ed6jUGNxpd.VVXLc-1774963578.7514763-1.0.1.1-Q6pfg3rRqcKPCT3zQklJrL22SrG7_yr1OPmF5KQijZZC.WXVjO1S9WXT.naXshpD1rmPjQpsHYHcLGowr_IlnG7tY4bjPNDGBXzpSnKXJJZc7DdbNBHIMSpV.U7_5kn6;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:56:19 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '1000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '999989'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_bad4b8fa789d48dcaec2617943f92bdd
+    status:
+      code: 200
+      message: OK
 version: 1
