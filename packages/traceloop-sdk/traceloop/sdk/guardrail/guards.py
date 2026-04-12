@@ -52,6 +52,7 @@ def _create_guard(
 
     evaluator_slug = evaluator_details.slug
     evaluator_config = evaluator_details.config
+    input_schema = evaluator_details.input_schema
     condition_field = evaluator_details.condition_field
 
     async def guard_fn(input_data: Any) -> bool:
@@ -74,6 +75,7 @@ def _create_guard(
             input=input_dict,
             async_http_client=client._async_http,
             evaluator_config=evaluator_config,
+            input_schema=input_schema,
             timeout_in_sec=timeout_in_sec,
         )
 

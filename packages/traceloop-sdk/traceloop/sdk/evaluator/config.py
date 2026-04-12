@@ -23,4 +23,5 @@ class EvaluatorDetails(BaseModel):
     version: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     output_schema: Optional[Type[BaseModel]] = None
+    input_schema: Optional[Type[BaseModel]] = None
     required_input_fields: Optional[List[str]] = None

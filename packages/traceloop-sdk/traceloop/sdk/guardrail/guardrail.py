@@ -6,7 +6,9 @@ import httpx
 import inspect
 import json
 import time
-from typing import Any, Callable, Awaitable, Dict, cast, Optional
+from typing import Any, Callable, Awaitable, Dict, Type, cast, Optional
+
+from pydantic import BaseModel
 
 from pydantic import TypeAdapter
 from opentelemetry.trace import Tracer, Span
@@ -228,6 +230,7 @@ class Guardrails:
         async_http_client: httpx.AsyncClient,
         timeout_in_sec: int = 120,
         evaluator_config: Optional[Dict[str, Any]] = None,
+        input_schema: Optional[Type[BaseModel]] = None,
     ) -> GuardrailResponse:
         """
         Execute an evaluator as a guardrail (without experiment context).
@@ -242,6 +245,7 @@ class Guardrails:
             async_http_client: The HTTP client to use for the request
             timeout_in_sec: Timeout in seconds for execution
             evaluator_config: Configuration for the evaluator (optional)
+            input_schema: Typed Pydantic request model for this evaluator (optional)
 
         Returns:
             GuardrailResponse: The evaluation result
@@ -251,6 +255,9 @@ class Guardrails:
         body: Dict[str, Any] = {"input": input}
         if evaluator_config is not None:
             body["config"] = evaluator_config
+        
+        if input_schema is not None:
+            body = input_schema(**body).model_dump()
 
         return await self._execute_guardrail_request(
             evaluator_slug, body, async_http_client, timeout_in_sec
