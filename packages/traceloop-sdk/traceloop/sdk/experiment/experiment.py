@@ -190,6 +190,7 @@ class Experiment:
                                 eval_result = (
                                     await self._evaluator.run_experiment_evaluator(
                                         evaluator_slug=evaluator_slug,
+                                        experiment_slug=experiment_slug,
                                         evaluator_version=evaluator_version,
                                         evaluator_config=evaluator_config,
                                         task_id=task_id,
@@ -203,6 +204,7 @@ class Experiment:
                             else:
                                 await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
+                                    experiment_slug=experiment_slug,
                                     evaluator_version=evaluator_version,
                                     evaluator_config=evaluator_config,
                                     task_id=task_id,
