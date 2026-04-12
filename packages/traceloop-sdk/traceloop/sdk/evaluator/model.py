@@ -25,9 +25,9 @@ class ExecuteEvaluatorInExperimentRequest(BaseModel):
     experiment_run_id: str
 
 class ExecuteEvaluatorRequest(BaseModel):
-    input_schema_mapping: InputSchemaMapping
+    input: InputSchemaMapping
     evaluator_version: Optional[str] = None
-    evaluator_config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None
 
 class ExecuteEvaluatorResponse(BaseModel):
     """Response from execute API matching actual structure"""

@@ -55,6 +55,7 @@ class Evaluator:
 
     @staticmethod
     def _build_evaluator_in_experiment_request(
+        evaluator_slug: str,
         task_id: str,
         experiment_id: str,
         experiment_run_id: str,
@@ -70,6 +71,7 @@ class Evaluator:
             input_schema_mapping=schema_mapping,
             evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
+            evaluator_slug=evaluator_slug,
             task_id=task_id,
             experiment_id=experiment_id,
             experiment_run_id=experiment_run_id,
@@ -78,13 +80,16 @@ class Evaluator:
     async def _execute_evaluator_in_experiment_request(
         self,
         evaluator_slug: str,
+        experiment_slug: str,
+        experiment_run_id: str,
+        task_id: str,
         request: ExecuteEvaluatorInExperimentRequest,
         timeout_in_sec: int = 120,
     ) -> ExecuteEvaluatorResponse:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute"
+        full_url = f"/v2/experiments/{experiment_slug}/runs/{experiment_run_id}/tasks/{task_id}"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
@@ -106,7 +111,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/evaluators/slug/{evaluator_slug}/execute-single"
+        full_url = f"/v2/evaluators/{evaluator_slug}/execute"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
@@ -150,11 +155,11 @@ class Evaluator:
         _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_in_experiment_request(
-            task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
+            evaluator_slug, task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
         execute_response = await self._execute_evaluator_in_experiment_request(
-            evaluator_slug, request, timeout_in_sec
+            evaluator_slug, experiment_slug, experiment_run_id, task_id, request, timeout_in_sec
         )
 
         sse_client = SSEClient(shared_client=self._async_http_client)
@@ -195,11 +200,11 @@ class Evaluator:
         _validate_evaluator_input(evaluator_slug, input, evaluator_config)
 
         request = self._build_evaluator_in_experiment_request(
-            task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
+            evaluator_slug, task_id, experiment_id, experiment_run_id, input, evaluator_version, evaluator_config
         )
 
         execute_response = await self._execute_evaluator_in_experiment_request(
-            evaluator_slug, request, 120
+            evaluator_slug, experiment_slug, experiment_run_id, task_id, request, 120
         )
 
         # Return execution_id without waiting for SSE result
@@ -237,9 +242,9 @@ class Evaluator:
         )
 
         request = ExecuteEvaluatorRequest(
-            input_schema_mapping=schema_mapping,
+            input=schema_mapping,
             evaluator_version=evaluator_version,
-            evaluator_config=evaluator_config,
+            config=evaluator_config,
         )
 
         execute_response = await self._execute_evaluator_request(
