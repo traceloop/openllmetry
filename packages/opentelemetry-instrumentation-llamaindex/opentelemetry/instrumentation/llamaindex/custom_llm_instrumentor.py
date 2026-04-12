@@ -1,4 +1,5 @@
 import importlib
+import json
 import pkgutil
 
 from wrapt import wrap_function_wrapper
@@ -7,10 +8,19 @@ from inflection import underscore
 from opentelemetry import context as context_api
 
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.llamaindex._message_utils import (
+    build_completion_output_message,
+    build_input_messages,
+    build_output_message,
+)
+from opentelemetry.instrumentation.llamaindex._response_utils import (
+    detect_provider_name,
+    extract_finish_reasons,
+)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
+from opentelemetry.semconv_ai import LLMRequestTypeValues
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -145,45 +155,42 @@ async def acomplete_wrapper(tracer, wrapped, instance: CustomLLM, args, kwargs):
 
 @dont_throw
 def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, instance.__class__.__name__)
-    _set_span_attribute(span, SpanAttributes.LLM_REQUEST_TYPE, llm_request_type.value)
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MODEL, instance.metadata.model_name
-    )
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, instance.metadata.context_window
-    )
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, instance.metadata.num_output
-    )
+    op_name = "chat" if llm_request_type == LLMRequestTypeValues.CHAT else "text_completion"
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OPERATION_NAME, op_name)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, detect_provider_name(instance))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, instance.metadata.model_name)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, instance.metadata.num_output)
 
     if should_send_prompts():
-        # TODO: add support for chat
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            if len(args) > 0:
-                prompt = args[0]
-                _set_span_attribute(
-                    span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
-                    prompt[0] if isinstance(prompt, list) else prompt,
-                )
-
-    return
+        if llm_request_type == LLMRequestTypeValues.CHAT and args:
+            messages = args[0]
+            if messages:
+                msgs = build_input_messages(messages)
+                span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msgs))
+        elif llm_request_type == LLMRequestTypeValues.COMPLETION and args:
+            prompt = args[0]
+            text = prompt[0] if isinstance(prompt, list) else prompt
+            msg = [{"role": "user", "parts": [{"type": "text", "content": text}]}]
+            span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msg))
 
 
 @dont_throw
 def _handle_response(span, llm_request_type, instance, response):
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, instance.metadata.model_name
-    )
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, instance.metadata.model_name)
+
+    # CRITICAL: finish_reasons is NOT gated by should_send_prompts()
+    raw = getattr(response, "raw", None)
+    reasons = extract_finish_reasons(raw) if raw else []
+    if reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons)
 
     if should_send_prompts():
-        if llm_request_type == LLMRequestTypeValues.COMPLETION:
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", response.text
-            )
-
-    return
+        fr = reasons[0] if reasons else None
+        if llm_request_type == LLMRequestTypeValues.CHAT and hasattr(response, "message"):
+            output_msg = build_output_message(response.message, finish_reason=fr)
+        else:
+            output_msg = build_completion_output_message(response.text, finish_reason=fr)
+        span.set_attribute(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([output_msg]))
 
 
 def snake_case_class_name(instance):

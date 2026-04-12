@@ -2,7 +2,6 @@ import pytest
 from llama_index.core.llms import ChatMessage
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
-from opentelemetry.semconv_ai import SpanAttributes, LLMRequestTypeValues
 
 
 class Invoice(BaseModel):
@@ -42,11 +41,7 @@ def test_structured_llm_model_attributes(instrument_with_content, span_exporter)
 
     llm_span = None
     for span in spans:
-        if (
-            span.attributes.get("gen_ai.operation.name") == "chat"
-            or span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
-            == LLMRequestTypeValues.CHAT.value
-        ):
+        if span.attributes.get("gen_ai.operation.name") == "chat":
             llm_span = span
             break
 
@@ -89,11 +84,7 @@ async def test_structured_llm_achat_model_attributes(
 
     llm_span = None
     for span in spans:
-        if (
-            span.attributes.get("gen_ai.operation.name") == "chat"
-            or span.attributes.get(SpanAttributes.LLM_REQUEST_TYPE)
-            == LLMRequestTypeValues.CHAT.value
-        ):
+        if span.attributes.get("gen_ai.operation.name") == "chat":
             llm_span = span
             break
 

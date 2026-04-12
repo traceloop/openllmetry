@@ -1,5 +1,7 @@
 """Test for None content handling in span_utils - Issue #3513"""
 
+import json
+
 import pytest
 from unittest.mock import MagicMock, patch
 from llama_index.core.base.llms.types import MessageRole
@@ -43,8 +45,7 @@ class TestNoneContentHandling:
 
     def test_set_llm_chat_response_with_none_content(self):
         """
-        Test that set_llm_chat_response doesn't set gen_ai.completion.0.content
-        when response.message.content is None (StructuredLLM case).
+        Test that output message has empty parts when content is None (StructuredLLM case).
         """
         mock_span = MagicMock()
         mock_span.is_recording.return_value = True
@@ -52,9 +53,11 @@ class TestNoneContentHandling:
         mock_message = MagicMock()
         mock_message.role = MessageRole.ASSISTANT
         mock_message.content = None
+        mock_message.additional_kwargs = {}
 
         mock_response = MagicMock()
         mock_response.message = mock_message
+        mock_response.raw = {}
 
         mock_event = MagicMock()
         mock_event.response = mock_response
@@ -63,21 +66,18 @@ class TestNoneContentHandling:
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_chat_response(mock_event, mock_span)
 
-        # Verify role was set
-        mock_span.set_attribute.assert_any_call(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-            MessageRole.ASSISTANT.value
-        )
-
-        # Verify content was NOT set (no call with the content attribute key)
-        content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"
-        assert not any(
-            c.args[0] == content_key for c in mock_span.set_attribute.call_args_list
-        ), "Content attribute should NOT be set when value is None"
+        # Find the gen_ai.output.messages call and verify empty parts for None content
+        raw = None
+        for call in mock_span.set_attribute.call_args_list:
+            if call.args[0] == GenAIAttributes.GEN_AI_OUTPUT_MESSAGES:
+                raw = call.args[1]
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert msgs[0]["parts"] == [], "Parts should be empty when content is None"
 
     def test_set_llm_chat_response_with_valid_content(self):
         """
-        Test that set_llm_chat_response correctly sets content when it's not None.
+        Test that set_llm_chat_response correctly sets content as JSON when it's not None.
         """
         mock_span = MagicMock()
         mock_span.is_recording.return_value = True
@@ -85,9 +85,11 @@ class TestNoneContentHandling:
         mock_message = MagicMock()
         mock_message.role = MessageRole.ASSISTANT
         mock_message.content = "This is a valid response"
+        mock_message.additional_kwargs = {}
 
         mock_response = MagicMock()
         mock_response.message = mock_message
+        mock_response.raw = {}
 
         mock_event = MagicMock()
         mock_event.response = mock_response
@@ -96,16 +98,18 @@ class TestNoneContentHandling:
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_chat_response(mock_event, mock_span)
 
-        # Verify content was set
-        mock_span.set_attribute.assert_any_call(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            "This is a valid response"
-        )
+        # Verify content was set in JSON output messages
+        raw = None
+        for call in mock_span.set_attribute.call_args_list:
+            if call.args[0] == GenAIAttributes.GEN_AI_OUTPUT_MESSAGES:
+                raw = call.args[1]
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert msgs[0]["parts"][0]["content"] == "This is a valid response"
 
     def test_set_llm_predict_response_with_none_output(self):
         """
-        Test that set_llm_predict_response doesn't set gen_ai.completion.content
-        when event.output is None.
+        Test that predict response handles None output gracefully (empty text).
         """
         mock_span = MagicMock()
 
@@ -115,21 +119,20 @@ class TestNoneContentHandling:
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_predict_response(mock_event, mock_span)
 
-        # Verify role was set
-        mock_span.set_attribute.assert_any_call(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
-            MessageRole.ASSISTANT.value
-        )
-
-        # Verify content was NOT set
-        content_key = f"{GenAIAttributes.GEN_AI_COMPLETION}.content"
-        assert not any(
-            c.args[0] == content_key for c in mock_span.set_attribute.call_args_list
-        ), "Content attribute should NOT be set when value is None"
+        raw = None
+        for call in mock_span.set_attribute.call_args_list:
+            if call.args[0] == GenAIAttributes.GEN_AI_OUTPUT_MESSAGES:
+                raw = call.args[1]
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert msgs[0]["role"] == "assistant"
+        # None output → empty string → empty parts (build_completion_output_message)
+        # Actually: event.output or "" → "", which gives empty parts
+        assert msgs[0]["parts"] == []
 
     def test_set_llm_predict_response_with_valid_output(self):
         """
-        Test that set_llm_predict_response correctly sets content when output is not None.
+        Test that set_llm_predict_response correctly sets content as JSON.
         """
         mock_span = MagicMock()
 
@@ -139,11 +142,13 @@ class TestNoneContentHandling:
         with patch('opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts', return_value=True):
             set_llm_predict_response(mock_event, mock_span)
 
-        # Verify content was set
-        mock_span.set_attribute.assert_any_call(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
-            "Valid output text"
-        )
+        raw = None
+        for call in mock_span.set_attribute.call_args_list:
+            if call.args[0] == GenAIAttributes.GEN_AI_OUTPUT_MESSAGES:
+                raw = call.args[1]
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert msgs[0]["parts"][0]["content"] == "Valid output text"
 
 
 if __name__ == "__main__":

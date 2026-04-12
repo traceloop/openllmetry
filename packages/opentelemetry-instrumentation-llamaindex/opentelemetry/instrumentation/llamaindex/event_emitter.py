@@ -17,6 +17,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     should_emit_events,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.llamaindex._response_utils import extract_finish_reasons
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -34,7 +35,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "llamaindex"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: "llamaindex"}
 """The attributes to be used for the event."""
 
 
@@ -46,11 +47,10 @@ def emit_chat_message_events(event: LLMChatStartEvent):
 def emit_chat_response_events(event: LLMChatEndEvent):
     if event.response:
         try:
-            finish_reason = event.response.raw.get("choices", [{}])[0].get(
-                "finish_reason", "unknown"
-            )
-        except (AttributeError, ValueError):
-            finish_reason = "unknown"
+            reasons = extract_finish_reasons(event.response.raw) if event.response.raw else []
+            finish_reason = reasons[0] if reasons else ""
+        except Exception:
+            finish_reason = ""
         emit_choice_event(
             index=0,
             content=event.response.message.content,
