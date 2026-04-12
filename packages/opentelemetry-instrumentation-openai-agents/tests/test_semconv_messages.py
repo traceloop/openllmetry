@@ -457,6 +457,95 @@ class TestInputMessagePartsFormat:
 
         span.end()
 
+    def test_list_content_with_tool_calls_preserves_structure(self, tracer_and_exporter):
+        """List content + tool_calls must preserve structured parts, not stringify."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Let me check"},
+                {"type": "image_url", "image_url": {"url": "https://example.com/img.png"}},
+            ],
+            "tool_calls": [{
+                "id": "call_1",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": '{"city": "NYC"}'
+                }
+            }]
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        msg = messages[0]
+
+        assert msg["role"] == "assistant"
+        assert "parts" in msg
+
+        parts = msg["parts"]
+        # Expect: text part, uri part (image), tool_call part
+        assert len(parts) == 3, f"Expected 3 parts (text + image + tool_call), got {len(parts)}: {parts}"
+
+        text_part = parts[0]
+        assert text_part["type"] == "text"
+        assert text_part["content"] == "Let me check"
+
+        image_part = parts[1]
+        assert image_part["type"] == "uri", (
+            f"image_url must map to 'uri' part, got type '{image_part['type']}'"
+        )
+        assert image_part["modality"] == "image"
+        assert image_part["uri"] == "https://example.com/img.png"
+
+        tool_part = parts[2]
+        assert tool_part["type"] == "tool_call"
+        assert tool_part["name"] == "get_weather"
+
+        span.end()
+
+    def test_string_content_with_tool_calls(self, tracer_and_exporter):
+        """String content + tool_calls should produce text part + tool_call part."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "content": "Let me look that up",
+            "tool_calls": [{
+                "id": "call_2",
+                "function": {
+                    "name": "search",
+                    "arguments": '{"q": "test"}'
+                }
+            }]
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        msg = messages[0]
+
+        parts = msg["parts"]
+        assert len(parts) == 2, f"Expected 2 parts (text + tool_call), got {len(parts)}"
+        assert parts[0]["type"] == "text"
+        assert parts[0]["content"] == "Let me look that up"
+        assert parts[1]["type"] == "tool_call"
+
+        span.end()
+
     def test_none_content_message(self, tracer_and_exporter):
         """Messages with None content should still produce valid parts."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
@@ -1045,14 +1134,14 @@ class TestToolDefinitions:
         assert resp_span is not None
 
         raw_defs = resp_span.attributes.get(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS)
-        if raw_defs:
-            defs = json.loads(raw_defs)
-            assert len(defs) >= 1
-            tool_def = defs[0]
-            # Per spec: preserve source system's representation
-            assert "type" in tool_def, "Tool definition should preserve 'type' field"
-            assert tool_def["type"] == "function"
-            assert "function" in tool_def, "Tool definition should preserve 'function' wrapper"
+        assert raw_defs is not None, "gen_ai.tool.definitions must be set when tools are present"
+        defs = json.loads(raw_defs)
+        assert len(defs) >= 1
+        tool_def = defs[0]
+        # Per spec: preserve source system's representation
+        assert "type" in tool_def, "Tool definition should preserve 'type' field"
+        assert tool_def["type"] == "function"
+        assert "function" in tool_def, "Tool definition should preserve 'function' wrapper"
 
 
 # ---------------------------------------------------------------------------
@@ -1093,10 +1182,10 @@ class TestRealtimeMessageFormat:
         assert llm_span is not None
 
         raw_input = llm_span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
-        if raw_input:
-            messages = json.loads(raw_input)
-            msg = messages[0]
-            assert "parts" in msg, f"Realtime input must use parts format, got keys: {list(msg.keys())}"
+        assert raw_input is not None, "gen_ai.input.messages must be set on realtime LLM span"
+        messages = json.loads(raw_input)
+        msg = messages[0]
+        assert "parts" in msg, f"Realtime input must use parts format, got keys: {list(msg.keys())}"
 
     def test_realtime_llm_span_output_uses_parts(self):
         """Realtime output messages must use parts-based format."""
@@ -1129,10 +1218,10 @@ class TestRealtimeMessageFormat:
         assert llm_span is not None
 
         raw_output = llm_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
-        if raw_output:
-            messages = json.loads(raw_output)
-            msg = messages[0]
-            assert "parts" in msg, f"Realtime output must use parts format, got keys: {list(msg.keys())}"
+        assert raw_output is not None, "gen_ai.output.messages must be set on realtime LLM span"
+        messages = json.loads(raw_output)
+        msg = messages[0]
+        assert "parts" in msg, f"Realtime output must use parts format, got keys: {list(msg.keys())}"
 
     def test_realtime_does_not_fabricate_stop(self):
         """Realtime must NOT fabricate finish_reason 'stop'."""
@@ -1165,14 +1254,89 @@ class TestRealtimeMessageFormat:
         assert llm_span is not None
 
         raw_output = llm_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
-        if raw_output:
-            messages = json.loads(raw_output)
-            msg = messages[0]
-            # finish_reason should be empty string, not fabricated "stop"
-            fr = msg.get("finish_reason")
-            assert fr == "", (
-                f"Realtime should not fabricate finish_reason, got '{fr}'"
-            )
+        assert raw_output is not None, "gen_ai.output.messages must be set on realtime LLM span"
+        messages = json.loads(raw_output)
+        msg = messages[0]
+        # finish_reason should be empty string, not fabricated "stop"
+        fr = msg.get("finish_reason")
+        assert fr == "", (
+            f"Realtime should not fabricate finish_reason, got '{fr}'"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Realtime operation name
+# ---------------------------------------------------------------------------
+
+class TestRealtimeOperationName:
+    """Verify realtime spans set gen_ai.operation.name."""
+
+    def test_realtime_llm_span_operation_name(self):
+        """Realtime LLM span must set gen_ai.operation.name."""
+        from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (
+            RealtimeTracingState,
+        )
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        tracer = provider.get_tracer("test")
+
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("TestAgent")
+        state.start_agent_span("TestAgent")
+
+        state.record_prompt("user", "Hello")
+
+        with patch(
+            "opentelemetry.instrumentation.openai_agents._realtime_wrappers.should_send_prompts",
+            return_value=True,
+        ):
+            state.create_llm_span("Hi there!")
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        llm_span = next((s for s in spans if s.name == "openai.realtime"), None)
+        assert llm_span is not None
+
+        op_name = llm_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)
+        assert op_name is not None, "gen_ai.operation.name must be set on realtime LLM span"
+        # "realtime" is a custom extension (no well-known OTel equivalent);
+        # lock the current value so changes are intentional.
+        assert op_name == "realtime", (
+            f"Expected 'realtime' operation name, got '{op_name}'"
+        )
+
+    def test_realtime_audio_span_operation_name(self):
+        """Realtime audio span must set gen_ai.operation.name."""
+        from opentelemetry.instrumentation.openai_agents._realtime_wrappers import (
+            RealtimeTracingState,
+        )
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        tracer = provider.get_tracer("test")
+
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("TestAgent")
+        state.start_agent_span("TestAgent")
+
+        state.start_audio_span("item-1", 0)
+        state.end_audio_span("item-1", 0)
+
+        state.cleanup()
+        state.end_workflow_span()
+
+        spans = exporter.get_finished_spans()
+        audio_span = next(
+            (s for s in spans if s.name == "openai.realtime" and
+             s.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME) == "realtime"),
+            None,
+        )
+        assert audio_span is not None, "Audio span must exist with operation name 'realtime'"
 
 
 # ---------------------------------------------------------------------------

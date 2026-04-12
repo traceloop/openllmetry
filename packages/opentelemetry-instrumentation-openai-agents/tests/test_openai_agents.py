@@ -61,13 +61,8 @@ def test_dict_content_serialization(exporter):
                 error_msg = f"Attribute {attr_name} should be a string, got {type(attr_value)}: {attr_value}"
                 assert isinstance(attr_value, str), error_msg
 
-                # If it looks like JSON, verify it can be parsed
-                if attr_value.startswith("{") and attr_value.endswith("}"):
-                    try:
-                        json.loads(attr_value)
-                    except json.JSONDecodeError:
-                        # If it fails to parse, that's still fine - just not JSON
-                        pass
+                # Message attributes must be valid JSON (arrays of message objects)
+                json.loads(attr_value)
 
     # The test passes if no dict type warnings occurred (all content attributes are strings)
 

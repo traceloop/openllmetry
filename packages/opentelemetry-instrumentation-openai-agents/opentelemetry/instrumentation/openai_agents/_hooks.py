@@ -253,9 +253,12 @@ def _convert_chat_message(msg: dict):
     parts = []
     if tool_calls:
         if content is not None:
-            text = _stringify_content(content)
-            if text:
-                parts.append({"type": "text", "content": text})
+            if isinstance(content, list):
+                parts.extend(_content_to_parts(content))
+            else:
+                text = _stringify_content(content)
+                if text:
+                    parts.append({"type": "text", "content": text})
         parts.extend(_tool_call_to_part(tc) for tc in tool_calls)
     elif content is not None:
         parts = _content_to_parts(content)
