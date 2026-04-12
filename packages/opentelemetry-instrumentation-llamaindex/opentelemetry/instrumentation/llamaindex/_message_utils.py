@@ -98,7 +98,7 @@ def _image_block_to_part(block: Dict) -> Dict:
             "type": "blob",
             "modality": "image",
             "mime_type": source.get("media_type", ""),
-            "content": source.get("data", ""),
+            "data": source.get("data", ""),
         }
     if source.get("type") == "url":
         return {"type": "uri", "modality": "image", "uri": source.get("url", "")}

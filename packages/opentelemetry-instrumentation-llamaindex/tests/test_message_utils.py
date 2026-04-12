@@ -139,7 +139,7 @@ class TestContentToParts:
         }
         parts = _content_to_parts([block])
         assert parts == [
-            {"type": "blob", "modality": "image", "mime_type": "image/png", "content": "abc123"}
+            {"type": "blob", "modality": "image", "mime_type": "image/png", "data": "abc123"}
         ]
 
     def test_image_url_source_block(self):
