@@ -201,6 +201,7 @@ class Guardrails:
             # Use dummy IDs for guardrails (they don't need experiment tracking)
             result = await self._evaluator.run_experiment_evaluator(
                 evaluator_slug=slug,
+                experiment_slug="guardrail",
                 task_id="guardrail",
                 experiment_id="guardrail",
                 experiment_run_id="guardrail",
