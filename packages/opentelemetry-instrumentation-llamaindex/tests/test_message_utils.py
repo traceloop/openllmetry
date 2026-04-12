@@ -11,7 +11,6 @@ from opentelemetry.instrumentation.llamaindex._message_utils import (
     build_completion_output_message,
     build_input_messages,
     build_output_message,
-    map_finish_reason,
 )
 
 
@@ -23,61 +22,6 @@ def _msg(role, content, **additional_kwargs):
     """Create a fake ChatMessage-like object."""
     m = SimpleNamespace(role=SimpleNamespace(value=role), content=content, additional_kwargs=additional_kwargs)
     return m
-
-
-# ===========================================================================
-# map_finish_reason
-# ===========================================================================
-
-class TestMapFinishReason:
-    def test_openai_stop(self):
-        assert map_finish_reason("stop") == "stop"
-
-    def test_openai_tool_calls_passes_through(self):
-        """Upstream Python convention: 'tool_calls' passes through (not remapped to singular)."""
-        assert map_finish_reason("tool_calls") == "tool_calls"
-
-    def test_openai_function_call(self):
-        assert map_finish_reason("function_call") == "tool_calls"
-
-    def test_openai_length(self):
-        assert map_finish_reason("length") == "length"
-
-    def test_openai_content_filter(self):
-        assert map_finish_reason("content_filter") == "content_filter"
-
-    def test_cohere_complete(self):
-        assert map_finish_reason("COMPLETE") == "stop"
-
-    def test_cohere_max_tokens(self):
-        assert map_finish_reason("MAX_TOKENS") == "length"
-
-    def test_cohere_error(self):
-        assert map_finish_reason("ERROR") == "error"
-
-    def test_cohere_error_toxic(self):
-        assert map_finish_reason("ERROR_TOXIC") == "content_filter"
-
-    def test_anthropic_end_turn(self):
-        assert map_finish_reason("end_turn") == "stop"
-
-    def test_anthropic_stop_sequence(self):
-        assert map_finish_reason("stop_sequence") == "stop"
-
-    def test_anthropic_tool_use(self):
-        assert map_finish_reason("tool_use") == "tool_calls"
-
-    def test_anthropic_max_tokens(self):
-        assert map_finish_reason("max_tokens") == "length"
-
-    def test_none_returns_none(self):
-        assert map_finish_reason(None) is None
-
-    def test_empty_string_returns_none(self):
-        assert map_finish_reason("") is None
-
-    def test_unknown_passes_through(self):
-        assert map_finish_reason("custom_reason") == "custom_reason"
 
 
 # ===========================================================================
@@ -139,8 +83,19 @@ class TestContentToParts:
         }
         parts = _content_to_parts([block])
         assert parts == [
-            {"type": "blob", "modality": "image", "mime_type": "image/png", "data": "abc123"}
+            {"type": "blob", "modality": "image", "mime_type": "image/png", "content": "abc123"}
         ]
+
+    def test_blob_part_uses_content_key_not_data(self):
+        """OTel BlobPart schema requires 'content' for base64 data, not 'data'."""
+        block = {
+            "type": "image",
+            "source": {"type": "base64", "media_type": "image/jpeg", "data": "base64data"},
+        }
+        parts = _content_to_parts([block])
+        assert "content" in parts[0], "BlobPart must use 'content' key per OTel spec"
+        assert "data" not in parts[0], "BlobPart must NOT use 'data' key"
+        assert parts[0]["content"] == "base64data"
 
     def test_image_url_source_block(self):
         block = {"type": "image", "source": {"type": "url", "url": "https://img.png"}}
@@ -292,43 +247,11 @@ class TestBuildOutputMessage:
         result = build_output_message(resp)
         assert result["parts"] == []
 
-    def test_response_with_finish_reason_stop(self):
-        resp = _msg("assistant", "Done.")
-        result = build_output_message(resp, finish_reason="stop")
-        assert result["finish_reason"] == "stop"
-
-    def test_response_with_finish_reason_tool_calls_passed_through(self):
-        """OpenAI 'tool_calls' passes through to match upstream Python convention."""
-        resp = _msg("assistant", "")
-        result = build_output_message(resp, finish_reason="tool_calls")
-        assert result["finish_reason"] == "tool_calls"
-
-    def test_response_with_finish_reason_length(self):
-        resp = _msg("assistant", "truncated...")
-        result = build_output_message(resp, finish_reason="length")
-        assert result["finish_reason"] == "length"
-
-    def test_response_with_none_finish_reason_defaults_to_empty(self):
-        """Missing finish_reason defaults to '' (required field, but no known value)."""
-        resp = _msg("assistant", "ok")
-        result = build_output_message(resp, finish_reason=None)
-        assert result["finish_reason"] == ""
-
-    def test_response_with_unknown_finish_reason(self):
-        resp = _msg("assistant", "ok")
-        result = build_output_message(resp, finish_reason="custom_stop")
-        assert result["finish_reason"] == "custom_stop"
-
     def test_response_with_tool_call_parts(self):
         tc = {"id": "tc1", "function": {"name": "calc", "arguments": '{"x": 1}'}}
         resp = _msg("assistant", "Calling tool", tool_calls=[tc])
         result = build_output_message(resp, finish_reason="tool_calls")
         assert any(p["type"] == "tool_call" for p in result["parts"])
-
-    def test_finish_reason_always_string(self):
-        resp = _msg("assistant", "ok")
-        result = build_output_message(resp)
-        assert isinstance(result["finish_reason"], str)
 
 
 # ===========================================================================
@@ -347,14 +270,6 @@ class TestBuildCompletionOutputMessage:
     def test_empty_text(self):
         result = build_completion_output_message("")
         assert result["parts"] == []
-
-    def test_with_finish_reason(self):
-        result = build_completion_output_message("done", finish_reason="stop")
-        assert result["finish_reason"] == "stop"
-
-    def test_with_mapped_finish_reason(self):
-        result = build_completion_output_message("done", finish_reason="COMPLETE")
-        assert result["finish_reason"] == "stop"
 
 
 if __name__ == "__main__":

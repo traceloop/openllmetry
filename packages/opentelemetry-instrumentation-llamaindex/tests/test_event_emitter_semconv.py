@@ -11,9 +11,8 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.instrumentation.llamaindex.event_emitter import (
     _event_attributes,
     emit_chat_message_events,
-    emit_chat_response_events,
+    emit_rerank_message_event,
 )
-from opentelemetry.instrumentation.llamaindex.event_models import ChoiceEvent
 
 
 # ===========================================================================
@@ -25,13 +24,14 @@ class TestEventAttributes:
         attrs = _event_attributes("openai")
         assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    def test_with_none_provider_name(self):
+    def test_with_none_provider_name_falls_back_to_llamaindex(self):
+        """When provider is unknown, fall back to 'llamaindex' so events always have a provider."""
         attrs = _event_attributes(None)
-        assert GenAIAttributes.GEN_AI_PROVIDER_NAME not in attrs
+        assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "llamaindex"
 
-    def test_with_empty_provider_name(self):
+    def test_with_empty_provider_name_falls_back_to_llamaindex(self):
         attrs = _event_attributes("")
-        assert GenAIAttributes.GEN_AI_PROVIDER_NAME not in attrs
+        assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "llamaindex"
 
     def test_uses_actual_provider_not_llamaindex(self):
         """Provider name should be the actual LLM provider, not the framework."""
@@ -40,17 +40,7 @@ class TestEventAttributes:
 
 
 # ===========================================================================
-# ChoiceEvent — default finish_reason
-# ===========================================================================
-
-class TestChoiceEventDefault:
-    def test_default_finish_reason_is_empty_string(self):
-        event = ChoiceEvent(index=0, message={"content": "ok", "role": "assistant"})
-        assert event.finish_reason == ""
-
-
-# ===========================================================================
-# emit_chat_response_events — finish_reason
+# emit_chat_message_events — provider_name
 # ===========================================================================
 
 class TestEmitChatMessageEventsProviderName:
@@ -89,94 +79,32 @@ class TestEmitChatMessageEventsProviderName:
         emit_chat_message_events(event)
 
 
-class TestEmitChatResponseEvents:
-    def test_finish_reason_tool_calls_passed_through(self):
-        event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = {"choices": [{"finish_reason": "tool_calls"}]}
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
+# ===========================================================================
+# emit_rerank_message_event — provider_name
+# ===========================================================================
 
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
+class TestEmitRerankMessageEvent:
+    def test_provider_name_passed_to_rerank_event(self):
+        """emit_rerank_message_event should forward provider_name."""
+        event = MagicMock()
+        event.query = "search query"
+
+        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_event") as mock_emit:
             with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event)
+                emit_rerank_message_event(event, provider_name="cohere")
             mock_emit.assert_called_once()
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["finish_reason"] == "tool_calls"
+            assert mock_emit.call_args[1]["provider_name"] == "cohere"
 
-    def test_finish_reason_fallback_empty_string_for_events(self):
-        """Event emission path uses '' fallback (ChoiceEvent convention)."""
+    def test_rerank_without_provider_name(self):
+        """Rerank events without provider_name should still work."""
         event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = {}  # no choices
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
+        event.query = "search query"
 
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
+        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_event") as mock_emit:
             with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event)
+                emit_rerank_message_event(event)
             mock_emit.assert_called_once()
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["finish_reason"] == ""
-
-    def test_finish_reason_handles_none_raw(self):
-        event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = None
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
-
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
-            with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event)
-            mock_emit.assert_called_once()
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["finish_reason"] == ""
-
-    def test_provider_name_passed_to_choice_event(self):
-        event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = {"choices": [{"finish_reason": "stop"}]}
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
-
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
-            with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event, provider_name="anthropic")
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["provider_name"] == "anthropic"
-
-    def test_cohere_finish_reason_mapped(self):
-        """Cohere-style finish reasons should be mapped (not just OpenAI format)."""
-        from types import SimpleNamespace
-        event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = SimpleNamespace(finish_reason="COMPLETE")
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
-
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
-            with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event)
-            mock_emit.assert_called_once()
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["finish_reason"] == "stop"
-
-    def test_anthropic_finish_reason_mapped(self):
-        """Anthropic-style stop_reason should be mapped."""
-        from types import SimpleNamespace
-        event = MagicMock()
-        event.response = MagicMock()
-        event.response.raw = SimpleNamespace(stop_reason="end_turn")
-        event.response.message.content = "hi"
-        event.response.message.role.value = "assistant"
-
-        with patch("opentelemetry.instrumentation.llamaindex.event_emitter.emit_choice_event") as mock_emit:
-            with patch("opentelemetry.instrumentation.llamaindex.event_emitter.should_emit_events", return_value=True):
-                emit_chat_response_events(event)
-            mock_emit.assert_called_once()
-            call_kwargs = mock_emit.call_args[1]
-            assert call_kwargs["finish_reason"] == "stop"
+            assert mock_emit.call_args[1]["provider_name"] is None
 
 
 if __name__ == "__main__":

@@ -3,15 +3,12 @@
 import json
 from typing import Any, Dict, List, Optional
 
-# Finish reason mapping: covers OpenAI, Cohere, Anthropic.
-# Values already matching OTel/upstream enum (stop, length, content_filter, error, tool_calls)
-# pass through unchanged via dict.get() fallback.
-# Note: upstream Python instrumentation (opentelemetry-util-genai) uses "tool_calls" (plural),
-# matching OpenAI's convention, even though the OTel JSON schema says "tool_call" (singular).
-# We follow the upstream Python implementations as the practical source of truth.
+# Finish reason mapping: covers OpenAI, Cohere, Anthropic, Google Gemini.
+# OTel spec uses "tool_call" (singular) — OpenAI's "tool_calls" (plural) must be mapped.
 _FINISH_REASON_MAP = {
-    # OpenAI legacy
-    "function_call": "tool_calls",
+    # OpenAI
+    "tool_calls": "tool_call",
+    "function_call": "tool_call",
     # Cohere
     "COMPLETE": "stop",
     "MAX_TOKENS": "length",
@@ -20,8 +17,17 @@ _FINISH_REASON_MAP = {
     # Anthropic
     "end_turn": "stop",
     "stop_sequence": "stop",
-    "tool_use": "tool_calls",
+    "tool_use": "tool_call",
     "max_tokens": "length",
+    # Google Gemini
+    "STOP": "stop",
+    "SAFETY": "content_filter",
+    "RECITATION": "content_filter",
+    "BLOCKLIST": "content_filter",
+    "PROHIBITED_CONTENT": "content_filter",
+    "SPII": "content_filter",
+    "FINISH_REASON_UNSPECIFIED": "error",
+    "OTHER": "error",
 }
 
 
@@ -98,7 +104,7 @@ def _image_block_to_part(block: Dict) -> Dict:
             "type": "blob",
             "modality": "image",
             "mime_type": source.get("media_type", ""),
-            "data": source.get("data", ""),
+            "content": source.get("data", ""),
         }
     if source.get("type") == "url":
         return {"type": "uri", "modality": "image", "uri": source.get("url", "")}

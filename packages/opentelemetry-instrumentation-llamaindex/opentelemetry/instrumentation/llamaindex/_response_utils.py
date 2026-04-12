@@ -140,7 +140,8 @@ def _safe_sum(a: Optional[int], b: Optional[int]) -> Optional[int]:
 def extract_finish_reasons(raw: Any) -> List[str]:
     """Extract and map finish reasons from raw LLM response.
 
-    Handles OpenAI choices[], Anthropic stop_reason, Cohere finish_reason.
+    Handles OpenAI choices[], Google Gemini candidates[], Anthropic stop_reason,
+    Cohere finish_reason, and Ollama done_reason.
     Returns empty list if no finish reason found.
     """
     if raw is None:
@@ -150,6 +151,13 @@ def extract_finish_reasons(raw: Any) -> List[str]:
     choices = _get_nested(raw, "choices")
     if choices and isinstance(choices, (list, tuple)):
         reasons = _collect_finish_reasons_from_choices(choices)
+        if reasons:
+            return reasons
+
+    # Google Gemini format: candidates[].finish_reason
+    candidates = _get_nested(raw, "candidates")
+    if candidates and isinstance(candidates, (list, tuple)):
+        reasons = _collect_finish_reasons_from_candidates(candidates)
         if reasons:
             return reasons
 
@@ -167,6 +175,13 @@ def extract_finish_reasons(raw: Any) -> List[str]:
         if mapped:
             return [mapped]
 
+    # Ollama format: done_reason
+    done_reason = _get_nested(raw, "done_reason")
+    if done_reason and isinstance(done_reason, str):
+        mapped = map_finish_reason(done_reason)
+        if mapped:
+            return [mapped]
+
     return []
 
 
@@ -178,6 +193,25 @@ def _collect_finish_reasons_from_choices(choices: Any) -> List[str]:
             fr = getattr(choice, "finish_reason", None)
             if fr is None and isinstance(choice, dict):
                 fr = choice.get("finish_reason")
+            mapped = map_finish_reason(fr)
+            if mapped:
+                reasons.append(mapped)
+    except (TypeError, StopIteration):
+        pass
+    return reasons
+
+
+def _collect_finish_reasons_from_candidates(candidates: Any) -> List[str]:
+    """Collect mapped finish reasons from a Google Gemini-style candidates array."""
+    reasons = []
+    try:
+        for candidate in candidates:
+            fr = getattr(candidate, "finish_reason", None)
+            if fr is None and isinstance(candidate, dict):
+                fr = candidate.get("finish_reason")
+            # Gemini finish_reason may be an enum; convert to string name
+            if fr is not None and not isinstance(fr, str):
+                fr = fr.name if hasattr(fr, "name") else str(fr)
             mapped = map_finish_reason(fr)
             if mapped:
                 reasons.append(mapped)

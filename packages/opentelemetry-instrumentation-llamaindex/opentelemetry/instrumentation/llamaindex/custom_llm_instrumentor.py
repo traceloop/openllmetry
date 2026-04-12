@@ -16,11 +16,13 @@ from opentelemetry.instrumentation.llamaindex._message_utils import (
 from opentelemetry.instrumentation.llamaindex._response_utils import (
     detect_provider_name,
     extract_finish_reasons,
+    extract_response_id,
+    extract_token_usage,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import LLMRequestTypeValues
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.instrumentation.llamaindex.utils import (
     _with_tracer_wrapper,
     dont_throw,
@@ -173,13 +175,31 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
             msg = [{"role": "user", "parts": [{"type": "text", "content": text}]}]
             span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msg))
 
+        tools = kwargs.get("tools")
+        if tools:
+            span.set_attribute(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tools))
+
 
 @dont_throw
 def _handle_response(span, llm_request_type, instance, response):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, instance.metadata.model_name)
 
-    # CRITICAL: finish_reasons is NOT gated by should_send_prompts()
     raw = getattr(response, "raw", None)
+
+    if raw:
+        response_id = extract_response_id(raw)
+        if response_id:
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
+
+        usage = extract_token_usage(raw)
+        if usage.input_tokens is not None:
+            span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, int(usage.input_tokens))
+        if usage.output_tokens is not None:
+            span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, int(usage.output_tokens))
+        if usage.total_tokens is not None:
+            span.set_attribute(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, int(usage.total_tokens))
+
+    # CRITICAL: finish_reasons is NOT gated by should_send_prompts()
     reasons = extract_finish_reasons(raw) if raw else []
     if reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons)

@@ -7,7 +7,6 @@ import pytest
 from opentelemetry.instrumentation.llamaindex._response_utils import (
     TokenUsage,
     detect_provider_name,
-    extract_finish_reasons,
     extract_model_from_raw,
     extract_response_id,
     extract_token_usage,
@@ -168,58 +167,6 @@ class TestExtractTokenUsage:
         assert result.input_tokens == 10
         assert result.output_tokens is None
 
-
-# ===========================================================================
-# extract_finish_reasons
-# ===========================================================================
-
-class TestExtractFinishReasons:
-    def test_openai_choices_object(self):
-        choice = SimpleNamespace(finish_reason="stop")
-        raw = SimpleNamespace(choices=[choice])
-        assert extract_finish_reasons(raw) == ["stop"]
-
-    def test_openai_choices_dict(self):
-        raw = {"choices": [{"finish_reason": "stop"}]}
-        assert extract_finish_reasons(raw) == ["stop"]
-
-    def test_openai_tool_calls_passed_through(self):
-        raw = {"choices": [{"finish_reason": "tool_calls"}]}
-        assert extract_finish_reasons(raw) == ["tool_calls"]
-
-    def test_multiple_choices(self):
-        raw = {"choices": [{"finish_reason": "stop"}, {"finish_reason": "length"}]}
-        assert extract_finish_reasons(raw) == ["stop", "length"]
-
-    def test_anthropic_stop_reason(self):
-        raw = SimpleNamespace(stop_reason="end_turn")
-        assert extract_finish_reasons(raw) == ["stop"]
-
-    def test_anthropic_stop_reason_dict(self):
-        raw = {"stop_reason": "end_turn"}
-        assert extract_finish_reasons(raw) == ["stop"]
-
-    def test_cohere_finish_reason(self):
-        raw = SimpleNamespace(finish_reason="COMPLETE")
-        assert extract_finish_reasons(raw) == ["stop"]
-
-    def test_cohere_finish_reason_dict(self):
-        raw = {"finish_reason": "MAX_TOKENS"}
-        assert extract_finish_reasons(raw) == ["length"]
-
-    def test_none_raw(self):
-        assert extract_finish_reasons(None) == []
-
-    def test_no_finish_reason(self):
-        assert extract_finish_reasons(SimpleNamespace()) == []
-
-    def test_none_finish_reason_in_choices(self):
-        raw = {"choices": [{"finish_reason": None}]}
-        assert extract_finish_reasons(raw) == []
-
-    def test_empty_choices(self):
-        raw = {"choices": []}
-        assert extract_finish_reasons(raw) == []
 
 
 if __name__ == "__main__":

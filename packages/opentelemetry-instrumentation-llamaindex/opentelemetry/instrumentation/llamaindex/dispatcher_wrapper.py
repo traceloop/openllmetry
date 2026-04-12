@@ -151,7 +151,7 @@ class SpanHolder:
     def _(self, event: ReRankStartEvent):
         set_rerank_model_attributes(event, self.otel_span)
         if should_emit_events():
-            emit_rerank_message_event(event)
+            emit_rerank_message_event(event, provider_name=self.provider_name)
         else:
             set_rerank(event, self.otel_span)
 

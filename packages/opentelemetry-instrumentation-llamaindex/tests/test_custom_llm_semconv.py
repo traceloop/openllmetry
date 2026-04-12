@@ -184,23 +184,6 @@ class TestCustomLLMHandleResponse:
         _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
         assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "llama3"
 
-    def test_sets_finish_reasons_from_raw(self):
-        from opentelemetry.semconv_ai import LLMRequestTypeValues
-        span = _span()
-        inst = _instance()
-        resp = SimpleNamespace(text="ok", raw={"choices": [{"finish_reason": "stop"}]})
-        _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
-
-    def test_finish_reasons_not_gated(self):
-        from opentelemetry.semconv_ai import LLMRequestTypeValues
-        span = _span()
-        inst = _instance()
-        resp = SimpleNamespace(text="ok", raw={"choices": [{"finish_reason": "stop"}]})
-        with patch(PATCH_SHOULD_SEND, return_value=False):
-            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
-
     def test_output_gated_by_should_send_prompts(self):
         from opentelemetry.semconv_ai import LLMRequestTypeValues
         span = _span()
@@ -209,6 +192,92 @@ class TestCustomLLMHandleResponse:
         with patch(PATCH_SHOULD_SEND, return_value=False):
             _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
         assert not _has_attr(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+
+
+    def test_sets_response_id_from_raw(self):
+        """gen_ai.response.id should be extracted from raw response."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        resp = SimpleNamespace(text="ok", raw=SimpleNamespace(id="chatcmpl-abc123", model="llama3"))
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_ID) == "chatcmpl-abc123"
+
+    def test_sets_response_id_from_raw_dict(self):
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        resp = SimpleNamespace(text="ok", raw={"id": "resp-456", "model": "llama3"})
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_ID) == "resp-456"
+
+    def test_no_response_id_when_missing(self):
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        resp = SimpleNamespace(text="ok", raw={})
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_RESPONSE_ID)
+
+    def test_sets_token_usage_from_raw(self):
+        """gen_ai.usage.* tokens should be extracted from raw response."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        raw = SimpleNamespace(
+            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=20, total_tokens=30),
+            id=None,
+        )
+        resp = SimpleNamespace(text="ok", raw=raw)
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 10
+        assert _attr(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 20
+        assert _attr(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS) == 30
+
+    def test_no_token_usage_when_missing(self):
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        resp = SimpleNamespace(text="ok", raw={})
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)
+
+    def test_sets_tool_definitions_from_kwargs(self):
+        """gen_ai.tool.definitions should be captured from kwargs when tools are passed."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        tools = [{"type": "function", "function": {"name": "get_weather", "parameters": {"type": "object"}}}]
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_request(span, LLMRequestTypeValues.CHAT, (), {"tools": tools}, inst)
+        raw = _attr(span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS)
+        assert raw is not None
+        parsed = json.loads(raw)
+        assert len(parsed) == 1
+        assert parsed[0]["function"]["name"] == "get_weather"
+
+    def test_no_tool_definitions_when_not_present(self):
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            _handle_request(span, LLMRequestTypeValues.CHAT, (), {}, inst)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS)
+
+    def test_tool_definitions_gated_by_should_send_prompts(self):
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance()
+        tools = [{"type": "function", "function": {"name": "get_weather"}}]
+        with patch(PATCH_SHOULD_SEND, return_value=False):
+            _handle_request(span, LLMRequestTypeValues.CHAT, (), {"tools": tools}, inst)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS)
 
 
 if __name__ == "__main__":

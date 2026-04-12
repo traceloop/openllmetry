@@ -38,9 +38,7 @@ VALID_MESSAGE_ROLES = {role.value for role in Roles}
 
 def _event_attributes(provider_name: Optional[str] = None) -> dict:
     """Build event attributes with the actual LLM provider name."""
-    if provider_name:
-        return {GenAIAttributes.GEN_AI_PROVIDER_NAME: provider_name}
-    return {}
+    return {GenAIAttributes.GEN_AI_PROVIDER_NAME: provider_name or "llamaindex"}
 
 
 def emit_chat_message_events(event: LLMChatStartEvent, provider_name: Optional[str] = None):

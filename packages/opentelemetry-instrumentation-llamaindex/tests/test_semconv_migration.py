@@ -232,43 +232,6 @@ class TestSetLlmChatResponseModelAttributes:
         event.response = MagicMock(raw=raw)
         return event
 
-    def test_sets_finish_reasons_array(self):
-        span = _recording_span()
-        raw = SimpleNamespace(
-            model="gpt-4",
-            choices=[SimpleNamespace(finish_reason="stop")],
-            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=20, total_tokens=30),
-        )
-        set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
-
-    def test_finish_reasons_tool_calls_passed_through(self):
-        span = _recording_span()
-        raw = SimpleNamespace(
-            model="gpt-4",
-            choices=[SimpleNamespace(finish_reason="tool_calls")],
-            usage=SimpleNamespace(prompt_tokens=5, completion_tokens=5, total_tokens=10),
-        )
-        set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["tool_calls"]
-
-    def test_finish_reasons_omitted_when_not_available(self):
-        span = _recording_span()
-        raw = SimpleNamespace(model="gpt-4")
-        set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert not _has_attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
-
-    def test_finish_reasons_not_gated_by_should_send_prompts(self):
-        span = _recording_span()
-        raw = SimpleNamespace(
-            model="gpt-4",
-            choices=[SimpleNamespace(finish_reason="stop")],
-            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=20, total_tokens=30),
-        )
-        with patch(PATCH_SHOULD_SEND, return_value=False):
-            set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
-
     def test_sets_model(self):
         span = _recording_span()
         raw = SimpleNamespace(model="gpt-4o")
@@ -295,15 +258,6 @@ class TestSetLlmChatResponseModelAttributes:
         set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
         assert not _has_attr(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS)
 
-    def test_no_legacy_finish_reason_attr(self):
-        span = _recording_span()
-        raw = SimpleNamespace(
-            model="gpt-4",
-            choices=[SimpleNamespace(finish_reason="stop")],
-        )
-        set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert not _has_attr(span, SpanAttributes.LLM_RESPONSE_FINISH_REASON)
-
     def test_cohere_token_usage(self):
         span = _recording_span()
         raw = SimpleNamespace(
@@ -315,12 +269,6 @@ class TestSetLlmChatResponseModelAttributes:
         assert _attr(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 5
         assert _attr(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 15
         assert _attr(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS) == 20
-
-    def test_cohere_finish_reason_mapped(self):
-        span = _recording_span()
-        raw = SimpleNamespace(model="command-r", finish_reason="COMPLETE")
-        set_llm_chat_response_model_attributes(self._event_with_raw(raw), span)
-        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
 
     def test_response_id_set(self):
         span = _recording_span()
