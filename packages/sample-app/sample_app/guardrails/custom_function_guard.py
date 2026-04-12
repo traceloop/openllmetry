@@ -52,9 +52,8 @@ async def simple_lambda_guard_example():
 
     try:
         guardrail = Guardrails(
-            lambda z: z["word_count"] < 100,
-            on_failure="raise",
-        )
+            lambda z: len(z["text"].split()) < 100,
+        ).log_on_failure()
         result = await guardrail.run(generate_summary)
         print(f"Summary (passed guard): {result}")
     except GuardValidationError as e:
@@ -111,8 +110,7 @@ async def custom_function_guard_example():
     try:
         guardrail = Guardrails(
             content_safety_guard,  # Pass function reference
-            on_failure="raise",
-        )
+        ).raise_on_failure()
         # Default mapper handles str -> {"text": text, "prompt": text, "completion": text}
         result = await guardrail.run(generate_travel_advice)
         print(f"Travel advice: {result[:100]}...")
@@ -148,8 +146,7 @@ async def custom_handler_example():
     try:
         guardrail = Guardrails(
             lambda z: "danger" not in z["text"].lower(),
-            on_failure=custom_alert_handler,
-        )
+        ).on_failure(custom_alert_handler)
         result = await guardrail.run(generate_content)
         print(f"Content: {result[:100]}...")
     except GuardValidationError:
