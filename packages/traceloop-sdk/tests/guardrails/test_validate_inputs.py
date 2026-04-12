@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from traceloop.sdk.guardrail.guardrail import Guardrails
 from traceloop.sdk.guardrail.model import GuardInputTypeError
-from traceloop.sdk.guardrail import pii_guard, toxicity_guard, answer_relevancy_guard
+from traceloop.sdk.guardrail import pii_guard, toxicity_guard
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
@@ -142,26 +142,6 @@ class TestValidateInputsPass:
 
         # With dict that matches schema
         guardrails._validate_inputs([{"text": "Friendly message"}])
-
-    def test_traceloop_answer_relevancy_input(self):
-        """Guard with AnswerRelevancyInput type annotation should validate correctly."""
-        guardrails = create_guardrails_with_guards([
-            answer_relevancy_guard(timeout_in_sec=30)
-        ])
-
-        # With Pydantic model instance
-        guard_input = AnswerRelevancyInput(
-            answer="Paris is the capital of France.",
-            question="What is the capital of France?",
-        )
-        guardrails._validate_inputs([guard_input])
-
-        # With dict that matches schema
-        guardrails._validate_inputs([{
-            "answer": "Paris is the capital of France.",
-            "question": "What is the capital of France?",
-        }])
-
 
     def test_multiple_traceloop_evaluator_guards(self):
         """Multiple guards using guard functions."""

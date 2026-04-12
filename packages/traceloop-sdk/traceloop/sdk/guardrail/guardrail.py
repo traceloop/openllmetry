@@ -49,12 +49,19 @@ class Guardrails:
     """
     Guardrails class for running guarded operations.
 
-    Usage:
+    Usage (constructor kwargs):
         g = Guardrails(
             pii_guard(),
             toxicity_guard(),
             on_failure="raise",
         )
+        result = await g.run(my_function)
+
+    Usage (builder pattern):
+        g = Guardrails(
+            pii_guard(),
+            toxicity_guard(),
+        ).raise_on_failure().parallel()
         result = await g.run(my_function)
     """
 
@@ -97,6 +104,53 @@ class Guardrails:
         self._name = name
         self._run_all = run_all
         self._parallel = parallel
+
+    # -- Builder methods (all return self for chaining) --
+
+    def parallel(self) -> "Guardrails":
+        """Run guards in parallel (default). Returns self for chaining."""
+        self._parallel = True
+        return self
+
+    def sequential(self) -> "Guardrails":
+        """Run guards sequentially. Returns self for chaining."""
+        self._parallel = False
+        return self
+
+    def run_all(self) -> "Guardrails":
+        """Run all guards even after a failure. Returns self for chaining."""
+        self._run_all = True
+        return self
+
+    def fail_fast(self) -> "Guardrails":
+        """Stop at the first guard failure (default). Returns self for chaining."""
+        self._run_all = False
+        return self
+
+    def raise_on_failure(self) -> "Guardrails":
+        """Raise GuardValidationError on failure. Returns self for chaining."""
+        self._on_failure = resolve_on_failure("raise")
+        return self
+
+    def log_on_failure(self) -> "Guardrails":
+        """Log a warning on failure and return the result. Returns self for chaining."""
+        self._on_failure = resolve_on_failure("log")
+        return self
+
+    def ignore_on_failure(self) -> "Guardrails":
+        """Silently return the result on failure (shadow mode). Returns self for chaining."""
+        self._on_failure = resolve_on_failure("ignore")
+        return self
+
+    def on_failure(self, handler: OnFailureInput) -> "Guardrails":
+        """Set a custom failure handler. Accepts a string or callable. Returns self for chaining."""
+        self._on_failure = resolve_on_failure(handler)
+        return self
+
+    def named(self, name: str) -> "Guardrails":
+        """Set the guardrail name (used in span attributes). Returns self for chaining."""
+        self._name = name
+        return self
 
     async def run(
         self,
@@ -238,7 +292,7 @@ class Guardrails:
         body: Dict[str, Any] = {"input": input}
         if evaluator_config is not None:
             body["config"] = evaluator_config
-        
+
         if input_schema is not None:
             body = input_schema(**body).model_dump()
 

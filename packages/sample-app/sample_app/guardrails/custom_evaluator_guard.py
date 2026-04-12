@@ -26,22 +26,12 @@ import asyncio
 import os
 
 from openai import AsyncOpenAI
-from pydantic import BaseModel
-
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, guardrail
 from traceloop.sdk.guardrail import (
     Guardrails,
     custom_evaluator_guard,
 )
-
-
-# Input models for custom evaluators
-# Note: You can use either Pydantic models (recommended) OR plain dictionaries
-# for guard_input. Both are supported by as_guard().
-class MedicalAdviceInput(BaseModel):
-    """Input model for medical advice evaluator."""
-    text: str
 
 
 # Initialize Traceloop
@@ -57,7 +47,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     on_failure="Sorry, I can't help you with that.",
     name="medical_advice_quality_check",
 )
-async def generate_health_info() -> MedicalAdviceInput:
+async def generate_health_info() -> str:
     """
     Generate general health information about hypertension.
 
@@ -82,7 +72,7 @@ async def generate_health_info() -> MedicalAdviceInput:
             },
         ],
     )
-    return MedicalAdviceInput(text=completion.choices[0].message.content or "")
+    return completion.choices[0].message.content or ""
 
 
 async def medical_advice_quality_check():

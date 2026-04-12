@@ -14,11 +14,10 @@ To playback without API key:
 import os
 import pytest
 from traceloop.sdk import Traceloop
-from traceloop.sdk.guardrail import Guardrails, OnFailure, pii_guard, toxicity_guard, answer_relevancy_guard
+from traceloop.sdk.guardrail import Guardrails, OnFailure, pii_guard, toxicity_guard
 from traceloop.sdk.generated.evaluators.request import (
     PIIDetectorInput,
     ToxicityDetectorInput,
-    AnswerRelevancyInput,
 )
 
 
@@ -133,54 +132,6 @@ class TestToxicityDetectorGuard:
         # Toxic text
         passed = await g.validate([
             ToxicityDetectorInput(text="You are stupid and worthless!")
-        ])
-
-        assert passed is False
-
-
-class TestAnswerRelevancyGuard:
-    """Tests for answer relevancy evaluator as guard."""
-
-    @pytest.mark.vcr
-    @pytest.mark.anyio
-    async def test_answer_relevancy_passes_relevant_answer(
-        self, traceloop_client
-    ):
-        """Answer relevancy guard passes for relevant answer."""
-        g = Guardrails(
-            answer_relevancy_guard(),
-            on_failure=OnFailure.raise_exception("Answer not relevant"),
-            name="relevancy-check",
-        )
-
-        # Relevant answer
-        passed = await g.validate([
-            AnswerRelevancyInput(
-                question="What is the capital of France?",
-                answer="The capital of France is Paris."
-            )
-        ])
-
-        assert passed is True
-
-    @pytest.mark.vcr
-    @pytest.mark.anyio
-    async def test_answer_relevancy_fails_irrelevant_answer(
-        self, traceloop_client
-    ):
-        """Answer relevancy guard fails for irrelevant answer."""
-        g = Guardrails(
-            answer_relevancy_guard(),
-            on_failure=OnFailure.log(),
-            name="relevancy-check",
-        )
-
-        # Irrelevant answer
-        passed = await g.validate([
-            AnswerRelevancyInput(
-                question="What is the capital of France?",
-                answer="I like eating pizza on weekends."
-            )
         ])
 
         assert passed is False

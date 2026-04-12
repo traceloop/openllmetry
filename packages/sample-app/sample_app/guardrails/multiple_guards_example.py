@@ -77,9 +77,7 @@ async def multiple_lambda_guards_example():
         lambda z: z["word_count"] < 200,           # Guard 0: Length check
         lambda z: "danger" not in z["text"].lower(),  # Guard 1: Forbidden words
         lambda z: z["caps_ratio"] < 0.3,           # Guard 2: No excessive caps
-        on_failure="raise",
-        parallel=True,
-    )
+    ).parallel().raise_on_failure()
 
     try:
         result = await guardrail.run(generate_content, input_mapper=create_guard_inputs)
@@ -188,10 +186,7 @@ async def run_all_guards_example():
         lambda z: z["word_count"] > 5,                    # Min length
         lambda z: "dangerous" not in z["text"].lower(),   # No dangerous
         lambda z: not z["has_caps_issues"],               # No all caps
-        on_failure=custom_handler,
-        run_all=True,  # Run ALL guards even after first failure
-        parallel=True,
-    )
+    ).on_failure(custom_handler).run_all().parallel()
 
     result = await guardrail.run(generate_problematic_content, input_mapper=create_inputs)
     print(f"Fallback result: {result}")
@@ -247,10 +242,7 @@ async def sequential_guards_example():
 
     guardrail = Guardrails(
         pre_check, main_check, post_check,
-        on_failure="raise",
-        parallel=False,  # Run guards one at a time, in order
-        run_all=False,   # Stop at first failure (default)
-    )
+    ).sequential().fail_fast().raise_on_failure()
 
     try:
         result = await guardrail.run(generate_content, input_mapper=create_sequential_inputs)
@@ -261,11 +253,11 @@ async def sequential_guards_example():
 
 async def main():
     """Run all multiple guards examples."""
-    # print("=" * 70)
-    # print("Example 1: Multiple Lambda Guards (Parallel)")
-    # print("=" * 70)
-    # print("3 guards checking: length, forbidden words, capitalization\n")
-    # await multiple_lambda_guards_example()
+    print("=" * 70)
+    print("Example 1: Multiple Lambda Guards (Parallel)")
+    print("=" * 70)
+    print("3 guards checking: length, forbidden words, capitalization\n")
+    await multiple_lambda_guards_example()
 
     print("\n" + "=" * 70)
     print("Example 2: Mixed Guard Types (Evaluator + Custom Function)")
@@ -276,17 +268,17 @@ async def main():
     except Exception as e:
         print(f"Skipped (requires API key): {e}")
 
-    # print("\n" + "=" * 70)
-    # print("Example 3: Run All Guards (Collect All Failures)")
-    # print("=" * 70)
-    # print("Using run_all=True to run all guards even after failures\n")
-    # await run_all_guards_example()
+    print("\n" + "=" * 70)
+    print("Example 3: Run All Guards (Collect All Failures)")
+    print("=" * 70)
+    print("Using run_all=True to run all guards even after failures\n")
+    await run_all_guards_example()
 
-    # print("\n" + "=" * 70)
-    # print("Example 4: Sequential Guards")
-    # print("=" * 70)
-    # print("Using parallel=False for ordered execution\n")
-    # await sequential_guards_example()
+    print("\n" + "=" * 70)
+    print("Example 4: Sequential Guards")
+    print("=" * 70)
+    print("Using parallel=False for ordered execution\n")
+    await sequential_guards_example()
 
 
 if __name__ == "__main__":
