@@ -78,6 +78,7 @@ class Evaluator:
         self,
         evaluator_slug: str,
         experiment_slug: str,
+        experiment_run_id: str,
         task_id: str,
         request: ExecuteEvaluatorRequest,
         timeout_in_sec: int = 120,
@@ -85,7 +86,7 @@ class Evaluator:
         """Execute evaluator request and return response"""
         body = request.model_dump()
         client = self._async_http_client
-        full_url = f"/v2/experiments/{experiment_slug}/tasks/{task_id}"
+        full_url = f"/v2/experiments/{experiment_slug}/runs/{experiment_run_id}/tasks/{task_id}"
         response = await client.post(
             full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
         )
@@ -133,7 +134,7 @@ class Evaluator:
         )
 
         execute_response = await self._execute_experiment_evaluator_request(
-            evaluator_slug, experiment_slug, task_id, request, timeout_in_sec
+            evaluator_slug, experiment_slug, experiment_run_id, task_id, request, timeout_in_sec
         )
 
         sse_client = SSEClient(shared_client=self._async_http_client)
@@ -178,7 +179,7 @@ class Evaluator:
         )
 
         execute_response = await self._execute_experiment_evaluator_request(
-            evaluator_slug, experiment_slug, task_id, request, 120
+            evaluator_slug, experiment_slug, experiment_run_id, task_id, request, 120
         )
 
         # Return execution_id without waiting for SSE result
