@@ -149,6 +149,8 @@ class SpanHolder:
 
     @update_span_for_event.register
     def _(self, event: ReRankStartEvent):
+        if self.provider_name is None and self.parent is not None:
+            self.provider_name = self.parent.provider_name
         set_rerank_model_attributes(event, self.otel_span)
         if should_emit_events():
             emit_rerank_message_event(event, provider_name=self.provider_name)
