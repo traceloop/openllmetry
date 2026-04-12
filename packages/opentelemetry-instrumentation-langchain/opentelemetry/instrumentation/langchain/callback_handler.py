@@ -462,6 +462,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span, GenAIAttributes.GEN_AI_OPERATION_NAME, operation_name
         )
 
+        # Detach any existing holder's token before creating the suppression
+        # token. The ordering matters: if we detach after attaching the
+        # suppression, ContextVar.reset() restores context to before the span,
+        # wiping the suppression flag and causing duplicate downstream spans.
+        existing_holder = self.spans.get(run_id)
+        if existing_holder is not None and existing_holder.token is not None:
+            self._safe_detach_context(existing_holder.token)
+
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
         try:
@@ -471,13 +479,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         except Exception:
             # If context setting fails, continue without suppression token
             token = None
-
-        # Detach any existing holder's token before overwriting, otherwise
-        # the previous context_api.attach() is orphaned and corrupts the
-        # OTel context stack (same class of bug as #3526 / #3807).
-        existing_holder = self.spans.get(run_id)
-        if existing_holder is not None and existing_holder.token is not None:
-            self._safe_detach_context(existing_holder.token)
 
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, None, entity_path
