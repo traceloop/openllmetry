@@ -110,10 +110,9 @@ class Evaluator:
         execute_response = ExecuteEvaluatorResponse(**result_data)
 
         sse_client = SSEClient(shared_client=self._async_http_client)
-        stream_url = "/v2" + execute_response.stream_url
         return await sse_client.wait_for_result(
             execute_response.execution_id,
-            stream_url,
+            execute_response.stream_url,
             timeout_in_sec,
         )
 

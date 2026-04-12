@@ -57,7 +57,7 @@ openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     on_failure="Sorry, I can't help you with that.",
     name="medical_advice_quality_check",
 )
-async def generate_health_info() -> str:
+async def generate_health_info() -> MedicalAdviceInput:
     """
     Generate general health information about hypertension.
 
@@ -82,7 +82,7 @@ async def generate_health_info() -> str:
             },
         ],
     )
-    return completion.choices[0].message.content or ""
+    return MedicalAdviceInput(text=completion.choices[0].message.content or "")
 
 
 async def medical_advice_quality_check():
