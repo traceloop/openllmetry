@@ -438,7 +438,7 @@ class Experiment:
             output=task_output,
         )
         response = self._http_client.post(
-            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/task",
+            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/tasks",
             body.model_dump(mode="json"),
         )
         if response is None:
