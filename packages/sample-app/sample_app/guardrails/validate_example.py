@@ -25,13 +25,11 @@ from traceloop.sdk.guardrail import (
     Guardrails,
     GuardValidationError,
     prompt_injection_guard,
-    answer_relevancy_guard,
     sexism_guard,
     toxicity_guard,
 )
 from traceloop.sdk.generated.evaluators.request import (
     PromptInjectionInput,
-    AnswerRelevancyInput,
     SexismDetectorInput,
     ToxicityDetectorInput,
 )
@@ -88,17 +86,14 @@ async def secure_chat(user_prompt: str) -> str:
 
     # Step 2: Create output guardrail
     output_guardrail = Guardrails(
-        answer_relevancy_guard(),
         sexism_guard(threshold=0.9),
         toxicity_guard(),
         name="output-guardrail",
     )
 
-
     result = await output_guardrail.run(
         generate_response, user_prompt,
         input_mapper=lambda response_text: {
-            "answer-relevancy": AnswerRelevancyInput(answer=response_text, question=user_prompt),
             "sexism-detector": SexismDetectorInput(text=response_text),
             "toxicity-detector": ToxicityDetectorInput(text=response_text),
         },

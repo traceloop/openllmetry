@@ -2,10 +2,11 @@
 Guardrails class for running guarded operations.
 """
 import asyncio
+import httpx
 import inspect
 import json
 import time
-from typing import Any, Callable, Awaitable, cast, Optional
+from typing import Any, Callable, Awaitable, Dict, cast, Optional
 
 from pydantic import TypeAdapter
 from opentelemetry.trace import Tracer, Span
@@ -27,6 +28,15 @@ from .span_attributes import (
 )
 from .on_failure import OnFailureInput, resolve_on_failure
 from .default_mapper import default_input_mapper
+from traceloop.sdk.evaluator.model import (
+    InputExtractor,
+    InputSchemaMapping,
+    ExecuteEvaluatorRequest,
+    ExecuteEvaluatorResponse,
+    ExecutionResponse,
+)
+from traceloop.sdk.evaluator.stream_client import SSEClient
+from traceloop.sdk.evaluator.evaluator import _validate_evaluator_input, _extract_error_from_response
 from .model import (
     GuardedResult,
     Guard,
@@ -90,6 +100,181 @@ class Guardrails:
         self._name = name
         self._run_all = run_all
         self._parallel = parallel
+
+    async def run(
+        self,
+        func_to_guard: Callable[..., Awaitable[Any]],
+        *args: Any,
+        input_mapper: InputMapper | None = None,
+        **kwargs: Any,
+    ) -> Any | FailureResult:
+        """
+        Execute a function with guardrail protection.
+
+        Args:
+            func_to_guard: Async function that returns any type.
+            *args: Positional arguments to pass to func_to_guard.
+            input_mapper: Optional function to convert output to guard inputs.
+                          If not provided, default mapper handles str and dict.
+            **kwargs: Keyword arguments to pass to func_to_guard.
+
+        Returns:
+            The result from func_to_guard, or the on_failure return value.
+
+        Raises:
+            GuardValidationError: If any guard returns False and on_failure raises
+            GuardExecutionError: If a guard function throws an exception
+
+        Example:
+            g = Guardrails(
+                toxicity_guard(),
+                on_failure="raise",
+            )
+            result = await g.run(generate_email)
+
+            # With arguments
+            result = await g.run(generate_response, user_prompt)
+
+            # With custom mapper
+            result = await g.run(
+                generate_custom_response,
+                input_mapper=lambda r: [{"text": r.content}]
+            )
+        """
+
+        with get_tracer() as tracer:
+            span_name = f"{self._name}.guardrail" if self._name else "guardrail"
+            with tracer.start_as_current_span(span_name) as span:
+                start_time = time.perf_counter()
+                span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "guardrail.run")
+                if self._name:
+                    span.set_attribute(GEN_AI_GUARDRAIL_NAME, self._name)
+
+                # 1. Execute func_to_guard
+                result = await func_to_guard(*args, **kwargs)
+
+                # 2. Convert result to guard inputs
+                if input_mapper:
+                    mapped = input_mapper(result)
+                    if isinstance(mapped, dict):
+                        guard_inputs = self._resolve_dict_inputs(mapped)
+                    else:
+                        guard_inputs = mapped
+                else:
+                    guard_inputs = default_input_mapper(result, len(self._guards))
+
+                # 3. Execute guards with tracing
+                all_passed, _ = await self._execute_guards_with_tracing(
+                    guard_inputs, tracer, span, start_time
+                )
+
+                # 4. Handle failure
+                if not all_passed:
+                    guarded_result = GuardedResult(result=result, guard_inputs=guard_inputs)
+                    failure_result = self._on_failure(guarded_result)
+                    if asyncio.iscoroutine(failure_result):
+                        failure_result = await failure_result
+                    return cast(FailureResult, failure_result)
+
+                # 5. All guards passed, return result
+                return result
+
+    async def validate(
+        self,
+        guard_inputs: list[Any] | dict[str, Any],
+        on_failure: Optional[OnFailureHandler] = None,
+    ) -> bool:
+        """
+        Run guards on inputs directly, without wrapping in a function.
+
+        Args:
+            guard_inputs: Inputs for each guard. Can be:
+                - A list (positional, must match number of guards)
+                - A dict keyed by guard name (order-independent)
+            on_failure: Optional handler to override the configured on_failure
+
+        Returns:
+            bool: True if all guards pass, False if any guard fails
+
+        Raises:
+            GuardExecutionError: If a guard function throws an exception
+
+        Example:
+            g = Guardrails(
+                lambda z: z["score"] > 0.8,
+                on_failure="log",
+            )
+            passed = await g.validate([{"score": 0.9}])  # Returns True
+        """
+
+        if isinstance(guard_inputs, dict):
+            guard_inputs = self._resolve_dict_inputs(guard_inputs)
+
+        failure_handler = on_failure if on_failure is not None else self._on_failure
+
+        with get_tracer() as tracer:
+            all_passed, _ = await self._execute_guards_with_tracing(
+                guard_inputs, tracer
+            )
+
+            # Handle failure
+            if not all_passed and failure_handler is not None:
+                guarded_result = GuardedResult(result=None, guard_inputs=guard_inputs)
+                failure_result = failure_handler(guarded_result)
+                if asyncio.iscoroutine(failure_result):
+                    await failure_result
+
+            return all_passed
+
+    async def execute_evaluator(
+        self,
+        evaluator_slug: str,
+        input: Dict[str, Any],
+        async_http_client: httpx.AsyncClient,
+        timeout_in_sec: int = 120,
+        evaluator_version: Optional[str] = None,
+        evaluator_config: Optional[Dict[str, Any]] = None,
+    ) -> ExecutionResponse:
+        """
+        Execute an evaluator as a guardrail (without experiment context).
+
+        Uses /v2/guardrails/{slug}/execute so the backend can distinguish
+        guardrail runs from experiment runs.
+
+        Args:
+            evaluator_slug: Slug of the evaluator to execute
+            input: Dict mapping evaluator input field names to their values.
+                   Values can be any type (str, int, dict, etc.)
+            async_http_client: The HTTP client to use for the request
+            timeout_in_sec: Timeout in seconds for execution
+            evaluator_version: Version of the evaluator to execute (optional)
+            evaluator_config: Configuration for the evaluator (optional)
+
+        Returns:
+            ExecutionResponse: The evaluation result
+        """
+        _validate_evaluator_input(evaluator_slug, input)
+
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+
+        request = ExecuteEvaluatorRequest(
+            input=schema_mapping,
+            evaluator_version=evaluator_version,
+            config=evaluator_config,
+        )
+
+        execute_response = await self._execute_evaluator_request(
+            evaluator_slug, request, async_http_client, timeout_in_sec
+        )
+
+        sse_client = SSEClient(shared_client=async_http_client)
+        return await sse_client.wait_for_result(
+            execute_response.execution_id,
+            execute_response.stream_url,
+            timeout_in_sec,
+        )
 
     def _resolve_dict_inputs(self, mapped: dict[str, Any]) -> list[Any]:
         """
@@ -293,127 +478,24 @@ class Guardrails:
 
         return all_passed, failed_indices
 
-    async def run(
+    async def _execute_evaluator_request(
         self,
-        func_to_guard: Callable[..., Awaitable[Any]],
-        *args: Any,
-        input_mapper: InputMapper | None = None,
-        **kwargs: Any,
-    ) -> Any | FailureResult:
-        """
-        Execute a function with guardrail protection.
-
-        Args:
-            func_to_guard: Async function that returns any type.
-            *args: Positional arguments to pass to func_to_guard.
-            input_mapper: Optional function to convert output to guard inputs.
-                          If not provided, default mapper handles str and dict.
-            **kwargs: Keyword arguments to pass to func_to_guard.
-
-        Returns:
-            The result from func_to_guard, or the on_failure return value.
-
-        Raises:
-            GuardValidationError: If any guard returns False and on_failure raises
-            GuardExecutionError: If a guard function throws an exception
-
-        Example:
-            g = Guardrails(
-                toxicity_guard(),
-                on_failure="raise",
+        evaluator_slug: str,
+        request: ExecuteEvaluatorRequest,
+        async_http_client: httpx.AsyncClient,
+        timeout_in_sec: int = 120,
+    ) -> ExecuteEvaluatorResponse:
+        """Execute guardrail evaluator request and return response."""
+        body = request.model_dump()
+        full_url = f"/v2/guardrails/{evaluator_slug}/execute"
+        response = await async_http_client.post(
+            full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        )
+        if response.status_code != 200:
+            error_detail = _extract_error_from_response(response)
+            raise Exception(
+                f"Failed to execute guardrail evaluator '{evaluator_slug}': "
+                f"{response.status_code} - {error_detail}"
             )
-            result = await g.run(generate_email)
-
-            # With arguments
-            result = await g.run(generate_response, user_prompt)
-
-            # With custom mapper
-            result = await g.run(
-                generate_custom_response,
-                input_mapper=lambda r: [{"text": r.content}]
-            )
-        """
-
-        with get_tracer() as tracer:
-            span_name = f"{self._name}.guardrail" if self._name else "guardrail"
-            with tracer.start_as_current_span(span_name) as span:
-                start_time = time.perf_counter()
-                span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "guardrail.run")
-                if self._name:
-                    span.set_attribute(GEN_AI_GUARDRAIL_NAME, self._name)
-
-                # 1. Execute func_to_guard
-                result = await func_to_guard(*args, **kwargs)
-
-                # 2. Convert result to guard inputs
-                if input_mapper:
-                    mapped = input_mapper(result)
-                    if isinstance(mapped, dict):
-                        guard_inputs = self._resolve_dict_inputs(mapped)
-                    else:
-                        guard_inputs = mapped
-                else:
-                    guard_inputs = default_input_mapper(result, len(self._guards))
-
-                # 3. Execute guards with tracing
-                all_passed, _ = await self._execute_guards_with_tracing(
-                    guard_inputs, tracer, span, start_time
-                )
-
-                # 4. Handle failure
-                if not all_passed:
-                    guarded_result = GuardedResult(result=result, guard_inputs=guard_inputs)
-                    failure_result = self._on_failure(guarded_result)
-                    if asyncio.iscoroutine(failure_result):
-                        failure_result = await failure_result
-                    return cast(FailureResult, failure_result)
-
-                # 5. All guards passed, return result
-                return result
-
-    async def validate(
-        self,
-        guard_inputs: list[Any] | dict[str, Any],
-        on_failure: Optional[OnFailureHandler] = None,
-    ) -> bool:
-        """
-        Run guards on inputs directly, without wrapping in a function.
-
-        Args:
-            guard_inputs: Inputs for each guard. Can be:
-                - A list (positional, must match number of guards)
-                - A dict keyed by guard name (order-independent)
-            on_failure: Optional handler to override the configured on_failure
-
-        Returns:
-            bool: True if all guards pass, False if any guard fails
-
-        Raises:
-            GuardExecutionError: If a guard function throws an exception
-
-        Example:
-            g = Guardrails(
-                lambda z: z["score"] > 0.8,
-                on_failure="log",
-            )
-            passed = await g.validate([{"score": 0.9}])  # Returns True
-        """
-
-        if isinstance(guard_inputs, dict):
-            guard_inputs = self._resolve_dict_inputs(guard_inputs)
-
-        failure_handler = on_failure if on_failure is not None else self._on_failure
-
-        with get_tracer() as tracer:
-            all_passed, _ = await self._execute_guards_with_tracing(
-                guard_inputs, tracer
-            )
-
-            # Handle failure
-            if not all_passed and failure_handler is not None:
-                guarded_result = GuardedResult(result=None, guard_inputs=guard_inputs)
-                failure_result = failure_handler(guarded_result)
-                if asyncio.iscoroutine(failure_result):
-                    await failure_result
-
-            return all_passed
+        result_data = response.json()
+        return ExecuteEvaluatorResponse(**result_data)

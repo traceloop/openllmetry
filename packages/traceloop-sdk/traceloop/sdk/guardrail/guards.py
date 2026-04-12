@@ -23,7 +23,7 @@ from typing import Any, Callable, Awaitable
 
 from opentelemetry import trace
 
-from .conditions import is_true, is_false, gte
+from .conditions import is_true, is_false
 from .span_attributes import GEN_AI_GUARDRAIL_OUTPUT
 from ..generated.evaluators.definitions import EvaluatorMadeByTraceloop
 from ..evaluator.config import EvaluatorDetails
@@ -57,7 +57,7 @@ def _create_guard(
 
     async def guard_fn(input_data: Any) -> bool:
         from traceloop.sdk import Traceloop
-        from traceloop.sdk.evaluator.evaluator import Evaluator
+        from traceloop.sdk.guardrail.guardrail import Guardrails
 
         # Convert Pydantic model to dict, or use dict directly
         if isinstance(input_data, dict):
@@ -68,11 +68,12 @@ def _create_guard(
             input_dict = dict(input_data)
 
         client = Traceloop.get()
-        evaluator = Evaluator(client._async_http)
+        guardrails = Guardrails()
 
-        eval_response = await evaluator.run(
+        eval_response = await guardrails.execute_evaluator(
             evaluator_slug=evaluator_slug,
             input=input_dict,
+            async_http_client=client._async_http,
             evaluator_version=evaluator_version,
             evaluator_config=evaluator_config,
             timeout_in_sec=timeout_in_sec,
@@ -226,35 +227,6 @@ def prompt_injection_guard(
 
 
 # =============================================================================
-# Quality Evaluators - pass when quality is good (is_* = True)
-# =============================================================================
-
-
-def answer_relevancy_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when the answer is relevant to the question."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.answer_relevancy(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def faithfulness_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when the response is faithful to the context."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.faithfulness(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-# =============================================================================
 # Validators - pass when valid (is_valid_* = True)
 # =============================================================================
 
@@ -311,229 +283,19 @@ def regex_validator_guard(
     )
 
 
-def placeholder_regex_guard(
-    case_sensitive: bool | None = None,
-    dot_include_nl: bool | None = None,
-    multi_line: bool | None = None,
-    should_match: bool | None = None,
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when placeholder regex validation succeeds."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.placeholder_regex(
-            case_sensitive=case_sensitive,
-            dot_include_nl=dot_include_nl,
-            multi_line=multi_line,
-            should_match=should_match,
-        ),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
 # =============================================================================
-# Agent Evaluators - pass on success
+# Quality and Adherence - pass when quality is good
 # =============================================================================
-
-
-def agent_efficiency_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when agent efficiency score meets threshold."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_efficiency(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def agent_flow_quality_guard(
-    conditions: list[str],
-    threshold: float,
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when agent flow meets quality conditions."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_flow_quality(
-            conditions=conditions,
-            threshold=threshold,
-        ),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def agent_goal_accuracy_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when agent goal accuracy score meets threshold."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_goal_accuracy(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def agent_goal_completeness_guard(
-    threshold: float,
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when agent completes its goal."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_goal_completeness(threshold=threshold),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def agent_tool_error_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when no tool errors are detected."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_tool_error_detector(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def agent_tool_trajectory_guard(
-    input_params_sensitive: bool | None = None,
-    mismatch_sensitive: bool | None = None,
-    order_sensitive: bool | None = None,
-    threshold: float | None = None,
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when agent tool trajectory matches expected."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.agent_tool_trajectory(
-            input_params_sensitive=input_params_sensitive,
-            mismatch_sensitive=mismatch_sensitive,
-            order_sensitive=order_sensitive,
-            threshold=threshold,
-        ),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def intent_change_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when intent remains consistent."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.intent_change(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-# =============================================================================
-# Score-based Evaluators - pass when score >= threshold (default 0.8)
-# =============================================================================
-
-
-def answer_correctness_guard(
-    threshold: float = 0.8,
-    condition: Callable[[Any], bool] | None = None,
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when answer correctness score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
-    return _create_guard(
-        EvaluatorMadeByTraceloop.answer_correctness(),
-        condition=effective_condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def answer_completeness_guard(
-    threshold: float = 0.8,
-    condition: Callable[[Any], bool] | None = None,
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when answer completeness score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
-    return _create_guard(
-        EvaluatorMadeByTraceloop.answer_completeness(),
-        condition=effective_condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def context_relevance_guard(
-    threshold: float = 0.8,
-    model: str | None = None,
-    condition: Callable[[Any], bool] | None = None,
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when context relevance score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
-    return _create_guard(
-        EvaluatorMadeByTraceloop.context_relevance(model=model),
-        condition=effective_condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def conversation_quality_guard(
-    threshold: float = 0.7,
-    condition: Callable[[Any], bool] | None = None,
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when conversation quality score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
-    return _create_guard(
-        EvaluatorMadeByTraceloop.conversation_quality(),
-        condition=effective_condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def html_comparison_guard(
-    threshold: float = 0.9,
-    condition: Callable[[Any], bool] | None = None,
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when HTML similarity score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
-    return _create_guard(
-        EvaluatorMadeByTraceloop.html_comparison(),
-        condition=effective_condition,
-        timeout_in_sec=timeout_in_sec,
-    )
 
 
 def instruction_adherence_guard(
-    threshold: float = 0.8,
-    condition: Callable[[Any], bool] | None = None,
+    condition: Callable[[Any], bool] = is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
     """Guard that passes when instruction adherence score meets threshold."""
-    effective_condition = (
-        condition if condition is not None else gte(threshold)
-    )
     return _create_guard(
         EvaluatorMadeByTraceloop.instruction_adherence(),
-        condition=effective_condition,
+        condition=condition,
         timeout_in_sec=timeout_in_sec,
     )
 
@@ -545,35 +307,6 @@ def semantic_similarity_guard(
     """Guard that passes when semantic similarity score meets threshold."""
     return _create_guard(
         EvaluatorMadeByTraceloop.semantic_similarity(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def topic_adherence_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when topic adherence score meets threshold."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.topic_adherence(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-# =============================================================================
-# Score-based Evaluators (lower is better) - pass when score <= threshold
-# =============================================================================
-
-
-def perplexity_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when perplexity score is below threshold."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.perplexity(),
         condition=condition,
         timeout_in_sec=timeout_in_sec,
     )
@@ -601,64 +334,6 @@ def uncertainty_guard(
         condition=condition,
         timeout_in_sec=timeout_in_sec,
     )
-
-
-# =============================================================================
-# Count/Ratio Evaluators - require explicit min/max bounds
-# =============================================================================
-
-
-def word_count_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when word count is within specified bounds."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.word_count(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def char_count_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when character count is within specified bounds."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.char_count(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def word_count_ratio_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when word count ratio is within specified bounds."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.word_count_ratio(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-def char_count_ratio_guard(
-    condition: Callable[[Any], bool] = is_true(),
-    timeout_in_sec: int = 60,
-) -> Guard:
-    """Guard that passes when character count ratio is within specified bounds."""
-    return _create_guard(
-        EvaluatorMadeByTraceloop.char_count_ratio(),
-        condition=condition,
-        timeout_in_sec=timeout_in_sec,
-    )
-
-
-# =============================================================================
-# Special Evaluators
-# =============================================================================
 
 
 def tone_detection_guard(

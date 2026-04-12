@@ -8,26 +8,20 @@ Requires a Traceloop API key to run the evaluators.
 """
 
 import asyncio
-import json
 import os
 
 from openai import AsyncOpenAI
 
 from traceloop.sdk import Traceloop
-from traceloop.sdk.decorators import workflow, agent
+from traceloop.sdk.decorators import workflow
 from traceloop.sdk.guardrail import (
     Guardrails,
     pii_guard,
     toxicity_guard,
-    agent_goal_completeness_guard,
-    answer_relevancy_guard,
 )
-from traceloop.sdk.guardrail.conditions import gt, between
 from traceloop.sdk.generated.evaluators.request import (
     ToxicityDetectorInput,
     PIIDetectorInput,
-    AgentGoalCompletenessInput,
-    AnswerRelevancyInput,
 )
 
 # Initialize Traceloop
@@ -103,132 +97,6 @@ async def toxicity_guard_example():
     print(f"Family-friendly content: {result[:100]}...")
 
 
-# Example 3: Agent Trajectory Evaluation
-# =====================================
-class TravelAgentState:
-    """Track agent prompts and completions for trajectory evaluation."""
-
-    def __init__(self):
-        self.prompts = []
-        self.completions = []
-
-
-@agent(name="travel_planner")
-async def travel_planner_agent(state: TravelAgentState, query: str) -> str:
-    """A travel planning agent that tracks its trajectory."""
-    state.prompts.append(query)
-
-    completion = await openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are an expert travel planner. Provide helpful travel advice.",
-            },
-            {"role": "user", "content": query},
-        ],
-    )
-    response = completion.choices[0].message.content or ""
-    state.completions.append(response)
-    return response
-
-
-@workflow(name="agent_trajectory_example")
-async def agent_trajectory_example():
-    """Demonstrate agent trajectory evaluation for goal completeness."""
-    state = TravelAgentState()
-
-    async def run_travel_agent() -> str:
-        """Run the travel agent and return final response."""
-        # Run the agent through multiple turns
-        await travel_planner_agent(state, "I want to plan a 5-day trip to Japan.")
-        final_response = await travel_planner_agent(
-            state, "What are the must-see attractions in Tokyo?"
-        )
-        return final_response
-
-    def create_trajectory_input(final_response: str) -> list:
-        """Create trajectory input for evaluation."""
-        # Format trajectory in the flattened dictionary format expected by the evaluator
-        trajectory_prompts = {}
-        for i, prompt in enumerate(state.prompts):
-            trajectory_prompts[f"llm.prompts.{i}.role"] = "user"
-            trajectory_prompts[f"llm.prompts.{i}.content"] = prompt
-
-        trajectory_completions = {}
-        for i, completion in enumerate(state.completions):
-            trajectory_completions[f"llm.completions.{i}.content"] = completion
-
-        return [AgentGoalCompletenessInput(
-            trajectory_prompts=json.dumps(trajectory_prompts),
-            trajectory_completions=json.dumps(trajectory_completions)
-        )]
-
-    guardrail = Guardrails(
-        agent_goal_completeness_guard(threshold=0.7),
-        on_failure="Sorry the agent is unable to help you with that.",
-    )
-    result = await guardrail.run(run_travel_agent, input_mapper=create_trajectory_input)
-    print(f"Agent final response: {result[:100]}...")
-
-
-# Example 4: Custom Conditions with Condition Helpers
-# ===================================================
-@workflow(name="condition_helpers_example")
-async def condition_helpers_example():
-    """
-    Demonstrate using condition helpers (gt, between, lambdas) instead of the
-    deprecated Condition class.
-
-    These are short, Pythonic alternatives:
-        gt(0.8)              instead of  Condition.greater_than(0.8)
-        between(0.3, 0.7)   instead of  Condition.between(0.3, 0.7)
-        lambda v: v > 0.9   for any custom logic
-    """
-
-    user_question = "What are the best places to visit in Tokyo?"
-
-    async def generate_travel_response() -> str:
-        """Generate a travel response for relevancy evaluation."""
-        completion = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": user_question,
-                },
-            ],
-        )
-        return completion.choices[0].message.content or ""
-
-    def relevancy_mapper(response: str) -> list:
-        return [AnswerRelevancyInput(answer=response, question=user_question)]
-
-    # Using gt() helper - passes if relevancy score > 0.7
-    guardrail = Guardrails(
-        answer_relevancy_guard(condition=gt(0.7)),
-        on_failure="The response was not relevant enough.",
-    )
-    result = await guardrail.run(generate_travel_response, input_mapper=relevancy_mapper)
-    print(f"Relevancy check (gt 0.7): {result[:100]}...")
-
-    # Using between() helper - passes if relevancy score is in acceptable range
-    guardrail2 = Guardrails(
-        answer_relevancy_guard(condition=between(0.5, 1.0)),
-        on_failure="Relevancy score outside acceptable range.",
-    )
-    result2 = await guardrail2.run(generate_travel_response, input_mapper=relevancy_mapper)
-    print(f"Relevancy check (between 0.5-1.0): {result2[:100]}...")
-
-    # Using a plain lambda - the most Pythonic option
-    guardrail3 = Guardrails(
-        answer_relevancy_guard(condition=lambda v: v >= 0.9),
-        on_failure="The response did not meet the high relevancy bar.",
-    )
-    result3 = await guardrail3.run(generate_travel_response, input_mapper=relevancy_mapper)
-    print(f"Relevancy check (lambda >= 0.9): {result3[:100]}...")
-
-
 async def main():
     """Run all Traceloop evaluator guard examples."""
     print("=" * 60)
@@ -244,22 +112,6 @@ async def main():
     print("=" * 60)
     try:
         await toxicity_guard_example()
-    except Exception as e:
-        print(f"Error: {e}")
-
-    print("\n" + "=" * 60)
-    print("Example 3: Agent Trajectory Evaluation")
-    print("=" * 60)
-    try:
-        await agent_trajectory_example()
-    except Exception as e:
-        print(f"Error: {e}")
-
-    print("\n" + "=" * 60)
-    print("Example 4: Custom Conditions with Condition Helpers")
-    print("=" * 60)
-    try:
-        await condition_helpers_example()
     except Exception as e:
         print(f"Error: {e}")
 
