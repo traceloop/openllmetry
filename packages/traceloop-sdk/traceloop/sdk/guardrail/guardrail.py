@@ -232,24 +232,7 @@ class Guardrails:
         evaluator_config: Optional[Dict[str, Any]] = None,
         input_schema: Optional[Type[BaseModel]] = None,
     ) -> GuardrailResponse:
-        """
-        Execute an evaluator as a guardrail (without experiment context).
-
-        Uses /v2/guardrails/{slug}/execute so the backend can distinguish
-        guardrail runs from experiment runs.
-
-        Args:
-            evaluator_slug: Slug of the evaluator to execute
-            input: Dict mapping evaluator input field names to their values.
-                   Values can be any type (str, int, dict, etc.)
-            async_http_client: The HTTP client to use for the request
-            timeout_in_sec: Timeout in seconds for execution
-            evaluator_config: Configuration for the evaluator (optional)
-            input_schema: Typed Pydantic request model for this evaluator (optional)
-
-        Returns:
-            GuardrailResponse: The evaluation result
-        """
+        """Execute an evaluator via /v2/guardrails/{slug}/execute."""
         _validate_evaluator_input(evaluator_slug, input)
 
         body: Dict[str, Any] = {"input": input}

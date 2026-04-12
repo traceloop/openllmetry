@@ -76,6 +76,47 @@ class Evaluator:
             experiment_run_id=experiment_run_id,
         )
 
+    async def execute(
+        self,
+        evaluator_slug: str,
+        input: Dict[str, Any],
+        timeout_in_sec: int = 120,
+        evaluator_version: Optional[str] = None,
+        evaluator_config: Optional[Dict[str, Any]] = None,
+    ) -> ExecutionResponse:
+        """Execute an evaluator via /v2/evaluators/{slug}/executions (trigger + SSE stream)."""
+        _validate_evaluator_input(evaluator_slug, input, evaluator_config)
+
+        schema_mapping = InputSchemaMapping(
+            root={k: InputExtractor(source=v) for k, v in input.items()}
+        )
+        body: Dict[str, Any] = {"input_schema_mapping": schema_mapping.model_dump()}
+        if evaluator_version is not None:
+            body["evaluator_version"] = evaluator_version
+        if evaluator_config is not None:
+            body["evaluator_config"] = evaluator_config
+
+        full_url = f"/v2/evaluators/{evaluator_slug}/executions"
+        response = await self._async_http_client.post(
+            full_url, json=body, timeout=httpx.Timeout(timeout_in_sec)
+        )
+        if response.status_code != 200:
+            error_detail = _extract_error_from_response(response)
+            raise Exception(
+                f"Failed to trigger evaluator '{evaluator_slug}': "
+                f"{response.status_code} - {error_detail}"
+            )
+        result_data = response.json()
+        execute_response = ExecuteEvaluatorResponse(**result_data)
+
+        sse_client = SSEClient(shared_client=self._async_http_client)
+        stream_url = "/v2" + execute_response.stream_url
+        return await sse_client.wait_for_result(
+            execute_response.execution_id,
+            stream_url,
+            timeout_in_sec,
+        )
+
     async def _execute_evaluator_in_experiment_request(
         self,
         evaluator_slug: str,

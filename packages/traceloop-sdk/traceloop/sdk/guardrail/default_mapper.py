@@ -33,6 +33,9 @@ def default_input_mapper(output: Any, num_guards: int) -> list[dict]:
         }
         return [dict(input_dict) for _ in range(num_guards)]
 
+    if hasattr(output, "model_dump"):
+        output = output.model_dump()
+
     if isinstance(output, dict):
         # Enrich dict with aliases for compatibility with various evaluators
         enriched = {**output}

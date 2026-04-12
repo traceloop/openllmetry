@@ -108,14 +108,51 @@ def custom_evaluator_guard(
     condition: Callable[[Any], bool] = is_true(),
     timeout_in_sec: int = 60,
 ) -> Guard:
-    """Guard that passes when the custom evaluator passes."""
-    evaluator_details = EvaluatorDetails(
-        slug=evaluator_slug,
-        condition_field=condition_field,
-        version=evaluator_version,
-        config=evaluator_config,
-    )
-    return _create_guard(evaluator_details, condition, timeout_in_sec)
+    """Guard that passes when the custom evaluator passes.
+
+    Uses /v2/evaluators/{slug}/execute route.
+    """
+
+    async def guard_fn(input_data: Any) -> bool:
+        from traceloop.sdk import Traceloop
+        from traceloop.sdk.evaluator.evaluator import Evaluator
+
+        if isinstance(input_data, dict):
+            input_dict = input_data
+        elif hasattr(input_data, "model_dump"):
+            input_dict = input_data.model_dump()
+        else:
+            input_dict = dict(input_data)
+
+        client = Traceloop.get()
+        evaluator = Evaluator(async_http_client=client._async_http)
+
+        eval_response = await evaluator.execute(
+            evaluator_slug=evaluator_slug,
+            input=input_dict,
+            evaluator_version=evaluator_version,
+            evaluator_config=evaluator_config,
+            timeout_in_sec=timeout_in_sec,
+        )
+
+        evaluator_result = eval_response.result.evaluator_result
+
+        span = trace.get_current_span()
+        if span is not None:
+            try:
+                span.set_attribute(GEN_AI_GUARDRAIL_OUTPUT, json.dumps(evaluator_result))
+            except (TypeError, ValueError):
+                span.set_attribute(GEN_AI_GUARDRAIL_OUTPUT, str(evaluator_result))
+
+        if condition_field:
+            result_to_validate = evaluator_result[condition_field]
+        else:
+            result_to_validate = evaluator_result
+
+        return condition(result_to_validate)
+
+    guard_fn.__name__ = evaluator_slug
+    return guard_fn
 
 
 # =============================================================================
