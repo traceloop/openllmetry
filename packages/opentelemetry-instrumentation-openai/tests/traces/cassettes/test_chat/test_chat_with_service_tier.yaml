@@ -110,4 +110,214 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Say hello"}],"model":"gpt-5","service_tier":"priority"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '94'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-0f58c5678edee1d3323fbd5ebb57493c-e0fcb6b3dff4eb5b-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/41SwU4CMRC98xVrz6xZUAQ8qiQmGGOiiQdDNqUdlmpp13bWSAj/7rQL7BIx8dKk
+        82Ze3nszm06SMCXZdcLEkqNYlTq9e3q5ffw0ExgvXqXUxXz6fDG86a/FZCoeWDdM2Pk7CNxPnQtL
+        c4DKmhoWDjhCYO0Nh5fjq/6o14vAykrQYawoMR2k/aw/SLNRmg13c0urBHhqeKNvkmziGxQaCd9U
+        zrr7ygq85wVQbd9ERWd1qDDuvfLIDbJuAwprEEwUfQ9a27M26GBReR6kmUrrFsCNsciDtShrtkO2
+        ByELZZRf5uTYk30i92hLFtEtvbNorDrSykpHgWGO9gMi7ahmY02ODVYnRyCSDt2qj7snyHIJyJX2
+        rVyY4GIJsplsQuSVVLYFdFrWfos5xV3bVqb4D30DCAElHUheOpBKHBtu2hyEK/ur7RBxFMw8uC86
+        nhwVuLCG0inrFK7ry/Jrj7DKaVkFOILiHYRVd7adH2eDKhQEAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9ca4ce296530-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:13:32 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '706'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=jCCwtdQVy_SGI3QraXZ_ZKFYVjicCyr98IDaSr8bYAo-1774962811.6468062-1.0.1.1-BOmO4o3UBdHyssawdWqcd0Ezlm0OFLHIeS.r9g_7H3ECqgnXLVnXrB5uYmEuGfAbDr5SN0VfkXPgptunYNMJpyEk8oQd6BVjtqNACk9JS6QJ2wDZmyamjP9FLOvuIrwV;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:43:32 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '15000'
+      x-ratelimit-limit-tokens:
+      - '40000000'
+      x-ratelimit-remaining-requests:
+      - '14999'
+      x-ratelimit-remaining-tokens:
+      - '39999995'
+      x-ratelimit-reset-requests:
+      - 4ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_fd73edca2e2d4210945138c2c023b539
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Say hello"}],"model":"gpt-5","service_tier":"priority"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '94'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-77d9963612d48b2a5fd17513b8620719-8e1a139640e3442a-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/41STUsDMRC9769Yc+7KtrZ217NoERFBoQcpS0ymbWqaLMlULaX/3Un6sVus4CWQ
+        efMe783MJklTpiS7SZmYcxTLWme3z69PD+OxvOfFIF8sHl9Guh589Ud3alQq1gkM+74AgQfWpbDE
+        A1TW7GDhgCME1e5w2C+vr/pFGYGllaADbVZjNsh6eW+Q5UWWD/e8uVUCPDW80TdNN/ENDo2Ebyrn
+        nUNlCd7zGVDt0ERFZ3WoMO698sgNsk4DCmsQTDQ9Aq3tRRt0MF15HqyZldYtgBtjkYdo0dZkj2yP
+        RqbKKD+vKLGn+CTu0dYsolt6JzHY6sQrqx0NDCu0HxBli50aa+bYYN3uHkTyoVv1snNGrJKAXGnf
+        mgsTXMxBNsxmiHwllW0BSSvabzPntHexlZn9R74BhICaDqSqHUglTgM3bQ7Clf3VdhxxNMw8uE86
+        ngoVuLCG2inrFK53l+XXHmFZ0bJm4AiKdxBWnWyTH+HSjf0EAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fad321c772b0b-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:24:50 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '629'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=AntWg5ArFG_5cr2bNCKCd3XWolD6OYyrRK5ls9N9q_U-1774963489.6125448-1.0.1.1-nyE0jAHOxr65AhSvkuNNa1TLKErYtamSdP79ru5a8qAepowAUGajb2mz2YLtOzDDHgq5AtSRGeeIgwKijW3F74OHkPdPSKTVnqbrIntwjnjvx9saFkjJ3jDji84pI2TS;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:54:50 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '15000'
+      x-ratelimit-limit-tokens:
+      - '40000000'
+      x-ratelimit-remaining-requests:
+      - '14999'
+      x-ratelimit-remaining-tokens:
+      - '39999995'
+      x-ratelimit-reset-requests:
+      - 4ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_2ac257878d644116a6a408032d53f272
+    status:
+      code: 200
+      message: OK
 version: 1

@@ -1,79 +1,364 @@
 interactions:
-  - request:
-      body:
-        '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
-        "model": "openllmetry-testing"}'
-      headers:
-        accept:
-          - application/json
-        accept-encoding:
-          - gzip, deflate
-        connection:
-          - keep-alive
-        content-length:
-          - "113"
-        content-type:
-          - application/json
-        host:
-          - traceloop-stg.openai.azure.com
-        user-agent:
-          - AzureOpenAI/Python 1.14.3
-        x-stainless-arch:
-          - arm64
-        x-stainless-async:
-          - "false"
-        x-stainless-lang:
-          - python
-        x-stainless-os:
-          - MacOS
-        x-stainless-package-version:
-          - 1.14.3
-        x-stainless-runtime:
-          - CPython
-        x-stainless-runtime-version:
-          - 3.12.1
-      method: POST
-      uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
-    response:
-      body:
-        string:
-          '{"choices":[{"content_filter_results":{"hate":{"filtered":true,"severity":"high"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"finish_reason":"content_filter","index":0,"logprobs":null}],"created":1714038380,"id":"chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo","model":"gpt-35-turbo","object":"chat.completion","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}],"system_fingerprint":null,"usage":{"completion_tokens":19,"prompt_tokens":15,"total_tokens":34}}
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+      "model": "openllmetry-testing"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '113'
+      content-type:
+      - application/json
+      host:
+      - traceloop-stg.openai.azure.com
+      user-agent:
+      - AzureOpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: '{"choices":[{"content_filter_results":{"hate":{"filtered":true,"severity":"high"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"finish_reason":"content_filter","index":0,"logprobs":null}],"created":1714038380,"id":"chatcmpl-9HpyGSWv1hoKdGaUaiFhfxzTEVlZo","model":"gpt-35-turbo","object":"chat.completion","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}],"system_fingerprint":null,"usage":{"completion_tokens":19,"prompt_tokens":15,"total_tokens":34}}
 
-          '
-      headers:
-        Cache-Control:
-          - no-cache, must-revalidate
-        Content-Length:
-          - "882"
-        Content-Type:
-          - application/json
-        Date:
-          - Thu, 25 Apr 2024 09:46:20 GMT
-        Strict-Transport-Security:
-          - max-age=31536000; includeSubDomains; preload
-        access-control-allow-origin:
-          - "*"
-        apim-request-id:
-          - 6624fbc0-526e-4c5f-b98c-fb96daf3c582
-        azureml-model-session:
-          - d061-20240328190738
-        x-accel-buffering:
-          - "no"
-        x-content-type-options:
-          - nosniff
-        x-ms-client-request-id:
-          - 6624fbc0-526e-4c5f-b98c-fb96daf3c582
-        x-ms-rai-invoked:
-          - "true"
-        x-ms-region:
-          - East US 2
-        x-ratelimit-remaining-requests:
-          - "119"
-        x-ratelimit-remaining-tokens:
-          - "119984"
-        x-request-id:
-          - cc6ffd40-d056-43b3-9813-19c43abd66d6
-      status:
-        code: 200
-        message: OK
+        '
+    headers:
+      Cache-Control:
+      - no-cache, must-revalidate
+      Content-Length:
+      - '882'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 25 Apr 2024 09:46:20 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      access-control-allow-origin:
+      - '*'
+      apim-request-id:
+      - 6624fbc0-526e-4c5f-b98c-fb96daf3c582
+      azureml-model-session:
+      - d061-20240328190738
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-client-request-id:
+      - 6624fbc0-526e-4c5f-b98c-fb96daf3c582
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US 2
+      x-ratelimit-remaining-requests:
+      - '119'
+      x-ratelimit-remaining-tokens:
+      - '119984'
+      x-request-id:
+      - cc6ffd40-d056-43b3-9813-19c43abd66d6
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about opentelemetry"}],"model":"openllmetry-testing"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '107'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-8a534118d57a104d19842fafe2767da4-6545963c381c6dd5-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: '{"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"protected_material_code":{"detected":false,"filtered":false},"protected_material_text":{"detected":false,"filtered":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"finish_reason":"stop","index":0,"logprobs":null,"message":{"annotations":[],"content":"Why
+        did the developer break up with OpenTelemetry?\n\nBecause it kept tracing
+        all their every move!","refusal":null,"role":"assistant"}}],"created":1774962755,"id":"chatcmpl-DPTBTtJGQyOFXTqFxkz1vLcJp88b1","model":"gpt-4.1-mini-2025-04-14","object":"chat.completion","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"jailbreak":{"detected":false,"filtered":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}],"system_fingerprint":"fp_b6f445fc1c","usage":{"completion_tokens":20,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens":16,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":36}}
+
+        '
+    headers:
+      Content-Length:
+      - '1311'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:12:36 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - f35bbc59-e2dd-4c19-a14b-8bbf878f650b
+      azureml-model-session:
+      - d20260330170902-0e618f323d34
+      skip-error-remapping:
+      - 'true'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - openllmetry-testing
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US 2
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-limit-requests:
+      - '120'
+      x-ratelimit-limit-tokens:
+      - '120000'
+      x-ratelimit-remaining-requests:
+      - '119'
+      x-ratelimit-remaining-tokens:
+      - '119986'
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-renewalperiod-tokens:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '500'
+      x-ratelimit-reset-tokens:
+      - '7'
+      x-request-id:
+      - 8995300f-616e-4461-9c0b-c8cd6bbc6cc4
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about opentelemetry"}],"model":"openllmetry-testing"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '107'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-741d4e4308ad785516670d9ab45aa6bf-4f5c9db20f099fd0-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: '{"choices":[{"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"protected_material_code":{"detected":false,"filtered":false},"protected_material_text":{"detected":false,"filtered":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}},"finish_reason":"stop","index":0,"logprobs":null,"message":{"annotations":[],"content":"Why
+        did the developer break up with OpenTelemetry?\n\nBecause it was always tracing
+        their every move!","refusal":null,"role":"assistant"}}],"created":1774963228,"id":"chatcmpl-DPTJ6Lnbu6D8kXikzbwvbEqSkwF4V","model":"gpt-4.1-mini-2025-04-14","object":"chat.completion","prompt_filter_results":[{"prompt_index":0,"content_filter_results":{"hate":{"filtered":false,"severity":"safe"},"jailbreak":{"detected":false,"filtered":false},"self_harm":{"filtered":false,"severity":"safe"},"sexual":{"filtered":false,"severity":"safe"},"violence":{"filtered":false,"severity":"safe"}}}],"system_fingerprint":"fp_b6f445fc1c","usage":{"completion_tokens":20,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens":16,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":36}}
+
+        '
+    headers:
+      Content-Length:
+      - '1313'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:20:28 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - fd955da2-0983-4833-ab46-187b3434561f
+      azureml-model-session:
+      - d20260330170902-0e618f323d34
+      skip-error-remapping:
+      - 'true'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - openllmetry-testing
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US 2
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-limit-requests:
+      - '120'
+      x-ratelimit-limit-tokens:
+      - '120000'
+      x-ratelimit-remaining-requests:
+      - '119'
+      x-ratelimit-remaining-tokens:
+      - '119986'
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-renewalperiod-tokens:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '500'
+      x-ratelimit-reset-tokens:
+      - '7'
+      x-request-id:
+      - ae1e4ad7-16c3-4c59-aa46-57880a4fbf31
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about opentelemetry"}],"model":"openllmetry-testing"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '107'
+      Content-Type:
+      - application/json
+      Host:
+      - traceloop-stg.openai.azure.com
+      User-Agent:
+      - AzureOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-7ce05715f304dd9a68a6665909749cca-3991b5d6a059dbdb-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://traceloop-stg.openai.azure.com/openai/deployments/openllmetry-testing/chat/completions?api-version=2024-02-01
+  response:
+    body:
+      string: "{\"choices\":[{\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"protected_material_code\":{\"detected\":false,\"filtered\":false},\"protected_material_text\":{\"detected\":false,\"filtered\":false},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}},\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"annotations\":[],\"content\":\"Sure!
+        Here's a light-hearted joke about OpenTelemetry for you:\\n\\nWhy did the
+        developer bring OpenTelemetry to the party?  \\nBecause they wanted to trace
+        every move! \U0001F604\",\"refusal\":null,\"role\":\"assistant\"}}],\"created\":1774963439,\"id\":\"chatcmpl-DPTMVjUeyeV0RbYBZ1beSsQyu2bZR\",\"model\":\"gpt-4.1-mini-2025-04-14\",\"object\":\"chat.completion\",\"prompt_filter_results\":[{\"prompt_index\":0,\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"jailbreak\":{\"detected\":false,\"filtered\":false},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}}}],\"system_fingerprint\":\"fp_b6f445fc1c\",\"usage\":{\"completion_tokens\":36,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"audio_tokens\":0,\"reasoning_tokens\":0,\"rejected_prediction_tokens\":0},\"prompt_tokens\":16,\"prompt_tokens_details\":{\"audio_tokens\":0,\"cached_tokens\":0},\"total_tokens\":52}}\n"
+    headers:
+      Content-Length:
+      - '1382'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:23:59 GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      apim-request-id:
+      - d59e5be9-eb91-47b2-bd32-495b19374a85
+      azureml-model-session:
+      - d20260330170902-0e618f323d34
+      skip-error-remapping:
+      - 'true'
+      x-accel-buffering:
+      - 'no'
+      x-content-type-options:
+      - nosniff
+      x-ms-deployment-name:
+      - openllmetry-testing
+      x-ms-is-spilled-over:
+      - 'false'
+      x-ms-rai-invoked:
+      - 'true'
+      x-ms-region:
+      - East US 2
+      x-ratelimit-abusepenalty-active:
+      - 'False'
+      x-ratelimit-limit-requests:
+      - '120'
+      x-ratelimit-limit-tokens:
+      - '120000'
+      x-ratelimit-remaining-requests:
+      - '119'
+      x-ratelimit-remaining-tokens:
+      - '119986'
+      x-ratelimit-renewalperiod-requests:
+      - '60'
+      x-ratelimit-renewalperiod-tokens:
+      - '60'
+      x-ratelimit-reset-requests:
+      - '500'
+      x-ratelimit-reset-tokens:
+      - '7'
+      x-request-id:
+      - 0af13bfb-ee05-43df-a048-084b4841547a
+    status:
+      code: 200
+      message: OK
 version: 1

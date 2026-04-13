@@ -14,7 +14,7 @@ from .utils import get_input_messages, get_output_messages
 @pytest.mark.vcr
 def test_vision(instrument_legacy, span_exporter, log_exporter, openai_client):
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
@@ -70,7 +70,7 @@ def test_vision_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
@@ -141,7 +141,7 @@ def test_vision_with_events_with_no_content(
     instrument_with_no_content, span_exporter, log_exporter, openai_client
 ):
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
@@ -202,7 +202,7 @@ def test_vision_base64(instrument_legacy, span_exporter, log_exporter, openai_cl
     base64_image = base64.b64encode(image_data).decode("utf-8")
 
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
@@ -269,7 +269,7 @@ def test_vision_base64_with_events_with_content(
     base64_image = base64.b64encode(image_data).decode("utf-8")
 
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
@@ -348,7 +348,7 @@ def test_vision_base64_with_events_with_no_content(
     base64_image = base64.b64encode(image_data).decode("utf-8")
 
     response = openai_client.chat.completions.create(
-        model="gpt-4-vision-preview",
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
