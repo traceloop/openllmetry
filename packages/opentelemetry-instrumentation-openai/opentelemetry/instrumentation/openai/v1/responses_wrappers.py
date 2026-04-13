@@ -183,6 +183,11 @@ class TracedData(pydantic.BaseModel):
     request_service_tier: Optional[str] = pydantic.Field(default=None)
     response_service_tier: Optional[str] = pydantic.Field(default=None)
 
+    # Response status from Responses API ("completed", "incomplete", "failed", etc.)
+    response_status: Optional[str] = pydantic.Field(default=None)
+    # Reason from incomplete_details when status is "incomplete"
+    incomplete_reason: Optional[str] = pydantic.Field(default=None)
+
     # Trace context - to maintain trace continuity across async operations
     trace_context: Any = pydantic.Field(default=None)
 
@@ -191,6 +196,41 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+
+def _derive_finish_reason(traced_data: TracedData) -> str:
+    """Derive finish_reason from response.status instead of fabricating from block types.
+
+    Mapping:
+      completed + tool calls → "tool_call"
+      completed + no tool calls → "stop"
+      incomplete + max_output_tokens → "length"
+      incomplete + content_filter → "content_filter"
+      incomplete + other → "length"
+      failed → "error"
+      None/unknown → ""
+    """
+    status = traced_data.response_status
+    if not status:
+        return ""
+    if status == "completed":
+        if traced_data.output_blocks:
+            for block in traced_data.output_blocks.values():
+                block_dict = model_as_dict(block)
+                if block_dict.get("type") in (
+                    "function_call", "file_search_call", "web_search_call",
+                    "computer_call", "code_interpreter_call",
+                ):
+                    return "tool_call"
+        return "stop"
+    if status == "incomplete":
+        reason = traced_data.incomplete_reason
+        if reason == "content_filter":
+            return "content_filter"
+        return "length"
+    if status in ("failed", "cancelled"):
+        return "error"
+    return ""
 
 
 def parse_response(response: Union[LegacyAPIResponse, Response]) -> Response:
@@ -256,7 +296,11 @@ def prepare_kwargs_for_shared_attributes(kwargs):
 
 
 def _set_responses_json_messages(traced_response: TracedData, span: Span):
-    """Set gen_ai.input.messages and gen_ai.output.messages as JSON."""
+    """Set gen_ai.input.messages and gen_ai.output.messages as JSON.
+
+    finish_reason is derived from response.status via _derive_finish_reason(),
+    not fabricated from output block types.
+    """
     # Build input messages
     input_messages = []
     if traced_response.instructions:
@@ -352,12 +396,10 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
-            has_tool_call = any(p.get("type") == "tool_call" for p in parts)
-            finish_reason = "tool_call" if has_tool_call else "stop"
             output_messages.append({
                 "role": "assistant",
                 "parts": parts,
-                "finish_reason": finish_reason,
+                "finish_reason": _derive_finish_reason(traced_response),
             })
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
@@ -419,26 +461,13 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         traced_response.response_reasoning_effort,
     )
 
-    # P1-2: Derive finish_reasons from output blocks
-    if traced_response.output_blocks:
-        finish_reasons = []
-        has_tool_call = False
-        for block in traced_response.output_blocks.values():
-            block_dict = model_as_dict(block)
-            block_type = block_dict.get("type")
-            if block_type == "message":
-                finish_reasons.append("stop")
-            elif block_type in ("function_call", "file_search_call", "web_search_call",
-                                "computer_call", "code_interpreter_call"):
-                has_tool_call = True
-        if has_tool_call:
-            finish_reasons.append("tool_call")
-        if finish_reasons:
-            _set_span_attribute(
-                span,
-                GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-                tuple(finish_reasons),
-            )
+    finish_reason = _derive_finish_reason(traced_response)
+    if finish_reason:
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+            (finish_reason,),
+        )
 
     if should_send_prompts():
         _set_responses_json_messages(traced_response, span)
@@ -585,6 +614,11 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
             request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
+            response_status=parsed_response.status,
+            incomplete_reason=(
+                getattr(parsed_response.incomplete_details, "reason", None)
+                if getattr(parsed_response, "incomplete_details", None) else None
+            ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
@@ -748,6 +782,11 @@ async def async_responses_get_or_create_wrapper(
             response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
             request_service_tier=existing_data.get("request_service_tier", non_sentinel_kwargs.get("service_tier")),
             response_service_tier=existing_data.get("response_service_tier", parsed_response.service_tier),
+            response_status=parsed_response.status,
+            incomplete_reason=(
+                getattr(parsed_response.incomplete_details, "reason", None)
+                if getattr(parsed_response, "incomplete_details", None) else None
+            ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
@@ -1008,6 +1047,11 @@ class ResponseStream(ObjectProxy):
                     self._traced_data.response_id = parsed_response.id
                     self._traced_data.response_model = parsed_response.model
                     self._traced_data.output_text = self._output_text
+                    self._traced_data.response_status = parsed_response.status
+                    self._traced_data.incomplete_reason = (
+                        getattr(parsed_response.incomplete_details, "reason", None)
+                        if getattr(parsed_response, "incomplete_details", None) else None
+                    )
 
                     if parsed_response.usage:
                         self._traced_data.usage = parsed_response.usage

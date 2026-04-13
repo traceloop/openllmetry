@@ -15,7 +15,7 @@ def assistant(openai_client):
         name="Math Tutor",
         instructions="You are a personal math tutor. Write and run code to answer math questions.",
         tools=[{"type": "code_interpreter"}],
-        model="gpt-4-turbo-preview",
+        model="gpt-4o-mini",
     )
 
 
@@ -60,11 +60,11 @@ def test_new_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -79,8 +79,8 @@ def test_new_assistant(
     )
     assert input_messages[2]["role"] == "user"
     assert input_messages[2]["parts"][0]["content"] == user_message
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 89
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     output_messages = get_output_messages(open_ai_span)
@@ -143,15 +143,15 @@ def test_new_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
@@ -224,14 +224,14 @@ def test_new_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 145
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 155
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
@@ -286,8 +286,8 @@ def test_new_assistant_with_polling(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
     assert input_messages[0]["parts"][0]["content"] == (
@@ -301,8 +301,8 @@ def test_new_assistant_with_polling(
     )
     assert input_messages[2]["role"] == "user"
     assert input_messages[2]["parts"][0]["content"] == user_message
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     output_messages = get_output_messages(open_ai_span)
@@ -355,10 +355,10 @@ def test_new_assistant_with_polling_with_events_with_content(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 376
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 83
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
@@ -429,10 +429,10 @@ def test_new_assistant_with_polling_with_events_with_no_content(
     ]
     open_ai_span = spans[0]
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
-    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4-turbo-preview"
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 374
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 86
+    assert open_ai_span.attributes["gen_ai.request.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes["gen_ai.response.model"] == "gpt-4o-mini"
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 89
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
@@ -468,7 +468,7 @@ def test_existing_assistant(
 
     run = openai_client.beta.threads.runs.create(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
     )
 
@@ -493,11 +493,11 @@ def test_existing_assistant(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -512,8 +512,8 @@ def test_existing_assistant(
     )
     assert input_messages[2]["role"] == "user"
     assert input_messages[2]["parts"][0]["content"] == user_message
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     output_messages = get_output_messages(open_ai_span)
@@ -547,7 +547,7 @@ def test_existing_assistant_with_events_with_content(
 
     run = openai_client.beta.threads.runs.create(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
     )
 
@@ -572,19 +572,19 @@ def test_existing_assistant_with_events_with_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 5
+    assert len(logs) == 4
 
     # Validate run system message Event
     assert_message_in_logs(
@@ -612,21 +612,13 @@ def test_existing_assistant_with_events_with_content(
         {"content": user_message},
     )
 
-    # Validate the first ai response
+    # Validate the ai response
     choice_event = {
         "index": 0,
         "finish_reason": "unknown",
-        "message": {"content": messages.data[-2].content[0].text.value},
-    }
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
-
-    # Validate the second ai response
-    choice_event = {
-        "index": 1,
-        "finish_reason": "unknown",
         "message": {"content": messages.data[-1].content[0].text.value},
     }
-    assert_message_in_logs(logs[4], "gen_ai.choice", choice_event)
+    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -644,7 +636,7 @@ def test_existing_assistant_with_events_with_no_content(
 
     run = openai_client.beta.threads.runs.create(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
     )
 
@@ -667,19 +659,19 @@ def test_existing_assistant_with_events_with_no_content(
     open_ai_span = spans[0]
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 639
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 170
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 89
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 5
+    assert len(logs) == 4
 
     # Validate run system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -691,13 +683,9 @@ def test_existing_assistant_with_events_with_no_content(
     user_message_log = logs[2]
     assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
 
-    # Validate the first ai response
+    # Validate the ai response
     choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
     assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
-
-    # Validate the second ai response
-    choice_event = {"index": 1, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[4], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -740,11 +728,11 @@ def test_streaming_new_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -758,8 +746,8 @@ def test_streaming_new_assistant(
         " The user has a premium account."
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     output_messages = get_output_messages(open_ai_span)
@@ -814,19 +802,19 @@ def test_streaming_new_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 89
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 4
+    assert len(logs) == 3
 
     # Validate run system message Event
     assert_message_in_logs(
@@ -860,21 +848,6 @@ def test_streaming_new_assistant_with_events_with_content(
         },
     }
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
-
-    # Validate the second ai response
-    choice_event = {
-        "index": 1,
-        "finish_reason": "unknown",
-        "message": {
-            "content": [
-                {
-                    "text": {"annotations": [], "value": assistant_messages[1]},
-                    "type": "text",
-                }
-            ],
-        },
-    }
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -917,19 +890,19 @@ def test_streaming_new_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 790
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 225
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 382
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 90
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 4
+    assert len(logs) == 3
 
     # Validate run system message Event
     assert_message_in_logs(logs[0], "gen_ai.system.message", {})
@@ -940,10 +913,6 @@ def test_streaming_new_assistant_with_events_with_no_content(
     # Validate the first ai response
     choice_event = {"index": 0, "finish_reason": "unknown", "message": {}}
     assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
-
-    # Validate the second ai response
-    choice_event = {"index": 1, "finish_reason": "unknown", "message": {}}
-    assert_message_in_logs(logs[3], "gen_ai.choice", choice_event)
 
 
 @pytest.mark.vcr
@@ -971,7 +940,7 @@ def test_streaming_existing_assistant(
 
     with openai_client.beta.threads.runs.create_and_stream(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
         event_handler=EventHandler(),
     ) as stream:
@@ -986,11 +955,11 @@ def test_streaming_existing_assistant(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     input_messages = get_input_messages(open_ai_span)
     assert input_messages[0]["role"] == "system"
@@ -1003,8 +972,8 @@ def test_streaming_existing_assistant(
         "Please address the user as Jane Doe."
         " The user has a premium account."
     )
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 89
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     output_messages = get_output_messages(open_ai_span)
@@ -1044,7 +1013,7 @@ def test_streaming_existing_assistant_with_events_with_content(
 
     with openai_client.beta.threads.runs.create_and_stream(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
         event_handler=EventHandler(),
     ) as stream:
@@ -1059,15 +1028,15 @@ def test_streaming_existing_assistant_with_events_with_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 380
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 90
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     logs = log_exporter.get_finished_logs()
@@ -1078,7 +1047,8 @@ def test_streaming_existing_assistant_with_events_with_content(
         logs[0],
         "gen_ai.system.message",
         {
-            "content": "You are a personal math tutor. Write and run code to answer math questions.",
+            "content": "You are a personal math tutor."
+            " Write and run code to answer math questions."
         },
     )
 
@@ -1087,7 +1057,8 @@ def test_streaming_existing_assistant_with_events_with_content(
         logs[1],
         "gen_ai.system.message",
         {
-            "content": "Please address the user as Jane Doe. The user has a premium account.",
+            "content": "Please address the user as Jane Doe."
+            " The user has a premium account."
         },
     )
 
@@ -1132,7 +1103,7 @@ def test_streaming_existing_assistant_with_events_with_no_content(
 
     with openai_client.beta.threads.runs.create_and_stream(
         thread_id=thread.id,
-        assistant_id="asst_rr3RGZE5iqoMCxqFOpb7AZmr",
+        assistant_id="asst_D2BqLQ9rNgOjd5A3NpS9m9s4",
         instructions="Please address the user as Jane Doe. The user has a premium account.",
         event_handler=EventHandler(),
     ) as stream:
@@ -1147,14 +1118,14 @@ def test_streaming_existing_assistant_with_events_with_no_content(
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
     assert (
         open_ai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
-        == "gpt-4-turbo-preview"
+        == "gpt-4o-mini"
     )
 
-    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 364
+    assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 381
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 88
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 

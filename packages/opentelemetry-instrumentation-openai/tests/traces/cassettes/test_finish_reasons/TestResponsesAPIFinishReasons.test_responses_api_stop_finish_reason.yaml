@@ -1,0 +1,106 @@
+interactions:
+- request:
+    body: '{"input":"Say hello in one word.","model":"gpt-4.1-nano"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '57'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/31UW3LbMAz8zylSfccZyS/ZPUHvkOloIBJy2FAEy4cnnozvXoh6WGqc/IlYYLnA
+        gvp4eHzMlMx+PmYOva3yUjayLI6y2JRlLTZ5vj+KWjY7zHcoDsWxBHmsAXZC7Os15Jsme+ooqP6D
+        Iow0ZDz2ceEQAsoKOqwoy+1xf9iXecJ8gBB9VyOotRo5ry+qQbydHEXT6WpAe+zDSmtlThz74CMH
+        LFzQdfUSz6jJ8oGBa3/xSHn3anSOukoTtU6BxuHfiEZcKosGdLgwmD/3ycqMZJXEAEr7eaUyPrgo
+        guKm5/EW3iuKwcZQBXrDz2Ag0pUAvaRrSaLuejrZsNo+FysDhlbrfL1b5dtVsR3GnYg57SVNop/H
+        5GTrT98YyYdtZ+ShxENd1KJuAJv8sE7MiSVcLCYe9B5OeAO+ciyBgkxAcxM1F7agHaeC72GqTglg
+        DPENwyRffi9ATSfrqL6DJCLm/YVa049sgq7D15SdOdJJAXivuBcW+zAmpiTeKMeGoF6aw/72G2h5
+        uXlJ8M6SMHRWFH017n+VvJh8Ze2tDUwpXrF6w8uXmMNuijyDeQa/Ik9msfzYNOTCLKnzJ7YtuJF7
+        egseGgwXFtQRNwoXm+/RnRW3FNT4lhqIuneGDSeH8wkEbPmZ8RakcDE0PzgwKGNdLdzOM+dTXj/y
+        QfEZXU1epVHyvkkV29sb7k14JZaXXIuBsgm4LQIfbTVbj3wK2rlGF42AYbCZVB5qPf5wYlrzqQFl
+        Fq+22Dx9js9+BVObyUB5K8wXrf7/M9jci9+jncz/ijnwq9EzvftpgtEvzW6ZXUKAjv76cP0H9rGX
+        Qv4FAAA=
+    headers:
+      CF-RAY:
+      - 9e502bab19968e49-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 14:51:10 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '885'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=pZwgl1RPYW0T08HUB4rgJFAevk1VVoA7kckH5kc1QWA-1774968669.9393387-1.0.1.1-O8MYYHRzZReovvHAGk8.uTCozkTp2lRbv7B10CHBrh5o4YoOQgWslwMVxk43PG4C4p8vI8ClA4hgettGoaihSvHXvEXeGu.dvmcuaarJEjIRQdKDHHkE7MSF0ReEEBQh;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        15:21:10 GMT
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999967'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b704fbab08a94127ae615d3ca3689a3b
+    status:
+      code: 200
+      message: OK
+version: 1

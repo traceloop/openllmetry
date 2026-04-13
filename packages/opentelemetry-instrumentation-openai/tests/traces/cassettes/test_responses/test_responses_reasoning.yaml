@@ -104,4 +104,108 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"input":"Count r''s in strawberry","model":"gpt-5-nano","reasoning":{"effort":"low","summary":null}}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '100'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/31U23KjMAx971d0eG52zCVA+iudDiOMSL01NutLtplO/n2FubfpvoGOdCzpHPvz
+        4fExEk30/BgZtH3F4rao4RSXecLzFBhj+YnXvMY0KyEr4xODY5azNGM8a1mBJURPA4WufyN3M41W
+        Fsc4NwgOmwoGLC6K7JSneZkGzDpw3g41XHe9RMobi2rg72ejvRr6akFaHMNCSqHOFPukXwr0cEUz
+        1Dd4Qal7+iHgNh48U345OgsoGqOHSuWlDIHW4B+Pil+rHhVIdyWQ/WIBE2omqxp0IKTdVgplnfHc
+        CRp6G+/go9Le9d5VTr/jd9BpLSsOck/X6QblMNO5d4fjQYHSh4QlxwMrD6yYlh1oKekl7GHcxqqj
+        /Y+KRZMGFcukyLKYZXGctG2JbSAOJO7a46gjWK2GfS+Q9V0HZljNy2uI3Z7uNdDZ888dZHXL+NBB
+        fSwhLzgrkjpFSOF7Bx1aC2fcnP+DYQLItXKo1q1sG9vRzqLgh1uqQwIopemESciX1x0o9bk3ur6D
+        BCLiTaMlepu+lsTIaBkOB2sFjUF9PsyJIYm8bMgKKPe2IGeN3u/pWpE98Y49CboI7W0137wqyLA4
+        itruekeU/A2rd7z+iBkcFkjjbzNWGyzXDttWmzCy1H+nFW68MZQu19BCi+5KHQ3MrcDdpbNoLoJm
+        cmK+xi14OapCYmuD2xU47OiGkwNCOJ6mn7Y/tUaNdbD+b1QPeVvTRhc0tbYi7JK81gjfrc/HqMKb
+        pvaCbN7paAFWE9BvX22swZZgv+3ReMVh2mzUCAu1nN86Hyy+DCDU7sGI46fv8c0rtIwZFGzWQrYb
+        9es7FKfxPeQe8aL/Wp1nO3JHl0ZuuLNk2aK3e8E74m/AwXDA7eH2DxgA6lR9BgAA
+    headers:
+      CF-RAY:
+      - 9e4fb1ebff7b9849-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:28:05 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1783'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=1F8o65QgyAe2N8Dl2_73y4VEUDPpXeKUArEVg79WTGI-1774963683.199365-1.0.1.1-MllQ9Z_H3AuQPN8682jIwlHcF.VegwfoYryZUOrWYba9S5pB83sjJ3Md4LA5S1DK3eoUSK0sXuwC.4M.JxIep0i9IEoEys2WEbCOtDcdomz7CLHEHhZDR0zEjPzxWhix;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:58:05 GMT
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '180000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '180000000'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_8b19b39c56b74b4ab61fac9078e4ddd0
+    status:
+      code: 200
+      message: OK
 version: 1

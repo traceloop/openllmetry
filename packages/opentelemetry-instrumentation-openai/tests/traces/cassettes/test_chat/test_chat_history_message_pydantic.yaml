@@ -209,4 +209,432 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Generate a random noun in Korean.
+      Respond with just that word."}],"model":"gpt-4.1-nano"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '128'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-84a9ebbeacfc2a5fe24ad61d6bd006fd-4ee06a97fd603e0a-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkIcfZydwMAAAD//4xSS07DMBTc9xSV102V
+        pCmhF0ACCZAQQqpQFbnOS2pwbGM7iI+64RQcgiW36iWwnaRJ+UhsLHnmzfPM85OL8/ryehnCxen6
+        YSmuXm7qs/IETZxCrO+AmE41JcLqwFDBG5oowAZc1yhNk8VRfBymnqhEDszJSmmCZBoFHHMRxGE8
+        D8IkiJJWvhGUgLZ1t/Y6Hr/60xnlOTxZOJx0SAVa4xIs1hVZUAnmEIS1ptpgbtCkJ4ngBrj3vnt7
+        3318DkkFRa2xc8hrxgYE5lwY7BJ6W6uW2e6NMFFKJdb6mxQVlFO9yexAtJ2OfVQbIZFnt/Zc+cD1
+        QQZkG1XSZEbcg38ubvOifs4DsuWM9ccGcIcfNMtyMJgyPZgXIphsIO+V/XBxnVMxIEaDyD+9/Na7
+        iU15+Z/2PUEISLs/mVSQU3KYty9T4Jbwr7L9iL1hpEE92qXKDAXlviGHAtes2Qykn7WBKrN/VYKS
+        ijbrUcgMzxdpMcOzdYRG29EXAAAA//8DACcXGcktAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9c897fc69627-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:13:27 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '184'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=IdSGlzGhC4dg7jPiHfvKArtAXrHvu8Sh4MYWS3iQn04-1774962807.273899-1.0.1.1-8vPIyA2dlYW1VzVrjhS6vH1K4Qz0JhkzwGq_g56JmnWuZ3SpB6LaCdl7tUEpoyRcC0pSp20xMzJEQjZsW6qHlrQHz0Gy8IR8qAZW2pbtJT.TIUsM6mLbLcvdcz7oDLrP;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:43:27 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999982'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_b3a613fcfbf048168ffe181dfc6ef436
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"user\",\"content\":\"Generate a random noun
+      in Korean. Respond with just that word.\"},{\"content\":\"\uB098\uBB34\",\"refusal\":null,\"role\":\"assistant\",\"annotations\":[]},{\"role\":\"user\",\"content\":\"Now,
+      generate a sentence using the word you just gave me.\"}],\"model\":\"gpt-4.1-nano\"}"
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '286'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=IdSGlzGhC4dg7jPiHfvKArtAXrHvu8Sh4MYWS3iQn04-1774962807.273899-1.0.1.1-8vPIyA2dlYW1VzVrjhS6vH1K4Qz0JhkzwGq_g56JmnWuZ3SpB6LaCdl7tUEpoyRcC0pSp20xMzJEQjZsW6qHlrQHz0Gy8IR8qAZW2pbtJT.TIUsM6mLbLcvdcz7oDLrP
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-4139f1c65b76c555fd29facb4bd4dad8-9565874fefb217e1-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkIcfYu8AEAAAD//4xSy07jMBTd9ysqr5sq
+        CSmFJRLLQTNskAChyHVuUs+ktmU7PIS6QWzYseBRAeIL2AE/RfMRc520JAwgzSZKzrnn5NyH2DoZ
+        bm4f7Wz98PeOlRhspL924SfpOYUc/QZml6o+k6gDy6WoaaaBWnCuwXAYra+Ga/5aRUxkArmTZcp6
+        UT/wBBXSC/1w4PmRF0QL+VhyBgbr9vGz2z2tni6oSOAYYb+3RCZgDM0AsWURglrmDiHUGG4sFZb0
+        GpJJYUFU2d+eX8v7y/L2sjx/6M7PZvOnl255fT5/nCGGbxfl9ay8eSnvrvptBw1pYahrQxR53iKo
+        ENJSN4Yq+8GCmb6nzWWmtByZf6Qk5YKbcYxTMzhCTGasVKRip/g8qKZSfGiUoNFE2djKP1D9Llqp
+        7UizjIYMwgVpMWDe4INB7wu3OAFLeW5aUyWMsjEkjbJZAS0SLltEp9Xz5zBfedd9c5H9j31DMAYK
+        ryxWGhLOPjbclGlwp/pd2fuMq8DEgD7E04stB+32kEBKi7y+H2JOjIVJjMvKQCvN6yNKVZwO11fC
+        gIV0RDrTzl8AAAD//wMAyn0SHFMDAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9c8d4de5889e-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:13:28 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '324'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999965'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_adf107b2ea4d46908428e96a6a5967f9
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"user","content":"Generate a random noun in Korean.
+      Respond with just that word."}],"model":"gpt-4.1-nano"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '128'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-bd83888dbbecc876efbcfff91dd1caf2-75019472bd3a06cb-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkI8XOL8gIAAAD//4xSS07DMBTc9xSV103V
+        pCmhWxYsEBKwA6Eqcu2X1ODYxnaqItQNp+AQLLkVl8B2kiblI7Gx5Jk3zzPP7/K22qYVP386g4vs
+        +m7HK3qzu0ITr5DrByC2U02JdDqwTIqGJhqwBd81zrJ0eTJPTxeBqCQF7mWlslE6jSOBhYySWbKI
+        ZmkUp618IxkB4+ru3XU8fgmnNyoo7Bw8m3RIBcbgEhzWFTlQS+4RhI1hxmJh0aQniRQWRPD++fr2
+        +f4xJDUUtcHeoag5HxBYCGmxTxhsrVpmfzDCZam0XJtvUlQwwcwmdwMxbjruUWOlQoHdu3MVAtdH
+        GZBrVCmbW/kI4bmkzYv6OQ/IlrPOHx/AHX7ULKdgMeNmMC9EMNkA7ZX9cHFNmRwQo0Hkn15+693E
+        ZqL8T/ueIASU259caaCMHOftyzT4Jfyr7DDiYBgZ0Fu3VLlloP03UChwzZvNQObZWKhy91claKVZ
+        sx6FyotsOU9ikuA1Gu1HXwAAAP//AwB9ZRwaLQMAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fad19ac113075-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:24:46 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '243'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=TSYuwyilWgWg4vuVt2N2Gk9x7m9jp.BfNBasygfvM6U-1774963485.7071795-1.0.1.1-bOE.M5EXJHfEnjx4h474Gkz5Tha_WIfHjWDi_2tKkyg9pOsqM.k4N1gBFdgrhMQfLY5brRshnjHREQ5JXT3NNpC1ETjg1LP6ifWdSx0sb43sWoqlYIcndIttl_rx7hAu;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:54:46 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999982'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_7b09b11dae864fc4bc48300d57bf8935
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"messages\":[{\"role\":\"user\",\"content\":\"Generate a random noun
+      in Korean. Respond with just that word.\"},{\"content\":\"\uB098\uBB34\",\"refusal\":null,\"role\":\"assistant\",\"annotations\":[]},{\"role\":\"user\",\"content\":\"Now,
+      generate a sentence using the word you just gave me.\"}],\"model\":\"gpt-4.1-nano\"}"
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '286'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=TSYuwyilWgWg4vuVt2N2Gk9x7m9jp.BfNBasygfvM6U-1774963485.7071795-1.0.1.1-bOE.M5EXJHfEnjx4h474Gkz5Tha_WIfHjWDi_2tKkyg9pOsqM.k4N1gBFdgrhMQfLY5brRshnjHREQ5JXT3NNpC1ETjg1LP6ifWdSx0sb43sWoqlYIcndIttl_rx7hAu
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-889cbe62b98d90a7f236a8d0233c4f29-604484761336cd86-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6rmUlBQykxRslJQSs5ILEnOLcjRdQkI8XMvyAYAAAD//41Su27bMBTd/RUCZ8uw
+        ZDluPiCT0clZgiAQaOpKZkqTBEkFCQIvRZa2S4YGNdCiU8dubX4q1kfkUrIt5QVkEaRz7jk69zGb
+        iavji1jC0UfNj06mTBzPpnPS9wo1PwfmdqoBU6gDx5VsaGaAOvCu0WSSHB6Mkg8HNbFUGQgvK7QL
+        k0EUSipVGA/jcThMwijZyheKM7BYd4qfQXBdP31QmcElwsP+DlmCtbQAxHZFCBolPEKotdw6Kh3p
+        tyRT0oGss28+rzdfvwcP/+6rn7fVj9vq5lfgsb//g+ruZvN7jRi+fanu1ptvfwZdFwN5aalvRZZC
+        dAgqpXLUj6LOf7ZlVvvEQhXaqLl9JiU5l9wuUpycxTFiOuuUJjW7wudZPZnySbMEjZbapU59gvp3
+        yaixI+1CWjKKt6TDgKLFx+P+K25pBo5yYTuTJYyyBWStsl0DLTOuOkSv0/PLMK95N31zWbzHviUY
+        A42XlmoDGWdPG27LDPhzfatsP+M6MLFgLvD8UsfB+D1kkNNSNDdE7JV1sExxWQUYbXhzSLlO88nh
+        KI5YTOekt+o9Avsn6R9XAwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fad1dccead1fd-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:24:46 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '385'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999962'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_a2dc07a7a3b0418dba0fea1c76ced095
+    status:
+      code: 200
+      message: OK
 version: 1
