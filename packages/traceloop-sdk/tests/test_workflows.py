@@ -503,6 +503,11 @@ class FakeAsyncRequest:
         return {"ok": True}
 
 
+class FakeSyncRequest:
+    def json(self):
+        return {"ok": True}
+
+
 @pytest.mark.asyncio
 async def test_async_workflow_with_async_json_method_argument(exporter):
     @workflow(name="request_workflow")
@@ -517,6 +522,24 @@ async def test_async_workflow_with_async_json_method_argument(exporter):
     workflow_span = spans[0]
     assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "args": ["FakeAsyncRequest"],
+        "kwargs": {},
+    }
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {"ok": True}
+
+
+def test_workflow_with_sync_json_method_argument(exporter):
+    @workflow(name="request_workflow")
+    def request_workflow(request: FakeSyncRequest):
+        return {"ok": True}
+
+    request_workflow(FakeSyncRequest())
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["request_workflow.workflow"]
+
+    workflow_span = spans[0]
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
+        "args": [{"ok": True}],
         "kwargs": {},
     }
     assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {"ok": True}
