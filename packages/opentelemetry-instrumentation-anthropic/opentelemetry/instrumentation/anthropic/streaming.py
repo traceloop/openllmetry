@@ -140,7 +140,7 @@ def _set_token_usage(
 def _resolve_stream_token_usage(complete_response, instance, kwargs):
     """Resolve prompt and completion token counts from a streaming response.
 
-    Returns (prompt_tokens, completion_tokens) when token data is available,
+    Returns (input_tokens, output_tokens) when token data is available,
     or (None, None) when it is not.
     """
     usage = complete_response.get("usage")
