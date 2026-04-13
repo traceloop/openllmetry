@@ -1,4 +1,5 @@
 import dataclasses
+import inspect
 import json
 
 
@@ -15,7 +16,11 @@ class JSONEncoder(json.JSONEncoder):
             return o.to_json()
 
         if hasattr(o, "json"):
-            return o.json()
+            json_method = o.json
+            if callable(json_method) and not inspect.iscoroutinefunction(json_method):
+                result = json_method()
+                if not inspect.iscoroutine(result):
+                    return result
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__

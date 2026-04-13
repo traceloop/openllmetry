@@ -496,3 +496,27 @@ def test_dataclass_serialization_workflow(exporter):
     assert task_span.parent.span_id == workflow_span.context.span_id
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "dataclass_workflow"
     assert task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "dataclass_task"
+
+
+class FakeAsyncRequest:
+    async def json(self):
+        return {"ok": True}
+
+
+@pytest.mark.asyncio
+async def test_async_workflow_with_async_json_method_argument(exporter):
+    @workflow(name="request_workflow")
+    async def request_workflow(request: FakeAsyncRequest):
+        return {"ok": True}
+
+    await request_workflow(FakeAsyncRequest())
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["request_workflow.workflow"]
+
+    workflow_span = spans[0]
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
+        "args": ["FakeAsyncRequest"],
+        "kwargs": {},
+    }
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {"ok": True}
