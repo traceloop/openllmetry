@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.llamaindex._message_utils import (
 from opentelemetry.instrumentation.llamaindex._response_utils import (
     detect_provider_name,
     extract_finish_reasons,
+    extract_model_from_raw,
     extract_response_id,
     extract_token_usage,
 )
@@ -182,9 +183,10 @@ def _handle_request(span, llm_request_type, args, kwargs, instance: CustomLLM):
 
 @dont_throw
 def _handle_response(span, llm_request_type, instance, response):
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, instance.metadata.model_name)
-
     raw = getattr(response, "raw", None)
+
+    response_model = extract_model_from_raw(raw) if raw else None
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model or instance.metadata.model_name)
 
     if raw:
         response_id = extract_response_id(raw)

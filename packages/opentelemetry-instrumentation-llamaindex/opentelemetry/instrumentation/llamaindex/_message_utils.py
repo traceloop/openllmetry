@@ -82,6 +82,8 @@ def _block_to_part(block: Any) -> Dict:
     block_type = block.get("type", "")
     if block_type == "text":
         return {"type": "text", "content": block.get("text", "")}
+    if block_type in ("thinking", "reasoning"):
+        return {"type": "reasoning", "content": block.get("thinking", block.get("content", block.get("text", "")))}
     if block_type == "image_url":
         url = block.get("image_url", {}).get("url", "")
         return {"type": "uri", "modality": "image", "uri": url}

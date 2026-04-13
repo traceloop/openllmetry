@@ -48,11 +48,8 @@ def emit_chat_message_events(event: LLMChatStartEvent, provider_name: Optional[s
 
 def emit_chat_response_events(event: LLMChatEndEvent, provider_name: Optional[str] = None):
     if event.response:
-        try:
-            reasons = extract_finish_reasons(event.response.raw) if event.response.raw else []
-            finish_reason = reasons[0] if reasons else ""
-        except Exception:
-            finish_reason = ""
+        reasons = extract_finish_reasons(event.response.raw) if event.response.raw else []
+        finish_reason = reasons[0] if reasons else ""
         emit_choice_event(
             index=0,
             content=event.response.message.content,

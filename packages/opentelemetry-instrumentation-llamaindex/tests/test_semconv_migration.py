@@ -13,11 +13,14 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.llamaindex.span_utils import (
+    set_embedding,
     set_llm_chat_request,
     set_llm_chat_request_model_attributes,
     set_llm_chat_response,
     set_llm_chat_response_model_attributes,
     set_llm_predict_response,
+    set_rerank,
+    set_rerank_model_attributes,
 )
 
 PATCH_SHOULD_SEND = "opentelemetry.instrumentation.llamaindex.span_utils.should_send_prompts"
@@ -221,6 +224,33 @@ class TestSetLlmChatResponse:
             assert not key.startswith(f"{GenAIAttributes.GEN_AI_PROMPT}.")
             assert not key.startswith(f"{GenAIAttributes.GEN_AI_COMPLETION}.")
 
+    def test_sets_finish_reasons_span_attr_independently(self):
+        """set_llm_chat_response must set gen_ai.response.finish_reasons on its own,
+        without relying on set_llm_chat_response_model_attributes."""
+        span = _recording_span()
+        msg = _chat_message("assistant", "Done.")
+        event = MagicMock()
+        event.response = MagicMock(
+            message=msg,
+            raw={"choices": [{"finish_reason": "stop"}]},
+        )
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            set_llm_chat_response(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
+
+    def test_finish_reasons_span_attr_not_gated_by_should_send_prompts(self):
+        """gen_ai.response.finish_reasons is metadata, not content — never gated."""
+        span = _recording_span()
+        msg = _chat_message("assistant", "Done.")
+        event = MagicMock()
+        event.response = MagicMock(
+            message=msg,
+            raw={"choices": [{"finish_reason": "stop"}]},
+        )
+        with patch(PATCH_SHOULD_SEND, return_value=False):
+            set_llm_chat_response(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ["stop"]
+
 
 # ===========================================================================
 # set_llm_chat_response_model_attributes — finish_reasons, tokens, model
@@ -328,6 +358,105 @@ class TestSetLlmPredictResponse:
             set_llm_predict_response(event, span)
         for call in span.set_attribute.call_args_list:
             assert not call.args[0].startswith(f"{GenAIAttributes.GEN_AI_COMPLETION}.")
+
+
+# ===========================================================================
+# set_embedding — semconv attributes
+# ===========================================================================
+
+class TestSetEmbedding:
+    def test_sets_operation_name_embeddings(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.model_dict = {"model_name": "text-embedding-3-small"}
+        set_embedding(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_OPERATION_NAME) == "embeddings"
+
+    def test_sets_request_model(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.model_dict = {"model_name": "text-embedding-3-small"}
+        set_embedding(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_REQUEST_MODEL) == "text-embedding-3-small"
+
+    def test_no_legacy_embedding_model_name(self):
+        """Must NOT emit legacy 'embedding.model_name' attribute."""
+        span = _recording_span()
+        event = MagicMock()
+        event.model_dict = {"model_name": "text-embedding-3-small"}
+        set_embedding(event, span)
+        assert not _has_attr(span, "embedding.model_name")
+
+
+# ===========================================================================
+# set_rerank / set_rerank_model_attributes — semconv attributes
+# ===========================================================================
+
+class TestSetRerankModelAttributes:
+    def test_sets_operation_name(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.model_name = "rerank-v3.5"
+        event.top_n = 5
+        set_rerank_model_attributes(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_OPERATION_NAME) == "rerank"
+
+    def test_sets_request_model(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.model_name = "rerank-v3.5"
+        event.top_n = 5
+        set_rerank_model_attributes(event, span)
+        assert _attr(span, GenAIAttributes.GEN_AI_REQUEST_MODEL) == "rerank-v3.5"
+
+    def test_sets_top_n(self):
+        """top_n is a rerank-specific param — kept as rerank.top_n (no semconv equivalent)."""
+        span = _recording_span()
+        event = MagicMock()
+        event.model_name = "rerank-v3.5"
+        event.top_n = 3
+        set_rerank_model_attributes(event, span)
+        assert _attr(span, "rerank.top_n") == 3
+
+    def test_no_legacy_rerank_model_name(self):
+        """Must NOT emit legacy 'rerank.model_name' attribute."""
+        span = _recording_span()
+        event = MagicMock()
+        event.model_name = "rerank-v3.5"
+        event.top_n = 5
+        set_rerank_model_attributes(event, span)
+        assert not _has_attr(span, "rerank.model_name")
+
+
+class TestSetRerank:
+    def test_sets_input_messages_with_query(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.query.query_str = "what is the meaning of life?"
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            set_rerank(event, span)
+        raw = _attr(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert msgs[0]["role"] == "user"
+        assert msgs[0]["parts"][0]["content"] == "what is the meaning of life?"
+
+    def test_gated_by_should_send_prompts(self):
+        span = _recording_span()
+        event = MagicMock()
+        event.query.query_str = "query"
+        with patch(PATCH_SHOULD_SEND, return_value=False):
+            set_rerank(event, span)
+        assert not _has_attr(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+
+    def test_no_legacy_rerank_query(self):
+        """Must NOT emit legacy 'rerank.query' attribute."""
+        span = _recording_span()
+        event = MagicMock()
+        event.query.query_str = "query"
+        with patch(PATCH_SHOULD_SEND, return_value=True):
+            set_rerank(event, span)
+        assert not _has_attr(span, "rerank.query")
 
 
 if __name__ == "__main__":

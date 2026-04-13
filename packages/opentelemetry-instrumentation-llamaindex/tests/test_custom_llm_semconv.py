@@ -184,6 +184,34 @@ class TestCustomLLMHandleResponse:
         _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
         assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "llama3"
 
+    def test_response_model_prefers_raw_over_instance(self):
+        """gen_ai.response.model should use the resolved model from raw response, not the request alias."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance(model_name="gpt-4o")
+        raw = SimpleNamespace(model="gpt-4o-2024-05-13", id=None)
+        resp = SimpleNamespace(text="ok", raw=raw)
+        _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "gpt-4o-2024-05-13"
+
+    def test_response_model_falls_back_to_instance_when_no_raw(self):
+        """When raw is None, fall back to instance.metadata.model_name."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance(model_name="llama3")
+        resp = SimpleNamespace(text="ok", raw=None)
+        _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "llama3"
+
+    def test_response_model_falls_back_to_instance_when_raw_has_no_model(self):
+        """When raw exists but has no model field, fall back to instance.metadata.model_name."""
+        from opentelemetry.semconv_ai import LLMRequestTypeValues
+        span = _span()
+        inst = _instance(model_name="ollama-llama3")
+        resp = SimpleNamespace(text="ok", raw=SimpleNamespace(id="resp-1"))
+        _handle_response(span, LLMRequestTypeValues.COMPLETION, inst, resp)
+        assert _attr(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "ollama-llama3"
+
     def test_output_gated_by_should_send_prompts(self):
         from opentelemetry.semconv_ai import LLMRequestTypeValues
         span = _span()

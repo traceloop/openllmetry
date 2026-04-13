@@ -19,10 +19,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import (
-    LLMRequestTypeValues,
-    SpanAttributes,
-)
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 def _set_span_attribute(span, name, value):
@@ -70,14 +67,14 @@ def set_llm_chat_response(event, span) -> None:
         return
 
     response = event.response
-    if should_send_prompts():
-        fr = None
-        try:
-            finish_reasons = extract_finish_reasons(response.raw) if response.raw else []
-            fr = finish_reasons[0] if finish_reasons else None
-        except Exception:
-            pass
+    finish_reasons = extract_finish_reasons(response.raw) if response.raw else []
 
+    # finish_reasons is NOT gated by should_send_prompts() — it's metadata, not content
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
+
+    if should_send_prompts():
+        fr = finish_reasons[0] if finish_reasons else None
         output_msg = build_output_message(response.message, finish_reason=fr)
         span.set_attribute(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([output_msg]))
 
@@ -109,12 +106,9 @@ def set_llm_chat_response_model_attributes(event, span):
         span.set_attribute(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, int(usage.total_tokens))
 
     # CRITICAL: finish_reasons is NOT gated by should_send_prompts()
-    try:
-        finish_reasons = extract_finish_reasons(raw)
-        if finish_reasons:
-            span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
-    except Exception:
-        pass
+    finish_reasons = extract_finish_reasons(raw)
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
 
 @dont_throw
@@ -127,10 +121,8 @@ def set_llm_predict_response(event, span) -> None:
 @dont_throw
 def set_embedding(event, span) -> None:
     model_dict = event.model_dict
-    span.set_attribute(
-        f"{LLMRequestTypeValues.EMBEDDING.value}.model_name",
-        model_dict.get("model_name"),
-    )
+    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "embeddings")
+    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model_dict.get("model_name"))
 
 
 @dont_throw
@@ -138,24 +130,17 @@ def set_rerank(event, span) -> None:
     if not span.is_recording():
         return
     if should_send_prompts():
-        span.set_attribute(
-            f"{LLMRequestTypeValues.RERANK.value}.query",
-            event.query.query_str,
-        )
+        msg = [{"role": "user", "parts": [{"type": "text", "content": event.query.query_str}]}]
+        span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msg))
 
 
 @dont_throw
 def set_rerank_model_attributes(event, span):
     if not span.is_recording():
         return
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.model_name",
-        event.model_name,
-    )
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.top_n",
-        event.top_n,
-    )
+    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "rerank")
+    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, event.model_name)
+    span.set_attribute("rerank.top_n", event.top_n)
 
 
 @dont_throw

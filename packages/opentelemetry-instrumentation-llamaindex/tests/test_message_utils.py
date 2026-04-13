@@ -112,6 +112,30 @@ class TestContentToParts:
         assert parts[0] == {"type": "text", "content": "Look at this:"}
         assert parts[1]["type"] == "uri"
 
+    def test_thinking_block_maps_to_reasoning_part(self):
+        """Anthropic-style thinking blocks must emit ReasoningPart, not TextPart."""
+        block = {"type": "thinking", "thinking": "Let me think step by step..."}
+        parts = _content_to_parts([block])
+        assert parts == [{"type": "reasoning", "content": "Let me think step by step..."}]
+
+    def test_reasoning_block_maps_to_reasoning_part(self):
+        """Generic reasoning blocks must emit ReasoningPart."""
+        block = {"type": "reasoning", "content": "Step 1: analyze the problem"}
+        parts = _content_to_parts([block])
+        assert parts == [{"type": "reasoning", "content": "Step 1: analyze the problem"}]
+
+    def test_thinking_block_with_content_key(self):
+        """Thinking block using 'content' key instead of 'thinking' key."""
+        block = {"type": "thinking", "content": "Deep thought..."}
+        parts = _content_to_parts([block])
+        assert parts == [{"type": "reasoning", "content": "Deep thought..."}]
+
+    def test_thinking_block_with_text_key(self):
+        """Thinking block using 'text' key as fallback."""
+        block = {"type": "thinking", "text": "Reasoning text"}
+        parts = _content_to_parts([block])
+        assert parts == [{"type": "reasoning", "content": "Reasoning text"}]
+
     def test_fallback_dict_with_text_key(self):
         parts = _content_to_parts([{"type": "custom", "text": "fallback"}])
         assert parts == [{"type": "text", "content": "fallback"}]
