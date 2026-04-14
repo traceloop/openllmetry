@@ -438,6 +438,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
+        # Capture and detach the old holder BEFORE _create_span runs.
+        # _create_span unconditionally overwrites self.spans[run_id], which
+        # would make the old SpanHolder (and its suppression token) unreachable.
+        # Detaching here, before the overwrite, ensures we clean up the original
+        # suppression token from a duplicate run_id and that the new suppression
+        # is layered on top of the clean baseline context.
+        old_holder = self.spans.get(run_id)
+        if old_holder is not None and old_holder.token is not None:
+            self._safe_detach_context(old_holder.token)
+
         span = self._create_span(
             run_id,
             parent_run_id,
@@ -462,13 +472,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span, GenAIAttributes.GEN_AI_OPERATION_NAME, operation_name
         )
 
-        # Detach any existing holder's token before creating the suppression
-        # token. The ordering matters: if we detach after attaching the
-        # suppression, ContextVar.reset() restores context to before the span,
-        # wiping the suppression flag and causing duplicate downstream spans.
-        existing_holder = self.spans.get(run_id)
-        if existing_holder is not None and existing_holder.token is not None:
-            self._safe_detach_context(existing_holder.token)
+        # _create_span has already attached the span context and stored a new
+        # SpanHolder(span, span_token, ...). Detach that span_token before
+        # attaching suppression so the suppression layers on top of the clean
+        # baseline context. If we detached after attaching suppression,
+        # ContextVar.reset() would wipe the suppression flag.
+        current_holder = self.spans.get(run_id)
+        if current_holder is not None and current_holder.token is not None:
+            self._safe_detach_context(current_holder.token)
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
