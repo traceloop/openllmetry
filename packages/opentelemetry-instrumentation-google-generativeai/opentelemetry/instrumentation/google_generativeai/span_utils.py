@@ -9,9 +9,9 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
     should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
+    gen_ai_attributes as GenAIAttributes
 )
-from opentelemetry.semconv_ai import (
+from opentelemetry.semconv_ai import 
     SpanAttributes,
 )
 from opentelemetry.trace.status import Status, StatusCode
@@ -654,7 +654,7 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
                 _finish_reason = None
                 fr = getattr(candidate, "finish_reason", None)
                 if fr:
-                    _finish_reason = fr.name.lower() if hasattr(fr, "name") else str(fr)
+                    _finish_reason = _map_gemini_finish_reason(fr) or None
                 parts = []
                 content = getattr(candidate, "content", None)
                 if content and hasattr(content, "parts"):
