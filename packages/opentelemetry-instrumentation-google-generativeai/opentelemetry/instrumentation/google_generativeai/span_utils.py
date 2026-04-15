@@ -241,7 +241,9 @@ async def _process_content_item(content_item, span):
     if hasattr(content_item, "parts"):
         # Content with parts (Google GenAI Content object)
         for part_index, part in enumerate(content_item.parts):
-            parts_acc.extend(await _parts_from_genai_part_async(part, span, part_index))
+            result = await _process_content_part(part, span, part_index)
+            if result:
+                processed_content.append(result)
     elif isinstance(content_item, str):
         # Direct string in the list
         processed_content.append({"type": "text", "content": content_item})
