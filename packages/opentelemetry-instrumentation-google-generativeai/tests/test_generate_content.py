@@ -73,7 +73,7 @@ def test_client_spans(exporter, genai_client):
     assert not any(key.startswith("gen_ai.prompt.") for key in attrs.keys())
     assert not any(key.startswith("gen_ai.completion.") for key in attrs.keys())
 
-    assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+    assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
 
