@@ -335,7 +335,7 @@ async def set_input_attributes(span, args, kwargs, llm_model):
             processed_content = await _process_content_item(contents, span)
             if processed_content:
                 input_messages.append({
-                    "role": getattr(contents, "role", "user"),
+                    "role": _normalize_message_role(getattr(contents, "role", None)),
                     "parts": processed_content,
                 })
         elif isinstance(contents, list):
@@ -344,7 +344,7 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                 for content_item in contents:
                     processed_content = await _process_content_item(content_item, span)
                     if processed_content:
-                        role = getattr(content_item, "role", "user")
+                        role = _normalize_message_role(getattr(content_item, "role", None))
                         input_messages.append({
                             "role": role,
                             "parts": processed_content,
@@ -416,7 +416,7 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                     processed_content.append({"type": "text", "content": str(part)})
             if processed_content:
                 input_messages.append({
-                    "role": getattr(contents, "role", "user"),
+                    "role": _normalize_message_role(getattr(contents, "role", None)),
                     "parts": processed_content,
                 })
         elif isinstance(contents, list):
@@ -437,7 +437,7 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                             processed_content.append({"type": "text", "content": str(part)})
                     if processed_content:
                         input_messages.append({
-                            "role": getattr(content, "role", "user"),
+                            "role": _normalize_message_role(getattr(content, "role", None)),
                             "parts": processed_content,
                         })
             else:
