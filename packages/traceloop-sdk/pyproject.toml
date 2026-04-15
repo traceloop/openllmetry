@@ -37,69 +37,69 @@ Documentation = "https://traceloop.com/docs/openllmetry"
 
 [project.optional-dependencies]
 datasets = ["pandas"]
-agno = ["opentelemetry-instrumentation-agno"]
-alephalpha = ["opentelemetry-instrumentation-alephalpha"]
-anthropic = ["opentelemetry-instrumentation-anthropic"]
-bedrock = ["opentelemetry-instrumentation-bedrock"]
-chromadb = ["opentelemetry-instrumentation-chromadb"]
-cohere = ["opentelemetry-instrumentation-cohere"]
-crewai = ["opentelemetry-instrumentation-crewai"]
-google-generativeai = ["opentelemetry-instrumentation-google-generativeai"]
-groq = ["opentelemetry-instrumentation-groq"]
-haystack = ["opentelemetry-instrumentation-haystack"]
-lancedb = ["opentelemetry-instrumentation-lancedb"]
-langchain = ["opentelemetry-instrumentation-langchain"]
-llamaindex = ["opentelemetry-instrumentation-llamaindex"]
-marqo = ["opentelemetry-instrumentation-marqo"]
-mcp = ["opentelemetry-instrumentation-mcp"]
-milvus = ["opentelemetry-instrumentation-milvus"]
-mistralai = ["opentelemetry-instrumentation-mistralai"]
-ollama = ["opentelemetry-instrumentation-ollama"]
-openai = ["opentelemetry-instrumentation-openai"]
-openai-agents = ["opentelemetry-instrumentation-openai-agents"]
-pinecone = ["opentelemetry-instrumentation-pinecone"]
-qdrant = ["opentelemetry-instrumentation-qdrant"]
-replicate = ["opentelemetry-instrumentation-replicate"]
-sagemaker = ["opentelemetry-instrumentation-sagemaker"]
-together = ["opentelemetry-instrumentation-together"]
-transformers = ["opentelemetry-instrumentation-transformers"]
-vertexai = ["opentelemetry-instrumentation-vertexai"]
-voyageai = ["opentelemetry-instrumentation-voyageai"]
-watsonx = ["opentelemetry-instrumentation-watsonx"]
-weaviate = ["opentelemetry-instrumentation-weaviate"]
-writer = ["opentelemetry-instrumentation-writer"]
+agno = ["opentelemetry-instrumentation-agno>=0.59b0"]
+alephalpha = ["opentelemetry-instrumentation-alephalpha>=0.59b0"]
+anthropic = ["opentelemetry-instrumentation-anthropic>=0.59b0"]
+bedrock = ["opentelemetry-instrumentation-bedrock>=0.59b0"]
+chromadb = ["opentelemetry-instrumentation-chromadb>=0.59b0"]
+cohere = ["opentelemetry-instrumentation-cohere>=0.59b0"]
+crewai = ["opentelemetry-instrumentation-crewai>=0.59b0"]
+google-generativeai = ["opentelemetry-instrumentation-google-generativeai>=0.59b0"]
+groq = ["opentelemetry-instrumentation-groq>=0.59b0"]
+haystack = ["opentelemetry-instrumentation-haystack>=0.59b0"]
+lancedb = ["opentelemetry-instrumentation-lancedb>=0.59b0"]
+langchain = ["opentelemetry-instrumentation-langchain>=0.59b0"]
+llamaindex = ["opentelemetry-instrumentation-llamaindex>=0.59b0"]
+marqo = ["opentelemetry-instrumentation-marqo>=0.59b0"]
+mcp = ["opentelemetry-instrumentation-mcp>=0.59b0"]
+milvus = ["opentelemetry-instrumentation-milvus>=0.59b0"]
+mistralai = ["opentelemetry-instrumentation-mistralai>=0.59b0"]
+ollama = ["opentelemetry-instrumentation-ollama>=0.59b0"]
+openai = ["opentelemetry-instrumentation-openai>=0.59b0"]
+openai-agents = ["opentelemetry-instrumentation-openai-agents>=0.59b0"]
+pinecone = ["opentelemetry-instrumentation-pinecone>=0.59b0"]
+qdrant = ["opentelemetry-instrumentation-qdrant>=0.59b0"]
+replicate = ["opentelemetry-instrumentation-replicate>=0.59b0"]
+sagemaker = ["opentelemetry-instrumentation-sagemaker>=0.59b0"]
+together = ["opentelemetry-instrumentation-together>=0.59b0"]
+transformers = ["opentelemetry-instrumentation-transformers>=0.59b0"]
+vertexai = ["opentelemetry-instrumentation-vertexai>=0.59b0"]
+voyageai = ["opentelemetry-instrumentation-voyageai>=0.59b0"]
+watsonx = ["opentelemetry-instrumentation-watsonx>=0.59b0"]
+weaviate = ["opentelemetry-instrumentation-weaviate>=0.59b0"]
+writer = ["opentelemetry-instrumentation-writer>=0.59b0"]
 all = [
-  "opentelemetry-instrumentation-agno",
-  "opentelemetry-instrumentation-alephalpha",
-  "opentelemetry-instrumentation-anthropic",
-  "opentelemetry-instrumentation-bedrock",
-  "opentelemetry-instrumentation-chromadb",
-  "opentelemetry-instrumentation-cohere",
-  "opentelemetry-instrumentation-crewai",
-  "opentelemetry-instrumentation-google-generativeai",
-  "opentelemetry-instrumentation-groq",
-  "opentelemetry-instrumentation-haystack",
-  "opentelemetry-instrumentation-lancedb",
-  "opentelemetry-instrumentation-langchain",
-  "opentelemetry-instrumentation-llamaindex",
-  "opentelemetry-instrumentation-marqo",
-  "opentelemetry-instrumentation-mcp",
-  "opentelemetry-instrumentation-milvus",
-  "opentelemetry-instrumentation-mistralai",
-  "opentelemetry-instrumentation-ollama",
-  "opentelemetry-instrumentation-openai",
-  "opentelemetry-instrumentation-openai-agents",
-  "opentelemetry-instrumentation-pinecone",
-  "opentelemetry-instrumentation-qdrant",
-  "opentelemetry-instrumentation-replicate",
-  "opentelemetry-instrumentation-sagemaker",
-  "opentelemetry-instrumentation-together",
-  "opentelemetry-instrumentation-transformers",
-  "opentelemetry-instrumentation-vertexai",
-  "opentelemetry-instrumentation-voyageai",
-  "opentelemetry-instrumentation-watsonx",
-  "opentelemetry-instrumentation-weaviate",
-  "opentelemetry-instrumentation-writer",
+  "opentelemetry-instrumentation-agno>=0.59b0",
+  "opentelemetry-instrumentation-alephalpha>=0.59b0",
+  "opentelemetry-instrumentation-anthropic>=0.59b0",
+  "opentelemetry-instrumentation-bedrock>=0.59b0",
+  "opentelemetry-instrumentation-chromadb>=0.59b0",
+  "opentelemetry-instrumentation-cohere>=0.59b0",
+  "opentelemetry-instrumentation-crewai>=0.59b0",
+  "opentelemetry-instrumentation-google-generativeai>=0.59b0",
+  "opentelemetry-instrumentation-groq>=0.59b0",
+  "opentelemetry-instrumentation-haystack>=0.59b0",
+  "opentelemetry-instrumentation-lancedb>=0.59b0",
+  "opentelemetry-instrumentation-langchain>=0.59b0",
+  "opentelemetry-instrumentation-llamaindex>=0.59b0",
+  "opentelemetry-instrumentation-marqo>=0.59b0",
+  "opentelemetry-instrumentation-mcp>=0.59b0",
+  "opentelemetry-instrumentation-milvus>=0.59b0",
+  "opentelemetry-instrumentation-mistralai>=0.59b0",
+  "opentelemetry-instrumentation-ollama>=0.59b0",
+  "opentelemetry-instrumentation-openai>=0.59b0",
+  "opentelemetry-instrumentation-openai-agents>=0.59b0",
+  "opentelemetry-instrumentation-pinecone>=0.59b0",
+  "opentelemetry-instrumentation-qdrant>=0.59b0",
+  "opentelemetry-instrumentation-replicate>=0.59b0",
+  "opentelemetry-instrumentation-sagemaker>=0.59b0",
+  "opentelemetry-instrumentation-together>=0.59b0",
+  "opentelemetry-instrumentation-transformers>=0.59b0",
+  "opentelemetry-instrumentation-vertexai>=0.59b0",
+  "opentelemetry-instrumentation-voyageai>=0.59b0",
+  "opentelemetry-instrumentation-watsonx>=0.59b0",
+  "opentelemetry-instrumentation-weaviate>=0.59b0",
+  "opentelemetry-instrumentation-writer>=0.59b0",
 ]
 [dependency-groups]
 dev = [
