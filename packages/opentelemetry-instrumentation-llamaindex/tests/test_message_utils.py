@@ -136,6 +136,11 @@ class TestContentToParts:
         parts = _content_to_parts([block])
         assert parts == [{"type": "reasoning", "content": "Reasoning text"}]
 
+    def test_otel_shaped_text_block_preserves_content(self):
+        """Block already in OTel form {"type": "text", "content": "…"} must not drop text."""
+        parts = _content_to_parts([{"type": "text", "content": "hello"}])
+        assert parts == [{"type": "text", "content": "hello"}]
+
     def test_fallback_dict_with_text_key(self):
         parts = _content_to_parts([{"type": "custom", "text": "fallback"}])
         assert parts == [{"type": "text", "content": "fallback"}]
