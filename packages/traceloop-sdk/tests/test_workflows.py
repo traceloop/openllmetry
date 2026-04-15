@@ -509,12 +509,17 @@ class FakeSyncRequest:
 
 
 @pytest.mark.asyncio
-async def test_async_workflow_with_async_json_method_argument(exporter):
+async def test_async_workflow_with_async_json_method_argument(exporter, recwarn):
     @workflow(name="request_workflow")
     async def request_workflow(request: FakeAsyncRequest):
         return {"ok": True}
 
     await request_workflow(FakeAsyncRequest())
+
+    assert not any(
+        w.category is RuntimeWarning and "was never awaited" in str(w.message)
+        for w in recwarn
+    )
 
     spans = exporter.get_finished_spans()
     assert [span.name for span in spans] == ["request_workflow.workflow"]

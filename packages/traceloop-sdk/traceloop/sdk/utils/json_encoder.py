@@ -21,6 +21,7 @@ class JSONEncoder(json.JSONEncoder):
                 result = json_method()
                 if not inspect.iscoroutine(result):
                     return result
+                result.close()
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__
