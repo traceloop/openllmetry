@@ -1,3 +1,9 @@
+## v0.59.0 (2026-04-13)
+
+### Feat
+
+- **traceloop-sdk**: Add guardrails (#3649)
+
 ## v0.58.1 (2026-04-12)
 
 ### Fix

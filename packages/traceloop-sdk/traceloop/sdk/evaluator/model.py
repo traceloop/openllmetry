@@ -1,6 +1,6 @@
 import datetime
 from typing import Dict, Any, Optional, TypeVar, Type
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, Field, RootModel
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -15,7 +15,7 @@ class InputSchemaMapping(RootModel[Dict[str, InputExtractor]]):
     root: Dict[str, InputExtractor]
 
 
-class ExecuteEvaluatorRequest(BaseModel):
+class ExecuteEvaluatorInExperimentRequest(BaseModel):
     input_schema_mapping: InputSchemaMapping
     evaluator_version: Optional[str] = None
     evaluator_config: Optional[Dict[str, Any]] = None
@@ -24,6 +24,10 @@ class ExecuteEvaluatorRequest(BaseModel):
     experiment_id: str
     experiment_run_id: str
 
+class ExecuteEvaluatorRequest(BaseModel):
+    input: Dict[str, Any]
+    evaluator_version: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
 
 class ExecuteEvaluatorResponse(BaseModel):
     """Response from execute API matching actual structure"""
@@ -39,12 +43,14 @@ class StreamEvent(BaseModel):
     data: Dict[str, Any]
     timestamp: datetime.datetime
 
+class EvaluatorExecutionResult(BaseModel):
+    evaluator_result: Dict[str, Any]
 
 class ExecutionResponse(BaseModel):
     """Complete response structure for evaluator execution"""
 
     execution_id: str
-    result: Dict[str, Any]
+    result: EvaluatorExecutionResult
 
     def typed_result(self, model: Type[T]) -> T:
         """Parse result into a typed Pydantic model.
@@ -61,4 +67,11 @@ class ExecutionResponse(BaseModel):
             pii = result.typed_result(PIIDetectorResponse)
             print(pii.has_pii)  # IDE autocomplete works!
         """
-        return model(**self.result)
+        return model(**self.result.evaluator_result)
+
+
+class GuardrailResponse(BaseModel):
+    """Response from the guardrails execute route."""
+
+    result: Dict[str, Any]
+    passed: bool = Field(alias="pass")
