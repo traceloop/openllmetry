@@ -766,17 +766,16 @@ async def test_async_middleware_hook(instrument_legacy, span_exporter):
 
 
 def test_middleware_super_call_succeeds_despite_outer_failure(instrument_legacy, span_exporter):
-    """Test that wrapper records super() call as success even when outer method raises.
+    """Test that wrapper records the full method call status correctly.
 
-    The instrumentation wraps AgentMiddleware.before_model (the base class method).
-    When a subclass calls super().before_model(), that wrapped call succeeds.
-    Even if the subclass's own before_model() then raises an exception, the span
-    for the super() call correctly records status="success".
+    With instance-level wrapping, the wrapper is on the instance's before_model
+    method. When the subclass raises an exception, the span correctly records
+    status="failure" since the wrapper encompasses the entire method call.
     """
 
     class FailingMiddleware(AgentMiddleware):
         def before_model(self, state, runtime):
-            # Call super first to trigger the wrapper, then fail
+            # Call super first, then fail
             super().before_model(state, runtime)
             raise ValueError("Intentional failure")
 
@@ -787,11 +786,10 @@ def test_middleware_super_call_succeeds_despite_outer_failure(instrument_legacy,
         pass  # Expected
 
     spans = span_exporter.get_finished_spans()
-    # The wrapper is on AgentMiddleware.before_model, so look for that
     middleware_spans = [s for s in spans if "before_model" in s.name]
 
-    # Should have at least one span from calling super().before_model()
+    # Instance-level wrapper creates a span for the full before_model call
     assert len(middleware_spans) >= 1
-    # The span from super() call should succeed (before the ValueError is raised)
     middleware_span = middleware_spans[0]
-    assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "success"
+    # The method raised, so the span correctly records failure
+    assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "failure"
