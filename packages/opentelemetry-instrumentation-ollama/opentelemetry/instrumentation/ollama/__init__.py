@@ -309,7 +309,13 @@ def _wrap(
     _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
     end_time = time.perf_counter()
 
     if response:
@@ -384,7 +390,13 @@ async def _awrap(
     _handle_input(span, event_logger, llm_request_type, args, kwargs)
 
     start_time = time.perf_counter()
-    response = await wrapped(*args, **kwargs)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
     end_time = time.perf_counter()
     if response:
         if duration_histogram:

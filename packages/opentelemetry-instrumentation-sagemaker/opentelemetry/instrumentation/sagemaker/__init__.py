@@ -31,6 +31,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
 )
 from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 _instruments = ("boto3 >= 1.28.57",)
@@ -96,7 +97,12 @@ def _instrumented_endpoint_invoke(fn, tracer, event_logger):
         with tracer.start_as_current_span(
             "sagemaker.completion", kind=SpanKind.CLIENT
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             _handle_call(span, event_logger, kwargs, response)
 
             return response
@@ -112,7 +118,13 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger)
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
 
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
 
         if span.is_recording():
             _handle_stream_call(span, event_logger, kwargs, response)

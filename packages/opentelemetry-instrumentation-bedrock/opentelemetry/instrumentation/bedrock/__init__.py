@@ -62,6 +62,7 @@ from opentelemetry.semconv_ai import (
     Meters,
 )
 from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 
@@ -220,7 +221,12 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
 
@@ -248,7 +254,13 @@ def _instrumented_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
 
         return response
@@ -276,7 +288,12 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
             return response
@@ -301,7 +318,13 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
