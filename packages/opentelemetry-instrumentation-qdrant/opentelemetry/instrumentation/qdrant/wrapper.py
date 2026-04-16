@@ -41,6 +41,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         attributes={
             SpanAttributes.VECTOR_DB_VENDOR: "Qdrant",
         },
+        record_exception=False,
+        set_status_on_exception=False,
     ) as span:
         _set_collection_name_attribute(
             span, method, args, kwargs
@@ -72,7 +74,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             response = wrapped(*args, **kwargs)
         except Exception as e:
             span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR))
             raise
         if response:
             span.set_status(Status(StatusCode.OK))
