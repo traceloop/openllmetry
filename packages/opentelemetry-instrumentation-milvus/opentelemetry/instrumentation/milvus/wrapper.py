@@ -77,7 +77,9 @@ def _wrap(
 
     method = to_wrap.get("method")
     name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(name) as span:
+    with tracer.start_as_current_span(
+        name, record_exception=False, set_status_on_exception=False
+    ) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "milvus")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
@@ -114,7 +116,7 @@ def _wrap(
             )
             span.set_attribute(ERROR_TYPE, error_type)
             span.record_exception(e)
-            span.set_status(SpanStatus(StatusCode.ERROR, str(e)))
+            span.set_status(SpanStatus(StatusCode.ERROR))
             raise
 
         shared_attributes = {

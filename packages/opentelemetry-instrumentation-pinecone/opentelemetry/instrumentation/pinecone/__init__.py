@@ -143,6 +143,8 @@ def _wrap(
         attributes={
             AISpanAttributes.VECTOR_DB_VENDOR: "Pinecone",
         },
+        record_exception=False,
+        set_status_on_exception=False,
     ) as span:
         if span.is_recording():
             _set_input_attributes(span, instance, kwargs)
@@ -158,7 +160,7 @@ def _wrap(
             response = wrapped(*args, **kwargs)
         except Exception as e:
             span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR))
             raise
         end_time = time.time()
 
