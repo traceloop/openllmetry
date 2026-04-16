@@ -1,4 +1,17 @@
-from llama_index.core.base.llms.types import MessageRole
+import json
+
+from opentelemetry.instrumentation.llamaindex._message_utils import (
+    build_completion_output_message,
+    build_input_messages,
+    build_output_message,
+)
+from opentelemetry.instrumentation.llamaindex._response_utils import (
+    detect_provider_name,
+    extract_finish_reasons,
+    extract_model_from_raw,
+    extract_response_id,
+    extract_token_usage,
+)
 from opentelemetry.instrumentation.llamaindex.utils import (
     dont_throw,
     should_send_prompts,
@@ -6,10 +19,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import (
-    LLMRequestTypeValues,
-    SpanAttributes,
-)
+from opentelemetry.semconv_ai import SpanAttributes
 
 
 def _set_span_attribute(span, name, value):
@@ -24,13 +34,8 @@ def set_llm_chat_request(event, span) -> None:
         return
 
     if should_send_prompts():
-        for idx, message in enumerate(event.messages):
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
-            )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
-            )
+        msgs = build_input_messages(event.messages)
+        span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msgs))
 
 
 @dont_throw
@@ -39,7 +44,12 @@ def set_llm_chat_request_model_attributes(event, span):
         return
 
     model_dict = event.model_dict
-    span.set_attribute(SpanAttributes.LLM_REQUEST_TYPE, LLMRequestTypeValues.CHAT.value)
+    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "chat")
+
+    class_name = model_dict.get("class_name")
+    provider = detect_provider_name(class_name)
+    if provider:
+        span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, provider)
 
     # For StructuredLLM, the model and temperature are nested under model_dict.llm
     if "llm" in model_dict:
@@ -57,23 +67,16 @@ def set_llm_chat_response(event, span) -> None:
         return
 
     response = event.response
+    finish_reasons = extract_finish_reasons(response.raw) if response.raw else []
+
+    # finish_reasons is NOT gated by should_send_prompts() — it's metadata, not content
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
+
     if should_send_prompts():
-        for idx, message in enumerate(event.messages):
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.role", message.role.value
-            )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_PROMPT}.{idx}.content", message.content
-            )
-        span.set_attribute(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role",
-            response.message.role.value,
-        )
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content",
-            response.message.content,
-        )
+        fr = finish_reasons[0] if finish_reasons else None
+        output_msg = build_output_message(response.message, finish_reason=fr)
+        span.set_attribute(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([output_msg]))
 
 
 @dont_throw
@@ -86,99 +89,40 @@ def set_llm_chat_response_model_attributes(event, span):
     if not (raw := response.raw):
         return
 
-    # Get model name - handle both dict and object formats
-    model = None
-    if hasattr(raw, "model"):
-        model = raw.model
-    elif isinstance(raw, dict) and "model" in raw:
-        model = raw.get("model")
+    model = extract_model_from_raw(raw)
     if model:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, model)
 
-    # Handle token usage - support multiple formats
-    input_tokens = None
-    output_tokens = None
-    total_tokens = None
+    response_id = extract_response_id(raw)
+    if response_id:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
 
-    # Try OpenAI format first: raw.usage with completion_tokens, prompt_tokens
-    usage = getattr(raw, "usage", None) or (raw.get("usage") if isinstance(raw, dict) else None)
-    if usage:
-        if hasattr(usage, "completion_tokens"):
-            output_tokens = usage.completion_tokens
-            input_tokens = usage.prompt_tokens
-            total_tokens = usage.total_tokens
-        elif isinstance(usage, dict):
-            output_tokens = usage.get("completion_tokens")
-            input_tokens = usage.get("prompt_tokens")
-            total_tokens = usage.get("total_tokens")
+    usage = extract_token_usage(raw)
+    if usage.output_tokens is not None:
+        span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, int(usage.output_tokens))
+    if usage.input_tokens is not None:
+        span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, int(usage.input_tokens))
+    if usage.total_tokens is not None:
+        span.set_attribute(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, int(usage.total_tokens))
 
-    # Try Cohere format: raw.meta.tokens or raw.meta.billed_units
-    if input_tokens is None or output_tokens is None:
-        meta = getattr(raw, "meta", None) or (raw.get("meta") if isinstance(raw, dict) else None)
-        if meta:
-            # Try meta.tokens first (actual token counts)
-            tokens = getattr(meta, "tokens", None) or (meta.get("tokens") if isinstance(meta, dict) else None)
-            if tokens:
-                if hasattr(tokens, "input_tokens"):
-                    input_tokens = tokens.input_tokens
-                    output_tokens = tokens.output_tokens
-                elif isinstance(tokens, dict):
-                    input_tokens = tokens.get("input_tokens")
-                    output_tokens = tokens.get("output_tokens")
-
-            # Fallback to meta.billed_units if tokens not found
-            if input_tokens is None or output_tokens is None:
-                billed = getattr(meta, "billed_units", None) or (
-                    meta.get("billed_units") if isinstance(meta, dict) else None
-                )
-                if billed:
-                    if hasattr(billed, "input_tokens"):
-                        input_tokens = int(billed.input_tokens)
-                        output_tokens = int(billed.output_tokens)
-                    elif isinstance(billed, dict):
-                        input_tokens = int(billed.get("input_tokens", 0))
-                        output_tokens = int(billed.get("output_tokens", 0))
-
-    # Set token attributes if found
-    if output_tokens is not None:
-        span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, int(output_tokens))
-    if input_tokens is not None:
-        span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, int(input_tokens))
-    if total_tokens is not None:
-        span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, int(total_tokens))
-    elif input_tokens is not None and output_tokens is not None:
-        # Calculate total if not provided (e.g., for Cohere)
-        span.set_attribute(SpanAttributes.LLM_USAGE_TOTAL_TOKENS, int(input_tokens) + int(output_tokens))
-
-    # Handle finish reason for OpenAI-style responses
-    choices = getattr(raw, "choices", None)
-    if choices:
-        span.set_attribute(
-            SpanAttributes.LLM_RESPONSE_FINISH_REASON, choices[0].finish_reason
-        )
+    # CRITICAL: finish_reasons is NOT gated by should_send_prompts()
+    finish_reasons = extract_finish_reasons(raw)
+    if finish_reasons:
+        span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
 
 @dont_throw
 def set_llm_predict_response(event, span) -> None:
     if should_send_prompts():
-        span.set_attribute(
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.role",
-            MessageRole.ASSISTANT.value,
-        )
-        _set_span_attribute(
-            span,
-            f"{GenAIAttributes.GEN_AI_COMPLETION}.content",
-            event.output,
-        )
+        output_msg = build_completion_output_message(event.output or "")
+        span.set_attribute(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([output_msg]))
 
 
 @dont_throw
 def set_embedding(event, span) -> None:
     model_dict = event.model_dict
-    span.set_attribute(
-        f"{LLMRequestTypeValues.EMBEDDING.value}.model_name",
-        model_dict.get("model_name"),
-    )
+    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "embeddings")
+    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, model_dict.get("model_name"))
 
 
 @dont_throw
@@ -186,24 +130,17 @@ def set_rerank(event, span) -> None:
     if not span.is_recording():
         return
     if should_send_prompts():
-        span.set_attribute(
-            f"{LLMRequestTypeValues.RERANK.value}.query",
-            event.query.query_str,
-        )
+        msg = [{"role": "user", "parts": [{"type": "text", "content": event.query.query_str}]}]
+        span.set_attribute(GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(msg))
 
 
 @dont_throw
 def set_rerank_model_attributes(event, span):
     if not span.is_recording():
         return
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.model_name",
-        event.model_name,
-    )
-    span.set_attribute(
-        f"{LLMRequestTypeValues.RERANK.value}.top_n",
-        event.top_n,
-    )
+    span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "rerank")
+    span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, event.model_name)
+    span.set_attribute("rerank.top_n", event.top_n)
 
 
 @dont_throw
