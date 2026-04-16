@@ -1,6 +1,7 @@
 """OpenTelemetry Langchain instrumentation"""
 
 import logging
+import weakref
 from typing import Collection
 
 from opentelemetry import context as context_api
@@ -34,6 +35,12 @@ from wrapt import wrap_function_wrapper
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain-core > 0.1.0", )
+
+_ALL_HOOK_NAMES = [
+    "before_model", "after_model", "before_agent", "after_agent",
+    "abefore_model", "aafter_model", "abefore_agent", "aafter_agent",
+]
+_patched_middleware_instances: weakref.WeakSet = weakref.WeakSet()
 
 
 class LangchainInstrumentor(BaseInstrumentor):
@@ -276,8 +283,14 @@ class LangchainInstrumentor(BaseInstrumentor):
         Uses instance-level wrapping via __init__ instead of class-level
         wrapt patching. Class-level wrapping with wrapt replaces base class
         methods with FunctionWrapper descriptors, which breaks Python identity
-        checks (e.g. `m.__class__.before_agent is not AgentMiddleware.before_agent`)
+        checks (e.g. ``m.__class__.before_agent is not AgentMiddleware.before_agent``)
         used by LangGraph's create_agent to determine which hooks are overridden.
+
+        Limitation: subclasses that override ``__init__`` without calling
+        ``super().__init__()`` will not have their hooks instrumented. This is
+        an acceptable tradeoff — such subclasses violate standard Python
+        conventions, and the alternative (class-level wrapping) breaks
+        LangGraph graph construction entirely.
         """
         sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
         async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
@@ -303,6 +316,7 @@ class LangchainInstrumentor(BaseInstrumentor):
                             return await wfn(orig, instance, a, kw)
                         return instrumented
                     setattr(instance, hook_name, make_async_bound(original, wrapper_fn))
+            _patched_middleware_instances.add(instance)
 
         try:
             wrap_function_wrapper(
@@ -330,6 +344,14 @@ class LangchainInstrumentor(BaseInstrumentor):
 
         # Unwrap AgentMiddleware hooks
         if is_package_available("langchain"):
+            # Remove instance-level hook patches from existing instances
+            for instance in list(_patched_middleware_instances):
+                for hook_name in _ALL_HOOK_NAMES:
+                    try:
+                        delattr(instance, hook_name)
+                    except AttributeError:
+                        pass
+            _patched_middleware_instances.clear()
             try:
                 unwrap("langchain.agents.middleware.types", "AgentMiddleware.__init__")
             except Exception:

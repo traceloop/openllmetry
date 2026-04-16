@@ -35,7 +35,7 @@ def _instrument():
 
     instrumentor = LangchainInstrumentor()
     instrumentor.instrument(tracer_provider=provider)
-    yield
+    yield instrumentor, exporter
     instrumentor.uninstrument()
 
 
@@ -72,3 +72,34 @@ def test_instance_hooks_are_instrumented(_instrument):
         assert instance_method is not class_method.__get__(m, type(m)), (
             f"{hook_name} on instance should be instrumented (shadowed)"
         )
+
+
+def test_uninstrument_removes_instance_patches(_instrument):
+    """After uninstrument(), pre-existing instances must stop emitting spans."""
+    instrumentor, exporter = _instrument
+
+    m = MyMiddleware()
+    # Verify hooks are patched
+    assert "before_model" in m.__dict__, "Hook should be in instance __dict__"
+
+    # Call a hook — should produce a span
+    m.before_model({}, None)
+    spans_before = exporter.get_finished_spans()
+    assert len(spans_before) == 1
+
+    exporter.clear()
+
+    # Uninstrument — should clean up instance patches
+    instrumentor.uninstrument()
+
+    # Instance __dict__ should no longer shadow the hooks
+    assert "before_model" not in m.__dict__, (
+        "Hook should be removed from instance __dict__ after uninstrument"
+    )
+
+    # Calling the hook now goes to the unpatched class method — no span
+    m.before_model({}, None)
+    spans_after = exporter.get_finished_spans()
+    assert len(spans_after) == 0, (
+        "No spans should be emitted after uninstrument()"
+    )
