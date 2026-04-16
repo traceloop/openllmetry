@@ -9,9 +9,6 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
-GEN_AI_SYSTEM = "gen_ai.system"
-GEN_AI_SYSTEM_GROQ = "groq"
-
 _PYDANTIC_VERSION = version("pydantic")
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
@@ -23,9 +20,9 @@ def set_span_attribute(span, name, value):
 
 
 def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+    return (os.getenv(TRACELOOP_TRACE_CONTENT) or "true").lower() == "true" or context_api.get_value(
+        "override_enable_content_tracing"
+    )
 
 
 def dont_throw(func):
@@ -61,7 +58,7 @@ def shared_metrics_attributes(response):
 
     return {
         **common_attributes,
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
     }
 
@@ -69,7 +66,7 @@ def shared_metrics_attributes(response):
 @dont_throw
 def error_metrics_attributes(exception):
     return {
-        GEN_AI_SYSTEM: GEN_AI_SYSTEM_GROQ,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
         "error.type": exception.__class__.__name__,
     }
 

@@ -197,7 +197,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-groq"
-version = "0.53.3"
+version = "0.59.2"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
