@@ -1690,7 +1690,7 @@ class TestMultimodalInputMapping:
             f"input_audio must map to BlobPart (type='blob'), got type='{parts[0]['type']}'"
         )
         assert parts[0]["modality"] == "audio"
-        assert parts[0]["data"] == "base64audiodata=="
+        assert parts[0]["content"] == "base64audiodata=="
 
         span.end()
 
@@ -1825,7 +1825,7 @@ class TestMultimodalInputMapping:
 
         assert result["type"] == "blob"
         assert result["modality"] == "audio"
-        assert result["data"] == "base64data=="
+        assert result["content"] == "base64data=="
 
 
 # ---------------------------------------------------------------------------
@@ -2642,3 +2642,416 @@ class TestRealtimeResponseMetadata:
         assert messages[0]["finish_reason"] == "", (
             f"Realtime finish_reason should be '' (not fabricated), got '{messages[0].get('finish_reason')}'"
         )
+
+
+# ---------------------------------------------------------------------------
+# F1: BlobPart must use "content" key, NOT "data"
+# OTel spec: BlobPart.required = ["type", "modality", "content"]
+# Upstream refs: opentelemetry-python-contrib Blob dataclass uses "content",
+#   Bedrock/OpenAI instrumentations use "content" for blob parts.
+# ---------------------------------------------------------------------------
+
+class TestBlobPartContentKey:
+    """F1: BlobPart must use 'content' key per OTel GenAI semconv."""
+
+    def test_dict_input_audio_blob_uses_content_key(self, tracer_and_exporter):
+        """Dict input_audio block must produce BlobPart with 'content', NOT 'data'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _dict_block_to_part,
+        )
+
+        block = {
+            "type": "input_audio",
+            "input_audio": {"data": "base64audiodata==", "format": "wav"},
+        }
+        result = _dict_block_to_part(block)
+
+        assert result["type"] == "blob"
+        assert result["modality"] == "audio"
+        assert "content" in result, (
+            "BlobPart must use 'content' key per OTel spec, not 'data'"
+        )
+        assert "data" not in result, (
+            "BlobPart must NOT use 'data' key — spec requires 'content'"
+        )
+        assert result["content"] == "base64audiodata=="
+
+    def test_object_input_audio_blob_uses_content_key(self, tracer_and_exporter):
+        """SDK-object input_audio block must produce BlobPart with 'content', NOT 'data'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _object_block_to_part,
+        )
+
+        audio_obj = MagicMock()
+        audio_obj.data = "base64data=="
+        block = MagicMock()
+        block.type = "input_audio"
+        block.input_audio = audio_obj
+
+        result = _object_block_to_part(block)
+
+        assert result["type"] == "blob"
+        assert result["modality"] == "audio"
+        assert "content" in result, (
+            "BlobPart must use 'content' key per OTel spec, not 'data'"
+        )
+        assert "data" not in result, (
+            "BlobPart must NOT use 'data' key — spec requires 'content'"
+        )
+        assert result["content"] == "base64data=="
+
+    def test_blob_content_key_in_full_pipeline(self, tracer_and_exporter):
+        """BlobPart 'content' key must survive through the full input message pipeline."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "input_audio",
+                    "input_audio": {"data": "YXVkaW9kYXRh", "format": "mp3"},
+                },
+            ],
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        messages = json.loads(raw)
+        blob_part = messages[0]["parts"][0]
+
+        assert blob_part["type"] == "blob"
+        assert "content" in blob_part, "BlobPart must use 'content' in pipeline output"
+        assert "data" not in blob_part, "BlobPart must NOT use 'data' in pipeline output"
+        assert blob_part["content"] == "YXVkaW9kYXRh"
+
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# F2: gen_ai.tool.call.arguments/result must use json.dumps(), NOT str()
+# str(dict) produces Python repr with single quotes — not valid JSON.
+# All other structured attributes in this package use json.dumps().
+# ---------------------------------------------------------------------------
+
+class TestToolCallArgumentsSerialization:
+    """F2: Tool call arguments/result must be valid JSON, not Python repr."""
+
+    def test_dict_input_serialized_as_json(self, tracer_and_exporter):
+        """Dict tool input must be serialized with json.dumps(), not str()."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import FunctionSpanData
+
+        tracer, _ = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        func_data = FunctionSpanData(
+            name="get_weather",
+            input={"city": "London"},
+            output="72F",
+        )
+        otel_span = proc._start_function_span(func_data, parent_context=None)
+        proc._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        raw_args = otel_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS]
+        # Must be valid JSON (double quotes), NOT Python repr (single quotes)
+        assert '"city"' in raw_args, (
+            f"Expected JSON with double quotes, got: {raw_args}"
+        )
+        assert "'" not in raw_args or raw_args == raw_args, (
+            f"str() produces single quotes; expected json.dumps(): {raw_args}"
+        )
+        # Must parse as valid JSON
+        parsed = json.loads(raw_args)
+        assert parsed == {"city": "London"}
+
+    def test_dict_output_serialized_as_json(self, tracer_and_exporter):
+        """Dict tool output must be serialized with json.dumps(), not str()."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import FunctionSpanData
+
+        tracer, _ = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        func_data = FunctionSpanData(
+            name="get_weather",
+            input="query",
+            output={"temp": 72, "unit": "F"},
+        )
+        otel_span = proc._start_function_span(func_data, parent_context=None)
+        proc._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        raw_result = otel_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_RESULT]
+        parsed = json.loads(raw_result)
+        assert parsed == {"temp": 72, "unit": "F"}
+
+    def test_string_input_kept_as_is(self, tracer_and_exporter):
+        """String tool input must be kept as-is (already a string)."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import FunctionSpanData
+
+        tracer, _ = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        func_data = FunctionSpanData(
+            name="echo",
+            input='{"already": "json"}',
+            output="done",
+        )
+        otel_span = proc._start_function_span(func_data, parent_context=None)
+        proc._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        raw_args = otel_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS]
+        assert raw_args == '{"already": "json"}'
+
+    def test_list_output_serialized_as_json(self, tracer_and_exporter):
+        """List tool output must be serialized with json.dumps()."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+        from agents import FunctionSpanData
+
+        tracer, _ = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        func_data = FunctionSpanData(
+            name="search",
+            input="query",
+            output=["result1", "result2"],
+        )
+        otel_span = proc._start_function_span(func_data, parent_context=None)
+        proc._end_function_span(otel_span, func_data, trace_content=True)
+        otel_span.end()
+
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        raw_result = otel_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_RESULT]
+        parsed = json.loads(raw_result)
+        assert parsed == ["result1", "result2"]
+
+
+# ---------------------------------------------------------------------------
+# F3: Responses API status → finish_reason mapping
+# The Responses API uses "status" ("completed"/"failed"/"cancelled"/"incomplete"),
+# NOT "finish_reason". Must map status to OTel finish reasons.
+# Upstream ref: opentelemetry-python-contrib _finish_reason_from_status()
+# ---------------------------------------------------------------------------
+
+class TestResponsesApiStatusMapping:
+    """F3: Map Responses API 'status' to finish_reason when finish_reason absent."""
+
+    def test_completed_status_maps_to_stop(self, tracer_and_exporter):
+        """Responses API status='completed' must map to finish_reason='stop'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[],
+            model="gpt-4o",
+            usage=MockUsage(),
+        )
+        # Responses API: no finish_reason, but has status
+        del response.finish_reason
+        response.status = "completed"
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None, (
+            "status='completed' must produce gen_ai.response.finish_reasons"
+        )
+        assert "stop" in finish_reasons, (
+            f"status='completed' must map to 'stop', got {finish_reasons}"
+        )
+
+        span.end()
+
+    def test_failed_status_maps_to_failed(self, tracer_and_exporter):
+        """Responses API status='failed' must map to finish_reason='failed'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[],
+            model="gpt-4o",
+            usage=MockUsage(),
+        )
+        del response.finish_reason
+        response.status = "failed"
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None
+        assert "failed" in finish_reasons
+
+        span.end()
+
+    def test_cancelled_status_maps_to_cancelled(self, tracer_and_exporter):
+        """Responses API status='cancelled' must map to finish_reason='cancelled'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[],
+            model="gpt-4o",
+            usage=MockUsage(),
+        )
+        del response.finish_reason
+        response.status = "cancelled"
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None
+        assert "cancelled" in finish_reasons
+
+        span.end()
+
+    def test_incomplete_status_maps_to_incomplete(self, tracer_and_exporter):
+        """Responses API status='incomplete' must map to finish_reason='incomplete'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[],
+            model="gpt-4o",
+            usage=MockUsage(),
+        )
+        del response.finish_reason
+        response.status = "incomplete"
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None
+        assert "incomplete" in finish_reasons
+
+        span.end()
+
+    def test_status_not_used_when_finish_reason_present(self, tracer_and_exporter):
+        """When finish_reason is present, status must NOT override it."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[],
+            model="gpt-4o",
+            usage=MockUsage(),
+            finish_reason="stop",
+        )
+        response.status = "completed"  # Both present — finish_reason wins
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None
+        assert "stop" in finish_reasons
+
+        span.end()
+
+    def test_completed_status_maps_to_stop_in_output_messages(self, tracer_and_exporter):
+        """status='completed' → output message finish_reason='stop'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        content_item = MockContentItem(text="Done")
+        output_item = MockResponseOutput(role="assistant", content=[content_item])
+        response = MockResponse(
+            output=[output_item],
+            model="gpt-4o",
+            usage=MockUsage(),
+        )
+        del response.finish_reason
+        response.status = "completed"
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+        messages = json.loads(raw)
+        assert messages[0]["finish_reason"] == "stop", (
+            f"status='completed' should produce finish_reason='stop' in output, "
+            f"got '{messages[0]['finish_reason']}'"
+        )
+
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# Missing finish_reason mapping tests
+# ---------------------------------------------------------------------------
+
+class TestFinishReasonMappingCompleteness:
+    """Cover finish_reason mappings missing from original test suite."""
+
+    def test_length_mapping(self):
+        """'length' must map to 'length'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
+        assert _map_finish_reason("length") == "length"
+
+    def test_content_filter_mapping(self):
+        """'content_filter' must map to 'content_filter'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
+        assert _map_finish_reason("content_filter") == "content_filter"
+
+    def test_error_mapping(self):
+        """'error' must map to 'error'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
+        assert _map_finish_reason("error") == "error"
+
+    def test_unknown_finish_reason_passes_through(self):
+        """Unknown/new finish reason values must pass through unchanged."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
+        assert _map_finish_reason("some_new_reason") == "some_new_reason"
+
+    def test_function_call_maps_to_tool_call(self):
+        """Legacy 'function_call' must map to 'tool_call'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
+        assert _map_finish_reason("function_call") == "tool_call"

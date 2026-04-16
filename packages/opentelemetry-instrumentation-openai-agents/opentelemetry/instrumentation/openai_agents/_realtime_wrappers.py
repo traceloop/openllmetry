@@ -117,7 +117,7 @@ class RealtimeTracingState:
         self.starting_agent_name = agent_name
         self.workflow_span = self.tracer.start_span(
             "Realtime Session",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
@@ -171,7 +171,7 @@ class RealtimeTracingState:
 
         span = self.tracer.start_span(
             f"{agent_name}.agent",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,

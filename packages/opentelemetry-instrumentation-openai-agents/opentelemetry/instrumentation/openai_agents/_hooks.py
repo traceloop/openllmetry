@@ -187,7 +187,7 @@ def _dict_block_to_part(block: dict) -> dict:
         return {
             "type": "blob",
             "modality": "audio",
-            "data": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
+            "content": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
         }
     return {"type": btype, "data": json.dumps(block)}
 
@@ -207,7 +207,7 @@ def _object_block_to_part(block) -> dict:
     if btype == "input_audio":
         audio_obj = getattr(block, "input_audio", None)
         data = getattr(audio_obj, "data", str(audio_obj)) if audio_obj else ""
-        return {"type": "blob", "modality": "audio", "data": data}
+        return {"type": "blob", "modality": "audio", "content": data}
     return {"type": btype, "data": str(block)}
 
 
@@ -372,6 +372,13 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
 
     # Map finish reason (top-level)
     raw_finish_reason = getattr(response, "finish_reason", None)
+    if raw_finish_reason is None:
+        # Responses API uses status instead of finish_reason
+        status = getattr(response, "status", None)
+        if status == "completed":
+            raw_finish_reason = "stop"
+        elif status in ("failed", "cancelled", "incomplete"):
+            raw_finish_reason = status
     mapped_finish_reason = _map_finish_reason(raw_finish_reason)
 
     # Set top-level finish_reasons attribute (even when trace_content=False)
@@ -556,7 +563,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         # Create a root "Agent Workflow" span for the entire trace
         workflow_span = self.tracer.start_span(
             "Agent Workflow",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
@@ -738,7 +745,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         return self.tracer.start_span(
             f"{agent_name}.agent",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             context=parent_context,
             attributes=attributes,
         )
@@ -882,14 +889,14 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if tool_input is not None:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS,
-                str(tool_input),
+                tool_input if isinstance(tool_input, str) else json.dumps(tool_input),
             )
 
         tool_output = getattr(span_data, "output", None)
         if tool_output is not None:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_TOOL_CALL_RESULT,
-                str(tool_output),
+                tool_output if isinstance(tool_output, str) else json.dumps(tool_output),
             )
 
     def _set_realtime_io_attributes(self, otel_span, span_data, has_output=True):

@@ -83,7 +83,7 @@ def test_agent_spans(exporter, test_agent):
 
     # Test agent span attributes (should NOT contain prompts/completions/usage/llm_params)
     assert agent_span.name == "testAgent.agent"
-    assert agent_span.kind == agent_span.kind.CLIENT
+    assert agent_span.kind == agent_span.kind.INTERNAL
     assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
     assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
     assert agent_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"

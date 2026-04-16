@@ -132,14 +132,14 @@ class TestStartAgentSpan:
 
         otel_span.end()
 
-    def test_span_kind_is_client(self, tracer_and_exporter, processor):
-        """Agent spans must be CLIENT kind."""
+    def test_span_kind_is_internal(self, tracer_and_exporter, processor):
+        """Agent spans must be INTERNAL kind (in-process orchestration, not a remote call)."""
         from agents import AgentSpanData
 
         agent_data = AgentSpanData(name="Agent", handoffs=[], tools=[], output_type="")
         otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t5")
 
-        assert otel_span.kind == SpanKind.CLIENT
+        assert otel_span.kind == SpanKind.INTERNAL
 
         otel_span.end()
 
