@@ -361,6 +361,21 @@ class TestAwrap:
         tracer.start_span.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_otel_suppression_key_skips_span(self):
+        tracer = MagicMock()
+        wrapped = AsyncMock(return_value="async_result")
+        wrapper = _awrap(tracer, None, None, None, None, {})
+
+        token = context_api.attach(context_api.set_value(_SUPPRESS_INSTRUMENTATION_KEY, True))
+        try:
+            result = await wrapper(wrapped, None, [], {"model": "m"})
+        finally:
+            context_api.detach(token)
+
+        assert result == "async_result"
+        tracer.start_span.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_api_exception_records_duration_and_reraises(self):
         tracer = MagicMock()
         span = _span()

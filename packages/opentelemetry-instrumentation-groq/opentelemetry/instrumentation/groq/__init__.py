@@ -185,7 +185,7 @@ def _handle_streaming_response(span, accumulated_content, tool_calls, finish_rea
     if should_emit_events() and event_logger:
         emit_streaming_response_events(accumulated_content, finish_reason, event_logger, tool_calls=tool_calls)
     else:
-        set_streaming_response_attributes(span, accumulated_content, finish_reason, usage, tool_calls=tool_calls)
+        set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
 def _create_stream_processor(response, span, event_logger):
@@ -201,9 +201,7 @@ def _create_stream_processor(response, span, event_logger):
             accumulated_content += content
         if tool_calls_delta:
             _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        for fr in chunk_finish_reasons:
-            if fr not in accumulated_finish_reasons:
-                accumulated_finish_reasons.append(fr)
+        accumulated_finish_reasons.extend(chunk_finish_reasons)
         if chunk_usage:
             usage = chunk_usage
         yield chunk
@@ -230,9 +228,7 @@ async def _create_async_stream_processor(response, span, event_logger):
             accumulated_content += content
         if tool_calls_delta:
             _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        for fr in chunk_finish_reasons:
-            if fr not in accumulated_finish_reasons:
-                accumulated_finish_reasons.append(fr)
+        accumulated_finish_reasons.extend(chunk_finish_reasons)
         if chunk_usage:
             usage = chunk_usage
         yield chunk

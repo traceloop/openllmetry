@@ -161,7 +161,7 @@ def set_model_input_attributes(span, kwargs):
                 pass
 
 
-def set_streaming_response_attributes(span, accumulated_content, finish_reason=None, usage=None, tool_calls=None):
+def set_streaming_response_attributes(span, accumulated_content, finish_reason=None, tool_calls=None):
     """Set gen_ai.output.messages span attribute for accumulated streaming response."""
     if not span.is_recording() or not should_send_prompts():
         return

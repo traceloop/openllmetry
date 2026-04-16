@@ -54,7 +54,7 @@ def emit_choice_events(response: ChatCompletion, event_logger):
                     "content": choice.message.content,
                     "role": choice.message.role or "unknown",
                 },
-                finish_reason=_map_groq_finish_reason(choice.finish_reason) or "",
+                finish_reason=_map_groq_finish_reason(choice.finish_reason),
                 tool_calls=choice.message.tool_calls or None,
             ),
             event_logger=event_logger,
