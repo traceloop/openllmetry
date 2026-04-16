@@ -30,6 +30,9 @@ from llama_index.core.instrumentation.events.rerank import ReRankStartEvent
 from llama_index.core.instrumentation.span_handlers import BaseSpanHandler
 from llama_index.core.workflow import Workflow
 from opentelemetry import context as context_api
+from opentelemetry.instrumentation.llamaindex._response_utils import (
+    detect_provider_name,
+)
 from opentelemetry.instrumentation.llamaindex.event_emitter import (
     emit_chat_message_events,
     emit_chat_response_events,
@@ -85,6 +88,7 @@ class SpanHolder:
     token: Optional[Any] = None
     context: Optional[context_api.context.Context] = None
     waiting_for_streaming: bool = field(init=False, default=False)
+    provider_name: Optional[str] = field(init=False, default=None)
 
     _active: bool = field(init=False, default=True)
 
@@ -120,8 +124,9 @@ class SpanHolder:
     @update_span_for_event.register
     def _(self, event: LLMChatStartEvent):
         set_llm_chat_request_model_attributes(event, self.otel_span)
+        self.provider_name = detect_provider_name(event.model_dict.get("class_name"))
         if should_emit_events():
-            emit_chat_message_events(event)
+            emit_chat_message_events(event, provider_name=self.provider_name)
         else:
             set_llm_chat_request(event, self.otel_span)
 
@@ -129,7 +134,7 @@ class SpanHolder:
     def _(self, event: LLMChatEndEvent):
         set_llm_chat_response_model_attributes(event, self.otel_span)
         if should_emit_events():
-            emit_chat_response_events(event)
+            emit_chat_response_events(event, provider_name=self.provider_name)
         else:
             set_llm_chat_response(event, self.otel_span)  # noqa: F821
 
@@ -144,9 +149,11 @@ class SpanHolder:
 
     @update_span_for_event.register
     def _(self, event: ReRankStartEvent):
+        if self.provider_name is None and self.parent is not None:
+            self.provider_name = self.parent.provider_name
         set_rerank_model_attributes(event, self.otel_span)
         if should_emit_events():
-            emit_rerank_message_event(event)
+            emit_rerank_message_event(event, provider_name=self.provider_name)
         else:
             set_rerank(event, self.otel_span)
 

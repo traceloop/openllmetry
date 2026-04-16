@@ -185,15 +185,11 @@ async def test_agent_with_multiple_tools(
     cohere_spans = [span for span in spans if span.name == "Cohere.task"]
     assert len(cohere_spans) >= 1, "Expected at least one Cohere LLM span"
 
-    # In llama-index 0.14.x, there are two types of Cohere.task spans:
-    # 1. LLM call spans with gen_ai.request.model, gen_ai.prompt.X.content, gen_ai.completion.X.content
-    # 2. Text processing spans with gen_ai.completion.content only
     # We verify that at least one span has the full set of LLM attributes
     llm_spans_with_model = [
         span
         for span in cohere_spans
         if GenAIAttributes.GEN_AI_REQUEST_MODEL in span.attributes
-        or "gen_ai.request.model" in span.attributes
     ]
     assert (
         len(llm_spans_with_model) >= 1
@@ -201,34 +197,24 @@ async def test_agent_with_multiple_tools(
 
     # Check that LLM spans with gen_ai.request.model have the expected attributes
     for cohere_span in llm_spans_with_model:
-        # Check for gen_ai.request.model attribute
         assert (
             GenAIAttributes.GEN_AI_REQUEST_MODEL in cohere_span.attributes
-            or "gen_ai.request.model" in cohere_span.attributes
         ), f"Expected gen_ai.request.model in {cohere_span.name}"
 
-        # Check for prompt content attributes (gen_ai.prompt.X.content)
-        prompt_keys = [
-            k for k in cohere_span.attributes if k.startswith("gen_ai.prompt.")
-        ]
-        assert len(prompt_keys) > 0, f"Expected prompt attributes in {cohere_span.name}"
-
-        # Check for completion content attributes (gen_ai.completion.X.content)
-        completion_keys = [
-            k for k in cohere_span.attributes if k.startswith("gen_ai.completion")
-        ]
+        # Check for JSON input/output messages (new semconv format)
         assert (
-            len(completion_keys) > 0
-        ), f"Expected completion attributes in {cohere_span.name}"
+            GenAIAttributes.GEN_AI_INPUT_MESSAGES in cohere_span.attributes
+        ), f"Expected gen_ai.input.messages in {cohere_span.name}"
+        assert (
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in cohere_span.attributes
+        ), f"Expected gen_ai.output.messages in {cohere_span.name}"
 
-        # Check that operation name exists (gen_ai.operation.name or legacy llm.request.type)
+        # Check that operation name exists
         assert (
             GenAIAttributes.GEN_AI_OPERATION_NAME in cohere_span.attributes
-            or SpanAttributes.LLM_REQUEST_TYPE in cohere_span.attributes
-            or "llm.request.type" in cohere_span.attributes
-        ), f"Expected gen_ai.operation.name or llm.request.type in {cohere_span.name}"
+        ), f"Expected gen_ai.operation.name in {cohere_span.name}"
 
-        # Check for token usage attributes (restored with Cohere format support)
+        # Check for token usage attributes
         assert (
             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS in cohere_span.attributes
         ), f"Expected gen_ai.usage.output_tokens in {cohere_span.name}"
@@ -238,9 +224,9 @@ async def test_agent_with_multiple_tools(
         ), f"Expected gen_ai.usage.input_tokens in {cohere_span.name}"
         assert cohere_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
         assert (
-            SpanAttributes.LLM_USAGE_TOTAL_TOKENS in cohere_span.attributes
-        ), f"Expected llm.usage.total_tokens in {cohere_span.name}"
-        assert cohere_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+            SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS in cohere_span.attributes
+        ), f"Expected gen_ai.usage.total_tokens in {cohere_span.name}"
+        assert cohere_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
 
     # Verify tool-related spans exist (FunctionTool.task and QueryEngineTool.task)
     function_tool_spans = [span for span in spans if span.name == "FunctionTool.task"]
