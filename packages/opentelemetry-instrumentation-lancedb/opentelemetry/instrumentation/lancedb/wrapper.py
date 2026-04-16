@@ -6,6 +6,7 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 
 
 def _with_tracer_wrapper(func):
@@ -45,7 +46,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "delete":
             _set_delete_attributes(span, kwargs)
 
-        return_value = wrapped(*args, **kwargs)
+        try:
+            return_value = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
     return return_value
 

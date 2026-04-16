@@ -154,7 +154,12 @@ def _wrap(
             shared_attributes["server.address"] = instance._config.host
 
         start_time = time.time()
-        response = wrapped(*args, **kwargs)
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
         end_time = time.time()
 
         duration = end_time - start_time

@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv_ai import Events, EventAttributes
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
+from opentelemetry.trace.status import Status as SpanStatus, StatusCode
 from pymilvus.client.types import Status
 from pymilvus.exceptions import ErrorCode
 
@@ -112,6 +113,8 @@ def _wrap(
                 getattr(e, "code", None), type(e).__name__
             )
             span.set_attribute(ERROR_TYPE, error_type)
+            span.record_exception(e)
+            span.set_status(SpanStatus(StatusCode.ERROR, str(e)))
             raise
 
         shared_attributes = {
