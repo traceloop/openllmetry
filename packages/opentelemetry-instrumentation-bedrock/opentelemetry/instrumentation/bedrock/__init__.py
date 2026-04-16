@@ -219,13 +219,17 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         with tracer.start_as_current_span(
-            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
+            _span_name(operation_name, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
                 span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR))
                 raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
@@ -258,7 +262,7 @@ def _instrumented_model_invoke_with_response_stream(
             response = fn(*args, **kwargs)
         except Exception as e:
             span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR))
             span.end()
             raise
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
@@ -287,12 +291,14 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             _span_name(GenAiOperationNameValues.CHAT.value, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
                 span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR))
                 raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
@@ -322,7 +328,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             response = fn(*args, **kwargs)
         except Exception as e:
             span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR))
             span.end()
             raise
         if span.is_recording():

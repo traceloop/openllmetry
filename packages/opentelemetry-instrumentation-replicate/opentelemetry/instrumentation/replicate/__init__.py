@@ -137,7 +137,7 @@ def _wrap(
         response = wrapped(*args, **kwargs)
     except Exception as e:
         span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.set_status(Status(StatusCode.ERROR))
         span.end()
         raise
 

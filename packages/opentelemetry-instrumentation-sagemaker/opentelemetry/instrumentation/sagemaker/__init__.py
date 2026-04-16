@@ -95,13 +95,16 @@ def _instrumented_endpoint_invoke(fn, tracer, event_logger):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            "sagemaker.completion", kind=SpanKind.CLIENT
+            "sagemaker.completion",
+            kind=SpanKind.CLIENT,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
                 span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR))
                 raise
             _handle_call(span, event_logger, kwargs, response)
 
@@ -122,7 +125,7 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger)
             response = fn(*args, **kwargs)
         except Exception as e:
             span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR))
             span.end()
             raise
 
