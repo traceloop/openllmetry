@@ -33,7 +33,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "fastmcp>=2.12.2,<3",
+  "fastmcp>=2.12.2,<4",
   "mcp>=1.26.0,<2",
   "opentelemetry-exporter-otlp>=1.34.1,<2",
   "opentelemetry-sdk>=1.38.0,<2",
