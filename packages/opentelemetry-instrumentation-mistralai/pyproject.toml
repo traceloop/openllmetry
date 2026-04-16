@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-mistralai"
-version = "0.59.1"
+version = "0.59.2"
 description = "OpenTelemetry Mistral AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
