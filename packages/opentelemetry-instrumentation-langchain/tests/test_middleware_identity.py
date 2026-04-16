@@ -66,11 +66,8 @@ def test_instance_hooks_are_instrumented(_instrument):
     """Instance-level hooks should be wrapped for tracing after construction."""
     m = MyMiddleware()
     for hook_name in ALL_HOOKS:
-        instance_method = getattr(m, hook_name)
-        class_method = getattr(m.__class__, hook_name)
-        # Instance attribute should shadow the class method (instrumented)
-        assert instance_method is not class_method.__get__(m, type(m)), (
-            f"{hook_name} on instance should be instrumented (shadowed)"
+        assert hook_name in m.__dict__, (
+            f"{hook_name} should be in instance __dict__ (instrumented)"
         )
 
 
