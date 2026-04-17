@@ -27,6 +27,7 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -61,15 +62,21 @@ def is_streaming_response(response):
 
 def _build_from_streaming_response(span, event_logger, response):
     complete_response = ""
-    for item in response:
-        item_to_yield = item
-        complete_response += str(item)
+    try:
+        for item in response:
+            item_to_yield = item
+            complete_response += str(item)
 
-        yield item_to_yield
+            yield item_to_yield
 
-    _handle_response(span, event_logger, complete_response)
-
-    span.end()
+        _handle_response(span, event_logger, complete_response)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    finally:
+        span.end()
 
 
 @dont_throw
@@ -133,16 +140,23 @@ def _wrap(
 
     _handle_request(span, event_logger, args, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
 
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(span, event_logger, response)
-        else:
-            _handle_response(span, event_logger, response)
+        if response:
+            if is_streaming_response(response):
+                return _build_from_streaming_response(span, event_logger, response)
+            else:
+                _handle_response(span, event_logger, response)
 
-    span.end()
-    return response
+        span.end()
+        return response
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
 
 class ReplicateInstrumentor(BaseInstrumentor):

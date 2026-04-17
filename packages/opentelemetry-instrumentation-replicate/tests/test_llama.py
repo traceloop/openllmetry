@@ -1,10 +1,12 @@
 import sys
+from unittest.mock import patch
 
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.trace.status import StatusCode
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python3.9")
@@ -116,3 +118,55 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python3.9")
+def test_replicate_run_exception(instrument_legacy, replicate_client, span_exporter):
+    with patch("httpx.Client.send", side_effect=Exception("API connection error")):
+        with pytest.raises(Exception, match="API connection error"):
+            replicate_client.run(
+                "meta/llama-2-70b-chat",
+                input={"prompt": "tell me a joke"},
+            )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "replicate.run"
+    assert span.status.status_code == StatusCode.ERROR
+    assert "API connection error" in span.status.description
+
+    events = span.events
+    assert len(events) == 1
+    assert events[0].name == "exception"
+    assert events[0].attributes["exception.type"] == "Exception"
+    assert "API connection error" in events[0].attributes["exception.message"]
+
+    assert span.attributes.get("error.type") == "Exception"
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="requires python3.9")
+def test_replicate_stream_exception(instrument_legacy, replicate_client, span_exporter):
+    with patch("httpx.Client.send", side_effect=Exception("Stream connection error")):
+        with pytest.raises(Exception, match="Stream connection error"):
+            for _ in replicate_client.stream(
+                "meta/llama-2-70b-chat",
+                input={"prompt": "tell me a joke"},
+            ):
+                pass
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+    assert span.name == "replicate.stream"
+    assert span.status.status_code == StatusCode.ERROR
+    assert "Stream connection error" in span.status.description
+
+    events = span.events
+    assert len(events) == 1
+    assert events[0].name == "exception"
+    assert events[0].attributes["exception.type"] == "Exception"
+
+    assert span.attributes.get("error.type") == "Exception"
