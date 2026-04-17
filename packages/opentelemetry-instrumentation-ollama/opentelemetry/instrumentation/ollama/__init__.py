@@ -65,6 +65,7 @@ WRAPPED_METHODS = [
 
 def _sanitize_copy_messages(wrapped, instance, args, kwargs):
     # original signature: _copy_messages(messages)
+    """Sanitize tool_calls arguments in messages before Pydantic validation."""
     messages = args[0] if args else []
     sanitized = []
     for msg in messages or []:
@@ -96,6 +97,7 @@ def _accumulate_streaming_response(
     streaming_time_to_generate=None,
     start_time=None,
 ):
+    """Yield streaming response chunks and record span attributes on completion."""
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -160,6 +162,7 @@ async def _aaccumulate_streaming_response(
     streaming_time_to_generate=None,
     start_time=None,
 ):
+    """Async version: yield streaming response chunks and record span attributes on completion."""
     if llm_request_type == LLMRequestTypeValues.CHAT:
         accumulated_response = {"message": {"content": "", "role": ""}}
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
@@ -226,7 +229,9 @@ def _with_tracer_wrapper(func):
         streaming_time_to_generate,
         to_wrap,
     ):
+        """Bind tracer and configuration parameters, returning the wrapped function factory."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(
                 tracer,
                 token_histogram,
@@ -247,6 +252,7 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
+    """Return the LLMRequestTypeValues enum for a given Together AI method name."""
     if method_name == "chat":
         return LLMRequestTypeValues.CHAT
     elif method_name == "generate":
@@ -259,6 +265,7 @@ def _llm_request_type_by_method(method_name):
 
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, args, kwargs):
+    """Set prompt span attributes and emit prompt events if event logging is enabled."""
     set_model_input_attributes(span, kwargs)
     if should_emit_events() and event_logger:
         emit_message_events(llm_request_type, args, kwargs, event_logger)
@@ -268,6 +275,7 @@ def _handle_input(span, event_logger, llm_request_type, args, kwargs):
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, token_histogram, response):
+    """Set response span attributes and emit choice events if event logging is enabled."""
     if should_emit_events() and event_logger:
         emit_choice_events(llm_request_type, response, event_logger)
     else:
@@ -437,6 +445,7 @@ async def _awrap(
 
 
 def _build_metrics(meter: Meter):
+    """Create and return OTel metric instruments for token usage, duration, and streaming timing."""
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
@@ -465,6 +474,7 @@ def _build_metrics(meter: Meter):
 
 
 def is_metrics_collection_enabled() -> bool:
+    """Return True if metrics collection is enabled via environment variable."""
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
@@ -472,14 +482,17 @@ class OllamaInstrumentor(BaseInstrumentor):
     """An instrumentor for Ollama's client library."""
 
     def __init__(self, exception_logger=None, use_legacy_attributes=True):
+        """Initialize the instrumentor and apply configuration settings."""
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package version constraints required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Patch the target library to add OTel instrumentation."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -551,6 +564,7 @@ class OllamaInstrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
+        """Remove OTel instrumentation patches from the target library."""
         try:
             import ollama
             from ollama._client import AsyncClient, Client
@@ -572,7 +586,9 @@ def _dispatch_wrap(
     streaming_time_to_first_token,
     streaming_time_to_generate
 ):
+    """Return a wrapt wrapper that dispatches sync Ollama _request calls to _wrap."""
     def wrapper(wrapped, instance, args, kwargs):
+        """Invoke the instrumented function with bound tracer parameters."""
         to_wrap = None
         if len(args) > 2 and isinstance(args[2], str):
             path = args[2]
@@ -601,7 +617,9 @@ def _dispatch_awrap(
     streaming_time_to_first_token,
     streaming_time_to_generate,
 ):
+    """Return a wrapt wrapper that dispatches async Ollama _request calls to _awrap."""
     async def wrapper(wrapped, instance, args, kwargs):
+        """Invoke the instrumented function with bound tracer parameters."""
         to_wrap = None
         if len(args) > 2 and isinstance(args[2], str):
             path = args[2]
