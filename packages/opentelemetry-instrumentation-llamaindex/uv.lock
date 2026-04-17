@@ -2322,7 +2322,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.53.3"
+version = "0.58.1"
 source = { editable = "../opentelemetry-instrumentation-chromadb" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2357,7 +2357,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-cohere"
-version = "0.53.3"
+version = "0.58.1"
 source = { editable = "../opentelemetry-instrumentation-cohere" }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -2411,7 +2411,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-llamaindex"
-version = "0.53.3"
+version = "0.58.1"
 source = { editable = "." }
 dependencies = [
     { name = "inflection" },
@@ -2495,7 +2495,7 @@ test = [
 
 [[package]]
 name = "opentelemetry-instrumentation-openai"
-version = "0.53.3"
+version = "0.58.1"
 source = { editable = "../opentelemetry-instrumentation-openai" }
 dependencies = [
     { name = "opentelemetry-api" },

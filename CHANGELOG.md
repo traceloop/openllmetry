@@ -1,3 +1,15 @@
+## v0.59.2 (2026-04-16)
+
+### Fix
+
+- **traceloop-sdk**: avoid calling async json methods in JSONEncoder (#3968)
+
+## v0.59.1 (2026-04-15)
+
+### Fix
+
+- **langchain**: detach existing SpanHolder token before overwrite in _create_llm_span (#3958)
+
 ## v0.59.0 (2026-04-13)
 
 ### Feat
