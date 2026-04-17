@@ -115,7 +115,7 @@ def _content_to_parts(content) -> list[dict]:
                     })
                 else:
                     # Unknown block type — preserve as text with JSON
-                    parts.append({"type": "text", "content": json.dumps(block, cls=CallbackFilteredJSONEncoder)})
+                    parts.append({"type": "text", "content": json.dumps(block, cls=CallbackFilteredJSONEncoder, ensure_ascii=False)})
             else:
                 parts.append({"type": "text", "content": str(block)})
         return parts
@@ -204,7 +204,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
-            json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder),
+            json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
         )
 
 
@@ -228,7 +228,7 @@ def set_llm_request(
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder),
+                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
             )
 
 
@@ -256,7 +256,7 @@ def set_chat_request(
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
-                json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder),
+                json.dumps(tool_defs, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
             )
 
         input_messages = []
@@ -275,7 +275,7 @@ def set_chat_request(
                     content_str = (
                         msg.content
                         if isinstance(msg.content, str)
-                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
+                        else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder, ensure_ascii=False)
                     )
                     parts = [{
                         "type": "tool_call_response",
@@ -301,13 +301,13 @@ def set_chat_request(
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
-                json.dumps(system_instructions, cls=CallbackFilteredJSONEncoder),
+                json.dumps(system_instructions, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
             )
         if input_messages:
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder),
+                json.dumps(input_messages, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
             )
 
 
@@ -376,7 +376,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(output_messages, cls=CallbackFilteredJSONEncoder),
+            json.dumps(output_messages, cls=CallbackFilteredJSONEncoder, ensure_ascii=False),
         )
     if finish_reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
