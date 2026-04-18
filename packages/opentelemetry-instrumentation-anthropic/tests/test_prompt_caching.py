@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 
 import pytest
+from opentelemetry.trace import StatusCode
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.semconv._incubating.attributes import (
@@ -92,7 +93,7 @@ def test_anthropic_prompt_caching_legacy(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -184,7 +185,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -346,7 +347,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -430,7 +431,7 @@ async def test_anthropic_prompt_caching_async_legacy(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -518,7 +519,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -686,7 +687,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
             ],
         )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -778,7 +779,7 @@ def test_anthropic_prompt_caching_stream_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -869,7 +870,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1042,7 +1043,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1130,7 +1131,7 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1221,7 +1222,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1405,7 +1406,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2

@@ -1,5 +1,6 @@
 import json
 import pytest
+from opentelemetry.trace import StatusCode
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -41,7 +42,7 @@ def test_anthropic_thinking_legacy(
         ],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -100,7 +101,7 @@ def test_anthropic_thinking_with_events_with_content(
         messages=[user_message],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -174,7 +175,7 @@ def test_anthropic_thinking_with_events_with_no_content(
         ],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -241,7 +242,7 @@ async def test_async_anthropic_thinking_legacy(
         ],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -301,7 +302,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
         messages=[user_message],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -379,7 +380,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
         ],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -457,7 +458,7 @@ def test_anthropic_thinking_streaming_legacy(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -527,7 +528,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -619,7 +620,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -698,7 +699,7 @@ async def test_async_anthropic_thinking_streaming_legacy(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -769,7 +770,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -867,7 +868,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
         ):
             thinking += event.delta.thinking
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"

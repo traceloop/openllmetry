@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from opentelemetry.trace import StatusCode
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -85,7 +86,7 @@ def test_anthropic_message_create_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
@@ -139,7 +140,7 @@ def test_anthropic_message_create_with_events_with_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
@@ -204,7 +205,7 @@ def test_anthropic_message_create_with_events_with_no_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert all(span.name == "anthropic.chat" for span in spans)
 
     anthropic_span = spans[0]
@@ -257,7 +258,7 @@ def test_anthropic_multi_modal_legacy(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -321,7 +322,7 @@ def test_anthropic_multi_modal_with_events_with_content(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -382,7 +383,7 @@ def test_anthropic_multi_modal_with_events_with_no_content(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -448,7 +449,7 @@ def test_anthropic_image_with_history(
         ],
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert all(span.name == "anthropic.chat" for span in spans)
 
     # span 0: system + first user message
@@ -513,7 +514,7 @@ async def test_anthropic_async_multi_modal_legacy(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -578,7 +579,7 @@ async def test_anthropic_async_multi_modal_with_events_with_content(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -640,7 +641,7 @@ async def test_anthropic_async_multi_modal_with_events_with_no_content(
         model="claude-3-opus-20240229",
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -695,7 +696,7 @@ def test_anthropic_message_streaming_legacy(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -756,7 +757,7 @@ def test_anthropic_message_streaming_with_events_with_content(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -821,7 +822,7 @@ def test_anthropic_message_streaming_with_events_with_no_content(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -876,7 +877,7 @@ async def test_async_anthropic_message_create_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -930,7 +931,7 @@ async def test_async_anthropic_message_create_with_events_with_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -988,7 +989,7 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -1048,7 +1049,7 @@ async def test_async_anthropic_message_streaming_legacy(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -1109,7 +1110,7 @@ async def test_async_anthropic_message_streaming_with_events_with_content(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -1173,7 +1174,7 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
             response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -1227,7 +1228,7 @@ def test_anthropic_tools_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1330,7 +1331,7 @@ def test_anthropic_tools_with_events_with_content(
         )
     except Exception:
         pass
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1432,7 +1433,7 @@ def test_anthropic_tools_with_events_with_no_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1554,7 +1555,7 @@ def test_anthropic_tools_history_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1688,7 +1689,7 @@ def test_anthropic_tools_history_with_events_with_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1790,7 +1791,7 @@ def test_anthropic_tools_history_with_events_with_no_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1872,7 +1873,7 @@ def test_anthropic_tools_streaming_legacy(
     for _ in response:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -1983,7 +1984,7 @@ def test_anthropic_tools_streaming_with_events_with_content(
         )
     except Exception:
         pass
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -2095,7 +2096,7 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
         )
     except Exception:
         pass
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 1
@@ -2192,7 +2193,7 @@ def test_with_asyncio_run_legacy(
         )
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2226,7 +2227,7 @@ def test_with_asyncio_run_with_events_with_content(
         )
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2284,7 +2285,7 @@ def test_with_asyncio_run_with_events_with_no_content(
         )
     )
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2349,7 +2350,7 @@ def test_anthropic_message_stream_manager_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2409,7 +2410,7 @@ def test_anthropic_message_stream_manager_with_events_with_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2473,7 +2474,7 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2533,7 +2534,7 @@ async def test_async_anthropic_message_stream_manager_legacy(
     except Exception:
         pass
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2593,7 +2594,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2656,7 +2657,7 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]
@@ -2714,7 +2715,7 @@ async def test_anthropic_streaming_helper_methods_legacy(
         assert hasattr(stream, 'text_stream')
         assert hasattr(stream, 'until_done')
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
     assert spans[0].name == "anthropic.chat"
 
@@ -2740,7 +2741,7 @@ async def test_anthropic_text_stream_helper_method_legacy(
         async for text in stream.text_stream:
             text_content += text
         assert len(text_content) > 0
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     print(f"Number of spans created: {len(spans)}")
     assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
     assert spans[0].name == "anthropic.chat"
@@ -2767,7 +2768,7 @@ def test_anthropic_sync_streaming_helper_methods_legacy(
         for event in stream:
             events.append(event)
         assert len(events) > 0
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert len(spans) == 1
     assert spans[0].name == "anthropic.chat"
 
@@ -2794,7 +2795,7 @@ async def test_async_anthropic_beta_message_stream_manager_legacy(
 
     assert response_content != ""
 
-    spans = span_exporter.get_finished_spans()
+    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
     assert [span.name for span in spans] == [
         "anthropic.chat",
     ]

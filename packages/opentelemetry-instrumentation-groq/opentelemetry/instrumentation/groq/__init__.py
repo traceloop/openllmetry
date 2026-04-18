@@ -263,6 +263,9 @@ def _wrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
         raise e
 
     end_time = time.time()
@@ -346,6 +349,9 @@ async def _awrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
         raise e
 
     end_time = time.time()
