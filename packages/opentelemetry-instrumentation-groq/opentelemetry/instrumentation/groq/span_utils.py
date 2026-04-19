@@ -54,11 +54,22 @@ def _content_to_parts(content):
     for block in content:
         if not isinstance(block, dict):
             continue
-        if block.get("type") == "text":
+        block_type = block.get("type")
+        if block_type == "text":
             parts.append({"type": "text", "content": block.get("text", "")})
-        elif block.get("type") == "image_url":
+        elif block_type == "image_url":
             url = (block.get("image_url") or {}).get("url", "")
-            parts.append({"type": "uri", "modality": "image", "uri": url})
+            if url.startswith("data:"):
+                try:
+                    header, data = url.split(",", 1)
+                    mime_type = header.split(":")[1].split(";")[0]
+                    parts.append({"type": "blob", "modality": "image", "mime_type": mime_type, "content": data})
+                except Exception:
+                    parts.append({"type": "uri", "modality": "image", "uri": url})
+            else:
+                parts.append({"type": "uri", "modality": "image", "uri": url})
+        else:
+            parts.append({"type": block_type or "unknown", **{k: v for k, v in block.items() if k != "type"}})
     return parts
 
 
@@ -86,19 +97,17 @@ def _tool_calls_to_parts(tool_calls):
             try:
                 args = json.loads(args_raw)
             except (json.JSONDecodeError, TypeError):
-                args = {"_raw": args_raw}
+                args = args_raw
         elif isinstance(args_raw, dict):
             args = args_raw
         else:
-            args = {}
-        parts.append(
-            {
-                "type": "tool_call",
-                "id": tc_id,
-                "name": fn_name,
-                "arguments": args,
-            }
-        )
+            args = None
+        part = {"type": "tool_call", "name": fn_name}
+        if tc_id:
+            part["id"] = tc_id
+        if args is not None:
+            part["arguments"] = args
+        parts.append(part)
     return parts
 
 
@@ -248,17 +257,6 @@ def set_response_attributes(span, response):
         finish_reason = _map_groq_finish_reason(choice.get("finish_reason"))
         role = message.get("role") or "assistant"
 
-        # Content filter: mark content as FILTERED
-        if choice.get("finish_reason") == "content_filter" or choice.get("content_filter_results"):
-            messages.append(
-                {
-                    "role": role,
-                    "parts": [{"type": "text", "content": "FILTERED"}],
-                    "finish_reason": finish_reason,
-                }
-            )
-            continue
-
         parts = _content_to_parts(message.get("content"))
 
         # tool_calls (modern OpenAI format)
@@ -274,17 +272,15 @@ def set_response_attributes(span, response):
                 try:
                     args = json.loads(args_raw)
                 except (json.JSONDecodeError, TypeError):
-                    args = {"_raw": args_raw}
+                    args = args_raw
+            elif isinstance(args_raw, dict):
+                args = args_raw
             else:
-                args = args_raw or {}
-            parts.append(
-                {
-                    "type": "tool_call",
-                    "id": "",
-                    "name": function_call.get("name") or "",
-                    "arguments": args,
-                }
-            )
+                args = None
+            part = {"type": "tool_call", "name": function_call.get("name") or ""}
+            if args is not None:
+                part["arguments"] = args
+            parts.append(part)
 
         messages.append({"role": role, "parts": parts, "finish_reason": finish_reason})
 

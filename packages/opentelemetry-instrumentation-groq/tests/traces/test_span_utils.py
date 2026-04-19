@@ -84,9 +84,15 @@ class TestContentToParts:
         content = ["not a dict", {"type": "text", "text": "hello"}]
         assert _content_to_parts(content) == [{"type": "text", "content": "hello"}]
 
-    def test_list_with_unknown_block_type_skipped(self):
+    def test_list_with_unknown_block_type_preserved_as_generic(self):
         content = [{"type": "audio", "data": "..."}]
-        assert _content_to_parts(content) == []
+        assert _content_to_parts(content) == [{"type": "audio", "data": "..."}]
+
+    def test_list_with_data_url_image(self):
+        content = [{"type": "image_url", "image_url": {"url": "data:image/png;base64,ABC123"}}]
+        assert _content_to_parts(content) == [
+            {"type": "blob", "modality": "image", "mime_type": "image/png", "content": "ABC123"}
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -139,9 +145,9 @@ class TestToolCallsToParts:
             }
         ]
         result = _tool_calls_to_parts(tool_calls)
-        assert result[0]["arguments"] == {"_raw": "not valid json {{"}
+        assert result[0]["arguments"] == "not valid json {{"
 
-    def test_no_arguments_returns_empty_dict(self):
+    def test_no_arguments_omits_arguments_key(self):
         tool_calls = [
             {
                 "id": "call_000",
@@ -150,7 +156,7 @@ class TestToolCallsToParts:
             }
         ]
         result = _tool_calls_to_parts(tool_calls)
-        assert result[0]["arguments"] == {}
+        assert "arguments" not in result[0]
 
     def test_non_dict_items_skipped(self):
         tool_calls = [
@@ -487,8 +493,8 @@ class TestSetResponseAttributes:
         set_response_attributes(span, response)
         value = _attr(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
         messages = json.loads(value)
-        assert messages[0]["parts"] == [{"type": "text", "content": "FILTERED"}]
         assert messages[0]["finish_reason"] == "content_filter"
+        assert messages[0]["parts"] == [{"type": "text", "content": "..."}]
 
     def test_with_legacy_function_call(self):
         span = _span()
@@ -533,7 +539,7 @@ class TestSetResponseAttributes:
         value = _attr(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
         messages = json.loads(value)
         part = next(p for p in messages[0]["parts"] if p["type"] == "tool_call")
-        assert part["arguments"] == {"_raw": "not valid json {{"}
+        assert part["arguments"] == "not valid json {{"
 
     def test_legacy_function_call_with_dict_arguments(self):
         span = _span()
