@@ -176,7 +176,7 @@ class TestCreateStreamProcessor:
     def test_span_not_recording_skips_set_status(self):
         span = _span(recording=False)
         chunk = MagicMock()
-        chunk.choices = []  # _process_streaming_chunk returns (None, None, None)
+        chunk.choices = []  # _process_streaming_chunk returns (None, [], [], None)
 
         # Consume the generator to trigger cleanup
         list(_create_stream_processor(iter([chunk]), span, None))
