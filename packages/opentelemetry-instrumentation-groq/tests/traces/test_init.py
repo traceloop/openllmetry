@@ -500,8 +500,4 @@ class TestGroqInstrumentor:
                 tracer_provider=tracer_provider,
                 meter_provider=meter_provider,
             )
-        # uninstrument may warn but should not raise
-        try:
-            instrumentor.uninstrument()
-        except Exception:
-            pass
+        instrumentor.uninstrument()
