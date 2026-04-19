@@ -1,3 +1,13 @@
+## v0.60.0 (2026-04-19)
+
+### Feat
+
+- **llamaindex**: Instrumentation adjustment for Otel GenAI semconv support  (#3979)
+
+### Fix
+
+- **groq**: align instrumentation with OTel GenAI semconv v1.40.0 (#4010)
+
 ## v0.59.2 (2026-04-16)
 
 ### Fix

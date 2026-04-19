@@ -4,6 +4,7 @@ from typing import Union
 
 from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.instrumentation.groq.event_models import ChoiceEvent, MessageEvent
+from opentelemetry.instrumentation.groq.span_utils import _map_groq_finish_reason
 from opentelemetry.instrumentation.groq.utils import (
     dont_throw,
     should_emit_events,
@@ -26,10 +27,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {
-    # Should be GenAIAttributes.GenAiSystemValues.GROQ.value but it's not defined in the opentelemetry-semconv package
-    GenAIAttributes.GEN_AI_SYSTEM: "groq"
-}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value}
 """The attributes to be used for the event."""
 
 
@@ -38,7 +36,9 @@ def emit_message_events(kwargs: dict, event_logger):
     for message in kwargs.get("messages", []):
         emit_event(
             MessageEvent(
-                content=message.get("content"), role=message.get("role", "unknown")
+                content=message.get("content"),
+                role=message.get("role", "unknown"),
+                tool_calls=message.get("tool_calls"),
             ),
             event_logger=event_logger,
         )
@@ -54,7 +54,8 @@ def emit_choice_events(response: ChatCompletion, event_logger):
                     "content": choice.message.content,
                     "role": choice.message.role or "unknown",
                 },
-                finish_reason=choice.finish_reason,
+                finish_reason=_map_groq_finish_reason(choice.finish_reason),
+                tool_calls=choice.message.tool_calls or None,
             ),
             event_logger=event_logger,
         )
@@ -62,22 +63,24 @@ def emit_choice_events(response: ChatCompletion, event_logger):
 
 @dont_throw
 def emit_streaming_response_events(
-    accumulated_content: str, finish_reason: Union[str, None], event_logger
+    accumulated_content: str,
+    finish_reason: Union[str, None],
+    event_logger,
+    tool_calls=None,
 ):
     """Emit events for streaming response."""
     emit_event(
         ChoiceEvent(
             index=0,
             message={"content": accumulated_content, "role": "assistant"},
-            finish_reason=finish_reason or "unknown",
+            finish_reason=_map_groq_finish_reason(finish_reason),
+            tool_calls=tool_calls,
         ),
         event_logger,
     )
 
 
-def emit_event(
-    event: Union[MessageEvent, ChoiceEvent], event_logger: Union[Logger, None]
-) -> None:
+def emit_event(event: Union[MessageEvent, ChoiceEvent], event_logger: Union[Logger, None]) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
 
@@ -119,11 +122,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
-        body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name=name
-    )
+    log_record = LogRecord(body=body, attributes=EVENT_ATTRIBUTES, event_name=name)
     event_logger.emit(log_record)
 
 
@@ -139,14 +138,10 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
 
     if not should_send_prompts():
         body["message"].pop("content", None)
+        body["message"].pop("role", None)
         if body.get("tool_calls") is not None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
-        body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name="gen_ai.choice"
-
-    )
+    log_record = LogRecord(body=body, attributes=EVENT_ATTRIBUTES, event_name="gen_ai.choice")
     event_logger.emit(log_record)
