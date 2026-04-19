@@ -132,7 +132,8 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes["gen_ai.request.temperature"] == 0.3
     assert response_span.attributes["gen_ai.request.max_tokens"] == 1024
     assert response_span.attributes["gen_ai.request.top_p"] == 0.2
-    assert response_span.attributes["gen_ai.request.model"] is not None
+    assert response_span.attributes.get("gen_ai.request.model") is not None or \
+        response_span.attributes.get("gen_ai.response.model") is not None
 
     # Test proper duration (should be > 0)
     duration_ms = (response_span.end_time - response_span.start_time) / 1_000_000

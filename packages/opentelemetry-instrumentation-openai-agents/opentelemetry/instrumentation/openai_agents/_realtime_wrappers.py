@@ -7,6 +7,7 @@ so we need to patch the RealtimeSession class directly to add OpenTelemetry trac
 import json
 import logging
 import time
+from collections import OrderedDict
 from typing import Dict, Any, Optional, List, Tuple
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
 from opentelemetry.trace import set_span_in_context
@@ -109,7 +110,8 @@ class RealtimeTracingState:
         self.prompt_agent_name: Optional[str] = None
         self.starting_agent_name: Optional[str] = None
         self.model_name: str = "gpt-4o-realtime-preview"
-        self.seen_completions: set = set()
+        self._seen_completions: OrderedDict = OrderedDict()
+        self._seen_completions_max: int = 1000
         self.pending_usage: Optional[Dict[str, int]] = None
 
     def start_workflow_span(self, agent_name: str):
@@ -177,6 +179,7 @@ class RealtimeTracingState:
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
             },
         )
         self.agent_spans[agent_name] = span
@@ -216,7 +219,8 @@ class RealtimeTracingState:
         if tool_name in self.tool_spans:
             span = self.tool_spans[tool_name]
             if output is not None and should_send_prompts():
-                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output))
+                result = output if isinstance(output, str) else json.dumps(output, default=str)
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, result)
             if error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))
             else:
@@ -310,14 +314,20 @@ class RealtimeTracingState:
                 "total_tokens": getattr(usage, "total_tokens", 0) or 0,
             }
 
+    @property
+    def seen_completions(self):
+        return self._seen_completions
+
     def record_completion(self, role: str, content: str):
         """Record a completion message - creates an LLM span with prompt and completion."""
         if not content:
             return
         content_hash = hash(content[:100])
-        if content_hash in self.seen_completions:
+        if content_hash in self._seen_completions:
             return
-        self.seen_completions.add(content_hash)
+        self._seen_completions[content_hash] = None
+        if len(self._seen_completions) > self._seen_completions_max:
+            self._seen_completions.popitem(last=False)
         self.create_llm_span(content)
 
     def create_llm_span(self, completion_content: str):

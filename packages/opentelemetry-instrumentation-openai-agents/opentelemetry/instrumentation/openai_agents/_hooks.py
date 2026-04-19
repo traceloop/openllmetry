@@ -24,6 +24,7 @@ from .utils import (
     dont_throw,
     GEN_AI_HANDOFF_FROM_AGENT,
     GEN_AI_HANDOFF_TO_AGENT,
+    GEN_AI_HANDOFF_PARENT_AGENT,
 )
 
 try:
@@ -155,6 +156,13 @@ def _stringify_content(content) -> str:
     return json.dumps(content)
 
 
+def _reasoning_text(s):
+    """Extract text from a reasoning summary item (object or dict)."""
+    if isinstance(s, dict):
+        return s.get("text", "")
+    return getattr(s, "text", str(s))
+
+
 def _content_block_to_part(block) -> dict:
     """Convert a single multimodal content block to an OTel part.
 
@@ -194,7 +202,7 @@ def _dict_block_to_part(block: dict) -> dict:
             "modality": "audio",
             "content": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
         }
-    return {"type": btype, "content": json.dumps(block)}
+    return {"type": btype, **{k: v for k, v in block.items() if k != "type"}}
 
 
 def _object_block_to_part(block) -> dict:
@@ -241,7 +249,12 @@ def _tool_call_to_part(tool_call) -> dict:
 def _build_tool_response_part(call_id, content) -> dict:
     """Build a tool_call_response part from an id and optional content."""
     part: dict = {"type": "tool_call_response", "id": call_id}
-    part["response"] = _stringify_content(content) if content is not None else ""
+    if content is None:
+        part["response"] = ""
+    elif isinstance(content, (dict, list)):
+        part["response"] = content
+    else:
+        part["response"] = _stringify_content(content)
     return part
 
 
@@ -359,7 +372,6 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
 
     if hasattr(response, "model") and response.model:
         model_settings["model"] = response.model
-        otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, response.model)
         otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.model)
 
     if hasattr(response, "id") and response.id:
@@ -375,71 +387,22 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
             response.frequency_penalty,
         )
 
-    # Map finish reason (top-level)
+    # Map finish reason (top-level fallback)
     raw_finish_reason = getattr(response, "finish_reason", None)
     if raw_finish_reason is None:
         raw_finish_reason = getattr(response, "status", None)
     mapped_finish_reason = _map_finish_reason(raw_finish_reason)
-
-    # Set top-level finish_reasons attribute (even when trace_content=False)
-    if mapped_finish_reason is not None:
-        otel_span.set_attribute(
-            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-            (mapped_finish_reason,),
-        )
 
     # Extract completions from response.output as a JSON array (parts-based)
     # Only emit output messages when trace_content is enabled (opt-in content)
     if trace_content and hasattr(response, "output") and response.output:
         output_messages = []
         for output in response.output:
-            if hasattr(output, "content") and output.content:
-                # Text message with content array (ResponseOutputMessage)
-                parts = []
-                for content_item in output.content:
-                    item_type = getattr(content_item, "type", None)
-                    if item_type == "output_text" or (
-                        hasattr(content_item, "text") and content_item.text
-                    ):
-                        parts.append({
-                            "type": "text",
-                            "content": content_item.text,
-                        })
-                    elif item_type == "refusal":
-                        refusal_text = getattr(content_item, "refusal", "")
-                        parts.append({
-                            "type": "text",
-                            "content": refusal_text,
-                        })
-                    elif item_type == "reasoning":
-                        # Reasoning/thinking content
-                        summary = getattr(content_item, "summary", None)
-                        text = ""
-                        if isinstance(summary, list):
-                            text = " ".join(
-                                getattr(s, "text", str(s))
-                                for s in summary
-                            )
-                        elif summary:
-                            text = str(summary)
-                        parts.append({
-                            "type": "reasoning",
-                            "content": text,
-                        })
-                    elif item_type is not None:
-                        parts.append({
-                            "type": item_type,
-                            "content": str(content_item),
-                        })
+            item_type = getattr(output, "type", None)
 
-                msg = {
-                    "role": getattr(output, "role", "assistant"),
-                    "parts": parts,
-                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
-                }
-                output_messages.append(msg)
-
-            elif hasattr(output, "name"):
+            if item_type == "function_call" or (
+                item_type is None and getattr(output, "call_id", None)
+            ):
                 # Function/tool call (ResponseFunctionToolCall)
                 tool_name = getattr(output, "name", "unknown_tool")
                 tool_call_id = getattr(output, "call_id", "")
@@ -458,6 +421,50 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 }
                 output_messages.append(msg)
 
+            elif hasattr(output, "content") and output.content:
+                # Text message with content array (ResponseOutputMessage)
+                parts = []
+                for content_item in output.content:
+                    ci_type = getattr(content_item, "type", None)
+                    if ci_type == "output_text" or (
+                        hasattr(content_item, "text") and content_item.text
+                    ):
+                        parts.append({
+                            "type": "text",
+                            "content": content_item.text,
+                        })
+                    elif ci_type == "refusal":
+                        refusal_text = getattr(content_item, "refusal", "")
+                        parts.append({
+                            "type": "refusal",
+                            "content": refusal_text,
+                        })
+                    elif ci_type == "reasoning":
+                        summary = getattr(content_item, "summary", None)
+                        text = ""
+                        if isinstance(summary, list):
+                            text = " ".join(
+                                _reasoning_text(s) for s in summary
+                            )
+                        elif summary:
+                            text = str(summary)
+                        parts.append({
+                            "type": "reasoning",
+                            "content": text,
+                        })
+                    elif ci_type is not None:
+                        parts.append({
+                            "type": ci_type,
+                            "content": str(content_item),
+                        })
+
+                msg = {
+                    "role": getattr(output, "role", "assistant"),
+                    "parts": parts,
+                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
+                }
+                output_messages.append(msg)
+
             elif hasattr(output, "text"):
                 # Direct text content
                 parts = []
@@ -473,6 +480,25 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
         if output_messages:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages)
+            )
+            per_msg_reasons = [
+                m["finish_reason"] for m in output_messages if m.get("finish_reason")
+            ]
+            if per_msg_reasons:
+                otel_span.set_attribute(
+                    GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                    tuple(dict.fromkeys(per_msg_reasons)),
+                )
+            elif mapped_finish_reason is not None:
+                otel_span.set_attribute(
+                    GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                    (mapped_finish_reason,),
+                )
+    else:
+        if mapped_finish_reason is not None:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                (mapped_finish_reason,),
             )
 
     # Extract usage data
@@ -530,13 +556,12 @@ def _extract_tool_definitions(tools):
             }
             tool_defs.append(tool_def)
         elif hasattr(tool, "name"):
-            # Direct function format
-            tool_def = {"name": tool.name}
+            func_def = {"name": tool.name}
             if hasattr(tool, "description"):
-                tool_def["description"] = tool.description
+                func_def["description"] = tool.description
             if hasattr(tool, "parameters"):
-                tool_def["parameters"] = tool.parameters
-            tool_defs.append(tool_def)
+                func_def["parameters"] = tool.parameters
+            tool_defs.append({"type": "function", "function": func_def})
     return tool_defs
 
 
@@ -727,20 +752,22 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
             GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
         }
 
         if handoff_parent:
-            attributes["gen_ai.agent.handoff_parent"] = handoff_parent
+            attributes[GEN_AI_HANDOFF_PARENT_AGENT] = handoff_parent
 
         if hasattr(span_data, "handoffs") and span_data.handoffs:
-            for i, handoff_agent in enumerate(span_data.handoffs):
-                handoff_info = {
+            handoffs_list = []
+            for handoff_agent in span_data.handoffs:
+                handoffs_list.append({
                     "name": getattr(handoff_agent, "name", "unknown"),
                     "instructions": getattr(
                         handoff_agent, "instructions", "No instructions"
                     ),
-                }
-                attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
+                })
+            attributes["openai.agent.handoffs"] = json.dumps(handoffs_list)
 
         return self.tracer.start_span(
             f"{agent_name}.agent",
@@ -858,13 +885,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         _extract_prompt_attributes(otel_span, input_data, trace_content)
 
         response = getattr(span_data, "response", None)
-        if (
-            trace_content
-            and response
-            and hasattr(response, "tools")
-            and response.tools
-        ):
-            tool_defs = _extract_tool_definitions(response.tools)
+        tools = getattr(span_data, "tools", None) or (
+            getattr(response, "tools", None) if response else None
+        )
+        if trace_content and tools:
+            tool_defs = _extract_tool_definitions(tools)
             if tool_defs:
                 otel_span.set_attribute(
                     GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)

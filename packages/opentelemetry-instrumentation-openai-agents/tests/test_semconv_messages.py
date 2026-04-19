@@ -80,7 +80,12 @@ class MockResponseOutput:
         self.name = name
         self.call_id = call_id
         self.arguments = arguments
-        self.type = type
+        if type is None and content is not None:
+            self.type = "message"
+        elif type is None and call_id is not None:
+            self.type = "function_call"
+        else:
+            self.type = type
 
 
 class MockContentItem:
@@ -721,6 +726,42 @@ class TestOutputMessagePartsFormat:
 
         span.end()
 
+    def test_message_with_empty_content_and_name_not_tool_call(self, tracer_and_exporter):
+        """ResponseOutputMessage with empty content + participant name must not become a tool call.
+
+        Semconv: ToolCallRequestPart.name MUST identify a tool, not a participant.
+        """
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        output = SimpleNamespace(
+            type="message", content=[], name="CustomerServiceBot", role="assistant",
+        )
+        response = SimpleNamespace(
+            temperature=None, max_output_tokens=None, top_p=None,
+            model=None, id=None, frequency_penalty=None,
+            finish_reason=None, status="completed",
+            output=[output], usage=None,
+        )
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+        if raw:
+            messages = json.loads(raw)
+            for msg in messages:
+                for part in msg.get("parts", []):
+                    assert part.get("type") != "tool_call", (
+                        "Participant name was misclassified as tool call"
+                    )
+
+        span.end()
+
 
 # ---------------------------------------------------------------------------
 # P1-4: Arguments parsed as objects
@@ -944,6 +985,44 @@ class TestFinishReasons:
 
         span.end()
 
+    def test_tool_call_top_level_matches_per_message(self, tracer_and_exporter):
+        """Top-level finish_reasons must say 'tool_call' when output contains tool calls.
+
+        Semconv: gen_ai.response.finish_reasons corresponds to each generation.
+        If the model stopped to emit a tool call, both levels must agree.
+        """
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        tool_output = SimpleNamespace(
+            type="function_call",
+            content=None,
+            name="get_weather",
+            arguments='{"city": "London"}',
+            call_id="call_123",
+        )
+        response = SimpleNamespace(
+            temperature=None, max_output_tokens=None, top_p=None,
+            model=None, id=None, frequency_penalty=None,
+            finish_reason=None, status="completed",
+            output=[tool_output], usage=None,
+        )
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        assert finish_reasons is not None, "Missing gen_ai.response.finish_reasons"
+        assert "tool_call" in finish_reasons, (
+            f"Expected 'tool_call' in finish_reasons, got {finish_reasons}"
+        )
+
+        span.end()
+
 
 # ---------------------------------------------------------------------------
 # P1-7: Operation name
@@ -1086,6 +1165,36 @@ class TestResponseAttributes:
             "gen_ai.request.frequency_penalty should be set on span"
         )
         assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY] == 0.5
+
+        span.end()
+
+    def test_response_model_does_not_overwrite_request_model(self, tracer_and_exporter):
+        """response.model must only set gen_ai.response.model, not gen_ai.request.model.
+
+        Semconv: gen_ai.request.model (alias, e.g. 'gpt-4o') and
+        gen_ai.response.model (served, e.g. 'gpt-4o-2024-08-06') are distinct.
+        """
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+        span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, "gpt-4o")
+
+        response = SimpleNamespace(
+            temperature=None, max_output_tokens=None, top_p=None,
+            model="gpt-4o-2024-08-06", id=None, frequency_penalty=None,
+            finish_reason=None, status="completed", output=[], usage=None,
+        )
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        assert span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "gpt-4o", (
+            "response.model must not overwrite gen_ai.request.model"
+        )
+        assert span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "gpt-4o-2024-08-06"
 
         span.end()
 
@@ -1475,6 +1584,7 @@ class TestContentGating:
         content_item.text = "secret output"
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None  # Not a tool call
@@ -1827,6 +1937,19 @@ class TestMultimodalInputMapping:
         assert result["modality"] == "audio"
         assert result["content"] == "base64data=="
 
+    def test_unknown_block_preserves_per_field_structure(self):
+        """Unknown block types must preserve per-field structure, not json.dumps the whole block."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _dict_block_to_part,
+        )
+
+        block = {"type": "file", "file_id": "file_abc123", "filename": "data.csv"}
+        part = _dict_block_to_part(block)
+
+        assert part["type"] == "file"
+        assert "file_id" in part, f"Expected 'file_id' in part, got: {part}"
+        assert part["file_id"] == "file_abc123"
+
 
 # ---------------------------------------------------------------------------
 # Spec §1: Assistant text + tool_calls combined
@@ -1936,6 +2059,7 @@ class TestOutputNonTextParts:
         content_item.text = None
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None
@@ -1951,7 +2075,7 @@ class TestOutputNonTextParts:
         parts = messages[0]["parts"]
 
         assert len(parts) == 1
-        assert parts[0]["type"] == "text"
+        assert parts[0]["type"] == "refusal"
         assert parts[0]["content"] == "I cannot help with that."
 
         span.end()
@@ -1980,6 +2104,7 @@ class TestOutputNonTextParts:
         content_item.text = "Hello"
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None
@@ -2022,6 +2147,7 @@ class TestOutputNonTextParts:
         content_item.text = "Calling tool"
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None
@@ -2066,6 +2192,7 @@ class TestOutputNonTextParts:
         content_item.summary = [summary_item]
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None
@@ -2082,6 +2209,46 @@ class TestOutputNonTextParts:
         assert len(parts) == 1
         assert parts[0]["type"] == "reasoning"
         assert "weather" in parts[0]["content"]
+
+        span.end()
+
+    def test_reasoning_summary_dict_items_extract_text(self, tracer_and_exporter):
+        """Dict-form reasoning summary items must extract 'text' field, not dump repr."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        content_item = SimpleNamespace(
+            type="reasoning",
+            summary=[{"text": "The model considered options."}],
+        )
+        output = SimpleNamespace(
+            type="message", content=[content_item], role="assistant",
+        )
+        response = SimpleNamespace(
+            temperature=None, max_output_tokens=None, top_p=None,
+            model=None, id=None, frequency_penalty=None,
+            finish_reason=None, status="completed",
+            output=[output], usage=None,
+        )
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+        messages = json.loads(raw)
+        reasoning_parts = [
+            p for msg in messages for p in msg.get("parts", [])
+            if p.get("type") == "reasoning"
+        ]
+        assert len(reasoning_parts) >= 1
+        assert "{'text'" not in reasoning_parts[0]["content"], (
+            "Dict repr leaked into reasoning content"
+        )
+        assert "The model considered options" in reasoning_parts[0]["content"]
 
         span.end()
 
@@ -2575,6 +2742,25 @@ class TestToolResponseNoneContent:
         )
 
         span.end()
+
+    def test_structured_dict_result_preserved(self):
+        """Dict tool result should be kept as-is, not stringified."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _build_tool_response_part,
+        )
+
+        part = _build_tool_response_part("call_1", {"status": "ok", "count": 5})
+        assert isinstance(part["response"], dict)
+        assert part["response"] == {"status": "ok", "count": 5}
+
+    def test_structured_list_result_preserved(self):
+        """List tool result should be kept as-is, not stringified."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _build_tool_response_part,
+        )
+
+        part = _build_tool_response_part("call_2", [1, 2, 3])
+        assert isinstance(part["response"], list)
 
 
 # ---------------------------------------------------------------------------

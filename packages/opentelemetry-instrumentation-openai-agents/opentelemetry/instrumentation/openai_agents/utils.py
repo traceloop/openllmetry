@@ -10,6 +10,7 @@ from opentelemetry import context as context_api
 # Handoff span attribute names
 GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
 GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
+GEN_AI_HANDOFF_PARENT_AGENT = "gen_ai.agent.handoff_parent"
 _TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 

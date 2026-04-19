@@ -126,9 +126,10 @@ class TestStartAgentSpan:
         otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t4")
 
         attrs = dict(otel_span.attributes)
-        handoff_json = json.loads(attrs["openai.agent.handoff0"])
-        assert handoff_json["name"] == "AgentB"
-        assert handoff_json["instructions"] == "Help the user"
+        handoffs = json.loads(attrs["openai.agent.handoffs"])
+        assert isinstance(handoffs, list)
+        assert handoffs[0]["name"] == "AgentB"
+        assert handoffs[0]["instructions"] == "Help the user"
 
         otel_span.end()
 
@@ -140,6 +141,43 @@ class TestStartAgentSpan:
         otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t5")
 
         assert otel_span.kind == SpanKind.INTERNAL
+
+        otel_span.end()
+
+    def test_agent_span_has_invoke_agent_operation_name(self, tracer_and_exporter, processor):
+        """Agent spans must set gen_ai.operation.name='invoke_agent' per OTel Agent Spans spec."""
+        from agents import AgentSpanData
+
+        agent_data = AgentSpanData(name="Agent", handoffs=[], tools=[], output_type="")
+        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t6")
+
+        attrs = dict(otel_span.attributes)
+        assert attrs.get(GenAIAttributes.GEN_AI_OPERATION_NAME) == "invoke_agent"
+
+        otel_span.end()
+
+    def test_handoffs_collapsed_to_single_json_array(self, tracer_and_exporter, processor):
+        """Handoffs must be a single 'openai.agent.handoffs' JSON array, not indexed attributes."""
+        from agents import AgentSpanData
+
+        mock_a = MagicMock()
+        mock_a.name = "AgentA"
+        mock_a.instructions = "Does A"
+        mock_b = MagicMock()
+        mock_b.name = "AgentB"
+        mock_b.instructions = "Does B"
+
+        agent_data = AgentSpanData(name="Router", handoffs=[mock_a, mock_b], tools=[], output_type="")
+        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t7")
+
+        attrs = dict(otel_span.attributes)
+        assert "openai.agent.handoff0" not in attrs
+        assert "openai.agent.handoff1" not in attrs
+
+        handoffs = json.loads(attrs["openai.agent.handoffs"])
+        assert isinstance(handoffs, list) and len(handoffs) == 2
+        assert handoffs[0]["name"] == "AgentA"
+        assert handoffs[1]["name"] == "AgentB"
 
         otel_span.end()
 
@@ -501,7 +539,7 @@ class TestExtractToolDefinitions:
         assert "properties" in result[0]["function"]["parameters"]
 
     def test_direct_function_tool(self):
-        """Tool with direct .name (no .function wrapper) → {name, description}."""
+        """Tool with direct .name (no .function wrapper) → wrapped {type, function} shape."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_tool_definitions,
         )
@@ -514,8 +552,9 @@ class TestExtractToolDefinitions:
         result = _extract_tool_definitions([tool])
 
         assert len(result) == 1
-        assert result[0]["name"] == "search"
-        assert result[0]["description"] == "Search the web"
+        assert result[0]["type"] == "function"
+        assert result[0]["function"]["name"] == "search"
+        assert result[0]["function"]["description"] == "Search the web"
 
     def test_empty_tools_list(self):
         """Empty tools list → empty result."""
@@ -556,8 +595,40 @@ class TestExtractToolDefinitions:
 
         result = _extract_tool_definitions([wrapped, direct])
         assert len(result) == 2
-        names = {r.get("name") or r.get("function", {}).get("name") for r in result}
+        for d in result:
+            assert d["type"] == "function"
+            assert "function" in d
+        names = {r["function"]["name"] for r in result}
         assert names == {"tool_a", "tool_b"}
+
+    def test_both_branches_produce_consistent_wrapped_shape(self):
+        """Both function-wrapped and direct-function tools must produce the same shape.
+
+        Semconv note [14]: gen_ai.tool.definitions should use source system's
+        representation. For OpenAI that's always {type:'function', function:{...}}.
+        """
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_tool_definitions,
+        )
+        from types import SimpleNamespace
+
+        wrapped = SimpleNamespace(
+            type="function",
+            function=SimpleNamespace(
+                name="search", description="Search things", parameters={"type": "object"}
+            ),
+        )
+        direct = SimpleNamespace(
+            name="lookup", description="Look up things", parameters={"type": "object"}
+        )
+
+        defs = _extract_tool_definitions([wrapped, direct])
+
+        assert len(defs) == 2
+        for d in defs:
+            assert d["type"] == "function", f"Missing type wrapper: {d}"
+            assert "function" in d, f"Missing function wrapper: {d}"
+            assert "name" in d["function"]
 
 
 # ---------------------------------------------------------------------------
@@ -613,6 +684,7 @@ class TestEndGenerationSpan:
         span_data = MagicMock()
         span_data.input = []
         span_data.response = response
+        span_data.tools = None
 
         processor._end_generation_span(otel_span, span_data, trace_content=True)
 
@@ -669,6 +741,7 @@ class TestEndGenerationSpan:
         content_item.text = "Hello!"
 
         output_msg = MagicMock()
+        output_msg.type = "message"
         output_msg.content = [content_item]
         output_msg.role = "assistant"
         output_msg.name = None
@@ -707,6 +780,47 @@ class TestEndGenerationSpan:
 
         # Should not raise
         processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        otel_span.end()
+
+    def test_tools_sourced_from_span_data_over_response(self, tracer_and_exporter, processor):
+        """Tool definitions should come from span_data (request), not response.
+
+        Tools are request metadata; the response may not always echo them.
+        """
+        from types import SimpleNamespace
+
+        tracer, exporter = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen")
+
+        request_tool = SimpleNamespace(
+            type="function",
+            function=SimpleNamespace(name="from_request", description="Request", parameters={}),
+        )
+        response_tool = SimpleNamespace(
+            type="function",
+            function=SimpleNamespace(name="from_response", description="Response", parameters={}),
+        )
+
+        span_data = SimpleNamespace(
+            input=[],
+            response=SimpleNamespace(
+                temperature=None, max_output_tokens=None, top_p=None,
+                model="gpt-4o", id="resp_1", frequency_penalty=None,
+                finish_reason=None, status="completed", output=[], usage=None,
+                tools=[response_tool],
+            ),
+            tools=[request_tool],
+            model="gpt-4o",
+        )
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        raw = otel_span.attributes.get(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS)
+        assert raw is not None
+        defs = json.loads(raw)
+        tool_names = [d["function"]["name"] for d in defs]
+        assert "from_request" in tool_names, f"Expected request tool, got: {tool_names}"
 
         otel_span.end()
 

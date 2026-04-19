@@ -340,6 +340,58 @@ class TestRealtimeTracingState:
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
 
+    def test_agent_span_has_invoke_agent_operation_name(self, tracer, tracer_provider):
+        """Agent spans must set gen_ai.operation.name='invoke_agent' per OTel spec."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        span = state.agent_spans["Voice Assistant"]
+        span.end()
+
+        finished = exporter.get_finished_spans()
+        agent = next(s for s in finished if s.name == "Voice Assistant.agent")
+        assert agent.attributes.get("gen_ai.operation.name") == "invoke_agent"
+
+        state.cleanup()
+
+    def test_tool_result_structured_output_serialized_as_json(self, tracer, tracer_provider):
+        """Structured tool output must be JSON, not Python repr (str())."""
+        import json as json_mod
+
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Agent")
+        state.start_agent_span("Agent")
+        state.start_tool_span("my_tool", "Agent")
+        state.end_tool_span("my_tool", output={"key": "value", "num": 42})
+
+        spans = exporter.get_finished_spans()
+        tool_span = next(s for s in spans if s.name == "my_tool.tool")
+        result = tool_span.attributes.get("gen_ai.tool.call.result")
+        if result is not None:
+            assert "'" not in result, f"Python repr detected: {result}"
+            parsed = json_mod.loads(result)
+            assert parsed == {"key": "value", "num": 42}
+
+        state.cleanup()
+
+    def test_seen_completions_bounded_at_1000(self, tracer, tracer_provider):
+        """seen_completions must not grow without bound in long sessions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Agent")
+        state.start_agent_span("Agent")
+        state.record_prompt("user", "hello")
+
+        for i in range(2000):
+            state.record_completion("assistant", f"unique response {i}")
+
+        assert len(state.seen_completions) <= 1000
+
+        state.cleanup()
+
 
 class TestRealtimeSessionWrapping:
     """Tests for the session wrapping functionality."""
