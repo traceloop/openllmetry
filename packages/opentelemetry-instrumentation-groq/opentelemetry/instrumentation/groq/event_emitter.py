@@ -73,7 +73,7 @@ def emit_streaming_response_events(
         ChoiceEvent(
             index=0,
             message={"content": accumulated_content, "role": "assistant"},
-            finish_reason=_map_groq_finish_reason(finish_reason) or "",
+            finish_reason=_map_groq_finish_reason(finish_reason),
             tool_calls=tool_calls,
         ),
         event_logger,
