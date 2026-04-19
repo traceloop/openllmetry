@@ -1913,7 +1913,7 @@ class TestOutputNonTextParts:
     """Lock: output messages handle refusal, reasoning, and finish_reason."""
 
     def test_refusal_content_mapped(self, tracer_and_exporter):
-        """Spec §1: Refusal content → {type: 'refusal', content: '...'}."""
+        """Spec §1: Refusal content → {type: 'text', content: '...'} (standard TextPart)."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -1951,7 +1951,7 @@ class TestOutputNonTextParts:
         parts = messages[0]["parts"]
 
         assert len(parts) == 1
-        assert parts[0]["type"] == "refusal"
+        assert parts[0]["type"] == "text"
         assert parts[0]["content"] == "I cannot help with that."
 
         span.end()
@@ -1973,6 +1973,7 @@ class TestOutputNonTextParts:
         response.id = "resp_1"
         response.frequency_penalty = None
         response.finish_reason = None  # Unknown/absent
+        response.status = None
 
         content_item = MagicMock()
         content_item.type = "output_text"
@@ -2893,8 +2894,8 @@ class TestResponsesApiStatusMapping:
 
         span.end()
 
-    def test_failed_status_maps_to_failed(self, tracer_and_exporter):
-        """Responses API status='failed' must map to finish_reason='failed'."""
+    def test_failed_status_maps_to_error(self, tracer_and_exporter):
+        """Responses API status='failed' must map to OTel finish_reason='error'."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -2914,12 +2915,12 @@ class TestResponsesApiStatusMapping:
 
         finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
         assert finish_reasons is not None
-        assert "failed" in finish_reasons
+        assert "error" in finish_reasons
 
         span.end()
 
-    def test_cancelled_status_maps_to_cancelled(self, tracer_and_exporter):
-        """Responses API status='cancelled' must map to finish_reason='cancelled'."""
+    def test_cancelled_status_maps_to_error(self, tracer_and_exporter):
+        """Responses API status='cancelled' must map to OTel finish_reason='error'."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -2939,12 +2940,12 @@ class TestResponsesApiStatusMapping:
 
         finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
         assert finish_reasons is not None
-        assert "cancelled" in finish_reasons
+        assert "error" in finish_reasons
 
         span.end()
 
-    def test_incomplete_status_maps_to_incomplete(self, tracer_and_exporter):
-        """Responses API status='incomplete' must map to finish_reason='incomplete'."""
+    def test_incomplete_status_maps_to_length(self, tracer_and_exporter):
+        """Responses API status='incomplete' must map to OTel finish_reason='length'."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -2964,7 +2965,7 @@ class TestResponsesApiStatusMapping:
 
         finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
         assert finish_reasons is not None
-        assert "incomplete" in finish_reasons
+        assert "length" in finish_reasons
 
         span.end()
 

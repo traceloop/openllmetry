@@ -55,6 +55,11 @@ _FINISH_REASON_MAP = {
     "length": "length",
     "content_filter": "content_filter",
     "error": "error",
+    # Responses API uses status instead of finish_reason
+    "completed": "stop",
+    "failed": "error",
+    "cancelled": "error",
+    "incomplete": "length",
 }
 
 
@@ -189,7 +194,7 @@ def _dict_block_to_part(block: dict) -> dict:
             "modality": "audio",
             "content": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
         }
-    return {"type": btype, "data": json.dumps(block)}
+    return {"type": btype, "content": json.dumps(block)}
 
 
 def _object_block_to_part(block) -> dict:
@@ -208,7 +213,7 @@ def _object_block_to_part(block) -> dict:
         audio_obj = getattr(block, "input_audio", None)
         data = getattr(audio_obj, "data", str(audio_obj)) if audio_obj else ""
         return {"type": "blob", "modality": "audio", "content": data}
-    return {"type": btype, "data": str(block)}
+    return {"type": btype, "content": str(block)}
 
 
 def _content_to_parts(content) -> list:
@@ -373,12 +378,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
     # Map finish reason (top-level)
     raw_finish_reason = getattr(response, "finish_reason", None)
     if raw_finish_reason is None:
-        # Responses API uses status instead of finish_reason
-        status = getattr(response, "status", None)
-        if status == "completed":
-            raw_finish_reason = "stop"
-        elif status in ("failed", "cancelled", "incomplete"):
-            raw_finish_reason = status
+        raw_finish_reason = getattr(response, "status", None)
     mapped_finish_reason = _map_finish_reason(raw_finish_reason)
 
     # Set top-level finish_reasons attribute (even when trace_content=False)
@@ -408,7 +408,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                     elif item_type == "refusal":
                         refusal_text = getattr(content_item, "refusal", "")
                         parts.append({
-                            "type": "refusal",
+                            "type": "text",
                             "content": refusal_text,
                         })
                     elif item_type == "reasoning":
@@ -427,10 +427,9 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                             "content": text,
                         })
                     elif item_type is not None:
-                        # Unknown part type – preserve type and best-effort content
                         parts.append({
                             "type": item_type,
-                            "data": str(content_item),
+                            "content": str(content_item),
                         })
 
                 msg = {
