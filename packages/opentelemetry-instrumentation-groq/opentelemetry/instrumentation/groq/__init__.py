@@ -37,11 +37,12 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
 )
-from opentelemetry.trace import SpanKind, Tracer, get_tracer
+from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 from groq._streaming import AsyncStream, Stream
+from groq.types.completion_usage import CompletionUsage
 
 logger = logging.getLogger(__name__)
 
@@ -132,9 +133,9 @@ def _process_streaming_chunk(chunk):
     finish_reasons = []
     for choice in chunk.choices:
         delta = choice.delta
-        if hasattr(delta, "content") and delta.content:
+        if delta.content:
             content += delta.content
-        if hasattr(delta, "tool_calls") and delta.tool_calls:
+        if delta.tool_calls:
             tool_calls_delta.extend(delta.tool_calls)
         if choice.finish_reason:
             finish_reasons.append(choice.finish_reason)
@@ -147,25 +148,18 @@ def _process_streaming_chunk(chunk):
     return content, tool_calls_delta, finish_reasons, usage
 
 
-def _accumulate_tool_calls(accumulated: dict, tool_calls_delta: list) -> dict:
+def _accumulate_tool_calls(accumulated: dict, tool_calls_delta: list) -> None:
     """Merge a list of streaming tool_call delta objects into the accumulator dict.
 
     The accumulator maps tool call index → {id, function: {name, arguments}}.
-    Delta objects may be Pydantic models or dicts; arguments arrive as JSON fragments.
+    Arguments arrive as JSON fragments and are concatenated across chunks.
     """
     for tc in tool_calls_delta:
-        if isinstance(tc, dict):
-            idx = tc.get("index", 0)
-            tc_id = tc.get("id") or ""
-            fn = tc.get("function") or {}
-            fn_name = fn.get("name") or ""
-            fn_args = fn.get("arguments") or ""
-        else:
-            idx = getattr(tc, "index", 0)
-            tc_id = getattr(tc, "id", None) or ""
-            fn = getattr(tc, "function", None)
-            fn_name = (getattr(fn, "name", None) or "") if fn else ""
-            fn_args = (getattr(fn, "arguments", None) or "") if fn else ""
+        idx = tc.index or 0
+        tc_id = tc.id or ""
+        fn = tc.function
+        fn_name = (fn.name or "") if fn else ""
+        fn_args = (fn.arguments or "") if fn else ""
 
         if idx not in accumulated:
             accumulated[idx] = {"id": tc_id, "function": {"name": fn_name, "arguments": ""}}
@@ -175,10 +169,16 @@ def _accumulate_tool_calls(accumulated: dict, tool_calls_delta: list) -> dict:
             if fn_name:
                 accumulated[idx]["function"]["name"] = fn_name
         accumulated[idx]["function"]["arguments"] += fn_args
-    return accumulated
 
 
-def _handle_streaming_response(span, accumulated_content, tool_calls, finish_reasons, usage, event_logger):
+def _handle_streaming_response(
+    span: Span,
+    accumulated_content: str,
+    tool_calls: dict,
+    finish_reasons: list[str],
+    usage: Union[CompletionUsage, None],
+    event_logger: Union[Logger, None],
+) -> None:
     # finish_reasons is a list; use first entry for message-level finish_reason
     finish_reason = finish_reasons[0] if finish_reasons else None
     set_model_streaming_response_attributes(span, usage, finish_reasons)
@@ -293,7 +293,7 @@ def _wrap(
     start_time = time.time()
     try:
         response = wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         end_time = time.time()
         attributes = error_metrics_attributes(e)
 
@@ -332,7 +332,7 @@ def _wrap(
 
             _handle_response(span, response, token_histogram, event_logger)
 
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             logger.warning(
                 "Failed to set response attributes for groq span, error: %s",
                 str(ex),
@@ -380,7 +380,7 @@ async def _awrap(
 
     try:
         response = await wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         end_time = time.time()
         attributes = error_metrics_attributes(e)
 
@@ -419,7 +419,7 @@ async def _awrap(
 
             _handle_response(span, response, token_histogram, event_logger)
 
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             logger.warning(
                 "Failed to set response attributes for groq span, error: %s",
                 str(ex),

@@ -160,11 +160,6 @@ class TestAccumulateToolCalls:
         assert acc[0]["id"] == "c0"
         assert acc[1]["id"] == "c1"
 
-    def test_dict_style_delta_also_works(self):
-        acc = {}
-        _accumulate_tool_calls(acc, [{"index": 0, "id": "c0", "function": {"name": "f", "arguments": "{}"}}])
-        assert acc[0]["id"] == "c0"
-        assert acc[0]["function"]["arguments"] == "{}"
 
 
 # ---------------------------------------------------------------------------
