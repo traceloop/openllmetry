@@ -70,51 +70,27 @@ class AgnoInstrumentor(BaseInstrumentor):
         )
 
         # Wrap Agent methods
-        wrap_function_wrapper(
-            module="agno.agent",
-            name="Agent.run",
-            wrapper=_AgentRunWrapper(tracer, duration_histogram, token_histogram),
-        )
+        wrap_function_wrapper("agno.agent", "Agent.run", _AgentRunWrapper(tracer, duration_histogram, token_histogram))
 
-        wrap_function_wrapper(
-            module="agno.agent",
-            name="Agent.arun",
-            wrapper=_AgentARunWrapper(tracer, duration_histogram, token_histogram),
-        )
+        wrap_function_wrapper("agno.agent", "Agent.arun", _AgentARunWrapper(tracer, duration_histogram, token_histogram))
 
         # Wrap Team methods if available
         try:
-            wrap_function_wrapper(
-                module="agno.team",
-                name="Team.run",
-                wrapper=_TeamRunWrapper(tracer, duration_histogram, token_histogram),
-            )
+            wrap_function_wrapper("agno.team", "Team.run", _TeamRunWrapper(tracer, duration_histogram, token_histogram))
 
-            wrap_function_wrapper(
-                module="agno.team",
-                name="Team.arun",
-                wrapper=_TeamARunWrapper(tracer, duration_histogram, token_histogram),
-            )
+            wrap_function_wrapper("agno.team", "Team.arun", _TeamARunWrapper(tracer, duration_histogram, token_histogram))
         except Exception as e:
             logger.debug(f"Could not instrument Team: {e}")
 
         # Wrap FunctionCall methods for tool execution
         try:
-            wrap_function_wrapper(
-                module="agno.tools",
-                name="FunctionCall.execute",
-                wrapper=_FunctionCallExecuteWrapper(
+            wrap_function_wrapper("agno.tools", "FunctionCall.execute", _FunctionCallExecuteWrapper(
                     tracer, duration_histogram, token_histogram
-                ),
-            )
+                ))
 
-            wrap_function_wrapper(
-                module="agno.tools",
-                name="FunctionCall.aexecute",
-                wrapper=_FunctionCallAExecuteWrapper(
+            wrap_function_wrapper("agno.tools", "FunctionCall.aexecute", _FunctionCallAExecuteWrapper(
                     tracer, duration_histogram, token_histogram
-                ),
-            )
+                ))
         except Exception as e:
             logger.debug(f"Could not instrument FunctionCall: {e}")
 
