@@ -322,7 +322,7 @@ class RealtimeTracingState:
         """Record a completion message - creates an LLM span with prompt and completion."""
         if not content:
             return
-        content_hash = hash(content[:100])
+        content_hash = hash(content)
         if content_hash in self._seen_completions:
             return
         self._seen_completions[content_hash] = None

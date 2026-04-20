@@ -760,13 +760,14 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if hasattr(span_data, "handoffs") and span_data.handoffs:
             handoffs_list = []
+            trace_content = should_send_prompts()
             for handoff_agent in span_data.handoffs:
-                handoffs_list.append({
-                    "name": getattr(handoff_agent, "name", "unknown"),
-                    "instructions": getattr(
+                handoff = {"name": getattr(handoff_agent, "name", "unknown")}
+                if trace_content:
+                    handoff["instructions"] = getattr(
                         handoff_agent, "instructions", "No instructions"
-                    ),
-                })
+                    )
+                handoffs_list.append(handoff)
             attributes["openai.agent.handoffs"] = json.dumps(handoffs_list)
 
         return self.tracer.start_span(
