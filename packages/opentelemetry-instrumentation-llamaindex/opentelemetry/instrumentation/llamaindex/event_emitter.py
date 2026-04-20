@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from enum import Enum
-from typing import Union
+from typing import Optional, Union
 
 from llama_index.core.instrumentation.events.llm import (
     LLMChatEndEvent,
@@ -17,6 +17,7 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     should_emit_events,
     should_send_prompts,
 )
+from opentelemetry.instrumentation.llamaindex._response_utils import extract_finish_reasons
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -34,41 +35,40 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "llamaindex"}
-"""The attributes to be used for the event."""
+
+def _event_attributes(provider_name: Optional[str] = None) -> dict:
+    """Build event attributes with the actual LLM provider name."""
+    return {GenAIAttributes.GEN_AI_PROVIDER_NAME: provider_name or "llamaindex"}
 
 
-def emit_chat_message_events(event: LLMChatStartEvent):
+def emit_chat_message_events(event: LLMChatStartEvent, provider_name: Optional[str] = None):
     for message in event.messages:
-        emit_event(MessageEvent(content=message.content, role=message.role.value))
+        emit_event(MessageEvent(content=message.content, role=message.role.value), provider_name=provider_name)
 
 
-def emit_chat_response_events(event: LLMChatEndEvent):
+def emit_chat_response_events(event: LLMChatEndEvent, provider_name: Optional[str] = None):
     if event.response:
-        try:
-            finish_reason = event.response.raw.get("choices", [{}])[0].get(
-                "finish_reason", "unknown"
-            )
-        except (AttributeError, ValueError):
-            finish_reason = "unknown"
+        reasons = extract_finish_reasons(event.response.raw) if event.response.raw else []
+        finish_reason = reasons[0] if reasons else ""
         emit_choice_event(
             index=0,
             content=event.response.message.content,
             role=event.response.message.role.value,
             finish_reason=finish_reason,
+            provider_name=provider_name,
         )
 
 
-def emit_rerank_message_event(event: ReRankStartEvent):
+def emit_rerank_message_event(event: ReRankStartEvent, provider_name: Optional[str] = None):
     if event.query:
         if isinstance(event.query, str):
-            emit_message_event(content=event.query, role="user")
+            emit_message_event(content=event.query, role="user", provider_name=provider_name)
         else:
-            emit_message_event(content=event.query.query_str, role="user")
+            emit_message_event(content=event.query.query_str, role="user", provider_name=provider_name)
 
 
-def emit_message_event(*, content, role: str):
-    emit_event(MessageEvent(content=content, role=role))
+def emit_message_event(*, content, role: str, provider_name: Optional[str] = None):
+    emit_event(MessageEvent(content=content, role=role), provider_name=provider_name)
 
 
 def emit_choice_event(
@@ -77,36 +77,40 @@ def emit_choice_event(
     content,
     role: str,
     finish_reason: str,
+    provider_name: Optional[str] = None,
 ):
     emit_event(
         ChoiceEvent(
             index=index,
             message={"content": content, "role": role},
             finish_reason=finish_reason,
-        )
+        ),
+        provider_name=provider_name,
     )
 
 
-def emit_event(event: Union[MessageEvent, ChoiceEvent]) -> None:
+def emit_event(event: Union[MessageEvent, ChoiceEvent], provider_name: Optional[str] = None) -> None:
     """
     Emit an event to the OpenTelemetry SDK.
 
     Args:
         event: The event to emit.
+        provider_name: The actual LLM provider name (e.g. "openai", "anthropic").
     """
     if not should_emit_events():
         return
 
     if isinstance(event, MessageEvent):
-        _emit_message_event(event)
+        _emit_message_event(event, provider_name=provider_name)
     elif isinstance(event, ChoiceEvent):
-        _emit_choice_event(event)
+        _emit_choice_event(event, provider_name=provider_name)
     else:
         raise TypeError("Unsupported event type")
 
 
-def _emit_message_event(event: MessageEvent) -> None:
+def _emit_message_event(event: MessageEvent, provider_name: Optional[str] = None) -> None:
     body = asdict(event)
+    attrs = _event_attributes(provider_name)
 
     if event.role in VALID_MESSAGE_ROLES:
         name = "gen_ai.{}.message".format(event.role)
@@ -131,14 +135,16 @@ def _emit_message_event(event: MessageEvent) -> None:
 
     log_record = LogRecord(
         body=body,
-        attributes=EVENT_ATTRIBUTES,
+        attributes=attrs,
         event_name=name
     )
     Config.event_logger.emit(log_record)
 
 
-def _emit_choice_event(event: ChoiceEvent) -> None:
+def _emit_choice_event(event: ChoiceEvent, provider_name: Optional[str] = None) -> None:
     body = asdict(event)
+    attrs = _event_attributes(provider_name)
+
     if event.message["role"] == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to "assistant", so remove the role from the body if it is "assistant".
@@ -155,7 +161,7 @@ def _emit_choice_event(event: ChoiceEvent) -> None:
 
     log_record = LogRecord(
         body=body,
-        attributes=EVENT_ATTRIBUTES,
+        attributes=attrs,
         event_name="gen_ai.choice"
     )
     Config.event_logger.emit(log_record)

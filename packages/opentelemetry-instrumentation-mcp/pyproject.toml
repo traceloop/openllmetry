@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-mcp"
-version = "0.59.1"
+version = "0.60.0"
 description = "OpenTelemetry mcp instrumentation"
 authors = [
   { name = "Felix George", email = "felix.george@ibm.com" },

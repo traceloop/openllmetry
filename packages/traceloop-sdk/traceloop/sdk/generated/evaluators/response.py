@@ -108,6 +108,7 @@ class JSONValidatorResponse(BaseModel):
 
 class PIIDetectorResponse(BaseModel):
     has_pii: bool | None = Field(None, examples=[False])
+    reason: str | None = Field(None, examples=['No PII detected'])
 
 
 class PerplexityResponse(BaseModel):

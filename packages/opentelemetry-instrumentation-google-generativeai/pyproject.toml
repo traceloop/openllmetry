@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-google-generativeai"
-version = "0.59.1"
+version = "0.60.0"
 description = "OpenTelemetry Google Generative AI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -28,8 +28,8 @@ google_generativeai = "opentelemetry.instrumentation.google_generativeai:GoogleG
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
+  "pytest>=8.2.2,<10",
   "ruff>=0.4.0",
 ]
 test = [
@@ -37,8 +37,8 @@ test = [
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=1.2.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest-sugar==1.1.1",
+  "pytest>=8.2.2,<10",
   "vcrpy>=8.0.0,<9",
 ]
 

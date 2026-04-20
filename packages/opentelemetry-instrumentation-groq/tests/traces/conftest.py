@@ -50,9 +50,7 @@ def fixture_logger_provider(log_exporter):
 
 @pytest.fixture(scope="function", name="reader")
 def fixture_reader():
-    reader = InMemoryMetricReader(
-        {Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA}
-    )
+    reader = InMemoryMetricReader({Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA})
     return reader
 
 
@@ -92,9 +90,7 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(
-    reader, tracer_provider, logger_provider, meter_provider
-):
+def instrument_with_content(reader, tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = GroqInstrumentor(
@@ -113,14 +109,10 @@ def instrument_with_content(
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(
-    reader, tracer_provider, logger_provider, meter_provider
-):
+def instrument_with_no_content(reader, tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
-    instrumentor = GroqInstrumentor(
-        use_legacy_attributes=False
-    )
+    instrumentor = GroqInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
