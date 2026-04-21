@@ -16,28 +16,8 @@
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "upload_records",
-        "span_name": "qdrant.upload_records"
-    },
-    {
-        "object": "AsyncQdrantClient",
         "method": "upload_collection",
         "span_name": "qdrant.upload_collection"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search",
-        "span_name": "qdrant.search"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search_batch",
-        "span_name": "qdrant.search_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "search_groups",
-        "span_name": "qdrant.search_groups"
     },
     {
         "object": "AsyncQdrantClient",
@@ -48,31 +28,6 @@
         "object": "AsyncQdrantClient",
         "method": "query_batch",
         "span_name": "qdrant.query_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "discover",
-        "span_name": "qdrant.discover"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "discover_batch",
-        "span_name": "qdrant.discover_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "recommend",
-        "span_name": "qdrant.recommend"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "recommend_batch",
-        "span_name": "qdrant.recommend_batch"
-    },
-    {
-        "object": "AsyncQdrantClient",
-        "method": "recommend_groups",
-        "span_name": "qdrant.recommend_groups"
     },
     {
         "object": "AsyncQdrantClient",

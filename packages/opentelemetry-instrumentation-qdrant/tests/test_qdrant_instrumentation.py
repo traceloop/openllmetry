@@ -122,3 +122,23 @@ def test_qdrant_search(exporter, qdrant):
         == COLLECTION_NAME
     )
     assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 4
+
+
+def test_instrument_does_not_fail_on_missing_client_methods():
+    """
+    Regression test for https://github.com/traceloop/openllmetry/issues/3492.
+
+    On qdrant-client 1.16 a handful of legacy methods (search, recommend,
+    discover, upload_records and their batch variants) were removed. The
+    instrumentor used to look them up unconditionally and blow up with an
+    AttributeError before any user code had a chance to run. Exercise the
+    full instrument / uninstrument cycle here so we notice if the list of
+    wrapped methods ever drifts out of sync with the client again.
+    """
+    from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+
+    instrumentor = QdrantInstrumentor()
+    instrumentor.uninstrument()
+    instrumentor.instrument()
+    instrumentor.uninstrument()
+    instrumentor.instrument()
