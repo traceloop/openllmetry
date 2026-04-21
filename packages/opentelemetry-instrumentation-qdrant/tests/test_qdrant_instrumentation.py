@@ -124,21 +124,42 @@ def test_qdrant_search(exporter, qdrant):
     assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 4
 
 
-def test_instrument_does_not_fail_on_missing_client_methods():
+def test_wrapped_methods_exist_on_client_surface():
     """
     Regression test for https://github.com/traceloop/openllmetry/issues/3492.
 
     On qdrant-client 1.16 a handful of legacy methods (search, recommend,
     discover, upload_records and their batch variants) were removed. The
-    instrumentor used to look them up unconditionally and blow up with an
-    AttributeError before any user code had a chance to run. Exercise the
-    full instrument / uninstrument cycle here so we notice if the list of
-    wrapped methods ever drifts out of sync with the client again.
+    instrumentor used to look them up unconditionally and blew up with an
+    AttributeError before any user code had a chance to run.
+
+    The runtime guards in _instrument / _uninstrument now skip missing
+    methods silently, which keeps users unblocked but hides the drift. Walk
+    the wrapped method tables directly against the installed client so
+    CI fails loudly if the JSON drifts out of sync with qdrant-client
+    again, and keep a full instrument/uninstrument cycle to make sure the
+    wrapping itself still works end to end.
     """
-    from opentelemetry.instrumentation.qdrant import QdrantInstrumentor
+    import qdrant_client
+    from opentelemetry.instrumentation.qdrant import (
+        QdrantInstrumentor,
+        WRAPPED_METHODS,
+    )
+
+    missing = []
+    for entry in WRAPPED_METHODS:
+        obj_name = entry["object"]
+        method_name = entry["method"]
+        client_cls = getattr(qdrant_client, obj_name, None)
+        if client_cls is None or not hasattr(client_cls, method_name):
+            missing.append(f"{obj_name}.{method_name}")
+
+    assert not missing, (
+        "Wrapped methods no longer present on qdrant-client: "
+        f"{missing}. Update the method JSON files under "
+        "opentelemetry/instrumentation/qdrant/ to match."
+    )
 
     instrumentor = QdrantInstrumentor()
-    instrumentor.uninstrument()
     instrumentor.instrument()
     instrumentor.uninstrument()
-    instrumentor.instrument()
