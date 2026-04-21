@@ -50,6 +50,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.trace.status import Status, StatusCode
 from typing_extensions import Coroutine
 from wrapt import wrap_function_wrapper
@@ -575,6 +576,7 @@ def _wrap(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
@@ -706,6 +708,7 @@ async def _awrap(
         if exception_counter:
             exception_counter.add(1, attributes=attributes)
 
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
