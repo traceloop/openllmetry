@@ -205,6 +205,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         token = self.spans[run_id].token
         if token:
             self._safe_detach_context(token)
+        assoc_token = self.spans[run_id].association_properties_token
+        if assoc_token:
+            self._safe_detach_context(assoc_token)
 
         del self.spans[run_id]
 
@@ -266,6 +269,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        association_properties_token = None
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -277,7 +281,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if v is not None
             }
             try:
-                context_api.attach(
+                association_properties_token = context_api.attach(
                     context_api.set_value(
                         "association_properties",
                         {**current_association_properties, **sanitized_metadata},
@@ -286,7 +290,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             except Exception:
                 # If setting association properties fails, continue without them
                 # This doesn't affect the core span functionality
-                pass
+                association_properties_token = None
 
         if parent_run_id is not None and parent_run_id in self.spans:
             span = self.tracer.start_span(
@@ -330,7 +334,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, entity_name, entity_path
+            span,
+            token,
+            None,
+            [],
+            workflow_name,
+            entity_name,
+            entity_path,
+            association_properties_token=association_properties_token,
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -618,16 +629,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             span.set_attribute(SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
 
         self._end_span(span, run_id)
-        if parent_run_id is None:
-            try:
-                context_api.attach(
-                    context_api.set_value(
-                        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False
-                    )
-                )
-            except Exception:
-                # If context reset fails, it's not critical for functionality
-                pass
 
     @dont_throw
     def on_chat_model_start(
