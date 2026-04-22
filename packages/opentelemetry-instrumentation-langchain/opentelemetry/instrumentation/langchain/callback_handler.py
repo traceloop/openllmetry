@@ -491,6 +491,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # If context setting fails, continue without suppression token
             token = None
 
+        # Detach orphaned context tokens before overwriting (see #3957).
+        existing = self.spans.get(run_id)
+        if existing is not None:
+            if existing.token:
+                self._safe_detach_context(existing.token)
+            if getattr(existing, "association_properties_token", None):
+                self._safe_detach_context(existing.association_properties_token)
+
         self.spans[run_id] = SpanHolder(
             span, token, None, [], workflow_name, None, entity_path
         )
