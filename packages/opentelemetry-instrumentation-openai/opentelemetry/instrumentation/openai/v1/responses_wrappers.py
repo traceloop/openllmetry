@@ -971,15 +971,17 @@ class ResponseStream(ObjectProxy):
         try:
             self._ensure_cleanup()
         finally:
-            if hasattr(self.__wrapped__, "close"):
-                return self.__wrapped__.close()
+            pass
+        if hasattr(self.__wrapped__, "close"):
+            return self.__wrapped__.close()
 
     async def aclose(self):
         try:
             self._ensure_cleanup()
         finally:
-            if hasattr(self.__wrapped__, "aclose"):
-                return await self.__wrapped__.aclose()
+            pass
+        if hasattr(self.__wrapped__, "aclose"):
+            return await self.__wrapped__.aclose()
 
     def __iter__(self):
         """Synchronous iterator"""
