@@ -3,9 +3,11 @@ from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
 
 def test_instrumentation_uses_wrapt_positional_signature(monkeypatch):
+    """Instrumentation should call wrapt with positional arguments only."""
     calls = []
 
     def strict_wrap_function(module, name, wrapper, /):
+        """Capture wrapt calls while enforcing a positional-only signature."""
         calls.append((module, name, wrapper))
 
     monkeypatch.setattr(
@@ -23,9 +25,11 @@ def test_instrumentation_uses_wrapt_positional_signature(monkeypatch):
 
 
 def test_uninstrumentation_unwraps_base_chat_openai(monkeypatch):
+    """Uninstrumentation should target the wrapped BaseChatOpenAI methods."""
     calls = []
 
     def capture_unwrap(module, name):
+        """Record the unwrap targets requested by the instrumentor."""
         calls.append((module, name))
 
     monkeypatch.setattr(langchain_module, "unwrap", capture_unwrap)

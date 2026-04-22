@@ -69,9 +69,11 @@ class LangchainInstrumentor(BaseInstrumentor):
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package dependencies required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Install LangChain, LangGraph, and OpenAI tracing hooks."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -115,6 +117,7 @@ class LangchainInstrumentor(BaseInstrumentor):
             self._wrap_openai_functions_for_tracing(traceloopCallbackHandler)
 
     def _wrap_openai_functions_for_tracing(self, traceloopCallbackHandler):
+        """Wrap LangChain OpenAI entry points to propagate active trace headers."""
         openai_tracing_wrapper = _OpenAITracingWrapper(traceloopCallbackHandler)
 
         if is_package_available("langchain_community"):
@@ -302,6 +305,7 @@ class LangchainInstrumentor(BaseInstrumentor):
                 logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
 
     def _uninstrument(self, **kwargs):
+        """Remove the wrappers installed by this instrumentor."""
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
 
         # Unwrap LangGraph components
@@ -366,7 +370,10 @@ class LangchainInstrumentor(BaseInstrumentor):
 
 
 class _BaseCallbackManagerInitWrapper:
+    """Attach the Traceloop callback handler to callback managers as they initialize."""
+
     def __init__(self, callback_handler: "TraceloopCallbackHandler"):
+        """Store the callback handler instance that should be attached."""
         self._callback_handler = callback_handler
 
     def __call__(
@@ -376,6 +383,7 @@ class _BaseCallbackManagerInitWrapper:
         args,
         kwargs,
     ) -> None:
+        """Add the tracing callback handler to inheritable callback managers once."""
         wrapped(*args, **kwargs)
         for handler in instance.inheritable_handlers:
             if isinstance(handler, type(self._callback_handler)):
@@ -396,7 +404,10 @@ class _BaseCallbackManagerInitWrapper:
 #    allows us to add extra headers (including tracing headers) to the OpenAI request by
 #    modifying the `extra_headers` argument in `kwargs`.
 class _OpenAITracingWrapper:
+    """Inject trace headers into downstream OpenAI requests made by LangChain."""
+
     def __init__(self, callback_manager: "TraceloopCallbackHandler"):
+        """Store the callback manager used to look up active spans by run id."""
         self._callback_manager = callback_manager
 
     def __call__(
@@ -406,6 +417,7 @@ class _OpenAITracingWrapper:
         args,
         kwargs,
     ) -> None:
+        """Forward trace context in OpenAI calls while suppressing duplicate spans."""
         run_manager = kwargs.get("run_manager")
         if run_manager:
             run_id = run_manager.run_id
