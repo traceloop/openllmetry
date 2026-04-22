@@ -9,6 +9,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 def _set_span_attribute(span, name, value):
+    """Set a span attribute if the value is not None."""
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
@@ -19,7 +20,9 @@ def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(tracer, to_wrap):
+        """Bind tracer and to_wrap parameters, returning the instrumented wrapper."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(tracer, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -41,6 +44,8 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         attributes={
             SpanAttributes.VECTOR_DB_VENDOR: "Qdrant",
         },
+        record_exception=False,
+        set_status_on_exception=False,
     ) as span:
         _set_collection_name_attribute(
             span, method, args, kwargs
@@ -53,8 +58,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_upload_attributes(span, args, kwargs, method, "documents")
         elif method == "upload_points":
             _set_upload_attributes(span, args, kwargs, method, "points")
-        elif method == "upload_records":
-            _set_upload_attributes(span, args, kwargs, method, "records")
         elif method == "upload_collection":
             _set_upload_attributes(span, args, kwargs, method, "vectors")
         elif method in [
@@ -70,7 +73,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif method in ["search_batch", "query_batch_points", "recommend_batch", "discover_batch"]:
             _set_batch_search_attributes(span, args, kwargs, method)
 
-        response = wrapped(*args, **kwargs)
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR))
+            raise
         if response:
             span.set_status(Status(StatusCode.OK))
     return response
@@ -78,6 +86,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _set_collection_name_attribute(span, method, args, kwargs):
+    """Set the collection name span attribute from method args or kwargs."""
     attribute_method = method
     if method == "query_points":
         attribute_method = "search"
@@ -93,6 +102,7 @@ def _set_collection_name_attribute(span, method, args, kwargs):
 
 @dont_throw
 def _set_upsert_attributes(span, args, kwargs):
+    """Set span attributes for upsert operations."""
     points = kwargs.get("points") or args[1]
     if isinstance(points, list):
         length = len(points)
@@ -105,18 +115,21 @@ def _set_upsert_attributes(span, args, kwargs):
 
 @dont_throw
 def _set_upload_attributes(span, args, kwargs, method_name, param_name):
+    """Set span attributes for upload operations."""
     points = list(kwargs.get(param_name) or args[1])
     _set_span_attribute(span, f"qdrant.{method_name}.points_count", len(points))
 
 
 @dont_throw
 def _set_search_attributes(span, args, kwargs):
+    """Set span attributes for search operations."""
     limit = kwargs.get("limit") or 10
     _set_span_attribute(span, SpanAttributes.VECTOR_DB_QUERY_TOP_K, limit)
 
 
 @dont_throw
 def _set_batch_search_attributes(span, args, kwargs, method):
+    """Set span attributes for batch search operations."""
     requests = kwargs.get("requests") or []
     # Map query_batch_points to search_batch for backward compatibility
     attribute_method = "search_batch" if method == "query_batch_points" else method
