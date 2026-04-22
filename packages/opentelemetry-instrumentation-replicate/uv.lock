@@ -171,7 +171,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-replicate"
-version = "0.53.3"
+version = "0.59.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
