@@ -185,18 +185,6 @@ class LangchainInstrumentor(BaseInstrumentor):
                 openai_tracing_wrapper,
             )
 
-            # Doesn't work :(
-            # wrap_function_wrapper(
-            #     module="langchain_openai.chat_models.base",
-            #     name="BaseChatOpenAI._stream",
-            #     wrapper=openai_tracing_wrapper,
-            # )
-            # wrap_function_wrapper(
-            #     module="langchain_openai.chat_models.base",
-            #     name="BaseChatOpenAI._astream",
-            #     wrapper=openai_tracing_wrapper,
-            # )
-
     def _wrap_langgraph_components(self, tracer):
         """Wrap LangGraph components for instrumentation."""
         # Wrap Pregel.stream and Pregel.astream (graph invocation)
@@ -359,12 +347,30 @@ class LangchainInstrumentor(BaseInstrumentor):
                 unwrap("langchain_community.llms.openai", "BaseOpenAI._stream")
                 unwrap("langchain_community.llms.openai", "BaseOpenAI._astream")
             if is_package_available("langchain_openai"):
-                unwrap("langchain_openai.llms.base", "BaseOpenAI._generate")
-                unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
-                unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
-                unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
-                unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._generate")
-                unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._agenerate")
+                try:
+                    unwrap("langchain_openai.llms.base", "BaseOpenAI._generate")
+                except Exception:
+                    pass
+                try:
+                    unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
+                except Exception:
+                    pass
+                try:
+                    unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
+                except Exception:
+                    pass
+                try:
+                    unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
+                except Exception:
+                    pass
+                try:
+                    unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._generate")
+                except Exception:
+                    pass
+                try:
+                    unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._agenerate")
+                except Exception:
+                    pass
 
 
 class _BaseCallbackManagerInitWrapper:
