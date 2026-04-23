@@ -365,8 +365,6 @@ class LangchainInstrumentor(BaseInstrumentor):
                 unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
                 unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._generate")
                 unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._agenerate")
-                # unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._stream")
-                # unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._astream")
 
 
 class _BaseCallbackManagerInitWrapper:

@@ -17,11 +17,15 @@ def test_instrumentation_uses_wrapt_positional_signature(monkeypatch):
         langchain_module, "is_package_available", lambda package_name: False
     )
 
-    LangchainInstrumentor()._instrument()
+    instrumentor = LangchainInstrumentor()
+    try:
+        instrumentor.instrument()
 
-    assert len(calls) == 1
-    assert calls[0][0] == "langchain_core.callbacks"
-    assert calls[0][1] == "BaseCallbackManager.__init__"
+        assert len(calls) == 1
+        assert calls[0][0] == "langchain_core.callbacks"
+        assert calls[0][1] == "BaseCallbackManager.__init__"
+    finally:
+        instrumentor.uninstrument()
 
 
 def test_uninstrumentation_unwraps_base_chat_openai(monkeypatch):
@@ -41,6 +45,10 @@ def test_uninstrumentation_unwraps_base_chat_openai(monkeypatch):
 
     LangchainInstrumentor()._uninstrument()
 
+    assert (
+        "langchain_core.callbacks",
+        "BaseCallbackManager.__init__",
+    ) in calls
     assert (
         "langchain_openai.chat_models.base",
         "BaseChatOpenAI._generate",
