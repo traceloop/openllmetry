@@ -434,8 +434,9 @@ class _OpenAITracingWrapper:
 
         # In legacy chains like LLMChain, suppressing model instrumentations
         # within create_llm_span doesn't work, so this should helps as a fallback
+        token = None
         try:
-            context_api.attach(
+            token = context_api.attach(
                 context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
             )
         except Exception:
@@ -443,4 +444,11 @@ class _OpenAITracingWrapper:
             # This is not critical for core functionality
             pass
 
-        return wrapped(*args, **kwargs)
+        try:
+            return wrapped(*args, **kwargs)
+        finally:
+            if token is not None:
+                try:
+                    context_api.detach(token)
+                except Exception:
+                    pass
