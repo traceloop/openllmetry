@@ -278,9 +278,7 @@ def run_async(method):
         loop = None
 
     if loop and loop.is_running():
-        thread = threading.Thread(target=lambda: asyncio.run(method))
-        thread.start()
-        thread.join()
+        asyncio.ensure_future(method)
     else:
         asyncio.run(method)
 
