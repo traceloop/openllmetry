@@ -215,9 +215,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if child_span.end_time is None:  # avoid warning on ended spans
                     child_span.end()
                 del self.spans[child_id]
+        self._detach_holder_contexts(self.spans[run_id])
         if span.end_time is None:  # avoid warning on ended spans
             span.end()
-        self._detach_holder_contexts(self.spans[run_id])
 
         del self.spans[run_id]
 
@@ -463,12 +463,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
-        # Capture and detach the old holder BEFORE _create_span runs.
-        # _create_span unconditionally overwrites self.spans[run_id], which
-        # would make the old SpanHolder (and its suppression token) unreachable.
-        # Detaching here, before the overwrite, ensures we clean up the original
-        # suppression token from a duplicate run_id and that the new suppression
-        # is layered on top of the clean baseline context.
+        # _create_span is responsible for detaching any existing SpanHolder for
+        # this run_id via _detach_holder_contexts before it overwrites
+        # self.spans[run_id]. Callers should rely on _create_span to manage
+        # existing suppression tokens and other context cleanup for duplicate run_id
+        # lifecycles.
         span = self._create_span(
             run_id,
             parent_run_id,
