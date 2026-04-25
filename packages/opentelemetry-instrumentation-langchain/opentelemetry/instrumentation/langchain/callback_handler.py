@@ -119,10 +119,12 @@ def _sanitize_metadata_value(value: Any) -> Any:
 
 
 def valid_role(role: str) -> bool:
+    """Return whether a role is valid for emitted GenAI message events."""
     return role in ["user", "assistant", "system", "tool"]
 
 
 def get_message_role(message: Type[BaseMessage]) -> str:
+    """Map a LangChain message object or chunk to a GenAI semantic role."""
     if isinstance(message, (SystemMessage, SystemMessageChunk)):
         return "system"
     elif isinstance(message, (HumanMessage, HumanMessageChunk)):
@@ -138,6 +140,7 @@ def get_message_role(message: Type[BaseMessage]) -> str:
 def _extract_tool_call_data(
     tool_calls: Optional[List[dict[str, Any]]],
 ) -> Union[List[ToolCall], None]:
+    """Normalize LangChain tool call payloads into ToolCall event objects."""
     if tool_calls is None:
         return tool_calls
 
@@ -165,6 +168,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def __init__(
         self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
     ) -> None:
+        """Initialize the callback handler state used to track active LangChain spans."""
         super().__init__()
         self.tracer = tracer
         self.duration_histogram = duration_histogram
@@ -193,6 +197,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return "unknown"
 
     def _get_span(self, run_id: UUID) -> Span:
+        """Return the active span currently registered for the given run id."""
         return self.spans[run_id].span
 
     def _detach_holder_contexts(self, span_holder: SpanHolder | None) -> None:
@@ -202,8 +207,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         if span_holder.token:
             self._safe_detach_context(span_holder.token)
+            span_holder.token = None
         if span_holder.association_properties_token:
             self._safe_detach_context(span_holder.association_properties_token)
+            span_holder.association_properties_token = None
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
         """End a span and clean up any tracked context tokens for it and its children."""
@@ -279,6 +286,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create and register a span holder, replacing any existing holder for the run id."""
         old_holder = self.spans.get(run_id)
         if old_holder is not None:
             self._detach_holder_contexts(old_holder)
@@ -375,6 +383,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create a workflow, task, or tool span with LangChain and GenAI attributes."""
         # Determine span type
         is_agent = kind in (
             TraceloopSpanKindValues.WORKFLOW,
@@ -460,6 +469,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create an LLM client span and swap span attachment for suppression context."""
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
@@ -500,7 +510,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         current_holder = self.spans.get(run_id)
         if current_holder is not None and current_holder.token is not None:
             self._safe_detach_context(current_holder.token)
-            current_holder.token = None
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
@@ -730,6 +739,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Union[UUID, None] = None,
         **kwargs: Any,
     ):
+        """Finalize an LLM span with response metadata, usage, and output content."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
@@ -1011,11 +1021,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self._end_span(span, run_id)
 
     def get_parent_span(self, parent_run_id: Optional[str] = None):
+        """Return the tracked parent span holder for a run id, if it exists."""
         if parent_run_id is None:
             return None
         return self.spans[parent_run_id]
 
     def get_workflow_name(self, parent_run_id: str):
+        """Resolve the workflow name inherited from a parent run."""
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
@@ -1024,6 +1036,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return parent_span.workflow_name
 
     def get_entity_path(self, parent_run_id: str):
+        """Build the child entity path inherited from the parent span holder."""
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
@@ -1119,6 +1132,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self._handle_error(error, run_id, parent_run_id, **kwargs)
 
     def _emit_chat_input_events(self, messages):
+        """Emit message events for each chat-model input message."""
         for message_list in messages:
             for message in message_list:
                 if hasattr(message, "tool_calls") and message.tool_calls:
@@ -1134,6 +1148,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
     def _emit_llm_end_events(self, response):
+        """Emit choice events for all generations contained in an LLM response."""
         for generation_list in response.generations:
             for i, generation in enumerate(generation_list):
                 self._emit_generation_choice_event(index=i, generation=generation)
@@ -1145,6 +1160,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
         ],
     ):
+        """Emit the appropriate GenAI choice event for a single generation."""
         if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
             # Get finish reason
             raw_finish_reason = None
