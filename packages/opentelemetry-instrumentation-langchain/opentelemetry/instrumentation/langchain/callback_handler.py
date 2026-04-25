@@ -206,12 +206,17 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             self._safe_detach_context(span_holder.association_properties_token)
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
-        for child_id in self.spans[run_id].children:
+        """End a span and clean up any tracked context tokens for it and its children."""
+        for child_id in list(self.spans[run_id].children):
             if child_id in self.spans:
-                child_span = self.spans[child_id].span
+                child_holder = self.spans[child_id]
+                child_span = child_holder.span
+                self._detach_holder_contexts(child_holder)
                 if child_span.end_time is None:  # avoid warning on ended spans
                     child_span.end()
-        span.end()
+                del self.spans[child_id]
+        if span.end_time is None:  # avoid warning on ended spans
+            span.end()
         self._detach_holder_contexts(self.spans[run_id])
 
         del self.spans[run_id]

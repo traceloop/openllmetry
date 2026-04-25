@@ -26,6 +26,7 @@ from opentelemetry.instrumentation.langchain.callback_handler import (
 
 @pytest.fixture
 def handler():
+    """Create a callback handler backed by an in-memory tracer for lifecycle tests."""
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
@@ -54,10 +55,12 @@ def restore_otel_context():
 
 
 def _suppression_active() -> bool:
+    """Return whether language-model suppression is currently active in OTel context."""
     return context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY) is True
 
 
 def _association_properties() -> dict:
+    """Return the current association properties context payload, if any."""
     return context_api.get_value("association_properties") or {}
 
 
@@ -232,4 +235,49 @@ def test_duplicate_run_id_replaces_association_properties(handler):
     assert _association_properties() == {}, (
         "association_properties from the replacement span should also be cleaned up "
         "when the surviving holder is ended."
+    )
+
+
+def test_duplicate_llm_run_id_replaces_association_properties(handler):
+    """
+    Replacing an LLM span holder must clear the prior metadata context and suppression.
+    """
+    run_id = uuid4()
+
+    first_span = handler._create_llm_span(
+        run_id,
+        None,
+        "gpt-4",
+        LLMRequestTypeValues.CHAT,
+        metadata={"user_id": "12345"},
+    )
+    assert _association_properties().get("user_id") == "12345"
+    assert _suppression_active(), "suppression active after 1st call (sanity)"
+
+    second_span = handler._create_llm_span(
+        run_id,
+        None,
+        "gpt-4",
+        LLMRequestTypeValues.CHAT,
+        metadata={"request_id": "req-1"},
+    )
+
+    # The first span is intentionally not ended because the replacement path is under test.
+    assert first_span.end_time is None, "sanity: old span stays open until caller ends it"
+    assert _association_properties().get("user_id") is None, (
+        "The previous association_properties context should be detached before "
+        "creating a replacement LLM holder for the same run_id."
+    )
+    assert _association_properties().get("request_id") == "req-1"
+    assert _suppression_active(), "suppression active after 2nd call (sanity)"
+
+    handler._end_span(second_span, run_id)
+
+    assert _association_properties() == {}, (
+        "association_properties from the replacement LLM span should be cleaned up "
+        "when the surviving holder is ended."
+    )
+    assert not _suppression_active(), (
+        "Suppression must be cleared after ending the replacement LLM span, matching "
+        "the behavior verified in test_duplicate_run_id_leaks_suppression_token."
     )
