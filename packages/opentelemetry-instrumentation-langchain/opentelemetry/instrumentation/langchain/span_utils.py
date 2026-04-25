@@ -58,6 +58,7 @@ class SpanHolder:
     workflow_name: str
     entity_name: str
     entity_path: str
+    association_properties_token: Any = None
     start_time: float = field(default_factory=time.time)
     request_model: Optional[str] = None
 

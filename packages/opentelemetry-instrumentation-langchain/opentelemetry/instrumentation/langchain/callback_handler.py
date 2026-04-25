@@ -195,6 +195,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def _get_span(self, run_id: UUID) -> Span:
         return self.spans[run_id].span
 
+    def _detach_holder_contexts(self, span_holder: SpanHolder | None) -> None:
+        """Detach any tracked context tokens stored on a span holder."""
+        if span_holder is None:
+            return
+
+        if span_holder.token:
+            self._safe_detach_context(span_holder.token)
+        if span_holder.association_properties_token:
+            self._safe_detach_context(span_holder.association_properties_token)
+
     def _end_span(self, span: Span, run_id: UUID) -> None:
         for child_id in self.spans[run_id].children:
             if child_id in self.spans:
@@ -202,9 +212,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if child_span.end_time is None:  # avoid warning on ended spans
                     child_span.end()
         span.end()
-        token = self.spans[run_id].token
-        if token:
-            self._safe_detach_context(token)
+        self._detach_holder_contexts(self.spans[run_id])
 
         del self.spans[run_id]
 
@@ -266,6 +274,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        old_holder = self.spans.get(run_id)
+        if old_holder is not None:
+            self._detach_holder_contexts(old_holder)
+
+        association_properties_token = None
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -277,7 +290,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if v is not None
             }
             try:
-                context_api.attach(
+                association_properties_token = context_api.attach(
                     context_api.set_value(
                         "association_properties",
                         {**current_association_properties, **sanitized_metadata},
@@ -330,7 +343,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, entity_name, entity_path
+            span,
+            token,
+            None,
+            [],
+            workflow_name,
+            entity_name,
+            entity_path,
+            association_properties_token=association_properties_token,
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -444,10 +464,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # Detaching here, before the overwrite, ensures we clean up the original
         # suppression token from a duplicate run_id and that the new suppression
         # is layered on top of the clean baseline context.
-        old_holder = self.spans.get(run_id)
-        if old_holder is not None and old_holder.token is not None:
-            self._safe_detach_context(old_holder.token)
-
         span = self._create_span(
             run_id,
             parent_run_id,
@@ -480,6 +496,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         current_holder = self.spans.get(run_id)
         if current_holder is not None and current_holder.token is not None:
             self._safe_detach_context(current_holder.token)
+            current_holder.token = None
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
@@ -492,7 +509,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             token = None
 
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, None, entity_path
+            span,
+            token,
+            None,
+            [],
+            workflow_name,
+            None,
+            entity_path,
+            association_properties_token=(
+                current_holder.association_properties_token if current_holder else None
+            ),
         )
 
         return span

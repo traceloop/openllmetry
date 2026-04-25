@@ -57,6 +57,10 @@ def _suppression_active() -> bool:
     return context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY) is True
 
 
+def _association_properties() -> dict:
+    return context_api.get_value("association_properties") or {}
+
+
 # ---------------------------------------------------------------------------
 # Ordering fix (commit 2) — normal single-call lifecycle
 # ---------------------------------------------------------------------------
@@ -88,6 +92,28 @@ def test_suppression_cleared_after_end_span(handler):
     assert not _suppression_active(), (
         "Suppression must be cleared when the LLM span ends; otherwise every "
         "subsequent call in this thread/task is permanently suppressed."
+    )
+
+
+def test_association_properties_cleared_after_end_span(handler):
+    """Metadata-specific association properties must not outlive the span."""
+    run_id = uuid4()
+    assert _association_properties() == {}, "precondition: no association properties"
+
+    span = handler._create_span(
+        run_id,
+        None,
+        "test-span",
+        metadata={"user_id": "12345"},
+    )
+
+    assert _association_properties().get("user_id") == "12345"
+
+    handler._end_span(span, run_id)
+
+    assert _association_properties() == {}, (
+        "association_properties must be detached when the span ends; otherwise "
+        "later spans can inherit stale metadata."
     )
 
 
@@ -170,4 +196,40 @@ def test_duplicate_run_id_leaks_suppression_token(handler):
         "_create_span overwrites self.spans[run_id] before the old holder can be read. "
         "Fix: move `existing_holder = self.spans.get(run_id)` (and its detach) to "
         "BEFORE the `_create_span(...)` call in _create_llm_span."
+    )
+
+
+def test_duplicate_run_id_replaces_association_properties(handler):
+    """
+    Replacing a SpanHolder for the same run_id must clean up the old metadata context.
+    """
+    run_id = uuid4()
+
+    first_span = handler._create_span(
+        run_id,
+        None,
+        "first-span",
+        metadata={"user_id": "12345"},
+    )
+    assert _association_properties().get("user_id") == "12345"
+
+    second_span = handler._create_span(
+        run_id,
+        None,
+        "second-span",
+        metadata={"request_id": "req-1"},
+    )
+
+    assert first_span.end_time is None, "sanity: old span stays open until caller ends it"
+    assert _association_properties().get("user_id") is None, (
+        "The previous association_properties context should be detached before "
+        "creating a replacement holder for the same run_id."
+    )
+    assert _association_properties().get("request_id") == "req-1"
+
+    handler._end_span(second_span, run_id)
+
+    assert _association_properties() == {}, (
+        "association_properties from the replacement span should also be cleaned up "
+        "when the surviving holder is ended."
     )
