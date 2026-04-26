@@ -11,12 +11,15 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes
 )
-from opentelemetry.semconv_ai import 
+from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace.status import Status, StatusCode
 
 logger = logging.getLogger(__name__)
+
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+_GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
 
 
 def _set_span_attribute(span, name, value):
@@ -662,24 +665,24 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
                 if content and hasattr(content, "parts"):
                     for part in content.parts:
                         parts.append(_serialize_response_part(part))
-                if not parts:
-                    # Fallback: try response.text for simple single-part responses
-                    try:
-                        text = response.text
-                        if text:
-                            parts = [{"type": "text", "content": text}]
-                    except Exception:
-                        pass
                 if parts:
                     msg = {"role": "assistant", "parts": parts}
                     if _finish_reason:
                         msg["finish_reason"] = _finish_reason
                     output_messages.append(msg)
+            if not output_messages:
+                # Fallback: try response.text for simple single-part responses
+                try:
+                    text = response.text
+                    if text:
+                        output_messages.append({"role": "assistant", "parts": [{"type": "text", "content": text}]})
+                except Exception:
+                    pass
         else:
             # No candidates field: fall back to response.text
             try:
                 if isinstance(response.text, list):
-                    for item in response:
+                    for item in response.text:
                         output_messages.append({
                             "role": "assistant",
                             "parts": [{"type": "text", "content": item.text}],
@@ -749,7 +752,7 @@ def set_model_response_attributes(
         token_histogram.record(
             response.usage_metadata.candidates_token_count,
             attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "Google",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
