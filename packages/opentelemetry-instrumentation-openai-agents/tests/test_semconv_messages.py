@@ -1061,7 +1061,11 @@ class TestOperationName:
         )
 
     def test_response_span_data_operation_name_is_chat(self, tracer_and_exporter):
-        """ResponseSpanData must use operation name 'chat', NOT 'response'."""
+        """ResponseSpanData (Responses API) must use 'chat', same as GenerationSpanData.
+
+        'generate_content' is the GCP/Gemini well-known value and must not be used for
+        OpenAI's Responses API, which is a chat completion surface.
+        """
         from opentelemetry.instrumentation.openai_agents._hooks import (
             OpenTelemetryTracingProcessor,
         )
@@ -1073,7 +1077,6 @@ class TestOperationName:
         mock_trace.trace_id = "test-op-2"
         proc.on_trace_start(mock_trace)
 
-        # Create a lightweight ResponseSpanData stub (avoids mutating MagicMock.__name__)
         response_data = ResponseSpanData(input=[], response=None)
 
         span = MockAgentSpan(response_data, trace_id="test-op-2")
@@ -1087,7 +1090,9 @@ class TestOperationName:
         assert resp_span is not None
 
         op_name = resp_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)
-        assert op_name == "chat", f"Expected 'chat', got '{op_name}'"
+        assert op_name == "chat", (
+            f"ResponseSpanData must emit 'chat', got '{op_name}'"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -3105,8 +3110,8 @@ class TestResponsesApiStatusMapping:
 
         span.end()
 
-    def test_cancelled_status_maps_to_error(self, tracer_and_exporter):
-        """Responses API status='cancelled' must map to OTel finish_reason='error'."""
+    def test_cancelled_response_preserves_cancelled_finish_reason(self, tracer_and_exporter):
+        """Responses API status='cancelled' must preserve 'cancelled', not remap to 'error'."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -3126,12 +3131,12 @@ class TestResponsesApiStatusMapping:
 
         finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
         assert finish_reasons is not None
-        assert "error" in finish_reasons
+        assert "cancelled" in finish_reasons
 
         span.end()
 
-    def test_incomplete_status_maps_to_length(self, tracer_and_exporter):
-        """Responses API status='incomplete' must map to OTel finish_reason='length'."""
+    def test_incomplete_response_preserves_incomplete_finish_reason(self, tracer_and_exporter):
+        """Responses API status='incomplete' must preserve 'incomplete', not remap to 'length'."""
         from opentelemetry.instrumentation.openai_agents._hooks import (
             _extract_response_attributes,
         )
@@ -3151,7 +3156,7 @@ class TestResponsesApiStatusMapping:
 
         finish_reasons = span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
         assert finish_reasons is not None
-        assert "length" in finish_reasons
+        assert "incomplete" in finish_reasons
 
         span.end()
 
@@ -3242,3 +3247,389 @@ class TestFinishReasonMappingCompleteness:
         """Legacy 'function_call' must map to 'tool_call'."""
         from opentelemetry.instrumentation.openai_agents._hooks import _map_finish_reason
         assert _map_finish_reason("function_call") == "tool_call"
+
+
+# ---------------------------------------------------------------------------
+# P2-3: Agents SDK function_call id — omit when absent
+# ---------------------------------------------------------------------------
+
+class TestAgentsSdkFunctionCallIdOmitted:
+    """P2-3: Agents SDK function_call with no 'id' must emit no 'id' key in the part.
+
+    The id field is optional (OTel ToolCallRequestPart.id defaults null).
+    Emitting empty-string id breaks tool_call / tool_call_response correlation.
+    """
+
+    def test_agents_sdk_function_call_no_id_omits_id(self, tracer_and_exporter):
+        """Agents SDK function_call without an 'id' key must not emit 'id' in the part."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "type": "function_call",
+            "name": "search",
+            "arguments": '{"q": "test"}',
+            # Intentionally no "id" key
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        part = messages[0]["parts"][0]
+
+        assert part["type"] == "tool_call"
+        assert "id" not in part or part["id"], (
+            f"id must be absent or non-empty when no id in source, got: {part}"
+        )
+        span.end()
+
+    def test_agents_sdk_function_call_with_id_still_included(self, tracer_and_exporter):
+        """Sanity: when 'id' is present, it must appear in the part."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "type": "function_call",
+            "id": "fc_1",
+            "name": "search",
+            "arguments": '{"q": "test"}',
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        messages = json.loads(raw)
+        part = messages[0]["parts"][0]
+
+        assert part.get("id") == "fc_1"
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# P3-4 (updated): ResponseSpanData → gen_ai.operation.name = "chat"
+# ---------------------------------------------------------------------------
+
+class TestResponseSpanDataOperationName:
+    """ResponseSpanData (Responses API) must use operation.name='chat'.
+
+    Both GenerationSpanData (Chat Completions) and ResponseSpanData (Responses
+    API) are chat completion surfaces.  Using 'generate_content' (a GCP/Gemini
+    well-known value) for an OpenAI span is incorrect.
+    """
+
+    def test_response_span_data_uses_chat(self, tracer_and_exporter):
+        """_start_generation_span with ResponseSpanData must emit 'chat'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+
+        tracer, exporter = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        span_data = ResponseSpanData(input=[], response=None)
+        span_data.model = "gpt-4o"
+
+        otel_span = proc._start_generation_span(parent_context=None, span_data=span_data)
+        attrs = dict(otel_span.attributes)
+        otel_span.end()
+
+        assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat", (
+            f"ResponseSpanData must use 'chat', got '{attrs.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}'"
+        )
+
+    def test_generation_span_data_keeps_chat(self, tracer_and_exporter):
+        """_start_generation_span with GenerationSpanData (or no span_data) must keep 'chat'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            OpenTelemetryTracingProcessor,
+        )
+
+        tracer, exporter = tracer_and_exporter
+        proc = OpenTelemetryTracingProcessor(tracer)
+
+        # No span_data → Chat Completions default
+        otel_span = proc._start_generation_span(parent_context=None, span_data=None)
+        attrs = dict(otel_span.attributes)
+        otel_span.end()
+
+        assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
+
+
+# ---------------------------------------------------------------------------
+# P3-6: tool_call part with empty name — name key must still be emitted
+# ---------------------------------------------------------------------------
+
+class TestToolCallPartEmptyName:
+    """P3-6: OTel ToolCallRequestPart.name is required.
+
+    The prior `if tc.get("name"):` guard silently dropped the key when name=""
+    (empty string is falsy). The key must be emitted even for empty strings
+    so that downstream consumers can observe the malformed call rather than
+    getting a part with no name at all.
+    """
+
+    def test_empty_string_tool_name_emits_name_key(self, tracer_and_exporter):
+        """Tool call with name='' must produce a part with name key present."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_prompt_attributes,
+        )
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "tool_calls": [{
+                "id": "call_x",
+                "function": {
+                    "name": "",
+                    "arguments": "{}",
+                }
+            }]
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        part = messages[0]["parts"][0]
+
+        assert part["type"] == "tool_call"
+        assert "name" in part, (
+            "name key must be present even when tool name is empty string — "
+            "required field per OTel ToolCallRequestPart schema"
+        )
+
+    def test_missing_tool_name_falls_back_to_empty_string(self, tracer_and_exporter):
+        """Tool call with no name must emit name='' rather than omitting the key.
+
+        OTel ToolCallRequestPart requires 'name'; omitting it produces a schema-invalid part.
+        """
+        from opentelemetry.instrumentation.openai_agents._hooks import _tool_call_to_part
+
+        part = _tool_call_to_part({"type": "tool_call"})  # no name key in source
+        assert "name" in part, "name must always be present on tool_call parts"
+        assert part["name"] == ""
+
+
+# ---------------------------------------------------------------------------
+# tool_call_response parts must omit 'id' when call_id is absent
+# ---------------------------------------------------------------------------
+
+class TestToolResponsePartIdOmitted:
+    """tool_call_response parts must omit 'id' when call_id is absent or None.
+
+    OTel ToolCallResponsePart: id is optional (absent vs. null are distinct in
+    JSON Schema).  Emitting "id": null causes schema violations and can break
+    consumer correlation logic that checks for key presence.
+    """
+
+    def test_build_tool_response_part_omits_id_when_call_id_is_none(self):
+        """_build_tool_response_part(None, ...) must not include an 'id' key."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _build_tool_response_part
+
+        part = _build_tool_response_part(None, "tool result")
+
+        assert "id" not in part, (
+            f"'id' must be absent when call_id is None, got {part!r}"
+        )
+        assert part["type"] == "tool_call_response"
+        assert part["response"] == "tool result"
+
+    def test_build_tool_response_part_includes_id_when_call_id_present(self):
+        """_build_tool_response_part with a real call_id must include 'id'."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _build_tool_response_part
+
+        part = _build_tool_response_part("call_abc", "output")
+
+        assert part["id"] == "call_abc"
+
+    def test_agents_sdk_function_call_output_without_call_id_omits_id(self, tracer_and_exporter):
+        """Agents SDK function_call_output message with no call_id must omit id from the part."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{"type": "function_call_output", "output": "the result"}]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert len(msgs) == 1
+        part = msgs[0]["parts"][0]
+        assert part["type"] == "tool_call_response"
+        assert "id" not in part, (
+            f"'id' must be absent (not null) when call_id is missing, got {part!r}"
+        )
+        span.end()
+
+    def test_agents_sdk_function_call_output_with_call_id_includes_id(self, tracer_and_exporter):
+        """Agents SDK function_call_output with a call_id must include 'id' in the part."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{"type": "function_call_output", "call_id": "call_99", "output": "done"}]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        msgs = json.loads(raw)
+        part = msgs[0]["parts"][0]
+        assert part["id"] == "call_99"
+        span.end()
+
+
+# ---------------------------------------------------------------------------
+# Input messages with empty parts must be excluded
+# ---------------------------------------------------------------------------
+
+class TestEmptyPartsExcluded:
+    """Messages that produce no parts must not appear in gen_ai.input.messages.
+
+    A message with a role but no content and no tool_calls yields parts=[].
+    Emitting {"role": "assistant", "parts": []} adds noise and may confuse
+    consumers that assume each message carries at least one part.
+    """
+
+    def test_message_with_no_content_and_no_tool_calls_excluded(self, tracer_and_exporter):
+        """A role-only message (no content, no tool_calls) must be excluded."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{"role": "assistant"}]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        if raw is not None:
+            msgs = json.loads(raw)
+            for msg in msgs:
+                assert msg.get("parts"), (
+                    f"Message with empty parts must be excluded, got {msg!r}"
+                )
+        span.end()
+
+    def test_empty_message_excluded_valid_message_kept(self, tracer_and_exporter):
+        """Only the valid message is emitted when mixed with an empty-parts message."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [
+            {"role": "assistant"},                      # no content → parts=[]
+            {"role": "user", "content": "Hello"},       # valid
+        ]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert len(msgs) == 1, f"Expected 1 message (empty-parts excluded), got {len(msgs)}: {msgs}"
+        assert msgs[0]["role"] == "user"
+        span.end()
+
+    def test_content_none_assistant_with_tool_calls_still_emitted(self, tracer_and_exporter):
+        """An assistant message with tool_calls but no text content must still be emitted."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{"id": "c1", "function": {"name": "search", "arguments": "{}"}}],
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        assert len(msgs) == 1
+        assert msgs[0]["parts"][0]["type"] == "tool_call"
+
+
+# ---------------------------------------------------------------------------
+# tool_call part must always carry a name (required by OTel ToolCallRequestPart)
+# ---------------------------------------------------------------------------
+
+class TestToolCallNameAlwaysPresent:
+    """Every tool_call part in gen_ai.input.messages must include a 'name' field.
+
+    OTel ToolCallRequestPart requires 'name'. When the upstream SDK object or
+    dict does not provide one, the instrumentation must fall back to an empty
+    string rather than silently omitting the key.
+    """
+
+    def test_tool_call_with_no_name_in_function_wrapper_gets_empty_name(self, tracer_and_exporter):
+        """A tool_call whose function wrapper has no name must produce name='' not a missing key."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "tool_calls": [{"id": "c1", "function": {"arguments": '{"x": 1}'}}],
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        part = msgs[0]["parts"][0]
+        assert part["type"] == "tool_call"
+        assert "name" in part, f"'name' must always be present on tool_call parts, got: {part}"
+        span.end()
+
+    def test_tool_call_with_none_name_attribute_gets_empty_name(self, tracer_and_exporter):
+        """A tool_call object whose name attribute resolves to None must produce name=''."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        tool_call = SimpleNamespace(id="c2", name=None, arguments="{}")
+        input_data = [{"role": "assistant", "tool_calls": [tool_call]}]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        msgs = json.loads(raw)
+        part = msgs[0]["parts"][0]
+        assert part["type"] == "tool_call"
+        assert "name" in part, f"'name' must always be present on tool_call parts, got: {part}"
+        span.end()
+
+    def test_tool_call_with_valid_name_preserves_name(self, tracer_and_exporter):
+        """Sanity: a tool_call with a proper name must still emit that name."""
+        from opentelemetry.instrumentation.openai_agents._hooks import _extract_prompt_attributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        input_data = [{
+            "role": "assistant",
+            "tool_calls": [{"id": "c3", "function": {"name": "get_weather", "arguments": '{"city": "NYC"}'}}],
+        }]
+        _extract_prompt_attributes(span, input_data, trace_content=True)
+
+        raw = span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        msgs = json.loads(raw)
+        part = msgs[0]["parts"][0]
+        assert part["name"] == "get_weather"
+        span.end()
+        span.end()

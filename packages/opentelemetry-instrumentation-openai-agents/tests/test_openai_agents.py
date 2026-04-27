@@ -495,3 +495,47 @@ def test_tool_call_and_result_attributes(exporter):
 
     assert tool_call_found, "No assistant message with tool_call parts found in second response span"
     assert tool_result_found, "No tool message with tool_call_response parts found in second response span"
+
+
+@pytest.mark.vcr
+def test_tool_span_operation_name(exporter, function_tool_agent):
+    """Test that tool/function spans have gen_ai.operation.name set to 'execute_tool'."""
+    query = "What is the weather in London?"
+
+    Runner.run_sync(function_tool_agent, query)
+
+    spans = exporter.get_finished_spans()
+    tool_spans = [s for s in spans if s.name.endswith(".tool")]
+
+    assert len(tool_spans) >= 1, f"Expected at least 1 tool span, found {len(tool_spans)}"
+
+    for tool_span in tool_spans:
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in tool_span.attributes, (
+            f"Tool span '{tool_span.name}' missing gen_ai.operation.name attribute"
+        )
+        assert tool_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "execute_tool", (
+            f"Tool span '{tool_span.name}' has incorrect gen_ai.operation.name: "
+            f"{tool_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}, expected 'execute_tool'"
+        )
+
+
+@pytest.mark.vcr
+def test_handoff_span_operation_name(exporter, handoff_agent):
+    """Test that handoff spans have gen_ai.operation.name set to 'handoff'."""
+    query = "Please handle this task by delegating to another agent."
+
+    Runner.run_sync(handoff_agent, query)
+
+    spans = exporter.get_finished_spans()
+    handoff_spans = [s for s in spans if ".handoff" in s.name]
+
+    assert len(handoff_spans) >= 1, f"Expected at least 1 handoff span, found {len(handoff_spans)}"
+
+    for handoff_span in handoff_spans:
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in handoff_span.attributes, (
+            f"Handoff span '{handoff_span.name}' missing gen_ai.operation.name attribute"
+        )
+        assert handoff_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "handoff", (
+            f"Handoff span '{handoff_span.name}' has incorrect gen_ai.operation.name: "
+            f"{handoff_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}, expected 'handoff'"
+        )

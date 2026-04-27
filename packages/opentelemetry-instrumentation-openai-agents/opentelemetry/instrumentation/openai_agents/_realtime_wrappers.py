@@ -207,6 +207,7 @@ class RealtimeTracingState:
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "execute_tool",
             },
         )
         self.tool_spans[tool_name] = span
@@ -245,6 +246,7 @@ class RealtimeTracingState:
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "handoff",
                 GEN_AI_HANDOFF_FROM_AGENT: from_agent,
                 GEN_AI_HANDOFF_TO_AGENT: to_agent,
             },

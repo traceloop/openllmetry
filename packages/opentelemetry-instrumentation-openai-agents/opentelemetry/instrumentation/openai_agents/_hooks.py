@@ -25,6 +25,7 @@ from .utils import (
     GEN_AI_HANDOFF_FROM_AGENT,
     GEN_AI_HANDOFF_TO_AGENT,
     GEN_AI_HANDOFF_PARENT_AGENT,
+    OPENAI_AGENT_HANDOFFS,
 )
 
 try:
@@ -59,8 +60,8 @@ _FINISH_REASON_MAP = {
     # Responses API uses status instead of finish_reason
     "completed": "stop",
     "failed": "error",
-    "cancelled": "error",
-    "incomplete": "length",
+    "cancelled": "cancelled",  # distinct from error; preserved as extension string
+    "incomplete": "incomplete",  # may be content_filter or token limit; preserve semantics
 }
 
 
@@ -177,12 +178,52 @@ def _content_block_to_part(block) -> dict:
     return _object_block_to_part(block)
 
 
+def _url_to_part(url: str) -> dict:
+    """Dispatch an image URL to UriPart or BlobPart depending on scheme.
+
+    data: URLs carry inline base64 content and must be BlobPart per OTel spec.
+    All other URLs (https:, http:, gs:, …) become UriPart.
+    """
+    if url.startswith("data:"):
+        # data:<mime>;base64,<content>  or  data:<mime>,<content>
+        header, _, content = url.partition(",")
+        mime: str | None = None
+        if header.startswith("data:"):
+            mime_part = header[5:]  # strip "data:"
+            mime = mime_part.split(";")[0] or None
+        part: dict = {"type": "blob", "modality": "image", "content": content}
+        if mime:
+            part["mime_type"] = mime
+        return part
+    return {"type": "uri", "modality": "image", "uri": url}
+
+
+_AUDIO_MIME: dict = {
+    "mp3": "audio/mpeg",
+    "wav": "audio/wav",
+    "ogg": "audio/ogg",
+    "flac": "audio/flac",
+    "webm": "audio/webm",
+    "m4a": "audio/mp4",
+}
+
+
+def _audio_blob_part(data: str, fmt: str | None) -> dict:
+    """Build a BlobPart for audio data, including mime_type when format is known."""
+    part: dict = {"type": "blob", "modality": "audio", "content": data}
+    if fmt:
+        mime = _AUDIO_MIME.get(fmt) or f"audio/{fmt}"
+        part["mime_type"] = mime
+    return part
+
+
 def _dict_block_to_part(block: dict) -> dict:
     """Map a dict-based content block (OpenAI format) to an OTel part.
 
     Spec mapping (openllmetry-semconv-review.md §1 / Part Types):
-      OpenAI image_url  → OTel UriPart  {type:uri, modality:image, uri:...}
-      OpenAI input_audio → OTel BlobPart {type:blob, modality:audio, ...}
+      OpenAI image_url data URL → OTel BlobPart {type:blob, modality:image, ...}
+      OpenAI image_url https URL → OTel UriPart  {type:uri, modality:image, uri:...}
+      OpenAI input_audio → OTel BlobPart {type:blob, modality:audio, mime_type:...}
     """
     btype = block.get("type", "text")
     if btype in ("text", "input_text", "output_text"):
@@ -194,14 +235,16 @@ def _dict_block_to_part(block: dict) -> dict:
             if isinstance(url_info, dict)
             else str(url_info)
         )
-        return {"type": "uri", "modality": "image", "uri": url}
+        return _url_to_part(url)
     if btype == "input_audio":
         audio_info = block.get("input_audio", {})
-        return {
-            "type": "blob",
-            "modality": "audio",
-            "content": audio_info.get("data", "") if isinstance(audio_info, dict) else str(audio_info),
-        }
+        if isinstance(audio_info, dict):
+            data = audio_info.get("data", "")
+            fmt = audio_info.get("format")
+        else:
+            data = str(audio_info)
+            fmt = None
+        return _audio_blob_part(data, fmt)
     return {"type": btype, **{k: v for k, v in block.items() if k != "type"}}
 
 
@@ -216,11 +259,12 @@ def _object_block_to_part(block) -> dict:
     if btype == "image_url":
         url_obj = getattr(block, "image_url", None)
         url = getattr(url_obj, "url", str(url_obj)) if url_obj else ""
-        return {"type": "uri", "modality": "image", "uri": url}
+        return _url_to_part(url)
     if btype == "input_audio":
         audio_obj = getattr(block, "input_audio", None)
         data = getattr(audio_obj, "data", str(audio_obj)) if audio_obj else ""
-        return {"type": "blob", "modality": "audio", "content": data}
+        fmt = getattr(audio_obj, "format", None) if audio_obj else None
+        return _audio_blob_part(data, fmt)
     return {"type": btype, "content": str(block)}
 
 
@@ -239,8 +283,8 @@ def _tool_call_to_part(tool_call) -> dict:
     part: dict = {"type": "tool_call"}
     if tc.get("id"):
         part["id"] = tc["id"]
-    if tc.get("name"):
-        part["name"] = tc["name"]
+    # name is required by OTel ToolCallRequestPart; fall back to "" rather than omit
+    part["name"] = tc.get("name") or ""
     if tc.get("arguments") is not None:
         part["arguments"] = _parse_arguments(tc["arguments"])
     return part
@@ -248,7 +292,9 @@ def _tool_call_to_part(tool_call) -> dict:
 
 def _build_tool_response_part(call_id, content) -> dict:
     """Build a tool_call_response part from an id and optional content."""
-    part: dict = {"type": "tool_call_response", "id": call_id}
+    part: dict = {"type": "tool_call_response"}
+    if call_id is not None:
+        part["id"] = call_id
     if content is None:
         part["response"] = ""
     elif isinstance(content, (dict, list)):
@@ -288,11 +334,10 @@ def _convert_agents_sdk_message(msg: dict):
     """Convert an Agents SDK type-based message to (role, parts) or None."""
     msg_type = msg["type"]
     if msg_type == "function_call":
-        part: dict = {
-            "type": "tool_call",
-            "id": msg.get("id", ""),
-            "name": msg.get("name", ""),
-        }
+        part: dict = {"type": "tool_call", "name": msg.get("name", "")}
+        call_id = msg.get("id")
+        if call_id:
+            part["id"] = call_id
         if msg.get("arguments") is not None:
             part["arguments"] = _parse_arguments(msg["arguments"])
         return "assistant", [part]
@@ -329,7 +374,7 @@ def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
         else:
             continue
 
-        if role:
+        if role and parts:
             messages.append({"role": role, "parts": parts})
 
     if messages:
@@ -393,107 +438,119 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
         raw_finish_reason = getattr(response, "status", None)
     mapped_finish_reason = _map_finish_reason(raw_finish_reason)
 
-    # Extract completions from response.output as a JSON array (parts-based)
-    # Only emit output messages when trace_content is enabled (opt-in content)
-    if trace_content and hasattr(response, "output") and response.output:
+    # Extract completions from response.output.
+    # gen_ai.response.finish_reasons is Recommended metadata (not opt-in content),
+    # so we always iterate output items to collect per-item finish reasons, even
+    # when trace_content=False.  Message content is only serialised when trace_content
+    # is True.
+    if hasattr(response, "output") and response.output:
         output_messages = []
+        per_item_reasons: list = []
+
         for output in response.output:
             item_type = getattr(output, "type", None)
 
             if item_type == "function_call" or (
                 item_type is None and getattr(output, "call_id", None)
             ):
-                # Function/tool call (ResponseFunctionToolCall)
-                tool_name = getattr(output, "name", "unknown_tool")
-                tool_call_id = getattr(output, "call_id", "")
-                part = {
-                    "type": "tool_call",
-                    "name": tool_name,
-                    "id": tool_call_id,
-                }
-                raw_args = getattr(output, "arguments", None)
-                part["arguments"] = _parse_arguments(raw_args)
+                # Function/tool call always contributes "tool_call" regardless of
+                # the response-level finish_reason.
+                item_reason = _map_finish_reason("tool_calls")
+                per_item_reasons.append(item_reason)
 
-                msg = {
-                    "role": "assistant",
-                    "parts": [part],
-                    "finish_reason": _map_finish_reason("tool_calls"),
-                }
-                output_messages.append(msg)
+                if trace_content:
+                    tool_name = getattr(output, "name", "unknown_tool")
+                    tool_call_id = getattr(output, "call_id", None)
+                    part: dict = {"type": "tool_call", "name": tool_name}
+                    if tool_call_id:
+                        part["id"] = tool_call_id
+                    raw_args = getattr(output, "arguments", None)
+                    if raw_args is not None:
+                        part["arguments"] = _parse_arguments(raw_args)
+                    output_messages.append({
+                        "role": "assistant",
+                        "parts": [part],
+                        "finish_reason": item_reason,
+                    })
 
             elif hasattr(output, "content") and output.content:
                 # Text message with content array (ResponseOutputMessage)
-                parts = []
-                for content_item in output.content:
-                    ci_type = getattr(content_item, "type", None)
-                    if ci_type == "output_text" or (
-                        hasattr(content_item, "text") and content_item.text
-                    ):
-                        parts.append({
-                            "type": "text",
-                            "content": content_item.text,
-                        })
-                    elif ci_type == "refusal":
-                        refusal_text = getattr(content_item, "refusal", "")
-                        parts.append({
-                            "type": "refusal",
-                            "content": refusal_text,
-                        })
-                    elif ci_type == "reasoning":
-                        summary = getattr(content_item, "summary", None)
-                        text = ""
-                        if isinstance(summary, list):
-                            text = " ".join(
-                                _reasoning_text(s) for s in summary
-                            )
-                        elif summary:
-                            text = str(summary)
-                        parts.append({
-                            "type": "reasoning",
-                            "content": text,
-                        })
-                    elif ci_type is not None:
-                        parts.append({
-                            "type": ci_type,
-                            "content": str(content_item),
-                        })
+                item_reason = mapped_finish_reason or ""
+                per_item_reasons.append(item_reason)
 
-                msg = {
-                    "role": getattr(output, "role", "assistant"),
-                    "parts": parts,
-                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
-                }
-                output_messages.append(msg)
+                if trace_content:
+                    parts = []
+                    for content_item in output.content:
+                        ci_type = getattr(content_item, "type", None)
+                        # Check known types first; use hasattr(.text) only as last resort
+                        # to avoid misclassifying reasoning/refusal items that also carry .text
+                        if ci_type == "output_text":
+                            parts.append({
+                                "type": "text",
+                                "content": getattr(content_item, "text", ""),
+                            })
+                        elif ci_type == "refusal":
+                            parts.append({
+                                "type": "refusal",
+                                "content": getattr(content_item, "refusal", ""),
+                            })
+                        elif ci_type == "reasoning":
+                            summary = getattr(content_item, "summary", None)
+                            text = ""
+                            if isinstance(summary, list):
+                                text = " ".join(_reasoning_text(s) for s in summary)
+                            elif summary:
+                                text = str(summary)
+                            parts.append({"type": "reasoning", "content": text})
+                        elif ci_type is not None:
+                            parts.append({
+                                "type": ci_type,
+                                "content": str(content_item),
+                            })
+                        elif hasattr(content_item, "text") and content_item.text:
+                            parts.append({
+                                "type": "text",
+                                "content": content_item.text,
+                            })
+                    output_messages.append({
+                        "role": getattr(output, "role", "assistant"),
+                        "parts": parts,
+                        "finish_reason": item_reason,
+                    })
 
             elif hasattr(output, "text"):
                 # Direct text content
-                parts = []
-                if output.text:
-                    parts.append({"type": "text", "content": output.text})
-                msg = {
-                    "role": getattr(output, "role", "assistant"),
-                    "parts": parts,
-                    "finish_reason": mapped_finish_reason if mapped_finish_reason else "",
-                }
-                output_messages.append(msg)
+                item_reason = mapped_finish_reason or ""
+                per_item_reasons.append(item_reason)
 
-        if output_messages:
+                if trace_content:
+                    parts = []
+                    if output.text:
+                        parts.append({"type": "text", "content": output.text})
+                    output_messages.append({
+                        "role": getattr(output, "role", "assistant"),
+                        "parts": parts,
+                        "finish_reason": item_reason,
+                    })
+
+        if trace_content and output_messages:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages)
             )
-            per_msg_reasons = [
-                m["finish_reason"] for m in output_messages if m.get("finish_reason")
-            ]
-            if per_msg_reasons:
-                otel_span.set_attribute(
-                    GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-                    tuple(dict.fromkeys(per_msg_reasons)),
-                )
-            elif mapped_finish_reason is not None:
-                otel_span.set_attribute(
-                    GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
-                    (mapped_finish_reason,),
-                )
+
+        # Set top-level finish_reasons from per-item discovery; fall back to the
+        # response-level reason if no output items provided reasons.
+        meaningful_reasons = list(dict.fromkeys(r for r in per_item_reasons if r))
+        if meaningful_reasons:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                tuple(meaningful_reasons),
+            )
+        elif mapped_finish_reason is not None:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+                (mapped_finish_reason,),
+            )
     else:
         if mapped_finish_reason is not None:
             otel_span.set_attribute(
@@ -578,7 +635,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._root_spans: Dict[str, Any] = {}  # trace_id -> root span
         self._otel_spans: Dict[str, Any] = {}  # agents span -> otel span
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
-        self._last_model_settings: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
 
     @dont_throw
@@ -768,7 +824,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                         handoff_agent, "instructions", "No instructions"
                     )
                 handoffs_list.append(handoff)
-            attributes["openai.agent.handoffs"] = json.dumps(handoffs_list)
+            attributes[OPENAI_AGENT_HANDOFFS] = json.dumps(handoffs_list)
 
         return self.tracer.start_span(
             f"{agent_name}.agent",
@@ -796,6 +852,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         handoff_attributes = {
             SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "handoff",
         }
 
         if from_agent and from_agent != "unknown":
@@ -820,6 +877,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
             GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+            GenAIAttributes.GEN_AI_OPERATION_NAME: "execute_tool",
         }
 
         if hasattr(span_data, "description") and span_data.description:
@@ -897,8 +955,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 )
 
         if response:
-            model_settings = _extract_response_attributes(otel_span, response, trace_content)
-            self._last_model_settings = model_settings
+            _extract_response_attributes(otel_span, response, trace_content)
 
     def _end_function_span(self, otel_span, span_data, trace_content):
         """Handle on_span_end logic for function/tool spans.

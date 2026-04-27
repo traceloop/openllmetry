@@ -11,6 +11,7 @@ from opentelemetry import context as context_api
 GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
 GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
 GEN_AI_HANDOFF_PARENT_AGENT = "gen_ai.agent.handoff_parent"
+OPENAI_AGENT_HANDOFFS = "openai.agent.handoffs"
 _TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 

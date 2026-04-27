@@ -416,7 +416,7 @@ class TestStartGenerationSpan:
     """Unit tests for the extracted _start_generation_span handler."""
 
     def test_returns_span_with_chat_attributes(self, tracer_and_exporter, processor):
-        """Must return 'openai.response' span with operation_name=chat."""
+        """GenerationSpanData (no span_data) → operation_name=chat."""
         otel_span = processor._start_generation_span(parent_context=None)
 
         assert otel_span is not None
@@ -424,6 +424,27 @@ class TestStartGenerationSpan:
         attrs = dict(otel_span.attributes)
         assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
         assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
+
+        otel_span.end()
+
+    def test_response_span_data_uses_chat_operation(self, tracer_and_exporter, processor):
+        """ResponseSpanData (OpenAI Responses API) must emit 'chat' as operation name.
+
+        'generate_content' is the GCP/Gemini well-known value; it must not be used for
+        an OpenAI Responses API span, which is a chat completion surface.
+        """
+        class ResponseSpanData:
+            model = "gpt-4o"
+
+        otel_span = processor._start_generation_span(
+            parent_context=None, span_data=ResponseSpanData()
+        )
+
+        attrs = dict(otel_span.attributes)
+        assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat", (
+            f"ResponseSpanData (OpenAI Responses API) must emit 'chat', "
+            f"got '{attrs.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}'"
+        )
 
         otel_span.end()
 
