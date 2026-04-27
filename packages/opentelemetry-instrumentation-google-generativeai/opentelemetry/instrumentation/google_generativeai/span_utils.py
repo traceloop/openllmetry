@@ -9,17 +9,17 @@ from opentelemetry.instrumentation.google_generativeai.utils import (
     should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
+    gen_ai_attributes as GenAIAttributes
 )
 from opentelemetry.semconv_ai import (
     SpanAttributes,
 )
 from opentelemetry.trace.status import Status, StatusCode
 
+logger = logging.getLogger(__name__)
+
 _GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
 _GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
-
-logger = logging.getLogger(__name__)
 
 
 def _set_span_attribute(span, name, value):
@@ -163,7 +163,6 @@ async def _process_image_part(item, trace_id, span_id, content_index):
     """Upload image when configured; used only from async content processing."""
     if not Config.upload_base64_image:
         return None
-
     try:
         image_format = (
             item.inline_data.mime_type.split("/")[1]
@@ -171,12 +170,16 @@ async def _process_image_part(item, trace_id, span_id, content_index):
             else ""
         )
         image_name = f"content_{content_index}.{image_format}"
+        # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
-        base64_string = base64.b64encode(binary_data).decode("utf-8")
-        url = await Config.upload_base64_image(
-            str(trace_id), str(span_id), image_name, base64_string
-        )
-        return {"type": "image_url", "image_url": {"url": url}}
+        base64_string = base64.b64encode(binary_data).decode('utf-8')
+        # Upload the base64 data - convert IDs to strings
+        url = await Config.upload_base64_image(str(trace_id), str(span_id), image_name, base64_string)
+        # Return OpenAI-compatible format for consistency across LLM providers
+        return {
+            "type": "image_url",
+            "image_url": {"url": url}
+        }
     except Exception as e:
         logger.warning(f"Failed to process image part: {e}")
         return None
@@ -206,7 +209,6 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
     """
     if not Config.upload_base64_image:
         return None
-
     try:
         image_format = (
             item.inline_data.mime_type.split("/")[1]
@@ -214,8 +216,10 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
             else ""
         )
         image_name = f"content_{content_index}.{image_format}"
+        # Convert binary data to base64 string for upload
         binary_data = item.inline_data.data
-        base64_string = base64.b64encode(binary_data).decode("utf-8")
+        base64_string = base64.b64encode(binary_data).decode('utf-8')
+        # Use OpenAI's run_async pattern to handle the async upload function
         url = None
 
         async def upload_task():
@@ -225,217 +229,91 @@ def _process_image_part_sync(item, trace_id, span_id, content_index):
             )
 
         run_async(upload_task())
-
-        return {"type": "image_url", "image_url": {"url": url}}
+        return {
+            "type": "image_url",
+            "image_url": {"url": url}
+        }
     except Exception as e:
         logger.warning(f"Failed to process image part sync: {e}")
         return None
 
 
-def _extract_non_image_parts(part):
-    """Extract all non-image OTel parts from a GenAI Part object (shared by sync/async)."""
-    out = []
-    if getattr(part, "thought", False) and getattr(part, "text", None):
-        out.append({"type": "reasoning", "content": part.text})
-    elif getattr(part, "text", None):
-        out.append({"type": "text", "content": part.text})
-    fc = getattr(part, "function_call", None)
-    if fc is not None:
-        fid = getattr(fc, "id", None) or ""
-        fname = getattr(fc, "name", None) or ""
-        out.append(
-            {
-                "type": "tool_call",
-                "id": fid,
-                "name": fname,
-                "arguments": _parse_function_call_arguments(getattr(fc, "args", None)),
-            }
-        )
-    fr = getattr(part, "function_response", None)
-    if fr is not None:
-        fid = getattr(fr, "id", None) or ""
-        out.append(
-            {
-                "type": "tool_call_response",
-                "id": fid,
-                "response": _function_response_to_str(getattr(fr, "response", None)),
-            }
-        )
-    return out
-
-
-def _fallback_part(part):
-    """Fallback when no structured parts were extracted."""
-    if getattr(part, "executable_code", None):
-        return {"type": "text", "content": str(part.executable_code)}
-    if getattr(part, "code_execution_result", None):
-        return {"type": "text", "content": str(part.code_execution_result)}
-    return {"type": "text", "content": str(part)}
-
-
-def _parts_from_genai_part_sync(part, span, part_index):
-    out = _extract_non_image_parts(part)
-    img = _otel_image_part_from_genai_part(part, span, part_index, sync=True)
-    if img:
-        out.append(img)
-    return out or [_fallback_part(part)]
-
-
-async def _parts_from_genai_part_async(part, span, part_index):
-    out = _extract_non_image_parts(part)
-    if _is_image_part(part):
-        img = await _otel_image_part_from_genai_part_async(part, span, part_index)
-        if img:
-            out.append(img)
-    return out or [_fallback_part(part)]
-
-
-def _map_dict_part(p):
-    """Map a dict-based part to OTel part schema, preserving semantics."""
-    text = p.get("text")
-    if text is not None:
-        return {"type": "text", "content": text}
-    fc = p.get("functionCall")
-    if fc is not None:
-        return {
-            "type": "tool_call",
-            "id": fc.get("id", ""),
-            "name": fc.get("name", ""),
-            "arguments": _parse_function_call_arguments(fc.get("args")),
-        }
-    fr = p.get("functionResponse")
-    if fr is not None:
-        return {
-            "type": "tool_call_response",
-            "id": fr.get("id", ""),
-            "response": _function_response_to_str(fr.get("response")),
-        }
-    inline = p.get("inlineData")
-    if inline is not None:
-        mime = inline.get("mimeType", "application/octet-stream")
-        data = inline.get("data", "")
-        modality = next((m for m in ("image", "video", "audio") if f"{m}/" in mime), "data")
-        return {"type": "blob", "modality": modality, "mime_type": mime, "content": data}
-    return {"type": "text", "content": str(p)}
-
-
 async def _process_content_item(content_item, span):
-    parts_acc = []
-    if isinstance(content_item, dict):
-        for p in content_item.get("parts", []):
-            if isinstance(p, dict):
-                parts_acc.append(_map_dict_part(p))
-            else:
-                parts_acc.extend(await _parts_from_genai_part_async(p, span, 0))
-    elif hasattr(content_item, "parts"):
+    """Process a single content item, handling different types (Content objects, strings, Parts)"""
+    processed_content = []
+    if hasattr(content_item, "parts"):
+        # Content with parts (Google GenAI Content object)
         for part_index, part in enumerate(content_item.parts):
-            parts_acc.extend(await _parts_from_genai_part_async(part, span, part_index))
+            result = await _process_content_part(part, span, part_index)
+            if result:
+                processed_content.append(result)
     elif isinstance(content_item, str):
-        parts_acc.append({"type": "text", "content": content_item})
+        # Direct string in the list
+        processed_content.append({"type": "text", "content": content_item})
     elif _is_image_part(content_item):
-        img = await _otel_image_part_from_genai_part_async(content_item, span, 0)
-        if img:
-            parts_acc.append(img)
+        # Direct Part object that's an image
+        processed_image = await _process_image_part(
+            content_item,
+            span.context.trace_id,
+            span.context.span_id,
+            0
+        )
+        if processed_image is not None:
+            processed_content.append(processed_image)
     else:
-        parts_acc.append({"type": "text", "content": str(content_item)})
-    return parts_acc
+        # Other content types
+        processed_content.append({"type": "text", "content": str(content_item)})
+    return processed_content
+
+
+async def _process_content_part(part, span, part_index):
+    """Process a single part within a Content object"""
+    if hasattr(part, "text") and part.text:
+        return {"type": "text", "content": part.text}
+    elif _is_image_part(part):
+        return await _process_image_part(
+            part,
+            span.context.trace_id,
+            span.context.span_id,
+            part_index
+        )
+    else:
+        # Other part types
+        return {"type": "text", "content": str(part)}
 
 
 async def _process_argument(argument, span):
+    """Process a single argument from args list"""
+    processed_content = []
     if isinstance(argument, str):
-        return [{"type": "text", "content": argument}]
-    if isinstance(argument, list):
-        parts_acc = []
+        processed_content.append({"type": "text", "content": argument})
+    elif isinstance(argument, list):
         for sub_index, sub_item in enumerate(argument):
             if isinstance(sub_item, str):
-                parts_acc.append({"type": "text", "content": sub_item})
+                processed_content.append({"type": "text", "content": sub_item})
             elif _is_image_part(sub_item):
-                img = await _otel_image_part_from_genai_part_async(sub_item, span, sub_index)
-                if img:
-                    parts_acc.append(img)
+                processed_image = await _process_image_part(
+                    sub_item,
+                    span.context.trace_id,
+                    span.context.span_id,
+                    sub_index
+                )
+                if processed_image is not None:
+                    processed_content.append(processed_image)
             else:
-                parts_acc.append({"type": "text", "content": str(sub_item)})
-        return parts_acc
-    if _is_image_part(argument):
-        img = await _otel_image_part_from_genai_part_async(argument, span, 0)
-        return [img] if img else []
-    return [{"type": "text", "content": str(argument)}]
-
-
-def _process_content_item_sync(content_item, span):
-    parts_acc = []
-    if isinstance(content_item, dict):
-        for p in content_item.get("parts", []):
-            if isinstance(p, dict):
-                parts_acc.append(_map_dict_part(p))
-            else:
-                parts_acc.extend(_parts_from_genai_part_sync(p, span, 0))
-    elif hasattr(content_item, "parts"):
-        for part_index, part in enumerate(content_item.parts):
-            parts_acc.extend(_parts_from_genai_part_sync(part, span, part_index))
-    elif isinstance(content_item, str):
-        parts_acc.append({"type": "text", "content": content_item})
-    elif _is_image_part(content_item):
-        img = _otel_image_part_from_genai_part(content_item, span, 0, sync=True)
-        if img:
-            parts_acc.append(img)
+                processed_content.append({"type": "text", "content": str(sub_item)})
+    elif _is_image_part(argument):
+        processed_image = await _process_image_part(
+            argument,
+            span.context.trace_id,
+            span.context.span_id,
+            0
+        )
+        if processed_image is not None:
+            processed_content.append(processed_image)
     else:
-        parts_acc.append({"type": "text", "content": str(content_item)})
-    return parts_acc
-
-
-def _process_argument_sync(argument, span):
-    if isinstance(argument, str):
-        return [{"type": "text", "content": argument}]
-    if isinstance(argument, list):
-        parts_acc = []
-        for sub_index, sub_item in enumerate(argument):
-            if isinstance(sub_item, str):
-                parts_acc.append({"type": "text", "content": sub_item})
-            elif _is_image_part(sub_item):
-                img = _otel_image_part_from_genai_part(sub_item, span, sub_index, sync=True)
-                if img:
-                    parts_acc.append(img)
-            else:
-                parts_acc.append({"type": "text", "content": str(sub_item)})
-        return parts_acc
-    if _is_image_part(argument):
-        img = _otel_image_part_from_genai_part(argument, span, 0, sync=True)
-        return [img] if img else []
-    return [{"type": "text", "content": str(argument)}]
-
-
-def _collect_finish_reasons_from_response(response):
-    reasons = []
-    candidates = getattr(response, "candidates", None) or []
-    for cand in candidates:
-        mapped = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        reasons.append(mapped)
-    return reasons
-
-
-
-def _output_messages_from_generate_response(span, response):
-    messages = []
-    candidates = getattr(response, "candidates", None) or []
-    for cand in candidates:
-        parts = []
-        content = getattr(cand, "content", None)
-        if content and getattr(content, "parts", None):
-            for idx, p in enumerate(content.parts):
-                parts.extend(_parts_from_genai_part_sync(p, span, idx))
-        fr = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
-        role = "assistant"
-        if content and getattr(content, "role", None):
-            role = _normalize_message_role(content.role)
-        msg = {"role": role, "parts": parts, "finish_reason": fr}
-        messages.append(msg)
-    if not messages and hasattr(response, "text") and response.text:
-        text = response.text
-        if isinstance(text, str) and text:
-            msg = {"role": "assistant", "parts": [{"type": "text", "content": text}], "finish_reason": ""}
-            messages.append(msg)
-    return messages
+        processed_content.append({"type": "text", "content": str(argument)})
+    return processed_content
 
 
 @dont_throw
@@ -445,47 +323,66 @@ async def set_input_attributes(span, args, kwargs, llm_model):
     if not should_send_prompts():
         return
 
-    messages = []
+    input_messages = []
+
     if "contents" in kwargs:
         contents = kwargs["contents"]
         if isinstance(contents, str):
-            messages.append(
-                {
-                    "role": "user",
-                    "parts": [{"type": "text", "content": contents}],
-                }
-            )
-        elif isinstance(contents, list):
-            for content_item in contents:
-                parts = await _process_content_item(content_item, span)
-                if parts:
-                    messages.append(
-                        {
-                            "role": _normalize_message_role(
-                                content_item.get("role", "user") if isinstance(content_item, dict)
-                                else getattr(content_item, "role", "user")
-                            ),
-                            "parts": parts,
-                        }
-                    )
-    elif args and len(args) > 0:
-        for argument in args:
-            parts = await _process_argument(argument, span)
-            if parts:
-                messages.append({"role": "user", "parts": parts})
-    elif "prompt" in kwargs:
-        messages.append(
-            {
+            # Simple string content
+            input_messages.append({
                 "role": "user",
-                "parts": [{"type": "text", "content": kwargs["prompt"]}],
-            }
-        )
+                "parts": [{"type": "text", "content": contents}],
+            })
+        elif hasattr(contents, "parts"):
+            # Single Content object (not a list)
+            processed_content = await _process_content_item(contents, span)
+            if processed_content:
+                input_messages.append({
+                    "role": _normalize_message_role(getattr(contents, "role", None)),
+                    "parts": processed_content,
+                })
+        elif isinstance(contents, list):
+            if contents and hasattr(contents[0], "parts"):
+                # Multi-turn: list of Content objects
+                for content_item in contents:
+                    processed_content = await _process_content_item(content_item, span)
+                    if processed_content:
+                        role = _normalize_message_role(getattr(content_item, "role", None))
+                        input_messages.append({
+                            "role": role,
+                            "parts": processed_content,
+                        })
+            else:
+                # Single-turn: list of Part objects or strings
+                parts = []
+                for content_item in contents:
+                    items = await _process_content_item(content_item, span)
+                    parts.extend(items)
+                if parts:
+                    input_messages.append({
+                        "role": "user",
+                        "parts": parts,
+                    })
+    elif args and len(args) > 0:
+        # Handle args - process each argument
+        for argument in args:
+            processed_content = await _process_argument(argument, span)
+            if processed_content:
+                input_messages.append({
+                    "role": "user",
+                    "parts": processed_content,
+                })
+    elif "prompt" in kwargs:
+        input_messages.append({
+            "role": "user",
+            "parts": [{"type": "text", "content": kwargs["prompt"]}],
+        })
 
-    if messages:
+    if input_messages:
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-            json.dumps(messages),
+            json.dumps(input_messages),
         )
 
 
@@ -496,47 +393,124 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
     if not should_send_prompts():
         return
 
-    messages = []
+    input_messages = []
+
     if "contents" in kwargs:
         contents = kwargs["contents"]
         if isinstance(contents, str):
-            messages.append(
-                {
-                    "role": "user",
-                    "parts": [{"type": "text", "content": contents}],
-                }
-            )
-        elif isinstance(contents, list):
-            for content in contents:
-                parts = _process_content_item_sync(content, span)
-                if parts:
-                    messages.append(
-                        {
-                            "role": _normalize_message_role(
-                                content.get("role", "user") if isinstance(content, dict)
-                                else getattr(content, "role", "user")
-                            ),
-                            "parts": parts,
-                        }
-                    )
-    elif args and len(args) > 0:
-        for arg in args:
-            parts = _process_argument_sync(arg, span)
-            if parts:
-                messages.append({"role": "user", "parts": parts})
-    elif "prompt" in kwargs:
-        messages.append(
-            {
+            # Simple string content
+            input_messages.append({
                 "role": "user",
-                "parts": [{"type": "text", "content": kwargs["prompt"]}],
-            }
-        )
+                "parts": [{"type": "text", "content": contents}],
+            })
+        elif hasattr(contents, "parts"):
+            # Single Content object (not a list)
+            processed_content = []
+            for j, part in enumerate(contents.parts):
+                if hasattr(part, "text") and part.text:
+                    processed_content.append({"type": "text", "content": part.text})
+                elif _is_image_part(part):
+                    processed_image = _process_image_part_sync(
+                        part, span.context.trace_id, span.context.span_id, j
+                    )
+                    if processed_image is not None:
+                        processed_content.append(processed_image)
+                else:
+                    processed_content.append({"type": "text", "content": str(part)})
+            if processed_content:
+                input_messages.append({
+                    "role": _normalize_message_role(getattr(contents, "role", None)),
+                    "parts": processed_content,
+                })
+        elif isinstance(contents, list):
+            if contents and hasattr(contents[0], "parts"):
+                # Multi-turn: list of Content objects
+                for content in contents:
+                    processed_content = []
+                    for j, part in enumerate(content.parts):
+                        if hasattr(part, "text") and part.text:
+                            processed_content.append({"type": "text", "content": part.text})
+                        elif _is_image_part(part):
+                            processed_image = _process_image_part_sync(
+                                part, span.context.trace_id, span.context.span_id, j
+                            )
+                            if processed_image is not None:
+                                processed_content.append(processed_image)
+                        else:
+                            processed_content.append({"type": "text", "content": str(part)})
+                    if processed_content:
+                        input_messages.append({
+                            "role": _normalize_message_role(getattr(content, "role", None)),
+                            "parts": processed_content,
+                        })
+            else:
+                # Single-turn: list of Part objects or strings
+                parts = []
+                for content in contents:
+                    if isinstance(content, str):
+                        parts.append({"type": "text", "content": content})
+                    elif _is_image_part(content):
+                        processed_image = _process_image_part_sync(
+                            content, span.context.trace_id, span.context.span_id, 0
+                        )
+                        if processed_image is not None:
+                            parts.append(processed_image)
+                    else:
+                        parts.append({"type": "text", "content": str(content)})
+                if parts:
+                    input_messages.append({
+                        "role": "user",
+                        "parts": parts,
+                    })
+    elif args and len(args) > 0:
+        # Handle args - process each argument
+        for arg in args:
+            processed_content = []
+            if isinstance(arg, str):
+                processed_content.append({"type": "text", "content": arg})
+            elif isinstance(arg, list):
+                for j, subarg in enumerate(arg):
+                    if isinstance(subarg, str):
+                        processed_content.append({"type": "text", "content": subarg})
+                    elif _is_image_part(subarg):
+                        processed_image = _process_image_part_sync(
+                            subarg,
+                            span.context.trace_id,
+                            span.context.span_id,
+                            j
+                        )
+                        if processed_image is not None:
+                            processed_content.append(processed_image)
+                    else:
+                        processed_content.append({"type": "text", "content": str(subarg)})
+            elif _is_image_part(arg):
+                processed_image = _process_image_part_sync(
+                    arg,
+                    span.context.trace_id,
+                    span.context.span_id,
+                    0
+                )
+                if processed_image is not None:
+                    processed_content.append(processed_image)
+            else:
+                processed_content.append({"type": "text", "content": str(arg)})
 
-    if messages:
+            if processed_content:
+                input_messages.append({
+                    "role": "user",
+                    "parts": processed_content,
+                })
+    elif "prompt" in kwargs:
+        input_messages.append({
+            "role": "user",
+            "parts": [{"type": "text", "content": kwargs["prompt"]}],
+        })
+
+    if input_messages:
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-            json.dumps(messages),
+            json.dumps(input_messages),
         )
 
 
@@ -553,15 +527,14 @@ def set_model_request_attributes(span, kwargs, llm_model):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
     _set_span_attribute(
         span,
-        GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
+        SpanAttributes.LLM_PRESENCE_PENALTY,
         kwargs.get("presence_penalty"),
     )
     _set_span_attribute(
         span,
-        GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+        SpanAttributes.LLM_FREQUENCY_PENALTY,
         kwargs.get("frequency_penalty"),
     )
-
     generation_config = kwargs.get("generation_config")
     if generation_config and hasattr(generation_config, "response_schema"):
         try:
@@ -572,7 +545,6 @@ def set_model_request_attributes(span, kwargs, llm_model):
             )
         except Exception:
             pass
-
     if "response_schema" in kwargs:
         try:
             _set_span_attribute(
@@ -654,6 +626,95 @@ def _tool_definitions_from_kwargs(kwargs):
     return defs or None
 
 
+
+def _serialize_response_part(part):
+    """Serialize a single response Part to a dict for gen_ai.output.messages."""
+    if hasattr(part, "text") and part.text:
+        return {"type": "text", "content": part.text}
+    if hasattr(part, "function_call") and part.function_call:
+        fc = part.function_call
+        return {
+            "type": "function_call",
+            "name": fc.name,
+            "arguments": dict(fc.args) if hasattr(fc, "args") else {},
+        }
+    return {"type": "text", "content": str(part)}
+
+
+def _parts_from_genai_part_sync(part, span, part_index):
+    """Serialize one GenAI Part to a list of OTel part dicts.
+
+    When ``part.thought`` is True the part is emitted as type ``"reasoning"``
+    instead of ``"text"`` to avoid producing duplicate parts for thinking blocks.
+    """
+    if getattr(part, "thought", None):
+        return [{"type": "reasoning", "content": getattr(part, "text", "")}]
+    if hasattr(part, "text") and part.text:
+        return [{"type": "text", "content": part.text}]
+    if _is_image_part(part):
+        processed = _otel_image_part_from_genai_part(part, span, part_index, sync=True)
+        return [processed] if processed else []
+    if hasattr(part, "function_call") and part.function_call:
+        fc = part.function_call
+        return [{
+            "type": "function_call",
+            "name": fc.name,
+            "arguments": dict(fc.args) if hasattr(fc, "args") else {},
+        }]
+    return [{"type": "text", "content": str(part)}]
+
+
+def _collect_finish_reasons_from_response(response):
+    """Return a list of OTel finish-reason strings, one per candidate.
+
+    Preserves 1:1 alignment with candidates so callers can zip them.  Returns
+    ``[]`` when the response has no ``candidates`` attribute.
+    """
+    candidates = getattr(response, "candidates", None)
+    if not candidates:
+        return []
+    return [
+        _map_gemini_finish_reason(getattr(c, "finish_reason", None))
+        for c in candidates
+    ]
+
+
+def _output_messages_from_generate_response(span, response):
+    """Extract output messages from a GenerateContentResponse.
+
+    Always includes a ``finish_reason`` key (``""`` when unknown).  Used by
+    both ``set_response_attributes`` (non-streaming path) and tests.
+    """
+    output_messages = []
+    candidates = getattr(response, "candidates", None)
+    if candidates:
+        for candidate in candidates:
+            fr = getattr(candidate, "finish_reason", None)
+            finish_reason = _map_gemini_finish_reason(fr)
+            parts = []
+            content = getattr(candidate, "content", None)
+            if content and hasattr(content, "parts"):
+                for part in content.parts:
+                    parts.append(_serialize_response_part(part))
+            output_messages.append({
+                "role": "assistant",
+                "parts": parts,
+                "finish_reason": finish_reason,
+            })
+    else:
+        try:
+            text = getattr(response, "text", None)
+            if text:
+                output_messages.append({
+                    "role": "assistant",
+                    "parts": [{"type": "text", "content": text}],
+                    "finish_reason": "",
+                })
+        except Exception:
+            pass
+    return output_messages
+
+
 @dont_throw
 def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
     if not span.is_recording():
@@ -661,45 +722,43 @@ def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
     if not should_send_prompts():
         return
 
-    if isinstance(response, str):
-        fr = ""
-        if stream_last_chunk is not None:
-            reasons = _collect_finish_reasons_from_response(stream_last_chunk)
-            fr = reasons[0] if reasons else ""
-        msg = {"role": "assistant", "parts": []}
-        if response:
-            msg["parts"].append({"type": "text", "content": response})
-        msg["finish_reason"] = fr
-        if not msg["parts"] and not fr:
-            return
-        _set_span_attribute(
-            span,
-            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([msg]),
-        )
-        return
+    output_messages = []
 
-    if isinstance(response, list):
-        messages = []
-        for item in response:
-            if isinstance(item, str):
-                messages.append(
-                    {
-                        "role": "assistant",
-                        "parts": [{"type": "text", "content": item}],
-                        "finish_reason": "",
-                    }
-                )
-            else:
-                messages.extend(_output_messages_from_generate_response(span, item))
+    if hasattr(response, "usage_metadata"):
+        # Non-streaming GenerateContentResponse: delegate to the shared helper
+        # which always populates finish_reason (empty string when unknown).
+        output_messages = _output_messages_from_generate_response(span, response)
     else:
-        messages = _output_messages_from_generate_response(span, response)
+        # Streaming / accumulated-string / list path.
+        # Derive finish_reason from the last streaming chunk when available.
+        chunk_finish_reason = ""
+        if stream_last_chunk is not None:
+            _chunk_candidates = getattr(stream_last_chunk, "candidates", None)
+            if _chunk_candidates:
+                _fr = getattr(_chunk_candidates[0], "finish_reason", None)
+                chunk_finish_reason = _map_gemini_finish_reason(_fr)
 
-    if messages:
+        if isinstance(response, list):
+            for item in response:
+                output_messages.append({
+                    "role": "assistant",
+                    "parts": [{"type": "text", "content": item}],
+                    "finish_reason": "",
+                })
+        elif isinstance(response, str):
+            # Suppress empty-string messages when there is no last-chunk context.
+            if response or stream_last_chunk is not None:
+                output_messages.append({
+                    "role": "assistant",
+                    "parts": [{"type": "text", "content": response}],
+                    "finish_reason": chunk_finish_reason,
+                })
+
+    if output_messages:
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(messages),
+            json.dumps(output_messages),
         )
 
 
@@ -708,24 +767,9 @@ def set_model_response_attributes(
 ):
     if not span.is_recording():
         return
-
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
-
-    rid = getattr(response, "response_id", None)
-    if rid:
-        _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, rid)
-
-    if stream_finish_reasons is not None:
-        reasons = stream_finish_reasons
-    else:
-        reasons = _collect_finish_reasons_from_response(response)
-    if reasons and any(reason != "" for reason in reasons):
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, reasons
-        )
-
-    um = getattr(response, "usage_metadata", None)
-    if um is not None:
+    if hasattr(response, "usage_metadata"):
+        um = response.usage_metadata
         _set_span_attribute(
             span,
             SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
@@ -741,8 +785,8 @@ def set_model_response_attributes(
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             um.prompt_token_count,
         )
-
-    if token_histogram and um is not None:
+    if token_histogram and hasattr(response, "usage_metadata"):
+        um = response.usage_metadata
         token_histogram.record(
             um.prompt_token_count,
             attributes={
@@ -757,11 +801,18 @@ def set_model_response_attributes(
             um.candidates_token_count,
             attributes={
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
                 GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                 GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
             },
         )
-
+    # Emit gen_ai.response.finish_reasons only when at least one reason is known.
+    reasons = stream_finish_reasons
+    if reasons is None:
+        reasons = _collect_finish_reasons_from_response(response)
+    if reasons and any(r for r in reasons):
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+            reasons,
+        )
     span.set_status(Status(StatusCode.OK))

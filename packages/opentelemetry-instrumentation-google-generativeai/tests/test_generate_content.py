@@ -1,5 +1,4 @@
 import json
-from unittest.mock import MagicMock
 
 import pytest
 from opentelemetry.trace import StatusCode, SpanKind
@@ -55,28 +54,24 @@ def test_client_spans(exporter, genai_client):
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
-    # Input messages are now a single JSON array
-    assert "gen_ai.input.messages" in attrs
-    input_messages = json.loads(attrs["gen_ai.input.messages"])
-    assert len(input_messages) > 0
-    assert input_messages[0]["role"] == "user"
-    assert "parts" in input_messages[0]
-    assert input_messages[0]["parts"][0]["type"] == "text"
-    assert "content" in input_messages[0]["parts"][0]
+    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in attrs
+    input_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert len(input_msgs) > 0
+    assert input_msgs[0]["role"] == "user"
+    assert isinstance(input_msgs[0].get("parts"), list) and len(input_msgs[0]["parts"]) > 0
+    assert input_msgs[0]["parts"][0]["type"] == "text"
+    assert "content" in input_msgs[0]["parts"][0]
 
-    # Output messages are now a single JSON array (parts-based OTel schema)
-    assert "gen_ai.output.messages" in attrs
-    output_messages = json.loads(attrs["gen_ai.output.messages"])
-    assert len(output_messages) > 0
-    assert output_messages[0]["role"] == "assistant"
-    assert "parts" in output_messages[0]
-    assert output_messages[0]["parts"][0]["type"] == "text"
-    assert "content" in output_messages[0]["parts"][0]
-
-    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in attrs
-    finish_reasons = attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
-    assert isinstance(finish_reasons, (list, tuple))
-    assert len(finish_reasons) > 0
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in attrs
+    output_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output_msgs) > 0
+    assert output_msgs[0]["role"] == "assistant"
+    assert isinstance(output_msgs[0].get("parts"), list) and len(output_msgs[0]["parts"]) > 0
+    assert output_msgs[0]["parts"][0]["type"] == "text"
+    assert "content" in output_msgs[0]["parts"][0]
+    # Verify deprecated indexed attributes are NOT emitted (migration guard)
+    assert not any(key.startswith("gen_ai.prompt.") for key in attrs.keys())
+    assert not any(key.startswith("gen_ai.completion.") for key in attrs.keys())
 
     assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
