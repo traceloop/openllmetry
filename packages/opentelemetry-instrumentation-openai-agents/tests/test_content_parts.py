@@ -6,7 +6,6 @@ Covers _dict_block_to_part and _object_block_to_part helpers in _hooks.py:
   - input_audio must include mime_type when format is provided
 """
 
-import pytest
 from types import SimpleNamespace
 
 
