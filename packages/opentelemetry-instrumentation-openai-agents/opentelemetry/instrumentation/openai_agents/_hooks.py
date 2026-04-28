@@ -307,6 +307,24 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS, usage.total_tokens
             )
 
+        input_details = getattr(usage, "input_tokens_details", None)
+        if input_details is not None:
+            cached_tokens = getattr(input_details, "cached_tokens", None)
+            if cached_tokens is not None:
+                otel_span.set_attribute(
+                    SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
+                    cached_tokens,
+                )
+
+        output_details = getattr(usage, "output_tokens_details", None)
+        if output_details is not None:
+            reasoning_tokens = getattr(output_details, "reasoning_tokens", None)
+            if reasoning_tokens is not None:
+                otel_span.set_attribute(
+                    SpanAttributes.LLM_USAGE_REASONING_TOKENS,
+                    reasoning_tokens,
+                )
+
     return model_settings
 
 

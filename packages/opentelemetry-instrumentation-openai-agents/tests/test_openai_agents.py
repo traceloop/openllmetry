@@ -501,3 +501,64 @@ def test_tool_call_and_result_attributes(exporter):
 
     assert tool_call_found, "No assistant message with tool_calls found in second response span"
     assert tool_result_found, "No tool message found in second response span"
+
+
+def test_extract_response_cached_and_reasoning_tokens():
+    """Verify cache-read and reasoning tokens are recorded when the Agents SDK
+    Usage object carries them via input_tokens_details / output_tokens_details.
+    """
+    from types import SimpleNamespace
+    from opentelemetry.instrumentation.openai_agents._hooks import (
+        _extract_response_attributes,
+    )
+
+    recorded: dict[str, object] = {}
+
+    class _FakeSpan:
+        def set_attribute(self, key, value):
+            recorded[key] = value
+
+    response = SimpleNamespace(
+        usage=SimpleNamespace(
+            input_tokens=20_750,
+            output_tokens=97,
+            total_tokens=20_847,
+            input_tokens_details=SimpleNamespace(cached_tokens=20_608),
+            output_tokens_details=SimpleNamespace(reasoning_tokens=64),
+        ),
+    )
+
+    _extract_response_attributes(_FakeSpan(), response, trace_content=False)
+
+    assert recorded[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 20_608
+    assert recorded[SpanAttributes.LLM_USAGE_REASONING_TOKENS] == 64
+    assert recorded[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 20_750
+    assert recorded[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 97
+
+
+def test_extract_response_cache_tokens_absent_when_missing():
+    """When input_tokens_details / output_tokens_details are absent the new
+    attributes must not be set (regression guard)."""
+    from types import SimpleNamespace
+    from opentelemetry.instrumentation.openai_agents._hooks import (
+        _extract_response_attributes,
+    )
+
+    recorded: dict[str, object] = {}
+
+    class _FakeSpan:
+        def set_attribute(self, key, value):
+            recorded[key] = value
+
+    response = SimpleNamespace(
+        usage=SimpleNamespace(
+            input_tokens=100,
+            output_tokens=10,
+            total_tokens=110,
+        ),
+    )
+
+    _extract_response_attributes(_FakeSpan(), response, trace_content=False)
+
+    assert SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS not in recorded
+    assert SpanAttributes.LLM_USAGE_REASONING_TOKENS not in recorded
