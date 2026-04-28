@@ -341,6 +341,7 @@ class McpInstrumentor(BaseInstrumentor):
                 )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
+                span.set_attribute(ERROR_TYPE, "MCPToolError")
                 if len(result.content) > 0:
                     span.set_status(
                         Status(StatusCode.ERROR, f"{result.content[0].text}")
@@ -569,6 +570,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
+                        span.set_attribute(ERROR_TYPE, "MCPToolError")
                         span.set_status(
                             Status(
                                 StatusCode.ERROR,
