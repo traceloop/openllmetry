@@ -45,6 +45,31 @@ except ImportError:
     SpeechGroupSpanData = None
 
 
+def _iso_to_nanoseconds(iso_str):
+    """Convert an ISO-8601 timestamp string (set by the OpenAI Agents SDK on
+    Span.started_at / Span.ended_at) to an integer nanoseconds-since-epoch
+    suitable for OTel's start_time/end_time.  Returns None when input is None
+    or unparseable; caller should fall back to default (current) time.
+
+    A datetime parsed from an ISO-8601 value without timezone information
+    is assumed to be UTC, since ``datetime.timestamp()`` would otherwise
+    interpret it as local time and produce an offset result depending on
+    the host."""
+    if not iso_str:
+        return None
+    try:
+        import datetime as _dt
+        # Python 3.11+ fromisoformat handles "Z" suffix natively, but 3.10 does
+        # not, so normalize defensively.
+        s = iso_str.replace("Z", "+00:00") if iso_str.endswith("Z") else iso_str
+        dt = _dt.datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_dt.timezone.utc)
+        return int(dt.timestamp() * 1_000_000_000)
+    except Exception:
+        return None
+
+
 def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
     """
     Extract prompt/input data from messages and set them as span attributes.
@@ -465,6 +490,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "execute_tool",
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "function",
                 f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True,
@@ -481,6 +507,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 kind=SpanKind.INTERNAL,
                 context=parent_context,
                 attributes=tool_attributes,
+                start_time=_iso_to_nanoseconds(getattr(span, "started_at", None)),
             )
 
         elif type(span_data).__name__ == "ResponseSpanData":
@@ -772,7 +799,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             else:
                 otel_span.set_status(Status(StatusCode.OK))
 
-            otel_span.end()
+            otel_span.end(end_time=_iso_to_nanoseconds(getattr(span, "ended_at", None)))
             del self._otel_spans[span]
             if span in self._span_contexts:
                 context.detach(self._span_contexts[span])
