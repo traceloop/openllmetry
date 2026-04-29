@@ -398,15 +398,33 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if handoff_parent:
                 attributes["gen_ai.agent.handoff_parent"] = handoff_parent
 
-            if hasattr(span_data, "handoffs") and span_data.handoffs:
-                for i, handoff_agent in enumerate(span_data.handoffs):
-                    handoff_info = {
-                        "name": getattr(handoff_agent, "name", "unknown"),
-                        "instructions": getattr(
-                            handoff_agent, "instructions", "No instructions"
-                        ),
-                    }
+            handoffs = getattr(span_data, "handoffs", None)
+            if handoffs:
+                # The Agents SDK documents `AgentSpanData.handoffs` as
+                # ``list[str]`` (handoff agent names).  Preserve the legacy
+                # per-index attribute shape so any existing consumers keep
+                # working, but normalise each entry defensively: plain strings
+                # pass through, Agent-like objects are reduced to their name.
+                def _handoff_name(h):
+                    return h if isinstance(h, str) else getattr(h, "name", "unknown")
+
+                names = [_handoff_name(h) for h in handoffs]
+                attributes["gen_ai.agent.handoffs"] = json.dumps(names)
+                for i, h in enumerate(handoffs):
+                    if isinstance(h, str):
+                        handoff_info = {"name": h}
+                    else:
+                        handoff_info = {
+                            "name": _handoff_name(h),
+                            "instructions": getattr(
+                                h, "instructions", "No instructions"
+                            ),
+                        }
                     attributes[f"openai.agent.handoff{i}"] = json.dumps(handoff_info)
+
+            output_type = getattr(span_data, "output_type", None)
+            if output_type:
+                attributes["gen_ai.agent.output_type"] = str(output_type)
 
             otel_span = self.tracer.start_span(
                 f"{agent_name}.agent",
