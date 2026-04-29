@@ -209,12 +209,52 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
     if hasattr(response, "model") and response.model:
         model_settings["model"] = response.model
         otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MODEL, response.model)
+        otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.model)
 
     if (
         hasattr(response, "frequency_penalty")
         and response.frequency_penalty is not None
     ):
         model_settings["frequency_penalty"] = response.frequency_penalty
+
+    # Response-identification fields captured from the Responses API response
+    # object.  These are surfaced by the Agents SDK's own native tracing and by
+    # Braintrust's native processor (via ``response.model_dump(...)``) but were
+    # previously dropped by this instrumentor.  They let downstream UIs tie
+    # turns together (response.id / previous_response_id) and show the exact
+    # model version that answered (response.model vs request.model).
+    response_id = getattr(response, "id", None)
+    if response_id:
+        otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_ID, response_id)
+
+    status = getattr(response, "status", None)
+    if status:
+        otel_span.set_attribute("gen_ai.response.status", str(status))
+
+    previous_response_id = getattr(response, "previous_response_id", None)
+    if previous_response_id:
+        otel_span.set_attribute(
+            "gen_ai.request.previous_response_id", previous_response_id
+        )
+
+    service_tier = getattr(response, "service_tier", None)
+    if service_tier:
+        otel_span.set_attribute(
+            GenAIAttributes.GEN_AI_OPENAI_REQUEST_SERVICE_TIER, service_tier
+        )
+
+    reasoning = getattr(response, "reasoning", None)
+    if reasoning is not None:
+        effort = getattr(reasoning, "effort", None)
+        if effort:
+            otel_span.set_attribute(
+                SpanAttributes.LLM_REQUEST_REASONING_EFFORT, str(effort)
+            )
+        summary = getattr(reasoning, "summary", None)
+        if summary:
+            otel_span.set_attribute(
+                SpanAttributes.LLM_REQUEST_REASONING_SUMMARY, str(summary)
+            )
 
     # Extract completions from response.output
     if hasattr(response, "output") and response.output:
