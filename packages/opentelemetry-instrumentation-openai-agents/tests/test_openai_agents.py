@@ -172,6 +172,19 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_NAME] == "get_weather"
     assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_TYPE] == "function"
 
+    # OTel GenAI semconv operation.name identifies this as a tool-execution
+    # span for ingestion backends that derive their span-type taxonomy from
+    # gen_ai.operation.name.
+    assert tool_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "execute_tool"
+
+    # The Agents SDK emits ISO-8601 start/end timestamps on the span; the
+    # instrumentor plumbs them through as OTel start_time/end_time so
+    # downstream durations are non-null.  Verify the exported span has a
+    # real, non-zero duration.
+    assert tool_span.start_time is not None and tool_span.start_time > 0
+    assert tool_span.end_time is not None and tool_span.end_time > 0
+    assert tool_span.end_time >= tool_span.start_time
+
     # Tool description is optional - only test if present
     if GenAIAttributes.GEN_AI_TOOL_DESCRIPTION in tool_span.attributes:
         assert (
@@ -501,3 +514,23 @@ def test_tool_call_and_result_attributes(exporter):
 
     assert tool_call_found, "No assistant message with tool_calls found in second response span"
     assert tool_result_found, "No tool message found in second response span"
+
+
+def test_iso_to_nanoseconds():
+    """Converter handles ISO-8601 (with and without 'Z') plus None/unparseable."""
+    from opentelemetry.instrumentation.openai_agents._hooks import _iso_to_nanoseconds
+
+    assert _iso_to_nanoseconds(None) is None
+    assert _iso_to_nanoseconds("") is None
+    assert _iso_to_nanoseconds("not a timestamp") is None
+
+    # Epoch 0
+    assert _iso_to_nanoseconds("1970-01-01T00:00:00+00:00") == 0
+    # Round-trip a known instant
+    assert _iso_to_nanoseconds("1970-01-01T00:00:01Z") == 1_000_000_000
+    # Nanosecond precision (ISO microseconds)
+    assert _iso_to_nanoseconds("1970-01-01T00:00:00.001234Z") == 1_234_000
+
+    # Timezone-naive input must be treated as UTC (not host local time),
+    # otherwise the returned ns value shifts by the tz offset.
+    assert _iso_to_nanoseconds("1970-01-01T00:00:01") == 1_000_000_000
