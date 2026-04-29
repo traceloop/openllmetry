@@ -172,6 +172,32 @@ def test_agent_with_function_tool_spans(exporter, function_tool_agent):
     assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_NAME] == "get_weather"
     assert tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_TYPE] == "function"
 
+    # FunctionSpanData.input / .output are captured as GEN_AI_TOOL_CALL_*
+    # attributes so trace UIs (Braintrust, etc.) can render the actual tool
+    # call arguments and return value instead of only the tool name.
+    #
+    # The test cassette is a call of `get_weather(city="London")` which
+    # returns the string "It's cloudy with 15°C" (see the `function_tool_agent`
+    # fixture). Asserting exact values pins the serialisation contract:
+    # arguments are the Agents SDK's compact JSON, the result is passed
+    # through verbatim when it's already a string.
+    args = tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS]
+    assert args == '{"city":"London"}', (
+        f"Unexpected tool call arguments: {args!r}"
+    )
+
+    result = tool_span.attributes[GenAIAttributes.GEN_AI_TOOL_CALL_RESULT]
+    assert result == "It's cloudy with 15\u00b0C", (
+        f"Unexpected tool call result: {result!r}"
+    )
+
+    # Traceloop entity input/output: matches the LangChain instrumentor
+    # convention and surfaces the tool call's arguments/result in the
+    # trace-UI top-level input/output panels.  Must carry the same payload
+    # as the GenAI pair.
+    assert tool_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT] == args
+    assert tool_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == result
+
     # Tool description is optional - only test if present
     if GenAIAttributes.GEN_AI_TOOL_DESCRIPTION in tool_span.attributes:
         assert (
