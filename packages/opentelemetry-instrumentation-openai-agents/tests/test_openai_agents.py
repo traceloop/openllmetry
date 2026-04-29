@@ -501,3 +501,91 @@ def test_tool_call_and_result_attributes(exporter):
 
     assert tool_call_found, "No assistant message with tool_calls found in second response span"
     assert tool_result_found, "No tool message found in second response span"
+
+
+def test_extract_response_captures_response_identification_fields():
+    """response.id / .model / .status / .previous_response_id / .service_tier /
+    .reasoning.effort / .reasoning.summary must surface as GenAI semconv
+    attributes on the span so downstream UIs can chain turns, distinguish
+    request-vs-actual model versions, and render reasoning / service-tier
+    settings.  Pins the attribute mapping contract."""
+    from types import SimpleNamespace
+    from opentelemetry.instrumentation.openai_agents._hooks import (
+        _extract_response_attributes,
+    )
+
+    recorded: dict[str, object] = {}
+
+    class _FakeSpan:
+        def set_attribute(self, key, value):
+            recorded[key] = value
+
+    response = SimpleNamespace(
+        id="resp_0123456789abcdef",
+        model="gpt-5.4-2026-03-05",
+        status="completed",
+        previous_response_id="resp_prevABCDEF",
+        service_tier="priority",
+        reasoning=SimpleNamespace(effort="medium", summary="concise"),
+        # Existing fields handled by earlier branches; include a minimum so
+        # the surrounding code doesn't choke.
+        temperature=None,
+        max_output_tokens=None,
+        top_p=None,
+        frequency_penalty=None,
+        usage=None,
+        output=None,
+    )
+
+    _extract_response_attributes(_FakeSpan(), response, trace_content=False)
+
+    assert recorded[GenAIAttributes.GEN_AI_RESPONSE_ID] == "resp_0123456789abcdef"
+    assert recorded[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-5.4-2026-03-05"
+    assert recorded["gen_ai.response.status"] == "completed"
+    assert recorded["gen_ai.request.previous_response_id"] == "resp_prevABCDEF"
+    assert recorded[GenAIAttributes.GEN_AI_OPENAI_REQUEST_SERVICE_TIER] == "priority"
+    assert recorded[SpanAttributes.LLM_REQUEST_REASONING_EFFORT] == "medium"
+    assert recorded[SpanAttributes.LLM_REQUEST_REASONING_SUMMARY] == "concise"
+
+
+def test_extract_response_absent_fields_dont_set_attributes():
+    """Regression guard: when a field is None / missing on the Response, no
+    attribute is written (no stringified ``None`` values)."""
+    from types import SimpleNamespace
+    from opentelemetry.instrumentation.openai_agents._hooks import (
+        _extract_response_attributes,
+    )
+
+    recorded: dict[str, object] = {}
+
+    class _FakeSpan:
+        def set_attribute(self, key, value):
+            recorded[key] = value
+
+    response = SimpleNamespace(
+        id=None,
+        model=None,
+        status=None,
+        previous_response_id=None,
+        service_tier=None,
+        reasoning=None,
+        temperature=None,
+        max_output_tokens=None,
+        top_p=None,
+        frequency_penalty=None,
+        usage=None,
+        output=None,
+    )
+
+    _extract_response_attributes(_FakeSpan(), response, trace_content=False)
+
+    for key in (
+        GenAIAttributes.GEN_AI_RESPONSE_ID,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL,
+        "gen_ai.response.status",
+        "gen_ai.request.previous_response_id",
+        GenAIAttributes.GEN_AI_OPENAI_REQUEST_SERVICE_TIER,
+        SpanAttributes.LLM_REQUEST_REASONING_EFFORT,
+        SpanAttributes.LLM_REQUEST_REASONING_SUMMARY,
+    ):
+        assert key not in recorded, f"Expected {key!r} not to be set"
