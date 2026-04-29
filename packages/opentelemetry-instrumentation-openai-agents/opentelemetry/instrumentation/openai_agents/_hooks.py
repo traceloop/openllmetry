@@ -45,6 +45,30 @@ except ImportError:
     SpeechGroupSpanData = None
 
 
+def _serialize_span_payload(value):
+    """Serialise a FunctionSpanData input/output to a JSON string suitable
+    for span attributes.  Handles pydantic BaseModel instances (e.g. the
+    Agents SDK's ``ToolOutputText``) via ``model_dump``, falls back to a
+    ``default=str`` ``json.dumps`` for anything else, and final-falls-back
+    to ``str()``.  Pass-through when the value is already a ``str``."""
+    if isinstance(value, str):
+        return value
+    try:
+        if hasattr(value, "model_dump"):
+            value = value.model_dump()
+        elif isinstance(value, (list, tuple)):
+            value = [
+                v.model_dump() if hasattr(v, "model_dump") else v
+                for v in value
+            ]
+    except Exception:
+        pass
+    try:
+        return json.dumps(value, default=str)
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
     """
     Extract prompt/input data from messages and set them as span attributes.
@@ -465,9 +489,6 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
                 GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.name": tool_name,
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.type": "function",
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.tool.strict_json_schema": True,
             }
 
             if hasattr(span_data, "description") and span_data.description:
@@ -668,6 +689,35 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 if response:
                     model_settings = _extract_response_attributes(otel_span, response, trace_content)
                     self._last_model_settings = model_settings
+
+            elif type(span_data).__name__ == "FunctionSpanData":
+                # Capture the function tool call's arguments and return value so they
+                # are visible in trace backends (matches the Agents SDK's native
+                # FunctionSpanData record + Braintrust's native tool-span input/output).
+                if trace_content:
+                    fn_input = getattr(span_data, "input", None)
+                    if fn_input is not None:
+                        input_str = _serialize_span_payload(fn_input)
+                        # OTel GenAI semconv: used by OTel-aware backends.
+                        otel_span.set_attribute(
+                            GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS, input_str
+                        )
+                        # Traceloop convention: matches the LangChain/other
+                        # Traceloop instrumentors so the tool arguments also
+                        # render in the trace UI's top-level Input panel.
+                        otel_span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, input_str
+                        )
+
+                    fn_output = getattr(span_data, "output", None)
+                    if fn_output is not None:
+                        output_str = _serialize_span_payload(fn_output)
+                        otel_span.set_attribute(
+                            GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, output_str
+                        )
+                        otel_span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_str
+                        )
 
             # Legacy fallback for other span types
             elif span_data:
