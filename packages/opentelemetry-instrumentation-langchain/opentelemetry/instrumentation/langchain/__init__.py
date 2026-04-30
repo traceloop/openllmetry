@@ -1,6 +1,7 @@
 """OpenTelemetry Langchain instrumentation"""
 
 import logging
+import weakref
 from typing import Collection
 
 from opentelemetry import context as context_api
@@ -34,6 +35,12 @@ from wrapt import wrap_function_wrapper
 logger = logging.getLogger(__name__)
 
 _instruments = ("langchain-core > 0.1.0", )
+
+_ALL_HOOK_NAMES = [
+    "before_model", "after_model", "before_agent", "after_agent",
+    "abefore_model", "aafter_model", "abefore_agent", "aafter_agent",
+]
+_patched_middleware_instances: weakref.WeakSet = weakref.WeakSet()
 
 
 class LangchainInstrumentor(BaseInstrumentor):
@@ -271,30 +278,54 @@ class LangchainInstrumentor(BaseInstrumentor):
                 logger.debug("Failed to wrap langchain.agents.create_agent: %s", e)
 
     def _wrap_middleware_hooks(self, tracer):
-        """Wrap AgentMiddleware hook methods for instrumentation."""
-        # Sync hooks
-        sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
-        for hook_name in sync_hooks:
-            try:
-                wrap_function_wrapper(
-                    module="langchain.agents.middleware.types",
-                    name=f"AgentMiddleware.{hook_name}",
-                    wrapper=create_middleware_hook_wrapper(tracer, hook_name),
-                )
-            except Exception as e:
-                logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
+        """Wrap AgentMiddleware hook methods for instrumentation.
 
-        # Async hooks
+        Uses instance-level wrapping via __init__ instead of class-level
+        wrapt patching. Class-level wrapping with wrapt replaces base class
+        methods with FunctionWrapper descriptors, which breaks Python identity
+        checks (e.g. ``m.__class__.before_agent is not AgentMiddleware.before_agent``)
+        used by LangGraph's create_agent to determine which hooks are overridden.
+
+        Limitation: subclasses that override ``__init__`` without calling
+        ``super().__init__()`` will not have their hooks instrumented. This is
+        an acceptable tradeoff — such subclasses violate standard Python
+        conventions, and the alternative (class-level wrapping) breaks
+        LangGraph graph construction entirely.
+        """
+        sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
         async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
-        for hook_name in async_hooks:
-            try:
-                wrap_function_wrapper(
-                    module="langchain.agents.middleware.types",
-                    name=f"AgentMiddleware.{hook_name}",
-                    wrapper=create_async_middleware_hook_wrapper(tracer, hook_name),
-                )
-            except Exception as e:
-                logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
+
+        sync_wrappers = {h: create_middleware_hook_wrapper(tracer, h) for h in sync_hooks}
+        async_wrappers = {h: create_async_middleware_hook_wrapper(tracer, h) for h in async_hooks}
+
+        def _middleware_init_wrapper(wrapped, instance, args, kwargs):
+            wrapped(*args, **kwargs)
+            for hook_name, wrapper_fn in sync_wrappers.items():
+                original = getattr(instance, hook_name, None)
+                if original is not None:
+                    def make_bound(orig, wfn):
+                        def instrumented(*a, **kw):
+                            return wfn(orig, instance, a, kw)
+                        return instrumented
+                    setattr(instance, hook_name, make_bound(original, wrapper_fn))
+            for hook_name, wrapper_fn in async_wrappers.items():
+                original = getattr(instance, hook_name, None)
+                if original is not None:
+                    def make_async_bound(orig, wfn):
+                        async def instrumented(*a, **kw):
+                            return await wfn(orig, instance, a, kw)
+                        return instrumented
+                    setattr(instance, hook_name, make_async_bound(original, wrapper_fn))
+            _patched_middleware_instances.add(instance)
+
+        try:
+            wrap_function_wrapper(
+                module="langchain.agents.middleware.types",
+                name="AgentMiddleware.__init__",
+                wrapper=_middleware_init_wrapper,
+            )
+        except Exception as e:
+            logger.debug("Failed to wrap AgentMiddleware.__init__: %s", e)
 
     def _uninstrument(self, **kwargs):
         unwrap("langchain_core.callbacks", "BaseCallbackManager.__init__")
@@ -313,13 +344,18 @@ class LangchainInstrumentor(BaseInstrumentor):
 
         # Unwrap AgentMiddleware hooks
         if is_package_available("langchain"):
-            sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
-            async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
-            for hook_name in sync_hooks + async_hooks:
-                try:
-                    unwrap("langchain.agents.middleware.types", f"AgentMiddleware.{hook_name}")
-                except Exception:
-                    pass
+            # Remove instance-level hook patches from existing instances
+            for instance in list(_patched_middleware_instances):
+                for hook_name in _ALL_HOOK_NAMES:
+                    try:
+                        delattr(instance, hook_name)
+                    except AttributeError:
+                        pass
+            _patched_middleware_instances.clear()
+            try:
+                unwrap("langchain.agents.middleware.types", "AgentMiddleware.__init__")
+            except Exception:
+                pass
 
         # Unwrap LangGraph agent factories (both actual module and re-export)
         if is_package_available("langgraph"):
