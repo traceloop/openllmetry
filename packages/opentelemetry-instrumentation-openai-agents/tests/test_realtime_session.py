@@ -1,5 +1,6 @@
 """Tests for realtime session instrumentation via wrapper patching."""
 
+import json
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -199,10 +200,14 @@ class TestRealtimeTracingState:
         assert len(llm_spans) == 1
 
         llm_span = llm_spans[0]
-        assert llm_span.attributes.get("gen_ai.prompt.0.role") == "user"
-        assert llm_span.attributes.get("gen_ai.prompt.0.content") == "What is the weather?"
-        assert llm_span.attributes.get("gen_ai.completion.0.role") == "assistant"
-        assert llm_span.attributes.get("gen_ai.completion.0.content") == "The weather is sunny."
+        input_msgs = json.loads(llm_span.attributes.get("gen_ai.input.messages"))
+        assert input_msgs[0]["role"] == "user"
+        assert input_msgs[0]["parts"][0]["type"] == "text"
+        assert input_msgs[0]["parts"][0]["content"] == "What is the weather?"
+        output_msgs = json.loads(llm_span.attributes.get("gen_ai.output.messages"))
+        assert output_msgs[0]["role"] == "assistant"
+        assert output_msgs[0]["parts"][0]["type"] == "text"
+        assert output_msgs[0]["parts"][0]["content"] == "The weather is sunny."
 
     def test_multiple_llm_spans(self, tracer, tracer_provider):
         """Test that multiple prompt/completion pairs create multiple LLM spans."""
@@ -229,12 +234,16 @@ class TestRealtimeTracingState:
         assert len(llm_spans) == 2
 
         # First span should have "Hello" and "Hi there!"
-        assert llm_spans[0].attributes.get("gen_ai.prompt.0.content") == "Hello"
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+        first_in = json.loads(llm_spans[0].attributes.get("gen_ai.input.messages"))
+        first_out = json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))
+        assert first_in[0]["parts"][0]["content"] == "Hello"
+        assert first_out[0]["parts"][0]["content"] == "Hi there!"
 
         # Second span should have "What is the weather?" and "It's sunny."
-        assert llm_spans[1].attributes.get("gen_ai.prompt.0.content") == "What is the weather?"
-        assert llm_spans[1].attributes.get("gen_ai.completion.0.content") == "It's sunny."
+        second_in = json.loads(llm_spans[1].attributes.get("gen_ai.input.messages"))
+        second_out = json.loads(llm_spans[1].attributes.get("gen_ai.output.messages"))
+        assert second_in[0]["parts"][0]["content"] == "What is the weather?"
+        assert second_out[0]["parts"][0]["content"] == "It's sunny."
 
     def test_cleanup_ends_all_spans(self, tracer, tracer_provider):
         """Test that cleanup ends all remaining spans."""
@@ -330,6 +339,58 @@ class TestRealtimeTracingState:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
+
+    def test_agent_span_has_invoke_agent_operation_name(self, tracer, tracer_provider):
+        """Agent spans must set gen_ai.operation.name='invoke_agent' per OTel spec."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Test Agent")
+        state.start_agent_span("Voice Assistant")
+
+        span = state.agent_spans["Voice Assistant"]
+        span.end()
+
+        finished = exporter.get_finished_spans()
+        agent = next(s for s in finished if s.name == "Voice Assistant.agent")
+        assert agent.attributes.get("gen_ai.operation.name") == "invoke_agent"
+
+        state.cleanup()
+
+    def test_tool_result_structured_output_serialized_as_json(self, tracer, tracer_provider):
+        """Structured tool output must be JSON, not Python repr (str())."""
+        import json as json_mod
+
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Agent")
+        state.start_agent_span("Agent")
+        state.start_tool_span("my_tool", "Agent")
+        state.end_tool_span("my_tool", output={"key": "value", "num": 42})
+
+        spans = exporter.get_finished_spans()
+        tool_span = next(s for s in spans if s.name == "my_tool.tool")
+        result = tool_span.attributes.get("gen_ai.tool.call.result")
+        if result is not None:
+            assert "'" not in result, f"Python repr detected: {result}"
+            parsed = json_mod.loads(result)
+            assert parsed == {"key": "value", "num": 42}
+
+        state.cleanup()
+
+    def test_seen_completions_bounded_at_1000(self, tracer, tracer_provider):
+        """seen_completions must not grow without bound in long sessions."""
+        _, exporter = tracer_provider
+        state = RealtimeTracingState(tracer)
+        state.start_workflow_span("Agent")
+        state.start_agent_span("Agent")
+        state.record_prompt("user", "hello")
+
+        for i in range(2000):
+            state.record_completion("assistant", f"unique response {i}")
+
+        assert len(state.seen_completions) <= 1000
+
+        state.cleanup()
 
 
 class TestRealtimeSessionWrapping:
@@ -584,7 +645,8 @@ class TestTracedPutEventHandlers:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Hi there!"
+        out_msgs = json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))
+        assert out_msgs[0]["parts"][0]["content"] == "Hi there!"
 
     def test_response_done_dict_captures_usage_and_completion(self, tracer, tracer_provider):
         """Test that response.done with dict data captures usage and completions."""
@@ -646,7 +708,8 @@ class TestTracedPutEventHandlers:
         llm_span = llm_spans[0]
         assert llm_span.attributes.get("gen_ai.usage.input_tokens") == 42
         assert llm_span.attributes.get("gen_ai.usage.output_tokens") == 18
-        assert llm_span.attributes.get("gen_ai.completion.0.content") == "It is sunny today."
+        out_msgs = json.loads(llm_span.attributes.get("gen_ai.output.messages"))
+        assert out_msgs[0]["parts"][0]["content"] == "It is sunny today."
 
     def test_response_done_without_usage_still_captures_completion(self, tracer, tracer_provider):
         """Test that completions are captured even when usage is absent from response.done."""
@@ -694,5 +757,6 @@ class TestTracedPutEventHandlers:
         spans = exporter.get_finished_spans()
         llm_spans = [s for s in spans if s.name == "openai.realtime"]
         assert len(llm_spans) == 1
-        assert llm_spans[0].attributes.get("gen_ai.completion.0.content") == "Why did the chicken cross the road?"
+        output = json.loads(llm_spans[0].attributes.get("gen_ai.output.messages"))
+        assert output[0]["parts"][0]["content"] == "Why did the chicken cross the road?"
         assert llm_spans[0].attributes.get("gen_ai.usage.input_tokens") is None
