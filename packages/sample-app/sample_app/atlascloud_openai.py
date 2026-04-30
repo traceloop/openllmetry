@@ -1,3 +1,5 @@
+"""Minimal sample app for tracing Atlas Cloud via the OpenAI-compatible SDK."""
+
 import os
 
 from dotenv import load_dotenv
@@ -8,6 +10,8 @@ from sample_app.provider_factory import create_openai_compatible_client
 
 
 def main():
+    """Run a simple Atlas Cloud chat completion and print the traced response."""
+
     load_dotenv()
 
     if "TRACELOOP_METRICS_ENABLED" not in os.environ:

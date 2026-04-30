@@ -1,3 +1,5 @@
+"""Helpers for selecting and instantiating OpenAI-compatible providers."""
+
 import os
 from dataclasses import dataclass
 
@@ -11,6 +13,8 @@ OPENAI_DEFAULT_MODEL = "gpt-4o-mini"
 
 @dataclass(frozen=True)
 class OpenAICompatibleProviderConfig:
+    """Configuration required to create an OpenAI-compatible client."""
+
     name: str
     api_key: str
     base_url: str | None
@@ -18,14 +22,14 @@ class OpenAICompatibleProviderConfig:
 
 
 def get_provider_config(provider_name: str | None = None) -> OpenAICompatibleProviderConfig:
+    """Resolve provider configuration from explicit input or environment variables."""
+
     provider = (provider_name or os.getenv("LLM_PROVIDER") or "openai").strip().lower()
 
     if provider == "atlascloud":
-        api_key = os.getenv("ATLASCLOUD_API_KEY") or os.getenv("OPENAI_API_KEY")
+        api_key = os.getenv("ATLASCLOUD_API_KEY")
         if not api_key:
-            raise ValueError(
-                "Missing Atlas Cloud API key. Set ATLASCLOUD_API_KEY or OPENAI_API_KEY in your environment."
-            )
+            raise ValueError("Missing Atlas Cloud API key. Set ATLASCLOUD_API_KEY in your environment.")
 
         return OpenAICompatibleProviderConfig(
             name="atlascloud",
@@ -52,6 +56,8 @@ def get_provider_config(provider_name: str | None = None) -> OpenAICompatiblePro
 def create_openai_compatible_client(
     provider_name: str | None = None,
 ) -> tuple[OpenAICompatibleProviderConfig, OpenAI]:
+    """Create an OpenAI SDK client using the resolved provider configuration."""
+
     config = get_provider_config(provider_name)
     client = OpenAI(api_key=config.api_key, base_url=config.base_url)
     return config, client
