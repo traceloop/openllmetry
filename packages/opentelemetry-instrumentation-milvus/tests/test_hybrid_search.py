@@ -36,19 +36,14 @@ def collection():
         index_name="sparse_index",
         index_type="SPARSE_INVERTED_INDEX",  # Index type for sparse vectors
         metric_type="IP",  # Currently, only IP (Inner Product) is supported for sparse vectors
-        params={
-            "drop_ratio_build": 0.2
-        },  # The ratio of small vector values to be dropped during indexing
+        params={"drop_ratio_build": 0.2},  # The ratio of small vector values to be dropped during indexing
     )
 
-    client.create_collection(
-        collection_name=collection_name, schema=schema, index_params=index_params
-    )
+    client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
     return collection_name
 
 
 def insert_data(collection):
-
     data = [
         {
             "id": 0,
@@ -108,9 +103,7 @@ def test_hybrid_search_with_rrf(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "hybrid_search"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 10
 
     reqs_info = []
@@ -121,13 +114,8 @@ def test_hybrid_search_with_rrf(exporter, collection):
         }
         reqs_info.append(req_info)
 
-    assert span.attributes.get(
-        SpanAttributes.MILVUS_SEARCH_ANNSEARCH_REQUEST
-    ) == str(reqs_info)
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RANKER_TYPE)
-        == "RRFRanker"
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_ANNSEARCH_REQUEST) == str(reqs_info)
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RANKER_TYPE) == "RRFRanker"
 
     # Result events
     events = [e for e in span.events if e.name == Events.DB_SEARCH_RESULT.value]
