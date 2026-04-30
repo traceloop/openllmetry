@@ -272,30 +272,30 @@ async def test_recipe_agents_hierarchy(exporter, recipe_agents):
 
     # Verify each response span has prompts, completions, and usage
     for i, response_span in enumerate(response_spans):
-        # Check for prompts
-        has_prompt = any(key.startswith("gen_ai.prompt.") for key in response_span.attributes.keys())
+        # Check for input messages (new JSON array format)
+        has_prompt = "gen_ai.input.messages" in response_span.attributes
         assert has_prompt, (
             f"Response span {i} should have prompt attributes, attributes: {dict(response_span.attributes)}"
         )
 
-        # Check for completions
-        has_completion = any(key.startswith("gen_ai.completion.") for key in response_span.attributes.keys())
+        # Check for output messages (new JSON array format)
+        has_completion = "gen_ai.output.messages" in response_span.attributes
         assert has_completion, (
             f"Response span {i} should have completion attributes, attributes: {dict(response_span.attributes)}"
         )
 
         # Check for usage
         has_usage = any(
-            key.startswith("gen_ai.usage.") or key.startswith("llm.usage.") for key in response_span.attributes.keys()
+            key.startswith("gen_ai.usage.") for key in response_span.attributes.keys()
         )
         assert has_usage, (
             f"Response span {i} should have usage attributes, attributes: {dict(response_span.attributes)}"
         )
 
         # Check specific expected attributes
-        assert "gen_ai.system" in response_span.attributes, f"Response span {i} should have gen_ai.system"
-        assert response_span.attributes["gen_ai.system"] == "openai", (
-            f"Response span {i} gen_ai.system should be 'openai'"
+        assert "gen_ai.provider.name" in response_span.attributes, f"Response span {i} should have gen_ai.provider.name"
+        assert response_span.attributes["gen_ai.provider.name"] == "openai", (
+            f"Response span {i} gen_ai.provider.name should be 'openai'"
         )
 
         pass  # Validation passed
