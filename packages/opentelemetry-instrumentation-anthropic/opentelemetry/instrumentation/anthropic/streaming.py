@@ -79,15 +79,15 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    input_tokens = prompt_tokens
+    total_tokens = input_tokens + completion_tokens
+
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
     cache_creation_tokens = (
         complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
     )
-
-    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
-    total_tokens = input_tokens + completion_tokens
 
     set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
     set_span_attribute(
