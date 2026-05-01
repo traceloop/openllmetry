@@ -52,12 +52,27 @@ class QdrantInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             obj = getattr(qdrant_client, wrap_object, None)
-            if obj and hasattr(obj, wrap_method):
-                wrap_function_wrapper(
-                    MODULE,
-                    f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
+            if obj is None:
+                logger.debug(
+                    "opentelemetry-instrumentation-qdrant: skipping %s — "
+                    "class not found in installed qdrant-client.",
+                    wrap_object,
                 )
+                continue
+            if not hasattr(obj, wrap_method):
+                logger.debug(
+                    "opentelemetry-instrumentation-qdrant: skipping %s.%s — "
+                    "method not found in installed qdrant-client. "
+                    "The method may have been removed or renamed in a newer version.",
+                    wrap_object,
+                    wrap_method,
+                )
+                continue
+            wrap_function_wrapper(
+                MODULE,
+                f"{wrap_object}.{wrap_method}",
+                _wrap(tracer, wrapped_method),
+            )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
