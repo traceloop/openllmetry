@@ -468,7 +468,7 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
             span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, agent_name)
 
             # Extract system instructions from prompt/system_prompt parameter
-            # LangGraph uses "prompt", LangChain uses "system_prompt"
+            # LangGraph uses "prompt", LangChain uses "system_prompt."
             system_instructions = kwargs.get("prompt") or kwargs.get("system_prompt")
             if system_instructions:
                 if isinstance(system_instructions, str):
@@ -486,7 +486,14 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                 tools = args[1]
             if tools:
                 tool_definitions = []
-                for tool in tools:
+                if hasattr(tools, "tools_by_name"):
+                    iterable_tools = tools.tools_by_name.values()
+                elif isinstance(tools, (list, tuple, set)):
+                    iterable_tools = tools
+                else:
+                    iterable_tools = [tools]
+
+                for tool in iterable_tools:
                     tool_def = _extract_tool_definition(tool)
                     if tool_def:
                         tool_definitions.append(tool_def)
