@@ -7,6 +7,7 @@ from opentelemetry.instrumentation.utils import (
 )
 from opentelemetry.semconv_ai import EventAttributes, Events
 from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
+from opentelemetry.trace.status import Status, StatusCode
 import itertools
 import json
 
@@ -37,7 +38,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(name) as span:
+    with tracer.start_as_current_span(
+        name, record_exception=False, set_status_on_exception=False
+    ) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "chroma")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
@@ -61,7 +64,12 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         elif to_wrap.get("method") == "delete":
             _set_delete_attributes(span, kwargs)
 
-        return_value = wrapped(*args, **kwargs)
+        try:
+            return_value = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR))
+            raise
         if to_wrap.get("method") == "query":
             _add_query_result_events(span, return_value)
 
