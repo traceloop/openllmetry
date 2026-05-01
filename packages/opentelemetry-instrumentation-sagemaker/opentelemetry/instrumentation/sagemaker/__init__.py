@@ -31,6 +31,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
 )
 from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 _instruments = ("boto3 >= 1.28.57",)
@@ -49,7 +50,9 @@ def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(tracer, event_logger, to_wrap):
+        """Bind tracer and configuration parameters, returning the wrapped function factory."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -88,15 +91,25 @@ def _wrap(
 
 
 def _instrumented_endpoint_invoke(fn, tracer, event_logger):
+    """Wrap invoke_endpoint to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         with tracer.start_as_current_span(
-            "sagemaker.completion", kind=SpanKind.CLIENT
+            "sagemaker.completion",
+            kind=SpanKind.CLIENT,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR))
+                raise
             _handle_call(span, event_logger, kwargs, response)
 
             return response
@@ -105,14 +118,22 @@ def _instrumented_endpoint_invoke(fn, tracer, event_logger):
 
 
 def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger):
+    """Wrap invoke_endpoint_with_response_stream to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
         span = tracer.start_span("sagemaker.completion", kind=SpanKind.CLIENT)
 
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
 
         if span.is_recording():
             _handle_stream_call(span, event_logger, kwargs, response)
@@ -123,9 +144,11 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger)
 
 
 def _handle_stream_call(span, event_logger, kwargs, response):
+    """Attach a StreamingWrapper to the response body to finalize the span when streaming completes."""
     @dont_throw
     def stream_done(response_body):
         # Handle Request
+        """Finalize span attributes when the streaming response body is fully consumed."""
         if should_emit_events() and event_logger is not None:
             emit_message_event(kwargs, event_logger)
         else:
@@ -147,6 +170,7 @@ def _handle_stream_call(span, event_logger, kwargs, response):
 @dont_throw
 def _handle_call(span, event_logger, kwargs, response):
     # Handle Request
+    """Read and record request/response attributes on the current span for a non-streaming call."""
     if should_emit_events() and event_logger is not None:
         emit_message_event(kwargs, event_logger)
     else:
@@ -174,14 +198,17 @@ class SageMakerInstrumentor(BaseInstrumentor):
         exception_logger=None,
         use_legacy_attributes: bool = True,
     ):
+        """Initialize the instrumentor and apply configuration settings."""
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package version constraints required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Patch the target library to add OTel instrumentation."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -204,6 +231,7 @@ class SageMakerInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        """Remove OTel instrumentation patches from the target library."""
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")

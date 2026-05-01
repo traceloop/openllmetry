@@ -56,10 +56,12 @@ WRAPPED_METHODS = [
 
 
 def is_streaming_response(response):
+    """Return True if the response is a generator (streaming)."""
     return isinstance(response, types.GeneratorType)
 
 
 def _build_from_streaming_response(span, event_logger, response):
+    """Yield streaming response items and finalize span on completion."""
     complete_response = ""
     for item in response:
         item_to_yield = item
@@ -74,6 +76,7 @@ def _build_from_streaming_response(span, event_logger, response):
 
 @dont_throw
 def _handle_request(span, event_logger, args, kwargs):
+    """Set model input span attributes and emit input events if event logging is enabled."""
     set_model_input_attributes(span, args, kwargs)
 
     model_input = kwargs.get("input") or (args[1] if len(args) > 1 else None)
@@ -86,6 +89,7 @@ def _handle_request(span, event_logger, args, kwargs):
 
 @dont_throw
 def _handle_response(span, event_logger, response):
+    """Set response span attributes and emit choice events if event logging is enabled."""
     if should_emit_events() and event_logger:
         emit_choice_events(response, event_logger)
     else:
@@ -99,7 +103,9 @@ def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(tracer, event_logger, to_wrap):
+        """Bind tracer and configuration parameters, returning the wrapped function factory."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -133,7 +139,13 @@ def _wrap(
 
     _handle_request(span, event_logger, args, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR))
+        span.end()
+        raise
 
     if response:
         if is_streaming_response(response):
@@ -149,14 +161,17 @@ class ReplicateInstrumentor(BaseInstrumentor):
     """An instrumentor for Replicate's client library."""
 
     def __init__(self, exception_logger=None, use_legacy_attributes=True):
+        """Initialize the instrumentor and apply configuration settings."""
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package version constraints required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Patch the target library to add OTel instrumentation."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -175,6 +190,7 @@ class ReplicateInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        """Remove OTel instrumentation patches from the target library."""
         import replicate
 
         for wrapper_method in WRAPPED_METHODS:

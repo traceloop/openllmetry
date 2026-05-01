@@ -62,6 +62,7 @@ from opentelemetry.semconv_ai import (
     Meters,
 )
 from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 
@@ -81,6 +82,7 @@ class MetricParams:
         guardrail_words: Counter,
         prompt_caching: Counter,
     ):
+        """Initialize the instrumentor and apply configuration settings."""
         self.vendor = ""
         self.model = ""
         self.is_stream = False
@@ -119,6 +121,7 @@ def _span_name(operation_name, model):
 
 
 def is_metrics_enabled() -> bool:
+    """Return True if metrics collection is enabled via environment variable."""
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
@@ -131,7 +134,9 @@ def _with_tracer_wrapper(func):
         event_logger,
         to_wrap,
     ):
+        """Bind tracer and configuration parameters, returning the wrapped function factory."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(
                 tracer,
                 metric_params,
@@ -205,8 +210,10 @@ def _wrap(
 
 
 def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
+    """Wrap invoke_model to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -218,9 +225,18 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         with tracer.start_as_current_span(
-            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
+            _span_name(operation_name, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR))
+                raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
 
@@ -230,8 +246,10 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
 def _instrumented_model_invoke_with_response_stream(
     fn, tracer, metric_params, event_logger
 ):
+    """Wrap invoke_model_with_response_stream to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -248,7 +266,13 @@ def _instrumented_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
 
         return response
@@ -260,8 +284,10 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
     # see
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
+    """Wrap converse to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -275,8 +301,15 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             _span_name(GenAiOperationNameValues.CHAT.value, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR))
+                raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
             return response
@@ -285,8 +318,10 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
 
 
 def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
+    """Wrap converse_stream to create a span and record exceptions."""
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        """Execute the wrapped AWS API call within an OTel span."""
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -301,7 +336,13 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR))
+            span.end()
+            raise
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
@@ -313,6 +354,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
 @dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
+    """Attach a StreamingWrapper to the response body to finalize the span when streaming completes."""
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
 
@@ -323,6 +365,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
     @dont_throw
     def stream_done(response_body):
 
+        """Finalize span attributes when the streaming response body is fully consumed."""
         metric_params.vendor = provider
         metric_params.model = model
         metric_params.is_stream = True
@@ -359,6 +402,7 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
 @dont_throw
 def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
+    """Read and record request/response attributes on the current span for a non-streaming call."""
     response["body"] = ReusableStreamingBody(
         response["body"]._raw_stream, response["body"]._content_length
     )
@@ -400,6 +444,7 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
 
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
+    """Record converse request/response attributes on the current span."""
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     guardrail_converse(span, response, provider, model, metric_params)
 
@@ -418,6 +463,7 @@ def _handle_converse(span, kwargs, response, metric_params, event_logger):
 
 @dont_throw
 def _handle_converse_stream(span, kwargs, response, metric_params, event_logger):
+    """Attach streaming event handler to record converse_stream response attributes."""
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
@@ -432,7 +478,9 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
     if stream:
 
         def handler(func):
+            """Decorate the stream event parser to accumulate response content and record span attributes."""
             def wrap(*args, **kwargs):
+                """Process each stream event, accumulate content, and record span attributes on completion."""
                 response_msg = kwargs.pop("response_msg")
                 tool_blocks = kwargs.pop("tool_blocks")
                 reasoning_blocks = kwargs.pop("reasoning_blocks")
@@ -493,6 +541,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 def _get_vendor_model(modelId):
     # Docs:
     # https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html#inference-profiles-support-system
+    """Parse modelId to extract provider, model vendor, and model name."""
     provider = GenAiSystemValues.AWS_BEDROCK.value
     model_vendor = "imported_model"
     model = modelId
@@ -511,6 +560,7 @@ def _get_vendor_model(modelId):
 
 
 def _cross_region_check(value):
+    """Strip cross-region inference prefix from a model identifier string."""
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
         parts = value.split(".")
@@ -551,6 +601,7 @@ class PromptCaching:
 
 
 def _create_metrics(meter: Meter):
+    """Create and return OTel metric instruments for Bedrock token usage, duration, and guardrails."""
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
@@ -650,15 +701,18 @@ class BedrockInstrumentor(BaseInstrumentor):
         exception_logger=None,
         use_legacy_attributes: bool = True,
     ):
+        """Initialize the instrumentor and apply configuration settings."""
         super().__init__()
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package version constraints required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Patch the target library to add OTel instrumentation."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -735,6 +789,7 @@ class BedrockInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        """Remove OTel instrumentation patches from the target library."""
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")

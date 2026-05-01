@@ -57,7 +57,9 @@ def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
     def _with_tracer(tracer, event_logger, to_wrap):
+        """Bind tracer and configuration parameters, returning the wrapped function factory."""
         def wrapper(wrapped, instance, args, kwargs):
+            """Invoke the instrumented function with bound tracer parameters."""
             return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
@@ -66,6 +68,7 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
+    """Return the LLMRequestTypeValues enum for a given Together AI method name."""
     if method_name == "chat.completions.ChatCompletions.create":
         return LLMRequestTypeValues.CHAT
     elif method_name == "completions.Completions.create":
@@ -76,6 +79,7 @@ def _llm_request_type_by_method(method_name):
 
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, kwargs):
+    """Set prompt span attributes and emit prompt events if event logging is enabled."""
     set_model_prompt_attributes(span, kwargs)
 
     if should_emit_events() and event_logger:
@@ -86,6 +90,7 @@ def _handle_input(span, event_logger, llm_request_type, kwargs):
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, response):
+    """Set response span attributes and emit choice events if event logging is enabled."""
     if should_emit_events() and event_logger:
         emit_completion_event(event_logger, llm_request_type, response)
     else:
@@ -122,7 +127,13 @@ def _wrap(
     )
     _handle_input(span, event_logger, llm_request_type, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR))
+        span.end()
+        raise
 
     if response:
         _handle_response(span, event_logger, llm_request_type, response)
@@ -137,14 +148,17 @@ class TogetherAiInstrumentor(BaseInstrumentor):
     """An instrumentor for Together AI's client library."""
 
     def __init__(self, exception_logger=None, use_legacy_attributes: bool = True):
+        """Initialize the instrumentor and apply configuration settings."""
         super().__init__()
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the package version constraints required by this instrumentor."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Patch the target library to add OTel instrumentation."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -165,6 +179,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        """Remove OTel instrumentation patches from the target library."""
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             unwrap(
