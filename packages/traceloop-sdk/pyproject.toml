@@ -41,6 +41,7 @@ dependencies = [
   "opentelemetry-instrumentation-llamaindex",
   "opentelemetry-instrumentation-milvus",
   "opentelemetry-instrumentation-haystack",
+  "opentelemetry-instrumentation-httpx>=0.59b0",
   "opentelemetry-instrumentation-bedrock",
   "opentelemetry-instrumentation-sagemaker",
   "opentelemetry-instrumentation-replicate",
