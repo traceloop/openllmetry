@@ -52,6 +52,11 @@ Traceloop.init(
 # is what lets you see the full request/response in one trace later.
 @workflow(name="ollama_greeting")
 def greet():
+    """Send a one-line greeting to Ollama and print the reply.
+
+    Wrapped in `@workflow` so Traceloop emits a parent span for the whole
+    function and a nested child span for the underlying Ollama chat call.
+    """
     # Step 3 — Make any LLM call. Traceloop auto-instruments the Ollama client,
     # so this single call produces a span with the prompt, response, model
     # name, and token usage — without any extra code from you.
