@@ -1022,7 +1022,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         span = self._get_span(run_id)
         # Set task status to failure
         _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "failure")
-        span.set_status(Status(StatusCode.ERROR), str(error))
+        # The OTel SDK contract for Span.set_status() ignores the `description`
+        # argument when the first arg is already a Status object, and emits a
+        # warning. Pass the description inside Status(...) so the error message
+        # is preserved on the span. See:
+        # https://github.com/open-telemetry/opentelemetry-python/blob/main/opentelemetry-sdk/src/opentelemetry/sdk/trace/__init__.py
+        span.set_status(Status(StatusCode.ERROR, str(error)))
         span.record_exception(error)
         self._end_span(span, run_id)
 
