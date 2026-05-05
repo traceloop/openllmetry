@@ -111,7 +111,7 @@ class TestFinishReasonsSpanAttribute:
         assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in mock_span.attributes
 
         output = json.loads(mock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-        assert "finish_reason" not in output[0]
+        assert output[0]["finish_reason"] == ""
 
     def test_empty_generation_info_omits_attribute(self, mock_span, monkeypatch):
         monkeypatch.setattr(

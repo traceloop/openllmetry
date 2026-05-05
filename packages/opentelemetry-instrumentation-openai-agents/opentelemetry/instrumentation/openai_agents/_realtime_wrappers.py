@@ -4,8 +4,10 @@ The openai-agents SDK's realtime functionality doesn't use its native tracing sy
 so we need to patch the RealtimeSession class directly to add OpenTelemetry tracing.
 """
 
+import json
 import logging
 import time
+from collections import OrderedDict
 from typing import Dict, Any, Optional, List, Tuple
 from opentelemetry.trace import Tracer, Status, StatusCode, SpanKind, Span
 from opentelemetry.trace import set_span_in_context
@@ -108,7 +110,8 @@ class RealtimeTracingState:
         self.prompt_agent_name: Optional[str] = None
         self.starting_agent_name: Optional[str] = None
         self.model_name: str = "gpt-4o-realtime-preview"
-        self.seen_completions: set = set()
+        self._seen_completions: OrderedDict = OrderedDict()
+        self._seen_completions_max: int = 1000
         self.pending_usage: Optional[Dict[str, int]] = None
 
     def start_workflow_span(self, agent_name: str):
@@ -116,10 +119,10 @@ class RealtimeTracingState:
         self.starting_agent_name = agent_name
         self.workflow_span = self.tracer.start_span(
             "Realtime Session",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Realtime Session",
             },
         )
@@ -170,12 +173,13 @@ class RealtimeTracingState:
 
         span = self.tracer.start_span(
             f"{agent_name}.agent",
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.INTERNAL,
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
                 GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
             },
         )
         self.agent_spans[agent_name] = span
@@ -202,7 +206,8 @@ class RealtimeTracingState:
                 SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.TOOL.value,
                 GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
                 GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "execute_tool",
             },
         )
         self.tool_spans[tool_name] = span
@@ -214,8 +219,9 @@ class RealtimeTracingState:
         """End a tool span."""
         if tool_name in self.tool_spans:
             span = self.tool_spans[tool_name]
-            if output is not None:
-                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, str(output))
+            if output is not None and should_send_prompts():
+                result = output if isinstance(output, str) else json.dumps(output, default=str)
+                span.set_attribute(GenAIAttributes.GEN_AI_TOOL_CALL_RESULT, result)
             if error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))
             else:
@@ -239,7 +245,8 @@ class RealtimeTracingState:
             context=parent_context,
             attributes={
                 SpanAttributes.TRACELOOP_SPAN_KIND: "handoff",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai_agents",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "handoff",
                 GEN_AI_HANDOFF_FROM_AGENT: from_agent,
                 GEN_AI_HANDOFF_TO_AGENT: to_agent,
             },
@@ -258,8 +265,8 @@ class RealtimeTracingState:
             kind=SpanKind.CLIENT,
             context=parent_context,
             attributes={
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             },
         )
         self.audio_spans[span_key] = span
@@ -309,14 +316,20 @@ class RealtimeTracingState:
                 "total_tokens": getattr(usage, "total_tokens", 0) or 0,
             }
 
+    @property
+    def seen_completions(self):
+        return self._seen_completions
+
     def record_completion(self, role: str, content: str):
         """Record a completion message - creates an LLM span with prompt and completion."""
         if not content:
             return
-        content_hash = hash(content[:100])
-        if content_hash in self.seen_completions:
+        content_hash = hash(content)
+        if content_hash in self._seen_completions:
             return
-        self.seen_completions.add(content_hash)
+        self._seen_completions[content_hash] = None
+        if len(self._seen_completions) > self._seen_completions_max:
+            self._seen_completions.popitem(last=False)
         self.create_llm_span(content)
 
     def create_llm_span(self, completion_content: str):
@@ -351,11 +364,14 @@ class RealtimeTracingState:
             context=parent_context,
             start_time=start_time,
             attributes={
-                SpanAttributes.LLM_REQUEST_TYPE: "realtime",
-                SpanAttributes.LLM_SYSTEM: "openai",
-                GenAIAttributes.GEN_AI_SYSTEM: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "realtime",
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 GenAIAttributes.GEN_AI_REQUEST_MODEL: model_name_str,
             },
+        )
+
+        span.set_attribute(
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name_str,
         )
 
         if self.pending_usage:
@@ -369,26 +385,37 @@ class RealtimeTracingState:
                     GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
                     self.pending_usage["output_tokens"],
                 )
+            if self.pending_usage.get("total_tokens"):
+                span.set_attribute(
+                    SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
+                    self.pending_usage["total_tokens"],
+                )
             self.pending_usage = None
 
         if should_send_prompts():
             if prompt_content:
+                input_msg = {
+                    "role": prompt_role or "user",
+                    "parts": [{"type": "text", "content": prompt_content}],
+                }
                 span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", prompt_role or "user"
-                )
-                span.set_attribute(
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", prompt_content
+                    GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+                    json.dumps([input_msg]),
                 )
 
+            out_msg = {
+                "role": "assistant",
+                "parts": [{"type": "text", "content": completion_content}],
+                "finish_reason": "",
+            }
             span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role", "assistant"
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                json.dumps([out_msg]),
             )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content", completion_content
-            )
-            span.set_attribute(
-                f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason", "stop"
-            )
+
+        # Realtime API does not provide finish reasons; set top-level
+        # attribute only when a meaningful value is available (consistent
+        # with _hooks.py which omits the attribute when mapped value is None).
 
         span.set_status(Status(StatusCode.OK))
         span.end()

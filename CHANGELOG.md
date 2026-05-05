@@ -1,3 +1,37 @@
+## v0.60.0 (2026-04-19)
+
+### Feat
+
+- **llamaindex**: Instrumentation adjustment for Otel GenAI semconv support  (#3979)
+
+### Fix
+
+- **groq**: align instrumentation with OTel GenAI semconv v1.40.0 (#4010)
+
+## v0.59.2 (2026-04-16)
+
+### Fix
+
+- **traceloop-sdk**: avoid calling async json methods in JSONEncoder (#3968)
+
+## v0.59.1 (2026-04-15)
+
+### Fix
+
+- **langchain**: detach existing SpanHolder token before overwrite in _create_llm_span (#3958)
+
+## v0.59.0 (2026-04-13)
+
+### Feat
+
+- **traceloop-sdk**: Add guardrails (#3649)
+
+## v0.58.1 (2026-04-12)
+
+### Fix
+
+- **evaluators**: update route api (#3977)
+
 ## v0.58.0 (2026-04-09)
 
 ### Feat

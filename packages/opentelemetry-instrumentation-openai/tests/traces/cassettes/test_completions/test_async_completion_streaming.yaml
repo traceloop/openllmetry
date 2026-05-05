@@ -118,4 +118,334 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"model":"davinci-002","prompt":"Tell me a joke about opentelemetry","stream":true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '83'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-83a3d9a6a5e4e1f3af72d9d090057005-b820207b509d5a99-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: 'data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        or","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        tell","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        me","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        who","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        invented","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        that","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        thing","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        that","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        you","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        love","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        so","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        much","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":".","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        I","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        have","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTD5VjKMlkf25gOi8zIuDlJbWv7x","object":"text_completion","created":1774962855,"choices":[{"text":"
+        lots","index":0,"logprobs":null,"finish_reason":"length"}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9db09f372b47-LHR
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Tue, 31 Mar 2026 13:14:15 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - envoy-router-55bf876484-wl2m2
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci:2023-07-21-v2
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '815'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=R4zc0JpaBqvWJfaKv_V..FdJ78q7CmkFQaTaUIXNL6Q-1774962854.493467-1.0.1.1-EdVP0HAgpbYnItoylbKz_Ch.DCf5D1OwUeMoU45x0pEn9z5g8w9eL9HBiqitzZNK6TlpyNq1eYhMTVbby4TdIR_P.Pky1M6H80f5crH5922faPo6e3bWoNnvJ3lqt.wc;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:44:15 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249991'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 2ms
+      x-request-id:
+      - req_f38c72539139491aab9a2dafa24fe020
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"davinci-002","prompt":"Tell me a joke about opentelemetry","stream":true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '83'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-800c68cc580a8e4e502e52ee334b5a01-dec88cf8508f5af1-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: 'data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"-js","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"-op","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"entr","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"ace","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"\n\n","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"It","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"''s","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"
+        supposed","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"
+        to","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"
+        be","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"
+        fun","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"!","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"
+        :-","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":")\n\n","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"(T","index":0,"logprobs":null,"finish_reason":null}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: {"id":"cmpl-DPTNxTJenX62KX0SSuaFqZbIZs7Ua","object":"text_completion","created":1774963529,"choices":[{"text":"ry","index":0,"logprobs":null,"finish_reason":"length"}],"model":"davinci:2023-07-21-v2"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4fae2cef58949c-LHR
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Tue, 31 Mar 2026 13:25:30 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - envoy-router-canary-77b79df66d-bkbnm
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci:2023-07-21-v2
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '261'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=sZrWvUnFsFJCtONs33Aw.uoV9XnjkebcKkWc5Ad3lcc-1774963529.7496526-1.0.1.1-rLx41Bmr.o01HsvBnGQeaR8ILwWCROCBD3B._kv7qghaI7ayrGQ3aSeJ2A7ZsrAgOFGNhVYAGvcP7.JM2zjZQRyUVWlEnwibmfM.VGPt6CVW0TaHhAsh6pOqm0t2uk5H;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:55:30 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249991'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 2ms
+      x-request-id:
+      - req_fffc8ce6d5bb43df89011adbd1c68eb5
+    status:
+      code: 200
+      message: OK
 version: 1

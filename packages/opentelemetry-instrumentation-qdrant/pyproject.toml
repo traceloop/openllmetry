@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-qdrant"
-version = "0.58.0"
+version = "0.60.0"
 description = "OpenTelemetry Qdrant instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },

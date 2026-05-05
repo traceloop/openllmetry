@@ -190,6 +190,7 @@ class Experiment:
                                 eval_result = (
                                     await self._evaluator.run_experiment_evaluator(
                                         evaluator_slug=evaluator_slug,
+                                        experiment_slug=experiment_slug,
                                         evaluator_version=evaluator_version,
                                         evaluator_config=evaluator_config,
                                         task_id=task_id,
@@ -199,10 +200,11 @@ class Experiment:
                                         timeout_in_sec=120,
                                     )
                                 )
-                                eval_results[evaluator_slug] = eval_result.result
+                                eval_results[evaluator_slug] = eval_result.result.evaluator_result
                             else:
                                 await self._evaluator.trigger_experiment_evaluator(
                                     evaluator_slug=evaluator_slug,
+                                    experiment_slug=experiment_slug,
                                     evaluator_version=evaluator_version,
                                     evaluator_config=evaluator_config,
                                     task_id=task_id,
@@ -436,7 +438,7 @@ class Experiment:
             output=task_output,
         )
         response = self._http_client.post(
-            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/task",
+            f"/experiments/{experiment_slug}/runs/{experiment_run_id}/tasks",
             body.model_dump(mode="json"),
         )
         if response is None:
