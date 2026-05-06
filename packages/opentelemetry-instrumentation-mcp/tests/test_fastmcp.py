@@ -181,3 +181,26 @@ def test_extract_result_error_with_missing_content():
 
     assert is_error is True
     assert message is None
+
+
+def test_extract_result_error_when_not_error():
+    """Non-error results short-circuit before reading content."""
+    dict_explicit_false = {"isError": False, "content": [{"text": "ignored"}]}
+    is_error, message = InstrumentedStreamWriter._extract_result_error(dict_explicit_false)
+    assert is_error is False
+    assert message is None
+
+    dict_missing_flag = {"content": [{"text": "also ignored"}]}
+    is_error, message = InstrumentedStreamWriter._extract_result_error(dict_missing_flag)
+    assert is_error is False
+    assert message is None
+
+    ns_false = SimpleNamespace(isError=False, content=[SimpleNamespace(text="ignored")])
+    is_error, message = InstrumentedStreamWriter._extract_result_error(ns_false)
+    assert is_error is False
+    assert message is None
+
+    ns_no_flag = SimpleNamespace(content=[SimpleNamespace(text="ignored")])
+    is_error, message = InstrumentedStreamWriter._extract_result_error(ns_no_flag)
+    assert is_error is False
+    assert message is None
