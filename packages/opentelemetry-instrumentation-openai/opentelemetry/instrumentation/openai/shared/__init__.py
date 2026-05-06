@@ -346,6 +346,8 @@ def _get_vendor_from_url(base_url):
         return "gcp.vertex_ai"
     elif "openrouter.ai" in base_url:
         return "openrouter"
+    elif "atlascloud.ai" in base_url:
+        return "atlascloud"
 
     return "openai"
 
