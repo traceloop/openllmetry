@@ -2807,3 +2807,51 @@ async def test_async_anthropic_beta_message_stream_manager_legacy(
     assert len(logs) == 0, (
         "Assert that it doesn't emit logs when use_legacy_attributes is True"
     )
+
+
+def test_process_response_item_no_crash_on_out_of_order_delta():
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4050:
+    content_block_delta arriving before content_block_start (or with a missing key)
+    must not raise KeyError or IndexError — it should be silently skipped."""
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
+
+    # Simulate a content_block_delta for index 0, but events list is empty
+    # (content_block_start hasn't arrived yet)
+    item = MagicMock()
+    item.type = "content_block_delta"
+    item.index = 0
+    item.delta.type = "input_json_delta"
+    item.delta.partial_json = '{"key": "value"}'
+
+    complete_response = {"events": []}  # no entry at index 0 yet
+
+    # Before the fix this raised IndexError; after the fix it silently skips
+    _process_response_item(item, complete_response)
+
+    # Events list unchanged — nothing written, nothing crashed
+    assert complete_response["events"] == []
+
+
+def test_process_response_item_no_crash_on_missing_input_key():
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4050:
+    content_block_delta with input_json_delta on a non-tool_use block (no 'input' key)
+    must not raise KeyError."""
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
+
+    # A text block that was started without an 'input' key
+    item = MagicMock()
+    item.type = "content_block_delta"
+    item.index = 0
+    item.delta.type = "input_json_delta"
+    item.delta.partial_json = '{"key": "value"}'
+
+    complete_response = {"events": [{"index": 0, "text": "", "type": "text"}]}
+
+    # Before the fix this raised KeyError on ["input"]; after the fix it uses .get()
+    _process_response_item(item, complete_response)
+
+    assert complete_response["events"][0]["input"] == '{"key": "value"}'
