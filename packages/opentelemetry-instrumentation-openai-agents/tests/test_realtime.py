@@ -11,7 +11,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.trace import StatusCode
-from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -117,8 +116,7 @@ class TestRealtimeSpeechSpans:
         assert "openai.realtime.speech" in span_names
 
         speech_span = next(s for s in spans if s.name == "openai.realtime.speech")
-        assert speech_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
-        assert speech_span.attributes["gen_ai.system"] == "openai"
+        assert speech_span.attributes["gen_ai.provider.name"] == "openai"
         assert speech_span.attributes["gen_ai.operation.name"] == "speech"
         assert speech_span.status.status_code == StatusCode.OK
 
@@ -213,8 +211,7 @@ class TestRealtimeTranscriptionSpans:
         assert "openai.realtime.transcription" in span_names
 
         transcription_span = next(s for s in spans if s.name == "openai.realtime.transcription")
-        assert transcription_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
-        assert transcription_span.attributes["gen_ai.system"] == "openai"
+        assert transcription_span.attributes["gen_ai.provider.name"] == "openai"
         assert transcription_span.attributes["gen_ai.operation.name"] == "transcription"
 
     def test_transcription_span_captures_model_and_format(self, tracer_provider_and_exporter):
@@ -306,8 +303,7 @@ class TestRealtimeSpeechGroupSpans:
         assert "openai.realtime.speech_group" in span_names
 
         speech_group_span = next(s for s in spans if s.name == "openai.realtime.speech_group")
-        assert speech_group_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "realtime"
-        assert speech_group_span.attributes["gen_ai.system"] == "openai"
+        assert speech_group_span.attributes["gen_ai.provider.name"] == "openai"
         assert speech_group_span.attributes["gen_ai.operation.name"] == "speech_group"
         assert speech_group_span.status.status_code == StatusCode.OK
 
