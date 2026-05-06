@@ -339,12 +339,12 @@ class McpInstrumentor(BaseInstrumentor):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
                 )
-            # Handle errors
-            if hasattr(result, "isError") and result.isError:
-                if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+            # Handle errors (dict- and object-shaped CallToolResult)
+            is_error, error_message = InstrumentedStreamWriter._extract_result_error(
+                result
+            )
+            if is_error:
+                span.set_status(Status(StatusCode.ERROR, error_message))
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
@@ -555,7 +555,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
     @classmethod
     def _extract_result_error(cls, result: Any) -> Tuple[bool, Union[str, None]]:
-        is_error = cls._get_value(result, "isError", False) is True
+        is_error = bool(cls._get_value(result, "isError", False))
         if not is_error:
             return False, None
 
@@ -563,7 +563,16 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
         if not content:
             return True, None
 
-        first_item = content[0]
+        try:
+            if isinstance(content, (list, tuple)):
+                first_item = content[0]
+            elif isinstance(content, dict):
+                first_item = next(iter(content.values()))
+            else:
+                first_item = next(iter(content))
+        except (StopIteration, IndexError, TypeError, KeyError):
+            return True, None
+
         message = cls._get_value(first_item, "text")
         if message is None:
             return True, None
