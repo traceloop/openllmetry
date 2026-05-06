@@ -48,12 +48,14 @@ def _process_response_item(item, complete_response):
                 complete_response["events"][index]["input"] = """"""
     elif item.type == "content_block_delta":
         index = item.index
-        if item.delta.type == "thinking_delta":
-            complete_response["events"][index]["text"] += item.delta.thinking
-        elif item.delta.type == "text_delta":
-            complete_response["events"][index]["text"] += item.delta.text
-        elif item.delta.type == "input_json_delta":
-            complete_response["events"][index]["input"] += item.delta.partial_json
+        if index < len(complete_response.get("events", [])):
+            event = complete_response["events"][index]
+            if item.delta.type == "thinking_delta":
+                event["text"] = event.get("text", "") + item.delta.thinking
+            elif item.delta.type == "text_delta":
+                event["text"] = event.get("text", "") + item.delta.text
+            elif item.delta.type == "input_json_delta":
+                event["input"] = event.get("input", "") + item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
