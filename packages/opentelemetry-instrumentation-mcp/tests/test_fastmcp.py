@@ -1,3 +1,8 @@
+from types import SimpleNamespace
+
+from opentelemetry.instrumentation.mcp.instrumentation import InstrumentedStreamWriter
+
+
 async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
     from fastmcp import FastMCP, Client
 
@@ -146,3 +151,56 @@ async def test_fastmcp_instrumentor(span_exporter, tracer_provider) -> None:
         assert workflow_name == 'test-server.mcp', (
             f"Expected workflow name 'test-server.mcp' on tool span, got '{workflow_name}'"
         )
+
+
+def test_extract_result_error_with_dict_shape():
+    result = {"isError": True, "content": [{"text": "dict error"}]}
+
+    is_error, message = InstrumentedStreamWriter._extract_result_error(result)
+
+    assert is_error is True
+    assert message == "dict error"
+
+
+def test_extract_result_error_with_object_shape():
+    result = SimpleNamespace(
+        isError=True,
+        content=[SimpleNamespace(text="object error")],
+    )
+
+    is_error, message = InstrumentedStreamWriter._extract_result_error(result)
+
+    assert is_error is True
+    assert message == "object error"
+
+
+def test_extract_result_error_with_missing_content():
+    result = {"isError": True, "content": []}
+
+    is_error, message = InstrumentedStreamWriter._extract_result_error(result)
+
+    assert is_error is True
+    assert message is None
+
+
+def test_extract_result_error_when_not_error():
+    """Non-error results short-circuit before reading content."""
+    dict_explicit_false = {"isError": False, "content": [{"text": "ignored"}]}
+    is_error, message = InstrumentedStreamWriter._extract_result_error(dict_explicit_false)
+    assert is_error is False
+    assert message is None
+
+    dict_missing_flag = {"content": [{"text": "also ignored"}]}
+    is_error, message = InstrumentedStreamWriter._extract_result_error(dict_missing_flag)
+    assert is_error is False
+    assert message is None
+
+    ns_false = SimpleNamespace(isError=False, content=[SimpleNamespace(text="ignored")])
+    is_error, message = InstrumentedStreamWriter._extract_result_error(ns_false)
+    assert is_error is False
+    assert message is None
+
+    ns_no_flag = SimpleNamespace(content=[SimpleNamespace(text="ignored")])
+    is_error, message = InstrumentedStreamWriter._extract_result_error(ns_no_flag)
+    assert is_error is False
+    assert message is None
