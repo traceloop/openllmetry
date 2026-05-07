@@ -6,6 +6,33 @@
 
 This library allows tracing calls to any of Aleph Alpha's endpoints sent with the official [Aleph Alpha Client](https://github.com/Aleph-Alpha/aleph-alpha-client).
 
+## Quickstart
+
+If you want to see tracing in action as quickly as possible, start with a tiny completion script:
+
+```bash
+pip install opentelemetry-instrumentation-alephalpha aleph-alpha-client
+export AA_TOKEN=your_aleph_alpha_token
+```
+
+```python
+from aleph_alpha_client import Client, CompletionRequest, Prompt
+from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
+
+AlephAlphaInstrumentor().instrument()
+
+client = Client(token="your_aleph_alpha_token", host="https://api.aleph-alpha.com")
+request = CompletionRequest(
+    prompt=Prompt.from_text("Tell me a joke about OpenTelemetry."),
+    maximum_tokens=100,
+)
+
+response = client.complete(request, model="luminous-base")
+print(response.completions[0].completion)
+```
+
+That is enough to create a traced completion call. If you want the prompt and completion text in span attributes, keep the default `TRACELOOP_TRACE_CONTENT=true`. If you want to suppress content tracing, set it to `false`.
+
 ## Installation
 
 ```bash
@@ -19,6 +46,8 @@ from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
 AlephAlphaInstrumentor().instrument()
 ```
+
+For a full request example, use the snippet above with `aleph_alpha_client.Client.complete(...)`.
 
 ## Privacy
 
