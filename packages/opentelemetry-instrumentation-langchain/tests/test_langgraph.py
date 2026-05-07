@@ -530,15 +530,23 @@ def test_create_react_agent_span(instrument_legacy, span_exporter):
     from langgraph.prebuilt import create_react_agent
 
     class MockChatModel(BaseChatModel):
+        """Mock chat model for testing ToolNode handling."""
+
         @property
         def _llm_type(self) -> str:
+            """Return model type identifier."""
             return "mock"
 
         def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="Mock"))])
+            """Return a mock AI response."""
+            return ChatResult(
+                generations=[ChatGeneration(message=AIMessage(content="Mock"))]
+            )
 
         def bind_tools(self, tools, **kwargs):
+            """Return self without binding tools."""
             return self
+
 
     @tool
     def get_weather(city: str) -> str:
@@ -795,3 +803,66 @@ def test_middleware_super_call_succeeds_despite_outer_failure(instrument_legacy,
     # The span from super() call should succeed (before the ValueError is raised)
     middleware_span = middleware_spans[0]
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "success"
+
+
+def test_create_react_agent_with_toolnode(instrument_legacy, span_exporter):
+    """Test create_react_agent works when tools is a ToolNode (not a list).
+
+    Regression test for https://github.com/traceloop/openllmetry/issues/3841
+    ToolNode wraps tools but is not iterable, so iterating directly raises:
+        TypeError: 'ToolNode' object is not iterable
+    The fix uses tools_by_name.values() when tools has a tools_by_name attr.
+    """
+    import json
+
+    from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import AIMessage
+    from langchain_core.outputs import ChatGeneration, ChatResult
+    from langchain_core.tools import tool
+    from langgraph.prebuilt import ToolNode, create_react_agent
+
+    class MockChatModel(BaseChatModel):
+        @property
+        def _llm_type(self) -> str:
+            return "mock"
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(
+                generations=[ChatGeneration(message=AIMessage(content="Mock"))]
+            )
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+    @tool
+    def get_weather(city: str) -> str:
+        """Get weather for a city."""
+        return f"Weather in {city}"
+
+    @tool
+    def get_time(timezone: str) -> str:
+        """Get current time in a timezone."""
+        return f"Time in {timezone}"
+
+    tool_node = ToolNode([get_weather, get_time])
+
+    # This should NOT raise "TypeError: 'ToolNode' object is not iterable"
+    _ = create_react_agent(
+        model=MockChatModel(), tools=tool_node, name="ToolNodeAgent"
+    )
+
+    spans = span_exporter.get_finished_spans()
+    create_span = next(s for s in spans if "create_agent" in s.name)
+
+    assert (
+        create_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.CREATE_AGENT.value
+    )
+    assert create_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "ToolNodeAgent"
+    assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in create_span.attributes
+
+    tool_defs = json.loads(
+        create_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS]
+    )
+    tool_names = {td["name"] for td in tool_defs}
+    assert tool_names == {"get_weather", "get_time"}
