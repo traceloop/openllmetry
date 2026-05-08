@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-groq"
-version = "0.59.2"
+version = "0.60.0"
 description = "OpenTelemetry Groq instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -33,7 +33,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "groq>=0.18.0",
+  "groq>=1.2.0",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=0.23.7,<0.24.0",
   "pytest-recording>=0.13.1,<0.14.0",

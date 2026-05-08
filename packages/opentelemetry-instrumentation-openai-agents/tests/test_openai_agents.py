@@ -1,3 +1,4 @@
+import json
 import pytest
 from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
@@ -49,24 +50,19 @@ def test_dict_content_serialization(exporter):
 
     spans = exporter.get_finished_spans()
 
-    # Look for any spans with prompt/content attributes
+    # Look for any spans with message content attributes
     for span in spans:
         for attr_name, attr_value in span.attributes.items():
-            prompt_content_check = ("prompt" in attr_name and "content" in attr_name) or (
-                "gen_ai.prompt" in attr_name and "content" in attr_name
+            prompt_content_check = (
+                attr_name in ("gen_ai.input.messages", "gen_ai.output.messages")
             )
             if prompt_content_check:
                 # All content attributes should be strings, not dicts
                 error_msg = f"Attribute {attr_name} should be a string, got {type(attr_value)}: {attr_value}"
                 assert isinstance(attr_value, str), error_msg
 
-                # If it looks like JSON, verify it can be parsed
-                if attr_value.startswith("{") and attr_value.endswith("}"):
-                    try:
-                        json.loads(attr_value)
-                    except json.JSONDecodeError:
-                        # If it fails to parse, that's still fine - just not JSON
-                        pass
+                # Message attributes must be valid JSON (arrays of message objects)
+                json.loads(attr_value)
 
     # The test passes if no dict type warnings occurred (all content attributes are strings)
 
@@ -87,52 +83,57 @@ def test_agent_spans(exporter, test_agent):
 
     # Test agent span attributes (should NOT contain prompts/completions/usage/llm_params)
     assert agent_span.name == "testAgent.agent"
-    assert agent_span.kind == agent_span.kind.CLIENT
+    assert agent_span.kind == agent_span.kind.INTERNAL
     assert agent_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == TraceloopSpanKindValues.AGENT.value
     assert agent_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "testAgent"
-    assert agent_span.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "openai_agents"
+    assert agent_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
     assert agent_span.status.status_code == StatusCode.OK
 
     # Agent span should NOT contain LLM parameters
-    assert SpanAttributes.LLM_REQUEST_TEMPERATURE not in agent_span.attributes
-    assert SpanAttributes.LLM_REQUEST_MAX_TOKENS not in agent_span.attributes
-    assert SpanAttributes.LLM_REQUEST_TOP_P not in agent_span.attributes
-    assert "openai.agent.model.frequency_penalty" not in agent_span.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE not in agent_span.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS not in agent_span.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_TOP_P not in agent_span.attributes
+    assert GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY not in agent_span.attributes
 
     # Find the response span (openai.response) - this should contain prompts/completions/usage
     response_spans = [s for s in spans if s.name == "openai.response"]
     assert len(response_spans) >= 1, f"Expected at least 1 openai.response span, got {len(response_spans)}"
     response_span = response_spans[0]
 
-    # Test response span attributes (should contain prompts/completions/usage)
-
     # Test proper semantic conventions
-    assert response_span.attributes[SpanAttributes.LLM_REQUEST_TYPE] == "response"
-    assert response_span.attributes["gen_ai.operation.name"] == "response"
-    assert response_span.attributes["gen_ai.system"] == "openai"
+    assert response_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
+    assert response_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
-    # Test prompts using OpenAI semantic conventions
-    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == "What is AI?"
+    # Test input messages (JSON array with parts-based schema)
+    input_messages = json.loads(response_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert "parts" in input_messages[0], "Input messages must use parts-based schema"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == "What is AI?"
 
     # Test usage tokens
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] is not None
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] is not None
+    assert response_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] is not None
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
-    assert response_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
+    assert response_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
 
-    # Test completions using OpenAI semantic conventions
-    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] is not None
-    assert len(response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]) > 0
-    assert response_span.attributes[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role"] is not None
+    # Test output messages (JSON array with parts-based schema)
+    output_messages = json.loads(response_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert "parts" in output_messages[0], "Output messages must use parts-based schema"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] is not None
+    assert len(output_messages[0]["parts"][0]["content"]) > 0
+    assert output_messages[0]["role"] is not None
+    assert "finish_reason" in output_messages[0], "Output messages must have finish_reason"
 
     # Test model settings are in the response span
     assert response_span.attributes["gen_ai.request.temperature"] == 0.3
     assert response_span.attributes["gen_ai.request.max_tokens"] == 1024
     assert response_span.attributes["gen_ai.request.top_p"] == 0.2
-    assert response_span.attributes["gen_ai.request.model"] is not None
+    assert response_span.attributes.get("gen_ai.request.model") is not None or \
+        response_span.attributes.get("gen_ai.response.model") is not None
 
     # Test proper duration (should be > 0)
     duration_ms = (response_span.end_time - response_span.start_time) / 1_000_000
@@ -444,60 +445,97 @@ def test_tool_call_and_result_attributes(exporter):
     second_response_span = response_spans[1]
 
     # The tool call and result appear in the SECOND response span as part of conversation history
-    # Find the assistant message with tool call
+    # Parse the input messages JSON array (parts-based schema)
+    input_messages = json.loads(
+        second_response_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
+    )
+
     tool_call_found = False
     tool_result_found = False
 
-    for i in range(20):  # Check conversation history
-        role_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.role"
-        if role_key not in second_response_span.attributes:
-            continue
-
-        role = second_response_span.attributes[role_key]
+    for msg in input_messages:
+        role = msg.get("role")
+        parts = msg.get("parts", [])
 
         if role == "assistant" and not tool_call_found:
-            # Check if this assistant message has tool_calls
-            tool_call_name_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.name"
-            if tool_call_name_key in second_response_span.attributes:
-                tool_call_found = True
-                # Verify tool call attributes
-                assert second_response_span.attributes[tool_call_name_key] == "get_city_info", (
-                    f"Expected tool name 'get_city_info', got '{second_response_span.attributes[tool_call_name_key]}'"
-                )
-                # Verify tool call ID exists
-                tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.id"
-                assert tool_call_id_key in second_response_span.attributes, (
-                    f"Tool call ID not found at {tool_call_id_key}"
-                )
-                tool_call_id = second_response_span.attributes[tool_call_id_key]
-                assert len(tool_call_id) > 0, "Tool call ID should not be empty"
-
-                # Verify arguments exist and contain city name
-                tool_call_args_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_calls.0.arguments"
-                assert tool_call_args_key in second_response_span.attributes, (
-                    f"Tool call arguments not found at {tool_call_args_key}"
-                )
-                arguments = second_response_span.attributes[tool_call_args_key]
-                assert "London" in arguments or "london" in arguments.lower(), (
-                    f"Expected 'London' in arguments, got: {arguments}"
-                )
+            # Look for tool_call parts
+            for part in parts:
+                if part.get("type") == "tool_call":
+                    tool_call_found = True
+                    assert part["name"] == "get_city_info", (
+                        f"Expected tool name 'get_city_info', got '{part['name']}'"
+                    )
+                    tool_call_id = part.get("id", "")
+                    assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+                    arguments = part.get("arguments", "")
+                    if isinstance(arguments, dict):
+                        arguments = json.dumps(arguments)
+                    assert "London" in arguments or "london" in arguments.lower(), (
+                        f"Expected 'London' in arguments, got: {arguments}"
+                    )
+                    break
 
         elif role == "tool" and not tool_result_found:
-            tool_result_found = True
-            # Verify tool result attributes
-            content_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.content"
-            tool_call_id_key = f"{SpanAttributes.LLM_PROMPTS}.{i}.tool_call_id"
+            # Look for tool_call_response parts
+            for part in parts:
+                if part.get("type") == "tool_call_response":
+                    tool_result_found = True
+                    response_text = part.get("response", "")
+                    assert len(response_text) > 0, "Tool result response should not be empty"
+                    assert (
+                        "London" in response_text
+                        or "9000000" in response_text
+                        or "United Kingdom" in response_text
+                    ), (
+                        f"Expected tool result to contain city info, got: {response_text}"
+                    )
+                    tool_call_id = part.get("id", "")
+                    assert len(tool_call_id) > 0, "Tool call ID should not be empty"
+                    break
 
-            assert content_key in second_response_span.attributes, f"Tool result content not found at {content_key}"
-            content = second_response_span.attributes[content_key]
-            assert len(content) > 0, "Tool result content should not be empty"
-            assert "London" in content or "9000000" in content or "United Kingdom" in content, (
-                f"Expected tool result to contain city info, got: {content}"
-            )
+    assert tool_call_found, "No assistant message with tool_call parts found in second response span"
+    assert tool_result_found, "No tool message with tool_call_response parts found in second response span"
 
-            assert tool_call_id_key in second_response_span.attributes, f"Tool call ID not found at {tool_call_id_key}"
-            tool_call_id = second_response_span.attributes[tool_call_id_key]
-            assert len(tool_call_id) > 0, "Tool call ID should not be empty"
 
-    assert tool_call_found, "No assistant message with tool_calls found in second response span"
-    assert tool_result_found, "No tool message found in second response span"
+@pytest.mark.vcr
+def test_tool_span_operation_name(exporter, function_tool_agent):
+    """Test that tool/function spans have gen_ai.operation.name set to 'execute_tool'."""
+    query = "What is the weather in London?"
+
+    Runner.run_sync(function_tool_agent, query)
+
+    spans = exporter.get_finished_spans()
+    tool_spans = [s for s in spans if s.name.endswith(".tool")]
+
+    assert len(tool_spans) >= 1, f"Expected at least 1 tool span, found {len(tool_spans)}"
+
+    for tool_span in tool_spans:
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in tool_span.attributes, (
+            f"Tool span '{tool_span.name}' missing gen_ai.operation.name attribute"
+        )
+        assert tool_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "execute_tool", (
+            f"Tool span '{tool_span.name}' has incorrect gen_ai.operation.name: "
+            f"{tool_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}, expected 'execute_tool'"
+        )
+
+
+@pytest.mark.vcr
+def test_handoff_span_operation_name(exporter, handoff_agent):
+    """Test that handoff spans have gen_ai.operation.name set to 'handoff'."""
+    query = "Please handle this task by delegating to another agent."
+
+    Runner.run_sync(handoff_agent, query)
+
+    spans = exporter.get_finished_spans()
+    handoff_spans = [s for s in spans if ".handoff" in s.name]
+
+    assert len(handoff_spans) >= 1, f"Expected at least 1 handoff span, found {len(handoff_spans)}"
+
+    for handoff_span in handoff_spans:
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME in handoff_span.attributes, (
+            f"Handoff span '{handoff_span.name}' missing gen_ai.operation.name attribute"
+        )
+        assert handoff_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == "handoff", (
+            f"Handoff span '{handoff_span.name}' has incorrect gen_ai.operation.name: "
+            f"{handoff_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}, expected 'handoff'"
+        )

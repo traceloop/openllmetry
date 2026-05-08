@@ -377,6 +377,45 @@ class TestMetersGenAiNamespace:
         assert Meters.LLM_OPERATION_DURATION == "gen_ai.client.operation.duration"
 
 
+# ---------------------------------------------------------------------------
+# Upstream OTel GenAI constants — message & tool attributes
+# ---------------------------------------------------------------------------
+
+
+class TestUpstreamGenAIMessageAttributes:
+    """Verify upstream OTel constants for messages/tools are importable and correct."""
+
+    def test_gen_ai_input_messages(self):
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        assert GenAIAttributes.GEN_AI_INPUT_MESSAGES == "gen_ai.input.messages"
+
+    def test_gen_ai_output_messages(self):
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES == "gen_ai.output.messages"
+
+    def test_gen_ai_tool_definitions(self):
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS == "gen_ai.tool.definitions"
+
+    def test_gen_ai_provider_name(self):
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        assert GenAIAttributes.GEN_AI_PROVIDER_NAME == "gen_ai.provider.name"
+
+    def test_gen_ai_operation_name(self):
+        from opentelemetry.semconv._incubating.attributes import (
+            gen_ai_attributes as GenAIAttributes,
+        )
+        assert GenAIAttributes.GEN_AI_OPERATION_NAME == "gen_ai.operation.name"
+
+
 class TestMetersVendorNamespacesKept:
     """
     Vendor-qualified metric names (llm.openai.*, llm.anthropic.*, llm.watsonx.*)
