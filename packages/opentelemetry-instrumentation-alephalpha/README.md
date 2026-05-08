@@ -16,12 +16,14 @@ export AA_TOKEN=your_aleph_alpha_token
 ```
 
 ```python
+import os
+
 from aleph_alpha_client import Client, CompletionRequest, Prompt
 from opentelemetry.instrumentation.alephalpha import AlephAlphaInstrumentor
 
 AlephAlphaInstrumentor().instrument()
 
-client = Client(token="your_aleph_alpha_token", host="https://api.aleph-alpha.com")
+client = Client(token=os.environ["AA_TOKEN"], host="https://api.aleph-alpha.com")
 request = CompletionRequest(
     prompt=Prompt.from_text("Tell me a joke about OpenTelemetry."),
     maximum_tokens=100,
