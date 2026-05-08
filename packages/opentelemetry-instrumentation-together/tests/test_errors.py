@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from opentelemetry.trace.status import StatusCode
 
 from opentelemetry.instrumentation.together import _wrap
 
@@ -22,7 +23,9 @@ def test_chat_api_error_marks_span_failed():
     with pytest.raises(RuntimeError, match="401 Unauthorized"):
         wrapper(wrapped, None, [], {"model": "test-model"})
 
-    span.record_exception.assert_called_once()
+    exc_arg = span.record_exception.call_args.args[0]
+    assert isinstance(exc_arg, RuntimeError)
+    assert "401 Unauthorized" in str(exc_arg)
     span.set_status.assert_called_once()
     span.end.assert_called_once()
 
@@ -35,5 +38,6 @@ def test_chat_api_error_records_exception_message():
         wrapper(wrapped, None, [], {"model": "test-model"})
 
     status_arg = span.set_status.call_args.args[0]
-    assert status_arg.status_code.name == "ERROR"
+    assert status_arg.status_code == StatusCode.ERROR
     assert status_arg.description == "bad request"
+    span.end.assert_called_once()
