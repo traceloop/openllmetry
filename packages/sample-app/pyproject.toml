@@ -49,6 +49,7 @@ dependencies = [
   "openai-agents>=0.2.7,<0.3.0",
   "fastmcp>=2.12.3,<3",
   "agno>=2.4.0,<3",
+  "dspy>=2.0.0,<3",
   "voyageai>=0.3.7",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-haystack",
@@ -60,6 +61,7 @@ dependencies = [
   "opentelemetry-instrumentation-crewai",
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
+  "opentelemetry-instrumentation-dspy",
   "opentelemetry-instrumentation-anthropic",
   "opentelemetry-instrumentation-voyageai",
   "traceloop-sdk",
@@ -79,6 +81,7 @@ opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-
 opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentation-crewai", editable = true }
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
+opentelemetry-instrumentation-dspy = { path = "../opentelemetry-instrumentation-dspy", editable = true }
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", editable = true }
 opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
 traceloop-sdk = { path = "../traceloop-sdk", editable = true }
