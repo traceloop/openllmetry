@@ -530,7 +530,7 @@
 - **openai**: record exception as span events as well (#3067)
 - **openai**: add request schema attribute (#3065)
 - **mcp**: add support for error_type in mcp instrumentation (#3050)
-- google gemini insturmentation (#3055)
+- google gemini instrumentation (#3055)
 - **openai**: completions.parse out of beta, azure remove double-slash (#3051)
 
 ## v0.40.14 (2025-06-24)
