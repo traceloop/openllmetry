@@ -352,7 +352,6 @@ async def run_recipe_query(query: str) -> List[str]:
     print("=" * 80)
     print(f"Query: {query}")
     print("=" * 80)
-    ctx = RecipeContext(conversation_history=[])
     composer = MealPlanComposerAgent()
     researcher = RecipeResearcherAgent(composer=composer)
     print("\nAgent Response: ", end="", flush=True)
