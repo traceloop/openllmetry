@@ -26,7 +26,13 @@ from .utils import (
     GEN_AI_HANDOFF_TO_AGENT,
     GEN_AI_HANDOFF_PARENT_AGENT,
     OPENAI_AGENT_HANDOFFS,
+    JSONEncoder,
 )
+
+
+def _safe_json(value) -> str:
+    """JSON-serialize tool input/output, handling Pydantic, dataclasses, etc."""
+    return json.dumps(value, cls=JSONEncoder)
 
 try:
     # Attempt to import once, so that we aren't looking for it repeatedly.
@@ -751,51 +757,55 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             span_data = getattr(span, "span_data", None)
             trace_content = should_send_prompts()
 
-            # The OpenAI Agents SDK only assigns ``to_agent`` on a HandoffSpanData
-            # *after* the handoff has been invoked, which happens between
-            # ``on_span_start`` and ``on_span_end``. Re-read the field here so
-            # the OTel span name and the ``gen_ai.handoff.to_agent`` attribute
-            # both reflect the resolved target agent.
-            if isinstance(span_data, HandoffSpanData):
-                from_agent = getattr(span_data, "from_agent", None) or "unknown"
-                to_agent = getattr(span_data, "to_agent", None)
-                if to_agent:
-                    otel_span.update_name(f"{from_agent} → {to_agent}.handoff")
-                    otel_span.set_attribute(GEN_AI_HANDOFF_TO_AGENT, to_agent)
-                    trace_id = getattr(span, "trace_id", None)
-                    if trace_id and from_agent != "unknown":
-                        handoff_key = f"{to_agent}:{trace_id}"
-                        self._reverse_handoffs_dict[handoff_key] = from_agent
-                        if len(self._reverse_handoffs_dict) > 1000:
-                            self._reverse_handoffs_dict.popitem(last=False)
+            try:
+                # The OpenAI Agents SDK only assigns ``to_agent`` on a HandoffSpanData
+                # *after* the handoff has been invoked, which happens between
+                # ``on_span_start`` and ``on_span_end``. Re-read the field here so
+                # the OTel span name and the ``gen_ai.handoff.to_agent`` attribute
+                # both reflect the resolved target agent.
+                if isinstance(span_data, HandoffSpanData):
+                    from_agent = getattr(span_data, "from_agent", None) or "unknown"
+                    to_agent = getattr(span_data, "to_agent", None)
+                    if to_agent:
+                        otel_span.update_name(f"{from_agent} → {to_agent}.handoff")
+                        otel_span.set_attribute(GEN_AI_HANDOFF_TO_AGENT, to_agent)
+                        trace_id = getattr(span, "trace_id", None)
+                        if trace_id and from_agent != "unknown":
+                            handoff_key = f"{to_agent}:{trace_id}"
+                            self._reverse_handoffs_dict[handoff_key] = from_agent
+                            if len(self._reverse_handoffs_dict) > 1000:
+                                self._reverse_handoffs_dict.popitem(last=False)
 
-            if span_data and (
-                type(span_data).__name__ == "ResponseSpanData"
-                or isinstance(span_data, GenerationSpanData)
-            ):
-                self._end_generation_span(otel_span, span_data, trace_content)
+                if span_data and (
+                    type(span_data).__name__ == "ResponseSpanData"
+                    or isinstance(span_data, GenerationSpanData)
+                ):
+                    self._end_generation_span(otel_span, span_data, trace_content)
 
-            elif span_data and isinstance(span_data, FunctionSpanData):
-                self._end_function_span(otel_span, span_data, trace_content)
+                elif span_data and isinstance(span_data, FunctionSpanData):
+                    self._end_function_span(otel_span, span_data, trace_content)
 
-            elif trace_content and span_data and _has_realtime_spans:
-                if SpeechSpanData and isinstance(span_data, SpeechSpanData):
-                    self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
-                elif TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
-                    self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
-                elif SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
-                    self._set_realtime_io_attributes(otel_span, span_data, has_output=False)
+                elif trace_content and span_data and _has_realtime_spans:
+                    if SpeechSpanData and isinstance(span_data, SpeechSpanData):
+                        self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
+                    elif TranscriptionSpanData and isinstance(span_data, TranscriptionSpanData):
+                        self._set_realtime_io_attributes(otel_span, span_data, has_output=True)
+                    elif SpeechGroupSpanData and isinstance(span_data, SpeechGroupSpanData):
+                        self._set_realtime_io_attributes(otel_span, span_data, has_output=False)
 
-            if hasattr(span, "error") and span.error:
-                otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
-            else:
-                otel_span.set_status(Status(StatusCode.OK))
-
-            otel_span.end()
-            del self._otel_spans[span]
-            if span in self._span_contexts:
-                context.detach(self._span_contexts[span])
-                del self._span_contexts[span]
+                if hasattr(span, "error") and span.error:
+                    otel_span.set_status(Status(StatusCode.ERROR, str(span.error)))
+                else:
+                    otel_span.set_status(Status(StatusCode.OK))
+            finally:
+                # Always end the OTel span and clean up state, even if attribute
+                # extraction above raised — otherwise the span is created but
+                # never exported, which manifests as missing tool/LLM spans.
+                otel_span.end()
+                del self._otel_spans[span]
+                if span in self._span_contexts:
+                    context.detach(self._span_contexts[span])
+                    del self._span_contexts[span]
 
     # ------------------------------------------------------------------
     # on_span_start handlers (extracted from the former if-elif chain)
@@ -990,14 +1000,14 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if tool_input is not None:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_TOOL_CALL_ARGUMENTS,
-                tool_input if isinstance(tool_input, str) else json.dumps(tool_input),
+                tool_input if isinstance(tool_input, str) else _safe_json(tool_input),
             )
 
         tool_output = getattr(span_data, "output", None)
         if tool_output is not None:
             otel_span.set_attribute(
                 GenAIAttributes.GEN_AI_TOOL_CALL_RESULT,
-                tool_output if isinstance(tool_output, str) else json.dumps(tool_output),
+                tool_output if isinstance(tool_output, str) else _safe_json(tool_output),
             )
 
     def _set_realtime_io_attributes(self, otel_span, span_data, has_output=True):
