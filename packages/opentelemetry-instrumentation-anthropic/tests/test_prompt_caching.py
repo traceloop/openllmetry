@@ -127,7 +127,7 @@ def test_anthropic_prompt_caching_legacy(
     assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
     assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -191,7 +191,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -353,7 +353,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1167, 187, 202, 1163)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 187, 202, 1163)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -460,7 +460,7 @@ async def test_anthropic_prompt_caching_async_legacy(
     assert json.loads(cache_creation_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
     assert json.loads(cache_read_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])[-1]["role"] == "assistant"
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -525,7 +525,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
     cache_creation_span = spans[0]
     cache_read_span = spans[1]
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()
@@ -698,7 +698,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
         == cache_read_span.attributes["gen_ai.usage.cache_read.input_tokens"]
     )
 
-    _verify_caching_attributes(cache_creation_span, cache_read_span, 1169, 207, 224, 1165)
+    _verify_caching_attributes(cache_creation_span, cache_read_span, 4, 207, 224, 1165)
 
     # verify metrics
     metrics_data = reader.get_metrics_data()

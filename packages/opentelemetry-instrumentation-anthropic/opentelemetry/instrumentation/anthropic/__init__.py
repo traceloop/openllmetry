@@ -229,7 +229,7 @@ async def _aset_token_usage(
         cache_read_tokens = 0
         cache_creation_tokens = 0
 
-    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+    input_tokens = prompt_tokens
 
     if token_histogram and isinstance(input_tokens, int) and input_tokens >= 0:
         token_histogram.record(
@@ -345,7 +345,7 @@ def _set_token_usage(
         cache_read_tokens = 0
         cache_creation_tokens = 0
 
-    input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
+    input_tokens = prompt_tokens
 
     if token_histogram and isinstance(input_tokens, int) and input_tokens >= 0:
         token_histogram.record(
