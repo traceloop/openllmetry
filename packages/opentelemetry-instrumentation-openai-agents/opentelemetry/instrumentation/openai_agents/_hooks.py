@@ -741,7 +741,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     @dont_throw
     def on_span_end(self, span):
         """Called when a span ends - finish OpenTelemetry span."""
-        from agents import FunctionSpanData, GenerationSpanData
+        from agents import FunctionSpanData, GenerationSpanData, HandoffSpanData
 
         if not span or not hasattr(span, "span_data"):
             return
