@@ -23,7 +23,7 @@ def messages_to_otel_input(messages) -> str | None:
 def response_to_otel_output(result) -> str | None:
     """Convert litellm ModelResponse to OTel gen_ai.output.messages JSON."""
     try:
-        choices = result.get("choices") if hasattr(result, "get") else getattr(result, "choices", None)
+        choices = _get(result, "choices")
         if not choices:
             return None
         out = []

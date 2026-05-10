@@ -143,6 +143,7 @@ def test_provider_inference_otel_spec_compliant(span_exporter, model, expected_p
     assert spans[-1].attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == expected_provider
 
 
+@pytest.mark.asyncio
 async def test_lm_aforward_chat_span(span_exporter):
     lm = dspy.LM("openai/gpt-4o", cache=False)
     fake = _fake_litellm_result()

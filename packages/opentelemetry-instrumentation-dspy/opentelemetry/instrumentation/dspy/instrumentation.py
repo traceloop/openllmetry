@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from typing import Collection
@@ -22,6 +23,8 @@ from .utils import (
     response_to_otel_output,
     set_span_attribute,
 )
+
+logger = logging.getLogger(__name__)
 
 _instruments = ("dspy >= 2.5.0",)
 
@@ -216,11 +219,11 @@ async def wrap_lm_aforward(tracer: Tracer, duration_histogram: Histogram, token_
 
 def _safe_set_lm_span_output(span, result, model, provider,
                              duration_histogram, token_histogram, start):
-    """Telemetry must never break the user's call — swallow post-call errors."""
+    """Telemetry must never break the user's call; swallow post-call errors."""
     try:
         _set_lm_span_output(span, result, model, provider, duration_histogram, token_histogram, start)
     except Exception:
-        pass
+        logger.debug("Failed to set LM span output", exc_info=True)
 
 
 @with_predict_tracer_wrapper
