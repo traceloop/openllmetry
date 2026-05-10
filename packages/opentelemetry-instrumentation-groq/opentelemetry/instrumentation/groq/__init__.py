@@ -39,6 +39,7 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
 from groq._streaming import AsyncStream, Stream
@@ -301,8 +302,10 @@ def _wrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise e
 
@@ -388,8 +391,10 @@ async def _awrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
         if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise e
 

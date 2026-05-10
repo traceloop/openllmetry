@@ -122,7 +122,13 @@ def _wrap(
     )
     _handle_input(span, event_logger, llm_request_type, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         _handle_response(span, event_logger, llm_request_type, response)
