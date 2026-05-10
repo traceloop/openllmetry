@@ -1567,6 +1567,153 @@ def test_event_attributes_uses_provider_name_not_system():
 
 
 # ---------------------------------------------------------------------------
+# Regression: streaming must set token usage from API data even when
+# enrich_token_usage is False (the default). Fixes #3949.
+# ---------------------------------------------------------------------------
+
+def _make_anthropic_async_stream(span, duration_histogram=None, event_logger=None):
+    """Helper to create an AnthropicAsyncStream for unit testing."""
+    from opentelemetry.instrumentation.anthropic.streaming import AnthropicAsyncStream
+
+    wrapped = MagicMock()
+    wrapped.__aiter__ = MagicMock(return_value=iter([]))
+    wrapped.__anext__ = MagicMock(side_effect=StopAsyncIteration)
+
+    stream = AnthropicAsyncStream(
+        span=span,
+        response=wrapped,
+        instance=MagicMock(),
+        start_time=0,
+        duration_histogram=duration_histogram,
+        event_logger=event_logger,
+        kwargs={},
+    )
+    return stream
+
+
+def test_streaming_sets_token_usage_from_api_without_enrich_flag():
+    """When enrich_token_usage is False but the stream carries real usage
+    data from the API, the span must still get gen_ai.usage.input_tokens
+    and gen_ai.usage.output_tokens set.  Previously, the entire token-usage
+    block was gated behind `if Config.enrich_token_usage`, so with the
+    default (False) no token attributes were recorded on streaming spans."""
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    stream = _make_anthropic_stream(span)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Blue", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-haiku-4-5-20251001",
+        "usage": {
+            "input_tokens": 343,
+            "output_tokens": 5,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        },
+        "id": "msg_streaming_test",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._handle_completion()
+
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 343, \
+        f"Expected input_tokens=343; got {span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)}"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 5, \
+        f"Expected output_tokens=5; got {span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)}"
+    assert stream._instrumentation_completed is True
+    span.end.assert_called_once()
+
+
+def test_streaming_skips_token_usage_without_api_data_and_enrich_disabled():
+    """When enrich_token_usage is False AND the stream has no usage data,
+    no token attributes should be set (no fallback estimation)."""
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    stream = _make_anthropic_stream(span)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Hello", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-3-opus-20240229",
+        "usage": {},
+        "id": "msg_no_usage",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._handle_completion()
+
+    assert GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS not in span.attributes, \
+        "Token attributes should not be set when no API usage and enrich disabled"
+    assert stream._instrumentation_completed is True
+    span.end.assert_called_once()
+
+
+def test_async_streaming_sets_token_usage_from_api_without_enrich_flag():
+    """Async counterpart: AnthropicAsyncStream._complete_instrumentation must
+    set token attributes from API usage even when enrich_token_usage is False."""
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    stream = _make_anthropic_async_stream(span)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Blue", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-haiku-4-5-20251001",
+        "usage": {
+            "input_tokens": 343,
+            "output_tokens": 5,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        },
+        "id": "msg_async_streaming_test",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._complete_instrumentation()
+
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 343, \
+        f"Expected input_tokens=343; got {span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)}"
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 5, \
+        f"Expected output_tokens=5; got {span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS)}"
+    assert stream._instrumentation_completed is True
+    span.end.assert_called_once()
+
+
+def test_async_streaming_skips_token_usage_without_api_data_and_enrich_disabled():
+    """Async counterpart: no token attributes when usage is empty and
+    enrich_token_usage is False."""
+    from unittest.mock import patch
+
+    span = make_span()
+    span.is_recording.return_value = True
+    span.end = MagicMock()
+
+    stream = _make_anthropic_async_stream(span)
+    stream._complete_response = {
+        "events": [{"type": "text", "text": "Hello", "index": 0, "finish_reason": "end_turn"}],
+        "model": "claude-3-opus-20240229",
+        "usage": {},
+        "id": "msg_async_no_usage",
+    }
+
+    with patch("opentelemetry.instrumentation.anthropic.streaming.Config") as mock_config:
+        mock_config.enrich_token_usage = False
+        stream._complete_instrumentation()
+
+    assert GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS not in span.attributes, \
+        "Token attributes should not be set when no API usage and enrich disabled"
+    assert stream._instrumentation_completed is True
+    span.end.assert_called_once()
 # _map_finish_reason must return "" for falsy input, mapped value for known
 # reasons, and the original string as-is for unknown reasons.
 # ---------------------------------------------------------------------------
