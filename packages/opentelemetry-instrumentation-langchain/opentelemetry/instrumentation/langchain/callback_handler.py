@@ -119,10 +119,12 @@ def _sanitize_metadata_value(value: Any) -> Any:
 
 
 def valid_role(role: str) -> bool:
+    """Return whether a role is valid for emitted GenAI message events."""
     return role in ["user", "assistant", "system", "tool"]
 
 
 def get_message_role(message: Type[BaseMessage]) -> str:
+    """Map a LangChain message object or chunk to a GenAI semantic role."""
     if isinstance(message, (SystemMessage, SystemMessageChunk)):
         return "system"
     elif isinstance(message, (HumanMessage, HumanMessageChunk)):
@@ -138,6 +140,7 @@ def get_message_role(message: Type[BaseMessage]) -> str:
 def _extract_tool_call_data(
     tool_calls: Optional[List[dict[str, Any]]],
 ) -> Union[List[ToolCall], None]:
+    """Normalize LangChain tool call payloads into ToolCall event objects."""
     if tool_calls is None:
         return tool_calls
 
@@ -165,6 +168,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def __init__(
         self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
     ) -> None:
+        """Initialize the callback handler state used to track active LangChain spans."""
         super().__init__()
         self.tracer = tracer
         self.duration_histogram = duration_histogram
@@ -193,18 +197,34 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return "unknown"
 
     def _get_span(self, run_id: UUID) -> Span:
+        """Return the active span currently registered for the given run id."""
         return self.spans[run_id].span
 
+    def _detach_holder_contexts(self, span_holder: SpanHolder | None) -> None:
+        """Detach any tracked context tokens stored on a span holder."""
+        if span_holder is None:
+            return
+
+        if span_holder.token:
+            self._safe_detach_context(span_holder.token)
+            span_holder.token = None
+        if span_holder.association_properties_token:
+            self._safe_detach_context(span_holder.association_properties_token)
+            span_holder.association_properties_token = None
+
     def _end_span(self, span: Span, run_id: UUID) -> None:
-        for child_id in self.spans[run_id].children:
+        """End a span and clean up any tracked context tokens for it and its children."""
+        for child_id in list(self.spans[run_id].children):
             if child_id in self.spans:
-                child_span = self.spans[child_id].span
+                child_holder = self.spans[child_id]
+                child_span = child_holder.span
+                self._detach_holder_contexts(child_holder)
                 if child_span.end_time is None:  # avoid warning on ended spans
                     child_span.end()
-        span.end()
-        token = self.spans[run_id].token
-        if token:
-            self._safe_detach_context(token)
+                del self.spans[child_id]
+        self._detach_holder_contexts(self.spans[run_id])
+        if span.end_time is None:  # avoid warning on ended spans
+            span.end()
 
         del self.spans[run_id]
 
@@ -266,6 +286,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create and register a span holder, replacing any existing holder for the run id."""
+        old_holder = self.spans.get(run_id)
+        if old_holder is not None:
+            self._detach_holder_contexts(old_holder)
+
+        association_properties_token = None
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -277,7 +303,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if v is not None
             }
             try:
-                context_api.attach(
+                association_properties_token = context_api.attach(
                     context_api.set_value(
                         "association_properties",
                         {**current_association_properties, **sanitized_metadata},
@@ -330,7 +356,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, entity_name, entity_path
+            span,
+            token,
+            None,
+            [],
+            workflow_name,
+            entity_name,
+            entity_path,
+            association_properties_token=association_properties_token,
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -350,6 +383,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create a workflow, task, or tool span with LangChain and GenAI attributes."""
         # Determine span type
         is_agent = kind in (
             TraceloopSpanKindValues.WORKFLOW,
@@ -435,19 +469,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         metadata: Optional[dict[str, Any]] = None,
         serialized: Optional[dict[str, Any]] = None,
     ) -> Span:
+        """Create an LLM client span and swap span attachment for suppression context."""
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
-        # Capture and detach the old holder BEFORE _create_span runs.
-        # _create_span unconditionally overwrites self.spans[run_id], which
-        # would make the old SpanHolder (and its suppression token) unreachable.
-        # Detaching here, before the overwrite, ensures we clean up the original
-        # suppression token from a duplicate run_id and that the new suppression
-        # is layered on top of the clean baseline context.
-        old_holder = self.spans.get(run_id)
-        if old_holder is not None and old_holder.token is not None:
-            self._safe_detach_context(old_holder.token)
-
+        # _create_span is responsible for detaching any existing SpanHolder for
+        # this run_id via _detach_holder_contexts before it overwrites
+        # self.spans[run_id]. Callers should rely on _create_span to manage
+        # existing suppression tokens and other context cleanup for duplicate run_id
+        # lifecycles.
         span = self._create_span(
             run_id,
             parent_run_id,
@@ -492,7 +522,16 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             token = None
 
         self.spans[run_id] = SpanHolder(
-            span, token, None, [], workflow_name, None, entity_path
+            span,
+            token,
+            None,
+            [],
+            workflow_name,
+            None,
+            entity_path,
+            association_properties_token=(
+                current_holder.association_properties_token if current_holder else None
+            ),
         )
 
         return span
@@ -700,6 +739,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         parent_run_id: Union[UUID, None] = None,
         **kwargs: Any,
     ):
+        """Finalize an LLM span with response metadata, usage, and output content."""
         if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
             return
 
@@ -981,11 +1021,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self._end_span(span, run_id)
 
     def get_parent_span(self, parent_run_id: Optional[str] = None):
+        """Return the tracked parent span holder for a run id, if it exists."""
         if parent_run_id is None:
             return None
         return self.spans[parent_run_id]
 
     def get_workflow_name(self, parent_run_id: str):
+        """Resolve the workflow name inherited from a parent run."""
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
@@ -994,6 +1036,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         return parent_span.workflow_name
 
     def get_entity_path(self, parent_run_id: str):
+        """Build the child entity path inherited from the parent span holder."""
         parent_span = self.get_parent_span(parent_run_id)
 
         if parent_span is None:
@@ -1089,6 +1132,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self._handle_error(error, run_id, parent_run_id, **kwargs)
 
     def _emit_chat_input_events(self, messages):
+        """Emit message events for each chat-model input message."""
         for message_list in messages:
             for message in message_list:
                 if hasattr(message, "tool_calls") and message.tool_calls:
@@ -1104,6 +1148,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 )
 
     def _emit_llm_end_events(self, response):
+        """Emit choice events for all generations contained in an LLM response."""
         for generation_list in response.generations:
             for i, generation in enumerate(generation_list):
                 self._emit_generation_choice_event(index=i, generation=generation)
@@ -1115,6 +1160,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
         ],
     ):
+        """Emit the appropriate GenAI choice event for a single generation."""
         if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
             # Get finish reason
             raw_finish_reason = None
