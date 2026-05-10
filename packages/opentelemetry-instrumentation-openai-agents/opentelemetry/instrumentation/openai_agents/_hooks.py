@@ -607,7 +607,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     @dont_throw
     def on_span_end(self, span):
         """Called when a span ends - finish OpenTelemetry span."""
-        from agents import GenerationSpanData
+        from agents import GenerationSpanData, HandoffSpanData
 
         if not span or not hasattr(span, "span_data"):
             return
@@ -616,6 +616,25 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             otel_span = self._otel_spans[span]
             span_data = getattr(span, "span_data", None)
             trace_content = should_send_prompts()
+
+            # The OpenAI Agents SDK only assigns ``to_agent`` on a HandoffSpanData
+            # *after* the handoff has been invoked, which happens between
+            # ``on_span_start`` and ``on_span_end``. Re-read the field here so
+            # the OTel span name and the ``gen_ai.handoff.to_agent`` attribute
+            # both reflect the resolved target agent.
+            if isinstance(span_data, HandoffSpanData):
+                from_agent = getattr(span_data, "from_agent", None) or "unknown"
+                to_agent = getattr(span_data, "to_agent", None)
+                if to_agent:
+                    otel_span.update_name(f"{from_agent} → {to_agent}.handoff")
+                    otel_span.set_attribute(GEN_AI_HANDOFF_TO_AGENT, to_agent)
+                    trace_id = getattr(span, "trace_id", None)
+                    if trace_id and from_agent != "unknown":
+                        handoff_key = f"{to_agent}:{trace_id}"
+                        self._reverse_handoffs_dict[handoff_key] = from_agent
+                        if len(self._reverse_handoffs_dict) > 1000:
+                            self._reverse_handoffs_dict.popitem(last=False)
+
             if span_data and (
                 type(span_data).__name__ == "ResponseSpanData"
                 or isinstance(span_data, GenerationSpanData)
