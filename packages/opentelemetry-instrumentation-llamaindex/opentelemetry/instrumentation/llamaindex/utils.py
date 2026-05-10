@@ -64,10 +64,12 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
-        elif hasattr(o, "json"):
-            return o.json()
-        elif hasattr(o, "to_json"):
+        if hasattr(o, "to_json"):
             return o.to_json()
+        if hasattr(o, "model_dump"):
+            return o.model_dump()
+        if hasattr(o, "dict"):
+            return o.dict()
         return super().default(o)
 
 

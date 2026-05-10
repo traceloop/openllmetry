@@ -44,9 +44,13 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        if hasattr(o, "model_dump_json"):
-            return o.model_dump_json()
-        elif hasattr(o, "json"):
+        if hasattr(o, "model_dump"):
+            return o.model_dump()
+
+        if hasattr(o, "dict"):
+            return o.dict()
+
+        if hasattr(o, "json"):
             return o.json()
 
         if hasattr(o, "__class__"):
