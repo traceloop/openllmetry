@@ -2807,3 +2807,36 @@ async def test_async_anthropic_beta_message_stream_manager_legacy(
     assert len(logs) == 0, (
         "Assert that it doesn't emit logs when use_legacy_attributes is True"
     )
+
+@pytest.mark.vcr
+def test_anthropic_streaming_base64_image_token_count_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
+):
+    b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b64}},
+                {"type": "text", "text": "What color is this? One word."},
+            ],
+        }
+    ]
+    
+    with anthropic_client.messages.stream(
+    model="claude-haiku-4-5-20251001",
+    max_tokens=100,
+    messages=messages,
+    ) as stream:
+        for _ in stream:
+            pass
+
+    spans = span_exporter.get_finished_spans()
+    anthropic_span = spans[0]
+
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 343
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
