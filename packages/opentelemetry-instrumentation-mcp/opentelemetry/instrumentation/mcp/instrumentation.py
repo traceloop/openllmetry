@@ -341,10 +341,10 @@ class McpInstrumentor(BaseInstrumentor):
                 )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
-                if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                span.set_attribute(ERROR_TYPE, "MCPToolError")
+                span.set_status(
+                    Status(StatusCode.ERROR, _get_mcp_result_error_description(result))
+                )
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
@@ -489,6 +489,33 @@ def serialize(request, depth=0, max_depth=4):
         return json.dumps(result)
 
 
+def _get_mcp_result_error_description(result):
+    content = getattr(result, "content", None)
+    return _get_mcp_error_description(content, "MCP tool call returned isError=True")
+
+
+def _get_mcp_response_error_description(result):
+    content = result.get("content") if isinstance(result, dict) else None
+    return _get_mcp_error_description(content, "MCP response returned isError=True")
+
+
+def _get_mcp_error_description(content, fallback):
+    if not content:
+        return fallback
+
+    try:
+        first_content = content[0]
+    except (IndexError, KeyError, TypeError):
+        return fallback
+
+    if isinstance(first_content, dict):
+        text = first_content.get("text")
+    else:
+        text = getattr(first_content, "text", None)
+
+    return f"{text}" if text else fallback
+
+
 class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     # ObjectProxy missing context manager - https://github.com/GrahamDumpleton/wrapt/issues/73
     def __init__(self, wrapped, tracer):
@@ -569,10 +596,11 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
+                        span.set_attribute(ERROR_TYPE, "MCPToolError")
                         span.set_status(
                             Status(
                                 StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
+                                _get_mcp_response_error_description(request.result),
                             )
                         )
             if hasattr(request, "id"):
