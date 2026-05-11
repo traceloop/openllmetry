@@ -555,6 +555,41 @@ def test_create_react_agent_span(instrument_legacy, span_exporter):
     assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in create_span.attributes
 
 
+def test_create_react_agent_with_toolnode(instrument_legacy, span_exporter):
+    """Test create_react_agent works with ToolNode."""
+    from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import AIMessage
+    from langchain_core.outputs import ChatGeneration, ChatResult
+    from langchain_core.tools import tool
+    from langgraph.prebuilt import ToolNode, create_react_agent
+
+    class MockChatModel(BaseChatModel):
+        @property
+        def _llm_type(self) -> str:
+            return "mock"
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="Mock"))])
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+    @tool
+    def get_weather(city: str) -> str:
+        """Get weather."""
+        return f"Weather in {city}"
+
+    tool_node = ToolNode([get_weather])
+    _ = create_react_agent(model=MockChatModel(), tools=tool_node, name="ToolNodeAgent")
+
+    spans = span_exporter.get_finished_spans()
+    create_span = next(s for s in spans if "create_agent" in s.name)
+
+    assert create_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CREATE_AGENT.value
+    assert create_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "ToolNodeAgent"
+    assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in create_span.attributes
+
+
 def test_retriever_span_attributes(instrument_legacy, span_exporter):
     """Test retriever span has GenAI semantic convention attributes."""
     from langchain_core.callbacks import CallbackManagerForRetrieverRun
