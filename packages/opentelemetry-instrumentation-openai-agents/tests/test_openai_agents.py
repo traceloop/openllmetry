@@ -109,11 +109,13 @@ def test_agent_spans(exporter, test_agent):
     assert response_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
 
     # Test input messages (JSON array with parts-based schema)
+    # index 0 is the system message (agent instructions), index 1 is the user message
     input_messages = json.loads(response_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert input_messages[0]["role"] == "user"
-    assert "parts" in input_messages[0], "Input messages must use parts-based schema"
-    assert input_messages[0]["parts"][0]["type"] == "text"
-    assert input_messages[0]["parts"][0]["content"] == "What is AI?"
+    assert input_messages[0]["role"] == "system"
+    user_message = next(m for m in input_messages if m["role"] == "user")
+    assert "parts" in user_message, "Input messages must use parts-based schema"
+    assert user_message["parts"][0]["type"] == "text"
+    assert user_message["parts"][0]["content"] == "What is AI?"
 
     # Test usage tokens
     assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] is not None
