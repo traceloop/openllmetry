@@ -2296,7 +2296,7 @@ dev = [
 ]
 test = [
     { name = "litellm", specifier = ">=1.71.2,<2" },
-    { name = "openai-agents", specifier = ">=0.6.9" },
+    { name = "openai-agents", specifier = ">=0.14.2" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=1.0.0,<2" },
