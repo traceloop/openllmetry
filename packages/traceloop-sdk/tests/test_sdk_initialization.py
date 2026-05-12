@@ -267,3 +267,26 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
+
+def test_use_legacy_attributes_false_propagates_to_instrumentors():
+    """use_legacy_attributes=False passed to Traceloop.init() must reach each
+    instrumentor's Config — otherwise users have no way to opt into the new
+    event-based format through the SDK."""
+    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
+
+    _instance = None
+    if hasattr(TracerWrapper, "instance"):
+        _instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    exporter = InMemorySpanExporter()
+    Traceloop.init(
+        exporter=exporter,
+        disable_batch=True,
+        use_legacy_attributes=False,
+    )
+
+    assert OpenAIConfig.use_legacy_attributes is False
+
+    if _instance is not None:
+        TracerWrapper.instance = _instance
