@@ -941,9 +941,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     def _end_generation_span(self, otel_span, span_data, trace_content):
         """Handle on_span_end logic for generation/response spans."""
         input_data = getattr(span_data, "input", [])
+        response = getattr(span_data, "response", None)
+        if trace_content and response and getattr(response, "instructions", None):
+            input_data = [{"role": "system", "content": response.instructions}] + (input_data if input_data else [])
         _extract_prompt_attributes(otel_span, input_data, trace_content)
 
-        response = getattr(span_data, "response", None)
         tools = getattr(span_data, "tools", None) or (
             getattr(response, "tools", None) if response else None
         )
