@@ -2,7 +2,11 @@ import json
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
+from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
+from traceloop.sdk.tracing.tracing import TracerWrapper
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
 @pytest.fixture
@@ -223,3 +227,23 @@ def test_get_default_span_processor():
     assert isinstance(processor, BatchSpanProcessor)
     assert hasattr(processor, "_traceloop_processor")
     assert getattr(processor, "_traceloop_processor") is True
+
+
+def test_both_exporter_and_processor_warns():
+    """Passing both exporter and processor is a mistake — the processor already wraps
+    the exporter internally. We warn instead of silently dropping the exporter."""
+    if hasattr(TracerWrapper, "instance"):
+        _instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    exporter = InMemorySpanExporter()
+    processor = SimpleSpanProcessor(exporter)
+
+    with pytest.warns(UserWarning, match="exporter.*ignored"):
+        Traceloop.init(
+            exporter=exporter,
+            processor=processor,
+        )
+
+    if "_instance" in dir():
+        TracerWrapper.instance = _instance

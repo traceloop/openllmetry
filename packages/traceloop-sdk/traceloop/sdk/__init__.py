@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from pathlib import Path
 
 from typing import Callable, List, Optional, Set, Union
@@ -89,6 +90,14 @@ class Traceloop:
             return
 
         enable_content_tracing = is_content_tracing_enabled()
+
+        if exporter and processor:
+            warnings.warn(
+                "Both 'exporter' and 'processor' were provided to Traceloop.init(). "
+                "The 'exporter' will be ignored — your processor should already wrap the exporter.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
