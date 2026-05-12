@@ -2836,20 +2836,20 @@ def test_process_response_item_no_crash_on_out_of_order_delta():
 
 def test_process_response_item_no_crash_on_missing_input_key():
     """Regression test for https://github.com/traceloop/openllmetry/issues/4050:
-    content_block_delta with input_json_delta on a non-tool_use block (no 'input' key)
-    must not raise KeyError."""
+    input_json_delta arriving for a tool_use block that has no 'input' key
+    must not raise KeyError — it should initialize and accumulate normally."""
     from unittest.mock import MagicMock
 
     from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
 
-    # A text block that was started without an 'input' key
+    # A tool_use block missing its "input" key (e.g. content_block_start didn't initialize it)
     item = MagicMock()
     item.type = "content_block_delta"
     item.index = 0
     item.delta.type = "input_json_delta"
     item.delta.partial_json = '{"key": "value"}'
 
-    complete_response = {"events": [{"index": 0, "text": "", "type": "text"}]}
+    complete_response = {"events": [{"index": 0, "type": "tool_use", "name": "my_tool"}]}
 
     # Before the fix this raised KeyError on ["input"]; after the fix it uses .get()
     _process_response_item(item, complete_response)

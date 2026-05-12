@@ -55,7 +55,8 @@ def _process_response_item(item, complete_response):
             elif item.delta.type == "text_delta":
                 event["text"] = event.get("text", "") + item.delta.text
             elif item.delta.type == "input_json_delta":
-                event["input"] = event.get("input", "") + item.delta.partial_json
+                if event.get("type") == "tool_use":
+                    event["input"] = event.get("input", "") + item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
