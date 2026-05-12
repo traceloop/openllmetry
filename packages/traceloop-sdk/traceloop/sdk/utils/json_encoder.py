@@ -9,19 +9,29 @@ class JSONEncoder(json.JSONEncoder):
             if "callbacks" in o:
                 del o["callbacks"]
                 return o
+
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 
-        if hasattr(o, "to_json"):
-            return o.to_json()
+        to_json_method = getattr(o, "to_json", None)
 
-        if hasattr(o, "json"):
-            json_method = o.json
-            if callable(json_method) and not inspect.iscoroutinefunction(json_method):
+        if callable(to_json_method):
+            return to_json_method()
+
+        json_method = getattr(o, "json", None)
+
+        if callable(json_method):
+            try:
                 result = json_method()
-                if not inspect.iscoroutine(result):
-                    return result
-                result.close()
+
+                if inspect.iscoroutine(result):
+                    result.close()
+                    return o.__class__.__name__
+
+                return result
+
+            except Exception:
+                pass
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__
