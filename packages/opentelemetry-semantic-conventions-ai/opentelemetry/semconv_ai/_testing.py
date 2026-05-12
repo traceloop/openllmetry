@@ -52,8 +52,8 @@ class TestSpanAttributesGENAIRenamed:
     def test_gen_ai_request_reasoning_effort(self):
         assert SpanAttributes.GEN_AI_REQUEST_REASONING_EFFORT == "gen_ai.request.reasoning_effort"
 
-    def test_gen_ai_usage_reasoning_tokens(self):
-        assert SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS == "gen_ai.usage.reasoning_tokens"
+    def test_gen_ai_usage_reasoning_output_tokens(self):
+        assert SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS == "gen_ai.usage.reasoning.output_tokens"
 
     def test_gen_ai_request_n(self):
         assert SpanAttributes.GEN_AI_REQUEST_N == "gen_ai.request.n"

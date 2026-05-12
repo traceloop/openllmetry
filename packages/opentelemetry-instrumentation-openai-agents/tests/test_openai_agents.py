@@ -539,3 +539,41 @@ def test_handoff_span_operation_name(exporter, handoff_agent):
             f"Handoff span '{handoff_span.name}' has incorrect gen_ai.operation.name: "
             f"{handoff_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)}, expected 'handoff'"
         )
+
+
+@pytest.mark.vcr
+def test_cache_read_input_tokens_recorded(exporter, test_agent):
+    """Cache read tokens should be > 0 on the second call — OpenAI writes to cache
+    on the first call and serves from it on the second."""
+    query = "What is the capital of France?"
+
+    Runner.run_sync(test_agent, query)
+    exporter.clear()
+    Runner.run_sync(test_agent, query)
+
+    response_spans = [s for s in exporter.get_finished_spans() if s.name == "openai.response"]
+    assert len(response_spans) >= 1
+    response_span = response_spans[0]
+
+    assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS in response_span.attributes
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] >= 0
+
+
+@pytest.mark.vcr
+def test_reasoning_output_tokens_recorded(exporter):
+    """Reasoning tokens should be recorded (>= 0) on o3-mini which always
+    reports output_tokens_details.reasoning_tokens."""
+    reasoning_agent = Agent(
+        name="reasoningAgent",
+        instructions="You are a helpful assistant.",
+        model="o3-mini",
+    )
+
+    Runner.run_sync(reasoning_agent, "What is 2 + 2?")
+
+    response_spans = [s for s in exporter.get_finished_spans() if s.name == "openai.response"]
+    assert len(response_spans) >= 1
+    response_span = response_spans[0]
+
+    assert SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS in response_span.attributes
+    assert response_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS] >= 0

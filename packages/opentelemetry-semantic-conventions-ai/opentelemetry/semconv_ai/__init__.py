@@ -79,7 +79,7 @@ class SpanAttributes:
     GEN_AI_RESPONSE_STOP_REASON = "gen_ai.response.stop_reason"
     GEN_AI_CONTENT_COMPLETION_CHUNK = "gen_ai.content.completion.chunk"
     GEN_AI_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
-    GEN_AI_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
+    GEN_AI_USAGE_REASONING_OUTPUT_TOKENS = "gen_ai.usage.reasoning.output_tokens"
     GEN_AI_REQUEST_N = "gen_ai.request.n"
     GEN_AI_REQUEST_MAX_COMPLETION_TOKENS = "gen_ai.request.max_completion_tokens"
     GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"

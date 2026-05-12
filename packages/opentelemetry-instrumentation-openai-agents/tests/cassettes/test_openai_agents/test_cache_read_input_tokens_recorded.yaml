@@ -1,0 +1,283 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"content":"What is the capital of France?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","prompt_cache_key":"agents-sdk:run:e6a54d0c36fa4d349882b12140eb6536","temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '308'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - Agents/Python 0.14.2
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 2.32.0
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.11.15
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VUyXKbQBC95ysozpaLHeQPyDmHXFKuFNUwjTTRMENmUUy59O9pBoGELd+YXl4v
+        7zXv34Ig5Cx8CUKNZqijOM+rriyLfZs1UYlRVEAUd2WWtPsqquJ9AW0ZY1GmecOwajoWPk0QqvmD
+        rV1glDQ421uNYJHVMPnisqzyOC3TyPuMBevMlNOqfhBIcXNSA+3poJWTU18dCIOzmQvB5YFs7/Qk
+        wwAj6imf4RmFGuhBjstceIH8UDr2XtRaTZnSCeENnca/DmU71gNKEHYkZ/Q898nlAlYztMCFuc/k
+        0ljtWstp6KmXX8oFoDGA4Ihi6JwIwBhOs0ob2CPYAKT5h9oEIERANc2c6bF6eKuVs4OztVUn9IBx
+        lGSr0yol6pYyNy30iqGYah8Gu8ue410SJfkuynZxFq4BGqZC92lzJbK8+nXOS13l0JvD12pIsUmy
+        SQ1NwfZZCXuWsyqNm9LX8yh2HNDjoDFwwJvjK9q9s1XSorw1dd/YBnZZE77ZNdsHgJTKwkLH6++N
+        U6jDoFXzwOOBCPfnEYMWBm5BBKoLvmuQLQbcBD9Ac/McrjmX69cKE2olfGsr33PwFOiDSK+aqEOx
+        pZHUM+t7oNMhCeIDCZLrzJUz9XJdtSdppZKG6gdLkO0R6xOOvo0DLdLsDDu9aCdfsIA8Y1GbFh1k
+        LM32VZU0cRJnETZFnhbhZyCNExezakjndY+90uMcSHdtlNycI3ad0vaurYls1/egx6txvU4DHdqR
+        hpjwO46bWzSoz5zWYPly3R04MdNM6lEa77dmsR8mcTtvjp7Tq9XTee2M+urh9r6TkY+babp2fEbd
+        KMP9+km8jLv+9leZiTsqas+v2FkVro6bqug51Hdai1bj4HtM5jfR0i5XGTJuoBHLL9D5m1kH4HLz
+        T0jKp8/2u5/TOqbnkd0So82oH3811SP7I9iV/K+QLZ2guDnTfN2gM1uye0JnYGGCv3y7/Af3e79M
+        kAYAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9fa240f96bd1ae7c-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 11 May 2026 15:35:32 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1372'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=GqvMTTwxqvHlYO_zMGr15vhngiHBKowc4W9cytloB1U-1778513729.5012145-1.0.1.1-TuWmsWma1J3OWFenDizlhbf_5qCYt89CjxNLLDDm.zLzVxhm2ep.2mEgG6rExy5xHOM0Quwrvd09cIn.yYTv.TO2jCa5bit4sQJ6ZIeHevWLiejQyIXZYqEUyXQItPzY;
+        HttpOnly; SameSite=None; Secure; Path=/; Domain=api.openai.com; Expires=Mon,
+        11 May 2026 16:05:32 GMT
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '30000000'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_1d5c114db93b4754ac565533fd909836
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data":[{"object":"trace","id":"trace_2aec8f2dade443f2a0f5e7b3d28bef19","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_9ea3fc968b624c39b12a918c","trace_id":"trace_2aec8f2dade443f2a0f5e7b3d28bef19","parent_id":"span_13609afa3f4a41da881dece8","started_at":"2026-05-11T15:35:28.916185+00:00","ended_at":"2026-05-11T15:35:32.001148+00:00","span_data":{"type":"response","response_id":"resp_01558f7769c4b07e006a01f742c9808196ac71e6735bde8bfd"},"error":null},{"object":"trace.span","id":"span_13609afa3f4a41da881dece8","trace_id":"trace_2aec8f2dade443f2a0f5e7b3d28bef19","parent_id":"span_2b9c8303fd7b4393bb936159","started_at":"2026-05-11T15:35:28.911648+00:00","ended_at":"2026-05-11T15:35:32.002081+00:00","span_data":{"type":"custom","name":"turn","data":{"sdk_span_type":"turn","turn":1,"agent_name":"testAgent","usage":{"input_tokens":27,"output_tokens":8,"cached_input_tokens":0}}},"error":null},{"object":"trace.span","id":"span_2b9c8303fd7b4393bb936159","trace_id":"trace_2aec8f2dade443f2a0f5e7b3d28bef19","parent_id":"span_91ba6ccfb6da4ea4864a12a6","started_at":"2026-05-11T15:35:28.911433+00:00","ended_at":"2026-05-11T15:35:32.002313+00:00","span_data":{"type":"agent","name":"testAgent","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_91ba6ccfb6da4ea4864a12a6","trace_id":"trace_2aec8f2dade443f2a0f5e7b3d28bef19","parent_id":null,"started_at":"2026-05-11T15:35:28.911145+00:00","ended_at":"2026-05-11T15:35:32.002373+00:00","span_data":{"type":"custom","name":"task","data":{"sdk_span_type":"task","name":"Agent
+      workflow","usage":{"input_tokens":27,"output_tokens":8,"cached_input_tokens":0,"requests":1,"total_tokens":35}}},"error":null},{"object":"trace","id":"trace_062f82975604439eafa307ff16ddb5b5","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1877'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      OpenAI-Beta:
+      - traces=v1
+      User-Agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 9fa24116cb32ae7c-TLV
+      Connection:
+      - keep-alive
+      Date:
+      - Mon, 11 May 2026 15:35:34 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '221'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=BVGcZp.hPhKeLnzwsynnSDvcKGdSWirfDgBqXKWi8RA-1778513734.2043483-1.0.1.1-P.FcNDPS8oYBAKFNKj2JwwEcpGw22DnhmYrYiRLrKm4EFAfwBcPiP1mIPd7u6AQuJYC_zWrO4lgGNIXD3.Oyoj_bHJrM1hBjkWPuzmApxgrUU4WvuwQbFplT8xWSqwzS;
+        HttpOnly; SameSite=None; Secure; Path=/; Domain=api.openai.com; Expires=Mon,
+        11 May 2026 16:05:34 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_18c1a3ce8c2c4a5fb9ef001640d7977f
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"content":"What is the capital of France?","role":"user"}],"instructions":"You
+      are a helpful assistant that answers all questions","max_output_tokens":1024,"model":"gpt-4.1","prompt_cache_key":"agents-sdk:run:8cfa31a48c21456d89a32e8124051f80","temperature":0.3,"tools":[],"top_p":0.2}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '308'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=GqvMTTwxqvHlYO_zMGr15vhngiHBKowc4W9cytloB1U-1778513729.5012145-1.0.1.1-TuWmsWma1J3OWFenDizlhbf_5qCYt89CjxNLLDDm.zLzVxhm2ep.2mEgG6rExy5xHOM0Quwrvd09cIn.yYTv.TO2jCa5bit4sQJ6ZIeHevWLiejQyIXZYqEUyXQItPzY
+      Host:
+      - api.openai.com
+      User-Agent:
+      - Agents/Python 0.14.2
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 2.32.0
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.11.15
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '1'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VUy3LbMAy89ys0OscZvWzJ+YCee+ilk+loYAqyWVOkyocbTcb/Xoi0ZClxbiIW
+        WILYhd6/RVHMm/glijWavk7yQ7lrimbPdnvG8jxJdpCkbVkA5FVSpZBVVdXucrYvm7zdswbip5FC
+        Hf4gsxONkgZDnGkEi00NI5aWZbVN8zKvPGYsWGfGGqa6XiDlhaIDsPNRKyfHvloQBkOYC8HlkWLv
+        dKRADwPqsb7BCwrV04GAa7h4ovxw9d6jqLUaK6UTwgdajX8dSjbUPUoQdiAweU48xuVEVjdogQuz
+        rOTSWO2Y5fTosZdfykWgMYLohKJvnYjAGE5vlTayJ7ARSPMPtYlAiIjuNKHSc3XwVitne2drq87o
+        CdMkK2bQKiVqRpWrFjrVoBjvPvZ2UzynmyzJtpuk2KRFPCdoGC9aloWbKPLqxxmGOtuhM8ev3XDY
+        tUUR3FCULQNWVrtDiWlQ3bPYoUfPg8bAcQF8JbsHmZIW5b2pZWMr2mlM+Gbnap8AUioLkxyvv1eg
+        UMdeq8MDxBMR788TRgx6bkFEqo2+a5AMI26iH6C5eY7nmuvta6aJtRK+tVnvkDwm+iTyqybpUKxl
+        JPcEf/e0OmRBfGBBgi5cOVNP21V7kWYp6VFdb4mSnbA+4+DbONIgzcY05xft5EvFWshTKCqWpcV2
+        11R7yDOs0qxItmlbJfFnIo2jFsE15PO6w07pISTSXhslV+uIbau0XbQ1iu26DvRwC87baaBFO9Aj
+        Rv6W42oXDeoLpzFYPm13C04Emck9SuNyaha7fjS38+HkOb9FvZy3zqivDu7nhY18XpDp1vEF9UEZ
+        7sdP5m246+5/lSDcSVF7fsTOqngG7q6iY18vvJbMwd73mIUzycKmrYwbbuAgpl+g8zszP4DL1T8h
+        K58+xxc/p/mZXsfmXpisnvrxV1M9ij+incX/itnSCoo7mG/nCTqzFrsj9gYsjPTXb9f/Lrmkg5AG
+        AAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9fa2412dae63be2e-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 11 May 2026 15:35:39 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1074'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '30000000'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_4f78a55cd99f4d78a4329c2956465006
+    status:
+      code: 200
+      message: OK
+version: 1
