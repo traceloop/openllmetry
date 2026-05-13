@@ -836,21 +836,22 @@ def test_parse_response_unwraps_api_response():
     assert result.id == "resp_456"
 
 
-def test_parse_response_unwraps_async_api_response():
-    """parse_response must unwrap AsyncAPIResponse (async with_raw_response variant)."""
-    from unittest.mock import MagicMock, patch
+@pytest.mark.asyncio
+async def test_async_parse_response_unwraps_async_api_response():
+    """async_parse_response must unwrap AsyncAPIResponse using await."""
+    from unittest.mock import AsyncMock, MagicMock
     from openai._response import AsyncAPIResponse
-    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import async_parse_response
 
     inner = MagicMock()
     inner.id = "resp_789"
 
     wrapper = MagicMock(spec=AsyncAPIResponse)
-    wrapper.parse.return_value = inner
+    wrapper.parse = AsyncMock(return_value=inner)
 
-    with patch.object(type(wrapper), "parse", return_value=inner, create=True):
-        result = parse_response(wrapper)
+    result = await async_parse_response(wrapper)
 
+    wrapper.parse.assert_awaited_once()
     assert result is inner
     assert result.id == "resp_789"
 

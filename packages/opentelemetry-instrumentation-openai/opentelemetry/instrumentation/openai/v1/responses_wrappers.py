@@ -234,10 +234,16 @@ def _derive_finish_reason(traced_data: TracedData) -> str:
     return ""
 
 
-def parse_response(response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse, Response]) -> Response:
-    if isinstance(response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)):
+def parse_response(response: Union[LegacyAPIResponse, APIResponse, Response]) -> Response:
+    if isinstance(response, (LegacyAPIResponse, APIResponse)):
         return response.parse()
     return response
+
+
+async def async_parse_response(response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse, Response]) -> Response:
+    if isinstance(response, AsyncAPIResponse):
+        return await response.parse()
+    return parse_response(response)
 
 
 def get_tools_from_kwargs(kwargs: dict) -> list[ToolParam]:
@@ -735,7 +741,7 @@ async def async_responses_get_or_create_wrapper(
             set_data_attributes(traced_data, span)
         span.end()
         raise
-    parsed_response = parse_response(response)
+    parsed_response = await async_parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
@@ -854,7 +860,7 @@ async def async_responses_cancel_wrapper(
     response = await wrapped(*args, **kwargs)
     if isinstance(response, (Stream, AsyncStream)):
         return response
-    parsed_response = parse_response(response)
+    parsed_response = await async_parse_response(response)
     existing_data = responses.pop(parsed_response.id, None)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
