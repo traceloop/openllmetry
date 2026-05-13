@@ -89,6 +89,7 @@ def _with_tracer_wrapper(func):
 
 
 def _llm_request_type_by_method(method_name):
+    """Determine the LLM request type based on the wrapped method name."""
     if "chat.completions" in method_name:
         return LLMRequestTypeValues.CHAT
     elif "completions" in method_name:
@@ -99,6 +100,7 @@ def _llm_request_type_by_method(method_name):
 
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, kwargs):
+    """Set input/prompt attributes on the span and emit prompt events if configured."""
     set_model_prompt_attributes(span, kwargs)
 
     if should_emit_events() and event_logger:
@@ -109,6 +111,7 @@ def _handle_input(span, event_logger, llm_request_type, kwargs):
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, response):
+    """Set completion/response attributes on the span and emit completion events if configured."""
     if should_emit_events() and event_logger:
         emit_completion_event(event_logger, llm_request_type, response)
     else:
@@ -329,9 +332,11 @@ class TogetherAiInstrumentor(BaseInstrumentor):
         Config.use_legacy_attributes = use_legacy_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the list of instrumented packages and their version constraints."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Enable instrumentation by wrapping Together AI client methods."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -364,6 +369,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                 pass  # async methods may not be available in all versions
 
     def _uninstrument(self, **kwargs):
+        """Disable instrumentation by unwrapping Together AI client methods."""
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             unwrap(
