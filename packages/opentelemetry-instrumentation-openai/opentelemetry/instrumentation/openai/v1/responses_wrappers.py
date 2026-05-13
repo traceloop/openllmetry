@@ -7,6 +7,7 @@ from typing import Any, Optional, Union
 
 from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
+from openai._response import APIResponse, AsyncAPIResponse
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
@@ -233,8 +234,8 @@ def _derive_finish_reason(traced_data: TracedData) -> str:
     return ""
 
 
-def parse_response(response: Union[LegacyAPIResponse, Response]) -> Response:
-    if isinstance(response, LegacyAPIResponse):
+def parse_response(response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse, Response]) -> Response:
+    if isinstance(response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)):
         return response.parse()
     return response
 
@@ -735,9 +736,6 @@ async def async_responses_get_or_create_wrapper(
         span.end()
         raise
     parsed_response = parse_response(response)
-
-    if not hasattr(parsed_response, "id"):
-        return response
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:

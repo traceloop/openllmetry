@@ -795,24 +795,74 @@ def test_response_stream_init_with_omit_reasoning():
     assert stream._traced_data.request_reasoning_summary is None
 
 
-def test_parse_response_without_id_is_returned_safely(
-    instrument_legacy, span_exporter: InMemorySpanExporter
-):
+def test_parse_response_unwraps_legacy_api_response():
     """Regression test for https://github.com/traceloop/openllmetry/issues/4058:
-    parse_response returning an object without .id (e.g. AsyncAPIResponse) must not
-    crash instrumentation — guard should return early."""
+    parse_response must unwrap LegacyAPIResponse (what with_raw_response currently
+    returns for the Responses API) so downstream code can access .id without crashing."""
     from unittest.mock import MagicMock
-
+    from openai._legacy_response import LegacyAPIResponse
     from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
 
-    # Simulate what happens when parse_response receives an AsyncAPIResponse:
-    # it falls through to `return response` unchanged, giving back an object with no .id
-    raw_response = MagicMock(spec=[])  # spec=[] means NO attributes at all
+    inner = MagicMock()
+    inner.id = "resp_123"
 
-    # parse_response returns it as-is (not LegacyAPIResponse, so no .parse() call)
-    result = parse_response(raw_response)
+    wrapper = MagicMock(spec=LegacyAPIResponse)
+    wrapper.parse.return_value = inner
 
-    # The result has no .id — this is the condition our guard checks
-    assert not hasattr(result, "id")
-    # And it is the exact same object passed in
-    assert result is raw_response
+    result = parse_response(wrapper)
+
+    wrapper.parse.assert_called_once()
+    assert result is inner
+    assert result.id == "resp_123"
+
+
+def test_parse_response_unwraps_api_response():
+    """parse_response must also unwrap APIResponse/AsyncAPIResponse in case
+    the OpenAI SDK changes with_raw_response to return the non-legacy variants."""
+    from unittest.mock import MagicMock
+    from openai._response import APIResponse
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    inner = MagicMock()
+    inner.id = "resp_456"
+
+    wrapper = MagicMock(spec=APIResponse)
+    wrapper.parse.return_value = inner
+
+    result = parse_response(wrapper)
+
+    wrapper.parse.assert_called_once()
+    assert result is inner
+    assert result.id == "resp_456"
+
+
+def test_parse_response_unwraps_async_api_response():
+    """parse_response must unwrap AsyncAPIResponse (async with_raw_response variant)."""
+    from unittest.mock import MagicMock, patch
+    from openai._response import AsyncAPIResponse
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    inner = MagicMock()
+    inner.id = "resp_789"
+
+    wrapper = MagicMock(spec=AsyncAPIResponse)
+    wrapper.parse.return_value = inner
+
+    with patch.object(type(wrapper), "parse", return_value=inner, create=True):
+        result = parse_response(wrapper)
+
+    assert result is inner
+    assert result.id == "resp_789"
+
+
+def test_parse_response_passes_through_plain_response():
+    """parse_response should return a plain Response object unchanged."""
+    from unittest.mock import MagicMock
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    plain = MagicMock()
+    plain.id = "resp_456"
+
+    result = parse_response(plain)
+
+    assert result is plain
