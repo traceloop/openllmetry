@@ -366,7 +366,10 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                     _awrap(tracer, event_logger, wrapped_method),
                 )
             except (ModuleNotFoundError, AttributeError):
-                pass  # async methods may not be available in all versions
+                logger.debug(
+                    "Could not wrap async method %s — async instrumentation disabled",
+                    wrap_method,
+                )
 
     def _uninstrument(self, **kwargs):
         """Disable instrumentation by unwrapping Together AI client methods."""
@@ -384,4 +387,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                     wrapped_method.get("method"),
                 )
             except (ModuleNotFoundError, AttributeError):
-                pass
+                logger.debug(
+                    "Could not unwrap async method %s",
+                    wrapped_method.get("method"),
+                )
