@@ -116,7 +116,7 @@ async def research_assistant(question: str):
         print(f"Summary:  {summary}")
 
         followups = await suggest_followups(client, question)
-        print(f"Followups:")
+        print("Followups:")
         for f in followups:
             print(f"  - {f}")
 
