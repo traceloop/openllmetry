@@ -10,7 +10,7 @@ class JSONEncoder(json.JSONEncoder):
                 del o["callbacks"]
                 return o
 
-        if dataclasses.is_dataclass(o):
+        if dataclasses.is_dataclass(o) and not isinstance(o, type):
             return dataclasses.asdict(o)
 
         to_json_method = getattr(o, "to_json", None)
@@ -26,7 +26,7 @@ class JSONEncoder(json.JSONEncoder):
 
                 if inspect.iscoroutine(result):
                     result.close()
-                    return o.__class__.__name__
+                    return type(o).__name__
 
                 return result
 
@@ -34,6 +34,7 @@ class JSONEncoder(json.JSONEncoder):
                 pass
 
         if hasattr(o, "__class__"):
-            return o.__class__.__name__
+            return type(o).__name__
 
         return super().default(o)
+    
