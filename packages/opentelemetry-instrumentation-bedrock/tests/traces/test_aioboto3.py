@@ -92,7 +92,8 @@ class _AsyncReadableBody:
 
     async def read(self, amt=None):
         if amt is None:
-            return self._raw
+            out, self._raw = self._raw, b""
+            return out
         out, self._raw = self._raw[:amt], self._raw[amt:]
         return out
 
@@ -272,6 +273,7 @@ async def test_aioboto3_converse_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     logs = log_exporter.get_finished_logs()
+    assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
         if log.log_record.body:
             body = dict(log.log_record.body)
@@ -381,6 +383,7 @@ async def test_aioboto3_invoke_model_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     logs = log_exporter.get_finished_logs()
+    assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
         if log.log_record.body:
             body = dict(log.log_record.body)
@@ -486,6 +489,7 @@ async def test_aioboto3_invoke_stream_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     logs = log_exporter.get_finished_logs()
+    assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
         if log.log_record.body:
             body = dict(log.log_record.body)
@@ -569,6 +573,7 @@ async def test_aioboto3_converse_stream_with_events_with_no_content(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     logs = log_exporter.get_finished_logs()
+    assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
         if log.log_record.body:
             body = dict(log.log_record.body)
