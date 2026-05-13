@@ -9,6 +9,7 @@ from opentelemetry.semconv_ai import (
 
 
 def _set_span_attribute(span, name, value):
+    """Set an attribute on the span if the value is not None or empty."""
     if value is not None:
         if value != "":
             span.set_attribute(name, value)
@@ -17,6 +18,7 @@ def _set_span_attribute(span, name, value):
 
 @dont_throw
 def set_prompt_attributes(span, llm_request_type, kwargs):
+    """Set prompt content attributes on the span based on the request type."""
     if not span.is_recording():
         return
 
@@ -43,6 +45,7 @@ def set_prompt_attributes(span, llm_request_type, kwargs):
 
 @dont_throw
 def set_model_prompt_attributes(span, kwargs):
+    """Set model and streaming attributes from the request kwargs."""
     if not span.is_recording():
         return
 
@@ -56,6 +59,7 @@ def set_model_prompt_attributes(span, kwargs):
 
 @dont_throw
 def set_completion_attributes(span, llm_request_type, response):
+    """Set completion content attributes on the span from the response."""
     if not span.is_recording():
         return
 
@@ -82,6 +86,7 @@ def set_completion_attributes(span, llm_request_type, response):
 
 @dont_throw
 def set_model_completion_attributes(span, response):
+    """Set model response attributes including token usage and finish reason."""
     if not span.is_recording():
         return
 
