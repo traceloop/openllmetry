@@ -107,3 +107,8 @@ def set_model_completion_attributes(span, response):
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         input_tokens,
     )
+    _set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON,
+        response.choices[0].finish_reason if response.choices else None,
+    )
