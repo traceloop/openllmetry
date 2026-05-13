@@ -736,6 +736,9 @@ async def async_responses_get_or_create_wrapper(
         raise
     parsed_response = parse_response(response)
 
+    if not hasattr(parsed_response, "id"):
+        return response
+
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
         existing_data = {}

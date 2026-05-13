@@ -793,3 +793,26 @@ def test_response_stream_init_with_omit_reasoning():
     assert stream is not None
     assert stream._traced_data is not None
     assert stream._traced_data.request_reasoning_summary is None
+
+
+def test_parse_response_without_id_is_returned_safely(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4058:
+    parse_response returning an object without .id (e.g. AsyncAPIResponse) must not
+    crash instrumentation — guard should return early."""
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    # Simulate what happens when parse_response receives an AsyncAPIResponse:
+    # it falls through to `return response` unchanged, giving back an object with no .id
+    raw_response = MagicMock(spec=[])  # spec=[] means NO attributes at all
+
+    # parse_response returns it as-is (not LegacyAPIResponse, so no .parse() call)
+    result = parse_response(raw_response)
+
+    # The result has no .id — this is the condition our guard checks
+    assert not hasattr(result, "id")
+    # And it is the exact same object passed in
+    assert result is raw_response
