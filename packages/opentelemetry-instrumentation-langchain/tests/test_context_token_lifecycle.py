@@ -238,6 +238,102 @@ def test_duplicate_run_id_replaces_association_properties(handler):
     )
 
 
+# ---------------------------------------------------------------------------
+# Issue #3526 — orphaned context_api.attach() in on_chain_end corrupts context stack
+# ---------------------------------------------------------------------------
+
+def test_on_chain_end_does_not_leak_context_frame(handler):
+    """
+    Regression test for issue #3526.
+
+    Before the fix, on_chain_end() contained an orphaned context_api.attach() call
+    for root chains (parent_run_id=None):
+
+        context_api.attach(context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, False))
+
+    No token was saved, so the frame was *never detached*.  The OTel context stack
+    grew by one entry on every root chain completion — permanently polluting the
+    context for the lifetime of the thread/task.
+
+    Observable effect: after on_chain_end the key is False (explicitly set) rather
+    than None (absent/unset), and it stays False for all subsequent work in the
+    same execution context.
+
+    The fix removes the orphaned attach entirely — _end_span() already detaches the
+    suppression token stored in the SpanHolder, which restores the pre-chain context.
+    """
+    chain_run_id = uuid4()
+    llm_run_id = uuid4()
+
+    assert context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY) is None, (
+        "precondition: suppression key must be absent before test"
+    )
+
+    # Simulate on_chain_start for a root chain
+    handler.on_chain_start(
+        serialized={"name": "TestChain"},
+        inputs={"input": "hello"},
+        run_id=chain_run_id,
+        parent_run_id=None,
+    )
+
+    # Simulate an LLM call inside the chain (sets suppression)
+    handler._create_llm_span(llm_run_id, chain_run_id, "gpt-4", LLMRequestTypeValues.CHAT)
+
+    assert _suppression_active(), "sanity: suppression must be active during LLM span"
+
+    # End the LLM span
+    llm_span = handler.spans[llm_run_id].span
+    handler._end_span(llm_span, llm_run_id)
+
+    # End the root chain — this is where the orphaned attach fires in the buggy code
+    handler.on_chain_end(
+        outputs={"output": "result"},
+        run_id=chain_run_id,
+        parent_run_id=None,
+    )
+
+    # The suppression key must be truly absent (None), not just falsy (False).
+    # Bug present  → value is False (orphaned attach pushed False onto the stack and never popped)
+    # Bug fixed    → value is None  (key is absent; _end_span restored the baseline context)
+    raw_value = context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+    assert raw_value is None, (
+        f"Issue #3526 not fixed: SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY is "
+        f"{raw_value!r} after on_chain_end, expected None. "
+        "The orphaned context_api.attach() in on_chain_end pushed False onto the context "
+        "stack without saving a token, so it was never detached. "
+        "Fix: remove the orphaned attach — _end_span() already restores the context."
+    )
+
+
+def test_on_chain_end_context_stack_does_not_accumulate(handler):
+    """
+    Complementary check for issue #3526: running N root chains must not grow the
+    context stack.  Detected by checking the suppression key stays None after each
+    completion and never becomes False from a previous chain's leaked frame.
+    """
+    for i in range(3):
+        chain_run_id = uuid4()
+
+        handler.on_chain_start(
+            serialized={"name": f"Chain{i}"},
+            inputs={"input": "x"},
+            run_id=chain_run_id,
+            parent_run_id=None,
+        )
+        handler.on_chain_end(
+            outputs={"output": "y"},
+            run_id=chain_run_id,
+            parent_run_id=None,
+        )
+
+        raw_value = context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+        assert raw_value is None, (
+            f"Issue #3526: after chain #{i + 1}, SUPPRESS key is {raw_value!r} "
+            f"(expected None). Each root on_chain_end leaked a context frame."
+        )
+
+
 def test_duplicate_llm_run_id_replaces_association_properties(handler):
     """
     Replacing an LLM span holder must clear the prior metadata context and suppression.
