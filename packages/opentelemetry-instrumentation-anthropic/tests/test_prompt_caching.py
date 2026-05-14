@@ -4,7 +4,6 @@ import json
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.trace.status import StatusCode
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -60,13 +59,6 @@ def test_anthropic_prompt_caching_legacy(
             + f.read()
         )
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -93,7 +85,7 @@ def test_anthropic_prompt_caching_legacy(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -152,13 +144,6 @@ def test_anthropic_prompt_caching_with_events_with_content(
             + f.read()
         )
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -185,7 +170,7 @@ def test_anthropic_prompt_caching_with_events_with_content(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -314,13 +299,6 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
             + f.read()
         )
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -347,7 +325,7 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -398,13 +376,6 @@ async def test_anthropic_prompt_caching_async_legacy(
             + f.read()
         )
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -431,7 +402,7 @@ async def test_anthropic_prompt_caching_async_legacy(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -486,13 +457,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
             + f.read()
         )
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -519,7 +483,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -654,13 +618,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
             + f.read()
         )
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -687,7 +644,7 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
             ],
         )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -741,13 +698,6 @@ def test_anthropic_prompt_caching_stream_legacy(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -779,7 +729,7 @@ def test_anthropic_prompt_caching_stream_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -832,13 +782,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -870,7 +813,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1005,13 +948,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1043,7 +979,7 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1093,13 +1029,6 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1131,7 +1060,7 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1184,13 +1113,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1222,7 +1144,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2
@@ -1368,13 +1290,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1406,7 +1321,7 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
     assert len(spans) == 2

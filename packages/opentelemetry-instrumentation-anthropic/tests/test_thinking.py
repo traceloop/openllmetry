@@ -1,7 +1,6 @@
 import json
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
-from opentelemetry.trace.status import StatusCode
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -14,13 +13,6 @@ def test_anthropic_thinking_legacy(
     instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     response = anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
@@ -42,7 +34,7 @@ def test_anthropic_thinking_legacy(
         ],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -74,13 +66,6 @@ def test_anthropic_thinking_with_events_with_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     user_message = {
         "role": "user",
         "content": [
@@ -101,7 +86,7 @@ def test_anthropic_thinking_with_events_with_content(
         messages=[user_message],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -148,13 +133,6 @@ def test_anthropic_thinking_with_events_with_no_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
@@ -175,7 +153,7 @@ def test_anthropic_thinking_with_events_with_no_content(
         ],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -215,13 +193,6 @@ async def test_async_anthropic_thinking_legacy(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
@@ -242,7 +213,7 @@ async def test_async_anthropic_thinking_legacy(
         ],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -275,13 +246,6 @@ async def test_async_anthropic_thinking_with_events_with_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     user_message = {
         "role": "user",
         "content": [
@@ -302,7 +266,7 @@ async def test_async_anthropic_thinking_with_events_with_content(
         messages=[user_message],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -353,13 +317,6 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         max_tokens=2048,
@@ -380,7 +337,7 @@ async def test_async_anthropic_thinking_with_events_with_no_content(
         ],
     )
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -419,13 +376,6 @@ def test_anthropic_thinking_streaming_legacy(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         stream=True,
@@ -458,7 +408,7 @@ def test_anthropic_thinking_streaming_legacy(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -488,13 +438,6 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     user_message = {
         "role": "user",
@@ -528,7 +471,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -581,13 +524,6 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         stream=True,
@@ -620,7 +556,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -660,13 +596,6 @@ async def test_async_anthropic_thinking_streaming_legacy(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         stream=True,
@@ -699,7 +628,7 @@ async def test_async_anthropic_thinking_streaming_legacy(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -730,13 +659,6 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
-
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     user_message = {
         "role": "user",
@@ -770,7 +692,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
@@ -829,13 +751,6 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
 ):
     prompt = "How many times does the letter 'r' appear in the word strawberry?"
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = await async_anthropic_client.messages.create(
         model="claude-3-7-sonnet-20250219",
         stream=True,
@@ -868,7 +783,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
         ):
             thinking += event.delta.thinking
 
-    spans = [s for s in span_exporter.get_finished_spans() if s.status.status_code != StatusCode.ERROR]
+    spans = span_exporter.get_finished_spans()
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"

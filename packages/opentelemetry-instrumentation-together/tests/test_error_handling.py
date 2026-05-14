@@ -17,6 +17,7 @@ def test_together_error_sets_span_status(instrument_legacy, together_client, spa
     span = spans[0]
     assert span.status.status_code == StatusCode.ERROR
     assert "API connection error" in span.status.description
+    assert span.attributes.get("error.type") == "Exception"
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1
     assert "API connection error" in events[0].attributes["exception.message"]
