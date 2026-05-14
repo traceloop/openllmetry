@@ -28,8 +28,8 @@ openai_agents = "opentelemetry.instrumentation.openai_agents:OpenAIAgentsInstrum
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
+  "pytest>=8.2.2,<10",
   "ruff>=0.4.0",
 ]
 test = [
@@ -39,7 +39,7 @@ test = [
   "pytest-asyncio>=1.0.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
   "vcrpy>=8.0.0,<9",
 ]
 
