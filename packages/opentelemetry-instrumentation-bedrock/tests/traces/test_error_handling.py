@@ -26,6 +26,7 @@ def test_bedrock_invoke_model_error_sets_span_status(instrument_legacy, brt, spa
     assert len(spans) == 1
     span = spans[0]
     assert span.status.status_code == StatusCode.ERROR
+    assert span.attributes.get("error.type") == "ClientError"
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1
 
@@ -42,5 +43,6 @@ def test_bedrock_converse_error_sets_span_status(instrument_legacy, brt, span_ex
     assert len(spans) == 1
     span = spans[0]
     assert span.status.status_code == StatusCode.ERROR
+    assert span.attributes.get("error.type") == "ClientError"
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1

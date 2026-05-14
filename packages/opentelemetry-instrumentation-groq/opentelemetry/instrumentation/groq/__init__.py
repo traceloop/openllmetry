@@ -304,10 +304,9 @@ def _wrap(
 
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
-        if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     end_time = time.time()
 
@@ -393,10 +392,9 @@ async def _awrap(
 
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
-        if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     end_time = time.time()
 

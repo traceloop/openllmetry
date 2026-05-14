@@ -17,6 +17,7 @@ def test_ollama_error_sets_span_status(instrument_legacy, ollama_client, span_ex
     span = spans[0]
     assert span.status.status_code == StatusCode.ERROR
     assert "Connection refused" in span.status.description
+    assert span.attributes.get("error.type") == "Exception"
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1
     assert "Connection refused" in events[0].attributes["exception.message"]
@@ -36,5 +37,7 @@ async def test_async_ollama_error_sets_span_status(instrument_legacy, ollama_cli
     span = spans[0]
     assert span.status.status_code == StatusCode.ERROR
     assert "Async connection error" in span.status.description
+    assert span.attributes.get("error.type") == "Exception"
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1
+    assert "Async connection error" in events[0].attributes["exception.message"]

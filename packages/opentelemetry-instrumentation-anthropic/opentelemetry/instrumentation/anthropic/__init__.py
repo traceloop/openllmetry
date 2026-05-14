@@ -44,6 +44,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
@@ -51,7 +52,6 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from typing_extensions import Coroutine
 from wrapt import wrap_function_wrapper
 
@@ -580,7 +580,7 @@ def _wrap(
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     end_time = time.time()
 
@@ -712,7 +712,7 @@ async def _awrap(
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     if is_streaming_response(response):
         return AnthropicAsyncStream(

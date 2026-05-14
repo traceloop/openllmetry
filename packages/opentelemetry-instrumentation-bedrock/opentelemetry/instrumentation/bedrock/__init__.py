@@ -62,6 +62,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
@@ -211,7 +212,7 @@ def _wrap(
             if metric_params.exception_counter:
                 metric_params.exception_counter.add(1, attributes=attributes)
 
-            raise e
+            raise
 
     return wrapped(*args, **kwargs)
 
@@ -236,6 +237,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
@@ -269,6 +271,7 @@ def _instrumented_model_invoke_with_response_stream(
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
@@ -304,6 +307,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
@@ -334,6 +338,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()

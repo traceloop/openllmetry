@@ -33,6 +33,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.metrics import (
     gen_ai_metrics as GenAIMetrics,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -312,6 +313,7 @@ def _wrap(
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
@@ -393,6 +395,7 @@ async def _awrap(
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
