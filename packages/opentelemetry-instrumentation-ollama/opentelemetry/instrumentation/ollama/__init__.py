@@ -106,49 +106,56 @@ def _accumulate_streaming_response(
     first_token_time = None
     last_response = None
 
-    for res in response:
-        last_response = res  # Track the last response explicitly
+    try:
+        for res in response:
+            last_response = res  # Track the last response explicitly
 
-        if first_token and streaming_time_to_first_token and start_time is not None:
-            first_token_time = time.perf_counter()
-            streaming_time_to_first_token.record(
-                first_token_time - start_time,
-                attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
+            if first_token and streaming_time_to_first_token and start_time is not None:
+                first_token_time = time.perf_counter()
+                streaming_time_to_first_token.record(
+                    first_token_time - start_time,
+                    attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
+                )
+                first_token = False
+            yield res
+
+            if llm_request_type == LLMRequestTypeValues.CHAT:
+                accumulated_response["message"]["content"] += res["message"]["content"]
+                accumulated_response["message"]["role"] = res["message"]["role"]
+            elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                text = res.get("response", "")
+                accumulated_response["response"] += text
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        # Record streaming time to generate after the response is complete
+        if streaming_time_to_generate and first_token_time is not None:
+            model_name = last_response.get("model") if last_response else None
+            streaming_time_to_generate.record(
+                time.perf_counter() - first_token_time,
+                attributes={
+                    GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
+                },
             )
-            first_token = False
-        yield res
 
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            accumulated_response["message"]["content"] += res["message"]["content"]
-            accumulated_response["message"]["role"] = res["message"]["role"]
-        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            text = res.get("response", "")
-            accumulated_response["response"] += text
-
-    # Record streaming time to generate after the response is complete
-    if streaming_time_to_generate and first_token_time is not None:
-        model_name = last_response.get("model") if last_response else None
-        streaming_time_to_generate.record(
-            time.perf_counter() - first_token_time,
-            attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
-            },
+        response_data = (
+            last_response.model_dump()
+            if last_response and hasattr(last_response, 'model_dump')
+            else last_response
         )
-
-    response_data = (
-        last_response.model_dump()
-        if last_response and hasattr(last_response, 'model_dump')
-        else last_response
-    )
-    _handle_response(
-        span=span,
-        event_logger=event_logger,
-        llm_request_type=llm_request_type,
-        token_histogram=token_histogram,
-        response=response_data | accumulated_response,
-    )
-    span.end()
+        _handle_response(
+            span=span,
+            event_logger=event_logger,
+            llm_request_type=llm_request_type,
+            token_histogram=token_histogram,
+            response=response_data | accumulated_response,
+        )
+    finally:
+        span.end()
 
 
 async def _aaccumulate_streaming_response(
@@ -170,49 +177,56 @@ async def _aaccumulate_streaming_response(
     first_token_time = None
     last_response = None
 
-    async for res in response:
-        last_response = res
+    try:
+        async for res in response:
+            last_response = res
 
-        if first_token and streaming_time_to_first_token and start_time is not None:
-            first_token_time = time.perf_counter()
-            streaming_time_to_first_token.record(
-                first_token_time - start_time,
-                attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
+            if first_token and streaming_time_to_first_token and start_time is not None:
+                first_token_time = time.perf_counter()
+                streaming_time_to_first_token.record(
+                    first_token_time - start_time,
+                    attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
+                )
+                first_token = False
+            yield res
+
+            if llm_request_type == LLMRequestTypeValues.CHAT:
+                accumulated_response["message"]["content"] += res["message"]["content"]
+                accumulated_response["message"]["role"] = res["message"]["role"]
+            elif llm_request_type == LLMRequestTypeValues.COMPLETION:
+                text = res.get("response", "")
+                accumulated_response["response"] += text
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        # Record streaming time to generate after the response is complete
+        if streaming_time_to_generate and first_token_time is not None:
+            model_name = last_response.get("model") if last_response else None
+            streaming_time_to_generate.record(
+                time.perf_counter() - first_token_time,
+                attributes={
+                    GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
+                },
             )
-            first_token = False
-        yield res
 
-        if llm_request_type == LLMRequestTypeValues.CHAT:
-            accumulated_response["message"]["content"] += res["message"]["content"]
-            accumulated_response["message"]["role"] = res["message"]["role"]
-        elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-            text = res.get("response", "")
-            accumulated_response["response"] += text
-
-    # Record streaming time to generate after the response is complete
-    if streaming_time_to_generate and first_token_time is not None:
-        model_name = last_response.get("model") if last_response else None
-        streaming_time_to_generate.record(
-            time.perf_counter() - first_token_time,
-            attributes={
-                GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
-            },
+        response_data = (
+            last_response.model_dump()
+            if last_response and hasattr(last_response, 'model_dump')
+            else last_response
         )
-
-    response_data = (
-        last_response.model_dump()
-        if last_response and hasattr(last_response, 'model_dump')
-        else last_response
-    )
-    _handle_response(
-        span,
-        event_logger,
-        llm_request_type,
-        token_histogram,
-        response_data | accumulated_response,
-    )
-    span.end()
+        _handle_response(
+            span,
+            event_logger,
+            llm_request_type,
+            token_histogram,
+            response_data | accumulated_response,
+        )
+    finally:
+        span.end()
 
 
 def _with_tracer_wrapper(func):

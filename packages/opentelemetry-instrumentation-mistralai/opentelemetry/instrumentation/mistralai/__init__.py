@@ -208,36 +208,42 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
         usage=UsageInfo(prompt_tokens=0, total_tokens=0, completion_tokens=0),
     )
 
-    for res in response:
-        yield res
+    try:
+        for res in response:
+            yield res
 
-        # Handle new CompletionEvent structure with .data attribute
-        chunk_data = res.data if hasattr(res, 'data') else res
-        if chunk_data.model:
-            accumulated_response.model = chunk_data.model
-        if chunk_data.usage:
-            accumulated_response.usage = chunk_data.usage
-        # Id is the same for all chunks, so it's safe to overwrite it every time
-        if chunk_data.id:
-            accumulated_response.id = chunk_data.id
+            # Handle new CompletionEvent structure with .data attribute
+            chunk_data = res.data if hasattr(res, 'data') else res
+            if chunk_data.model:
+                accumulated_response.model = chunk_data.model
+            if chunk_data.usage:
+                accumulated_response.usage = chunk_data.usage
+            # Id is the same for all chunks, so it's safe to overwrite it every time
+            if chunk_data.id:
+                accumulated_response.id = chunk_data.id
 
-        for idx, choice in enumerate(chunk_data.choices):
-            if len(accumulated_response.choices) <= idx:
-                accumulated_response.choices.append(
-                    ChatCompletionChoice(
-                        index=idx,
-                        message=AssistantMessage(role="assistant", content=""),
-                        finish_reason=None,
+            for idx, choice in enumerate(chunk_data.choices):
+                if len(accumulated_response.choices) <= idx:
+                    accumulated_response.choices.append(
+                        ChatCompletionChoice(
+                            index=idx,
+                            message=AssistantMessage(role="assistant", content=""),
+                            finish_reason=None,
+                        )
                     )
-                )
 
-            accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
-            accumulated_response.choices[idx].message.role = choice.delta.role
-
-    _handle_response(span, event_logger, llm_request_type, accumulated_response)
-
-    span.end()
+                accumulated_response.choices[idx].finish_reason = choice.finish_reason
+                accumulated_response.choices[idx].message.content += choice.delta.content
+                accumulated_response.choices[idx].message.role = choice.delta.role
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        _handle_response(span, event_logger, llm_request_type, accumulated_response)
+    finally:
+        span.end()
 
 
 async def _aaccumulate_streaming_response(
@@ -252,36 +258,42 @@ async def _aaccumulate_streaming_response(
         usage=UsageInfo(prompt_tokens=0, total_tokens=0, completion_tokens=0),
     )
 
-    async for res in response:
-        yield res
+    try:
+        async for res in response:
+            yield res
 
-        # Handle new CompletionEvent structure with .data attribute
-        chunk_data = res.data if hasattr(res, 'data') else res
-        if chunk_data.model:
-            accumulated_response.model = chunk_data.model
-        if chunk_data.usage:
-            accumulated_response.usage = chunk_data.usage
-        # Id is the same for all chunks, so it's safe to overwrite it every time
-        if chunk_data.id:
-            accumulated_response.id = chunk_data.id
+            # Handle new CompletionEvent structure with .data attribute
+            chunk_data = res.data if hasattr(res, 'data') else res
+            if chunk_data.model:
+                accumulated_response.model = chunk_data.model
+            if chunk_data.usage:
+                accumulated_response.usage = chunk_data.usage
+            # Id is the same for all chunks, so it's safe to overwrite it every time
+            if chunk_data.id:
+                accumulated_response.id = chunk_data.id
 
-        for idx, choice in enumerate(chunk_data.choices):
-            if len(accumulated_response.choices) <= idx:
-                accumulated_response.choices.append(
-                    ChatCompletionChoice(
-                        index=idx,
-                        message=AssistantMessage(role="assistant", content=""),
-                        finish_reason=None,
+            for idx, choice in enumerate(chunk_data.choices):
+                if len(accumulated_response.choices) <= idx:
+                    accumulated_response.choices.append(
+                        ChatCompletionChoice(
+                            index=idx,
+                            message=AssistantMessage(role="assistant", content=""),
+                            finish_reason=None,
+                        )
                     )
-                )
 
-            accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
-            accumulated_response.choices[idx].message.role = choice.delta.role
-
-    _handle_response(span, event_logger, llm_request_type, accumulated_response)
-
-    span.end()
+                accumulated_response.choices[idx].finish_reason = choice.finish_reason
+                accumulated_response.choices[idx].message.content += choice.delta.content
+                accumulated_response.choices[idx].message.role = choice.delta.role
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        _handle_response(span, event_logger, llm_request_type, accumulated_response)
+    finally:
+        span.end()
 
 
 def _with_tracer_wrapper(func):

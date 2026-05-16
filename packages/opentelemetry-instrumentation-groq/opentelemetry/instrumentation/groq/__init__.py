@@ -196,24 +196,29 @@ def _create_stream_processor(response, span, event_logger):
     accumulated_finish_reasons: list = []
     usage = None
 
-    for chunk in response:
-        content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
-        if content:
-            accumulated_content += content
-        if tool_calls_delta:
-            _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        accumulated_finish_reasons.extend(chunk_finish_reasons)
-        if chunk_usage:
-            usage = chunk_usage
-        yield chunk
-
-    tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-    _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
-
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-
-    span.end()
+    try:
+        for chunk in response:
+            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            if content:
+                accumulated_content += content
+            if tool_calls_delta:
+                _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
+            accumulated_finish_reasons.extend(chunk_finish_reasons)
+            if chunk_usage:
+                usage = chunk_usage
+            yield chunk
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
+        _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 async def _create_async_stream_processor(response, span, event_logger):
@@ -223,24 +228,29 @@ async def _create_async_stream_processor(response, span, event_logger):
     accumulated_finish_reasons: list = []
     usage = None
 
-    async for chunk in response:
-        content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
-        if content:
-            accumulated_content += content
-        if tool_calls_delta:
-            _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        accumulated_finish_reasons.extend(chunk_finish_reasons)
-        if chunk_usage:
-            usage = chunk_usage
-        yield chunk
-
-    tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-    _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
-
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-
-    span.end()
+    try:
+        async for chunk in response:
+            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            if content:
+                accumulated_content += content
+            if tool_calls_delta:
+                _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
+            accumulated_finish_reasons.extend(chunk_finish_reasons)
+            if chunk_usage:
+                usage = chunk_usage
+            yield chunk
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
+        _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 def _handle_input(span, kwargs, event_logger):
