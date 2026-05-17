@@ -1,4 +1,5 @@
 import dataclasses
+import inspect
 import json
 import logging
 import os
@@ -69,7 +70,12 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "model_dump"):
             return o.model_dump()
         if hasattr(o, "dict"):
-            return o.dict()
+            dict_method = o.dict
+            if callable(dict_method) and not inspect.iscoroutinefunction(dict_method):
+                result = dict_method()
+                if not inspect.iscoroutine(result):
+                    return result
+                result.close()
         return super().default(o)
 
 

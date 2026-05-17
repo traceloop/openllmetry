@@ -30,9 +30,16 @@ class JSONEncoder(json.JSONEncoder):
             json_method = o.json
             if callable(json_method) and not inspect.iscoroutinefunction(json_method):
                 result = json_method()
-                if not inspect.iscoroutine(result):
+                if inspect.iscoroutine(result):
+                    result.close()
+                elif isinstance(result, str):
+                    # .json() returns a JSON string; parse to avoid double-encoding.
+                    try:
+                        return json.loads(result)
+                    except (ValueError, TypeError):
+                        return result
+                else:
                     return result
-                result.close()
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__

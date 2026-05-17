@@ -2,8 +2,6 @@ import dataclasses
 import json
 import warnings
 
-import pytest
-
 from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 
@@ -63,6 +61,36 @@ def test_pydantic_v1_uses_dict():
     assert result == '{"name": "Bob", "age": 25}'
 
 
+def test_legacy_json_method_fallback():
+    # Regression test for #3516: .json() was the original deprecated path.
+    # Objects exposing only .json() should still serialize without crashing.
+    result = json.loads(json.dumps(LegacyJsonModel(), cls=JSONEncoder))
+    assert result == {"name": "Charlie"}
+
+
+def test_non_callable_dict_attribute_does_not_crash():
+    # Many non-Pydantic objects (e.g., enum.DynamicClassAttribute) expose
+    # a non-callable `.dict` attribute. The encoder must skip it instead
+    # of raising TypeError.
+    class HasDictDataAttribute:
+        dict = {"not": "callable"}
+
+    # Should fall through to __class__ name rather than raising.
+    result = json.dumps(HasDictDataAttribute(), cls=JSONEncoder)
+    assert result == '"HasDictDataAttribute"'
+
+
+def test_coroutine_dict_method_does_not_crash():
+    # Async dict() (e.g., some ORM models) returns a coroutine.
+    # The encoder must skip and not emit un-encodable garbage.
+    class AsyncDictModel:
+        async def dict(self):
+            return {"async": "result"}
+
+    result = json.dumps(AsyncDictModel(), cls=JSONEncoder)
+    assert result == '"AsyncDictModel"'
+
+
 def test_to_json_takes_priority_over_model_dump():
     class Both:
         def to_json(self):
@@ -91,17 +119,12 @@ def test_no_pydantic_deprecation_warning():
         json.dumps(PydanticV2Model(), cls=JSONEncoder)
 
 
-def test_dict_with_callbacks_stripped():
-    # default() is only called for non-natively-serializable objects,
-    # so we wrap the dict in a custom object to trigger default()
-    class DictWrapper:
-        def __init__(self, d):
-            self._d = d
-        # no model_dump / dict / json — falls through to __class__ normally,
-        # but we simulate the "isinstance dict" path via a subclass
+def test_default_strips_callbacks_from_dict():
+    # The `isinstance(o, dict)` branch is only reachable when default() is
+    # invoked directly (json.dumps natively handles dicts and their subclasses
+    # without calling default()). Callers that hand a dict to .default()
+    # explicitly — e.g., upstream callback-filtering glue — get callbacks stripped.
     data = {"callbacks": ["cb1"], "key": "value"}
-    # Directly invoke default() since plain dicts bypass it
-    encoder = JSONEncoder()
-    result = encoder.default(data)
+    result = JSONEncoder().default(data)
     assert "callbacks" not in result
     assert result["key"] == "value"
