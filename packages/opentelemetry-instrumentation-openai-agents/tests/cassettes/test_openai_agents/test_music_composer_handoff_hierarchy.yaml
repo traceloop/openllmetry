@@ -1,0 +1,736 @@
+interactions:
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_aa6a978f91f34c0199d3e6f5","trace_id":"trace_294d81b076ea4262b0f0e94cb73d08c9","parent_id":"span_f845942d6331464cab32157d","started_at":"2025-08-15T17:56:47.042473+00:00","ended_at":"2025-08-15T17:56:49.425430+00:00","span_data":{"type":"response","response_id":"resp_689f74df555c8196a1e11193b42ab6480ff2cbeb9143e7cd"},"error":null},{"object":"trace.span","id":"span_f845942d6331464cab32157d","trace_id":"trace_294d81b076ea4262b0f0e94cb73d08c9","parent_id":null,"started_at":"2025-08-15T17:56:38.702636+00:00","ended_at":"2025-08-15T17:56:49.426080+00:00","span_data":{"type":"agent","name":"Recipe
+      Editor Agent","handoffs":[],"tools":["search_recipes","plan_and_apply_recipe_modifications"],"output_type":"str"},"error":null},{"object":"trace","id":"trace_db0186bb863d426e9e4486699cb8418a","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '900'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96fa9222df1709cd-HFA
+      Connection:
+      - keep-alive
+      Date:
+      - Fri, 15 Aug 2025 17:56:50 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '86'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '89'
+      x-request-id:
+      - req_fa6a326a466829719347a40d16854d10
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you create a new symphony
+      in D major?"}],"instructions":"You coordinate musical performances. When users
+      ask for composition, hand off to the Symphony Composer.","model":"gpt-4o","stream":true,"tools":[{"name":"transfer_to_symphony_composer","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true,"type":"function","description":"Handoff
+      to the Symphony Composer agent to handle the request. "}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '498'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '1'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_689f74e29ec88192a33523ce531650ec0d633b0c8e3fd59d","object":"response","created_at":1755280610,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        coordinate musical performances. When users ask for composition, hand off
+        to the Symphony Composer.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Symphony Composer agent to handle the request. ","name":"transfer_to_symphony_composer","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_689f74e29ec88192a33523ce531650ec0d633b0c8e3fd59d","object":"response","created_at":1755280610,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        coordinate musical performances. When users ask for composition, hand off
+        to the Symphony Composer.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Symphony Composer agent to handle the request. ","name":"transfer_to_symphony_composer","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","type":"function_call","status":"in_progress","arguments":"","call_id":"call_0huubaIPG7y97doHmNEbKQi3","name":"transfer_to_symphony_composer"}}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":3,"item_id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","output_index":0,"delta":"{}","obfuscation":"7g5uVFuyZ4PLt7"}
+
+
+        event: response.function_call_arguments.done
+
+        data: {"type":"response.function_call_arguments.done","sequence_number":4,"item_id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","output_index":0,"arguments":"{}"}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":5,"output_index":0,"item":{"id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","type":"function_call","status":"completed","arguments":"{}","call_id":"call_0huubaIPG7y97doHmNEbKQi3","name":"transfer_to_symphony_composer"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":6,"response":{"id":"resp_689f74e29ec88192a33523ce531650ec0d633b0c8e3fd59d","object":"response","created_at":1755280610,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        coordinate musical performances. When users ask for composition, hand off
+        to the Symphony Composer.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","type":"function_call","status":"completed","arguments":"{}","call_id":"call_0huubaIPG7y97doHmNEbKQi3","name":"transfer_to_symphony_composer"}],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Handoff
+        to the Symphony Composer agent to handle the request. ","name":"transfer_to_symphony_composer","parameters":{"additionalProperties":false,"type":"object","properties":{},"required":[]},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":75,"input_tokens_details":{"cached_tokens":0},"output_tokens":16,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":91},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96fa92256f9809cb-HFA
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Fri, 15 Aug 2025 17:56:50 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '149'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '171'
+      x-request-id:
+      - req_8162482bf19e64aa71a954593b74c173
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you create a new symphony
+      in D major?"},{"arguments":"{}","call_id":"call_0huubaIPG7y97doHmNEbKQi3","name":"transfer_to_symphony_composer","type":"function_call","id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","status":"completed"},{"call_id":"call_0huubaIPG7y97doHmNEbKQi3","output":"{\"assistant\":
+      \"Symphony Composer\"}","type":"function_call_output"}],"instructions":"You
+      compose and arrange symphonic music pieces using your composition tools.","model":"gpt-4o","stream":true,"tools":[{"name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Compose
+      music in the specified style and key."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '886'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_689f74e452808192a56e86fa1107aa6b0d633b0c8e3fd59d","object":"response","created_at":1755280612,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_689f74e452808192a56e86fa1107aa6b0d633b0c8e3fd59d","object":"response","created_at":1755280612,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","type":"function_call","status":"in_progress","arguments":"","call_id":"call_B6pmEGgYkNcOtg8K8wpLVj1b","name":"compose_music"}}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":3,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"{","obfuscation":"OX6QBHLlJhlMQHb"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":4,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\"style","obfuscation":"ZjS2hvbH4B"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":5,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\":","obfuscation":"2EOfPLyZfe71vG"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":6,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\"s","obfuscation":"nGMmaTFDRprqRD"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":7,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"ymph","obfuscation":"HBofiI3HeiIq"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":8,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"ony","obfuscation":"IszFk0z1I0plB"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":9,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\",","obfuscation":"yKZxvp3BfoT8XV"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":10,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\"key","obfuscation":"X4PKavoKB6hD"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":11,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\":","obfuscation":"RMKlq7tz7EVnrm"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":12,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\"D","obfuscation":"qCy40oMEj5W2Um"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":13,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"
+        major","obfuscation":"Jj0l4ZVNBp"}
+
+
+        event: response.function_call_arguments.delta
+
+        data: {"type":"response.function_call_arguments.delta","sequence_number":14,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"delta":"\"}","obfuscation":"aQm5BKWF0ff7sI"}
+
+
+        event: response.function_call_arguments.done
+
+        data: {"type":"response.function_call_arguments.done","sequence_number":15,"item_id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","output_index":0,"arguments":"{\"style\":\"symphony\",\"key\":\"D
+        major\"}"}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":16,"output_index":0,"item":{"id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","type":"function_call","status":"completed","arguments":"{\"style\":\"symphony\",\"key\":\"D
+        major\"}","call_id":"call_B6pmEGgYkNcOtg8K8wpLVj1b","name":"compose_music"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":17,"response":{"id":"resp_689f74e452808192a56e86fa1107aa6b0d633b0c8e3fd59d","object":"response","created_at":1755280612,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","type":"function_call","status":"completed","arguments":"{\"style\":\"symphony\",\"key\":\"D
+        major\"}","call_id":"call_B6pmEGgYkNcOtg8K8wpLVj1b","name":"compose_music"}],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":119,"input_tokens_details":{"cached_tokens":0},"output_tokens":38,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":157},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96fa92302e9c09cb-HFA
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Fri, 15 Aug 2025 17:56:52 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '242'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '251'
+      x-request-id:
+      - req_bbe7b67298ea9853deef6f9a10b10b29
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_4b8557afa2f940209b6fdd6d","trace_id":"trace_db0186bb863d426e9e4486699cb8418a","parent_id":"span_437a8eb384354d8282f36062","started_at":"2025-08-15T17:56:49.441384+00:00","ended_at":"2025-08-15T17:56:51.688812+00:00","span_data":{"type":"response","response_id":"resp_689f74e29ec88192a33523ce531650ec0d633b0c8e3fd59d"},"error":null},{"object":"trace.span","id":"span_421c3dfba5ce4cb5abf6bd03","trace_id":"trace_db0186bb863d426e9e4486699cb8418a","parent_id":"span_437a8eb384354d8282f36062","started_at":"2025-08-15T17:56:51.689172+00:00","ended_at":"2025-08-15T17:56:51.689423+00:00","span_data":{"type":"handoff","from_agent":"Orchestra
+      Conductor","to_agent":"Symphony Composer"},"error":null},{"object":"trace.span","id":"span_437a8eb384354d8282f36062","trace_id":"trace_db0186bb863d426e9e4486699cb8418a","parent_id":null,"started_at":"2025-08-15T17:56:49.440955+00:00","ended_at":"2025-08-15T17:56:51.689481+00:00","span_data":{"type":"agent","name":"Orchestra
+      Conductor","handoffs":["Symphony Composer"],"tools":[],"output_type":"str"},"error":null},{"object":"trace.span","id":"span_cecd653e0a3e4e94a93f067d","trace_id":"trace_db0186bb863d426e9e4486699cb8418a","parent_id":"span_e6a4e759a5db4b7aafeec6e3","started_at":"2025-08-15T17:56:51.689833+00:00","ended_at":"2025-08-15T17:56:54.830934+00:00","span_data":{"type":"response","response_id":"resp_689f74e452808192a56e86fa1107aa6b0d633b0c8e3fd59d"},"error":null},{"object":"trace.span","id":"span_5e7b227afdaf41ea9bba3348","trace_id":"trace_db0186bb863d426e9e4486699cb8418a","parent_id":"span_e6a4e759a5db4b7aafeec6e3","started_at":"2025-08-15T17:56:54.831207+00:00","ended_at":"2025-08-15T17:56:54.831465+00:00","span_data":{"type":"function","name":"compose_music","input":"{\"style\":\"symphony\",\"key\":\"D
+      major\"}","output":"Composed a beautiful symphony piece in D major major","mcp_data":null},"error":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1916'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96fa9246dac909c3-HFA
+      Connection:
+      - keep-alive
+      Date:
+      - Fri, 15 Aug 2025 17:56:56 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '106'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '109'
+      x-request-id:
+      - req_e5f3a430358752ef2f7e138b116a072a
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you create a new symphony
+      in D major?"},{"arguments":"{}","call_id":"call_0huubaIPG7y97doHmNEbKQi3","name":"transfer_to_symphony_composer","type":"function_call","id":"fc_689f74e3958881928863549f7a95e29f0d633b0c8e3fd59d","status":"completed"},{"call_id":"call_0huubaIPG7y97doHmNEbKQi3","output":"{\"assistant\":
+      \"Symphony Composer\"}","type":"function_call_output"},{"arguments":"{\"style\":\"symphony\",\"key\":\"D
+      major\"}","call_id":"call_B6pmEGgYkNcOtg8K8wpLVj1b","name":"compose_music","type":"function_call","id":"fc_689f74e5684881928ad80c74c300529e0d633b0c8e3fd59d","status":"completed"},{"call_id":"call_B6pmEGgYkNcOtg8K8wpLVj1b","output":"Composed
+      a beautiful symphony piece in D major major","type":"function_call_output"}],"instructions":"You
+      compose and arrange symphonic music pieces using your composition tools.","model":"gpt-4o","stream":true,"tools":[{"name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Compose
+      music in the specified style and key."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1253'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: 'event: response.created
+
+        data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_689f74e71d40819299cce7f6bc4a3b980d633b0c8e3fd59d","object":"response","created_at":1755280615,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.in_progress
+
+        data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_689f74e71d40819299cce7f6bc4a3b980d633b0c8e3fd59d","object":"response","created_at":1755280615,"status":"in_progress","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"auto","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}}}
+
+
+        event: response.output_item.added
+
+        data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","type":"message","status":"in_progress","content":[],"role":"assistant"}}
+
+
+        event: response.content_part.added
+
+        data: {"type":"response.content_part.added","sequence_number":3,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""}}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"I''ve","logprobs":[],"obfuscation":"gX4bBYnxkXkd"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":5,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        composed","logprobs":[],"obfuscation":"HG94xsA"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":6,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        a","logprobs":[],"obfuscation":"kziVFU7NM1JCDy"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":7,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        beautiful","logprobs":[],"obfuscation":"x708ux"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":8,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        sym","logprobs":[],"obfuscation":"uTE8t5yjhTt8"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":9,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"phony","logprobs":[],"obfuscation":"pjU1KjAONQm"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":10,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        piece","logprobs":[],"obfuscation":"QWMjSjHGnm"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":11,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        in","logprobs":[],"obfuscation":"mvplC7wEYwhmY"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":12,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        D","logprobs":[],"obfuscation":"BOkS6o0EBC75di"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":13,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        major","logprobs":[],"obfuscation":"wVmHUqWeUQ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":14,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        for","logprobs":[],"obfuscation":"bsOHtEjnAW5t"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":15,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        you","logprobs":[],"obfuscation":"dz3PVn7TfPph"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":16,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":".","logprobs":[],"obfuscation":"4bVi5LR9uyBdua7"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":17,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        If","logprobs":[],"obfuscation":"hKxoBKMl2vooJ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":18,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        you","logprobs":[],"obfuscation":"grTIloXeXWPD"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":19,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        want","logprobs":[],"obfuscation":"Vbb03Fdwpb9"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":20,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        more","logprobs":[],"obfuscation":"ZwjhL2hGNHb"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":21,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        details","logprobs":[],"obfuscation":"7MvBzosI"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":22,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        or","logprobs":[],"obfuscation":"ATxn3FP3cdF83"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":23,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        adjustments","logprobs":[],"obfuscation":"hk0D"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":24,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":",","logprobs":[],"obfuscation":"gfmuRBul1s165l9"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":25,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        feel","logprobs":[],"obfuscation":"10DJnPGcEJt"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":26,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        free","logprobs":[],"obfuscation":"vRmkS8OssDJ"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":27,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        to","logprobs":[],"obfuscation":"505BuhhEGeBIv"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":28,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        let","logprobs":[],"obfuscation":"yX3c22oO12Wm"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":29,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        me","logprobs":[],"obfuscation":"lQxe2Ed6GanL1"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":30,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"
+        know","logprobs":[],"obfuscation":"g6ZL64J8pYT"}
+
+
+        event: response.output_text.delta
+
+        data: {"type":"response.output_text.delta","sequence_number":31,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"delta":"!","logprobs":[],"obfuscation":"FDHtcWzgkIihLXh"}
+
+
+        event: response.output_text.done
+
+        data: {"type":"response.output_text.done","sequence_number":32,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"text":"I''ve
+        composed a beautiful symphony piece in D major for you. If you want more details
+        or adjustments, feel free to let me know!","logprobs":[]}
+
+
+        event: response.content_part.done
+
+        data: {"type":"response.content_part.done","sequence_number":33,"item_id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","output_index":0,"content_index":0,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":"I''ve
+        composed a beautiful symphony piece in D major for you. If you want more details
+        or adjustments, feel free to let me know!"}}
+
+
+        event: response.output_item.done
+
+        data: {"type":"response.output_item.done","sequence_number":34,"output_index":0,"item":{"id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"I''ve
+        composed a beautiful symphony piece in D major for you. If you want more details
+        or adjustments, feel free to let me know!"}],"role":"assistant"}}
+
+
+        event: response.completed
+
+        data: {"type":"response.completed","sequence_number":35,"response":{"id":"resp_689f74e71d40819299cce7f6bc4a3b980d633b0c8e3fd59d","object":"response","created_at":1755280615,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":"You
+        compose and arrange symphonic music pieces using your composition tools.","max_output_tokens":null,"max_tool_calls":null,"model":"gpt-4o-2024-08-06","output":[{"id":"msg_689f74e7a6c48192a4bfe9856d1898c60d633b0c8e3fd59d","type":"message","status":"completed","content":[{"type":"output_text","annotations":[],"logprobs":[],"text":"I''ve
+        composed a beautiful symphony piece in D major for you. If you want more details
+        or adjustments, feel free to let me know!"}],"role":"assistant"}],"parallel_tool_calls":true,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":null,"summary":null},"safety_identifier":null,"service_tier":"default","store":true,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"function","description":"Compose
+        music in the specified style and key.","name":"compose_music","parameters":{"properties":{"style":{"title":"Style","type":"string"},"key":{"title":"Key","type":"string"}},"required":["style","key"],"title":"compose_music_args","type":"object","additionalProperties":false},"strict":true}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":{"input_tokens":157,"input_tokens_details":{"cached_tokens":0},"output_tokens":30,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":187},"user":null,"metadata":{}}}
+
+
+        '
+    headers:
+      CF-RAY:
+      - 96fa9243ecbd09cb-HFA
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Fri, 15 Aug 2025 17:56:55 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '44'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '48'
+      x-request-id:
+      - req_40cac6ddab12115e9d45629c6025330b
+    status:
+      code: 200
+      message: OK
+version: 1

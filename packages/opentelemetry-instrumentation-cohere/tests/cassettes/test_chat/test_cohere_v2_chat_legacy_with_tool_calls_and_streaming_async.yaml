@@ -1,0 +1,283 @@
+interactions:
+- request:
+    body: '{"model": "command-r", "messages": [{"role": "user", "content": "What is
+      the weather and current time in Tokyo?"}], "tools": [{"type": "function", "function":
+      {"name": "get_weather", "description": "Get the current weather in a given location",
+      "parameters": {"type": "object", "properties": {"location": {"type": "string",
+      "description": "The city and state, e.g. San Francisco, CA"}}, "required": ["location"]}}},
+      {"type": "function", "function": {"name": "get_time", "description": "Get the
+      current time in a given location", "parameters": {"type": "object", "properties":
+      {"location": {"type": "string", "description": "The city and state, e.g. San
+      Francisco, CA"}}, "required": ["location"]}}}], "stream": true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '716'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: 'event: message-start
+
+        data: {"id":"ce257b09-c6da-4aed-b722-6384504180f5","type":"message-start","delta":{"message":{"role":"assistant","content":[],"tool_plan":"","tool_calls":[],"citations":[]}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":"I"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" will"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" search"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" for"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" the"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" current"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" time"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" and"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" weather"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" in"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" Tokyo"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" and"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" relay"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" this"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" information"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" to"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" the"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":" user"}}}
+
+
+        event: tool-plan-delta
+
+        data: {"type":"tool-plan-delta","delta":{"message":{"tool_plan":"."}}}
+
+
+        event: tool-call-start
+
+        data: {"type":"tool-call-start","index":0,"delta":{"message":{"tool_calls":{"id":"get_time_mp1131yrhbga","type":"function","function":{"name":"get_time","arguments":""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"{\n    \""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"location"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"\":"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"
+        \""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"Tokyo"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"\""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"\n"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":0,"delta":{"message":{"tool_calls":{"function":{"arguments":"}"}}}}}
+
+
+        event: tool-call-end
+
+        data: {"type":"tool-call-end","index":0}
+
+
+        event: tool-call-start
+
+        data: {"type":"tool-call-start","index":1,"delta":{"message":{"tool_calls":{"id":"get_weather_yxz1xx2m07cn","type":"function","function":{"name":"get_weather","arguments":""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"{\n    \""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"location"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"\":"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"
+        \""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"Tokyo"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"\""}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"\n"}}}}}
+
+
+        event: tool-call-delta
+
+        data: {"type":"tool-call-delta","index":1,"delta":{"message":{"tool_calls":{"function":{"arguments":"}"}}}}}
+
+
+        event: tool-call-end
+
+        data: {"type":"tool-call-end","index":1}
+
+
+        event: message-end
+
+        data: {"type":"message-end","delta":{"finish_reason":"TOOL_CALL","usage":{"billed_units":{"input_tokens":62,"output_tokens":35},"tokens":{"input_tokens":968,"output_tokens":90}}}}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - text/event-stream
+      date:
+      - Sun, 14 Sep 2025 03:00:27 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command-r' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 471c84acae7cecba8477f34ef53ed722
+      x-envoy-upstream-service-time:
+      - '134'
+    status:
+      code: 200
+      message: OK
+version: 1

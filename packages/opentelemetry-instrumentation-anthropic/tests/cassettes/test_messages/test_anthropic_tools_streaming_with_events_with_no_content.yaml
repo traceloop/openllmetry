@@ -1,0 +1,334 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "What is
+      the weather like right now in New York? Also what time is it there now?"}],
+      "model": "claude-3-5-sonnet-20240620", "stream": true, "tools": [{"name": "get_weather",
+      "description": "Get the current weather in a given location", "input_schema":
+      {"type": "object", "properties": {"location": {"type": "string", "description":
+      "The city and state, e.g. San Francisco, CA"}, "unit": {"type": "string", "enum":
+      ["celsius", "fahrenheit"], "description": "The unit of temperature, either ''celsius''
+      or ''fahrenheit''"}}, "required": ["location"]}}, {"name": "get_time", "description":
+      "Get the current time in a given time zone", "input_schema": {"type": "object",
+      "properties": {"timezone": {"type": "string", "description": "The IANA time
+      zone name, e.g. America/Los_Angeles"}}, "required": ["timezone"]}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '869'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.49.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - NOT_GIVEN
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: 'event: message_start
+
+        data: {"type":"message_start","message":{"id":"msg_01JSRVhRSH3H7Fpoimm84exq","type":"message","role":"assistant","model":"claude-3-5-sonnet-20240620","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":514,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":5,"service_tier":"standard"}}            }
+
+
+        event: content_block_start
+
+        data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}         }
+
+
+        event: ping
+
+        data: {"type": "ping"}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Certainly!
+        I''"}        }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
+        be happy to help"}     }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        you with information"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        about the current weather an"}            }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"d
+        time in New York."}  }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        To"}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        provide"}      }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        you with accurate information,"}               }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        I''ll need to use"}        }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        two different tools."} }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        Let''s start with the"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        weather and then check"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"
+        the time"}               }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"."}            }
+
+
+        event: content_block_stop
+
+        data: {"type":"content_block_stop","index":0            }
+
+
+        event: content_block_start
+
+        data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_01YUs66wivdF51ENZFX8gX9S","name":"get_weather","input":{}}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":""}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"location"}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\":
+        \""}              }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"Ne"}           }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"w
+        Y"}   }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"ork,
+        NY\""}          }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":",
+        \"unit\""}               }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":":
+        \"fahrenhe"}             }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"it\"}"}             }
+
+
+        event: content_block_stop
+
+        data: {"type":"content_block_stop","index":1          }
+
+
+        event: content_block_start
+
+        data: {"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"toolu_01NRtod2L7M7TBDj9GCzsZCx","name":"get_time","input":{}}         }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":""}      }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"{\"ti"}}
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"mezone\":"}    }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"
+        \"Ame"}             }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"rica/"}               }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"New_"}               }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"Yo"}     }
+
+
+        event: content_block_delta
+
+        data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"rk\"}"}           }
+
+
+        event: content_block_stop
+
+        data: {"type":"content_block_stop","index":2      }
+
+
+        event: message_delta
+
+        data: {"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null},"usage":{"output_tokens":165}              }
+
+
+        event: message_stop
+
+        data: {"type":"message_stop"     }
+
+
+        '
+    headers:
+      CF-RAY:
+      - 966dceb35aa686d0-LHR
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Tue, 29 Jul 2025 15:56:38 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-07-29T15:56:38Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-07-29T15:56:38Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-07-29T15:56:38Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-07-29T15:56:38Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_011CRbapP4d6AdWez2L13z2d
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1

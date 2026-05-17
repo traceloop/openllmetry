@@ -1,0 +1,65 @@
+{
+  "name": "opentelemetry-semantic-conventions-ai",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai",
+  "targets": {
+    "lock": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv lock",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "options": {
+        "outputPath": "packages/opentelemetry-semantic-conventions-ai/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-semantic-conventions-ai/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-semantic-conventions-ai"
+      ],
+      "options": {
+        "command": "uv run pytest tests/",
+        "cwd": "packages/opentelemetry-semantic-conventions-ai"
+      }
+    }
+  },
+  "tags": []
+}

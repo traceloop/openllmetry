@@ -1,0 +1,173 @@
+interactions:
+- request:
+    body: '{"model": "llama3", "messages": [{"role": "user", "content": "Tell me a
+      joke about OpenTelemetry"}], "stream": true, "format": "", "options": {}, "keep_alive":
+      null}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '165'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.2.0 (arm64 darwin) Python/3.9.5
+    method: POST
+    uri: http://127.0.0.1:11434/api/chat
+  response:
+    body:
+      string: '{"model":"llama3","created_at":"2024-05-24T20:26:46.294874Z","message":{"role":"assistant","content":"Why"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.327411Z","message":{"role":"assistant","content":"
+        did"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.359847Z","message":{"role":"assistant","content":"
+        the"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.39151Z","message":{"role":"assistant","content":"
+        Open"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.423185Z","message":{"role":"assistant","content":"Te"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.455249Z","message":{"role":"assistant","content":"lemetry"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.48701Z","message":{"role":"assistant","content":"
+        agent"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.519106Z","message":{"role":"assistant","content":"
+        go"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.55084Z","message":{"role":"assistant","content":"
+        to"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.582717Z","message":{"role":"assistant","content":"
+        therapy"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.614338Z","message":{"role":"assistant","content":"?\n\n"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.647259Z","message":{"role":"assistant","content":"Because"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.680523Z","message":{"role":"assistant","content":"
+        it"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.712722Z","message":{"role":"assistant","content":"
+        was"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.744696Z","message":{"role":"assistant","content":"
+        feeling"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.777989Z","message":{"role":"assistant","content":"
+        traced"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.810599Z","message":{"role":"assistant","content":"
+        out"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.842483Z","message":{"role":"assistant","content":"
+        and"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.874242Z","message":{"role":"assistant","content":"
+        needed"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.907858Z","message":{"role":"assistant","content":"
+        some"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.939695Z","message":{"role":"assistant","content":"
+        instrumentation"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:46.973465Z","message":{"role":"assistant","content":"
+        in"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.005488Z","message":{"role":"assistant","content":"
+        its"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.037408Z","message":{"role":"assistant","content":"
+        life"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.071067Z","message":{"role":"assistant","content":"!\n\n"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.1034Z","message":{"role":"assistant","content":"(S"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.13523Z","message":{"role":"assistant","content":"orry"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.167179Z","message":{"role":"assistant","content":","},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.199136Z","message":{"role":"assistant","content":"
+        I"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.231007Z","message":{"role":"assistant","content":"
+        know"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.262848Z","message":{"role":"assistant","content":"
+        it"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.294761Z","message":{"role":"assistant","content":"''s"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.32662Z","message":{"role":"assistant","content":"
+        a"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.359191Z","message":{"role":"assistant","content":"
+        bit"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.391083Z","message":{"role":"assistant","content":"
+        of"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.4236Z","message":{"role":"assistant","content":"
+        a"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.456246Z","message":{"role":"assistant","content":"
+        stretch"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.488217Z","message":{"role":"assistant","content":","},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.520801Z","message":{"role":"assistant","content":"
+        but"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.552751Z","message":{"role":"assistant","content":"
+        I"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.585388Z","message":{"role":"assistant","content":"
+        hope"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.617281Z","message":{"role":"assistant","content":"
+        it"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.648978Z","message":{"role":"assistant","content":"
+        brought"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.680771Z","message":{"role":"assistant","content":"
+        a"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.712613Z","message":{"role":"assistant","content":"
+        smile"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.744465Z","message":{"role":"assistant","content":"
+        to"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.776965Z","message":{"role":"assistant","content":"
+        your"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.808792Z","message":{"role":"assistant","content":"
+        face"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.840827Z","message":{"role":"assistant","content":"!)"},"done":false}
+
+        {"model":"llama3","created_at":"2024-05-24T20:26:47.872905Z","message":{"role":"assistant","content":""},"done_reason":"stop","done":true,"total_duration":1897385625,"load_duration":1631208,"prompt_eval_count":17,"prompt_eval_duration":313560000,"eval_count":50,"eval_duration":1577990000}
+
+        '
+    headers:
+      Content-Type:
+      - application/x-ndjson
+      Date:
+      - Fri, 24 May 2024 20:26:46 GMT
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

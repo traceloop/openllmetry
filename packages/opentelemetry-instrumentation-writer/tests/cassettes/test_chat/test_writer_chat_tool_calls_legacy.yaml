@@ -1,0 +1,110 @@
+interactions:
+- request:
+    body: '{
+        "model": "palmyra-x4",
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is the weather like today?"
+          },
+          {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "get_current_weather",
+                  "arguments": "{\"location\": \"San Francisco\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "content": "The weather in San Francisco is 70 degrees and sunny."
+          }
+        ],
+        "tools": [
+          {
+            "function": {
+              "description": "Return weather in the specific location.",
+              "name": "get_weather",
+              "parameters": {
+                "properties": {
+                  "location": {
+                    "description": "Location to return weather at",
+                    "type": "string"
+                  },
+                },
+                "required": [
+                  "location"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          }
+        ],
+        "stream": false,
+        "max_tokens": 340,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "stop": "I am"
+      }'
+    headers:
+      accept:
+      - application/json
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com:443/v1/chat
+  response:
+    body:
+      string: '{
+          "id": "1fc9b079-5315-43d9-a7f2-82c17b065615",
+          "object": "chat.completion",
+          "choices": [
+              {
+                  "index": 0,
+                  "finish_reason": "stop",
+                  "message": {
+                      "content": "Today in San Francisco, the weather is 70 degrees and sunny. Enjoy the day!",
+                      "role": "assistant",
+                      "tool_calls": null,
+                      "graph_data": {
+                          "sources": null,
+                          "status": null,
+                          "subqueries": null
+                      },
+                      "llm_data": null,
+                      "image_data": null,
+                      "translation_data": null,
+                      "web_search_data": null,
+                      "refusal": null
+                  },
+                  "logprobs": null,
+                  "trace_details": null
+              }
+          ],
+          "created": 1755767284,
+          "model": "palmyra-x4",
+          "usage": {
+              "prompt_tokens": 244,
+              "total_tokens": 263,
+              "completion_tokens": 19,
+              "prompt_token_details": null,
+              "completion_tokens_details": null
+          },
+          "system_fingerprint": "v1",
+          "service_tier": null
+      }'
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+    status:
+      code: 200
+      message: OK
+version: 1

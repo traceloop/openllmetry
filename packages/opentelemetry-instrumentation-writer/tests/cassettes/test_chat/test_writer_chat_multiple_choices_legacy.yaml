@@ -1,0 +1,34 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry"}],"model":"palmyra-x4","max_tokens":340,"n":2,"stop":"I
+      am","stream":false,"temperature":0.7,"top_p":0.9}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '180'
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/chat
+  response:
+    body:
+      string: '{"id":"f383320f-f6d7-46b6-966b-7877c6fc0e79","object":"chat.completion","choices":[{"index":0,"finish_reason":"stop","message":{"content":"Sure,
+        here''s a joke for you:\n\nWhy did the developer go broke? Because he used
+        up all his metrics on OpenTelemetry and had nothing left to measure his finances!","role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null},{"index":1,"finish_reason":"stop","message":{"content":"Sure,
+        here''s a light-hearted joke about OpenTelemetry:\n\nWhy did the developer
+        go broke? Because he used up all his metrics on OpenTelemetry and had nothing
+        left to measure!","role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756129713,"model":"palmyra-x4","usage":{"prompt_tokens":39,"total_tokens":113,"completion_tokens":74,"prompt_token_details":null,"completion_tokens_details":null},"system_fingerprint":"v1","service_tier":null}'
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1

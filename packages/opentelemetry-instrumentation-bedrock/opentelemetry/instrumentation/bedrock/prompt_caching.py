@@ -1,0 +1,46 @@
+from opentelemetry import trace
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+
+
+class CachingHeaders:
+    READ = "x-amzn-bedrock-cache-read-input-token-count"
+    WRITE = "x-amzn-bedrock-cache-write-input-token-count"
+
+
+class CacheSpanAttrs:  # TODO: move it under SemConv pkg
+    TYPE = "gen_ai.cache.type"
+    CACHED = "gen_ai.prompt_caching"
+
+
+def prompt_caching_handling(headers, vendor, model, metric_params):
+    base_attrs = {
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+    }
+    span = trace.get_current_span()
+    if not isinstance(span, trace.Span):
+        return
+    if CachingHeaders.READ in headers:
+        read_cached_tokens = int(headers[CachingHeaders.READ])
+        metric_params.prompt_caching.add(
+            read_cached_tokens,
+            attributes={
+                **base_attrs,
+                CacheSpanAttrs.TYPE: "read",
+            },
+        )
+        if read_cached_tokens > 0:
+            span.set_attribute(CacheSpanAttrs.CACHED, "read")
+    if CachingHeaders.WRITE in headers:
+        write_cached_tokens = int(headers[CachingHeaders.WRITE])
+        metric_params.prompt_caching.add(
+            write_cached_tokens,
+            attributes={
+                **base_attrs,
+                CacheSpanAttrs.TYPE: "write",
+            },
+        )
+        if write_cached_tokens > 0:
+            span.set_attribute(CacheSpanAttrs.CACHED, "write")

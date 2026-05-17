@@ -1,0 +1,303 @@
+interactions:
+- request:
+    body: '{"model":"command-r-08-2024","messages":[{"role":"user","content":"write
+      2 lines of random text about $colorful socks"}],"temperature":0.75,"stream":true}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '154'
+      Host:
+      - api.cohere.com
+      User-Agent:
+      - cohere/5.20.1
+      X-Client-Name:
+      - langchain:partner
+      X-Fern-Language:
+      - Python
+      X-Fern-SDK-Name:
+      - cohere
+      X-Fern-SDK-Version:
+      - 5.20.1
+      content-type:
+      - application/json
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: 'event: message-start
+
+        data: {"id":"0a1b4ea7-8c4b-4c84-b06a-fd6a2f5f18fd","type":"message-start","delta":{"message":{"role":"assistant","content":[],"tool_plan":"","tool_calls":[],"citations":[]}}}
+
+
+        event: content-start
+
+        data: {"type":"content-start","index":0,"delta":{"message":{"content":{"type":"text","text":""}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"$"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"color"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"ful"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        socks"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        are"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        vibrant"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        accessory"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":","}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        adding"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        pop"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        of"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        personality"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        to"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        any"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        outfit"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"."}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        They"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        come"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        in"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        an"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        array"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        of"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        patterns"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        and"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        hues"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":","}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        offering"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        a"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        fun"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        way"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        to"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        express"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"
+        individuality"}}}}
+
+
+        event: content-delta
+
+        data: {"type":"content-delta","index":0,"delta":{"message":{"content":{"text":"."}}}}
+
+
+        event: content-end
+
+        data: {"type":"content-end","index":0}
+
+
+        event: message-end
+
+        data: {"type":"message-end","delta":{"finish_reason":"COMPLETE","usage":{"billed_units":{"input_tokens":12,"output_tokens":36},"tokens":{"input_tokens":212,"output_tokens":36},"cached_tokens":208}}}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - text/event-stream
+      date:
+      - Sat, 17 Jan 2026 18:14:43 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 215c7ac445c8d7404b940584d138c190
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '84'
+      x-trial-endpoint-call-limit:
+      - '20'
+      x-trial-endpoint-call-remaining:
+      - '19'
+    status:
+      code: 200
+      message: OK
+version: 1

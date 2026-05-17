@@ -1,0 +1,76 @@
+[project]
+name = "opentelemetry-instrumentation-writer"
+version = "0.60.0"
+description = "OpenTelemetry Writer instrumentation"
+authors = [
+  { name = "Yan Tolstoy", email = "yan.talstoi@writer.com" },
+  { name = "Writer, Inc.", email = "dev-feedback@writer.com" },
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10,<4"
+dependencies = [
+  "opentelemetry-api>=1.38.0,<2",
+  "opentelemetry-instrumentation>=0.59b0",
+  "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
+  "opentelemetry-semantic-conventions>=0.59b0",
+]
+
+[project.urls]
+Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-writer"
+
+[project.optional-dependencies]
+instruments = ["writer"]
+
+[project.entry-points."opentelemetry_instrumentor"]
+writer = "opentelemetry.instrumentation.writer:WriterInstrumentor"
+
+[dependency-groups]
+dev = [
+  "autopep8>=2.2.0,<3",
+  "black>=25.1.0,<27",
+  "isort>=6.0.1,<7",
+  "ruff>=0.4.0",
+]
+test = [
+  "opentelemetry-sdk>=1.38.0,<2",
+  "pytest-asyncio>=0.23.7,<0.24.0",
+  "pytest-recording>=0.13.1,<0.14.0",
+  "pytest-sugar==1.0.0",
+  "pytest>=8.2.2,<9",
+  "python-dotenv>=1.1.1,<2",
+  "vcrpy>=8.0.0,<9",
+  "writer-sdk>=2.3.0,<3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["opentelemetry"]
+
+[tool.coverage.run]
+branch = true
+source = ["opentelemetry/instrumentation/writer"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:"]
+show_missing = true
+
+[tool.ruff]
+line-length = 120
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.uv]
+constraint-dependencies = ["urllib3>=2.6.3", "pyarrow>=18.1.0", "pip>=25.3"]

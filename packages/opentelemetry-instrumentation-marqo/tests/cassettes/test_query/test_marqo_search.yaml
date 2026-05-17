@@ -1,0 +1,142 @@
+interactions:
+- request:
+    body: '{"model": "hf/e5-base-v2"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '26'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex
+  response:
+    body:
+      string: '{"acknowledged":true,"index":"TestIndex"}'
+    headers:
+      content-length:
+      - '41'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:17:46 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"documents": [{"Title": "The Travels of Marco Polo", "Description": "A
+      13th-century travelogue describing Polo''s travels"}, {"Title": "Extravehicular
+      Mobility Unit (EMU)", "Description": "The EMU is a spacesuit that provides environmental
+      protection, mobility, life support, and communications for astronauts", "_id":
+      "article_591"}], "useExistingTensors": false, "imageDownloadHeaders": {}, "mappings":
+      null, "modelAuth": null, "tensorFields": ["Description"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '462'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex/documents
+  response:
+    body:
+      string: '{"errors":false,"processingTimeMs":110.83812200013199,"index_name":"TestIndex","items":[{"status":200,"_id":"53826c11-053d-48bb-b1b5-e7dd6d0565c0"},{"status":200,"_id":"article_591"}]}'
+    headers:
+      content-length:
+      - '184'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:17:52 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"q": "What is the best outfit to wear on the moon?", "limit": 10, "offset":
+      0, "searchMethod": "TENSOR", "showHighlights": true}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '129'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex/search
+  response:
+    body:
+      string: '{"hits":[{"Title":"Extravehicular Mobility Unit (EMU)","Description":"The
+        EMU is a spacesuit that provides environmental protection, mobility, life
+        support, and communications for astronauts","_id":"article_591","_highlights":[{"Description":"The
+        EMU is a spacesuit that provides environmental protection, mobility, life
+        support, and communications for astronauts"}],"_score":0.8302066018513117},{"Title":"The
+        Travels of Marco Polo","Description":"A 13th-century travelogue describing
+        Polo''s travels","_id":"53826c11-053d-48bb-b1b5-e7dd6d0565c0","_highlights":[{"Description":"A
+        13th-century travelogue describing Polo''s travels"}],"_score":0.7665059356501492}],"query":"What
+        is the best outfit to wear on the moon?","limit":10,"offset":0,"processingTimeMs":98}'
+    headers:
+      content-length:
+      - '761'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:17:52 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - python-requests/2.32.3
+    method: DELETE
+    uri: http://localhost:8882/indexes/TestIndex
+  response:
+    body:
+      string: '{"acknowledged":true}'
+    headers:
+      content-length:
+      - '21'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:17:53 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1

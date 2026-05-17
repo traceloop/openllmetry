@@ -1,0 +1,398 @@
+from enum import Enum
+
+SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
+
+
+class GenAISystem(Enum):
+    """
+    Supported LLM vendor (System) names used across OpenLLMetry instrumentations.
+
+    Values that have a counterpart in the official OTel GenAI semantic conventions
+    (opentelemetry.semconv._incubating.attributes.gen_ai_attributes.GenAiSystemValues)
+    use the spec-defined lowercase string. Values without an OTel counterpart use
+    lowercase-with-underscores as a project convention.
+    """
+
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    COHERE = "cohere"
+    MISTRALAI = "mistral_ai"
+    OLLAMA = "ollama"
+    GROQ = "groq"
+    ALEPH_ALPHA = "aleph_alpha"
+    REPLICATE = "replicate"
+    TOGETHER_AI = "together_ai"
+    WATSONX = "ibm.watsonx.ai"
+    HUGGINGFACE = "hugging_face"
+    FIREWORKS = "fireworks"
+
+    AZURE = "az.ai.openai"
+    AWS = "aws.bedrock"
+    GOOGLE = "gcp.gen_ai"
+    OPENROUTER = "openrouter"
+
+    LANGCHAIN = "langchain"
+    CREWAI = "crewai"
+
+
+class Meters:
+    LLM_GENERATION_CHOICES = "gen_ai.client.generation.choices"
+    LLM_TOKEN_USAGE = "gen_ai.client.token.usage"
+    LLM_OPERATION_DURATION = "gen_ai.client.operation.duration"
+    LLM_COMPLETIONS_EXCEPTIONS = "llm.openai.chat_completions.exceptions"
+    LLM_STREAMING_TIME_TO_GENERATE = "llm.chat_completions.streaming_time_to_generate"
+    LLM_EMBEDDINGS_EXCEPTIONS = "llm.openai.embeddings.exceptions"
+    LLM_EMBEDDINGS_VECTOR_SIZE = "llm.openai.embeddings.vector_size"
+    LLM_IMAGE_GENERATIONS_EXCEPTIONS = "llm.openai.image_generations.exceptions"
+    LLM_ANTHROPIC_COMPLETION_EXCEPTIONS = "llm.anthropic.completion.exceptions"
+
+    PINECONE_DB_QUERY_DURATION = "db.pinecone.query.duration"
+    PINECONE_DB_QUERY_SCORES = "db.pinecone.query.scores"
+    PINECONE_DB_USAGE_READ_UNITS = "db.pinecone.usage.read_units"
+    PINECONE_DB_USAGE_WRITE_UNITS = "db.pinecone.usage_write_units"
+
+    DB_QUERY_DURATION = "db.client.query.duration"
+    DB_SEARCH_DISTANCE = "db.client.search.distance"
+    DB_USAGE_INSERT_UNITS = "db.client.usage.insert_units"
+    DB_USAGE_UPSERT_UNITS = "db.client.usage.upsert_units"
+    DB_USAGE_DELETE_UNITS = "db.client.usage.delete_units"
+
+    LLM_WATSONX_COMPLETIONS_DURATION = "llm.watsonx.completions.duration"
+    LLM_WATSONX_COMPLETIONS_EXCEPTIONS = "llm.watsonx.completions.exceptions"
+    LLM_WATSONX_COMPLETIONS_RESPONSES = "llm.watsonx.completions.responses"
+    LLM_WATSONX_COMPLETIONS_TOKENS = "llm.watsonx.completions.tokens"
+
+
+class SpanAttributes:
+    # GenAI Usage Cache Attributes (not yet in upstream OTel incubating semconv)
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
+
+    # LLM — project-policy attributes (not in upstream OTel spec)
+    GEN_AI_USAGE_TOTAL_TOKENS = "gen_ai.usage.total_tokens"
+    GEN_AI_USAGE_TOKEN_TYPE = "gen_ai.usage.token_type"
+    GEN_AI_USER = "gen_ai.user"
+    GEN_AI_HEADERS = "gen_ai.headers"
+    GEN_AI_IS_STREAMING = "gen_ai.is_streaming"
+    GEN_AI_REQUEST_REPETITION_PENALTY = "gen_ai.request.repetition_penalty"
+    GEN_AI_RESPONSE_FINISH_REASON = "gen_ai.response.finish_reason"
+    GEN_AI_RESPONSE_STOP_REASON = "gen_ai.response.stop_reason"
+    GEN_AI_CONTENT_COMPLETION_CHUNK = "gen_ai.content.completion.chunk"
+    GEN_AI_REQUEST_REASONING_EFFORT = "gen_ai.request.reasoning_effort"
+    GEN_AI_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
+    GEN_AI_REQUEST_N = "gen_ai.request.n"
+    GEN_AI_REQUEST_MAX_COMPLETION_TOKENS = "gen_ai.request.max_completion_tokens"
+    GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    GEN_AI_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    GEN_AI_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
+
+    # OpenAI
+    GEN_AI_OPENAI_API_BASE = "gen_ai.openai.api_base"
+    GEN_AI_OPENAI_API_VERSION = "gen_ai.openai.api_version"
+    GEN_AI_OPENAI_API_TYPE = "gen_ai.openai.api_type"
+
+    # Haystack
+    HAYSTACK_OPENAI_CHAT = "haystack.openai.chat"
+    HAYSTACK_OPENAI_COMPLETION = "haystack.openai.completion"
+
+    # Vector DB
+    VECTOR_DB_VENDOR = "db.system"
+    VECTOR_DB_OPERATION = "db.operation"
+    VECTOR_DB_QUERY_TOP_K = "db.vector.query.top_k"
+
+    # Pinecone
+    PINECONE_USAGE_READ_UNITS = "pinecone.usage.read_units"
+    PINECONE_USAGE_WRITE_UNITS = "pinecone.usage.write_units"
+    PINECONE_QUERY_FILTER = "pinecone.query.filter"
+    PINECONE_QUERY_ID = "pinecone.query.id"
+    PINECONE_QUERY_INCLUDE_METADATA = "pinecone.query.include_metadata"
+    PINECONE_QUERY_INCLUDE_VALUES = "pinecone.query.include_values"
+    PINECONE_QUERY_NAMESPACE = "pinecone.query.namespace"
+    PINECONE_QUERY_QUERIES = "pinecone.query.queries"
+    PINECONE_QUERY_TOP_K = "pinecone.query.top_k"
+
+    # LLM Workflows
+    TRACELOOP_SPAN_KIND = "traceloop.span.kind"
+    TRACELOOP_WORKFLOW_NAME = "traceloop.workflow.name"
+    TRACELOOP_ENTITY_NAME = "traceloop.entity.name"
+    TRACELOOP_ENTITY_PATH = "traceloop.entity.path"
+    TRACELOOP_ENTITY_VERSION = "traceloop.entity.version"
+    TRACELOOP_ENTITY_INPUT = "traceloop.entity.input"
+    TRACELOOP_ENTITY_OUTPUT = "traceloop.entity.output"
+    TRACELOOP_ASSOCIATION_PROPERTIES = "traceloop.association.properties"
+
+    # Prompts
+    TRACELOOP_PROMPT_MANAGED = "traceloop.prompt.managed"
+    TRACELOOP_PROMPT_KEY = "traceloop.prompt.key"
+    TRACELOOP_PROMPT_VERSION = "traceloop.prompt.version"
+    TRACELOOP_PROMPT_VERSION_NAME = "traceloop.prompt.version_name"
+    TRACELOOP_PROMPT_VERSION_HASH = "traceloop.prompt.version_hash"
+    TRACELOOP_PROMPT_TEMPLATE = "traceloop.prompt.template"
+    TRACELOOP_PROMPT_TEMPLATE_VARIABLES = "traceloop.prompt.template_variables"
+
+    # Deprecated
+    TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"
+
+    # Watson/genai LLM
+    GEN_AI_WATSONX_DECODING_METHOD = "llm.watsonx.decoding_method"
+    GEN_AI_WATSONX_RANDOM_SEED = "llm.watsonx.random_seed"
+    GEN_AI_WATSONX_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
+    GEN_AI_WATSONX_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
+    GEN_AI_WATSONX_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+
+    # -----------------------------------------------------------------------
+    # Legacy LLM_* aliases (old names with original string values)
+    # These constants were removed or renamed in v0.5.0.
+    # Kept so non-migrated instrumentation packages continue to work.
+    # TODO: Remove once all instrumentation packages are migrated.
+    # -----------------------------------------------------------------------
+
+    # Removed from SpanAttributes in v0.5.0 (now in upstream OTel gen_ai_attributes)
+    # TODO: migrate each to its GenAIAttributes.GEN_AI_* counterpart
+    LLM_SYSTEM = "gen_ai.system"
+    LLM_REQUEST_MODEL = "gen_ai.request.model"
+    LLM_REQUEST_MAX_TOKENS = "gen_ai.request.max_tokens"
+    LLM_REQUEST_TEMPERATURE = "gen_ai.request.temperature"
+    LLM_REQUEST_TOP_P = "gen_ai.request.top_p"
+    LLM_PROMPTS = "gen_ai.prompt"
+    LLM_COMPLETIONS = "gen_ai.completion"
+    LLM_RESPONSE_MODEL = "gen_ai.response.model"
+    LLM_USAGE_COMPLETION_TOKENS = "gen_ai.usage.completion_tokens"
+    LLM_USAGE_PROMPT_TOKENS = "gen_ai.usage.prompt_tokens"
+    LLM_TOKEN_TYPE = "gen_ai.token.type"
+    LLM_OPENAI_RESPONSE_SYSTEM_FINGERPRINT = "gen_ai.openai.system_fingerprint"
+    LLM_FREQUENCY_PENALTY = "llm.frequency_penalty"
+    LLM_PRESENCE_PENALTY = "llm.presence_penalty"
+    LLM_TOP_K = "llm.top_k"
+    LLM_CHAT_STOP_SEQUENCES = "llm.chat.stop_sequences"
+    LLM_REQUEST_FUNCTIONS = "llm.request.functions"
+    LLM_REQUEST_TYPE = "llm.request.type"
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name AND value changed: llm.* -> gen_ai.*)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_* counterpart
+    LLM_USAGE_TOTAL_TOKENS = "llm.usage.total_tokens"
+    LLM_USAGE_TOKEN_TYPE = "llm.usage.token_type"
+    LLM_USER = "llm.user"
+    LLM_HEADERS = "llm.headers"
+    LLM_IS_STREAMING = "llm.is_streaming"
+    LLM_REQUEST_REPETITION_PENALTY = "llm.request.repetition_penalty"
+    LLM_RESPONSE_FINISH_REASON = "llm.response.finish_reason"
+    LLM_RESPONSE_STOP_REASON = "llm.response.stop_reason"
+    LLM_CONTENT_COMPLETION_CHUNK = "llm.content.completion.chunk"
+    LLM_REQUEST_REASONING_EFFORT = "llm.request.reasoning_effort"
+    LLM_USAGE_REASONING_TOKENS = "llm.usage.reasoning_tokens"
+
+    # Renamed LLM_* -> GEN_AI_* in v0.5.0 (name changed, value UNCHANGED)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_* counterpart
+    LLM_REQUEST_STRUCTURED_OUTPUT_SCHEMA = "gen_ai.request.structured_output_schema"
+    LLM_REQUEST_REASONING_SUMMARY = "gen_ai.request.reasoning_summary"
+    LLM_RESPONSE_REASONING_EFFORT = "gen_ai.response.reasoning_effort"
+
+    # OpenAI (renamed LLM_OPENAI_* -> GEN_AI_OPENAI_* in v0.5.0, value unchanged)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_OPENAI_* counterpart
+    LLM_OPENAI_API_BASE = "gen_ai.openai.api_base"
+    LLM_OPENAI_API_VERSION = "gen_ai.openai.api_version"
+    LLM_OPENAI_API_TYPE = "gen_ai.openai.api_type"
+
+    # Watsonx (renamed LLM_* -> GEN_AI_WATSONX_* in v0.5.0, value unchanged)
+    # TODO: migrate each to its SpanAttributes.GEN_AI_WATSONX_* counterpart
+    LLM_DECODING_METHOD = "llm.watsonx.decoding_method"
+    LLM_RANDOM_SEED = "llm.watsonx.random_seed"
+    LLM_MAX_NEW_TOKENS = "llm.watsonx.max_new_tokens"
+    LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
+    LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
+
+    # Cache attributes — VALUE changed in v0.5.0 (underscore -> dot separator).
+    # LLM_* aliases: for packages using the old LLM_* constant name.
+    # GEN_AI_*_DEPRECATED: for packages already using GEN_AI_* name but expecting old value.
+    # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_*_INPUT_TOKENS
+    LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
+    LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+
+    # Chroma db
+    CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"
+    CHROMADB_ADD_EMBEDDINGS_COUNT = "db.chroma.add.embeddings_count"
+    CHROMADB_ADD_METADATAS_COUNT = "db.chroma.add.metadatas_count"
+    CHROMADB_ADD_DOCUMENTS_COUNT = "db.chroma.add.documents_count"
+    CHROMADB_DELETE_IDS_COUNT = "db.chroma.delete.ids_count"
+    CHROMADB_DELETE_WHERE = "db.chroma.delete.where"
+    CHROMADB_DELETE_WHERE_DOCUMENT = "db.chroma.delete.where_document"
+    CHROMADB_GET_IDS_COUNT = "db.chroma.get.ids_count"
+    CHROMADB_GET_INCLUDE = "db.chroma.get.include"
+    CHROMADB_GET_LIMIT = "db.chroma.get.limit"
+    CHROMADB_GET_OFFSET = "db.chroma.get.offset"
+    CHROMADB_GET_WHERE = "db.chroma.get.where"
+    CHROMADB_GET_WHERE_DOCUMENT = "db.chroma.get.where_document"
+    CHROMADB_MODIFY_NAME = "db.chroma.modify.name"
+    CHROMADB_PEEK_LIMIT = "db.chroma.peek.limit"
+    CHROMADB_QUERY_EMBEDDINGS_COUNT = "db.chroma.query.embeddings_count"
+    CHROMADB_QUERY_TEXTS_COUNT = "db.chroma.query.texts_count"
+    CHROMADB_QUERY_N_RESULTS = "db.chroma.query.n_results"
+    CHROMADB_QUERY_INCLUDE = "db.chroma.query.include"
+    CHROMADB_QUERY_SEGMENT_QUERY_COLLECTION_ID = (
+        "db.chroma.query.segment._query.collection_id"
+    )
+    CHROMADB_QUERY_WHERE = "db.chroma.query.where"
+    CHROMADB_QUERY_WHERE_DOCUMENT = "db.chroma.query.where_document"
+    CHROMADB_UPDATE_DOCUMENTS_COUNT = "db.chroma.update.documents_count"
+    CHROMADB_UPDATE_EMBEDDINGS_COUNT = "db.chroma.update.embeddings_count"
+    CHROMADB_UPDATE_IDS_COUNT = "db.chroma.update.ids_count"
+    CHROMADB_UPDATE_METADATAS_COUNT = "db.chroma.update.metadatas_count"
+    CHROMADB_UPSERT_DOCUMENTS_COUNT = "db.chroma.upsert.documents_count"
+    CHROMADB_UPSERT_EMBEDDINGS_COUNT = "db.chroma.upsert.embeddings_count"
+    CHROMADB_UPSERT_METADATAS_COUNT = "db.chroma.upsert.metadatas_count"
+
+    # Milvus
+    MILVUS_DELETE_COLLECTION_NAME = "db.milvus.delete.collection_name"
+    MILVUS_DELETE_FILTER = "db.milvus.delete.filter"
+    MILVUS_DELETE_IDS_COUNT = "db.milvus.delete.ids_count"
+    MILVUS_DELETE_PARTITION_NAME = "db.milvus.delete.partition_name"
+    MILVUS_DELETE_TIMEOUT = "db.milvus.delete.timeout"
+    MILVUS_GET_COLLECTION_NAME = "db.milvus.get.collection_name"
+    MILVUS_GET_PARTITION_NAMES_COUNT = "db.milvus.get.partition_names_count"
+    MILVUS_GET_IDS_COUNT = "db.milvus.get.ids_count"
+    MILVUS_GET_OUTPUT_FIELDS_COUNT = "db.milvus.get.output_fields_count"
+    MILVUS_GET_TIMEOUT = "db.milvus.get.timeout"
+    MILVUS_CREATE_COLLECTION_NAME = "db.milvus.create_collection.collection_name"
+    MILVUS_CREATE_COLLECTION_DIMENSION = "db.milvus.create_collection.dimension"
+    MILVUS_CREATE_COLLECTION_PRIMARY_FIELD = "db.milvus.create_collection.primary_field"
+    MILVUS_CREATE_COLLECTION_METRIC_TYPE = "db.milvus.create_collection.metric_type"
+    MILVUS_CREATE_COLLECTION_TIMEOUT = "db.milvus.create_collection.timeout"
+    MILVUS_CREATE_COLLECTION_ID_TYPE = "db.milvus.create_collection.id_type"
+    MILVUS_CREATE_COLLECTION_VECTOR_FIELD = "db.milvus.create_collection.vector_field"
+    MILVUS_INSERT_COLLECTION_NAME = "db.milvus.insert.collection_name"
+    MILVUS_INSERT_DATA_COUNT = "db.milvus.insert.data_count"
+    MILVUS_INSERT_PARTITION_NAME = "db.milvus.insert.partition_name"
+    MILVUS_INSERT_TIMEOUT = "db.milvus.insert.timeout"
+    MILVUS_QUERY_COLLECTION_NAME = "db.milvus.query.collection_name"
+    MILVUS_QUERY_FILTER = "db.milvus.query.filter"
+    MILVUS_QUERY_IDS_COUNT = "db.milvus.query.ids_count"
+    MILVUS_QUERY_LIMIT = "db.milvus.query.limit"
+    MILVUS_QUERY_OUTPUT_FIELDS_COUNT = "db.milvus.query.output_fields_count"
+    MILVUS_QUERY_PARTITION_NAMES_COUNT = "db.milvus.query.partition_names_count"
+    MILVUS_QUERY_TIMEOUT = "db.milvus.query.timeout"
+    MILVUS_SEARCH_ANNS_FIELD = "db.milvus.search.anns_field"
+    MILVUS_SEARCH_COLLECTION_NAME = "db.milvus.search.collection_name"
+    MILVUS_SEARCH_DATA_COUNT = "db.milvus.search.data_count"
+    MILVUS_SEARCH_FILTER = "db.milvus.search.filter"
+    MILVUS_SEARCH_LIMIT = "db.milvus.search.limit"
+    MILVUS_SEARCH_OUTPUT_FIELDS_COUNT = "db.milvus.search.output_fields_count"
+    MILVUS_SEARCH_PARTITION_NAMES_COUNT = "db.milvus.search.partition_names_count"
+    MILVUS_SEARCH_SEARCH_PARAMS = "db.milvus.search.search_params"
+    MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
+    MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names"
+    MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
+    MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
+    MILVUS_SEARCH_ANNSEARCH_REQUEST = "db.milvus.search.annsearch_request"
+    MILVUS_SEARCH_RANKER_TYPE = "db.milvus.search.ranker_type"
+    MILVUS_UPSERT_COLLECTION_NAME = "db.milvus.upsert.collection_name"
+    MILVUS_UPSERT_DATA_COUNT = "db.milvus.upsert.data_count"
+    MILVUS_UPSERT_PARTITION_NAME = "db.milvus.upsert.partition_name"
+    MILVUS_UPSERT_TIMEOUT = "db.milvus.upsert.timeout"
+
+    # Qdrant
+    QDRANT_SEARCH_COLLECTION_NAME = "qdrant.search.collection_name"
+    QDRANT_SEARCH_BATCH_COLLECTION_NAME = "qdrant.search_batch.collection_name"
+    QDRANT_SEARCH_BATCH_REQUESTS_COUNT = "qdrant.search_batch.requests_count"
+    QDRANT_UPLOAD_COLLECTION_NAME = "qdrant.upload_collection.collection_name"
+    QDRANT_UPLOAD_POINTS_COUNT = "qdrant.upload_collection.points_count"
+    QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
+    QDRANT_UPSERT_POINTS_COUNT = "qdrant.upsert.points_count"
+
+    # Marqo
+    MARQO_SEARCH_QUERY = "db.marqo.search.query"
+    MARQO_SEARCH_PROCESSING_TIME = "db.marqo.search.processing_time"
+    MARQO_DELETE_DOCUMENTS_STATUS = "db.marqo.delete_documents.status"
+
+    # MCP
+    MCP_METHOD_NAME = "mcp.method.name"
+    MCP_REQUEST_ARGUMENT = "mcp.request.argument"
+    MCP_REQUEST_ID = "mcp.request.id"
+    MCP_SESSION_INIT_OPTIONS = "mcp.session.init_options"
+    MCP_RESPONSE_VALUE = "mcp.response.value"
+
+    # GenAI Task Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_TASK_ID = "gen_ai.task.id"
+    GEN_AI_TASK_NAME = "gen_ai.task.name"
+    GEN_AI_TASK_PARENT_ID = "gen_ai.task.parent.id"
+    GEN_AI_TASK_INPUT = "gen_ai.task.input"
+    GEN_AI_TASK_OUTPUT = "gen_ai.task.output"
+    GEN_AI_TASK_STATUS = "gen_ai.task.status"
+    GEN_AI_TASK_KIND = "gen_ai.task.kind"
+
+    # GenAI Workflow Attributes (custom - not yet in official OTel semconv)
+    GEN_AI_WORKFLOW_NODES = "gen_ai.workflow.nodes"
+    GEN_AI_WORKFLOW_EDGES = "gen_ai.workflow.edges"
+
+    # LangGraph-specific Attributes (vendor namespace)
+    LANGGRAPH_COMMAND_SOURCE_NODE = "langgraph.command.source_node"
+    LANGGRAPH_COMMAND_GOTO_NODE = "langgraph.command.goto_node"
+    LANGGRAPH_COMMAND_GOTO_NODES = "langgraph.command.goto_nodes"
+
+
+class Events(Enum):
+    DB_QUERY_EMBEDDINGS = "db.query.embeddings"
+    DB_QUERY_RESULT = "db.query.result"
+    DB_SEARCH_EMBEDDINGS = "db.search.embeddings"
+    DB_SEARCH_RESULT = "db.search.result"
+
+
+class EventAttributes(Enum):
+    # Query Embeddings
+    DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
+
+    # Query Result (canonical format)
+    DB_QUERY_RESULT_ID = "db.query.result.id"
+    DB_QUERY_RESULT_SCORE = "db.query.result.score"
+    DB_QUERY_RESULT_DISTANCE = "db.query.result.distance"
+    DB_QUERY_RESULT_METADATA = "db.query.result.metadata"
+    DB_QUERY_RESULT_VECTOR = "db.query.result.vector"
+    DB_QUERY_RESULT_DOCUMENT = "db.query.result.document"
+
+    # SEARCH
+    DB_SEARCH_EMBEDDINGS_VECTOR = "db.search.embeddings.vector"
+
+    DB_SEARCH_RESULT_QUERY_ID = "db.search.query.id"  # For multi-vector searches
+    DB_SEARCH_RESULT_ID = "db.search.result.id"
+    DB_SEARCH_RESULT_SCORE = "db.search.result.score"
+    DB_SEARCH_RESULT_DISTANCE = "db.search.result.distance"
+    DB_SEARCH_RESULT_ENTITY = "db.search.result.entity"
+
+
+class LLMRequestTypeValues(Enum):
+    COMPLETION = "completion"
+    CHAT = "chat"
+    RERANK = "rerank"
+    EMBEDDING = "embedding"
+    UNKNOWN = "unknown"
+
+
+class TraceloopSpanKindValues(Enum):
+    WORKFLOW = "workflow"
+    TASK = "task"
+    AGENT = "agent"
+    TOOL = "tool"
+    UNKNOWN = "unknown"
+
+
+class GenAICustomOperationName(Enum):
+    """
+    Custom operation names extending the official OpenTelemetry GenAI semantic conventions.
+
+    For standard operations (create_agent, invoke_agent, execute_tool, chat, embeddings),
+    use the official GenAiOperationNameValues from:
+    opentelemetry.semconv._incubating.attributes.gen_ai_attributes
+
+    These are agent workflow extensions not yet in the official spec.
+    """
+
+    EXECUTE_TASK = "execute_task"
+    LLM_REQUEST = "llm_request"
+    VECTOR_DB_RETRIEVE = "vector_db_retrieve"
+
+
+class GenAITaskStatus(Enum):
+    """Task execution status values for gen_ai.task.status attribute."""
+
+    SUCCESS = "success"
+    FAILURE = "failure"

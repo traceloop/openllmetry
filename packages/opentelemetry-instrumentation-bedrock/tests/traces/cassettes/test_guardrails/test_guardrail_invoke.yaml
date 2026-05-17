@@ -1,0 +1,83 @@
+interactions:
+- request:
+    body: '{"inputText": "Tell me a joke about opentelemetry", "textGenerationConfig": {"maxTokenCount": 512, "temperature":
+      0.5}}'
+    headers:
+      Content-Length:
+      - '172'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuMy4wIG1k
+        L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+        LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAyMjZUMTI1MTAzWg==
+      X-Amzn-Bedrock-GuardrailIdentifier:
+      - !!binary |
+        NXp3cm1kbHNyYTJl
+      X-Amzn-Bedrock-GuardrailVersion:
+      - !!binary |
+        RFJBRlQ=
+      X-Amzn-Bedrock-Trace:
+      - !!binary |
+        RU5BQkxFRA==
+      amz-sdk-invocation-id:
+      - !!binary |
+        ZmM4MDVkM2QtMzIzZi00N2ExLTkzYzUtZGQ4NDFiODk4OTMx
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke
+  response:
+    body:
+      string: '{"inputTextTokenCount":28.0,"results":[{"tokenCount":197.0,"outputText":"\nOnce
+        upon a time, a young girl named Lily found a magical key that unlocked a hidden
+        garden filled with colorful flowers and friendly animals. She spent hours
+        exploring the garden, feeling grateful for the unexpected adventure.\nOnce
+        upon a time, a young girl named Lily found a magical key that unlocked a hidden
+        garden filled with colorful flowers and friendly animals. She spent hours
+        exploring the garden, feeling grateful for the unexpected adventure. When
+        she turned to leave, she noticed a small note on the ground with the string
+        \"{Account Number}\" written on it. She picked it up and realized it was a
+        clue to another secret garden, even more beautiful than the first one. Excited
+        to explore, she followed the clues and soon discovered the new garden, filled
+        with even more surprises. From that day on, Lily became known as the girl
+        with the magical key and the secret gardens, and she continued to explore
+        and discover new wonders in the world.","completionReason":"FINISH"}],"amazon-bedrock-trace":{"guardrail":{"modelOutput":["{\"inputTextTokenCount\":28,\"results\":[{\"tokenCount\":197,\"outputText\":\"\\nOnce
+        upon a time, a young girl named Lily found a magical key that unlocked a hidden
+        garden filled with colorful flowers and friendly animals. She spent hours
+        exploring the garden, feeling grateful for the unexpected adventure.\\nOnce
+        upon a time, a young girl named Lily found a magical key that unlocked a hidden
+        garden filled with colorful flowers and friendly animals. She spent hours
+        exploring the garden, feeling grateful for the unexpected adventure. When
+        she turned to leave, she noticed a small note on the ground with the string
+        \\\"1234561666\\\" written on it. She picked it up and realized it was a clue
+        to another secret garden, even more beautiful than the first one. Excited
+        to explore, she followed the clues and soon discovered the new garden, filled
+        with even more surprises. From that day on, Lily became known as the girl
+        with the magical key and the secret gardens, and she continued to explore
+        and discover new wonders in the world.\",\"completionReason\":\"FINISH\"}]}"],"input":{"5zwrmdlsra2e":{"invocationMetrics":{"guardrailProcessingLatency":347,"usage":{"topicPolicyUnits":1,"contentPolicyUnits":1,"wordPolicyUnits":1,"sensitiveInformationPolicyUnits":1,"sensitiveInformationPolicyFreeUnits":0,"contextualGroundingPolicyUnits":0},"guardrailCoverage":{"textCharacters":{"guarded":87,"total":87}}}}},"outputs":[{"5zwrmdlsra2e":{"sensitiveInformationPolicy":{"regexes":[{"name":"Account
+        Number","regex":"\\b\\d{6}\\d{4}\\b","match":"1234561666","action":"ANONYMIZED"}]},"invocationMetrics":{"guardrailProcessingLatency":266,"usage":{"topicPolicyUnits":1,"contentPolicyUnits":1,"wordPolicyUnits":1,"sensitiveInformationPolicyUnits":1,"sensitiveInformationPolicyFreeUnits":1,"contextualGroundingPolicyUnits":0},"guardrailCoverage":{"textCharacters":{"guarded":948,"total":948}}}}}]}},"amazon-bedrock-guardrailAction":"INTERVENED"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '3051'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 26 Feb 2025 12:51:14 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '28'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '10738'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '197'
+      x-amzn-RequestId:
+      - c59a0724-5bdb-40a8-b252-eac180098b5a
+    status:
+      code: 200
+      message: OK
+version: 1

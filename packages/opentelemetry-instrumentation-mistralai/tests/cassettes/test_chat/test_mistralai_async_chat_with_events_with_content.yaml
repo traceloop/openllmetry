@@ -1,0 +1,90 @@
+interactions:
+- request:
+    body: '{"model":"mistral-tiny","messages":[{"content":"Tell me a joke about OpenTelemetry","role":"user"}],"stream":false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '115'
+      content-type:
+      - application/json
+      host:
+      - api.mistral.ai
+      user-agent:
+      - mistral-client-python/1.9.10
+    method: POST
+    uri: https://api.mistral.ai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1xTTU8bQQz9K64vvSyIKAkJe0HqqTculXooFfLOeLMDM/ZqxkvYovz3ajYgWm7W
+        k+33YfkVg8cWnfer1RW5zlG/cb3b09V6tduvV9d7f73e32CDLjMZe2xXu+1ut73Z3GwbTOo5Yosp
+        FMsULyzIjA1OhQ6M7SuOWdNoD6ZPLAXb1apBU6P4gWy2DTpNY2QLKh/4enNqULtHdlb1DWSXH21V
+        zqDBccH21ysG8fyC7VWDfZBQhofMVFSwxWI6YoOJy7uirJGxRSolFCMxrIo0PjiKsWArU4xVkBhL
+        Jf7Omb8WIIjhMNjFwJSNPTzqEwN1OhncjSw/OHJiy3MDBKOOU6QMOrJcFJ2yYyhzMU7Qa4YDC2ey
+        IIcGnMbI7lyTUJz/vJUeaIFBBex9OXgyau/lXn4OM/jg/+eGRw0CBFndE3Qk/ra2fmNHU2EIBkeS
+        qt0UkkowzWADQ50NrjRQRpIFObBkLmcZvh42dNMyODB0TPal7r3rwemUCzcQrCYUIwSBg6qHfpJl
+        ODGJVb6Oay6R5n6KcKS5YvwyRgpnxnHKoxYG7T9ZWgwNU9KsU4FEIpwvP/eUJfQj57q9HnPJOaQx
+        63PNcGHg3GtOJI4byBwDdSEGm88uue+DCyxurhL+9Xw+3FsYi1EuhcUCnVlIZqhPkAWK9nakzOD5
+        maOOicUu8XT6ffoLAAD//wMA0Heqg2UDAAA=
+    headers:
+      CF-RAY:
+      - 97e6f9cc5c7b4884-VIE
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 13 Sep 2025 10:31:36 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=RZ.3ZWjQ8kxBEuvbk8YEwgr0GbvxFTsMZhNJEDf0eAA-1757759496-1.0.1.1-tZ0HgPN0UHmVtx7f3Tqyus26W_i4VBEP80zZuvQWvXUcTzYQ4WWddc3rYTK2XjGHoHRZaO.Eae9hL66hKVk6E2MfEbzmsOaO8OycZEH4Xi0;
+        path=/; expires=Sat, 13-Sep-25 11:01:36 GMT; domain=.mistral.ai; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=RyMS2vjSRlcfaCpB2Je938eUwu6pONi1ygmGFSjY.Hg-1757759496114-0.0.1.1-604800000;
+        path=/; domain=.mistral.ai; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      mistral-correlation-id:
+      - 019942a1-5c15-7264-a1c9-f3e31dd0e685
+      x-envoy-upstream-service-time:
+      - '902'
+      x-kong-proxy-latency:
+      - '6'
+      x-kong-request-id:
+      - 019942a1-5c15-7264-a1c9-f3e31dd0e685
+      x-kong-upstream-latency:
+      - '903'
+      x-ratelimit-limit-req-10-second:
+      - '60'
+      x-ratelimit-limit-tokens-minute:
+      - '2000000'
+      x-ratelimit-limit-tokens-month:
+      - '10000000000'
+      x-ratelimit-remaining-req-10-second:
+      - '52'
+      x-ratelimit-remaining-tokens-minute:
+      - '1999225'
+      x-ratelimit-remaining-tokens-month:
+      - '9999999225'
+      x-ratelimit-tokens-query-cost:
+      - '145'
+    status:
+      code: 200
+      message: OK
+version: 1

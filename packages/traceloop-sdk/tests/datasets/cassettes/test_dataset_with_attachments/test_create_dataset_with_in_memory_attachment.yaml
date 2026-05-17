@@ -1,0 +1,178 @@
+interactions:
+- request:
+    body: '{"slug": "test-dataset-memory-attachment", "name": "Memory Attachment Dataset",
+      "description": null, "columns": [{"slug": "name", "name": "Name", "type": "string"},
+      {"slug": "image", "name": "Image", "type": "file"}], "rows": [{"name": "Test
+      Item", "image": null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '265'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidno3nq002t01r53voiw01a","slug":"test-dataset-memory-attachment","name":"Memory
+        Attachment Dataset","columns":{"image":{"slug":"image","name":"Image","type":"file"},"name":{"slug":"name","name":"Name","type":"string"}},"total_columns":2,"created_at":"2025-11-24T21:25:08.102105041Z","updated_at":"2025-11-24T21:25:08.102105127Z","rows":[{"id":"cmidno3nx002u01r55spkw8dn","row_index":1,"values":{"image":null,"name":"Test
+        Item"},"created_at":"2025-11-24T21:25:08.113547367Z","updated_at":"2025-11-24T21:25:08.113547367Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3bfa250a8b7546-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '531'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 21:25:08 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - b0f0e6271ec3e30f1fa55322d8148871
+      x-kong-upstream-latency:
+      - '22'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"type": "image", "file_name": "test.jpg", "content_type": "image/jpeg",
+      "with_thumbnail": false, "metadata": {}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '113'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-memory-attachment/rows/cmidno3nx002u01r55spkw8dn/cells/image/upload-url
+  response:
+    body:
+      string: '{"upload_url":"https://traceloop-staging-files.s3.amazonaws.com/c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/744992d1-7f89-4bf7-9978-38db53dd12ae.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=ASIAQEMAC2MSQIN6EEGS%2F20251124%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20251124T212508Z\u0026X-Amz-Expires=3600\u0026X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH3%2Bh%2BsH0KvYJqXGuQ0GF0xk8%2BkRicgYH8Ltvo08DLW%2FAiAfcHu0cnrxCIkB7hd2UBATZ1ZSbOQq8L38mh6%2BkJf18Cr5BAheEAAaDDAwOTM5NTQyNjA4NSIMCJbAo9CFNseeyr20KtYEipuqeoYbzFZDx8VMzfnyRA58M7AkLLzZ14X6E8WNz3Fo%2BRbtOZeDaIgG6Q1vvqFtg%2B3JxRcNUyU3Q372FdJsfQZnWlI%2BpmZLykoja%2FasIHEz%2B8h9eTz8tl97XYnWafZTgVHFWD2SJXmFchA0rLVVyRi0YvG6gq4X02ns0Xgn718hzuBvSqbnJ82oa0RvhrAyKeGvCPQwxhghqyNpG0ntXxJzmkgezFZSelFnz7T4FwKXr8pKgEu%2BRCPBG%2BSHGDT1DhZ3sG2F5ORq8aJyj%2FKkGhENcyogtju9Kgaq8oVMJtV%2FrQEkxuftMFrnvaO9vR4e2tgk6p%2FJLv7akwI61%2Fn89pdSBjB0pklC4gGk5zBWwnPq814OhIGcCzmlf1gdD8k4DR1AUCy9Q2wGwnWScpsSEipr3r7i0kvXZIRlx2YVGXOnk0XJHKd32RM9wrpcFb0LSxkABelmMGsYll%2BTktuBkOKJidBLBjzE2kU4oKbbmtcv8FKyXTwXQALerpO54UVzuABh6gmLAWAZspWEcJ%2B2M8tC1n5GxFICqvhgXzFHL7x%2FilwJcjhH9I%2Bt28K7RGIqQpQfTffC2gJtUAUcohLFtmdahNQ6DHLuPiBSKk9XUFd8l5URLndJVNhzMos580RO%2FrcIHQv8FU95kEyrNuaCH6nxk3xC2ef97AyikYu%2BPrdfRDn2JPENF86x4q0Qu1FzErRBQX%2Ft6osQ9TVP3wdnswk41b9EQO4nxzikMp9h1MEoZUETf1nWpelQNxgva7PvCm7ci0NVDNrm20PfbIdNSmnaoYxFsjDykJPJBjqZASCiHdsuYM4lR%2FDje4Zp0IzfS2KDr8069je%2FGD91v%2FurCR5IQMToDFUyIiHRBZ5F%2FW93oSK6z3OpqOXoxyG2iDmmmY5VxR9iRNqjVFu%2FjZLZh53RetQgplscJRgnqD3q8ICez2qwQJY%2FcPwnVddN6CngNOz%2FPbjZ33eETP8V9IizhuKqBA4ExS75x2n50DpzQZei%2ByGCuvYeZw%3D%3D\u0026X-Amz-SignedHeaders=content-type%3Bhost\u0026X-Amz-Signature=e961a868ba46c0a58b13af2d7a2f56eaeec39c6f177f20050341ec45af00f1fb","storage_key":"c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/744992d1-7f89-4bf7-9978-38db53dd12ae.jpg","expires_at":"2025-11-24T22:25:08.316243221Z","method":"PUT"}'
+    headers:
+      CF-RAY:
+      - 9a3bfa266dfa9d70-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 21:25:08 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - a55d3d2fcc57500eaca0204e73fbb731
+      x-kong-upstream-latency:
+      - '22'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "success", "metadata": {"size_bytes": 16}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '53'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: PUT
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-memory-attachment/rows/cmidno3nx002u01r55spkw8dn/cells/image/upload-status
+  response:
+    body:
+      string: '{"success":true,"status":"success"}'
+    headers:
+      CF-RAY:
+      - 9a3bfa27aa82f9c6-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '35'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 21:25:08 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 45288e44ceb94d4c5e58c12e9942955e
+      x-kong-upstream-latency:
+      - '15'
+    status:
+      code: 200
+      message: OK
+version: 1

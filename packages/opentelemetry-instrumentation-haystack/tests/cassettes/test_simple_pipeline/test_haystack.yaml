@@ -1,0 +1,160 @@
+interactions:
+- request:
+    body: '{"batch": [{"properties": {"libraries.haystack": "2.0.0", "os.containerized":
+      false, "os.version": "23.2.0", "os.family": "Darwin", "os.machine": "arm64",
+      "python.version": "3.12.1", "hardware.cpus": 8, "hardware.gpus": 0, "libraries.transformers":
+      false, "libraries.torch": false, "libraries.cuda": false, "libraries.pytest":
+      "8.1.0", "libraries.ipython": false, "libraries.colab": false, "pipeline_id":
+      "4342043408", "runs": 1, "components": {"haystack.components.builders.dynamic_chat_prompt_builder.DynamicChatPromptBuilder":
+      [{"name": "prompt_builder"}], "haystack.components.generators.chat.openai.OpenAIChatGenerator":
+      [{"name": "llm", "model": "gpt-4"}]}, "$lib": "posthog-python", "$lib_version":
+      "3.5.0", "$geoip_disable": true}, "timestamp": "2024-04-01T18:55:44.280804+00:00",
+      "context": {}, "distinct_id": "38bf70b0-c13e-495a-ba7d-86d91682d7af", "event":
+      "Pipeline run (2.x)"}], "historical_migration": false, "sentAt": "2024-04-01T18:55:44.785326+00:00",
+      "api_key": "phc_C44vUK9R1J6HYVdfJarTEPqVAoRPJzMXzFcj8PIrJgP"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1030'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - posthog-python/3.5.0
+    method: POST
+    uri: https://eu-api.i.posthog.com/batch/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6pWKi5JLCktVrJSMKwFAAAA//8DAM5z9poNAAAA
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 18:55:45 GMT
+      Transfer-Encoding:
+      - chunked
+      content-encoding:
+      - gzip
+      cross-origin-opener-policy:
+      - same-origin
+      referrer-policy:
+      - same-origin
+      server:
+      - envoy
+      vary:
+      - Accept-Encoding
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '7'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages": [{"content": "Tell me a joke about OpenTelemetry", "role":
+      "user"}], "model": "gpt-4", "stream": false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '116'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.14.3
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.14.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.1
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SRT08CMRDF7/spxl68gGEFRbiYePKg4sEEEzGkdIfdQnemaQd0Q/jupsu/eOnh
+        vXmT35vuMgBlCzUGZSotpvauOxo939fT1fT1c1JszfZFNL/pdzeZxm0/qk5K8GKFRk6pG8O1dyiW
+        6WCbgFowbc2HeT4aDYeDQWvUXKBLsdJLd9Dt3ef9Y6JiazCqMXxlAAC79k1sVOCvGkOvc1JqjFGX
+        qMbnIQAV2CVF6RhtFE2iOhfTMAlSizutGiiYrgUmHukDHdYooQGk0hJiiOCdbqCyBYKmAiLi+nFG
+        M3pCozcRO1AyF+A2Zp2GLJXwUyGBVNiA0QQStEHALYZGKkvllTpy7M8FHJc+8CKVpY1zZ31pycZq
+        HlBHpgQbhf0hvs8AvttDbf51Vz5w7WUuvEZKC/O7wzp1+ZKLeds/msKi3UXvP2RHPhWbKFjPl5ZK
+        DD7Y9mqJMttnfwAAAP//AwAKkPSILAIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 86dacb8f9da40dc6-MXP
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 18:55:46 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=uDO60g414See5qHrhOAyqsySmHx.Z8u153EfCzR.Oi4-1711997746-1.0.1.1-ZZ6W.TFhJhaGtIQgr8ZZpDRi_vnJ1OkTrunpFsrrtAiu2jEXgtq8irYidiLu8DUm2jS5jogVPIOsp3oXjYLFEA;
+        path=/; expires=Mon, 01-Apr-24 19:25:46 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=pbSFBgNPjDmt3qczd6YF4wqDhYR5e_pS8rQs7EcBpOw-1711997746569-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-4-0613
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1792'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '5000'
+      x-ratelimit-limit-tokens:
+      - '80000'
+      x-ratelimit-remaining-requests:
+      - '4999'
+      x-ratelimit-remaining-tokens:
+      - '79974'
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 19ms
+      x-request-id:
+      - req_4390347143dd748392610004b9e38a35
+    status:
+      code: 200
+      message: OK
+version: 1

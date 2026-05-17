@@ -1,0 +1,53 @@
+interactions:
+- request:
+    body: '{"query": "What is the capital of France?", "documents": ["Paris is the
+      capital of France and is known for the Eiffel Tower.", "London is the capital
+      of England and has Big Ben.", "Berlin is the capital of Germany.", "The capital
+      of France is Paris, a beautiful city."], "model": "rerank-2-lite", "top_k":
+      3, "truncation": true}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '328'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.5
+    method: POST
+    uri: https://api.voyageai.com/v1/rerank
+  response:
+    body:
+      string: '{"object":"list","data":[{"relevance_score":0.7421875,"index":3},{"relevance_score":0.69140625,"index":0},{"relevance_score":0.494140625,"index":2}],"model":"rerank-2-lite","usage":{"total_tokens":57}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '201'
+      Via:
+      - 1.1 google
+      content-type:
+      - application/json
+      date:
+      - Thu, 29 Jan 2026 09:08:23 GMT
+      server:
+      - uvicorn
+      x-api-warning:
+      - You have not yet added your payment method in the billing page and will have
+        reduced rate limits of 3 RPM and 10K TPM. To unlock our standard rate limits,
+        please add a payment method in the billing page for the appropriate organization
+        in the user dashboard (https://dashboard.voyageai.com/). Even with payment
+        methods entered, the free tokens (200M tokens for Voyage series 3) will still
+        apply. After adding a payment method, you should see your rate limits increase
+        after several minutes. See our pricing docs (https://docs.voyageai.com/docs/pricing)
+        for the free tokens for your model.
+      x-request-id:
+      - 9454b60510fef508af49c38eeb0cd0bf
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,694 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"developer","content":"You are the leader of a team
+      and sub-teams of AI Agents.\nYour task is to coordinate the team to complete
+      the user''s request.\n\nHere are the members in your team:\n<team_members>\n
+      - Agent 1:\n   - ID: technicalexpert\n   - Name: TechnicalExpert\n   - Role:
+      Technical perspective\n - Agent 2:\n   - ID: businessexpert\n   - Name: BusinessExpert\n   -
+      Role: Business perspective\n</team_members>\n\n<how_to_respond>\n- You can either
+      respond directly or use the `delegate_task_to_members` tool to delegate a task
+      to all members in your team to get a collaborative response.\n- To delegate
+      a task to all members in your team, call `delegate_task_to_members` ONLY once.
+      This will delegate a task to all members in your team.\n- Analyze the responses
+      from all members and evaluate whether the task has been completed.\n- If you
+      feel the task has been completed, you can stop and respond to the user.\n</how_to_respond>\n\n<instructions>\n-
+      Gather perspectives from all members.\n- Provide a brief synthesis.\n</instructions>\n\n<additional_information>\n-
+      Use markdown to format your answers.\n</additional_information>"},{"role":"user","content":"Should
+      we use microservices? Brief answer only."}],"model":"gpt-4o-mini","tools":[{"type":"function","function":{"name":"delegate_task_to_members","description":"Use
+      this function to delegate a task to all the member agents and return a response.\nYou
+      must provide a clear and concise description of the task the member should achieve
+      AND the expected output.","parameters":{"type":"object","properties":{"task":{"type":"string","description":"(str)
+      A clear and concise description of the task to send to member agents."}},"required":["task"],"additionalProperties":false}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1765'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFTJbtswEL3rKwY8x4FlK3Hqm9EG3YtuaNDWgTAiRxIbihTIkRvX8L8X
+        khfJSQpUB4GYx/dm5yYCEFqJOQhZIsuqNqPnan19aWKlksXv4pqmE/U53Lx6O3vxbvb1vThrGS77
+        RZIPrHPpqtoQa2d3sPSETK1qPLucXiaT6fSqAyqnyLS0ouZR4kaVtno0GU+S0Xg2iq/27NJpSUHM
+        4WcEALDp/m2cVtG9mMP47GCpKAQsSMyPlwCEd6a1CAxBB0bL4qwHpbNMtg3dNsYMAHbOpBKN6R3v
+        vs3g3BcLjUkXn17ex5PXN8kH/pJ9W/wYX7/h+Hv2YeBvJ72uu4DyxspjkQb40T5/4AxAWKw6riJD
+        BTKljOEuZZdWVGXkwwMtAIG+aCqy3OYhNkvREpZivhQLi2b9h4BLAlQrtIwFBUCrQOkwsLgcmqBt
+        AZWW3gXyq7YfoC0oWpFxdSsPuXcVZI5LYJKl1RJNp5W1XAoBavKhJsl6ReEcPnq30ooAIfOacghr
+        yyUF3blbu8ZDrq3StgjnS7EVJ1lto6fOt4PuecqbgOZxW9Fax9hWt+vr7R7ZHkfIuKL2LgsPqCLX
+        Vocy9YSh68xwQKJDIF0IojmZQVF7V9Wcsrujzun0Yj+wot+THk3iPciO0QxYzw7AiV6qiFF3Q3rc
+        C4myJNVT+/3ARmk3AKJB7o+jeUp7l7+2xf/I94CUVDOptPaktDzNuL/mqX1G/nXtWOUuYLGfw5Q1
+        +d1G5NiY3XKLsA5MVZprW5Cvve42XOR1ehGr7CrBHDMRbaO/AAAA//8DAOh0HULvBAAA
+    headers:
+      CF-RAY:
+      - 9a1801e5cc257d3c-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:38:59 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=BhRFtj93vCoNVFJcv_iaU84WeFSDgSWfwZpPERI6Vy8-1763642339-1.0.1.1-BGoBQJ92ZptAm0nckizAh4Nlamhc6NvnZaKxDdCOqTz4czdO0iOrd4TD4a4E8ayXJ9rIqUcfXf0dRpVN_9bbIdbTA8YCLtxxrvMoVZbPCIE;
+        path=/; expires=Thu, 20-Nov-25 13:08:59 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=crap2UtZDB1vAkCZF4C4ckS7lxjJuVAlGnxS.ZUBDiM-1763642339428-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1041'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '1054'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999712'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_11a67d7e7092420d9280a325aa8e6139
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"developer","content":"<your_role>\nTechnical perspective\n</your_role>\n\n<instructions>\n\nProvide
+      technical perspective. Keep responses brief.\n\n</instructions>\n\n<additional_information>\n-
+      Your name is: TechnicalExpert.\n</additional_information>"},{"role":"user","content":"Analyze
+      the advantages and disadvantages of using microservices in development from
+      both technical and business perspectives. Provide a brief synthesis of your
+      findings."}],"model":"gpt-4o-mini"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '498'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-RAY:
+      - 9a1801edbfc13562-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:06 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=249kpGt5uaSl_EF1HvIOJPkk.vaspUSOylYjXgINFfo-1763642346-1.0.1.1-l29INi17x04fJgwZCDBYJnK13V5oXvYjfj4SplK24QoJvn7JDmrqmulzpMsW.rxnT6DGeS1RNlIUpWMR.B7C1zRVy.h0rRtqckV8f6g0OcQ;
+        path=/; expires=Thu, 20-Nov-25 13:09:06 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=KmfUvtN3lmKtHeLrqhVEtG_cWKPfusBl62c4ltLftQ0-1763642346481-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '6822'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '6837'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999900'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_050d43a201774d76a9dabb4776e7534d
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"b049f982-8f29-4427-b474-0fee6920cf0d","run_id":"01cf1232-1a74-4ac7-a21f-c91d5c823502","data":{"agent_id":"technicalexpert","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"has_tools":true,"has_memory":false,"has_culture":false,"has_reasoning":false,"has_knowledge":false,"has_input_schema":false,"has_output_schema":false,"has_team":true},"sdk_version":"2.2.13","type":"agent"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '476'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: 01cf1232-1a74-4ac7-a21f-c91d5c823502","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:07 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"messages":[{"role":"developer","content":"<your_role>\nBusiness perspective\n</your_role>\n\n<instructions>\n\nProvide
+      business perspective. Keep responses brief.\n\n</instructions>\n\n<additional_information>\n-
+      Your name is: BusinessExpert.\n</additional_information>"},{"role":"user","content":"Analyze
+      the advantages and disadvantages of using microservices in development from
+      both technical and business perspectives. Provide a brief synthesis of your
+      findings."}],"model":"gpt-4o-mini"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '495'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        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
+        /wMA4NNJOPwLAAA=
+    headers:
+      CF-RAY:
+      - 9a18021dbffcc22c-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:15 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=b8zbmGH6TjpN4985NwIEIz4WTgYXKAt4KngOddQZ07w-1763642355-1.0.1.1-UcIZ3j9cKuSVXol7_sMJhOqsDj78joxliL_pNWQ54zjRlpeE7Yl1zf6gUcayim96IxdFaciYR1l1F0ONN8LhdpIcFSjeUfw222LvqwycQiE;
+        path=/; expires=Thu, 20-Nov-25 13:09:15 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=7TYK6.NVThWZJBDp_CxwQcNVcwkkoReDsX1ddcP060k-1763642355254-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '7904'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '7916'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999902'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_75ffc205d54444ddb68faeb5b4b30813
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"b049f982-8f29-4427-b474-0fee6920cf0d","run_id":"f8f3885d-4b52-4471-823a-5e3941412799","data":{"agent_id":"businessexpert","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"has_tools":true,"has_memory":false,"has_culture":false,"has_reasoning":false,"has_knowledge":false,"has_input_schema":false,"has_output_schema":false,"has_team":true},"sdk_version":"2.2.13","type":"agent"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '475'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: f8f3885d-4b52-4471-823a-5e3941412799","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:15 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+- request:
+    body: "{\"messages\":[{\"role\":\"developer\",\"content\":\"You are the leader
+      of a team and sub-teams of AI Agents.\\nYour task is to coordinate the team
+      to complete the user's request.\\n\\nHere are the members in your team:\\n<team_members>\\n
+      - Agent 1:\\n   - ID: technicalexpert\\n   - Name: TechnicalExpert\\n   - Role:
+      Technical perspective\\n - Agent 2:\\n   - ID: businessexpert\\n   - Name: BusinessExpert\\n
+      \  - Role: Business perspective\\n</team_members>\\n\\n<how_to_respond>\\n-
+      You can either respond directly or use the `delegate_task_to_members` tool to
+      delegate a task to all members in your team to get a collaborative response.\\n-
+      To delegate a task to all members in your team, call `delegate_task_to_members`
+      ONLY once. This will delegate a task to all members in your team.\\n- Analyze
+      the responses from all members and evaluate whether the task has been completed.\\n-
+      If you feel the task has been completed, you can stop and respond to the user.\\n</how_to_respond>\\n\\n<instructions>\\n-
+      Gather perspectives from all members.\\n- Provide a brief synthesis.\\n</instructions>\\n\\n<additional_information>\\n-
+      Use markdown to format your answers.\\n</additional_information>\"},{\"role\":\"user\",\"content\":\"Should
+      we use microservices? Brief answer only.\"},{\"role\":\"assistant\",\"tool_calls\":[{\"id\":\"call_AQGx12IW4NtSbVAZ0EJt1YbN\",\"function\":{\"arguments\":\"{\\\"task\\\":\\\"Analyze
+      the advantages and disadvantages of using microservices in development from
+      both technical and business perspectives. Provide a brief synthesis of your
+      findings.\\\"}\",\"name\":\"delegate_task_to_members\"},\"type\":\"function\"}],\"content\":\"\"},{\"role\":\"tool\",\"content\":\"Agent
+      TechnicalExpert: **Advantages of Microservices:**\\n\\n*Technical Perspectives:*\\n1.
+      **Scalability:** Individual services can be scaled independently based on demand,
+      leading to optimized resource utilization.\\n2. **Technology Agnostic:** Teams
+      can choose technology stacks best suited for the specific service, promoting
+      innovation.\\n3. **Fault Isolation:** Failure in one service does not directly
+      impact others, enhancing system resilience.\\n4. **Continuous Deployment:**
+      Supports CI/CD practices, allowing for faster and more frequent releases.\\n\\n*Business
+      Perspectives:*\\n1. **Faster Time-to-Market:** Development can happen in parallel
+      across services, accelerating delivery.\\n2. **Increased Flexibility:** Easier
+      to pivot business strategies or introduce new features without overhauling the
+      entire system.\\n3. **Empowered Teams:** Small, autonomous teams can take ownership
+      of services, enhancing productivity and accountability.\\n\\n**Disadvantages
+      of Microservices:**\\n\\n*Technical Perspectives:*\\n1. **Complexity:** Increased
+      architectural complexity leads to challenges in deployment, monitoring, and
+      management.\\n2. **Data Management:** Handling data consistency across services
+      can be cumbersome, leading to potential synchronization issues.\\n3. **Network
+      Latency:** More service-to-service communication can introduce latency and potential
+      failure points.\\n\\n*Business Perspectives:*\\n1. **Higher Initial Costs:**
+      Investment in infrastructure, tooling, and team training can be significant.\\n2.
+      **Skill Requirements:** Teams need expertise in managing microservices, which
+      may necessitate additional training or hiring.\\n3. **Integration Challenges:**
+      Coordinating between multiple services can complicate workflows and introduce
+      overhead.\\n\\n**Synthesis:**\\nMicroservices offer significant advantages in
+      scalability, flexibility, and resilience, making them attractive for businesses
+      aiming for rapid innovation and market responsiveness. However, the complexities
+      and initial resource investment required can be barriers, particularly for small
+      teams or organizations. Careful consideration of these trade-offs is essential
+      for successful implementation.Agent BusinessExpert: **Advantages of Microservices:**\\n\\n*Technical
+      Perspective:*\\n1. **Scalability:** Each service can be scaled independently,
+      allowing for optimized resource usage.\\n2. **Flexibility with Technology Stack:**
+      Teams can choose different technologies that best fit the specific requirements
+      of each service.\\n3. **Resilience:** If one service fails, it doesn\u2019t
+      necessarily bring down the entire application.\\n\\n*Business Perspective:*\\n1.
+      **Faster Time to Market:** Independent teams can develop and deploy services
+      concurrently, speeding up the release cycle.\\n2. **Enhanced Innovation:** Teams
+      can experiment with new ideas in isolated services without impacting the whole
+      system.\\n3. **Improved Alignment with Business Goals:** Smaller teams can focus
+      on specific business functionality, fostering accountability and better aligning
+      development with business needs.\\n\\n**Disadvantages of Microservices:**\\n\\n*Technical
+      Perspective:*\\n1. **Complexity:** Microservices architecture introduces operational
+      complexity in terms of deployment, communication, and data management.\\n2.
+      **Monitoring and Management Challenges:** Increased number of services requires
+      sophisticated infrastructure for monitoring and logging.\\n3. **Inter-Service
+      Communication Overhead:** Network latency and potential failure points increase
+      with multiple services interacting.\\n\\n*Business Perspective:*\\n1. **Higher
+      Initial Investment:** The need for robust infrastructure, skilled personnel,
+      and additional tools can lead to increased costs.\\n2. **Team Coordination:**
+      Requires clear communication and coordination across multiple teams, which can
+      lead to overhead.\\n3. **Compliance and Security Risks:** More services mean
+      more endpoints to secure and manage compliance, increasing risk.\\n\\n**Synthesis:**\\nMicroservices
+      offer significant advantages in scalability, flexibility, and speed, aligning
+      well with modern business needs for rapid innovation and responsiveness to market
+      changes. However, they also introduce complexities and potential higher costs,
+      necessitating careful consideration and an understanding of organizational readiness.
+      Businesses must weigh these factors against their specific goals and resources
+      to make informed decisions on adopting this architecture.\",\"tool_call_id\":\"call_AQGx12IW4NtSbVAZ0EJt1YbN\"}],\"model\":\"gpt-4o-mini\",\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"delegate_task_to_members\",\"description\":\"Use
+      this function to delegate a task to all the member agents and return a response.\\nYou
+      must provide a clear and concise description of the task the member should achieve
+      AND the expected output.\",\"parameters\":{\"type\":\"object\",\"properties\":{\"task\":{\"type\":\"string\",\"description\":\"(str)
+      A clear and concise description of the task to send to member agents.\"}},\"required\":[\"task\"],\"additionalProperties\":false}}}]}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '6649'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=BhRFtj93vCoNVFJcv_iaU84WeFSDgSWfwZpPERI6Vy8-1763642339-1.0.1.1-BGoBQJ92ZptAm0nckizAh4Nlamhc6NvnZaKxDdCOqTz4czdO0iOrd4TD4a4E8ayXJ9rIqUcfXf0dRpVN_9bbIdbTA8YCLtxxrvMoVZbPCIE;
+        _cfuvid=crap2UtZDB1vAkCZF4C4ckS7lxjJuVAlGnxS.ZUBDiM-1763642339428-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFXbbhw3DH33VxDjt8Wu4XsSvxSOnTQpEBRw3FvqYMGVODOsNdREotbZ
+        BAH6G/29fkkhzezFTQr0ZR6GInnO4RH1eQ+gYltdQGVaVNP1bnZlVy9+fHd8/Zu/vbyh+zdO3j2V
+        H9I1/vrzs1RNc4Zf/EFG11kHxne9I2UvQ9gEQqVc9ejJ+cn56fHJ2XkJdN6Sy2lNr7NTP+tYeHZ8
+        eHw6O3wyO3o6ZreeDcXqAn7fAwD4XL4Zp1j6WF3A4XT9p6MYsaHqYnMIoAre5T8VxshRUbSaboPG
+        i5IU6Pv7+/C29clZ+IXgp0jwhk3wkcIy9//uTu5kPx+aTC7tEkWxoXgxmdzJDCaTtwYdLtixri4m
+        k8epYFBgQRANOrKQcfcklkTdChYYyYIXsNSh2IOh3EtHH3koBw+sLdySacU735Ty11zXFEgUHvVI
+        yo4/EdhNWNdpTBEU2flAFtRD7MlwzQaEyMax6w1FdkxiKDe5hBrZpUDAAl5o3Quspyh///mXAovB
+        Hg0rKoG2BCTKgQD73rHBbIED2BHueYosFCM8J6GadavfS4xKAW65o5n62RsM96SFKi3J+b7LbDJH
+        b0wKGVGPAZ0jNwVHaFmaTOtDYnNPAQI5wkhrYi/E+BSwIQuvRfyyIMvVbwm7QTs79AEUC0pRQegB
+        2BLGMgCfFLjr0Wjp1BKMLieIq6jUjZ0uHTdSwJaxbQh/79FltvC2Q+dAN31rb1LM899MpE5iMj50
+        rExxCiQtisl90RifREejHewoe80Rv3blVcH4cTTlbUuAwbSsZDTPNfdn0eBtMgSRG8kAUBR8TwEH
+        ECPRXCTLmm9yVtpS7/yqMM2SWVSEDgUbyv9GNV5x01KA18LK6ODKRx1EIC06ph5Y6oBRQxogFfkD
+        suRwxhfoQ8qWimlRbm+uw7KkqDt9rrwPlqUghqs2+0IGHeBmyI9gHGHIZLokozcB8y2NwzSm0Pu8
+        CxidW2VnB8KYUTz4cF87/wB+SaEltGvdS2MxLsXBTXfy9bXfEdWtxkkOm2Ac4hTq7V2fFv6xJ7JT
+        6PB+9FoHMbHiwhHUPsBiNBXFwT3D/gjYc14ua3sfwCv/QEsK02JXjNEbLtPbDDQvhdyQx/mYPB94
+        wBCw3LZAdXJAS3Rp1KtBlqjgQ4PCnzYOwX5gsy7YZLcf7C7aXCpiXvaSnNsJoIjXUqis+Pdj5Mtm
+        qTvf9MEv4r9Sq5qFYzvPU/KSF3hU31cl+mUP4H15PNKj96Dqg+96nau/p9Lu6Oj8dChYbR+tbfj4
+        5HiMqld0O3knz86n3yg5t5SXbNx5gSqDpiW7zd0+V5gs+53A3g7xr/F8q/ZAnqX5P+W3AWOoV7Lz
+        PpBl85jz9lig/Kr/17GN0AVwNZp+rkwhD8NSjckNb201bMh5zdJQ6AMPD27dz8/OD7E+p7OzZ9Xe
+        l71/AAAA//8DAA3PiVR+CAAA
+    headers:
+      CF-RAY:
+      - 9a180254cdd2b7bf-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:28 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '12559'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '12574'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149998610'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_929ced3923c04a05816fd70fb6d17765
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id":"b049f982-8f29-4427-b474-0fee6920cf0d","run_id":"4f0f30f5-d7e9-408f-8ec5-9f07c8f10d72","data":{"team_id":"discussionteam","db_type":null,"model_provider":"OpenAI","model_name":"OpenAIChat","model_id":"gpt-4o-mini","parser_model":null,"output_model":null,"member_count":2,"has_knowledge":false,"has_tools":false},"sdk_version":"2.2.13","type":"team"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '363'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: 4f0f30f5-d7e9-408f-8ec5-9f07c8f10d72","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Nov 2025 12:39:29 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+version: 1

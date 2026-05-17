@@ -1,0 +1,114 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "Hey, what''s the weather in San Francisco? Also,
+      any news in town?", "role": "user"}], "model": "gpt-4.1-nano", "stream": false,
+      "tools": [{"type": "function", "function": {"name": "get_weather", "description":
+      "", "parameters": {"properties": {"location": {"type": "string"}}, "required":
+      ["location"], "type": "object"}}}, {"type": "function", "function": {"name":
+      "get_news", "description": "", "parameters": {"properties": {"location": {"type":
+      "string"}}, "required": ["location"], "type": "object"}}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '534'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-24a7273550b299d6bb1709ef7caf769d-739f050c3a361af2-01
+      user-agent:
+      - OpenAI/Python 1.59.9
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.59.9
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//tFRNb+IwEL3nV1hzJhWBLFBuRdtlV7Tqbj9XXarIOJNgcOys7ZS2iP++
+        iilJoF2pl+YQJfP83rwZj732CAEew5AAm1PLslz4o7ulGWfL0f2leTTjSef09uUlW1z/6K9k7ye0
+        SoaaLZDZHeuIqSwXaLmSW5hppBZL1aAf9oOw1x20HZCpGEVJS3Prh0eBL6lUfqfd+eK3Qz8IX+lz
+        xRkaGJI/HiGErN27NCpjfIIhcWIukqExNEUYVosIAa1EGQFqDDeWSgutGmRKWpSld1kI0QCsUiJi
+        VIg68fZZN77rblEhotP05uz73eTveFGMuj16g/ziKj85u2/k20o/585QUkhWdamBV/HhQTJCQNLM
+        cVO00QqpnaM+oBMCVKdFhtKW1mE9BaEYLQWnMCRTuKKSfNNUMm6YmsIG9uibxt+m9aG6f6M+/jW+
+        uP56Pu6MnuTxyWTMb89ft+8T6pa4Mp9YdPX90BgHjUlhqHg7J1RKZV0iNygP3kHrQKg012pmDqiQ
+        cMnNPNJIjSu5OXHezoizAMXeUEOuVZbbyKoluqS9/lYU6oNXg+EOtMpSUceDIGy9IxfFaCl3Q1+d
+        M0bZHOOaWp83WsRcNQCvUfpbN+9pb8vnMv2IfA0whrnFOMo1xpztV1wv01jeS/9bVjXZGQaD+pEz
+        jCxHXW5HjAktxPayAPNsLGZRwmWKOtfc3RiQ5NEgicNuPxjMuuBtvH8AAAD//wMA9adeKkAFAAA=
+    headers:
+      CF-RAY:
+      - 93f2d4860e8cef55-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 13 May 2025 14:26:20 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=66RQQs5BE5.IU93GsWJc00y7_dqqx7pVo.xRR_4aHDI-1747146380-1.0.1.1-Nigqor_4LbUt2bg6HluzJYW6LC2R5h4rxwlkkGX979yL7KXYrCPVSKIOGijjs.fjkpugcV0VbTd0BqwDPZP90hiNh4SLn8Zmp14ALj5X768;
+        path=/; expires=Tue, 13-May-25 14:56:20 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=h_it0ryqHJQQ3gtmInZ289Gx9tGClrnQhLA3XV4.YHo-1747146380441-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - user-xzaeeoqlanzncr8pomspsknu
+      openai-processing-ms:
+      - '369'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '373'
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999981'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_cd30db7dcceb6259d2a7f96526bfb943
+    status:
+      code: 200
+      message: OK
+version: 1

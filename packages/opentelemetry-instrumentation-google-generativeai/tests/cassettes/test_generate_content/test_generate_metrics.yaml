@@ -1,0 +1,90 @@
+interactions:
+- request:
+    body: '{"contents": [{"parts": [{"text": "What is ai?"}], "role": "user"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '68'
+      Content-Type:
+      - application/json
+      Host:
+      - generativelanguage.googleapis.com
+      user-agent:
+      - google-genai-sdk/1.52.0 gl-python/3.11.11
+      x-goog-api-client:
+      - google-genai-sdk/1.52.0 gl-python/3.11.11
+      x-goog-api-key:
+      - DUMMY_GOOGLE_API_KEY
+    method: POST
+    uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+  response:
+    body:
+      string: !!binary |
+        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
+        q121MJ8PAAA=
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Tue, 09 Dec 2025 12:45:58 GMT
+      Server:
+      - scaffolding on HTTPServer2
+      Server-Timing:
+      - gfet4t7; dur=11375
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - X-Origin
+      - Referer
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

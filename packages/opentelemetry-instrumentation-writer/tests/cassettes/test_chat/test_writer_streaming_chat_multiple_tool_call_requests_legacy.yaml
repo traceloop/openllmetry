@@ -1,0 +1,120 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"What is the weather like in Zakopane,
+      Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?"}],"model":"palmyra-x4","max_tokens":340,"stop":"I
+      am","stream":true,"stream_options":{"include_usage":true},"temperature":0.7,"tools":[{"function":{"description":"Return
+      weather in the specific location.","name":"get_weather","parameters":{"properties":{"location":{"description":"Location
+      to return weather at","type":"string"}},"required":["location"],"type":"object"}},"type":"function"}],"top_p":0.9}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '539'
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/chat
+  response:
+    body:
+      string: 'data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":"chatcmpl-tool-5ac885d9b1b54a66b11f014a1ecb5b9d","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":"chatcmpl-tool-5ac885d9b1b54a66b11f014a1ecb5b9d","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Zakopane\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Zakopane\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":"chatcmpl-tool-368eedfd835c4186b5cb97c69d803cf0","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":"chatcmpl-tool-368eedfd835c4186b5cb97c69d803cf0","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Warsaw\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":1,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Warsaw\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":"chatcmpl-tool-af73f77676e3402e9e04a4f867552ddd","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":"chatcmpl-tool-af73f77676e3402e9e04a4f867552ddd","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Lodz\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":2,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Lodz\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":"chatcmpl-tool-e9d9b531d7954d789c1ccc21dbdd3be0","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":"chatcmpl-tool-e9d9b531d7954d789c1ccc21dbdd3be0","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Katowice\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":3,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Katowice\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":"chatcmpl-tool-a5155160b47c4f5c9f02eb234cac9e7c","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":"chatcmpl-tool-a5155160b47c4f5c9f02eb234cac9e7c","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Krakow\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":4,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Krakow\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":"chatcmpl-tool-aad9face17d14c7296dd569213e61f47","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":"chatcmpl-tool-aad9face17d14c7296dd569213e61f47","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Poznan\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":5,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Poznan\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":"chatcmpl-tool-938c427496df48f3b2efb60d6a854461","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":"chatcmpl-tool-938c427496df48f3b2efb60d6a854461","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Lublin\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":6,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Lublin\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":"tool_calls","message":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221269,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"1908e68d-0a48-4394-a155-d160bca81742","object":"chat.completion.chunk","choices":[],"created":1756221269,"model":"palmyra-x4","usage":{"prompt_tokens":212,"total_tokens":365,"completion_tokens":153,"prompt_token_details":null,"completion_tokens_details":null},"system_fingerprint":"v1","service_tier":null}
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

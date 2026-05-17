@@ -1,0 +1,41 @@
+interactions:
+- request:
+    body: '{"model": "gemma3:1b", "stream": false, "messages": [{"role": "user", "content":
+      "Hello, this is a test for model attribute."}], "tools": []}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '141'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.4.7 (arm64 darwin) Python/3.13.4
+    method: POST
+    uri: http://127.0.0.1:11434/api/chat
+  response:
+    body:
+      string: '{"model":"gemma3:1b","created_at":"2025-08-20T09:45:30.391699Z","message":{"role":"assistant","content":"Okay,
+        I understand. You''re testing my model''s ability to understand and respond
+        to specific attributes. \n\nI''m ready. Please let me know what you''d like
+        me to do.  Do you have a question for me, or would you like me to:\n\n*   **Answer
+        a question?**\n*   **Describe something?**\n*   **Generate something based
+        on a prompt that includes specific attributes?** \n\nI''ll do my best to respond
+        appropriately."},"done_reason":"stop","done":true,"total_duration":1078043917,"load_duration":109557375,"prompt_eval_count":19,"prompt_eval_duration":153401750,"eval_count":104,"eval_duration":814595750}'
+    headers:
+      Content-Length:
+      - '700'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 20 Aug 2025 09:45:30 GMT
+    status:
+      code: 200
+      message: OK
+version: 1

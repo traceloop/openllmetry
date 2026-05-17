@@ -1,0 +1,108 @@
+name: "🐛 Bug Report"
+description: "Submit a bug report to help us improve"
+title: "🐛 Bug Report: "
+labels: ["type: bug"]
+body:
+  - type: dropdown
+    id: component
+    validations:
+      required: true
+    attributes:
+      label: Which component is this bug for?
+      description: Which package does this bug report apply to?
+      options:
+        - "AlephAlpha Instrumentation"
+        - "Anthropic Instrumentation"
+        - "Bedrock Instrumentation"
+        - "Chromadb Instrumentation"
+        - "Cohere Instrumentation"
+        - "Google Generative AI Instrumentation"
+        - "Groq Instrumentation"
+        - "Haystack Instrumentation"
+        - "LanceDB Instrumentation"
+        - "Langchain Instrumentation"
+        - "LlamaIndex Instrumentation"
+        - "Marqo Instrumentation"
+        - "Milvus Instrumentation"
+        - "Mistral Instrumentation"
+        - "Ollama Instrumentation"
+        - "OpenAI Instrumentation"
+        - "Pinecone Instrumentation"
+        - "Qdrant Instrumentation"
+        - "Replicate Instrumentation"
+        - "SageMaker Instrumentation"
+        - "Together Instrumentation"
+        - "Transformers Instrumentation"
+        - "VertexAI Instrumentation"
+        - "Watsonx Instrumentation"
+        - "Weaviate Instrumentation"
+        - "LLM Semantic Conventions"
+        - "Traceloop SDK"
+        - "All Packages"
+  - type: markdown
+    attributes:
+      value: We value your time and effort to submit this bug report. 🙏
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: "📜 Description"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "It bugs out when ..."
+  - type: textarea
+    id: steps-to-reproduce
+    validations:
+      required: true
+    attributes:
+      label: "👟 Reproduction steps"
+      description: "How do you trigger this bug? Please walk us through it step by step."
+      placeholder: "1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error"
+  - type: textarea
+    id: expected-behavior
+    validations:
+      required: true
+    attributes:
+      label: "👍 Expected behavior"
+      description: "What did you think should happen?"
+      placeholder: "It should ..."
+  - type: textarea
+    id: actual-behavior
+    validations:
+      required: true
+    attributes:
+      label: "👎 Actual Behavior with Screenshots"
+      description: "What did actually happen? Add screenshots, if applicable."
+      placeholder: "It actually ..."
+  - type: input
+    id: python-version
+    validations:
+      required: false
+    attributes:
+      label: "🤖 Python Version"
+      description: >
+        What Python version are you using?
+  - type: textarea
+    id: additional-context
+    validations:
+      required: false
+    attributes:
+      label: "📃 Provide any additional context for the Bug."
+      description: "Add any other context about the problem here."
+      placeholder: "It actually ..."
+  - type: checkboxes
+    id: no-duplicate-issues
+    attributes:
+      label: "👀 Have you spent some time to check if this bug has been raised before?"
+      options:
+        - label: "I checked and didn't find similar issue"
+          required: true
+  - type: dropdown
+    attributes:
+      label: Are you willing to submit PR?
+      description: This is absolutely not required, but we are happy to guide you in the contribution process.
+      options:
+        - "Yes I am willing to submit a PR!"

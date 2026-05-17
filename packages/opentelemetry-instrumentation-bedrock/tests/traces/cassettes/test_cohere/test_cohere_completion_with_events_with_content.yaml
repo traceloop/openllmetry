@@ -1,0 +1,61 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about opentelemetry", "max_tokens": 200, "temperature":
+      0.5, "p": 0.5}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '97'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNC4xNDUgbWQvQm90b2NvcmUjMS4zNC4xNDUgdWEvMi4wIG9zL21hY29zIzIzLjYu
+        MCBtZC9hcmNoI2FybTY0IGxhbmcvcHl0aG9uIzMuMTIuMSBtZC9weWltcGwjQ1B5dGhvbiBjZmcv
+        cmV0cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNC4xNDU=
+      X-Amz-Date:
+      - !!binary |
+        MjAyNDEwMjNUMTQwOTQ1Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        YTY0ODE3ZjItNDc3ZS00MWE3LThmYmItMWEyYmQ2ZTRjZjk4
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/cohere.command-text-v14/invoke
+  response:
+    body:
+      string: '{"id":"3266ca30-473c-4491-b6ef-5b1f033798d2","generations":[{"id":"5ccd25a1-96ff-4976-8ef6-056c876953d2","text":"
+        What does an open-source project say to a cloud provider?\n\n\"I trace at
+        every opportunity!\"\n\nWhy?\n\nBecause, open-source projects like Opentelemetry
+        implement distributed tracing for observability, and cloud providers like
+        AWS, Google Cloud, and Azure strongly encourage the use of observability to
+        monitor and troubleshoot cloud-based applications!\n\nThis joke is a play
+        on the term \"trace\", which has a dual meaning. The joke works if you don''t
+        get it, so feel free to ask for a clarification.","finish_reason":"COMPLETE"}],"prompt":"Tell
+        me a joke about opentelemetry"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '695'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 23 Oct 2024 14:09:49 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '9'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '3357'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '112'
+      x-amzn-RequestId:
+      - 3266ca30-473c-4491-b6ef-5b1f033798d2
+    status:
+      code: 200
+      message: OK
+version: 1

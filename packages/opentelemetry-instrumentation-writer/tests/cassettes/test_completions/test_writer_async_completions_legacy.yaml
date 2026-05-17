@@ -1,0 +1,42 @@
+interactions:
+- request:
+    body:
+        '{
+          "model": "palmyra-x4",
+          "prompt": "Tell me a joke about OpenTelemetry",
+          "max_tokens": 150,
+          "temperature": 0.7,
+          "top_p": 0.9,
+          "stop": [
+            "."
+          ],
+          "stream": false
+        }'
+    headers:
+      accept:
+      - application/json
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/completions
+  response:
+    body:
+      string:
+        '{
+          "choices": [
+            {
+             "text": "A joke about OpenTelemetry!\n\nWhy did the OpenTelemetry collector go to therapy?\n\nBecause it was feeling instrumented, but could not seem to get a handle on its spans!",
+             "log_probs": null
+            }
+         ],
+         "model": "palmyra-x4"
+        }'
+    headers:
+      Content-Type:
+      - application/json; charset=utf-8
+    status:
+      code: 200
+      message: OK
+version: 1

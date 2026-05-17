@@ -1,0 +1,2857 @@
+import asyncio
+import base64
+import json
+from pathlib import Path
+
+import pytest
+from opentelemetry.sdk._logs import ReadableLogRecord
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import SpanAttributes
+
+from .utils import verify_metrics
+
+image_content_block = {
+    "type": "image",
+    "source": {
+        "type": "base64",
+        "media_type": "image/jpeg",
+        "data": base64.b64encode(
+            open(
+                Path(__file__).parent.joinpath("data/logo.jpg"),
+                "rb",
+            ).read()
+        ).decode("utf-8"),
+    },
+}
+
+
+TOOLS = [
+    {
+        "name": "get_weather",
+        "description": "Get the current weather in a given location",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+                },
+            },
+            "required": ["location"],
+        },
+    },
+    {
+        "name": "get_time",
+        "description": "Get the current time in a given time zone",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "The IANA time zone name, e.g. America/Los_Angeles",
+                }
+            },
+            "required": ["timezone"],
+        },
+    },
+]
+
+
+@pytest.mark.vcr
+def test_anthropic_message_create_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01TPXhkPo8jy6yQMrMhjpiAE"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_message_create_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message = {"content": "Tell me a joke about OpenTelemetry"}
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": "Sure, here's a joke about OpenTelemetry:\n\nWhy did the developer adopt OpenTelemetry?"
+            "\nBecause they wanted to trace their steps and meter their progress!\n\nExplanation:\nOpenTelemetry "
+            "is an open-source observability framework that provides a set of APIs, libraries, and tools to "
+            "instrument, generate, collect, and export telemetry data (traces, metrics, and logs) for distributed "
+            'systems. The joke plays on the words "trace" and "meter," which are key concepts in OpenTelemetry.\n\n- '
+            '"Trace their steps" refers to distributed tracing, which involves recording the path of a request as it '
+            'travels through a system of microservices.\n- "Meter their progress" refers to metrics, which are '
+            "quantitative measurements of a system's performance and behavior.\n\nThe joke suggests that the "
+            "developer adopted OpenTelemetry to gain better visibility and understanding of their application's "
+            "behavior and performance, just like how one might trace their steps and meter their progress in real "
+            "life."
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_message_create_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message = {}
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_multi_modal_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
+):
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What do you see?",
+                    },
+                    image_content_block,
+                ],
+            },
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
+    ]
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01B37ySLPzYj8KY6uZmiPoxd"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_multi_modal_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter
+):
+    user_message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": "What do you see?",
+            },
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64.b64encode(
+                        open(
+                            Path(__file__).parent.joinpath("data/logo.jpg"),
+                            "rb",
+                        ).read()
+                    ).decode("utf-8"),
+                },
+            },
+        ],
+    }
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response.content[0].text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_multi_modal_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter
+):
+    anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What do you see?",
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64.b64encode(
+                                open(
+                                    Path(__file__).parent.joinpath("data/logo.jpg"),
+                                    "rb",
+                                ).read()
+                            ).decode("utf-8"),
+                        },
+                    },
+                ],
+            },
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1381
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message = {}
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_image_with_history(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
+):
+    system_message = "You are a helpful assistant. Be concise and to the point."
+    user_message1 = {
+        "role": "user",
+        "content": "Are you capable of describing an image?",
+    }
+    user_message2 = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "What do you see?"},
+            image_content_block,
+        ],
+    }
+
+    response1 = anthropic_client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+        ],
+    )
+
+    response2 = anthropic_client.messages.create(
+        max_tokens=1024,
+        model="claude-3-5-haiku-latest",
+        system=system_message,
+        messages=[
+            user_message1,
+            {"role": "assistant", "content": response1.content},
+            user_message2,
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert all(span.name == "anthropic.chat" for span in spans)
+
+    # span 0: system + first user message
+    expected_system = json.dumps([{"type": "text", "content": system_message}])
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    span0_input = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert span0_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
+    assert span0_input[0]["role"] == "user"
+    span0_output = json.loads(spans[0].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in span0_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response1.content[0].text
+    assert span0_output[-1]["role"] == "assistant"
+    assert (
+        spans[0].attributes.get("gen_ai.response.id") == "msg_01Ctc62hUPvikvYASXZqTo9q"
+    )
+
+    # span 1: system + multi-turn
+    assert spans[1].attributes[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS] == expected_system
+    span1_input = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert span1_input[0]["parts"][0]["content"] == "Are you capable of describing an image?"
+    assert span1_input[0]["role"] == "user"
+    assert span1_input[1]["parts"][0]["content"] == response1.content[0].text
+    assert span1_input[1]["role"] == "assistant"
+    assert span1_input[2]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
+    ]
+    assert span1_input[2]["role"] == "user"
+    span1_output = json.loads(spans[1].attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in span1_output[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response2.content[0].text
+    assert span1_output[-1]["role"] == "assistant"
+    assert (
+        spans[1].attributes.get("gen_ai.response.id") == "msg_01EtAvxHCWn5jjdUCnG4wEAd"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_anthropic_async_multi_modal_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter
+):
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What do you see?",
+                    },
+                    image_content_block,
+                ],
+            },
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [
+        {"type": "text", "content": "What do you see?"},
+        {"type": "uri", "modality": "image", "uri": "/some/url"},
+    ]
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01DWnmUo9hWk4Fk7V7Ddfa2w"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_anthropic_async_multi_modal_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter
+):
+    user_message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": "What do you see?",
+            },
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64.b64encode(
+                        open(
+                            Path(__file__).parent.joinpath("data/logo.jpg"),
+                            "rb",
+                        ).read()
+                    ).decode("utf-8"),
+                },
+            },
+        ],
+    }
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response.content[0].text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_anthropic_async_multi_modal_with_events_with_no_content(
+    instrument_with_no_content, async_anthropic_client, span_exporter, log_exporter
+):
+    await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "What do you see?",
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64.b64encode(
+                                open(
+                                    Path(__file__).parent.joinpath("data/logo.jpg"),
+                                    "rb",
+                                ).read()
+                            ).decode("utf-8"),
+                        },
+                    },
+                ],
+            },
+        ],
+        model="claude-3-opus-20240229",
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1311
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_message_streaming_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response_content = ""
+    for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01MXWxhWoPSgrYhjTuMDM6F1"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_message_streaming_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response_content = ""
+    for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": {
+                "type": "text",
+                "content": response_content,
+            }
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_message_streaming_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response_content = ""
+    for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_create_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01UFDDjsFn5BPQnfNwmsMnAY"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_create_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": response.content[0].text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_create_with_events_with_no_content(
+    instrument_with_no_content,
+    async_anthropic_client,
+    span_exporter,
+    log_exporter,
+    reader,
+):
+    await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-opus-20240229")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_streaming_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    response_content = ""
+    async for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_016o6A7zDmgjucf5mWv1rrPD"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_streaming_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    response_content = ""
+    async for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": {"type": "text", "content": response_content}},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_streaming_with_events_with_no_content(
+    instrument_with_no_content,
+    async_anthropic_client,
+    span_exporter,
+    log_exporter,
+    reader,
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    response_content = ""
+    async for event in response:
+        if event.type == "content_block_delta" and event.delta.type == "text_delta":
+            response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-haiku-20240307")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather like right now in New York? Also what time is it there now?",
+            }
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify request and inputs
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == (
+        "What is the weather like right now in New York? Also what time is it there now?"
+    )
+    assert input_messages[0]["role"] == "user"
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
+            },
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+            },
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
+
+    # verify response and output
+    finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert "tool_call" in finish_reasons
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
+    assert tool_calls[0]["id"] == response.content[1].id
+    assert tool_calls[0]["name"] == response.content[1].name
+    assert tool_calls[0]["arguments"] == response.content[1].input
+    assert tool_calls[1]["id"] == response.content[2].id
+    assert tool_calls[1]["name"] == response.content[2].name
+    assert tool_calls[1]["arguments"] == response.content[2].input
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01RBkXFe9TmDNNWThMz2HmGt"
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather like right now in New York? Also what time is it there now?",
+    }
+
+    anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[user_message],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the tool messages input vent
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": {"tools": TOOLS}}
+    )
+
+    # Validate the ai response
+    ideal_response = {
+        "index": 0,
+        "finish_reason": "tool_call",
+        "message": {
+            "content": "Certainly! I'd be happy to help you with both the current weather in New York and the current "
+            "time there. Let's use the available tools to get this information for you."
+        },
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": {"location": "New York, NY", "unit": "fahrenheit"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/New_York"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather like right now in New York? Also what time is it there now?",
+            }
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert anthropic_span.attributes["gen_ai.usage.input_tokens"] == 514
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the first tool message
+
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    # Validate the ai response
+    ideal_response = {
+        "index": 0,
+        "finish_reason": "tool_call",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_012r6TBCWjRHG71j6zruYyUL",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                },
+            }
+        ],
+        "message": {},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01SkeBKkLCNYWNuivqFerGDd",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                },
+            }
+        ],
+        "message": {},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_history_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather and current time in San Francisco?",
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "I'll help you get the weather and current time in San Francisco.",
+                    },
+                    {
+                        "id": "call_1",
+                        "type": "tool_use",
+                        "name": "get_weather",
+                        "input": {"location": "San Francisco, CA"},
+                    },
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "content": "Sunny and 65 degrees Fahrenheit",
+                        "tool_use_id": "call_1",
+                    }
+                ],
+            },
+        ],
+    )
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    # verify request and inputs
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[1]["parts"][0]["content"] == (
+        "I'll help you get the weather and current time in San Francisco."
+    )
+    assert input_messages[1]["role"] == "assistant"
+    assert input_messages[2]["parts"] == [
+        {
+            "type": "tool_call_response",
+            "id": "call_1",
+            "response": "Sunny and 65 degrees Fahrenheit",
+        }
+    ]
+    assert input_messages[2]["role"] == "user"
+
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
+            },
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+            },
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
+
+    # verify response and output
+    finish_reasons = anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert "tool_call" in finish_reasons
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[-1]["role"] == "assistant"
+    tool_calls = [p for p in output_messages[-1]["parts"] if p["type"] == "tool_call"]
+    assert tool_calls[0]["id"] == response.content[0].id
+    assert tool_calls[0]["name"] == response.content[0].name
+    assert tool_calls[0]["arguments"] == response.content[0].input
+
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01QJDheQSo4hSrxgtLpEJFkA"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_history_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather and current time in San Francisco?",
+    }
+    first_assistant_message = {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "I'll help you get the weather and current time in San Francisco.",
+            },
+            {
+                "id": "call_1",
+                "type": "tool_use",
+                "name": "get_weather",
+                "input": {"location": "San Francisco, CA"},
+            },
+        ],
+    }
+    tool_result_message = {
+        "role": "user",
+        "content": [
+            {"type": "tool_result", "content": "Sunny and 65 degrees Fahrenheit", "tool_use_id": "call_1"},
+        ],
+    }
+    anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            user_message,
+            first_assistant_message,
+            tool_result_message,
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    first_assistant_message.pop("role", None)
+    # Validate the tool messages input event
+    assert_message_in_logs(
+        logs[1], "gen_ai.assistant.message", first_assistant_message
+    )
+
+    tool_result_message.pop("role", None)
+    assert_message_in_logs(logs[2], "gen_ai.user.message", tool_result_message)
+
+    assert_message_in_logs(logs[3], "gen_ai.user.message", {"content": {"tools": TOOLS}})
+
+    # Validate the second tool call
+    tool_call = {
+        "index": 0,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_013CVavAKjSN7RZoE2ZN4xQJ",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/Los_Angeles"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_history_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather and current time in San Francisco?",
+    }
+    first_assistant_message = {
+        "role": "assistant",
+        "content": [
+            {
+                "type": "text",
+                "text": "I'll help you get the weather and current time in San Francisco.",
+            },
+            {
+                "id": "call_1",
+                "type": "tool_use",
+                "name": "get_weather",
+                "input": {"location": "San Francisco, CA"},
+            },
+        ],
+    }
+    tool_result_message = {
+        "role": "user",
+        "content": [
+            {"type": "tool_result", "content": "Sunny and 65 degrees Fahrenheit", "tool_use_id": "call_1"},
+        ],
+    }
+    anthropic_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            user_message,
+            first_assistant_message,
+            tool_result_message,
+        ],
+    )
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the tool messages input event
+    assert_message_in_logs(
+        logs[1], "gen_ai.assistant.message", {}
+    )
+
+    assert_message_in_logs(logs[2], "gen_ai.user.message", {})
+
+    assert_message_in_logs(logs[3], "gen_ai.user.message", {})
+
+    # Validate the second tool call
+    tool_call = {
+        "index": 0,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01S4zmdHhnEuStnkkoyVdiv6",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the weather and current time in San Francisco?",
+            }
+        ],
+        stream=True,
+    )
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    # verify request and inputs
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "What is the weather and current time in San Francisco?"
+    assert input_messages[0]["role"] == "user"
+    tool_defs = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs[0]["name"] == "get_weather"
+    assert tool_defs[0]["description"] == "Get the current weather in a given location"
+    assert tool_defs[0]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The city and state, e.g. San Francisco, CA",
+            },
+            "unit": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "The unit of temperature, either 'celsius' or 'fahrenheit'",
+            },
+        },
+        "required": ["location"],
+    }
+    assert tool_defs[1]["name"] == "get_time"
+    assert tool_defs[1]["description"] == "Get the current time in a given time zone"
+    assert tool_defs[1]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "timezone": {
+                "type": "string",
+                "description": "The IANA time zone name, e.g. America/Los_Angeles",
+            }
+        },
+        "required": ["timezone"],
+    }
+
+    # verify response and output - all parts consolidated into single assistant message
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert len(output_messages) == 1
+    msg = output_messages[0]
+    assert msg["role"] == "assistant"
+    text_parts = [p for p in msg["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == (
+        "Certainly! I can help you with that information. "
+        "To get the weather and current time in San Francisco, I'll need to use "
+        "two separate functions. Let me fetch that data for you."
+    )
+    tool_calls = [p for p in msg["parts"] if p["type"] == "tool_call"]
+    assert len(tool_calls) == 2
+    assert tool_calls[0]["id"] == "toolu_014x5X91kx3fvdhpLvwXZWE2"
+    assert tool_calls[0]["name"] == "get_weather"
+    assert tool_calls[1]["id"] == "toolu_0121kXsENLvoDZ72LCuAnCCz"
+    assert tool_calls[1]["name"] == "get_time"
+    assert tool_calls[1]["arguments"] == {"timezone": "America/Los_Angeles"}
+
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_0138UNF3YbNp49KkqZtUBWqz"
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather like right now in New York? Also what time is it there now?",
+    }
+
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[user_message],
+        stream=True,
+    )
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the tool messages input vent
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": {"tools": TOOLS}}
+    )
+
+    # Validate the ai response
+    ideal_response = {
+        "index": 0,
+        "finish_reason": "tool_call",
+        "message": {
+            "content": {
+                "content": "Certainly! I'd be happy to help you with both the current "
+                "weather in New York and the current "
+                "time there. To get this information, I'll need to use two different "
+                "tools. Let's start with the weather, "
+                "and then we'll check the time.",
+                "type": "text",
+            }
+        },
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", ideal_response)
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01UGYEgvuRFeXbTZKyDyqo9P",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": {"location": "New York, NY", "unit": "fahrenheit"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01VCGwdaiXbGQJHRCzoWgK2U",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "arguments": {"timezone": "America/New_York"},
+                },
+            }
+        ],
+        "message": {"content": None},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
+def test_anthropic_tools_streaming_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "What is the weather like right now in New York? Also what time is it there now?",
+    }
+
+    response = anthropic_client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=1024,
+        tools=TOOLS,
+        messages=[user_message],
+        stream=True,
+    )
+
+    # consume the streaming iterator
+    for _ in response:
+        pass
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+    spans = span_exporter.get_finished_spans()
+    # verify overall shape
+    assert all(span.name == "anthropic.chat" for span in spans)
+    assert len(spans) == 1
+
+    anthropic_span = spans[0]
+
+    # verify usage
+    assert (
+        anthropic_span.attributes["gen_ai.usage.output_tokens"]
+        + anthropic_span.attributes["gen_ai.usage.input_tokens"]
+        == anthropic_span.attributes["gen_ai.usage.total_tokens"]
+    )
+
+    # verify metrics
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-sonnet-20240620")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 5
+
+    # Validate user message
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
+
+    # Validate the tool messages input vent
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+
+    assert_message_in_logs(logs[2], "gen_ai.choice", {
+        "finish_reason": "tool_call",
+        "index": 0,
+        "message": {},
+    })
+
+    # Validate the first tool call
+    tool_call_0 = {
+        "index": 1,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01YUs66wivdF51ENZFX8gX9S",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[3], "gen_ai.choice", tool_call_0)
+
+    # Validate the second tool call
+    tool_call_1 = {
+        "index": 2,
+        "finish_reason": "tool_call",
+        "tool_calls": [
+            {
+                "id": "toolu_01NRtod2L7M7TBDj9GCzsZCx",
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    # no arguments
+                },
+            }
+        ],
+        # empty message
+        "message": {},
+    }
+    assert_message_in_logs(logs[4], "gen_ai.choice", tool_call_1)
+
+
+@pytest.mark.vcr
+def test_with_asyncio_run_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter
+):
+    asyncio.run(
+        async_anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1024,
+            system=[
+                {
+                    "type": "text",
+                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                },
+            ],
+            messages=[
+                {
+                    "role": "user",
+                    "content": "What is the weather in San Francisco?",
+                },
+            ],
+        )
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_with_asyncio_run_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter
+):
+    system_message = {
+        "type": "text",
+        "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+    }
+
+    user_message = {
+        "role": "user",
+        "content": "What is the weather in San Francisco?",
+    }
+
+    asyncio.run(
+        async_anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1024,
+            system=[system_message],
+            messages=[user_message],
+        )
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    system_message_log = logs[0]
+    assert_message_in_logs(
+        system_message_log,
+        "gen_ai.system.message",
+        {"content": [system_message]},
+    )
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[1], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": "I apologize, but I don't have access to real-time weather information. As an AI language "
+            "model, I don't have the ability to check current weather conditions or forecasts. To get accurate and "
+            "up-to-date weather information for San Francisco, you would need to check a reliable weather website, "
+            "app, or local news source. These sources can provide you with current conditions, forecasts, and other "
+            "weather-related details for specific locations."
+        },
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_with_asyncio_run_with_events_with_no_content(
+    instrument_with_no_content, async_anthropic_client, span_exporter, log_exporter
+):
+    asyncio.run(
+        async_anthropic_client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=1024,
+            system=[
+                {
+                    "type": "text",
+                    "text": "You help generate concise summaries of news articles and blog posts that user sends you.",
+                },
+            ],
+            messages=[
+                {
+                    "role": "user",
+                    "content": "What is the weather in San Francisco?",
+                },
+            ],
+        )
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    # Validate system message Event
+    system_message_log = logs[0]
+    assert_message_in_logs(system_message_log, "gen_ai.system.message", {})
+
+    # Validate user message Event
+    user_message_log = logs[1]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[2], "gen_ai.choice", choice_event)
+
+
+def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
+    assert log.log_record.event_name == event_name
+    assert (
+        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME)
+        == GenAIAttributes.GenAiSystemValues.ANTHROPIC.value
+    )
+
+    if not expected_content:
+        assert not log.log_record.body
+    else:
+        assert log.log_record.body
+        assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01MCkQZZtEKF3nVbFaExwATe"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+            "content": {
+                "type": "text",
+                "content": response_content,
+            }
+        },
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_anthropic_message_stream_manager_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response_content
+    assert output_messages[-1]["role"] == "assistant"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    assert (
+        anthropic_span.attributes.get("gen_ai.response.id")
+        == "msg_01E414PCSTg6skd6JWPTX5Uc"
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_with_events_with_content(
+    instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    user_message = {
+        "role": "user",
+        "content": "Tell me a joke about OpenTelemetry",
+    }
+
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[user_message],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message.pop("role", None)
+    assert_message_in_logs(logs[0], "gen_ai.user.message", user_message)
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": {"type": "text", "content": response_content}},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_message_stream_manager_with_events_with_no_content(
+    instrument_with_no_content,
+    async_anthropic_client,
+    span_exporter,
+    log_exporter,
+    reader,
+):
+    try:
+        await async_anthropic_client.messages.create(
+            unknown_parameter="unknown",
+        )
+    except Exception:
+        pass
+
+    response_content = ""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert (
+        anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        == anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    verify_metrics(resource_metrics, "claude-3-5-haiku-20241022")
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+async def test_anthropic_streaming_helper_methods_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    """Test that streaming helper methods like get_final_message() work with instrumentation"""
+    # Test async stream with get_final_message
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Test that get_final_message() actually works (this is the main fix verification)
+        message = await stream.get_final_message()
+        assert message is not None
+        assert hasattr(message, 'content')
+        assert len(message.content) > 0
+        # Test that the stream still has other helper methods available
+        assert hasattr(stream, 'text_stream')
+        assert hasattr(stream, 'until_done')
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
+    assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio
+async def test_anthropic_text_stream_helper_method_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter
+):
+    """Test that text_stream() helper method works with instrumentation"""
+    async with async_anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Test that text_stream() works
+        text_content = ""
+        async for text in stream.text_stream:
+            text_content += text
+        assert len(text_content) > 0
+    spans = span_exporter.get_finished_spans()
+    print(f"Number of spans created: {len(spans)}")
+    assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"
+    assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr()
+def test_anthropic_sync_streaming_helper_methods_legacy(
+    instrument_legacy, anthropic_client, span_exporter
+):
+    """Test that sync streaming helper methods work with instrumentation"""
+    # Test sync stream - this should work similarly without helper methods causing issues
+    with anthropic_client.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Say hello there!",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        # Collect all events
+        events = []
+        for event in stream:
+            events.append(event)
+        assert len(events) > 0
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "anthropic.chat"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_async_anthropic_beta_message_stream_manager_legacy(
+    instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
+):
+    response_content = ""
+    async with async_anthropic_client.beta.messages.stream(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-5-haiku-20241022",
+    ) as stream:
+        async for event in stream:
+            if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                response_content += event.delta.text
+
+    assert response_content != ""
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "anthropic.chat",
+    ]
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry"
+    assert input_messages[0]["role"] == "user"
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+def test_process_response_item_no_crash_on_out_of_order_delta():
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4050:
+    content_block_delta arriving before content_block_start (or with a missing key)
+    must not raise KeyError or IndexError — it should be silently skipped."""
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
+
+    # Simulate a content_block_delta for index 0, but events list is empty
+    # (content_block_start hasn't arrived yet)
+    item = MagicMock()
+    item.type = "content_block_delta"
+    item.index = 0
+    item.delta.type = "input_json_delta"
+    item.delta.partial_json = '{"key": "value"}'
+
+    complete_response = {"events": []}  # no entry at index 0 yet
+
+    # Before the fix this raised IndexError; after the fix it silently skips
+    _process_response_item(item, complete_response)
+
+    # Events list unchanged — nothing written, nothing crashed
+    assert complete_response["events"] == []
+
+
+def test_process_response_item_no_crash_on_missing_input_key():
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4050:
+    input_json_delta arriving for a tool_use block that has no 'input' key
+    must not raise KeyError — it should initialize and accumulate normally."""
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
+
+    # A tool_use block missing its "input" key (e.g. content_block_start didn't initialize it)
+    item = MagicMock()
+    item.type = "content_block_delta"
+    item.index = 0
+    item.delta.type = "input_json_delta"
+    item.delta.partial_json = '{"key": "value"}'
+
+    complete_response = {"events": [{"index": 0, "type": "tool_use", "name": "my_tool"}]}
+
+    # Before the fix this raised KeyError on ["input"]; after the fix it uses .get()
+    _process_response_item(item, complete_response)
+
+    assert complete_response["events"][0]["input"] == '{"key": "value"}'

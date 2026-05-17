@@ -1,0 +1,62 @@
+interactions:
+- request:
+    body: '{"slug": "test-dataset-no-attachments", "name": "Regular Dataset", "description":
+      null, "columns": [{"slug": "id", "name": "ID", "type": "string"}, {"slug": "value",
+      "name": "Value", "type": "number"}], "rows": [{"id": "A", "value": 100}, {"id":
+      "B", "value": 200}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '266'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidno458002v01r5hk9xpcyo","slug":"test-dataset-no-attachments","name":"Regular
+        Dataset","columns":{"id":{"slug":"id","name":"ID","type":"string"},"value":{"slug":"value","name":"Value","type":"number"}},"total_columns":2,"created_at":"2025-11-24T21:25:08.732664156Z","updated_at":"2025-11-24T21:25:08.73266424Z","rows":[{"id":"cmidno45d002w01r5c1k3jma2","row_index":1,"values":{"id":"A","value":100},"created_at":"2025-11-24T21:25:08.740245074Z","updated_at":"2025-11-24T21:25:08.740245074Z"},{"id":"cmidno45d002x01r5peiayzfx","row_index":2,"values":{"id":"B","value":200},"created_at":"2025-11-24T21:25:08.740245074Z","updated_at":"2025-11-24T21:25:08.740245074Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3bfa290e3c9384-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '675'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 21:25:08 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - c2aa7832bed4932664eb0348d36b923c
+      x-kong-upstream-latency:
+      - '16'
+    status:
+      code: 201
+      message: Created
+version: 1

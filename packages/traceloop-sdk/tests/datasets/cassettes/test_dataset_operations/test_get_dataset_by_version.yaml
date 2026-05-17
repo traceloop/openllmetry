@@ -1,0 +1,58 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: GET
+    uri: https://api-staging.traceloop.com/v2/datasets/test-qa/versions/v1
+  response:
+    body:
+      string: 'New Column 1,New Column 2,New Column 3
+        hallo,0,false
+        '
+    headers:
+      CF-RAY:
+      - 96d9f09e0c493a78-FRA
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '53'
+      Content-Type:
+      - text/csv
+      Date:
+      - Mon, 11 Aug 2025 18:54:09 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      content-disposition:
+      - attachment; filename="test-qa-v1.csv"
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - b1758d02a9e56223e194eb1248ccf569
+      x-kong-upstream-latency:
+      - '50'
+    status:
+      code: 200
+      message: OK
+version: 1

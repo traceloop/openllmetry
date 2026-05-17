@@ -1,0 +1,415 @@
+interactions:
+- request:
+    body: '{"input": {"prompt": "robots"}, "version": "ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '110'
+      content-type:
+      - application/json
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: POST
+    uri: https://api.replicate.com/v1/predictions
+  response:
+    body:
+      string: '{"id":"vdcbnszbj37qhlzgoergjj5dsa","model":"stability-ai/stable-diffusion","version":"ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4","input":{"prompt":"robots"},"logs":"","error":null,"status":"starting","created_at":"2024-02-12T16:44:47.049270763Z","urls":{"cancel":"https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa/cancel","get":"https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa"}}
+
+        '
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c59583009bd-HFA
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '441'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:44:47 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=jaQC75rm6ZLtd9iTiSWlIjhIL1KWpTcv334S5OqRqU4XQp42HFMaPectVCf9Kly5NngGDa%2BrPwYj%2BFNGSK5v909MBXdKXfM1qqIGZCj%2FPPXd2yo4BLg7vqVsZA%2FHY%2Ferjj00"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '599'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 201
+      message: Created
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://api.replicate.com/v1/models/stability-ai/stable-diffusion/versions/ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA+xWTW/UMBD9K9bAAaR087HbTZQjBdGeWLUVB1AVuc54Y0hsYzugqsp/R3a6zW5Z
+        RL+QOHCJbfl5PG9m3jjXIGoogbJ8ntW8mDOkOec8LS6LRZ7ly4IVBa2TRcppfphwni+LjGYp5RyL
+        tFjO2SXmOS4gAmaQOqwr6qCELMnmB0l+kCbnybI8TMpFOlum8zQrPnmoWlff0VihJJSQzPJZBhEo
+        jZJqUVnWYEehvAYhufKjE65FKOFIrSGC7ZPpLIEhAk1dYz0y9p81Oj/YvuuouYISTpVyEIFBq5W0
+        GJBZkviBKelQBjzVuhWMOqFk/MX6C65h8mXjw+mNEeKNEvIeHQzDEEGNlhmh3ejZWc8YWsv7lmwO
+        gEcpjSbccOKjbpRyVbUOJiKIbdO7Wv0IF2tl75A4c9Q4crbBPDedXfPTZOUdeTRD661WG2LTRI9W
+        I4i1wVowf8Du570aAU8l/NIghxJexEx1WkmUzsbjro1Xtz5sUbkf4wgWWfZsjhyfn68+0lbU4fA7
+        Y5TZ58kEIRuM14ChHTo0FsrPXjtQQoO0RgMRSNr5bGuDPKy3CuFKY0iUEdKra1MYqxE6+LB/64XB
+        GkpOW4vDxV13TntJKLFCrlskUz6JksQ1SDpVYwt3K+MGV23lf6yK8UK07o2qr/5KioN1H9cQ2rhB
+        2rrmgDXIvu5tH8cBMO4/t+y2bN/MyVFYPKmxNJPVapxX4+K212yFPb6eFpWohyDDfr8KyUmNnVaB
+        7H9BPlyQ/qHakeMU9/uqcqOuk7e74nSmxyH654RPXonbkiHhH0Eo+Xr2234woXdaQ7UTq6ryBfr4
+        TkHb9gMPWXlgz7jYm4qtlvJLRv6ktphRybDd//YdjXt7lfYTAAD//+RZTXPbNhD9KxicYY8+adk3
+        T+y0nkpKJkqbg8ejgc0lhYYEVAJ07c7ov3cWACmIkmDlo6femOhh9+3u28WS/oGh48ySbQSakFBZ
+        KWkh33L7/79bb687fAo5qWophcyDDtlTvxNBVPENpK2I35fpFR3aPRj36iaL2zTbxzvpB7oPTj3+
+        CXalaoJzAEbXFfIywglNA0bXnhLSQG6nSHNsgQBGX85UhePmarI3IbhMVUnQ0DmZAn8G8lhw+ZUY
+        RSr7m/gH7LCwvjaM/i1Sszq9Rx3cJT/jdWHo1UUyCSgNupS+4AmiMpKDxBJASkTJcyBCkrV4gUKf
+        kzlAqpHjIxBOyrowYl0AHkpGSHIFIl+Z01l6fIRmv0vzV3vkB3muK1WuTVzVFhHwopw8C23HeEaw
+        kVKh4ZzUsgJeEJC5kBDWvNdlbrVEvOuNa620LhB7ar62R3ZSRm8+zhaqeIZqhqFqA+uQycVeB66U
+        0piZ1t45EpJ1uVS1WdeuT46qe16X5IPHBSz6jJb8RZR1Sa9GjJZCuud+QGXUpTKvy0eoMKW2iLZo
+        TWEtqbwWKXb4Uj9x9N7ykvZkQOsXjyQLiwwldT4OuA16R8gle9McDZFMVeSp4FqLTEB1llUApGFl
+        0wY5N+IZlm+rau6hpJVX63y453wNTyJ7JWYlZG7zIpXBcYBCx8ngStUUTsgMKrCJMrB+u4B3DZ4s
+        LD5I17gXZGvcO5au8fFapiCVwP2HODJ2LrcTDCSauk9GrD+YsP7lgA3GCRsOemw4GbHRaMLG/QEb
+        XyQsGfXYRW/EcCZMhgM2uUzYZdJj/d5ghCvHsQCdqy6/a0nQtb9frLqcjINk8arir5RRYaDUh0qZ
+        qaq0n3LqSqCFxuWHthoLw02tg0Dd2747vq4ULgjuHxq3BUjtXeGuMfuYcYEP2wD3dORdnBDgdiL/
+        91n3vk5gtTP6mizd3NzNKKO/LW9/n95+ouzwVPM/L6/n724Xnz9dTymjH+c39uR0tohlbev1BIpf
+        4HGl1NfbZ7+w7dQS9xRXb0YLlWu/YxRg4nXbMXoCie6eF9lUutBwD7unhXqijJbakkELD92dBhGR
+        NuDy1d9Pu7Hhm1VHEJuHoC2myi25GA26jwzHGWjNcztSHeQ41IZIPuOvdrTsv5FEMrUP7uZCpDHn
+        d3YfE83qGLuv3fqIs88VPmbWa6M7YuwonoLMcXYm4/EwseO4+Z/+ZvcL83H77xyKXJvQRcoNnBlR
+        2rQ7TS8zUeBlBpl4iRl0E4+8FwXeZxa9jXQJqHGNtgxUMWXF8rfTL5vgiroP+q1twbYlXY8+MFpL
+        8VcNd85V+9p54CvKiXLx6O/Ri+UYQU1dDNudDg9Bp+sPN8K3y1G1114Mvr3SdHulxfD+VsJOB1OJ
+        Jx1L68xDNsEfLo7H+YeH/Ey1W5W8aWjhUDFDrRTf4tTgjhtDeR56wY8k8hC8K9AUDBfF93bh3teG
+        rfMbZ9h9M978CwAA//8DAPxuXU01GwAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c5b1a7a09bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 12 Feb 2024 16:44:47 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      allow:
+      - GET, DELETE, HEAD, OPTIONS
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-security-policy-report-only:
+      - 'script-src ''report-sample'' ''self'' https://cdn.rudderlabs.com/v1.1/rudder-analytics.min.js;
+        img-src ''report-sample'' ''self'' data: https://replicate.delivery https://*.replicate.delivery
+        https://*.githubusercontent.com https://github.com; default-src ''self'';
+        style-src ''report-sample'' ''self'' ''unsafe-inline''; media-src ''report-sample''
+        ''self'' https://replicate.delivery https://*.replicate.delivery https://*.mux.com
+        https://*.sentry.io; worker-src ''none''; connect-src ''report-sample'' ''self''
+        https://replicate.delivery https://*.replicate.delivery https://*.rudderlabs.com
+        https://*.rudderstack.com https://*.mux.com https://*.sentry.io; font-src
+        ''report-sample'' ''self'' data:; report-uri'
+      cross-origin-opener-policy:
+      - same-origin
+      nel:
+      - '{"report_to":"heroku-nel","max_age":3600,"success_fraction":0.005,"failure_fraction":0.05,"response_headers":["Via"]}'
+      ratelimit-remaining:
+      - '2999'
+      ratelimit-reset:
+      - '1'
+      referrer-policy:
+      - same-origin
+      report-to:
+      - '{"group":"heroku-nel","max_age":3600,"endpoints":[{"url":"https://nel.heroku.com/reports?ts=1707756287&sid=1b10b0ff-8a76-4548-befa-353fc6c6c045&s=y0xQmtuDU%2BxdTPc0%2FgbG9obLZQyIRHUNuQS9Eyl5Mgs%3D"}]}'
+      reporting-endpoints:
+      - heroku-nel=https://nel.heroku.com/reports?ts=1707756287&sid=1b10b0ff-8a76-4548-befa-353fc6c6c045&s=y0xQmtuDU%2BxdTPc0%2FgbG9obLZQyIRHUNuQS9Eyl5Mgs%3D
+      vary:
+      - Cookie, origin
+      via:
+      - 1.1 vegur, 1.1 google
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6zSzW4bIRAH8HufYjVSbtgL7AeYS16iuSSpKpaPDRZetsBaSmLfq6pSb3nAPEmF
+        5SZV1eQUToP0/81hZh7BaRCw12qY0sOwbdi3O/8wBhPH7bbTSQKCXdDGg4CU5eC8y/cr6ery8Wal
+        nbVLcmECBHsTT5UAqVhDteWNMpJZawkfeMso67niXGrcEitZh61lPaeSEmmt4YT3jRoMY6YFBG6a
+        lwziEeYYdnMGATEMISc4IvBhTCDgKrlprJIxWlSE0q69naoKXxyql3eocN3h6gZjgfHtgnGjLlF1
+        6XKdvpRwf3F4fvr5V7z5N15KiipK17j7wwgt7Pvz069X2P8PkhNk5AXyM/zxCjdvw01/hoDAxBgi
+        iGnxHpVF5KVMYI5BmVTGAAhUNDIb/VWWYVFM2xWmK0I/k160rWjZGrcbyq7h5OO7SbrpeNeU6BJ9
+        KltQclKnI7jLeU6iruXs1tHM3imZzVqFXb0n9RyNdiq7MKX67ZOqz80QjCZ/TEs4Hj/9BgAA//8D
+        AKQokJ3LAgAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c602b6809bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:44:48 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=V4itMQ7APTAcJHMC6MEUgKj1%2BF82JMt89GSmxSh%2FloS9tztAerFzSxI10roJ0fk1%2FygHVhrBhHaX9M9TwMaVjvp4qkBwPr9ngkNJfn4D8NXisuGhDE7jDoojAyK%2FJsgTQLRe"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '59999'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6zUwY6bMBAG4HufwhppbyTYxmDDZV+ivbRbVcaYrCMC1DaRukvu0apVb3nAPElF
+        NpDdKOypnIw0329pNONnMAVksC1UXrunfB3xn4/V06rRdrVex4WTEMCmKXQFGTgvc1MZ/2shTTj8
+        VHpRmLLsnGlqCGCr7emUgVQ8okUpIqUlL8uSiFwwTnkilBCywIyUkse4LHkiqKRElqUWRCSRyjXn
+        mkEApm47D9kztLbZtB4ysE3eeAe7AKpm5SCDL87UK+S0LjJEKI3ZQ40QvuvR9PUIhzFG3zDOMH7o
+        MI7UfYDujQ/d96E4ueuPh99vyqPr8uFIA0TpEscjI3Rg++Ph7wUmtyA5QU4mKM7w5QLTeZgmI6Ts
+        DPfHw5+JEjpnoyUWo43wxe4vNp63hE02eWOnTvWIiA90OmpG3+mpYT2iZN7T6XYmrv3L6NnkybyP
+        2bUf29cjyucS6DKlY0KCbyTsz6OCbyXg14SpB0lyK+G1lT2KormM6DJvEIC2trGQ1V1VBcMa+m6Y
+        /9Y2SrthCSAAZbX0uvghh1WhmLIFpgtCP5MkYyxjfIlZSvlXOHn7YSVNYxFHQ2lnKzfsoJK1Oj0B
+        j963LgtD2Zql1W1llPR6qZpNuCVha3VhlDdN7cL5ByU8hwWw0v7/RMJu9+kfAAAA//8DABOcx4TJ
+        BAAA
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c654c7909bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:44:49 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=WKZakdU5bLrdvokbASRKEW7S34xYpYDSaJw%2BYGxo7ET4BgNGf%2FhiSOHOCOBuYTbJCslrzZF8ygSmzDyGneSUNqWVoCGT2CHU8KAGsdFfl7suuVBsYvFyvvtrkbWfRjkRRKu4"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '59999'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6yUQW7bMBBF9z0FMUB2skUOKZHSJpdoN22KgpYoh4EsqSRtoImyN4IW3eWAOUkh
+        x5KTwPKqXJHAvEfgY/AfwJaQw64sVo2/X91x+fO2vl+3xq3v7pLSa4hg05amhhx80Ctb2/BroW08
+        PGqzKG1Vbb1tG4hgZ9zhloMuJMeyUrwwWlZVxdRKCYkyVYVSuqSCVVomtKpkqlAj01VlFFMpL1ZG
+        SiMgAtt02wD5A3Su3XQBcnDtqg0eHiOo27WHHL5426yJN6bMCUNMxE1DCL3qyXR6QuOEkm+U5pTe
+        bCnlxXVErm2I/fdhOL3qX55/vxnnH8eHK0YEcUmTEWM4YPuX578nMD0HsgMo2QSqI/h0ArN5MEtH
+        EMUR3L88/5lQhnMsX1I1spye2P2JTeZZJiY2fcNOSfWEqQt0NtIC39FTYD1BNs/j9LtQH/mnkRcT
+        z+b5RHzkx/h6gnLOgMsMR0NKzxj2x1Wh5wz01TBlkKbnDK9R9oTzOQd/s28SzzteA+0JT+ctjE4W
+        NWt5OliyC5YpESVmLYdweyLwgmfa6Ixe8uwHT3LBM+YLERjnWgd5s63raKiosB26oXNtYfxQEBBB
+        4YwOpvyhhxpBimJBccHwM0tzIXIhl1RkKL/CgXcXJzFLVMKH0a2r/dBPhW6KQz3ehtD5PI51Z5fO
+        dLUtdDDLot3EOxZ3zpS2CLZtfDxftvFRFsHahP+jhMfHT/8AAAD//wMAR9JRyeUFAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c69ebc209bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:44:49 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=OeWG3xC6vXpjoJIudPzcbjHmMhAd9UL7WWNbTbX0kWZw5ImVHzTX%2BfGM%2Fn%2B2QxWLQmQHTY%2FMm7CwBF3FpojrW5Y2zzyfQxhQJOZJ6zEuptkPnAgCk%2BUuVikLA7MecuIQIqDQ"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '59999'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.replicate.com
+      user-agent:
+      - replicate-python/0.23.1
+    method: GET
+    uri: https://api.replicate.com/v1/predictions/vdcbnszbj37qhlzgoergjj5dsa
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6yVT2ucQByG7/0Uw0Burs4/Z0YvOaRQKKWkJKXkH8HV0cziqtVxaVJzX0JKb/sB
+        95MU3dVNl3V7qacR3ucRXn7+5ifUEfThIgqnWfU0nVHx/SF9SnJVJrOZG1UBtOA8j1QKfViZYKpT
+        bR4ngXbal1RNIh3HdaXzDFpwocru5MMgFJREsaShCkQcx1hOJRNEcBlKGUSI4TgQLopjwSUJCA7i
+        WEksOQ2nSgjFoAV1VtQG+j9hUebzwkAflvk0NxV8tmCaJxX04ddKZwmolIp8gAlx2W0GADppwPA0
+        ADkuAjcI+Qjd1gjR8NQCp9o41V0b5ifNevX6Jk734+2RWIAQG7k9hkmLLder3zuQHwJxBwo8gHIL
+        vuxAbxz0eA8StgWX69WvAcVkjKU2kj1L0Y5d7lh3nMVsYPkbdmiqAVgeob2eZuQveiisAQSP82T4
+        OpP7/EvPs4HH47zL9vm+vgYQMWYgtkd6A0cHDMvtqKBDBrQxDB1wfsiwqbIBlI456Jt5E+SwY1No
+        Aygft2A0WOSo5aWzeEcsQyOSjVq6chvAyBHPMNEeOuZZth73iGfo1+NHPevVawPYblrJvonQrQkj
+        9A/TsgEuGjMR2+v/OGjBvDbd9rqBD8YUle84pSpSHQZG2ZFK9UKVj04x/WGcizIrzDfxOa0/qrOL
+        +TSpz2ePn+Jzmby/mlVxbZJrxc/o1eUF+fAlXlycOXltJsgusgTeWVCVZV5CP6vT1Gr3s6nbxVjV
+        YahUpCJowbBUgVHRfdCuUIIImyAyweQSc58xnwkbMY+Ia9jh5dEk8Vzp0jYa5vMiVeNhF9kYCYJ5
+        G67LtGoXeRhkYXeP9J0EhbZ3vYT53FlgpyhVpEOj86xyxm8lZyuzYKLM/1G2F8tcmVKH1eba6aB7
+        o+cK+sSWGFNOn5/f/QEAAP//AwCnKGMdMgcAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 85464c6e8ae909bd-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 12 Feb 2024 16:44:50 GMT
+      NEL:
+      - '{"success_fraction":0,"report_to":"cf-nel","max_age":604800}'
+      Report-To:
+      - '{"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v3?s=b1s6fnzbeDe5WBPXqmYQfgwL70zM%2BtY5TxQLgLqkVyDkgwA39ksAXNOSlwGygaEf2YwDLi9ADn2WCasd%2BfSzVpzWNs886qXdzSbnSqvOJCVFLbVAz5R81QlqCx7%2BTF9PmUzs"}],"group":"cf-nel","max_age":604800}'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      ratelimit-remaining:
+      - '59999'
+      ratelimit-reset:
+      - '1'
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1

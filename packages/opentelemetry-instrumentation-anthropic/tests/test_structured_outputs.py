@@ -1,0 +1,137 @@
+import json
+
+import pytest
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+
+
+JOKE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "joke": {
+            "type": "string",
+            "description": "A joke about OpenTelemetry"
+        },
+        "rating": {
+            "type": "integer",
+            "description": "Rating of the joke from 1 to 10"
+        }
+    },
+    "required": ["joke", "rating"],
+    "additionalProperties": False
+}
+
+OUTPUT_FORMAT = {
+    "type": "json_schema",
+    "schema": JOKE_SCHEMA
+}
+
+
+@pytest.mark.vcr
+def test_anthropic_structured_outputs_legacy(
+    instrument_legacy, anthropic_client, span_exporter, log_exporter
+):
+    response = anthropic_client.beta.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=1024,
+        betas=["structured-outputs-2025-11-13"],
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+            }
+        ],
+        output_format=OUTPUT_FORMAT
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "anthropic.chat"
+
+    anthropic_span = spans[0]
+    input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"][0]["content"] == "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+    assert input_messages[0]["role"] == "user"
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    text_parts = [p for p in output_messages[-1]["parts"] if p["type"] == "text"]
+    assert text_parts[0]["content"] == response.content[0].text
+    assert output_messages[-1]["role"] == "assistant"
+
+    assert "gen_ai.request.structured_output_schema" in anthropic_span.attributes
+    schema_attr = json.loads(
+        anthropic_span.attributes["gen_ai.request.structured_output_schema"]
+    )
+    assert "properties" in schema_attr
+    assert "joke" in schema_attr["properties"]
+    assert "rating" in schema_attr["properties"]
+
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MODEL) == "claude-sonnet-4-5-20250929"
+    assert anthropic_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "claude-sonnet-4-5-20250929"
+
+    response_json = json.loads(response.content[0].text)
+    assert "joke" in response_json
+    assert "rating" in response_json
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0, (
+        "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    )
+
+
+@pytest.mark.vcr
+def test_anthropic_structured_outputs_with_events_with_content(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter
+):
+    response = anthropic_client.beta.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=1024,
+        betas=["structured-outputs-2025-11-13"],
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+            }
+        ],
+        output_format=OUTPUT_FORMAT
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "anthropic.chat"
+
+    response_json = json.loads(response.content[0].text)
+    assert "joke" in response_json
+    assert "rating" in response_json
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+
+@pytest.mark.vcr
+def test_anthropic_structured_outputs_with_events_with_no_content(
+    instrument_with_no_content, anthropic_client, span_exporter, log_exporter
+):
+    response = anthropic_client.beta.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=1024,
+        betas=["structured-outputs-2025-11-13"],
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry and rate it from 1 to 10"
+            }
+        ],
+        output_format=OUTPUT_FORMAT
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "anthropic.chat"
+
+    response_json = json.loads(response.content[0].text)
+    assert "joke" in response_json
+    assert "rating" in response_json
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2

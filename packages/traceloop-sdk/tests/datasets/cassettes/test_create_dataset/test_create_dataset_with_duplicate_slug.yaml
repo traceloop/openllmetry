@@ -1,0 +1,61 @@
+interactions:
+- request:
+    body: '{"slug": "duplicate-test-slug", "name": "Duplicate Test Dataset", "description":
+      null, "columns": [{"slug": "name", "name": "Name", "type": "string"}, {"slug":
+      "price", "name": "Price", "type": "string"}], "rows": [{"Name": "Laptop", "Price":
+      "999.99"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '254'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"error":"row 0 has an invalid column slug: Name"}'
+    headers:
+      CF-RAY:
+      - 96d8cbf22c09d674-IAD
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '50'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 15:34:21 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 899fe51af59d0c2f53f2795fa8de1a65
+      x-kong-upstream-latency:
+      - '3'
+    status:
+      code: 400
+      message: Bad Request
+version: 1

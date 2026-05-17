@@ -1,0 +1,364 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": [{"type":
+      "text", "text": "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES
+      START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM Functionality
+      to OpenTelemetry\nTraceloop, a YCombinator-backed company, has announced the
+      release of OpenLLMetry, a new open-source\nlibrary designed to extend OpenTelemetry
+      with Large Language Model (LLM) functionality. This innovative\ntool aims to
+      bridge the gap between traditional application monitoring and the rapidly evolving
+      field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted OpenTelemetry
+      framework, which provides\na standardized approach to collecting and exporting
+      telemetry data from cloud-native applications. By\nintegrating LLM-specific
+      features, OpenLLMetry enables developers to gain deeper insights into\nthe performance
+      and behavior of AI models within their applications.\n\nKey features of OpenLLMetry
+      include:\n\nLLM-specific metrics and traces\nSeamless integration with existing
+      OpenTelemetry setups\nSupport for popular LLM frameworks and platforms\n\nThe
+      open-source nature of OpenLLMetry is expected to foster community contributions
+      and rapid adoption\namong developers working with LLMs. As AI continues to transform
+      the software landscape, tools\nlike OpenLLMetry are poised to play a vital role
+      in ensuring the reliability and performance of\nnext-generation applications.\n\n========================================================================\n\nMajor
+      LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\n\nIn
+      a significant development for the artificial intelligence industry, leading
+      Large Language Model (LLM) providers,\nincluding Anthropic, have announced the
+      implementation of prompt caching. This new feature promises to dramatically\nimprove
+      the speed and cost-effectiveness of LLM API calls, particularly for applications
+      with repetitive prompt patterns.\n\nUnderstanding Prompt Caching\nPrompt caching
+      is a technique that allows LLM providers to store and quickly retrieve responses
+      for frequently used prompts.\nInstead of processing the same or similar prompts
+      repeatedly, the system can serve pre-computed responses,\nsignificantly reducing
+      computation time and resources.\n\nBenefits of Prompt Caching\n1. Improved Response
+      Times\n\nWith prompt caching, response times for cached prompts can be reduced
+      from seconds to milliseconds. This dramatic speed\nimprovement enables near-instantaneous
+      responses in many scenarios, enhancing user experience in AI-powered applications.\n\n2.
+      Cost Reduction\nBy eliminating the need to reprocess identical or highly similar
+      prompts, prompt caching can substantially reduce the\ncomputational resources
+      required. This efficiency translates directly into cost savings for developers
+      and businesses\nutilizing LLM APIs.\n\n3. Scalability\nThe reduced computational
+      load allows LLM providers to handle a higher volume of requests with existing
+      infrastructure,\nimproving the scalability of their services.\n\nUse Cases and
+      Impact\nPrompt caching is particularly beneficial for applications with repetitive
+      prompt patterns. Some key use cases include:\n\nCustomer service chatbots handling
+      common queries\nContent moderation systems processing similar types of content\nLanguage
+      translation services for frequently translated phrases or sentences\nAutomated
+      coding assistants dealing with standard programming tasks\n\nImplementation
+      by Major Providers\nWhile the specific implementation details vary among providers,
+      the general approach involves:\n\nIdentifying frequently used prompts\nStoring
+      pre-computed responses\nImplementing efficient lookup mechanisms\nBalancing
+      cache freshness with performance gains\n\nAnthropic, known for its Claude AI
+      model, has been at the forefront of this technology.\n\nFuture Implications\nThe
+      introduction of prompt caching by major LLM providers is likely to have far-reaching
+      effects on the AI industry:\n\nBroader Adoption: Reduced costs and improved
+      performance could lead to wider adoption of LLM technologies across various
+      sectors.\nNew Application Paradigms: Developers may create new types of applications
+      that leverage the near-instantaneous response times of cached prompts.\nEvolution
+      of Pricing Models: LLM providers might introduce new pricing structures that
+      reflect the efficiency gains of prompt caching.\n\nAs the technology matures,
+      we can expect to see further refinements and innovative applications of prompt
+      caching, potentially\nreshaping the landscape of AI-powered services and applications.\n\n========================================================================\n\n\ud83d\udcca
+      Why Unit Testing is Non-Negotiable in Software Development \ud83d\udda5\ufe0f\nAs
+      a software professional, I can''t stress enough how crucial unit testing is
+      to our craft. Here''s why it''s a must-have practice:\n\n\ud83d\udc1b Catches
+      bugs early: Identify and fix issues before they snowball into major problems.\n\ud83d\udcb0
+      Saves time and money: Less debugging time means faster development and lower
+      costs.\n\ud83c\udfd7\ufe0f Improves code quality: Writing testable code inherently
+      leads to better architecture.\n\ud83d\udd04 Facilitates refactoring: Tests give
+      you confidence to improve your code without breaking functionality.\n\ud83d\udcda
+      Serves as documentation: Well-written tests explain how your code should behave.\n\ud83e\udd1d
+      Enhances collaboration: New team members can understand and contribute to the
+      codebase faster.\n\nRemember: The time invested in unit testing pays off multifold
+      in the long run. It''s not just good practice\u2014it''s professional responsibility.\nWhat''s
+      your take on unit testing? Share your experiences below! \ud83d\udc47", "cache_control":
+      {"type": "ephemeral"}}]}], "model": "claude-3-5-sonnet-20240620", "system":
+      [{"type": "text", "text": "You help generate concise summaries of news articles
+      and blog posts that user sends you."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '5976'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - AsyncAnthropic/Python 0.49.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - '600'
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2yU3W4bNxCFX2XA69VCVpwU2DsHBdo0dtqiThOgKQSKe1ZizOUwnKFlwfC7F+TK
+        QWv0aoH5PfPNcB+NH81gZtlv1xdXP7lf7Ee2v+Pyz+nTx6/xj7f58950Rk8JNQoidg/TmcyhGqyI
+        F7VRTWdmHhHMYFywZcTq1er1SjhG6Gqz3lyu32zWpjOOoyKqGf56fC6qeKjp7TOYn5FBNoMcR+cF
+        JGWebfYQ4on0ANJDRg1R7wJk+BK/xIuefk2I19c30Hwa6AOOxAlxJVyyAwW/yzafCA+KOPq4b+G3
+        CJhrAh29Huj6+oamEp16jjZ4PfX0I+4ROGGk3Ylus3UIzKkjr5Qy3/sRUtNWkuD85B3Vct4J2TiS
+        1njpyEfFPluFLH3w4EWrBoGWJF0LlpISZxVKnEqweVGT7Ywj5zvp6crPQsrk59oZNHP0yrnW4Ymu
+        3q0SH5ExkpxEMUtfuWx6urFfeal2VpylKso8Fodqm5OSs+7g434BN8FqySBRzhDKkMRRIDRxpinj
+        W0HUc2Ydrwlq8yRgbNNkjMVVk2NR6ektIiavtbMLZQTNPgQvcNyClwakfq68Qh2EHM+pqF2WUWPa
+        Js+0zhBGEmeD3fllW7+1m6j0womKYCqhabYpBe9aqfMKMhLUq79/JiAU/B3IHazuWL/vL0poaSTI
+        995BeqpYX/X0bq7rstGh4i/RKymWtfpIwpMe6xGPywHNiDrQe5xo95IEmtpd2dMIRTu+rpFoGio/
+        ElvxfkeNah5B30q70o5gxSNTxmTdchIdjexK7WqXgrUW4qHqrdkh2B3n5uvp9gCyRQ+VVN4XyItx
+        hFwuztsFZso8QWRZy//N2Xole6rvdaow6psNHPeUS+zN09+dEeW0zbDC0QwGcdxqydGcHdIuzMEM
+        sYTQmdJ+OcOj8TEV3SrfIYoZLjtTzxZbl9Em2f7Xf3Hx5vVzSIYdX7jXneGi/7Zs1j88Pf0DAAD/
+        /wMA8WaCRA8FAAA=
+    headers:
+      CF-RAY:
+      - 920b097a5f70ecf7-ALA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Mar 2025 09:38:22 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-03-15T09:38:18Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-03-15T09:38:22Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-03-15T09:38:17Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-03-15T09:38:18Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_01AZwYhzCNZYSmjvjRRdR3QN
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": [{"type":
+      "text", "text": "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES
+      START ON THE NEXT LINE\nOpen-Source Library OpenLLMetry Brings LLM Functionality
+      to OpenTelemetry\nTraceloop, a YCombinator-backed company, has announced the
+      release of OpenLLMetry, a new open-source\nlibrary designed to extend OpenTelemetry
+      with Large Language Model (LLM) functionality. This innovative\ntool aims to
+      bridge the gap between traditional application monitoring and the rapidly evolving
+      field\nof AI-powered systems. OpenLLMetry builds upon the widely-adopted OpenTelemetry
+      framework, which provides\na standardized approach to collecting and exporting
+      telemetry data from cloud-native applications. By\nintegrating LLM-specific
+      features, OpenLLMetry enables developers to gain deeper insights into\nthe performance
+      and behavior of AI models within their applications.\n\nKey features of OpenLLMetry
+      include:\n\nLLM-specific metrics and traces\nSeamless integration with existing
+      OpenTelemetry setups\nSupport for popular LLM frameworks and platforms\n\nThe
+      open-source nature of OpenLLMetry is expected to foster community contributions
+      and rapid adoption\namong developers working with LLMs. As AI continues to transform
+      the software landscape, tools\nlike OpenLLMetry are poised to play a vital role
+      in ensuring the reliability and performance of\nnext-generation applications.\n\n========================================================================\n\nMajor
+      LLM Providers Introduce Prompt Caching, Boosting Speed and Reducing Costs\n\nIn
+      a significant development for the artificial intelligence industry, leading
+      Large Language Model (LLM) providers,\nincluding Anthropic, have announced the
+      implementation of prompt caching. This new feature promises to dramatically\nimprove
+      the speed and cost-effectiveness of LLM API calls, particularly for applications
+      with repetitive prompt patterns.\n\nUnderstanding Prompt Caching\nPrompt caching
+      is a technique that allows LLM providers to store and quickly retrieve responses
+      for frequently used prompts.\nInstead of processing the same or similar prompts
+      repeatedly, the system can serve pre-computed responses,\nsignificantly reducing
+      computation time and resources.\n\nBenefits of Prompt Caching\n1. Improved Response
+      Times\n\nWith prompt caching, response times for cached prompts can be reduced
+      from seconds to milliseconds. This dramatic speed\nimprovement enables near-instantaneous
+      responses in many scenarios, enhancing user experience in AI-powered applications.\n\n2.
+      Cost Reduction\nBy eliminating the need to reprocess identical or highly similar
+      prompts, prompt caching can substantially reduce the\ncomputational resources
+      required. This efficiency translates directly into cost savings for developers
+      and businesses\nutilizing LLM APIs.\n\n3. Scalability\nThe reduced computational
+      load allows LLM providers to handle a higher volume of requests with existing
+      infrastructure,\nimproving the scalability of their services.\n\nUse Cases and
+      Impact\nPrompt caching is particularly beneficial for applications with repetitive
+      prompt patterns. Some key use cases include:\n\nCustomer service chatbots handling
+      common queries\nContent moderation systems processing similar types of content\nLanguage
+      translation services for frequently translated phrases or sentences\nAutomated
+      coding assistants dealing with standard programming tasks\n\nImplementation
+      by Major Providers\nWhile the specific implementation details vary among providers,
+      the general approach involves:\n\nIdentifying frequently used prompts\nStoring
+      pre-computed responses\nImplementing efficient lookup mechanisms\nBalancing
+      cache freshness with performance gains\n\nAnthropic, known for its Claude AI
+      model, has been at the forefront of this technology.\n\nFuture Implications\nThe
+      introduction of prompt caching by major LLM providers is likely to have far-reaching
+      effects on the AI industry:\n\nBroader Adoption: Reduced costs and improved
+      performance could lead to wider adoption of LLM technologies across various
+      sectors.\nNew Application Paradigms: Developers may create new types of applications
+      that leverage the near-instantaneous response times of cached prompts.\nEvolution
+      of Pricing Models: LLM providers might introduce new pricing structures that
+      reflect the efficiency gains of prompt caching.\n\nAs the technology matures,
+      we can expect to see further refinements and innovative applications of prompt
+      caching, potentially\nreshaping the landscape of AI-powered services and applications.\n\n========================================================================\n\n\ud83d\udcca
+      Why Unit Testing is Non-Negotiable in Software Development \ud83d\udda5\ufe0f\nAs
+      a software professional, I can''t stress enough how crucial unit testing is
+      to our craft. Here''s why it''s a must-have practice:\n\n\ud83d\udc1b Catches
+      bugs early: Identify and fix issues before they snowball into major problems.\n\ud83d\udcb0
+      Saves time and money: Less debugging time means faster development and lower
+      costs.\n\ud83c\udfd7\ufe0f Improves code quality: Writing testable code inherently
+      leads to better architecture.\n\ud83d\udd04 Facilitates refactoring: Tests give
+      you confidence to improve your code without breaking functionality.\n\ud83d\udcda
+      Serves as documentation: Well-written tests explain how your code should behave.\n\ud83e\udd1d
+      Enhances collaboration: New team members can understand and contribute to the
+      codebase faster.\n\nRemember: The time invested in unit testing pays off multifold
+      in the long run. It''s not just good practice\u2014it''s professional responsibility.\nWhat''s
+      your take on unit testing? Share your experiences below! \ud83d\udc47", "cache_control":
+      {"type": "ephemeral"}}]}], "model": "claude-3-5-sonnet-20240620", "system":
+      [{"type": "text", "text": "You help generate concise summaries of news articles
+      and blog posts that user sends you."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '5976'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - AsyncAnthropic/Python 0.49.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.49.0
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - '600'
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2yUwW4cNwyGX4XQeXZrr50gmJtrJKgRu23QHNLWxUIrcWZUa0hFpHa9MfzuhTRr
+        1A16GkCkSP7fT82TCd70ZpZxe3b+6d30+x/767urTx+vL+ndl4tvHyh/MZ3RY8KahSJ2RNOZzLEe
+        WJEgaklNZ2b2GE1vXLTF4+pi9WYlTIS62pxtLs/ebs5MZxyTIqnp/3x6Kar4WK+3T29+woxgM4Jj
+        ckEQpMyzzQEFeACdEHTKWFM0uIjS39M9na/hl4R0e3uHmo89/IwH4IS0Ei7ZIcSwyzYfAR8VyQca
+        W/pnjDjXC3AIOsHt7R0MhZwGJhuDHtfwEY8woNWSUSCQi8VjzVtJQheG4KDeD05+0GwdSgeBFMds
+        a42lKj4G0dpRUEuSDix5kJISZ4WBMyROJdq8tM92xgPnB1nDVZgFlCFl3geP4BETZggkYZy0jqMM
+        VzfQsEPCPHCeLTlsfQOBTSkG10aRdaW0WcOd/ZuXVqeyuRXK7IvDejYnBWfdVCdWhjDXPARJiL6N
+        nrGlOhaVNfyIhEPQf+HMIcYg6LilSmISBA1zZRP5gBkcz6moXSjXnGbRCcypnwdxNtpdWGz4tZld
+        KcUjFMGhxIbutcKFdsaEGjTsX8QIxPCA4CarO1ZpTU472MgtVq3h/WNCp+hPoq3TyjaQL1IXRKfM
+        ZZzgUJGB9Zyaw7Ua4eH1IJBstj6M88L8Yg03c/W6OcMDFAoKistOBALhQQ913z3uMXKakbS/pxVc
+        W3UTCuzKKIBVej39ze5RGtDWfGbCI9TAzUJOwLFH+FraBtfAB+sqRqsokHGwTjkHGlsxzPWGFfDs
+        Su3cJNTQe5rqxLVcjHbH+RT5PCEkFgWc02QlfKvTTFa/0yXgcnHBLj6lzAOKLI7/n+CmJdljfeND
+        pVLfeWQaIRdam+e/OiPKaZvRCpPpDZLfaslkTgHBrwXJoempxNiZ0n5T/ZMJlIpulR+QxPSXnanL
+        jVuXsQna/jd+9hLPaP13sfPzt286w0VfH242l8/P/wAAAP//AwARVOMOQwUAAA==
+    headers:
+      CF-RAY:
+      - 920b099bff60ecf7-ALA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Mar 2025 09:38:27 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-03-15T09:38:23Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-03-15T09:38:26Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-03-15T09:38:22Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-03-15T09:38:23Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_01JG2nybVnwvR1UPyqmMpd8x
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1
