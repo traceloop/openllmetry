@@ -1,6 +1,5 @@
 """OpenTelemetry Milvus DB instrumentation"""
 
-import logging
 import pymilvus
 
 from typing import Collection
@@ -16,62 +15,116 @@ from opentelemetry.instrumentation.utils import unwrap
 
 from opentelemetry.instrumentation.milvus.wrapper import _wrap
 from opentelemetry.instrumentation.milvus.version import __version__
-from opentelemetry.instrumentation.milvus.utils import is_metrics_enabled
-
-logger = logging.getLogger(__name__)
+from opentelemetry.instrumentation.milvus.utils import is_metrics_enabled, pymilvus_supports_async_milvus_client
 
 _instruments = ("pymilvus >= 2.4.1",)
 
-WRAPPED_METHODS = [
+_MILVUS_CLIENT_WRAPPED_METHODS = [
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "create_collection",
-        "span_name": "milvus.create_collection"
+        "span_name": "milvus.create_collection",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "insert",
-        "span_name": "milvus.insert"
+        "span_name": "milvus.insert",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "upsert",
-        "span_name": "milvus.upsert"
+        "span_name": "milvus.upsert",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "delete",
-        "span_name": "milvus.delete"
+        "span_name": "milvus.delete",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "search",
-        "span_name": "milvus.search"
+        "span_name": "milvus.search",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "get",
-        "span_name": "milvus.get"
+        "span_name": "milvus.get",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "query",
-        "span_name": "milvus.query"
+        "span_name": "milvus.query",
     },
     {
         "package": pymilvus,
         "object": "MilvusClient",
         "method": "hybrid_search",
-        "span_name": "milvus.hybrid_search"
+        "span_name": "milvus.hybrid_search",
     },
 ]
+
+_ASYNC_MILVUS_CLIENT_WRAPPED_METHODS = [
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "create_collection",
+        "span_name": "milvus.create_collection",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "insert",
+        "span_name": "milvus.insert",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "upsert",
+        "span_name": "milvus.upsert",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "delete",
+        "span_name": "milvus.delete",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "search",
+        "span_name": "milvus.search",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "get",
+        "span_name": "milvus.get",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "query",
+        "span_name": "milvus.query",
+    },
+    {
+        "package": pymilvus,
+        "object": "AsyncMilvusClient",
+        "method": "hybrid_search",
+        "span_name": "milvus.hybrid_search",
+    },
+]
+
+
+WRAPPED_METHODS = list(_MILVUS_CLIENT_WRAPPED_METHODS)
+if pymilvus_supports_async_milvus_client():
+    WRAPPED_METHODS.extend(_ASYNC_MILVUS_CLIENT_WRAPPED_METHODS)
 
 
 class MilvusInstrumentor(BaseInstrumentor):
@@ -140,7 +193,7 @@ class MilvusInstrumentor(BaseInstrumentor):
                         insert_units_metric,
                         upsert_units_metric,
                         delete_units_metric,
-                        wrapped_method
+                        wrapped_method,
                     ),
                 )
 

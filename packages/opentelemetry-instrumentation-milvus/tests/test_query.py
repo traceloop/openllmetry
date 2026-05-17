@@ -85,11 +85,11 @@ def test_milvus_insert(exporter, collection, reader):
 def test_milvus_upsert(exporter, collection, reader):
     insert_data(collection)
     modified_data = {
-            "id": 1000,
-            "vector": [random.uniform(-1, 1) for _ in range(5)],
-            "color": "red",
-            "tag": 1234,
-        }
+        "id": 1000,
+        "vector": [random.uniform(-1, 1) for _ in range(5)],
+        "color": "red",
+        "tag": 1234,
+    }
     milvus.upsert(collection_name=collection, data=modified_data)
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.upsert")
@@ -117,9 +117,7 @@ def test_milvus_query_equal(exporter, collection, reader):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color == "brown"'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 3
@@ -150,13 +148,8 @@ def test_milvus_query_like(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
-    )
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER)
-        == 'color_tag like "brown"'
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color_tag like "brown"'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 2
     events = span.events
@@ -181,13 +174,8 @@ def test_milvus_query_or(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
-    )
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER)
-        == 'color == "brown" or color == "red"'
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color == "brown" or color == "red"'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 3
     events = span.events
@@ -212,13 +200,8 @@ def test_milvus_query_and(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "query"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
-    )
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER)
-        == 'color == "brown" and tag == 1234'
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_COLLECTION_NAME) == collection
+    assert span.attributes.get(SpanAttributes.MILVUS_QUERY_FILTER) == 'color == "brown" and tag == 1234'
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_QUERY_LIMIT) == 1
     events = span.events
@@ -243,9 +226,7 @@ def test_milvus_get_collection(exporter, collection):
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "get"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_GET_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_GET_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_GET_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_GET_TIMEOUT) == 10
     assert span.attributes.get(SpanAttributes.MILVUS_GET_IDS_COUNT) == 3
@@ -253,22 +234,16 @@ def test_milvus_get_collection(exporter, collection):
 
 def test_milvus_delete_collection(exporter, collection, reader):
     insert_data(collection)
-    milvus.delete(
-        collection_name=collection, ids=[1000, 1001, 1002], timeout=10
-    )
+    milvus.delete(collection_name=collection, ids=[1000, 1001, 1002], timeout=10)
     spans = exporter.get_finished_spans()
     span = next(span for span in spans if span.name == "milvus.delete")
 
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "delete"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_DELETE_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_DELETE_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_IDS_COUNT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_DELETE_TIMEOUT) == 10
     metrics_data = reader.get_metrics_data()
-    delete_metrics = find_metrics_by_name(
-        metrics_data, Meters.DB_USAGE_DELETE_UNITS
-    )
+    delete_metrics = find_metrics_by_name(metrics_data, Meters.DB_USAGE_DELETE_UNITS)
     for metric in delete_metrics:
         assert all(dp.value == 3 for dp in metric.data.data_points)

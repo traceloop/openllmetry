@@ -89,17 +89,12 @@ def test_milvus_single_vector_search(exporter, collection, reader):
     # Check the span attributes related to search
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "search"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_TIMEOUT) == 10
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_ANNS_FIELD) == "vector"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION)
-        == "[5]"
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION) == "[5]"
     distances = []
     ids = []
 
@@ -114,17 +109,13 @@ def test_milvus_single_vector_search(exporter, collection, reader):
         assert isinstance(distance, str)
 
         # Collect the distances and IDs for further computation
-        distances.append(
-            float(distance)
-        )  # Convert the distance to a float for computation
+        distances.append(float(distance))  # Convert the distance to a float for computation
         ids.append(_id)
 
     # Now compute dynamic stats from the distances
     total_matches = len(events)
 
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
     metrics_data = reader.get_metrics_data()
     distance_metrics = find_metrics_by_name(metrics_data, Meters.DB_SEARCH_DISTANCE)
     for metric in distance_metrics:
@@ -137,9 +128,7 @@ def test_milvus_multiple_vector_search(exporter, collection):
     query_vectors = [
         [random.uniform(-1, 1) for _ in range(5)],  # Random query vector for the search
         [random.uniform(-1, 1) for _ in range(5)],  # Another query vector
-        [
-            random.uniform(-1, 1) for _ in range(5)
-        ],  # Another query vector (you can add more as needed)
+        [random.uniform(-1, 1) for _ in range(5)],  # Another query vector (you can add more as needed)
     ]
     search_params = {"radius": 0.5, "metric_type": "COSINE", "index_type": "IVF_FLAT"}
     milvus.search(
@@ -159,17 +148,12 @@ def test_milvus_multiple_vector_search(exporter, collection):
     # Check the span attributes related to search
     assert span.attributes.get(SpanAttributes.VECTOR_DB_VENDOR) == "milvus"
     assert span.attributes.get(SpanAttributes.VECTOR_DB_OPERATION) == "search"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_COLLECTION_NAME) == collection
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_OUTPUT_FIELDS_COUNT) == 1
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_LIMIT) == 3
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_TIMEOUT) == 10
     assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_ANNS_FIELD) == "vector"
-    assert (
-        span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION)
-        == "[5, 5, 5]"
-    )
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_QUERY_VECTOR_DIMENSION) == "[5, 5, 5]"
 
     distances_dict = {}
     ids_dict = {}
@@ -177,9 +161,7 @@ def test_milvus_multiple_vector_search(exporter, collection):
     events = span.events
     for event in events:
         assert event.name == Events.DB_SEARCH_RESULT.value
-        query_idx = event.attributes.get(
-            EventAttributes.DB_SEARCH_RESULT_QUERY_ID.value
-        )
+        query_idx = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_QUERY_ID.value)
         _id = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_ID.value)
         distance = event.attributes.get(EventAttributes.DB_SEARCH_RESULT_DISTANCE.value)
 

@@ -12,8 +12,16 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.instrumentation.milvus import MilvusInstrumentor
+from opentelemetry.instrumentation.milvus.utils import pymilvus_supports_async_milvus_client
 
 pytest_plugins = []
+
+
+def pytest_ignore_collect(collection_path, config):
+    """Skip async client tests when pymilvus has no AsyncMilvusClient (added in 2.6.0)."""
+    if collection_path.name == "test_async_milvus_client.py":
+        return not pymilvus_supports_async_milvus_client()
+    return False
 
 
 @pytest.fixture(scope="session")
@@ -35,9 +43,7 @@ def clear_exporter(exporter):
 
 @pytest.fixture(scope="session")
 def reader():
-    reader = InMemoryMetricReader(
-        {Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA}
-    )
+    reader = InMemoryMetricReader({Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA})
     return reader
 
 
