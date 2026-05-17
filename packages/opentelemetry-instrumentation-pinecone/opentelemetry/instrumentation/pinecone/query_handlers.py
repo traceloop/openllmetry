@@ -92,3 +92,68 @@ def set_query_response(span, scores_metric, shared_attributes, response):
                 EventAttributes.DB_QUERY_RESULT_VECTOR.value: match.get("values"),
             },
         )
+
+
+@dont_throw
+def set_upsert_input_attributes(span, kwargs, args):
+    # Pinecone upsert kwargs (positional or keyword):
+    # vectors: List[Vector],
+    # namespace: Optional[str] = None,
+    # batch_size: Optional[int] = None,
+    # async_req: bool = False,
+    # show_progress: bool = True,
+
+    vectors = kwargs.get("vectors")
+    if vectors is None and args:
+        vectors = args[0]
+    if vectors is not None:
+        try:
+            set_span_attribute(
+                span, SpanAttributes.PINECONE_UPSERT_VECTORS_COUNT, len(vectors)
+            )
+        except TypeError:
+            # vectors is a generator or other non-len-supporting iterable;
+            # don't materialise it just to count.
+            pass
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_UPSERT_NAMESPACE, kwargs.get("namespace")
+    )
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_UPSERT_BATCH_SIZE, kwargs.get("batch_size")
+    )
+
+
+@dont_throw
+def set_delete_input_attributes(span, kwargs, args):
+    # Pinecone delete kwargs (positional or keyword):
+    # ids: Optional[List[str]] = None,
+    # delete_all: Optional[bool] = None,
+    # namespace: Optional[str] = None,
+    # filter: Optional[Dict] = None,
+
+    ids = kwargs.get("ids")
+    if ids is None and args:
+        ids = args[0]
+    if ids is not None:
+        try:
+            set_span_attribute(
+                span, SpanAttributes.PINECONE_DELETE_IDS_COUNT, len(ids)
+            )
+        except TypeError:
+            pass
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_DELETE_DELETE_ALL, kwargs.get("delete_all")
+    )
+    set_span_attribute(
+        span, SpanAttributes.PINECONE_DELETE_NAMESPACE, kwargs.get("namespace")
+    )
+    if isinstance(kwargs.get("filter"), dict):
+        set_span_attribute(
+            span,
+            SpanAttributes.PINECONE_DELETE_FILTER,
+            json.dumps(kwargs.get("filter")),
+        )
+    else:
+        set_span_attribute(
+            span, SpanAttributes.PINECONE_DELETE_FILTER, kwargs.get("filter")
+        )
