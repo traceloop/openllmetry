@@ -586,6 +586,28 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens
             )
 
+        # Cached input tokens (matches opentelemetry-instrumentation-openai behavior;
+        # the OpenAI Agents SDK Usage object carries this via input_tokens_details.cached_tokens).
+        input_details = getattr(usage, "input_tokens_details", None)
+        if input_details is not None:
+            cached_tokens = getattr(input_details, "cached_tokens", None)
+            if cached_tokens is not None:
+                otel_span.set_attribute(
+                    SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                    cached_tokens,
+                )
+
+        # Reasoning tokens (for reasoning models like o1/o3) via
+        # output_tokens_details.reasoning_tokens.
+        output_details = getattr(usage, "output_tokens_details", None)
+        if output_details is not None:
+            reasoning_tokens = getattr(output_details, "reasoning_tokens", None)
+            if reasoning_tokens is not None:
+                otel_span.set_attribute(
+                    SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+                    reasoning_tokens,
+                )
+
     return model_settings
 
 
