@@ -341,6 +341,7 @@ class McpInstrumentor(BaseInstrumentor):
                 )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
+                span.set_attribute(ERROR_TYPE, "tool_error")
                 if len(result.content) > 0:
                     span.set_status(
                         Status(StatusCode.ERROR, f"{result.content[0].text}")
