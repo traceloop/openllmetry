@@ -339,12 +339,12 @@ class McpInstrumentor(BaseInstrumentor):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
                 )
-            # Handle errors
-            if hasattr(result, "isError") and result.isError:
-                if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+            # Handle errors (dict- and object-shaped CallToolResult)
+            is_error, error_message = InstrumentedStreamWriter._extract_result_error(
+                result
+            )
+            if is_error:
+                span.set_status(Status(StatusCode.ERROR, error_message))
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
@@ -547,6 +547,38 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
+    @staticmethod
+    def _get_value(data: Any, key: str, default: Any = None) -> Any:
+        if isinstance(data, dict):
+            return data.get(key, default)
+        return getattr(data, key, default)
+
+    @classmethod
+    def _extract_result_error(cls, result: Any) -> Tuple[bool, Union[str, None]]:
+        is_error = bool(cls._get_value(result, "isError", False))
+        if not is_error:
+            return False, None
+
+        content = cls._get_value(result, "content", [])
+        if not content:
+            return True, None
+
+        try:
+            if isinstance(content, (list, tuple)):
+                first_item = content[0]
+            elif isinstance(content, dict):
+                first_item = next(iter(content.values()))
+            else:
+                first_item = next(iter(content))
+        except (StopIteration, IndexError, TypeError, KeyError):
+            return True, None
+
+        message = cls._get_value(first_item, "text")
+        if message is None:
+            return True, None
+
+        return True, str(message)
+
     @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
@@ -567,14 +599,9 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 span.set_attribute(
                     SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
                 )
-                if "isError" in request.result:
-                    if request.result["isError"] is True:
-                        span.set_status(
-                            Status(
-                                StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
-                            )
-                        )
+                is_error, error_message = self._extract_result_error(request.result)
+                if is_error:
+                    span.set_status(Status(StatusCode.ERROR, error_message))
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
