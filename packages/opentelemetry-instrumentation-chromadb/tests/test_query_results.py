@@ -54,7 +54,7 @@ def test_chromadb_multi_query_returns_all_chunks(exporter, collection):
 def test_chromadb_query_result_events_contain_correct_data(exporter, collection):
     """Each result event should contain id, distance, document and metadata."""
     collection.add(
-        ids=["1", "2"],
+        ids=["doc-id-aaa", "doc-id-bbb"],
         documents=["doc one", "doc two"],
         metadatas=[{"source": "fileA"}, {"source": "fileB"}],
         embeddings=[[1.0, 0.0], [0.0, 1.0]],
@@ -73,4 +73,4 @@ def test_chromadb_query_result_events_contain_correct_data(exporter, collection)
         assert "db.query.result.metadata" in event.attributes
 
     ids_recorded = {e.attributes["db.query.result.id"] for e in result_events}
-    assert ids_recorded == {"1", "2"}
+    assert ids_recorded == {"doc-id-aaa", "doc-id-bbb"}
