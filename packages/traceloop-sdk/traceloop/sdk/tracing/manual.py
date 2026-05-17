@@ -62,12 +62,12 @@ class LLMSpan:
         )
         if usage.cache_creation_input_tokens is not None:
             self._span.set_attribute(
-                GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+                SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS,
                 usage.cache_creation_input_tokens,
             )
         if usage.cache_read_input_tokens is not None:
             self._span.set_attribute(
-                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS,
                 usage.cache_read_input_tokens,
             )
 

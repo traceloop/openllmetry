@@ -575,5 +575,5 @@ def test_reasoning_output_tokens_recorded(exporter):
     assert len(response_spans) >= 1
     response_span = response_spans[0]
 
-    assert SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS in response_span.attributes
-    assert response_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS] >= 0
+    assert GenAIAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS in response_span.attributes
+    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS] >= 0

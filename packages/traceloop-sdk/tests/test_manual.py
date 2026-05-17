@@ -59,9 +59,9 @@ def test_manual_report(exporter, openai_client):
     assert open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 24
     assert open_ai_span.attributes[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 39
     assert (
-        open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS]
+        open_ai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_CREATION_INPUT_TOKENS]
         == 15
     )
     assert (
-        open_ai_span.attributes[GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 18
+        open_ai_span.attributes[SpanAttributes.LLM_USAGE_CACHE_READ_INPUT_TOKENS] == 18
     )

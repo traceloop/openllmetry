@@ -349,7 +349,7 @@ def _handle_response(
 
     _set_span_attribute(
         span,
-        SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
         reasoning_tokens,
     )
 

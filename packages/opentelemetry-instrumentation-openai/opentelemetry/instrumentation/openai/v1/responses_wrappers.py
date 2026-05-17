@@ -450,7 +450,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
                 tokens_details.get("reasoning_tokens") if isinstance(tokens_details, dict)
                 else getattr(tokens_details, "reasoning_tokens", None)
             )
-        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS, reasoning_tokens)
+        _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens)
 
     _set_span_attribute(
         span,

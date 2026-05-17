@@ -599,7 +599,7 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
             reasoning_tokens = getattr(output_details, "reasoning_tokens", None)
             if reasoning_tokens is not None:
                 otel_span.set_attribute(
-                    SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS, reasoning_tokens
+                    GenAIAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS, reasoning_tokens
                 )
 
     return model_settings

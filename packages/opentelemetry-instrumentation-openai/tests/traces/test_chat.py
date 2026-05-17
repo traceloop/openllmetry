@@ -1446,7 +1446,7 @@ def test_chat_reasoning(instrument_legacy, span_exporter,
     span = spans[-1]
 
     assert span.attributes["gen_ai.request.reasoning_effort"] == "low"
-    assert span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS] > 0
+    assert span.attributes["gen_ai.usage.reasoning_tokens"] > 0
 
 
 @pytest.mark.vcr
