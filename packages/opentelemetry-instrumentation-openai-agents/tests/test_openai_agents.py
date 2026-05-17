@@ -1,8 +1,12 @@
 import json
 import pytest
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from opentelemetry.instrumentation.openai_agents import (
     OpenAIAgentsInstrumentor,
+)
+from opentelemetry.instrumentation.openai_agents._hooks import (
+    _extract_response_attributes,
 )
 from agents import Runner, Agent, function_tool
 from opentelemetry.trace import StatusCode
@@ -541,39 +545,62 @@ def test_handoff_span_operation_name(exporter, handoff_agent):
         )
 
 
-@pytest.mark.vcr
-def test_cache_read_input_tokens_recorded(exporter, test_agent):
-    """Cache read tokens should be > 0 on the second call — OpenAI writes to cache
-    on the first call and serves from it on the second."""
-    query = "What is the capital of France?"
+def _make_fake_response(cached_tokens=None, reasoning_tokens=None):
+    """Build a duck-typed Response that exercises only the usage path of
+    _extract_response_attributes. Other fields are absent so the helper's
+    hasattr/getattr guards short-circuit them.
 
-    Runner.run_sync(test_agent, query)
-    exporter.clear()
-    Runner.run_sync(test_agent, query)
+    Shape verified against:
+      - openai-agents SDK v0.14.2 (our pinned floor) — agents.usage.Usage,
+        InputTokensDetails (cached_tokens: int), OutputTokensDetails
+        (reasoning_tokens: int).
+      - A real recorded Responses API payload in this repo's cassette
+        tests/cassettes/test_openai_agents/test_music_composer_handoff_hierarchy.yaml,
+        which contains:
+          "usage": {
+            "input_tokens": 75,
+            "input_tokens_details": {"cached_tokens": 0},
+            "output_tokens": 16,
+            "output_tokens_details": {"reasoning_tokens": 0},
+            "total_tokens": 91
+          }
+      - OpenAI Responses API spec: https://platform.openai.com/docs/api-reference/responses
+    """
+    input_details = SimpleNamespace(cached_tokens=cached_tokens) if cached_tokens is not None else None
+    output_details = (
+        SimpleNamespace(reasoning_tokens=reasoning_tokens) if reasoning_tokens is not None else None
+    )
+    usage = SimpleNamespace(
+        input_tokens=10,
+        output_tokens=20,
+        total_tokens=30,
+        input_tokens_details=input_details,
+        output_tokens_details=output_details,
+    )
+    return SimpleNamespace(usage=usage)
 
-    response_spans = [s for s in exporter.get_finished_spans() if s.name == "openai.response"]
-    assert len(response_spans) >= 1
-    response_span = response_spans[0]
 
-    assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS in response_span.attributes
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] >= 0
+def test_extract_response_attributes_sets_cache_read_input_tokens():
+    """_extract_response_attributes must read usage.input_tokens_details.cached_tokens
+    and set gen_ai.usage.cache_read.input_tokens on the span."""
+    response = _make_fake_response(cached_tokens=1024)
+    span = MagicMock()
 
+    _extract_response_attributes(span, response, trace_content=False)
 
-@pytest.mark.vcr
-def test_reasoning_output_tokens_recorded(exporter):
-    """Reasoning tokens should be recorded (>= 0) on o3-mini which always
-    reports output_tokens_details.reasoning_tokens."""
-    reasoning_agent = Agent(
-        name="reasoningAgent",
-        instructions="You are a helpful assistant.",
-        model="o3-mini",
+    span.set_attribute.assert_any_call(
+        GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, 1024
     )
 
-    Runner.run_sync(reasoning_agent, "What is 2 + 2?")
 
-    response_spans = [s for s in exporter.get_finished_spans() if s.name == "openai.response"]
-    assert len(response_spans) >= 1
-    response_span = response_spans[0]
+def test_extract_response_attributes_sets_reasoning_tokens():
+    """_extract_response_attributes must read usage.output_tokens_details.reasoning_tokens
+    and set gen_ai.usage.reasoning_tokens on the span."""
+    response = _make_fake_response(reasoning_tokens=256)
+    span = MagicMock()
 
-    assert GenAIAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS in response_span.attributes
-    assert response_span.attributes[GenAIAttributes.GEN_AI_USAGE_REASONING_OUTPUT_TOKENS] >= 0
+    _extract_response_attributes(span, response, trace_content=False)
+
+    span.set_attribute.assert_any_call(
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, 256
+    )
