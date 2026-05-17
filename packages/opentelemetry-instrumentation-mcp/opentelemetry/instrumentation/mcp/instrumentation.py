@@ -570,7 +570,6 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
-                        span.set_attribute(ERROR_TYPE, "tool_error")
                         span.set_status(
                             Status(
                                 StatusCode.ERROR,
