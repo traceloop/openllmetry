@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+import traceback
 from functools import partial, wraps
 from typing import Collection
 
@@ -682,8 +683,9 @@ async def _handle_async_call(span: Span, kwargs, response, metric_params, event_
             set_model_choice_span_attributes(model_vendor, span, response_body)
     except Exception as e:
         # Mirror @dont_throw behavior for async: log + route through Config.exception_logger
-        logger.error(
-            "OpenLLMetry failed to trace in _handle_async_call, error: %s", e, exc_info=True
+        logger.debug(
+            "OpenLLMetry failed to trace in _handle_async_call, error: %s",
+            traceback.format_exc(),
         )
         if Config.exception_logger:
             Config.exception_logger(e)

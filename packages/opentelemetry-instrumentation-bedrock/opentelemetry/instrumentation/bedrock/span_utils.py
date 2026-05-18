@@ -640,10 +640,18 @@ def _set_amazon_span_attributes(
                 total_completion_tokens += int(
                     result.get("totalOutputTextTokenCount", 0)
                 )
-    elif "usage" in response_body:
-        total_prompt_tokens += int(response_body.get("inputTokens", 0))
+    elif "usage" in response_body or "metadata" in response_body:
+        # Nova non-streaming nests usage at `usage`; the streaming wrapper
+        # accumulates the converse-style metadata event under `metadata.usage`.
+        # Headers carry the same values and are used as a fallback.
+        usage = response_body.get("usage") or response_body.get("metadata", {}).get("usage", {}) or {}
+        total_prompt_tokens += int(
+            usage.get("inputTokens")
+            or headers.get("x-amzn-bedrock-input-token-count", 0)
+        )
         total_completion_tokens += int(
-            headers.get("x-amzn-bedrock-output-token-count", 0)
+            usage.get("outputTokens")
+            or headers.get("x-amzn-bedrock-output-token-count", 0)
         )
     # checks for Titan models
     if "inputTextTokenCount" in response_body:

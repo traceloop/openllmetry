@@ -24,6 +24,7 @@ import json
 
 import aioboto3
 import pytest
+from opentelemetry import context as context_api
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -31,6 +32,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 
 
 MODEL_ID = "amazon.nova-lite-v1:0"
@@ -85,10 +87,16 @@ def _fake_invoke_model_response():
 
 
 class _AsyncReadableBody:
-    """Mimics aiobotocore's streaming body: `await body.read()` returns bytes."""
+    """Mimics aiobotocore's streaming body: `await body.read()` returns bytes,
+    consumed after the first read (mirrors botocore's StreamingBody — a second
+    read on the real body yields empty bytes).
+
+    `close()` is async and records invocation, so tests can assert the
+    instrumentation actually releases the underlying body."""
 
     def __init__(self, raw: bytes):
         self._raw = raw
+        self.close_calls = 0
 
     async def read(self, amt=None):
         if amt is None:
@@ -96,6 +104,13 @@ class _AsyncReadableBody:
             return out
         out, self._raw = self._raw[:amt], self._raw[amt:]
         return out
+
+    async def close(self):
+        # aiobotocore's StreamingBody.close is async. The instrumentation
+        # invokes close_fn() then awaits the result if awaitable — this
+        # exercises the await-if-coroutine branch.
+        self.close_calls += 1
+        return None
 
 
 class _AsyncEventStream:
@@ -229,8 +244,8 @@ async def test_aioboto3_converse_legacy(
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 300
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.1
-    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, 0) > 0
-    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, 0) > 0
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
@@ -252,6 +267,8 @@ async def test_aioboto3_converse_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2
 
@@ -272,6 +289,8 @@ async def test_aioboto3_converse_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
@@ -325,6 +344,8 @@ async def test_aioboto3_invoke_model_legacy(
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.7
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.9
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
@@ -354,6 +375,8 @@ async def test_aioboto3_invoke_model_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2
 
@@ -382,6 +405,8 @@ async def test_aioboto3_invoke_model_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
@@ -429,6 +454,8 @@ async def test_aioboto3_invoke_stream_legacy(
     assert span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
@@ -459,6 +486,8 @@ async def test_aioboto3_invoke_stream_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2
 
@@ -488,6 +517,8 @@ async def test_aioboto3_invoke_stream_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
@@ -527,6 +558,8 @@ async def test_aioboto3_converse_stream_legacy(
     assert span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
     assert span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
@@ -550,6 +583,8 @@ async def test_aioboto3_converse_stream_with_events_with_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2
 
@@ -572,9 +607,174 @@ async def test_aioboto3_converse_stream_with_events_with_no_content(
 
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2, "events should still be emitted with content disabled"
     for log in logs:
         if log.log_record.body:
             body = dict(log.log_record.body)
             assert body == {} or "content" not in body
+
+
+# ───────────────────────── edge cases ─────────────────────────
+
+
+async def test_aioboto3_invoke_stream_early_break(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """Caller breaks out of `async for` and closes the iterator — the wrapper's
+    try/finally + _done guard must fire stream_done so the span ends cleanly."""
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": MESSAGE_LIST,
+        "system": SYSTEM_LIST,
+        "inferenceConfig": INF_PARAMS,
+    }
+
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_stream_response)
+    try:
+        response = await client.invoke_model_with_response_stream(
+            body=json.dumps(request_body),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        # Drive the iterator manually so we can deterministically close it
+        # after the first event. In real code Python closes the generator
+        # during GC; here we make finalization explicit.
+        stream = response["body"].__aiter__()
+        await stream.__anext__()
+        await stream.aclose()
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, "span must be ended even when the caller breaks early"
+    assert spans[0].name == "chat nova-lite-v1:0"
+
+
+async def test_aioboto3_invoke_stream_exception_during_iteration(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """Exception raised inside the iteration body — wrapper's try/finally must
+    still fire stream_done so the span ends (no leak)."""
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": MESSAGE_LIST,
+        "system": SYSTEM_LIST,
+        "inferenceConfig": INF_PARAMS,
+    }
+
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_stream_response)
+    try:
+        response = await client.invoke_model_with_response_stream(
+            body=json.dumps(request_body),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        # Drive the iterator manually so we can throw into the generator and
+        # observe the finally block running synchronously.
+        stream = response["body"].__aiter__()
+        await stream.__anext__()
+        with pytest.raises(RuntimeError, match="boom"):
+            await stream.athrow(RuntimeError("boom"))
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, "span must be ended even when iteration raises"
+    assert spans[0].name == "chat nova-lite-v1:0"
+
+
+async def test_aioboto3_suppress_language_model_instrumentation(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY set → no LLM span produced."""
+    client, ctx = await _patch_make_api_call(async_session, _fake_converse_response)
+
+    token = context_api.attach(
+        context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+    )
+    try:
+        await client.converse(
+            modelId=MODEL_ID,
+            messages=MESSAGE_LIST,
+            system=SYSTEM_LIST,
+            inferenceConfig=CONVERSE_INF,
+        )
+    finally:
+        context_api.detach(token)
+        await ctx.__aexit__(None, None, None)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 0, "instrumentation must short-circuit when suppressed"
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 0
+
+
+async def test_aioboto3_invoke_model_closes_underlying_body(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """The async instrumentation must release the underlying aiobotocore body
+    after consuming it (so the HTTP connection returns to the pool)."""
+    captured_body = {}
+
+    def factory():
+        resp = _fake_invoke_model_response()
+        captured_body["body"] = resp["body"]
+        return resp
+
+    client, ctx = await _patch_make_api_call(async_session, factory)
+    try:
+        request_body = {
+            "schemaVersion": "messages-v1",
+            "messages": MESSAGE_LIST,
+            "system": SYSTEM_LIST,
+            "inferenceConfig": INF_PARAMS,
+        }
+        await client.invoke_model(
+            body=json.dumps(request_body),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    original = captured_body["body"]
+    assert original.close_calls == 1, (
+        "instrumentation must close the underlying body exactly once"
+    )
+
+
+async def test_aioboto3_invoke_model_body_is_rereadable(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """After the instrumentation consumes the response body, the user must
+    still be able to `await response['body'].read()` — proves BufferedAsyncBody
+    is swapped in for the original (single-use) aiobotocore body."""
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_model_response)
+    try:
+        request_body = {
+            "schemaVersion": "messages-v1",
+            "messages": MESSAGE_LIST,
+            "system": SYSTEM_LIST,
+            "inferenceConfig": INF_PARAMS,
+        }
+        response = await client.invoke_model(
+            body=json.dumps(request_body),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        first = await response["body"].read()
+        second = await response["body"].read()
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    assert first, "user's first read must return the buffered content"
+    assert first == second, (
+        "second read must return the same bytes — BufferedAsyncBody re-reads via cursor"
+    )
