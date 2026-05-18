@@ -752,6 +752,136 @@ class TestEndGenerationSpan:
 
         otel_span.end()
 
+    def test_instructions_prepended_as_system_message(self, tracer_and_exporter, processor):
+        """response.instructions must appear as the first message with role=system."""
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen")
+
+        response = MagicMock()
+        response.instructions = "You are a helpful assistant."
+        response.tools = None
+        response.output = []
+        response.model = None
+        response.id = None
+        response.temperature = None
+        response.max_output_tokens = None
+        response.top_p = None
+        response.frequency_penalty = None
+        response.finish_reason = None
+        response.usage = None
+
+        span_data = MagicMock()
+        span_data.input = [{"role": "user", "content": "Hello"}]
+        span_data.response = response
+        span_data.tools = None
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        raw = otel_span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        assert messages[0]["role"] == "system"
+        assert messages[0]["parts"][0]["content"] == "You are a helpful assistant."
+        assert messages[1]["role"] == "user"
+
+        otel_span.end()
+
+    def test_instructions_not_prepended_when_content_gated(self, tracer_and_exporter, processor):
+        """response.instructions must NOT appear when trace_content=False."""
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen")
+
+        response = MagicMock()
+        response.instructions = "You are a helpful assistant."
+        response.tools = None
+        response.output = []
+        response.model = None
+        response.id = None
+        response.temperature = None
+        response.max_output_tokens = None
+        response.top_p = None
+        response.frequency_penalty = None
+        response.finish_reason = None
+        response.usage = None
+
+        span_data = MagicMock()
+        span_data.input = [{"role": "user", "content": "Hello"}]
+        span_data.response = response
+        span_data.tools = None
+
+        processor._end_generation_span(otel_span, span_data, trace_content=False)
+
+        assert GenAIAttributes.GEN_AI_INPUT_MESSAGES not in otel_span.attributes
+
+        otel_span.end()
+
+    def test_instructions_only_with_empty_input(self, tracer_and_exporter, processor):
+        """Empty input + instructions → single system message in output."""
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen")
+
+        response = MagicMock()
+        response.instructions = "You are a helpful assistant."
+        response.tools = None
+        response.output = []
+        response.model = None
+        response.id = None
+        response.temperature = None
+        response.max_output_tokens = None
+        response.top_p = None
+        response.frequency_penalty = None
+        response.finish_reason = None
+        response.usage = None
+
+        span_data = MagicMock()
+        span_data.input = []
+        span_data.response = response
+        span_data.tools = None
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        raw = otel_span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        assert len(messages) == 1
+        assert messages[0]["role"] == "system"
+        assert messages[0]["parts"][0]["content"] == "You are a helpful assistant."
+
+        otel_span.end()
+
+    def test_empty_instructions_skipped(self, tracer_and_exporter, processor):
+        """instructions == "" is falsy and must be skipped — no system message prepended."""
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen")
+
+        response = MagicMock()
+        response.instructions = ""
+        response.tools = None
+        response.output = []
+        response.model = None
+        response.id = None
+        response.temperature = None
+        response.max_output_tokens = None
+        response.top_p = None
+        response.frequency_penalty = None
+        response.finish_reason = None
+        response.usage = None
+
+        span_data = MagicMock()
+        span_data.input = [{"role": "user", "content": "Hello"}]
+        span_data.response = response
+        span_data.tools = None
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        raw = otel_span.attributes.get(GenAIAttributes.GEN_AI_INPUT_MESSAGES)
+        assert raw is not None
+        messages = json.loads(raw)
+        assert len(messages) == 1
+        assert messages[0]["role"] == "user"
+
+        otel_span.end()
+
     def test_extracts_response_attributes(self, tracer_and_exporter, processor):
         """Must extract response model, id, etc."""
         tracer, exporter = tracer_and_exporter
