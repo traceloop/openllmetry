@@ -6,8 +6,6 @@ import time
 import warnings
 from typing import Callable, Collection, Optional
 
-_USE_ATTRIBUTES_UNSET = object()
-
 from opentelemetry import context as context_api
 from opentelemetry._logs import Logger, get_logger
 from opentelemetry.instrumentation.anthropic.config import Config
@@ -799,15 +797,20 @@ class AnthropicInstrumentor(BaseInstrumentor):
         self,
         enrich_token_usage: bool = False,
         exception_logger=None,
-        use_attributes: bool = True,
+        use_attributes: Optional[bool] = None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
         upload_base64_image: Optional[
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = None,
-        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
-        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
             warnings.warn(
                 "`use_legacy_attributes` is deprecated and will be removed in a "
                 "future release; use `use_attributes` instead. The current OTel "
@@ -819,6 +822,8 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 stacklevel=2,
             )
             use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes

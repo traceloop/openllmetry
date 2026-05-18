@@ -4,9 +4,7 @@ import logging
 import os
 import time
 import warnings
-from typing import Callable, Collection, Union
-
-_USE_ATTRIBUTES_UNSET = object()
+from typing import Callable, Collection, Optional, Union
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import Logger, get_logger
@@ -461,12 +459,17 @@ class GroqInstrumentor(BaseInstrumentor):
     def __init__(
         self,
         exception_logger=None,
-        use_attributes: bool = True,
+        use_attributes: Optional[bool] = None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
-        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
-        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
             warnings.warn(
                 "`use_legacy_attributes` is deprecated and will be removed in a "
                 "future release; use `use_attributes` instead. The current OTel "
@@ -478,6 +481,8 @@ class GroqInstrumentor(BaseInstrumentor):
                 stacklevel=2,
             )
             use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.use_legacy_attributes = use_attributes

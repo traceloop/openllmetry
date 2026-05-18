@@ -8,8 +8,6 @@ from typing_extensions import Coroutine
 
 _instruments = ("openai >= 0.27.0",)
 
-_USE_ATTRIBUTES_UNSET = object()
-
 
 class OpenAIInstrumentor(BaseInstrumentor):
     """An instrumentor for OpenAI's client library."""
@@ -23,11 +21,16 @@ class OpenAIInstrumentor(BaseInstrumentor):
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = lambda *args: "",
         enable_trace_context_propagation: bool = True,
-        use_attributes: bool = True,
-        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
+        use_attributes: Optional[bool] = None,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
-        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
             warnings.warn(
                 "`use_legacy_attributes` is deprecated and will be removed in a "
                 "future release; use `use_attributes` instead. The current OTel "
@@ -39,6 +42,8 @@ class OpenAIInstrumentor(BaseInstrumentor):
                 stacklevel=2,
             )
             use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.enrich_assistant = enrich_assistant
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes

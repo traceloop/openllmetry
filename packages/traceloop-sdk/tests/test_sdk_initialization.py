@@ -6,7 +6,7 @@ from openai import OpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
@@ -297,6 +297,18 @@ def test_use_legacy_attributes_deprecated_alias_still_works(isolated_tracer_wrap
         and "use_legacy_attributes" in str(w.message)
     ]
     assert len(deprecations) >= 1, "Expected a DeprecationWarning for use_legacy_attributes"
+
+
+def test_passing_both_kwargs_raises_type_error(isolated_tracer_wrapper):
+    """Passing both use_attributes and use_legacy_attributes is a programmer error —
+    fail loudly instead of silently letting one clobber the other."""
+    with pytest.raises(TypeError, match="Cannot pass both"):
+        Traceloop.init(
+            exporter=InMemorySpanExporter(),
+            disable_batch=True,
+            use_attributes=False,
+            use_legacy_attributes=True,
+        )
 
 def test_use_attributes_defaults_to_true(isolated_tracer_wrapper):
     """When use_attributes is not passed, instrumentors keep the default spec-compliant

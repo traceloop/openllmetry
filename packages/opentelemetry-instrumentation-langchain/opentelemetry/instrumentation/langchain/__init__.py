@@ -2,9 +2,7 @@
 
 import logging
 import warnings
-from typing import Collection
-
-_USE_ATTRIBUTES_UNSET = object()
+from typing import Collection, Optional
 
 from opentelemetry import context as context_api
 
@@ -46,9 +44,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         self,
         exception_logger=None,
         disable_trace_context_propagation=False,
-        use_attributes: bool = True,
+        use_attributes: Optional[bool] = None,
         metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES,
-        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         """Create a Langchain instrumentor instance.
 
@@ -66,7 +64,12 @@ class LangchainInstrumentor(BaseInstrumentor):
                 future release.
         """
         super().__init__()
-        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
             warnings.warn(
                 "`use_legacy_attributes` is deprecated and will be removed in a "
                 "future release; use `use_attributes` instead.",
@@ -74,6 +77,8 @@ class LangchainInstrumentor(BaseInstrumentor):
                 stacklevel=2,
             )
             use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_attributes
         Config.metadata_key_prefix = metadata_key_prefix
