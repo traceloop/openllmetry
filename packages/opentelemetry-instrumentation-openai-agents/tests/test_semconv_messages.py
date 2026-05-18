@@ -3633,3 +3633,86 @@ class TestToolCallNameAlwaysPresent:
         assert part["name"] == "get_weather"
         span.end()
         span.end()
+
+
+# ---------------------------------------------------------------------------
+# Cached input tokens and reasoning tokens (issue #4060)
+# ---------------------------------------------------------------------------
+
+class TestUsageTokenDetails:
+    """Verify that nested usage details (cached input tokens, reasoning tokens)
+    on the OpenAI Agents SDK Usage object are propagated to span attributes,
+    matching the behavior of opentelemetry-instrumentation-openai."""
+
+    def test_cache_read_input_tokens_recorded_when_present(self, tracer_and_exporter):
+        """If usage.input_tokens_details.cached_tokens > 0, the span must record
+        gen_ai.usage.cache_read_input_tokens."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from opentelemetry.semconv_ai import SpanAttributes
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        usage = MockUsage(input_tokens=100, output_tokens=20, total_tokens=120)
+        usage.input_tokens_details = SimpleNamespace(cached_tokens=80)
+        response = MockResponse(output=[], model="gpt-4o", usage=usage)
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        assert (
+            span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
+            == 80
+        )
+        span.end()
+
+    def test_reasoning_tokens_recorded_when_present(self, tracer_and_exporter):
+        """If usage.output_tokens_details.reasoning_tokens is set (reasoning models),
+        the span must record gen_ai.usage.reasoning_tokens."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from opentelemetry.semconv_ai import SpanAttributes
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        usage = MockUsage(input_tokens=50, output_tokens=200, total_tokens=250)
+        usage.output_tokens_details = SimpleNamespace(reasoning_tokens=150)
+        response = MockResponse(output=[], model="o1", usage=usage)
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        assert (
+            span.attributes.get(SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS) == 150
+        )
+        span.end()
+
+    def test_cache_and_reasoning_absent_when_details_missing(self, tracer_and_exporter):
+        """Sanity: when input_tokens_details / output_tokens_details are absent,
+        no cache_read_input_tokens or reasoning_tokens attribute is emitted."""
+        from opentelemetry.instrumentation.openai_agents._hooks import (
+            _extract_response_attributes,
+        )
+        from opentelemetry.semconv_ai import SpanAttributes
+
+        tracer, _ = tracer_and_exporter
+        span = tracer.start_span("test")
+
+        response = MockResponse(
+            output=[], model="gpt-4o", usage=MockUsage()
+        )
+
+        _extract_response_attributes(span, response, trace_content=True)
+
+        assert (
+            span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
+            is None
+        )
+        assert (
+            span.attributes.get(SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS) is None
+        )
+        span.end()
