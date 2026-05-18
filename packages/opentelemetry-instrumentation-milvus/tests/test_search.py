@@ -125,6 +125,17 @@ def test_milvus_single_vector_search(exporter, collection, reader):
     assert (
         span.attributes.get(SpanAttributes.MILVUS_SEARCH_RESULT_COUNT) == total_matches
     )
+
+    # New standardized + per-DB attrs (issue #1870).
+    # Single query vector: embeddings_count == 1.
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_EMBEDDINGS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_EMBEDDINGS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_RESULT_COUNT) == total_matches
+    if distances:
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_DISTANCE) == pytest.approx(
+            min(distances)
+        )
+
     metrics_data = reader.get_metrics_data()
     distance_metrics = find_metrics_by_name(metrics_data, Meters.DB_SEARCH_DISTANCE)
     for metric in distance_metrics:
@@ -203,3 +214,18 @@ def test_milvus_multiple_vector_search(exporter, collection):
         count_key = f"{SpanAttributes.MILVUS_SEARCH_RESULT_COUNT}_{query_idx}"
 
         assert span.attributes.get(count_key) == total_matches
+
+    # New standardized + per-DB attrs (issue #1870). Multi-query case.
+    assert span.attributes.get(SpanAttributes.MILVUS_SEARCH_EMBEDDINGS_COUNT) == 3
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_EMBEDDINGS_COUNT) == 3
+
+    all_distances = [d for ds in distances_dict.values() for d in ds]
+    total_across_queries = len(all_distances)
+    assert (
+        span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_RESULT_COUNT)
+        == total_across_queries
+    )
+    if all_distances:
+        assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_DISTANCE) == pytest.approx(
+            min(all_distances)
+        )
