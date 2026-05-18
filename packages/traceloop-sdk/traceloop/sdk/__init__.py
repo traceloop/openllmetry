@@ -94,7 +94,8 @@ class Traceloop:
         if exporter and processor:
             warnings.warn(
                 "Both 'exporter' and 'processor' were provided to Traceloop.init(). "
-                "The 'exporter' will be ignored — your processor should already wrap the exporter.",
+                "The 'exporter' will be ignored — your processor should already wrap the exporter. "
+                "Wrap your exporter inside the processor, e.g.: SimpleSpanProcessor(my_exporter).",
                 UserWarning,
                 stacklevel=2,
             )
