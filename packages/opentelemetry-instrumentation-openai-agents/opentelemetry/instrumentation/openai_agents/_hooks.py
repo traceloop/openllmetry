@@ -959,7 +959,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         input_data = getattr(span_data, "input", [])
         response = getattr(span_data, "response", None)
         if trace_content and response and getattr(response, "instructions", None):
-            input_data = [{"role": "system", "content": response.instructions}] + (input_data if input_data else [])
+            existing = input_data if isinstance(input_data, list) else []
+            input_data = [{"role": "system", "content": response.instructions}] + existing
         _extract_prompt_attributes(otel_span, input_data, trace_content)
 
         tools = getattr(span_data, "tools", None) or (
