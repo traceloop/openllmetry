@@ -1,7 +1,10 @@
 """OpenTelemetry Langchain instrumentation"""
 
 import logging
+import warnings
 from typing import Collection
+
+_USE_ATTRIBUTES_UNSET = object()
 
 from opentelemetry import context as context_api
 
@@ -43,8 +46,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         self,
         exception_logger=None,
         disable_trace_context_propagation=False,
-        use_legacy_attributes: bool = True,
-        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES
+        use_attributes: bool = True,
+        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES,
+        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
     ):
         """Create a Langchain instrumentor instance.
 
@@ -52,14 +56,26 @@ class LangchainInstrumentor(BaseInstrumentor):
             exception_logger: A callable that takes an Exception as input. This will be
                 used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
             disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
-            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            use_attributes: If True (default), emits prompts/completions as span attributes
+                (`gen_ai.input.messages` / `gen_ai.output.messages`), per the current OTel GenAI spec.
+                If False, emits them as OTel log events instead (requires an EventLoggerProvider).
             metadata_key_prefix: Prefix for metadata keys added to spans. Defaults to
                 `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
                 Useful for using with other backends.
+            use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be removed in a
+                future release.
         """
         super().__init__()
+        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
         Config.exception_logger = exception_logger
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
         Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 

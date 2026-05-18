@@ -1,3 +1,4 @@
+import warnings
 from typing import Callable, Collection, Optional
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -6,6 +7,8 @@ from opentelemetry.instrumentation.openai.utils import is_openai_v1
 from typing_extensions import Coroutine
 
 _instruments = ("openai >= 0.27.0",)
+
+_USE_ATTRIBUTES_UNSET = object()
 
 
 class OpenAIInstrumentor(BaseInstrumentor):
@@ -20,15 +23,28 @@ class OpenAIInstrumentor(BaseInstrumentor):
             Callable[[str, str, str, str], Coroutine[None, None, str]]
         ] = lambda *args: "",
         enable_trace_context_propagation: bool = True,
-        use_legacy_attributes: bool = True,
+        use_attributes: bool = True,
+        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
     ):
         super().__init__()
+        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
         Config.enrich_assistant = enrich_assistant
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image
         Config.enable_trace_context_propagation = enable_trace_context_propagation
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

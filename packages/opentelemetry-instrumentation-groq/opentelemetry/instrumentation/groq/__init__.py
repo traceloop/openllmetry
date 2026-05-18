@@ -3,7 +3,10 @@
 import logging
 import os
 import time
+import warnings
 from typing import Callable, Collection, Union
+
+_USE_ATTRIBUTES_UNSET = object()
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import Logger, get_logger
@@ -458,13 +461,26 @@ class GroqInstrumentor(BaseInstrumentor):
     def __init__(
         self,
         exception_logger=None,
-        use_legacy_attributes: bool = True,
+        use_attributes: bool = True,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
     ):
         super().__init__()
+        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

@@ -1,4 +1,5 @@
 import json
+import warnings
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
@@ -7,6 +8,23 @@ from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+
+@pytest.fixture
+def isolated_tracer_wrapper():
+    """Save/restore the TracerWrapper singleton so a test can call Traceloop.init()
+    with custom params without leaking state into other tests."""
+    _instance = None
+    if hasattr(TracerWrapper, "instance"):
+        _instance = TracerWrapper.instance
+        del TracerWrapper.instance
+
+    yield
+
+    if hasattr(TracerWrapper, "instance"):
+        del TracerWrapper.instance
+    if _instance is not None:
+        TracerWrapper.instance = _instance
 
 
 @pytest.fixture
@@ -229,6 +247,68 @@ def test_get_default_span_processor():
     assert getattr(processor, "_traceloop_processor") is True
 
 
+def test_use_legacy_attributes_false_propagates_to_instrumentors():
+    """use_legacy_attributes=False passed to Traceloop.init() must reach each
+    instrumentor's Config — otherwise users have no way to opt into the new
+    event-based format through the SDK."""
+    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
+    from opentelemetry.instrumentation.anthropic.config import Config as AnthropicConfig
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert OpenAIConfig.use_legacy_attributes is True
+    assert AnthropicConfig.use_legacy_attributes is True
+
+
+def test_use_attributes_false_propagates_to_multiple_instrumentors(isolated_tracer_wrapper):
+    """use_attributes=False must reach every instrumentor that supports the flag,
+    not just OpenAI — otherwise users opting into the events path get inconsistent
+    behavior across providers."""
+    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
+    from opentelemetry.instrumentation.anthropic.config import Config as AnthropicConfig
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        use_attributes=False,
+    )
+
+    assert OpenAIConfig.use_legacy_attributes is False
+    assert AnthropicConfig.use_legacy_attributes is False
+
+
+def test_use_legacy_attributes_deprecated_alias_still_works(isolated_tracer_wrapper):
+    """The old kwarg keeps working for one deprecation cycle but emits a warning
+    and forwards to use_attributes."""
+    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Traceloop.init(
+            exporter=InMemorySpanExporter(),
+            disable_batch=True,
+            use_legacy_attributes=False,
+        )
+
+    assert OpenAIConfig.use_legacy_attributes is False
+    deprecations = [
+        w for w in caught
+        if issubclass(w.category, DeprecationWarning)
+        and "use_legacy_attributes" in str(w.message)
+    ]
+    assert len(deprecations) >= 1, "Expected a DeprecationWarning for use_legacy_attributes"
+
+def test_use_attributes_defaults_to_true(isolated_tracer_wrapper):
+    """When use_attributes is not passed, instrumentors keep the default spec-compliant
+    behavior (emit prompts/completions as span attributes)."""
+    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
+    from opentelemetry.instrumentation.anthropic.config import Config as AnthropicConfig
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert OpenAIConfig.use_legacy_attributes is True
+    assert AnthropicConfig.use_legacy_attributes is True
+
 def test_both_exporter_and_processor_warns():
     """Passing both exporter and processor is a mistake — the processor already wraps
     the exporter internally. We warn instead of silently dropping the exporter, and
@@ -267,26 +347,3 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
-
-def test_use_legacy_attributes_false_propagates_to_instrumentors():
-    """use_legacy_attributes=False passed to Traceloop.init() must reach each
-    instrumentor's Config — otherwise users have no way to opt into the new
-    event-based format through the SDK."""
-    from opentelemetry.instrumentation.openai.shared.config import Config as OpenAIConfig
-
-    _instance = None
-    if hasattr(TracerWrapper, "instance"):
-        _instance = TracerWrapper.instance
-        del TracerWrapper.instance
-
-    exporter = InMemorySpanExporter()
-    Traceloop.init(
-        exporter=exporter,
-        disable_batch=True,
-        use_legacy_attributes=False,
-    )
-
-    assert OpenAIConfig.use_legacy_attributes is False
-
-    if _instance is not None:
-        TracerWrapper.instance = _instance

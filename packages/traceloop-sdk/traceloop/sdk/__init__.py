@@ -4,6 +4,8 @@ import warnings
 from pathlib import Path
 
 from typing import Callable, List, Optional, Set, Union
+
+_USE_ATTRIBUTES_UNSET = object()
 from colorama import Fore
 from opentelemetry.sdk.trace import SpanProcessor, ReadableSpan
 from opentelemetry.sdk.trace.sampling import Sampler
@@ -71,8 +73,36 @@ class Traceloop:
         image_uploader: Optional[ImageUploader] = None,
         span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
         endpoint_is_traceloop: Optional[bool] = False,
-        use_legacy_attributes: bool = True,
+        use_attributes: bool = True,
+        use_legacy_attributes=_USE_ATTRIBUTES_UNSET,
     ) -> Optional[Client]:
+        """Initialize Traceloop tracing, metrics, and instrumentation.
+
+        Args:
+            use_attributes: Controls how prompts/completions are emitted by the
+                bundled instrumentations.
+                If ``True`` (default), they are set as span attributes
+                (``gen_ai.input.messages`` / ``gen_ai.output.messages``), per the current
+                OpenTelemetry GenAI semantic-convention spec.
+                If ``False``, they are emitted as OTel log events instead. This path
+                requires the application to have configured an ``EventLoggerProvider``
+                (via ``opentelemetry._events.set_event_logger_provider``); otherwise
+                events have nowhere to go and no prompt/completion data will be recorded.
+            use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
+                removed in a future release.
+        """
+        if use_legacy_attributes is not _USE_ATTRIBUTES_UNSET:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -157,7 +187,7 @@ class Traceloop:
             instruments=instruments,
             block_instruments=block_instruments,
             span_postprocess_callback=span_postprocess_callback,
-            use_legacy_attributes=use_legacy_attributes,
+            use_attributes=use_attributes,
         )
 
         metrics_disabled_by_config = not is_metrics_enabled()
