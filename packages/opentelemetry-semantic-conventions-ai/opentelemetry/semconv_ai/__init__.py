@@ -99,6 +99,10 @@ class SpanAttributes:
     VECTOR_DB_VENDOR = "db.system"
     VECTOR_DB_OPERATION = "db.operation"
     VECTOR_DB_QUERY_TOP_K = "db.vector.query.top_k"
+    VECTOR_DB_QUERY_EMBEDDINGS_COUNT = "db.vector.query.embeddings_count"
+    VECTOR_DB_QUERY_RESULT_COUNT = "db.vector.query.result_count"
+    VECTOR_DB_QUERY_TOP_SCORE = "db.vector.query.top_score"
+    VECTOR_DB_QUERY_TOP_DISTANCE = "db.vector.query.top_distance"
 
     # Pinecone
     PINECONE_USAGE_READ_UNITS = "pinecone.usage.read_units"
@@ -110,6 +114,8 @@ class SpanAttributes:
     PINECONE_QUERY_NAMESPACE = "pinecone.query.namespace"
     PINECONE_QUERY_QUERIES = "pinecone.query.queries"
     PINECONE_QUERY_TOP_K = "pinecone.query.top_k"
+    PINECONE_QUERY_EMBEDDINGS_COUNT = "db.pinecone.query.embeddings_count"
+    PINECONE_QUERY_RESULT_COUNT = "db.pinecone.query.result_count"
 
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
@@ -282,6 +288,7 @@ class SpanAttributes:
     MILVUS_SEARCH_TIMEOUT = "db.milvus.search.timeout"
     MILVUS_SEARCH_PARTITION_NAMES = "db.milvus.search.partition_names"
     MILVUS_SEARCH_RESULT_COUNT = "db.milvus.search.result_count"
+    MILVUS_SEARCH_EMBEDDINGS_COUNT = "db.milvus.search.embeddings_count"
     MILVUS_SEARCH_QUERY_VECTOR_DIMENSION = "db.milvus.search.query_vector_dimension"
     MILVUS_SEARCH_ANNSEARCH_REQUEST = "db.milvus.search.annsearch_request"
     MILVUS_SEARCH_RANKER_TYPE = "db.milvus.search.ranker_type"
