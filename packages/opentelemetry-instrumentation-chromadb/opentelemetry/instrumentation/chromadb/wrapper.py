@@ -223,68 +223,50 @@ def _add_segment_query_embeddings_events(span, kwargs, args=None):
 @dont_throw
 def _add_query_result_events(span, kwargs):
     """
-    There's a lot of logic here involved in converting the query result
-    format from ChromaDB into the canonical format (taken from Pinecone)
-
-    This is because Chroma query result looks like this:
+    ChromaDB query results have a nested structure — one inner list per query:
 
         {
-           ids: [1, 2, 3...],
-           distances: [0.3, 0.5, 0.6...],
-           metadata: ["some metadata text", "another metadata text",...],
-           documents: ["retrieved text", "retrieved text2", ...]
+            "ids":       [["id1", "id2", "id3"]],   <- outer: per query, inner: per result
+            "distances": [[0.1,   0.2,   0.3  ]],
+            "metadatas": [[{...}, {...}, {...} ]],
+            "documents": [["doc1","doc2","doc3"]],
         }
 
-    We'd like instead to log it like this:
+    We emit one db.query.result span event per result document:
 
-        [
-            {"id": 1, "distance": 0.3,  "document": "retrieved text", "metadata": "some metadata text",
-            {"id": 2, "distance" 0.5, , "document": "retrieved text2": "another metadata text",
-            {"id": 3, "distance": 0.6, "document": ..., "metadata": ...
-        ]
+        event: db.query.result { id: "id1", distance: 0.1, document: "doc1", metadata: "..." }
+        event: db.query.result { id: "id2", distance: 0.2, document: "doc2", metadata: "..." }
+        event: db.query.result { id: "id3", distance: 0.3, document: "doc3", metadata: "..." }
 
-    If you'd like to understand better why, please read the discussions on PR #370:
-    https://github.com/traceloop/openllmetry/pull/370
-
-    The goal is to set a canonical format which we call as a Semantic Convention.
+    For N queries with n_results=K, this produces N×K events total.
     """
-    zipped = itertools.zip_longest(
+    # Outer zip: one tuple per query (ChromaDB returns a list-of-lists)
+    for query_ids, query_distances, query_metadatas, query_documents in itertools.zip_longest(
         kwargs.get("ids", []) or [],
         kwargs.get("distances", []) or [],
         kwargs.get("metadatas", []) or [],
         kwargs.get("documents", []) or [],
-    )
-    for tuple_ in zipped:
-        attributes = {
-            EventAttributes.DB_QUERY_RESULT_ID.value: None,
-            EventAttributes.DB_QUERY_RESULT_DISTANCE.value: None,
-            EventAttributes.DB_QUERY_RESULT_METADATA.value: None,
-            EventAttributes.DB_QUERY_RESULT_DOCUMENT.value: None,
-        }
+    ):
+        # Inner zip: one event per result document within this query
+        for id_, distance, metadata, document in itertools.zip_longest(
+            query_ids or [],
+            query_distances or [],
+            query_metadatas or [],
+            query_documents or [],
+        ):
+            attributes = {}
+            if id_ is not None:
+                attributes[EventAttributes.DB_QUERY_RESULT_ID.value] = id_
+            if distance is not None:
+                attributes[EventAttributes.DB_QUERY_RESULT_DISTANCE.value] = distance
+            if metadata is not None:
+                attributes[EventAttributes.DB_QUERY_RESULT_METADATA.value] = (
+                    json.dumps(metadata) if isinstance(metadata, dict) else metadata
+                )
+            if document is not None:
+                attributes[EventAttributes.DB_QUERY_RESULT_DOCUMENT.value] = document
 
-        attributes_order = ["ids", "distances", "metadatas", "documents"]
-        attributes_mapping_to_canonical_format = {
-            "ids": EventAttributes.DB_QUERY_RESULT_ID.value,
-            "distances": EventAttributes.DB_QUERY_RESULT_DISTANCE.value,
-            "metadatas": EventAttributes.DB_QUERY_RESULT_METADATA.value,
-            "documents": EventAttributes.DB_QUERY_RESULT_DOCUMENT.value,
-        }
-        for j, attr in enumerate(tuple_):
-            original_attribute_name = attributes_order[j]
-            canonical_name = attributes_mapping_to_canonical_format[
-                original_attribute_name
-            ]
-            try:
-                value = attr[0]
-                if isinstance(value, dict):
-                    value = json.dumps(value)
-
-                attributes[canonical_name] = value
-            except (IndexError, TypeError):
-                # Don't send missing values as nulls, OpenTelemetry dislikes them!
-                del attributes[canonical_name]
-
-        span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=attributes)
+            span.add_event(name=Events.DB_QUERY_RESULT.value, attributes=attributes)
 
 
 @dont_throw
