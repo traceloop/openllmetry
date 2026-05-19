@@ -232,7 +232,6 @@ def test_multiple_span_processors(exporters_with_multiple_span_processors):
 def test_get_default_span_processor():
     """Test that get_default_span_processor returns a valid processor."""
     from traceloop.sdk import Traceloop
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 
     # Test with batch disabled
     processor = Traceloop.get_default_span_processor(disable_batch=True)
