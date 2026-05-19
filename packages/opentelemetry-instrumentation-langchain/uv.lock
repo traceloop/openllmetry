@@ -1515,9 +1515,12 @@ provides-extras = ["instruments", "enrichment"]
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.4.0" }]
 test = [
+    { name = "aioboto3", specifier = ">=13.0.0,<15" },
+    { name = "aiobotocore", specifier = ">=2.13.0,<3" },
     { name = "boto3", specifier = ">=1.34.120,<2" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest-asyncio", specifier = ">=0.23.0,<1" },
     { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
     { name = "pytest-sugar", specifier = "==1.0.0" },
     { name = "vcrpy", specifier = ">=8.0.0,<9" },

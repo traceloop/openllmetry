@@ -4,6 +4,7 @@ import logging
 import os
 import time
 import types
+import warnings
 from typing import Collection, Optional, Union
 
 from opentelemetry import context as context_api
@@ -642,10 +643,34 @@ class WatsonxSpanAttributes:
 class WatsonxInstrumentor(BaseInstrumentor):
     """An instrumentor for Watsonx's client library."""
 
-    def __init__(self, exception_logger=None, use_legacy_attributes: bool = True):
+    def __init__(
+        self,
+        exception_logger=None,
+        use_attributes: Optional[bool] = None,
+        use_legacy_attributes: Optional[bool] = None,
+    ):
         super().__init__()
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
