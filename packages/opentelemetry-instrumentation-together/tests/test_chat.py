@@ -38,6 +38,7 @@ def test_together_chat_legacy(
         "gen_ai.usage.output_tokens"
     ) + together_span.attributes.get("gen_ai.usage.input_tokens")
     assert together_span.attributes.get("gen_ai.response.id") == "88fa668fac30bb19-MXP"
+    assert together_span.attributes.get("gen_ai.response.finish_reason") == "eos"
 
     logs = log_exporter.get_finished_logs()
     assert (
