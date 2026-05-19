@@ -84,6 +84,10 @@ def test_nova_completion(instrument_legacy, brt, span_exporter, log_exporter):
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
 
+    # Token usage — values from the recorded cassette.
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 30
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 51
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -326,6 +330,10 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
     # There is no response id for Amazon Titan models in the response body,
     # only request id in the response.
     assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    # Token usage — usage comes from the trailing `metadata` event in the stream.
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
 
     logs = log_exporter.get_finished_logs()
     assert (

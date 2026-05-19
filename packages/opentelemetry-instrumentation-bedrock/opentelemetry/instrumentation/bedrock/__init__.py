@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+import traceback
 from functools import partial, wraps
 from typing import Collection
 
@@ -24,6 +25,7 @@ from opentelemetry.instrumentation.bedrock.guardrail import (
 )
 from opentelemetry.instrumentation.bedrock.prompt_caching import prompt_caching_handling
 from opentelemetry.instrumentation.bedrock.reusable_streaming_body import (
+    BufferedAsyncBody,
     ReusableStreamingBody,
 )
 from opentelemetry.instrumentation.bedrock.span_utils import (
@@ -38,7 +40,10 @@ from opentelemetry.instrumentation.bedrock.span_utils import (
     set_model_message_span_attributes,
     set_model_span_attributes,
 )
-from opentelemetry.instrumentation.bedrock.streaming_wrapper import StreamingWrapper
+from opentelemetry.instrumentation.bedrock.streaming_wrapper import (
+    AsyncStreamingWrapper,
+    StreamingWrapper,
+)
 from opentelemetry.instrumentation.bedrock.utils import (
     dont_throw,
     should_emit_events,
@@ -111,6 +116,12 @@ WRAPPED_METHODS = [
         "method": "create_client",
     },
     {"package": "botocore.session", "object": "Session", "method": "create_client"},
+    {
+        "package": "aiobotocore.session",
+        "object": "AioSession",
+        "method": "create_client",
+        "async": True,
+    },
 ]
 
 def _span_name(operation_name, model):
@@ -310,6 +321,172 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
     return with_instrumentation
 
 
+def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        with tracer.start_as_current_span(
+            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
+        ) as span:
+            response = await fn(*args, **kwargs)
+            await _handle_async_call(span, kwargs, response, metric_params, event_logger)
+            return response
+
+    return with_instrumentation
+
+
+def _instrumented_async_model_invoke_with_response_stream(
+    fn, tracer, metric_params, event_logger
+):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        operation_name = _derive_operation_name(kwargs)
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: operation_name,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        span = tracer.start_span(
+            _span_name(operation_name, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
+
+        response = await fn(*args, **kwargs)
+        _handle_async_stream_call(span, kwargs, response, metric_params, event_logger)
+
+        return response
+
+    return with_instrumentation
+
+
+def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        with tracer.start_as_current_span(
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        ) as span:
+            response = await fn(*args, **kwargs)
+            _handle_converse(span, kwargs, response, metric_params, event_logger)
+
+            return response
+
+    return with_instrumentation
+
+
+def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger):
+    @wraps(fn)
+    async def with_instrumentation(*args, **kwargs):
+        if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
+            return await fn(*args, **kwargs)
+
+        (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
+        span_attributes = {
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
+        }
+        span = tracer.start_span(
+            _span_name(GenAiOperationNameValues.CHAT.value, _model),
+            kind=SpanKind.CLIENT,
+            attributes=span_attributes,
+        )
+        response = await fn(*args, **kwargs)
+        if span.is_recording():
+            _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger)
+
+        return response
+
+    return with_instrumentation
+
+
+class _InstrumentedClientContext:
+    """Wraps aiobotocore's ClientCreatorContext to monkey-patch Bedrock methods
+    on the live async client after it's created."""
+
+    def __init__(self, inner_ctx, tracer, metric_params, event_logger):
+        self._inner_ctx = inner_ctx
+        self._tracer = tracer
+        self._metric_params = metric_params
+        self._event_logger = event_logger
+
+    async def __aenter__(self):
+        client = await self._inner_ctx.__aenter__()
+        try:
+            client.invoke_model = _instrumented_async_model_invoke(
+                client.invoke_model, self._tracer, self._metric_params, self._event_logger
+            )
+            client.invoke_model_with_response_stream = (
+                _instrumented_async_model_invoke_with_response_stream(
+                    client.invoke_model_with_response_stream,
+                    self._tracer,
+                    self._metric_params,
+                    self._event_logger,
+                )
+            )
+            client.converse = _instrumented_async_converse(
+                client.converse, self._tracer, self._metric_params, self._event_logger
+            )
+            client.converse_stream = _instrumented_async_converse_stream(
+                client.converse_stream, self._tracer, self._metric_params, self._event_logger
+            )
+        except Exception:
+            # If monkey-patching fails (e.g., aiobotocore exposes a method as a
+            # read-only property in a future version), release the underlying
+            # HTTP connection rather than leaking it.
+            try:
+                await self._inner_ctx.__aexit__(None, None, None)
+            except Exception:  # noqa: BLE001 - don't mask original error
+                pass
+            raise
+        return client
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self._inner_ctx.__aexit__(exc_type, exc_val, exc_tb)
+
+
+def _wrap_async_factory(tracer, metric_params, event_logger, to_wrap):
+    """Wrapper for aiobotocore's AioSession.create_client (sync, returns async ctx mgr)."""
+
+    def wrapper(wrapped, instance, args, kwargs):
+        if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+            return wrapped(*args, **kwargs)
+
+        ctx = wrapped(*args, **kwargs)
+
+        service_name = kwargs.get("service_name") or (args[0] if args else None)
+        if service_name != "bedrock-runtime":
+            return ctx
+
+        return _InstrumentedClientContext(ctx, tracer, metric_params, event_logger)
+
+    return wrapper
+
+
 @dont_throw
 def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
@@ -358,6 +535,53 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
 
 
 @dont_throw
+def _handle_async_stream_call(span, kwargs, response, metric_params, event_logger):
+    """Async counterpart of _handle_stream_call — wraps the response body
+    with AsyncStreamingWrapper so the user can `async for` over it."""
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    request_body = json.loads(kwargs.get("body"))
+
+    headers = {}
+    if "ResponseMetadata" in response:
+        headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
+
+    @dont_throw
+    def stream_done(response_body):
+        metric_params.vendor = provider
+        metric_params.model = model
+        metric_params.is_stream = True
+
+        prompt_caching_handling(headers, provider, model, metric_params)
+        guardrail_handling(span, response_body, provider, model, metric_params)
+
+        if span.is_recording():
+            set_model_span_attributes(
+                provider,
+                model_vendor,
+                model,
+                span,
+                request_body,
+                response_body,
+                headers,
+                metric_params,
+                kwargs,
+            )
+        if should_emit_events() and event_logger:
+            emit_message_events(event_logger, kwargs)
+            emit_streaming_response_event(response_body, event_logger)
+            _set_finish_reasons_unconditionally(model_vendor, span, response_body)
+        else:
+            set_model_message_span_attributes(model_vendor, span, request_body)
+            set_model_choice_span_attributes(model_vendor, span, response_body)
+
+        span.end()
+
+    response["body"] = AsyncStreamingWrapper(
+        response["body"], stream_done_callback=stream_done
+    )
+
+
+@dont_throw
 def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
     response["body"] = ReusableStreamingBody(
         response["body"]._raw_stream, response["body"]._content_length
@@ -396,6 +620,86 @@ def _handle_call(span: Span, kwargs, response, metric_params, event_logger):
     else:
         set_model_message_span_attributes(model_vendor, span, request_body)
         set_model_choice_span_attributes(model_vendor, span, response_body)
+
+
+async def _handle_async_call(span: Span, kwargs, response, metric_params, event_logger):
+    """Async counterpart of _handle_call — reads the response body via `await
+    body.read()` (aiobotocore's body is async) and replaces it with a buffered
+    wrapper so the user can read it again."""
+    original_body = response.get("body")
+    try:
+        raw_bytes = await original_body.read()
+        # Close the underlying aiobotocore body to release the HTTP connection
+        # back to aiohttp's pool. Without this, the connection stays held until
+        # the response object is GC'd.
+        close_fn = getattr(original_body, "close", None)
+        if close_fn is not None:
+            try:
+                result = close_fn()
+                if hasattr(result, "__await__"):
+                    await result
+            except Exception:  # noqa: BLE001 - never fail instrumentation on close
+                pass
+
+        response["body"] = BufferedAsyncBody(raw_bytes)
+        request_body = json.loads(kwargs.get("body"))
+        response_body = json.loads(raw_bytes)
+        headers = {}
+        if "ResponseMetadata" in response:
+            headers = response.get("ResponseMetadata").get("HTTPHeaders", {})
+
+        (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+        metric_params.vendor = provider
+        metric_params.model = model
+        metric_params.is_stream = False
+
+        prompt_caching_handling(headers, provider, model, metric_params)
+        guardrail_handling(span, response_body, provider, model, metric_params)
+
+        if span.is_recording():
+            set_model_span_attributes(
+                provider,
+                model_vendor,
+                model,
+                span,
+                request_body,
+                response_body,
+                headers,
+                metric_params,
+                kwargs,
+            )
+
+        if should_emit_events() and event_logger:
+            emit_message_events(event_logger, kwargs)
+            # emit_choice_events does a sync `response["body"].read()` then
+            # accesses other top-level response keys. Pass the real response
+            # with body swapped for a sync-readable view so both work.
+            response_for_emit = dict(response)
+            response_for_emit["body"] = _SyncBodyView(raw_bytes)
+            emit_choice_events(event_logger, response_for_emit)
+            _set_finish_reasons_unconditionally(model_vendor, span, response_body)
+        else:
+            set_model_message_span_attributes(model_vendor, span, request_body)
+            set_model_choice_span_attributes(model_vendor, span, response_body)
+    except Exception as e:
+        # Mirror @dont_throw behavior for async: log + route through Config.exception_logger
+        logger.debug(
+            "OpenLLMetry failed to trace in _handle_async_call, error: %s",
+            traceback.format_exc(),
+        )
+        if Config.exception_logger:
+            Config.exception_logger(e)
+
+
+class _SyncBodyView:
+    """Tiny sync-readable view of already-buffered bytes, for helpers that
+    expect a botocore-style body with a sync .read()."""
+
+    def __init__(self, raw_bytes: bytes):
+        self._raw = raw_bytes
+
+    def read(self):
+        return self._raw
 
 
 @dont_throw
@@ -488,6 +792,167 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
             return partial(wrap, response_msg=[], tool_blocks=[], reasoning_blocks=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
+
+
+@dont_throw
+def _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger):
+    """Async variant of _handle_converse_stream — `_parse_event` is a coroutine
+    in aiobotocore, so the wrapper must await it before inspecting the event."""
+    (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+
+    set_converse_model_span_attributes(span, provider, model, kwargs)
+
+    if should_emit_events() and event_logger:
+        emit_input_events_converse(kwargs, event_logger)
+    else:
+        set_converse_input_prompt_span_attributes(kwargs, span)
+
+    stream = response.get("stream")
+    role = "unknown"
+    if stream:
+        # Track whether span.end() has been called inside the metadata branch.
+        # If the caller breaks out of `async for` early, metadata never arrives
+        # and the span would otherwise leak. We close it from the iterator
+        # wrapper's finally block as a fallback.
+        #
+        # We also keep references to the accumulators (response_msg etc.) on
+        # span_state so the iterator wrapper can flush partial content into
+        # the span as attributes when iteration ends without a messageStop.
+        span_state = {"ended": False, "saw_message_stop": False}
+        partial_state = {
+            "response_msg": [],
+            "tool_blocks": [],
+            "reasoning_blocks": [],
+        }
+
+        def handler(func):
+            async def wrap(*args, **kwargs):
+                response_msg = kwargs.pop("response_msg")
+                tool_blocks = kwargs.pop("tool_blocks")
+                reasoning_blocks = kwargs.pop("reasoning_blocks")
+                span = kwargs.pop("span")
+                event = await func(*args, **kwargs)
+                nonlocal role
+                if "contentBlockDelta" in event:
+                    delta = event["contentBlockDelta"].get("delta", {})
+                    if "text" in delta:
+                        response_msg.append(delta["text"])
+                    if "toolUse" in delta:
+                        if tool_blocks:
+                            tool_blocks[-1].setdefault("input", "")
+                            tool_blocks[-1]["input"] += delta["toolUse"].get("input", "")
+                        else:
+                            tool_blocks.append(delta["toolUse"])
+                    if "reasoningContent" in delta:
+                        reasoning_blocks.append(delta["reasoningContent"].get("text", ""))
+                elif "contentBlockStart" in event:
+                    start = event["contentBlockStart"].get("start", {})
+                    if "toolUse" in start:
+                        tool_blocks.append(start["toolUse"])
+                elif "messageStart" in event:
+                    role = event["messageStart"]["role"]
+                elif "metadata" in event:
+                    guardrail_converse(span, event["metadata"], provider, model, metric_params)
+                    converse_usage_record(span, event["metadata"], metric_params)
+                    span_state["ended"] = True
+                    span.end()
+                elif "messageStop" in event:
+                    span_state["saw_message_stop"] = True
+                    stop_reason = event.get("messageStop", {}).get("stopReason")
+                    if should_emit_events() and event_logger:
+                        emit_streaming_converse_response_event(
+                            event_logger,
+                            response_msg,
+                            role,
+                            stop_reason,
+                        )
+                        _set_converse_finish_reasons(span, stop_reason)
+                    else:
+                        set_converse_streaming_response_span_attributes(
+                            response_msg,
+                            role,
+                            span,
+                            finish_reason=stop_reason,
+                            tool_blocks=tool_blocks,
+                            reasoning_blocks=reasoning_blocks,
+                        )
+
+                return event
+
+            return partial(
+                wrap,
+                response_msg=partial_state["response_msg"],
+                tool_blocks=partial_state["tool_blocks"],
+                reasoning_blocks=partial_state["reasoning_blocks"],
+                span=span,
+            )
+
+        stream._parse_event = handler(stream._parse_event)
+
+        def _flush_partial():
+            """Called when iteration ends without seeing messageStop+metadata.
+            Records partial response content so the span isn't empty."""
+            if span_state["saw_message_stop"]:
+                return  # already flushed by messageStop handler
+            if not span.is_recording():
+                return
+            try:
+                if should_emit_events() and event_logger:
+                    emit_streaming_converse_response_event(
+                        event_logger,
+                        partial_state["response_msg"],
+                        role,
+                        None,  # no finish_reason — stream was cut short
+                    )
+                else:
+                    set_converse_streaming_response_span_attributes(
+                        partial_state["response_msg"],
+                        role,
+                        span,
+                        finish_reason=None,
+                        tool_blocks=partial_state["tool_blocks"],
+                        reasoning_blocks=partial_state["reasoning_blocks"],
+                    )
+            except Exception:  # noqa: BLE001 — never fail in instrumentation cleanup
+                pass
+
+        # Wrap the stream's __aiter__ to guarantee span.end() fires even when
+        # the caller breaks early or the underlying iterator raises.
+        response["stream"] = _ConverseStreamCloser(stream, span, span_state, _flush_partial)
+
+
+class _ConverseStreamCloser:
+    """Wraps a converse_stream `stream` so that `span.end()` is guaranteed to
+    fire exactly once: normally via the patched `_parse_event` when metadata
+    arrives, or as a fallback when iteration completes without metadata (early
+    `break`, exception, or empty stream).
+
+    On the fallback path, partial response content captured up to that point
+    is flushed onto the span as attributes (no finish_reason) so the dashboard
+    still shows what the caller consumed. The span is ended with default
+    (Unset) status — per OTel guidance, early termination is not an error."""
+
+    def __init__(self, inner, span, span_state, flush_partial):
+        self._inner = inner
+        self._span = span
+        self._span_state = span_state
+        self._flush_partial = flush_partial
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    def __aiter__(self):
+        return self._aiter()
+
+    async def _aiter(self):
+        try:
+            async for event in self._inner:
+                yield event
+        finally:
+            if not self._span_state["ended"]:
+                self._span_state["ended"] = True
+                self._flush_partial()
+                self._span.end()
 
 
 def _get_vendor_model(modelId):
@@ -723,22 +1188,31 @@ class BedrockInstrumentor(BaseInstrumentor):
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                wrap_package,
-                f"{wrap_object}.{wrap_method}",
-                _wrap(
-                    tracer,
-                    metric_params,
-                    event_logger,
-                    wrapped_method,
-                ),
-            )
+            if wrapped_method.get("async"):
+                wrapper_factory = _wrap_async_factory(
+                    tracer, metric_params, event_logger, wrapped_method
+                )
+            else:
+                wrapper_factory = _wrap(
+                    tracer, metric_params, event_logger, wrapped_method
+                )
+            try:
+                wrap_function_wrapper(
+                    wrap_package,
+                    f"{wrap_object}.{wrap_method}",
+                    wrapper_factory,
+                )
+            except (ImportError, ModuleNotFoundError):
+                pass
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"{wrap_package}.{wrap_object}",
-                wrapped_method.get("method"),
-            )
+            try:
+                unwrap(
+                    f"{wrap_package}.{wrap_object}",
+                    wrapped_method.get("method"),
+                )
+            except (ImportError, ModuleNotFoundError, AttributeError):
+                pass

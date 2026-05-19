@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-semantic-conventions-ai"
-version = "0.5.1"
+version = "0.5.2"
 description = "OpenTelemetry Semantic Conventions Extension for Large Language Models"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
