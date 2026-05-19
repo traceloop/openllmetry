@@ -57,6 +57,8 @@ def mistralai_async_client():
 @pytest.fixture(scope="function")
 def instrument_legacy(tracer_provider):
     instrumentor = MistralAiInstrumentor()
+    if instrumentor.is_instrumented_by_opentelemetry:
+        instrumentor.uninstrument()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
     )
@@ -71,6 +73,8 @@ def instrument_with_content(tracer_provider, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     instrumentor = MistralAiInstrumentor(use_legacy_attributes=False)
+    if instrumentor.is_instrumented_by_opentelemetry:
+        instrumentor.uninstrument()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
@@ -87,6 +91,8 @@ def instrument_with_no_content(tracer_provider, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     instrumentor = MistralAiInstrumentor(use_legacy_attributes=False)
+    if instrumentor.is_instrumented_by_opentelemetry:
+        instrumentor.uninstrument()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,

@@ -279,11 +279,8 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
     )
 
     response = ""
-    try:
-        for res in gen:
-            response += res.data.choices[0].delta.content
-    finally:
-        gen.close()
+    for res in gen:
+        response += res.data.choices[0].delta.content
 
     spans = span_exporter.get_finished_spans()
     mistral_span = spans[0]
