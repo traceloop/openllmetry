@@ -259,7 +259,7 @@ class AnthropicStream(ObjectProxy):
             attributes = error_metrics_attributes(e)
             if self._exception_counter:
                 self._exception_counter.add(1, attributes=attributes)
-            raise e
+            raise
         _process_response_item(item, self._complete_response)
         return item
 

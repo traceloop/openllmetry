@@ -78,13 +78,6 @@ def test_anthropic_message_create_legacy(
         ],
         model="claude-3-opus-20240229",
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.chat" for span in spans)
 
@@ -132,13 +125,6 @@ def test_anthropic_message_create_with_events_with_content(
         ],
         model="claude-3-opus-20240229",
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.chat" for span in spans)
 
@@ -197,13 +183,6 @@ def test_anthropic_message_create_with_events_with_no_content(
         ],
         model="claude-3-opus-20240229",
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.chat" for span in spans)
 
@@ -683,13 +662,6 @@ def test_anthropic_message_streaming_legacy(
         model="claude-3-haiku-20240307",
         stream=True,
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response_content = ""
     for event in response:
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
@@ -744,13 +716,6 @@ def test_anthropic_message_streaming_with_events_with_content(
         model="claude-3-haiku-20240307",
         stream=True,
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response_content = ""
     for event in response:
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
@@ -809,13 +774,6 @@ def test_anthropic_message_streaming_with_events_with_no_content(
         model="claude-3-haiku-20240307",
         stream=True,
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response_content = ""
     for event in response:
         if event.type == "content_block_delta" and event.delta.type == "text_delta":
@@ -869,13 +827,6 @@ async def test_async_anthropic_message_create_legacy(
         ],
         model="claude-3-opus-20240229",
     )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -923,13 +874,6 @@ async def test_async_anthropic_message_create_with_events_with_content(
         messages=[user_message],
         model="claude-3-opus-20240229",
     )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -981,13 +925,6 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
         ],
         model="claude-3-opus-20240229",
     )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -1025,13 +962,6 @@ async def test_async_anthropic_message_create_with_events_with_no_content(
 async def test_async_anthropic_message_streaming_legacy(
     instrument_legacy, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = await async_anthropic_client.messages.create(
         max_tokens=1024,
         messages=[
@@ -1086,13 +1016,6 @@ async def test_async_anthropic_message_streaming_legacy(
 async def test_async_anthropic_message_streaming_with_events_with_content(
     instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     user_message = {
         "role": "user",
         "content": "Tell me a joke about OpenTelemetry",
@@ -1150,13 +1073,6 @@ async def test_async_anthropic_message_streaming_with_events_with_no_content(
     log_exporter,
     reader,
 ):
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response = await async_anthropic_client.messages.create(
         max_tokens=1024,
         messages=[
@@ -1220,13 +1136,6 @@ def test_anthropic_tools_legacy(
             }
         ],
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -1324,12 +1233,6 @@ def test_anthropic_tools_with_events_with_content(
         tools=TOOLS,
         messages=[user_message],
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -1425,13 +1328,6 @@ def test_anthropic_tools_with_events_with_no_content(
             }
         ],
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -1546,13 +1442,6 @@ def test_anthropic_tools_history_legacy(
             },
         ],
     )
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     spans = span_exporter.get_finished_spans()
     # verify overall shape
@@ -1681,13 +1570,6 @@ def test_anthropic_tools_history_with_events_with_content(
             tool_result_message,
         ],
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -1783,13 +1665,6 @@ def test_anthropic_tools_history_with_events_with_no_content(
             tool_result_message,
         ],
     )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -1860,13 +1735,6 @@ def test_anthropic_tools_streaming_legacy(
         ],
         stream=True,
     )
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     # consume the streaming iterator
     for _ in response:
@@ -1977,12 +1845,6 @@ def test_anthropic_tools_streaming_with_events_with_content(
     for _ in response:
         pass
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -2089,12 +1951,6 @@ def test_anthropic_tools_streaming_with_events_with_no_content(
     for _ in response:
         pass
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
     spans = span_exporter.get_finished_spans()
     # verify overall shape
     assert all(span.name == "anthropic.chat" for span in spans)
@@ -2342,13 +2198,6 @@ def test_anthropic_message_stream_manager_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -2401,13 +2250,6 @@ def test_anthropic_message_stream_manager_with_events_with_content(
         for event in stream:
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
@@ -2466,13 +2308,6 @@ def test_anthropic_message_stream_manager_with_events_with_no_content(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -2526,13 +2361,6 @@ async def test_async_anthropic_message_stream_manager_legacy(
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
                 response_content += event.delta.text
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
         "anthropic.chat",
@@ -2571,13 +2399,6 @@ async def test_async_anthropic_message_stream_manager_legacy(
 async def test_async_anthropic_message_stream_manager_with_events_with_content(
     instrument_with_content, async_anthropic_client, span_exporter, log_exporter, reader
 ):
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     user_message = {
         "role": "user",
         "content": "Tell me a joke about OpenTelemetry",
@@ -2634,13 +2455,6 @@ async def test_async_anthropic_message_stream_manager_with_events_with_no_conten
     log_exporter,
     reader,
 ):
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     response_content = ""
     async with async_anthropic_client.messages.stream(
         max_tokens=1024,

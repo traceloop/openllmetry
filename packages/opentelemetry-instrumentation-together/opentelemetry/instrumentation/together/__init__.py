@@ -26,6 +26,7 @@ from opentelemetry.instrumentation.utils import (
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -122,7 +123,14 @@ def _wrap(
     )
     _handle_input(span, event_logger, llm_request_type, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         _handle_response(span, event_logger, llm_request_type, response)
