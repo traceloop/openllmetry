@@ -105,3 +105,51 @@ async def test_async_ollama_streaming_iteration_error_sets_span_status(
     events = [e for e in span.events if e.name == "exception"]
     assert len(events) == 1
     assert "Async mid-stream failure" in events[0].attributes["exception.message"]
+
+
+def test_ollama_streaming_empty_response_does_not_raise(
+    instrument_legacy, tracer_provider, span_exporter
+):
+    # An empty stream leaves last_response as None; the merge must not TypeError.
+    from opentelemetry.instrumentation.ollama import _accumulate_streaming_response
+    from opentelemetry.semconv_ai import LLMRequestTypeValues
+
+    span = tracer_provider.get_tracer(__name__).start_span("ollama.chat")
+
+    def empty_stream():
+        return
+        yield  # unreachable, makes this a generator
+
+    gen = _accumulate_streaming_response(
+        span, None, None, LLMRequestTypeValues.CHAT, empty_stream()
+    )
+    for _ in gen:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].status.status_code != StatusCode.ERROR
+
+
+@pytest.mark.asyncio
+async def test_async_ollama_streaming_empty_response_does_not_raise(
+    instrument_legacy, tracer_provider, span_exporter
+):
+    from opentelemetry.instrumentation.ollama import _aaccumulate_streaming_response
+    from opentelemetry.semconv_ai import LLMRequestTypeValues
+
+    span = tracer_provider.get_tracer(__name__).start_span("ollama.chat")
+
+    async def empty_stream():
+        return
+        yield  # unreachable, makes this an async generator
+
+    gen = _aaccumulate_streaming_response(
+        span, None, None, LLMRequestTypeValues.CHAT, empty_stream()
+    )
+    async for _ in gen:
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].status.status_code != StatusCode.ERROR

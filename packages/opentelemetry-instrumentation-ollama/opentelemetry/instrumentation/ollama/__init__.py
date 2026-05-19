@@ -146,7 +146,7 @@ def _accumulate_streaming_response(
             last_response.model_dump()
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
-        )
+        ) or {}
         _handle_response(
             span=span,
             event_logger=event_logger,
@@ -217,7 +217,7 @@ async def _aaccumulate_streaming_response(
             last_response.model_dump()
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
-        )
+        ) or {}
         _handle_response(
             span,
             event_logger,
