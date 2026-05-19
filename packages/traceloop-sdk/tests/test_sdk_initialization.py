@@ -2,7 +2,11 @@ import json
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
+from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
+from traceloop.sdk.tracing.tracing import TracerWrapper
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 
 @pytest.fixture
@@ -223,3 +227,43 @@ def test_get_default_span_processor():
     assert isinstance(processor, BatchSpanProcessor)
     assert hasattr(processor, "_traceloop_processor")
     assert getattr(processor, "_traceloop_processor") is True
+
+
+def test_both_exporter_and_processor_warns():
+    """Passing both exporter and processor is a mistake — the processor already wraps
+    the exporter internally. We warn instead of silently dropping the exporter, and
+    verify the standalone exporter receives nothing while the processor's wrapped
+    exporter receives the span."""
+    saved_instance = getattr(TracerWrapper, "instance", None)
+    if saved_instance is not None:
+        del TracerWrapper.instance
+
+    try:
+        standalone_exporter = InMemorySpanExporter()
+        processor_exporter = InMemorySpanExporter()
+        processor = SimpleSpanProcessor(processor_exporter)
+
+        with pytest.warns(UserWarning, match="exporter.*ignored"):
+            Traceloop.init(
+                exporter=standalone_exporter,
+                processor=processor,
+            )
+
+        @workflow(name="probe_workflow")
+        def probe():
+            return "ok"
+
+        probe()
+
+        assert len(standalone_exporter.get_finished_spans()) == 0, (
+            "The standalone exporter must receive no spans — the warning promises it is ignored."
+        )
+        processor_spans = processor_exporter.get_finished_spans()
+        assert any(span.name == "probe_workflow.workflow" for span in processor_spans), (
+            "The processor's wrapped exporter must receive the emitted span."
+        )
+    finally:
+        if hasattr(TracerWrapper, "instance"):
+            del TracerWrapper.instance
+        if saved_instance is not None:
+            TracerWrapper.instance = saved_instance
