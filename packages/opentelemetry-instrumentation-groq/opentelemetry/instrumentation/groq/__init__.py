@@ -214,7 +214,9 @@ def _create_stream_processor(response, span, event_logger):
         raise
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-        _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
+        _handle_streaming_response(
+            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+        )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
@@ -246,7 +248,9 @@ async def _create_async_stream_processor(response, span, event_logger):
         raise
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-        _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
+        _handle_streaming_response(
+            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+        )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
