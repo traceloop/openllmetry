@@ -82,6 +82,51 @@ def test_emit_response_events_writes_choice_log_for_list_response(event_logger):
     }
 
 
+def test_emit_response_events_skips_invalid_batched_items(event_logger):
+    logger, exporter = event_logger
+
+    _emit_response_events(
+        [
+            "not a response",
+            {
+                "results": [
+                    {"generated_text": "One", "stop_reason": "eos_token"},
+                    None,
+                    {"generated_text": "Two", "stop_reason": "length"},
+                ]
+            },
+            {"generated_text": "Three", "stop_reason": "cancelled"},
+            {"results": ["not a message"]},
+        ],
+        logger,
+    )
+
+    logs = exporter.get_finished_logs()
+    assert len(logs) == 3
+    assert [log.log_record.event_name for log in logs] == [
+        "gen_ai.choice",
+        "gen_ai.choice",
+        "gen_ai.choice",
+    ]
+    assert [log.log_record.body for log in logs] == [
+        {
+            "index": 0,
+            "message": {"content": "One"},
+            "finish_reason": "eos_token",
+        },
+        {
+            "index": 2,
+            "message": {"content": "Two"},
+            "finish_reason": "length",
+        },
+        {
+            "index": 3,
+            "message": {"content": "Three"},
+            "finish_reason": "cancelled",
+        },
+    ]
+
+
 def test_handle_stream_response_writes_choice_log(event_logger):
     logger, exporter = event_logger
     span = RecordingSpan()
@@ -92,9 +137,7 @@ def test_handle_stream_response_writes_choice_log(event_logger):
         "input_token_count": 2,
     }
 
-    _handle_stream_response(
-        span, logger, stream_response, "streamed response", "stop_sequence"
-    )
+    _handle_stream_response(span, logger, stream_response, "streamed response", "stop_sequence")
 
     logs = exporter.get_finished_logs()
     assert len(logs) == 1
