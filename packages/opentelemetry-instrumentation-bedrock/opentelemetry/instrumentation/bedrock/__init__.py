@@ -5,8 +5,9 @@ import logging
 import os
 import time
 import traceback
+import warnings
 from functools import partial, wraps
-from typing import Collection
+from typing import Collection, Optional
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import get_logger
@@ -62,11 +63,13 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
     GenAiSystemValues,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
 )
 from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
 
@@ -210,7 +213,7 @@ def _wrap(
             if metric_params.exception_counter:
                 metric_params.exception_counter.add(1, attributes=attributes)
 
-            raise e
+            raise
 
     return wrapped(*args, **kwargs)
 
@@ -229,9 +232,16 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             GenAIAttributes.GEN_AI_REQUEST_MODEL: _model,
         }
         with tracer.start_as_current_span(
-            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
+            _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes,
+            record_exception=False, set_status_on_exception=False,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
 
@@ -259,7 +269,14 @@ def _instrumented_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
 
         return response
@@ -286,8 +303,15 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             _span_name(GenAiOperationNameValues.CHAT.value, _model),
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
+            record_exception=False, set_status_on_exception=False,
         ) as span:
-            response = fn(*args, **kwargs)
+            try:
+                response = fn(*args, **kwargs)
+            except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
             return response
@@ -312,7 +336,14 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
-        response = fn(*args, **kwargs)
+        try:
+            response = fn(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            raise
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
@@ -1113,12 +1144,32 @@ class BedrockInstrumentor(BaseInstrumentor):
         self,
         enrich_token_usage: bool = False,
         exception_logger=None,
-        use_legacy_attributes: bool = True,
+        use_attributes: Optional[bool] = None,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

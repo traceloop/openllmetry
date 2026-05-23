@@ -59,13 +59,6 @@ def test_anthropic_prompt_caching_legacy(
             + f.read()
         )
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -150,13 +143,6 @@ def test_anthropic_prompt_caching_with_events_with_content(
             "test_anthropic_prompt_caching <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
@@ -313,13 +299,6 @@ def test_anthropic_prompt_caching_with_events_with_no_content(
             + f.read()
         )
 
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -396,13 +375,6 @@ async def test_anthropic_prompt_caching_async_legacy(
             "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
@@ -484,13 +456,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_content(
             "test_anthropic_prompt_caching_async <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
 
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
@@ -653,13 +618,6 @@ async def test_anthropic_prompt_caching_async_with_events_with_no_content(
             + f.read()
         )
 
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -740,13 +698,6 @@ def test_anthropic_prompt_caching_stream_legacy(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -831,13 +782,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_content(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1004,13 +948,6 @@ def test_anthropic_prompt_caching_stream_with_events_with_no_content(
             "test_anthropic_prompt_caching_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1092,13 +1029,6 @@ async def test_anthropic_prompt_caching_async_stream_legacy(
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1183,13 +1113,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_content(
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
@@ -1367,13 +1290,6 @@ async def test_anthropic_prompt_caching_async_stream_with_events_with_no_content
             "test_anthropic_prompt_caching_async_stream <- IGNORE THIS. ARTICLES START ON THE NEXT LINE\n"
             + f.read()
         )
-    try:
-        await async_anthropic_client.messages.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     system_message = "You help generate concise summaries of news articles and blog posts that user sends you."
 
     for _ in range(2):
