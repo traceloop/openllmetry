@@ -502,37 +502,36 @@ class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def __aiter__(self) -> AsyncGenerator[Any, None]:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
 
         async for item in self.__wrapped__:
-            # Handle different item types based on what's available
-            request = None
-            if hasattr(item, "message") and hasattr(item.message, "root"):
-                request = item.message.root
-            elif type(item) is JSONRPCMessage:
-                request = cast(JSONRPCMessage, item).root
-            elif hasattr(item, "root"):
-                request = item.root
-            else:
-                yield item
-                continue
+            try:
+                # Handle different item types based on what's available
+                request = None
+                if hasattr(item, "message") and hasattr(item.message, "root"):
+                    request = item.message.root
+                elif type(item) is JSONRPCMessage:
+                    request = cast(JSONRPCMessage, item).root
+                elif hasattr(item, "root"):
+                    request = item.root
 
-            if not isinstance(request, JSONRPCRequest):
-                yield item
-                continue
+                if request and isinstance(request, JSONRPCRequest):
+                    if request.params and isinstance(request.params, dict):
+                        meta = request.params.get("_meta")
+                        if meta:
+                            ctx = propagate.extract(meta)
+                            restore = context.attach(ctx)
+                            try:
+                                yield item
+                                continue
+                            finally:
+                                context.detach(restore)
+            except Exception as e:
+                logging.warning(
+                    f"mcp instrumentation InstrumentedStreamReader telemetry exception: {e}"
+                )
 
-            if request.params:
-                meta = request.params.get("_meta")
-                if meta:
-                    ctx = propagate.extract(meta)
-                    restore = context.attach(ctx)
-                    try:
-                        yield item
-                        continue
-                    finally:
-                        context.detach(restore)
             yield item
 
 
@@ -548,7 +547,6 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
 
@@ -563,31 +561,66 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
         else:
             return await self.__wrapped__.send(item)
 
-        with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
-            if hasattr(request, "result"):
-                span.set_attribute(
-                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
-                )
-                if "isError" in request.result:
-                    if request.result["isError"] is True:
-                        span.set_status(
-                            Status(
-                                StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
-                            )
-                        )
-            if hasattr(request, "id"):
-                span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
+        item_to_send = item
+        try:
+            with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
+                if hasattr(request, "result") and request.result is not None:
+                    span.set_attribute(
+                        SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
+                    )
 
-            if not isinstance(request, JSONRPCRequest):
-                return await self.__wrapped__.send(item)
-            meta = None
-            if not request.params:
-                request.params = {}
-            meta = request.params.setdefault("_meta", {})
+                    is_error = False
+                    error_text = ""
+                    res = request.result
 
-            propagate.get_global_textmap().inject(meta)
-            return await self.__wrapped__.send(item)
+                    if isinstance(res, dict):
+                        is_error = res.get("isError") is True
+                        if (
+                            is_error
+                            and "content" in res
+                            and isinstance(res["content"], list)
+                            and len(res["content"]) > 0
+                        ):
+                            content_item = res["content"][0]
+                            if isinstance(content_item, dict):
+                                error_text = content_item.get("text", "")
+                            else:
+                                error_text = getattr(content_item, "text", str(content_item))
+                    elif hasattr(res, "isError"):
+                        is_error = getattr(res, "isError") is True
+                        if (
+                            is_error
+                            and hasattr(res, "content")
+                            and isinstance(res.content, list)
+                            and len(res.content) > 0
+                        ):
+                            content_item = res.content[0]
+                            if hasattr(content_item, "text"):
+                                error_text = content_item.text
+                            elif isinstance(content_item, dict):
+                                error_text = content_item.get("text", "")
+                            else:
+                                error_text = str(content_item)
+
+                    if is_error:
+                        span.set_status(Status(StatusCode.ERROR, error_text))
+
+                if hasattr(request, "id"):
+                    span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
+
+                if isinstance(request, JSONRPCRequest):
+                    # Only inject metadata if params is a dict (or make it a dict if None/empty)
+                    if request.params is None:
+                        request.params = {}
+                    if isinstance(request.params, dict):
+                        meta = request.params.setdefault("_meta", {})
+                        propagate.get_global_textmap().inject(meta)
+        except Exception as e:
+            logging.warning(
+                f"mcp instrumentation InstrumentedStreamWriter telemetry exception: {e}"
+            )
+
+        return await self.__wrapped__.send(item_to_send)
 
 
 @dataclass(slots=True, frozen=True)
@@ -608,11 +641,20 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
         # Removed RequestStreamWriter span creation - we don't need low-level protocol spans
-        ctx = context.get_current()
-        return await self.__wrapped__.send(ItemWithContext(item, ctx))
+        ctx = None
+        try:
+            ctx = context.get_current()
+        except Exception as e:
+            logging.warning(
+                f"mcp instrumentation ContextSavingStreamWriter telemetry exception: {e}"
+            )
+
+        if ctx is not None:
+            return await self.__wrapped__.send(ItemWithContext(item, ctx))
+        else:
+            return await self.__wrapped__.send(item)
 
 
 class ContextAttachingStreamReader(ObjectProxy):  # type: ignore
