@@ -975,6 +975,93 @@ class TestEndGenerationSpan:
 
         otel_span.end()
 
+    # ------------------------------------------------------------------
+    # GenerationSpanData (no .response attribute) – issue #4157
+    # ------------------------------------------------------------------
+
+    def test_generation_span_data_usage_attributes(self, tracer_and_exporter, processor):
+        """GenerationSpanData without a .response attr must still emit usage tokens.
+
+        Regression test for https://github.com/traceloop/openllmetry/issues/4157 –
+        _end_generation_span was looking for span_data.response (which does not exist
+        on GenerationSpanData) and therefore never called _extract_response_attributes,
+        silently dropping all gen_ai.usage.* and gen_ai.response.* OTel attributes.
+        """
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen-data")
+
+        span_data = SimpleNamespace(
+            input=[{"role": "user", "content": "Hello"}],
+            output=[{"role": "assistant", "content": "Hi there"}],
+            model="gpt-4o-mini",
+            model_config={"temperature": 0.7, "top_p": 1.0, "max_tokens": 256},
+            usage={"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+            # Deliberately no .response attribute – matches GenerationSpanData
+        )
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "gpt-4o-mini"
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 10
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 5
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE) == 0.7
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS) == 256
+
+        otel_span.end()
+
+    def test_generation_span_data_output_messages(self, tracer_and_exporter, processor):
+        """GenerationSpanData output messages are emitted when trace_content=True."""
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen-data-output")
+
+        span_data = SimpleNamespace(
+            input=[],
+            output=[{"role": "assistant", "content": "The answer is 42."}],
+            model="gpt-4o",
+            model_config={},
+            usage={"input_tokens": 3, "output_tokens": 7},
+        )
+
+        processor._end_generation_span(otel_span, span_data, trace_content=True)
+
+        raw = otel_span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+        assert raw is not None, "gen_ai.output.messages must be set for GenerationSpanData"
+        messages = json.loads(raw)
+        assert messages[0]["role"] == "assistant"
+        assert messages[0]["parts"][0]["content"] == "The answer is 42."
+
+        otel_span.end()
+
+    def test_generation_span_data_output_suppressed_when_content_gated(
+        self, tracer_and_exporter, processor
+    ):
+        """GenerationSpanData output messages are NOT emitted when trace_content=False."""
+        from types import SimpleNamespace
+
+        tracer, _ = tracer_and_exporter
+        otel_span = tracer.start_span("test-gen-data-no-content")
+
+        span_data = SimpleNamespace(
+            input=[],
+            output=[{"role": "assistant", "content": "The answer is 42."}],
+            model="gpt-4o",
+            model_config={},
+            usage={"input_tokens": 3, "output_tokens": 7},
+        )
+
+        processor._end_generation_span(otel_span, span_data, trace_content=False)
+
+        # Usage/model are NOT content-gated – they must still be set
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 3
+        # Output messages ARE content-gated – they must be absent
+        assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in otel_span.attributes
+
+        otel_span.end()
+
 
 # ---------------------------------------------------------------------------
 # Tests: _set_realtime_io_attributes
