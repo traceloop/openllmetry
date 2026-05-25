@@ -25,6 +25,7 @@ _instruments = ("mcp >= 1.6.0",)
 
 
 def _should_send_prompts() -> bool:
+    """Check if content tracing is enabled (matches traceloop SDK)"""
     return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
