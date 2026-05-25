@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
 import json
 import logging
+import os
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -21,6 +22,11 @@ from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
 )
 
 _instruments = ("mcp >= 1.6.0",)
+
+
+def _should_send_prompts() -> bool:
+    """Check if content tracing is enabled (matches traceloop SDK)"""
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
 class McpInstrumentor(BaseInstrumentor):
@@ -290,16 +296,17 @@ class McpInstrumentor(BaseInstrumentor):
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
             # Add input
-            clean_input = self._extract_clean_input(method, params)
-            if clean_input:
-                try:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
-                    )
-                except (TypeError, ValueError):
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
-                    )
+            if _should_send_prompts():
+                clean_input = self._extract_clean_input(method, params)
+                if clean_input:
+                    try:
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
+                        )
+                    except (TypeError, ValueError):
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
+                        )
 
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=True
@@ -308,9 +315,10 @@ class McpInstrumentor(BaseInstrumentor):
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
         with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
+            if _should_send_prompts():
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
@@ -322,23 +330,24 @@ class McpInstrumentor(BaseInstrumentor):
         try:
             result = await wrapped(*args, **kwargs)
             # Add output
-            if clean_output:
-                clean_output_data = self._extract_clean_output(method, result)
-                if clean_output_data:
-                    try:
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            json.dumps(clean_output_data),
-                        )
-                    except (TypeError, ValueError):
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            str(clean_output_data),
-                        )
-            else:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
-                )
+            if _should_send_prompts():
+                if clean_output:
+                    clean_output_data = self._extract_clean_output(method, result)
+                    if clean_output_data:
+                        try:
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                json.dumps(clean_output_data),
+                            )
+                        except (TypeError, ValueError):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                str(clean_output_data),
+                            )
+                else:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+                    )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
@@ -565,9 +574,10 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
-                span.set_attribute(
-                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
-                )
+                if _should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
+                    )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
                         span.set_status(
