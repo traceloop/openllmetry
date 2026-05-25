@@ -1,4 +1,3 @@
-import cuid
 import asyncio
 import json
 import os
@@ -20,6 +19,9 @@ from traceloop.sdk.experiment.model import (
 )
 from traceloop.sdk.evaluator.config import EvaluatorDetails
 import httpx
+from cuid2 import Cuid
+
+_EXPERIMENT_SLUG_CUID = Cuid(length=11)
 
 
 class Experiment:
@@ -122,7 +124,7 @@ class Experiment:
         """
 
         if not experiment_slug:
-            experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
+            experiment_slug = self._experiment_slug or "exp-" + _EXPERIMENT_SLUG_CUID.generate()
         self._last_experiment_slug = experiment_slug
 
         experiment_run_metadata = {
@@ -307,7 +309,7 @@ class Experiment:
             )
 
         if not experiment_slug:
-            experiment_slug = self._experiment_slug or "exp-" + str(cuid.cuid())[:11]
+            experiment_slug = self._experiment_slug or "exp-" + _EXPERIMENT_SLUG_CUID.generate()
         self._last_experiment_slug = experiment_slug
 
         # Fetch dataset rows
