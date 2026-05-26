@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import functools
+import inspect
 import json
 import logging
 import os
@@ -10,6 +11,8 @@ from opentelemetry import context as context_api
 # Handoff span attribute names
 GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
 GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
+GEN_AI_HANDOFF_PARENT_AGENT = "gen_ai.agent.handoff_parent"
+OPENAI_AGENT_HANDOFFS = "openai.agent.handoffs"
 _TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
@@ -42,10 +45,31 @@ class JSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        if hasattr(o, "model_dump_json"):
-            return o.model_dump_json()
-        elif hasattr(o, "json"):
-            return o.json()
+        if hasattr(o, "model_dump"):
+            return o.model_dump()
+
+        if hasattr(o, "dict"):
+            dict_method = o.dict
+            if callable(dict_method) and not inspect.iscoroutinefunction(dict_method):
+                result = dict_method()
+                if not inspect.iscoroutine(result):
+                    return result
+                result.close()
+
+        if hasattr(o, "json"):
+            json_method = o.json
+            if callable(json_method) and not inspect.iscoroutinefunction(json_method):
+                result = json_method()
+                if inspect.iscoroutine(result):
+                    result.close()
+                elif isinstance(result, str):
+                    # .json() returns a JSON string; parse to avoid double-encoding.
+                    try:
+                        return json.loads(result)
+                    except (ValueError, TypeError):
+                        return result
+                else:
+                    return result
 
         if hasattr(o, "__class__"):
             return o.__class__.__name__

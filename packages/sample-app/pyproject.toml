@@ -20,6 +20,7 @@ dependencies = [
   "chromadb>=1.1.0,<2",
   "tokenizers>=0.22.0,<0.24.0",
   "boto3>=1.35.49,<2",
+  "aioboto3>=13.0.0,<15",
   "transformers>=4.46.0,<5",
   "replicate>=0.22.0,<0.23.0",
   "cohere>=5.11.1,<6",
@@ -61,6 +62,7 @@ dependencies = [
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
   "opentelemetry-instrumentation-anthropic",
+  "opentelemetry-instrumentation-bedrock",
   "opentelemetry-instrumentation-voyageai",
   "traceloop-sdk",
 ]
@@ -80,6 +82,7 @@ opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentatio
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", editable = true }
+opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", editable = true }
 opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
 traceloop-sdk = { path = "../traceloop-sdk", editable = true }
 

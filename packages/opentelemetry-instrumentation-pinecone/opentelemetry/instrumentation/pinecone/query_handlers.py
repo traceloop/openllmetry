@@ -49,13 +49,33 @@ def set_query_input_attributes(span, kwargs):
     # When defining conflicting sources of embeddings, the trace result is undefined
 
     vector = kwargs.get("vector")
+    sparse_vector = kwargs.get("sparse_vector")
+    queries = kwargs.get("queries")
+
+    # Count of query embeddings: 1 for vector/sparse_vector, len() for queries.
+    # Omit attribute when caller used id-only lookup (none of the three supplied).
+    embeddings_count = None
+    if queries is not None:
+        embeddings_count = len(queries)
+    elif vector is not None:
+        embeddings_count = 1
+    elif sparse_vector is not None:
+        embeddings_count = 1
+
+    if embeddings_count is not None:
+        span.set_attribute(
+            SpanAttributes.PINECONE_QUERY_EMBEDDINGS_COUNT, embeddings_count
+        )
+        span.set_attribute(
+            SpanAttributes.VECTOR_DB_QUERY_EMBEDDINGS_COUNT, embeddings_count
+        )
+
     if vector:
         span.add_event(
             name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
             attributes={f"{EventAttributes.DB_QUERY_EMBEDDINGS_VECTOR.value}": vector},
         )
 
-    sparse_vector = kwargs.get("sparse_vector")
     if sparse_vector:
         span.add_event(
             name=f"{Events.DB_QUERY_EMBEDDINGS.value}",
@@ -64,7 +84,6 @@ def set_query_input_attributes(span, kwargs):
             },
         )
 
-    queries = kwargs.get("queries")
     if queries:
         for vector in queries:
             span.add_event(
@@ -75,7 +94,15 @@ def set_query_input_attributes(span, kwargs):
 
 @dont_throw
 def set_query_response(span, scores_metric, shared_attributes, response):
-    matches = response.get("matches")
+    matches = response.get("matches") or []
+
+    # result_count: always emit on a successful response (0 is meaningful — OTel spec).
+    span.set_attribute(SpanAttributes.PINECONE_QUERY_RESULT_COUNT, len(matches))
+    span.set_attribute(SpanAttributes.VECTOR_DB_QUERY_RESULT_COUNT, len(matches))
+
+    scores = [m.get("score") for m in matches if m.get("score") is not None]
+    if scores:
+        span.set_attribute(SpanAttributes.VECTOR_DB_QUERY_TOP_SCORE, max(scores))
 
     for match in matches:
         if scores_metric and match.get("score"):

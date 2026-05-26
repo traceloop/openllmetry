@@ -41,3 +41,28 @@ class ReusableStreamingBody(StreamingBody):
         else:
             self._buffer_cursor += amt
             return self._buffer[self._buffer_cursor-amt:self._buffer_cursor]
+
+
+class BufferedAsyncBody:
+    """Async-readable replacement for aiobotocore StreamingBody whose contents
+    have already been read. Allows the user to `await body.read()` after our
+    instrumentation already consumed the bytes once.
+
+    Uses an immutable buffer + cursor (matching ReusableStreamingBody's sync
+    semantics) so a partial `read(n)` followed by `read()` returns the rest,
+    and the buffer can be re-read by resetting the cursor."""
+
+    def __init__(self, buffer: bytes):
+        self._buffer = buffer
+        self._cursor = 0
+
+    async def read(self, amt=None):
+        if amt is None:
+            return self._buffer[self._cursor:]
+        out = self._buffer[self._cursor:self._cursor + amt]
+        self._cursor += amt
+        return out
+
+    async def close(self):
+        # No-op: the bytes are already buffered, no underlying resource to release.
+        return None

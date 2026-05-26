@@ -3,7 +3,8 @@
 import logging
 import os
 import time
-from typing import Callable, Collection, Union
+import warnings
+from typing import Callable, Collection, Optional, Union
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import Logger, get_logger
@@ -39,6 +40,7 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
 from groq._streaming import AsyncStream, Stream
@@ -195,24 +197,31 @@ def _create_stream_processor(response, span, event_logger):
     accumulated_finish_reasons: list = []
     usage = None
 
-    for chunk in response:
-        content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
-        if content:
-            accumulated_content += content
-        if tool_calls_delta:
-            _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        accumulated_finish_reasons.extend(chunk_finish_reasons)
-        if chunk_usage:
-            usage = chunk_usage
-        yield chunk
-
-    tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-    _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
-
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-
-    span.end()
+    try:
+        for chunk in response:
+            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            if content:
+                accumulated_content += content
+            if tool_calls_delta:
+                _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
+            accumulated_finish_reasons.extend(chunk_finish_reasons)
+            if chunk_usage:
+                usage = chunk_usage
+            yield chunk
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
+        _handle_streaming_response(
+            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+        )
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 async def _create_async_stream_processor(response, span, event_logger):
@@ -222,24 +231,31 @@ async def _create_async_stream_processor(response, span, event_logger):
     accumulated_finish_reasons: list = []
     usage = None
 
-    async for chunk in response:
-        content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
-        if content:
-            accumulated_content += content
-        if tool_calls_delta:
-            _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
-        accumulated_finish_reasons.extend(chunk_finish_reasons)
-        if chunk_usage:
-            usage = chunk_usage
-        yield chunk
-
-    tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
-    _handle_streaming_response(span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger)
-
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-
-    span.end()
+    try:
+        async for chunk in response:
+            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            if content:
+                accumulated_content += content
+            if tool_calls_delta:
+                _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
+            accumulated_finish_reasons.extend(chunk_finish_reasons)
+            if chunk_usage:
+                usage = chunk_usage
+            yield chunk
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
+        tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
+        _handle_streaming_response(
+            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+        )
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 def _handle_input(span, kwargs, event_logger):
@@ -301,10 +317,11 @@ def _wrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
-        if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR))
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     end_time = time.time()
 
@@ -388,10 +405,11 @@ async def _awrap(
             duration = end_time - start_time
             duration_histogram.record(duration, attributes=attributes)
 
-        if span.is_recording():
-            span.set_status(Status(StatusCode.ERROR))
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
-        raise e
+        raise
 
     end_time = time.time()
 
@@ -441,13 +459,33 @@ class GroqInstrumentor(BaseInstrumentor):
     def __init__(
         self,
         exception_logger=None,
-        use_legacy_attributes: bool = True,
+        use_attributes: Optional[bool] = None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
+        use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
         Config.get_common_metrics_attributes = get_common_metrics_attributes
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments

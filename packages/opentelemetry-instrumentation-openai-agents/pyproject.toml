@@ -13,7 +13,7 @@ dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
   "opentelemetry-semantic-conventions-ai>=0.5.1,<0.6.0",
-  "opentelemetry-semantic-conventions>=0.59b0",
+  "opentelemetry-semantic-conventions>=0.62b1",
 ]
 
 [project.urls]
@@ -34,7 +34,7 @@ dev = [
 ]
 test = [
   "litellm>=1.71.2,<2",
-  "openai-agents>=0.6.9",
+  "openai-agents>=0.14.2",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=1.0.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",

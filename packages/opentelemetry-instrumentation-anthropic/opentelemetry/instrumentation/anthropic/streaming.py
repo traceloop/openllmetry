@@ -48,12 +48,15 @@ def _process_response_item(item, complete_response):
                 complete_response["events"][index]["input"] = """"""
     elif item.type == "content_block_delta":
         index = item.index
-        if item.delta.type == "thinking_delta":
-            complete_response["events"][index]["text"] += item.delta.thinking
-        elif item.delta.type == "text_delta":
-            complete_response["events"][index]["text"] += item.delta.text
-        elif item.delta.type == "input_json_delta":
-            complete_response["events"][index]["input"] += item.delta.partial_json
+        if index < len(complete_response.get("events", [])):
+            event = complete_response["events"][index]
+            if item.delta.type == "thinking_delta":
+                event["text"] = event.get("text", "") + item.delta.thinking
+            elif item.delta.type == "text_delta":
+                event["text"] = event.get("text", "") + item.delta.text
+            elif item.delta.type == "input_json_delta":
+                if event.get("type") == "tool_use":
+                    event["input"] = event.get("input", "") + item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
@@ -135,6 +138,35 @@ def _set_token_usage(
                     ),
                 },
             )
+
+
+def _resolve_stream_token_usage(complete_response, instance, kwargs):
+    """Resolve prompt and completion token counts from a streaming response.
+
+    Returns (input_tokens, output_tokens) when token data is available,
+    or (None, None) when it is not.
+    """
+    usage = complete_response.get("usage")
+    if usage:
+        return (
+            usage.get("input_tokens", 0) or 0,
+            usage.get("output_tokens", 0) or 0,
+        )
+
+    if not Config.enrich_token_usage:
+        return None, None
+
+    prompt_tokens = count_prompt_tokens_from_request(instance, kwargs)
+    completion_tokens = None
+    completion_content = "".join(
+        event.get("text", "")
+        for event in complete_response.get("events", [])
+        if event.get("text")
+    )
+    if complete_response.get("model") and hasattr(instance, "count_tokens"):
+        completion_tokens = instance.count_tokens(completion_content)
+
+    return prompt_tokens, completion_tokens
 
 
 def _handle_streaming_response(span, event_logger, complete_response):
@@ -227,7 +259,7 @@ class AnthropicStream(ObjectProxy):
             attributes = error_metrics_attributes(e)
             if self._exception_counter:
                 self._exception_counter.add(1, attributes=attributes)
-            raise e
+            raise
         _process_response_item(item, self._complete_response)
         return item
 
@@ -243,38 +275,22 @@ class AnthropicStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-        # Calculate token usage
-        if Config.enrich_token_usage:
-            try:
-                if usage := self._complete_response.get("usage"):
-                    prompt_tokens = usage.get("input_tokens", 0) or 0
-                else:
-                    prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
-
-                if usage := self._complete_response.get("usage"):
-                    completion_tokens = usage.get("output_tokens", 0) or 0
-                else:
-                    completion_content = ""
-                    if self._complete_response.get("events"):
-                        model_name = self._complete_response.get("model") or None
-                        for event in self._complete_response.get("events"):
-                            if event.get("text"):
-                                completion_content += event.get("text")
-
-                        if model_name and hasattr(self._instance, "count_tokens"):
-                            completion_tokens = self._instance.count_tokens(completion_content)
-
+        try:
+            prompt_tokens, completion_tokens = _resolve_stream_token_usage(
+                self._complete_response, self._instance, self._kwargs
+            )
+            if prompt_tokens is not None:
                 _set_token_usage(
                     self._span,
                     self._complete_response,
                     prompt_tokens,
-                    completion_tokens,
+                    completion_tokens or 0,
                     metric_attributes,
                     self._token_histogram,
                     self._choice_counter,
                 )
-            except Exception as e:
-                logger.warning("Failed to set token usage, error: %s", e)
+        except Exception as e:
+            logger.warning("Failed to set token usage, error: %s", str(e))
 
         _handle_streaming_response(self._span, self._event_logger, self._complete_response)
 
@@ -403,38 +419,22 @@ class AnthropicAsyncStream(ObjectProxy):
                 attributes=metric_attributes,
             )
 
-        # Calculate token usage
-        if Config.enrich_token_usage:
-            try:
-                if usage := self._complete_response.get("usage"):
-                    prompt_tokens = usage.get("input_tokens", 0)
-                else:
-                    prompt_tokens = count_prompt_tokens_from_request(self._instance, self._kwargs)
-
-                if usage := self._complete_response.get("usage"):
-                    completion_tokens = usage.get("output_tokens", 0)
-                else:
-                    completion_content = ""
-                    if self._complete_response.get("events"):
-                        model_name = self._complete_response.get("model") or None
-                        for event in self._complete_response.get("events"):
-                            if event.get("text"):
-                                completion_content += event.get("text")
-
-                        if model_name and hasattr(self._instance, "count_tokens"):
-                            completion_tokens = self._instance.count_tokens(completion_content)
-
+        try:
+            prompt_tokens, completion_tokens = _resolve_stream_token_usage(
+                self._complete_response, self._instance, self._kwargs
+            )
+            if prompt_tokens is not None:
                 _set_token_usage(
                     self._span,
                     self._complete_response,
                     prompt_tokens,
-                    completion_tokens,
+                    completion_tokens or 0,
                     metric_attributes,
                     self._token_histogram,
                     self._choice_counter,
                 )
-            except Exception as e:
-                logger.warning("Failed to set token usage, error: %s", str(e))
+        except Exception as e:
+            logger.warning("Failed to set token usage, error: %s", str(e))
 
         _handle_streaming_response(self._span, self._event_logger, self._complete_response)
 
