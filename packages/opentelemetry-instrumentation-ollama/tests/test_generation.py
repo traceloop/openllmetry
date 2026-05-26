@@ -38,6 +38,14 @@ def test_ollama_generation_legacy(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
+    assert ollama_span.attributes.get("llm.ollama.total_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.load_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.prompt_eval_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.eval_duration") > 0
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -161,6 +169,14 @@ def test_ollama_streaming_generation_legacy(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+
+    assert ollama_span.attributes.get("llm.ollama.total_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.load_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.prompt_eval_duration") > 0
+
+    assert ollama_span.attributes.get("llm.ollama.eval_duration") > 0
 
     logs = log_exporter.get_finished_logs()
     assert (
