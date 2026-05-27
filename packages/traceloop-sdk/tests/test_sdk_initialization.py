@@ -417,3 +417,26 @@ def test_trace_content_none_honors_env(
 
     assert is_content_tracing_enabled() is False
     assert os.environ["TRACELOOP_TRACE_CONTENT"] == "false"
+
+
+def test_trace_content_override_is_sticky_across_inits(
+    isolated_tracer_wrapper, isolated_trace_content_env
+):
+    """An explicit trace_content setting must persist across subsequent init()
+    calls that omit the arg. Once the env has been overwritten, trace_content=None
+    cannot restore the pre-init env value — the most recent explicit setting wins
+    until something external resets the env. This pins the documented behavior so
+    a future "save/restore env on init exit" refactor would force a docs update."""
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        trace_content=True,
+    )
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert is_content_tracing_enabled() is True
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"

@@ -96,6 +96,19 @@ class Traceloop:
                 the environment variable for the lifetime of the process. Use
                 ``False`` to disable prompt/completion capture when sensitive content
                 must not leave the host.
+
+                Notes:
+                  * This is implemented by writing ``TRACELOOP_TRACE_CONTENT`` into
+                    ``os.environ``, so child processes and any other code reading
+                    that variable will observe the override.
+                  * The override is sticky: a subsequent ``Traceloop.init()`` call
+                    with ``trace_content=None`` does not restore the previous
+                    env-driven value — the most recent explicit ``True``/``False``
+                    keeps winning until the env var is changed externally.
+                  * Per-span enablement via the ``override_enable_content_tracing``
+                    OTel context value still works when ``trace_content=False`` —
+                    instrumentations treat env and context as OR, so individual
+                    spans can opt back in while the global default stays off.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
