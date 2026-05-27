@@ -364,8 +364,12 @@ def test_both_exporter_and_processor_warns():
 
 @pytest.fixture
 def isolated_trace_content_env():
-    """Save/restore TRACELOOP_TRACE_CONTENT so trace_content tests don't leak."""
-    saved = os.environ.get("TRACELOOP_TRACE_CONTENT")
+    """Save/restore TRACELOOP_TRACE_CONTENT so trace_content tests don't leak.
+
+    Also clears the var before yielding so tests start from a known-unset state —
+    otherwise a CI env that pre-sets TRACELOOP_TRACE_CONTENT could mask bugs in
+    tests that exercise the "env not set" default path."""
+    saved = os.environ.pop("TRACELOOP_TRACE_CONTENT", None)
     yield
     if saved is None:
         os.environ.pop("TRACELOOP_TRACE_CONTENT", None)

@@ -109,6 +109,10 @@ class Traceloop:
                     OTel context value still works when ``trace_content=False`` —
                     instrumentations treat env and context as OR, so individual
                     spans can opt back in while the global default stays off.
+                  * Not applied when ``enabled=False`` or when tracing is disabled
+                    via ``TRACELOOP_TRACING_ENABLED``: ``init()`` returns early
+                    before the override would take effect, so the env var is left
+                    untouched in those no-op paths.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
