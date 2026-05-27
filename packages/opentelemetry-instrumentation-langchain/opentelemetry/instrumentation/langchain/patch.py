@@ -9,6 +9,10 @@ from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as Ge
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
 from opentelemetry.instrumentation.langchain.span_utils import SpanHolder
+from opentelemetry.instrumentation.langchain.utils import (
+    CallbackFilteredJSONEncoder,
+    should_send_prompts,
+)
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -107,6 +111,47 @@ def _get_graph_name(instance, args, kwargs) -> str:
     return "LangGraph"
 
 
+def _set_graph_span_io(
+    graph_span: Span,
+    graph_input: Any,
+    last_output: Any,
+) -> None:
+    """Set input/output attributes on the graph wrapper span.
+
+    Uses the same format as the callback handler (``on_chain_start``/
+    ``on_chain_end``) so that downstream consumers see a consistent
+    structure regardless of which span they read from.
+
+    Respects the ``should_send_prompts()`` privacy gate.
+    """
+    if not should_send_prompts():
+        return
+
+    if graph_input is not None:
+        try:
+            input_json = json.dumps(
+                {"inputs": graph_input},
+                ensure_ascii=False,
+                cls=CallbackFilteredJSONEncoder,
+            )
+            graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, input_json)
+            graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_INPUT, input_json)
+        except Exception:
+            logger.debug("Failed to set graph span input attributes", exc_info=True)
+
+    if last_output is not None:
+        try:
+            output_json = json.dumps(
+                {"outputs": last_output},
+                ensure_ascii=False,
+                cls=CallbackFilteredJSONEncoder,
+            )
+            graph_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output_json)
+            graph_span.set_attribute(SpanAttributes.GEN_AI_TASK_OUTPUT, output_json)
+        except Exception:
+            logger.debug("Failed to set graph span output attributes", exc_info=True)
+
+
 def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
     """
     Factory to create wrappers for graph invocation methods.
@@ -148,14 +193,20 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
         graph_span_ctx = context_api.attach(ctx_with_span)
 
+        # Capture input from args and track last output from generator
+        graph_input = args[0] if args else kwargs.get("input")
+        last_output = None
+
         try:
             for item in wrapped(*args, **kwargs):
+                last_output = item
                 yield item
         except BaseException as e:
             graph_span.set_status(Status(StatusCode.ERROR, str(e)))
             graph_span.record_exception(e)
             raise
         finally:
+            _set_graph_span_io(graph_span, graph_input, last_output)
             graph_span.end()
             context_api.detach(graph_span_ctx)
             context_api.detach(langgraph_ctx)
@@ -190,14 +241,20 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
         graph_span_ctx = context_api.attach(ctx_with_span)
 
+        # Capture input from args and track last output from generator
+        graph_input = args[0] if args else kwargs.get("input")
+        last_output = None
+
         try:
             async for item in wrapped(*args, **kwargs):
+                last_output = item
                 yield item
         except BaseException as e:
             graph_span.set_status(Status(StatusCode.ERROR, str(e)))
             graph_span.record_exception(e)
             raise
         finally:
+            _set_graph_span_io(graph_span, graph_input, last_output)
             graph_span.end()
             context_api.detach(graph_span_ctx)
             context_api.detach(langgraph_ctx)
