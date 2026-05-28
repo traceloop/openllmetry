@@ -314,6 +314,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         )
         self._try_wrap(
             "openai.resources.responses",
+            "Responses.parse",
+            responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
             "Responses.cancel",
             responses_cancel_wrapper(tracer),
         )
@@ -325,6 +330,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "AsyncResponses.retrieve",
+            async_responses_get_or_create_wrapper(tracer),
+        )
+        self._try_wrap(
+            "openai.resources.responses",
+            "AsyncResponses.parse",
             async_responses_get_or_create_wrapper(tracer),
         )
         self._try_wrap(
@@ -364,9 +374,11 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
             unwrap("openai.resources.beta.threads.messages", "Messages.list")
             unwrap("openai.resources.responses", "Responses.create")
             unwrap("openai.resources.responses", "Responses.retrieve")
+            unwrap("openai.resources.responses", "Responses.parse")
             unwrap("openai.resources.responses", "Responses.cancel")
             unwrap("openai.resources.responses", "AsyncResponses.create")
             unwrap("openai.resources.responses", "AsyncResponses.retrieve")
+            unwrap("openai.resources.responses", "AsyncResponses.parse")
             unwrap("openai.resources.responses", "AsyncResponses.cancel")
             unwrap("openai.resources.beta.realtime.realtime", "Realtime.connect")
             unwrap("openai.resources.beta.realtime.realtime", "AsyncRealtime.connect")
