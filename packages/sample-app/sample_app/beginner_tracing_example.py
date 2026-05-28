@@ -10,13 +10,16 @@ Uses OpenAI here, but the structure is the same for any provider this
 repo instruments.
 
     export OPENAI_API_KEY=sk-...
-    poetry run python sample_app/beginner_tracing_example.py
+    uv run python sample_app/beginner_tracing_example.py
 
-Without extra config, spans print to stdout. Set the standard
-`OTEL_EXPORTER_OTLP_*` env vars to ship them to a backend instead.
+This example wires a ConsoleSpanExporter so spans land on stdout out of
+the box. For real backends (Traceloop, Jaeger, Honeycomb, Datadog, …)
+set `TRACELOOP_API_KEY` or the standard `OTEL_EXPORTER_OTLP_*` env vars
+and drop the explicit exporter argument.
 """
 
 from openai import OpenAI
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
@@ -24,9 +27,12 @@ from traceloop.sdk.decorators import task, workflow
 # `app_name` shows up on every span. `disable_batch=True` flushes
 # synchronously, which is easier to read in a short script — leave the
 # default on in production so flushing doesn't block your hot path.
+# The explicit `exporter` makes spans visible on stdout even when no
+# TRACELOOP_API_KEY or OTLP endpoint is configured.
 Traceloop.init(
     app_name="beginner-tracing-example",
     disable_batch=True,
+    exporter=ConsoleSpanExporter(),
 )
 
 client = OpenAI()

@@ -8,10 +8,10 @@ Runnable examples that exercise OpenLLMetry against real providers — useful as
 
 ```bash
 export OPENAI_API_KEY=sk-...
-poetry run python sample_app/beginner_tracing_example.py
+uv run python sample_app/beginner_tracing_example.py
 ```
 
-Spans print to stdout by default. Point the standard `OTEL_EXPORTER_OTLP_*` env vars at a backend (Jaeger, Honeycomb, Datadog, Traceloop, …) to ship them.
+The example wires a `ConsoleSpanExporter` so spans land on stdout out of the box. For real backends (Traceloop, Jaeger, Honeycomb, Datadog, …) set `TRACELOOP_API_KEY` or the standard `OTEL_EXPORTER_OTLP_*` env vars and drop the explicit exporter from the script.
 
 ## Everything else
 
