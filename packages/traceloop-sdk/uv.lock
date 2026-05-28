@@ -419,10 +419,13 @@ wheels = [
 ]
 
 [[package]]
-name = "cuid"
-version = "0.4"
+name = "cuid2"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/55/ca/d323556e2bf9bfb63219fbb849ce61bb830cc42d1b25b91cde3815451b91/cuid-0.4.tar.gz", hash = "sha256:74eaba154916a2240405c3631acee708c263ef8fa05a86820b87d0f59f84e978", size = 4986, upload-time = "2023-03-06T00:41:12.708Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/63/97ffc74f33e5a5f913bf073e8250a5b5a64d52d411b09a9c36c902db2cc4/cuid2-2.0.1.tar.gz", hash = "sha256:8d262eb467c16b81419361e18e47f41da77c4446dd2cf0640eac2616680bc924", size = 7033, upload-time = "2024-04-16T23:51:52.05Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/d2/90fce0050c5a9196d259ac8f0c4720c69ec6b5a322612edf3892f0036c5d/cuid2-2.0.1-py3-none-any.whl", hash = "sha256:943bdf86dc3ed07f32253e1be6e3c34dda8c7bda1c453f851f4ebaaa5a2dcfbf", size = 8154, upload-time = "2024-04-16T23:51:50.953Z" },
+]
 
 [[package]]
 name = "datamodel-code-generator"
@@ -3883,7 +3886,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "colorama" },
-    { name = "cuid" },
+    { name = "cuid2" },
     { name = "deprecated" },
     { name = "jinja2" },
     { name = "opentelemetry-api" },
@@ -3965,7 +3968,7 @@ test = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.11,<4" },
     { name = "colorama", specifier = ">=0.4.6,<0.5.0" },
-    { name = "cuid", specifier = ">=0.4,<0.5" },
+    { name = "cuid2", specifier = ">=2.0.1,<3" },
     { name = "deprecated", specifier = ">=1.2.14,<2" },
     { name = "jinja2", specifier = ">=3.1.5,<4" },
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
