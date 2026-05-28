@@ -1,5 +1,6 @@
 import json
 import pytest
+from pydantic import BaseModel
 
 from openai import AsyncOpenAI, OpenAI
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
@@ -9,6 +10,11 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from .utils import get_input_messages, get_output_messages
+
+
+class Person(BaseModel):
+    name: str
+    age: int
 
 
 @pytest.mark.vcr
@@ -404,6 +410,87 @@ async def test_responses_streaming_async_with_context_manager(
     output_messages = get_output_messages(span)
     assert output_messages[0]["role"] == "assistant"
     assert output_messages[0]["parts"][0]["content"] == full_text
+
+
+def _fake_responses_payload() -> dict:
+    """Minimal Responses-API JSON shaped enough for the wrapper to read it."""
+    return {
+        "id": "resp_test_123",
+        "object": "response",
+        "created_at": 1700000000,
+        "status": "completed",
+        "model": "gpt-4.1-nano-2025-04-14",
+        "output": [
+            {
+                "id": "msg_test_1",
+                "type": "message",
+                "role": "assistant",
+                "status": "completed",
+                "content": [
+                    {
+                        "type": "output_text",
+                        "text": '{"name":"Alice","age":30}',
+                        "annotations": [],
+                    }
+                ],
+            }
+        ],
+        "usage": {
+            "input_tokens": 12,
+            "output_tokens": 8,
+            "total_tokens": 20,
+            "input_tokens_details": {"cached_tokens": 0},
+            "output_tokens_details": {"reasoning_tokens": 0},
+        },
+        "parallel_tool_calls": True,
+        "tool_choice": "auto",
+        "tools": [],
+        "metadata": {},
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "error": None,
+        "incomplete_details": None,
+        "instructions": None,
+        "max_output_tokens": None,
+        "previous_response_id": None,
+        "reasoning": None,
+        "service_tier": "default",
+        "text": {"format": {"type": "text"}},
+        "truncation": "disabled",
+        "user": None,
+    }
+
+
+def _mock_openai_client():
+    """Build an OpenAI client whose HTTP layer returns a fixed Responses payload."""
+    import httpx
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=_fake_responses_payload())
+
+    return OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+
+def test_responses_parse_emits_span(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Structured-output via responses.parse() must produce an LLM span with usage."""
+    client = _mock_openai_client()
+    _ = client.responses.parse(
+        model="gpt-4.1-nano",
+        input="Extract: Alice is 30 years old.",
+        text_format=Person,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"expected one openai.response span, got {len(spans)}"
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] == 12
+    assert span.attributes["gen_ai.usage.output_tokens"] == 8
 
 
 def test_get_tools_from_kwargs_with_none():
