@@ -416,10 +416,12 @@ async def test_responses_streaming_async_with_context_manager(
 def test_responses_parse(
     instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
 ):
-    """Structured-output via responses.parse() must produce an LLM span with usage."""
-    _ = openai_client.responses.parse(
+    """Structured-output via responses.parse() must produce an LLM span with usage
+    and capture the prompt + structured response on the span."""
+    input_text = "Extract: Alice is 30 years old."
+    response = openai_client.responses.parse(
         model="gpt-4.1-nano",
-        input="Extract: Alice is 30 years old.",
+        input=input_text,
         text_format=Person,
     )
     spans = span_exporter.get_finished_spans()
@@ -430,6 +432,18 @@ def test_responses_parse(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.usage.input_tokens"] > 0
     assert span.attributes["gen_ai.usage.output_tokens"] > 0
+
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    output_text = output_messages[0]["parts"][0]["content"]
+    parsed = Person.model_validate_json(output_text)
+    assert parsed == response.output_parsed
+    assert parsed.name == "Alice"
+    assert parsed.age == 30
 
 
 @pytest.mark.vcr
@@ -439,10 +453,12 @@ async def test_responses_parse_async(
     span_exporter: InMemorySpanExporter,
     async_openai_client: AsyncOpenAI,
 ):
-    """Async structured-output via responses.parse() must produce an LLM span with usage."""
-    _ = await async_openai_client.responses.parse(
+    """Async structured-output via responses.parse() must produce an LLM span with usage
+    and capture the prompt + structured response on the span."""
+    input_text = "Extract: Bob is 42 years old."
+    response = await async_openai_client.responses.parse(
         model="gpt-4.1-nano",
-        input="Extract: Bob is 42 years old.",
+        input=input_text,
         text_format=Person,
     )
     spans = span_exporter.get_finished_spans()
@@ -453,6 +469,18 @@ async def test_responses_parse_async(
     assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
     assert span.attributes["gen_ai.usage.input_tokens"] > 0
     assert span.attributes["gen_ai.usage.output_tokens"] > 0
+
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    output_text = output_messages[0]["parts"][0]["content"]
+    parsed = Person.model_validate_json(output_text)
+    assert parsed == response.output_parsed
+    assert parsed.name == "Bob"
+    assert parsed.age == 42
 
 
 def test_get_tools_from_kwargs_with_none():
