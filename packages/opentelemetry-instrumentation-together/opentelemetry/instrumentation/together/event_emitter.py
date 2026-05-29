@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from enum import Enum
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 from opentelemetry._logs import Logger, LogRecord
 from opentelemetry.instrumentation.together.event_models import (
@@ -19,8 +19,8 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
 )
 
-from together.types.chat_completions import ChatCompletionResponse
-from together.types.completions import CompletionResponse
+if TYPE_CHECKING:
+    from together.types import ChatCompletionResponse, CompletionResponse
 
 
 class Roles(Enum):
@@ -59,10 +59,10 @@ def emit_prompt_events(event_logger, llm_request_type, kwargs):
 def emit_completion_event(
     event_logger,
     llm_request_type,
-    response: Union[ChatCompletionResponse, CompletionResponse],
+    response: Union["ChatCompletionResponse", "CompletionResponse"],
 ):
     if llm_request_type == LLMRequestTypeValues.CHAT:
-        response: ChatCompletionResponse
+        response: "ChatCompletionResponse"
         for choice in response.choices:
             emit_event(
                 CompletionEvent(
@@ -76,7 +76,7 @@ def emit_completion_event(
                 event_logger,
             )
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        response: CompletionResponse
+        response: "CompletionResponse"
         for choice in response.choices:
             emit_event(
                 CompletionEvent(
