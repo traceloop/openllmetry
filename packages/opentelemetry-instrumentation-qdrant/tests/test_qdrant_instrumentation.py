@@ -153,6 +153,8 @@ async def _async_setup(client: AsyncQdrantClient) -> None:
 
 
 def test_qdrant_async_query_points(exporter):
+    exporter.clear()
+
     async def run() -> None:
         client = AsyncQdrantClient(location=":memory:")
         await _async_setup(client)
@@ -175,6 +177,8 @@ def test_qdrant_async_query_points(exporter):
 
 
 def test_qdrant_async_query_batch_points(exporter):
+    exporter.clear()
+
     async def run() -> None:
         client = AsyncQdrantClient(location=":memory:")
         await _async_setup(client)
