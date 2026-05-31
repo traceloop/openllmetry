@@ -122,6 +122,10 @@ class Traceloop:
         Traceloop.__app_name = app_name
 
         if not is_tracing_enabled():
+            # Mirror the `enabled=False` path: mark the tracer disabled so the
+            # @workflow/@task decorators become silent no-ops instead of warning
+            # that Traceloop was never initialized.
+            TracerWrapper.set_disabled(True)
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
