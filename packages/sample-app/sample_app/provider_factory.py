@@ -5,9 +5,13 @@ from dataclasses import dataclass, field
 
 from openai import OpenAI
 
+from sample_app.atlas_models import (
+    ATLASCLOUD_DEFAULT_MODEL,
+    ATLASCLOUD_VALIDATED_MODELS,
+)
+
 
 ATLASCLOUD_BASE_URL = "https://api.atlascloud.ai/v1"
-ATLASCLOUD_DEFAULT_MODEL = "deepseek-ai/DeepSeek-V3-0324"
 OPENAI_DEFAULT_MODEL = "gpt-4o-mini"
 
 
@@ -19,6 +23,12 @@ class OpenAICompatibleProviderConfig:
     api_key: str = field(repr=False)
     base_url: str | None
     default_model: str
+
+
+def get_atlascloud_validated_models() -> tuple[str, ...]:
+    """Return the validated Atlas model pool exposed by the sample app."""
+
+    return ATLASCLOUD_VALIDATED_MODELS
 
 
 def _get_env_value(name: str) -> str | None:
