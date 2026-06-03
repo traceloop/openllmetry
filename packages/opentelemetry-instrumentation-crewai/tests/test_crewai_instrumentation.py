@@ -8,7 +8,11 @@ from crewai.llms.base_llm import BaseLLM
 from crewai.utilities.planning_handler import CrewPlanner, PlanPerTask, PlannerTaskPydanticOutput
 
 from opentelemetry.instrumentation.crewai import CrewAIInstrumentor
-from opentelemetry.instrumentation.crewai.instrumentation import wrap_crew_planning
+from opentelemetry.instrumentation.crewai.instrumentation import (
+    _crew_planning_span,
+    wrap_create_planning_agent,
+    wrap_crew_planning,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -29,6 +33,13 @@ class StubLLM(BaseLLM):
         response_model: type[BaseModel] | None = None,
     ):
         return "Mocked response"
+
+
+def _plan_per_task(task, plan):
+    values = {"task": task, "plan": plan}
+    if "task_number" in getattr(PlanPerTask, "model_fields", {}):
+        values["task_number"] = 1
+    return PlanPerTask(**values)
 
 
 @pytest.fixture
@@ -126,6 +137,7 @@ def test_wrap_crew_planning_creates_plan_span():
     planner._create_planning_agent.assert_not_called()
     span.set_status.assert_called_once()
     assert span.set_status.call_args.args[0].status_code == StatusCode.OK
+    assert _crew_planning_span.get() is None
 
 
 def test_wrap_crew_planning_records_error_status():
@@ -143,6 +155,39 @@ def test_wrap_crew_planning_records_error_status():
         wrap_crew_planning(tracer, None, None)(wrapped, planner, (), {})
 
     assert span.set_status.call_args.args[0].status_code == StatusCode.ERROR
+    assert _crew_planning_span.get() is None
+
+
+def test_wrap_create_planning_agent_ignores_agent_outside_plan_span(monkeypatch):
+    set_span_attribute = MagicMock()
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.crewai.instrumentation.set_span_attribute",
+        set_span_attribute,
+    )
+    planner_agent = MagicMock(role="Task Execution Planner", id="agent-id")
+    wrapped = MagicMock(return_value=planner_agent)
+
+    result = wrap_create_planning_agent(wrapped, MagicMock(), (), {})
+
+    assert result is planner_agent
+    assert _crew_planning_span.get() is None
+    set_span_attribute.assert_not_called()
+
+
+def test_wrap_create_planning_agent_enriches_stored_plan_span():
+    plan_span = MagicMock()
+    planner_agent = MagicMock(role="Task Execution Planner", id="agent-id")
+    wrapped = MagicMock(return_value=planner_agent)
+    token = _crew_planning_span.set(plan_span)
+    try:
+        result = wrap_create_planning_agent(wrapped, MagicMock(), (), {})
+    finally:
+        _crew_planning_span.reset(token)
+
+    assert result is planner_agent
+    plan_span.update_name.assert_called_once_with("plan Task Execution Planner")
+    plan_span.set_attribute.assert_any_call("gen_ai.agent.name", "Task Execution Planner")
+    plan_span.set_attribute.assert_any_call("gen_ai.agent.id", "agent-id")
 
 
 def test_crewai_planner_instrumentation_creates_plan_span_without_state_mutation():
@@ -164,7 +209,7 @@ def test_crewai_planner_instrumentation_creates_plan_span_without_state_mutation
         fake_task.execute_sync.return_value = SimpleNamespace(
             pydantic=PlannerTaskPydanticOutput(
                 list_of_plans_per_task=[
-                    PlanPerTask(task=task.description, plan="Use the researcher to collect the data")
+                    _plan_per_task(task.description, "Use the researcher to collect the data")
                 ]
             )
         )

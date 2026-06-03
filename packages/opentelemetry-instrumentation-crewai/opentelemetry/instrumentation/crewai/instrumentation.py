@@ -4,7 +4,7 @@ from contextvars import ContextVar
 from typing import Collection
 
 from wrapt import wrap_function_wrapper
-from opentelemetry.trace import SpanKind, get_current_span, get_tracer, Tracer
+from opentelemetry.trace import SpanKind, get_tracer, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.metrics import Histogram, Meter, get_meter
 from opentelemetry.instrumentation.utils import unwrap
@@ -23,7 +23,7 @@ from .utils import _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
 _GEN_AI_OPERATION_PLAN = "plan"
-_crew_planning_span_active = ContextVar("crew_planning_span_active", default=False)
+_crew_planning_span = ContextVar("crew_planning_span", default=None)
 
 # Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
 # Uses GenAISystem (semconv-ai) and GenAiSystemValues (OTel upstream) — no raw strings.
@@ -252,7 +252,7 @@ def wrap_crew_planning(tracer, duration_histogram, token_histogram, wrapped, ins
             GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_AI_OPERATION_PLAN,
         },
     ) as span:
-        token = _crew_planning_span_active.set(True)
+        token = _crew_planning_span.set(span)
         try:
             result = wrapped(*args, **kwargs)
             span.set_status(Status(StatusCode.OK))
@@ -261,13 +261,13 @@ def wrap_crew_planning(tracer, duration_histogram, token_histogram, wrapped, ins
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
         finally:
-            _crew_planning_span_active.reset(token)
+            _crew_planning_span.reset(token)
 
 
 def wrap_create_planning_agent(wrapped, instance, args, kwargs):
     planner_agent = wrapped(*args, **kwargs)
-    if _crew_planning_span_active.get():
-        span = get_current_span()
+    span = _crew_planning_span.get()
+    if span is not None:
         agent_name = getattr(planner_agent, "role", None)
         agent_id = getattr(planner_agent, "id", None)
         if agent_name:
