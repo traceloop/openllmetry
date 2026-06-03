@@ -22,6 +22,8 @@ from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 from .utils import _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
+# "plan" is defined by the GenAI semantic conventions, but the generated
+# GenAiOperationNameValues enum may lag the convention release.
 _GEN_AI_OPERATION_PLAN = "plan"
 _crew_planning_span = ContextVar("crew_planning_span", default=None)
 
