@@ -49,6 +49,7 @@ def set_input_attributes(span, llm_request_type, kwargs):
 
 @dont_throw
 def set_model_input_attributes(span, kwargs):
+    """Set model input and request option attributes for the span from kwargs."""
     if not span.is_recording():
         return
     json_data = kwargs.get("json", {})
@@ -102,6 +103,7 @@ def set_response_attributes(span, token_histogram, llm_request_type, response):
 
 @dont_throw
 def set_model_response_attributes(span, token_histogram, llm_request_type, response):
+    """Set model response and finish reason attributes for the span from response."""
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
         return
 

@@ -10,6 +10,7 @@ from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 
 def test_set_model_input_attributes_semantic_conventions():
+    """Test mapping of standard GenAI input semantic conventions for Ollama."""
     span = MagicMock()
     span.is_recording.return_value = True
 
@@ -49,6 +50,7 @@ def test_set_model_input_attributes_semantic_conventions():
 
 
 def test_set_model_response_attributes_semantic_conventions():
+    """Test mapping of standard GenAI response semantic conventions for Ollama."""
     span = MagicMock()
     span.is_recording.return_value = True
 
