@@ -56,6 +56,22 @@ def set_model_input_attributes(span, kwargs):
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
+    _set_span_attribute(
+        span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream") or False
+    )
+
+    options = json_data.get("options")
+    if isinstance(options, dict):
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, options.get("temperature"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, options.get("top_p"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, options.get("top_k"))
+        _set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_REPETITION_PENALTY, options.get("repeat_penalty"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, options.get("presence_penalty"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, options.get("frequency_penalty"))
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, options.get("num_predict"))
+        stop_seq = options.get("stop")
+        if isinstance(stop_seq, list):
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, tuple(stop_seq))
 
 
 @dont_throw
@@ -110,6 +126,19 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
         input_tokens,
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, "Ollama")
+
+    done_reason = response.get("done_reason")
+    if done_reason is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON,
+            done_reason,
+        )
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS,
+            (done_reason,),
+        )
 
     if (
         token_histogram is not None
