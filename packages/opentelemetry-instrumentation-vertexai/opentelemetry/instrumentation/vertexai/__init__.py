@@ -1,5 +1,6 @@
 """OpenTelemetry Vertex AI instrumentation"""
 
+import inspect
 import logging
 import types
 from typing import Collection
@@ -151,7 +152,7 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
     for item in response:
         item_to_yield = item
         complete_response += str(item.text)
-        if item.usage_metadata:
+        if getattr(item, "usage_metadata", None):
             token_usage = item.usage_metadata
 
         yield item_to_yield
@@ -170,12 +171,12 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
     async for item in response:
         item_to_yield = item
         complete_response += str(item.text)
-        if item.usage_metadata:
+        if getattr(item, "usage_metadata", None):
             token_usage = item.usage_metadata
 
         yield item_to_yield
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(span, event_logger, llm_model, complete_response, token_usage)
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -191,13 +192,16 @@ async def _handle_request(span, event_logger, args, kwargs, llm_model):
 
 
 def _handle_response(span, event_logger, response, llm_model):
-    set_model_response_attributes(span, llm_model, response.usage_metadata)
+    token_usage = getattr(response, "usage_metadata", None)
+    set_model_response_attributes(span, llm_model, token_usage)
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
-        set_response_attributes(
-            span, llm_model, response.candidates[0].text if response.candidates else ""
-        )
+        generation_text = getattr(response, "text", "") or ""
+        if not generation_text and getattr(response, "candidates", None):
+            first_candidate = response.candidates[0]
+            generation_text = getattr(first_candidate, "text", str(first_candidate))
+        set_response_attributes(span, llm_model, generation_text)
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
 
@@ -245,7 +249,11 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
     await _handle_request(span, event_logger, args, kwargs, llm_model)
 
-    response = await wrapped(*args, **kwargs)
+    result = wrapped(*args, **kwargs)
+    if inspect.isasyncgen(result):
+        response = result
+    else:
+        response = await result
 
     if response:
         if is_streaming_response(response):
