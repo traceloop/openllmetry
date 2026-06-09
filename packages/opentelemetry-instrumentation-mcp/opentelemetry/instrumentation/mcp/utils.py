@@ -2,11 +2,16 @@
 
 import asyncio
 import logging
+import os
 import traceback
 
 
 class Config:
     exception_logger = None
+
+
+def should_send_prompts() -> bool:
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
 def dont_throw(func):
