@@ -197,6 +197,25 @@ def _set_model_response_attributes(span, llm_request_type, response):
         input_tokens,
     )
 
+    prompt_tokens_details = (
+        getattr(response.usage, "prompt_tokens_details", None)
+        or getattr(response.usage, "additional_properties", {}).get(
+            "prompt_tokens_details"
+        )
+    )
+    if prompt_tokens_details:
+        cached_tokens = (
+            prompt_tokens_details.get("cached_tokens")
+            if isinstance(prompt_tokens_details, dict)
+            else getattr(prompt_tokens_details, "cached_tokens", None)
+        )
+        if cached_tokens is not None:
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_tokens,
+            )
+
 
 def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
     accumulated_response = ChatCompletionResponse(
