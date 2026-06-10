@@ -27,6 +27,31 @@ def set_span_attribute(span, name, value):
     return
 
 
+def get_cache_creation_ttl_split(usage):
+    """Read Anthropic's per-TTL cache-creation token split from a Usage object or dict.
+
+    Anthropic exposes `usage.cache_creation.ephemeral_5m_input_tokens` and
+    `ephemeral_1h_input_tokens` alongside the flat `cache_creation_input_tokens`.
+    The breakdown is only populated when both TTLs are used in the same request;
+    returns (None, None) when absent so callers can skip emitting empty attrs.
+    """
+    cache_creation = (
+        usage.get("cache_creation") if isinstance(usage, dict)
+        else getattr(usage, "cache_creation", None)
+    )
+    if cache_creation is None:
+        return None, None
+    if isinstance(cache_creation, dict):
+        return (
+            cache_creation.get("ephemeral_5m_input_tokens"),
+            cache_creation.get("ephemeral_1h_input_tokens"),
+        )
+    return (
+        getattr(cache_creation, "ephemeral_5m_input_tokens", None),
+        getattr(cache_creation, "ephemeral_1h_input_tokens", None),
+    )
+
+
 def should_send_prompts():
     return (
         os.getenv(TRACELOOP_TRACE_CONTENT) or "true"

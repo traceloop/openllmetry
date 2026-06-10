@@ -29,6 +29,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    get_cache_creation_ttl_split,
     run_async,
     set_span_attribute,
     shared_metrics_attributes,
@@ -226,10 +227,13 @@ async def _aset_token_usage(
         prompt_tokens = getattr(usage, "input_tokens", 0)
         cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
         cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
+        cache_creation_5m, cache_creation_1h = get_cache_creation_ttl_split(usage)
     else:
         prompt_tokens = await acount_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
         cache_creation_tokens = 0
+        cache_creation_5m = None
+        cache_creation_1h = None
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
 
@@ -304,6 +308,18 @@ async def _aset_token_usage(
         SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
+    if cache_creation_5m is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_5M_INPUT_TOKENS,
+            cache_creation_5m,
+        )
+    if cache_creation_1h is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_1H_INPUT_TOKENS,
+            cache_creation_1h,
+        )
 
 
 @dont_throw
@@ -342,10 +358,13 @@ def _set_token_usage(
         prompt_tokens = getattr(usage, "input_tokens", 0)
         cache_read_tokens = getattr(usage, "cache_read_input_tokens", 0) or 0
         cache_creation_tokens = getattr(usage, "cache_creation_input_tokens", 0) or 0
+        cache_creation_5m, cache_creation_1h = get_cache_creation_ttl_split(usage)
     else:
         prompt_tokens = count_prompt_tokens_from_request(anthropic, request)
         cache_read_tokens = 0
         cache_creation_tokens = 0
+        cache_creation_5m = None
+        cache_creation_1h = None
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
 
@@ -420,6 +439,18 @@ def _set_token_usage(
         SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
         cache_creation_tokens,
     )
+    if cache_creation_5m is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_5M_INPUT_TOKENS,
+            cache_creation_5m,
+        )
+    if cache_creation_1h is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_1H_INPUT_TOKENS,
+            cache_creation_1h,
+        )
 
 
 def _with_chat_telemetry_wrapper(func):

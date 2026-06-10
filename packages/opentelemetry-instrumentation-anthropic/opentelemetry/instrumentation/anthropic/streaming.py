@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    get_cache_creation_ttl_split,
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
@@ -88,6 +89,9 @@ def _set_token_usage(
     cache_creation_tokens = (
         complete_response.get("usage", {}).get("cache_creation_input_tokens", 0) or 0
     )
+    cache_creation_5m, cache_creation_1h = get_cache_creation_ttl_split(
+        complete_response.get("usage", {})
+    )
 
     input_tokens = prompt_tokens + cache_read_tokens + cache_creation_tokens
     total_tokens = input_tokens + completion_tokens
@@ -104,6 +108,18 @@ def _set_token_usage(
     set_span_attribute(
         span, SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
     )
+    if cache_creation_5m is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_5M_INPUT_TOKENS,
+            cache_creation_5m,
+        )
+    if cache_creation_1h is not None:
+        set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_1H_INPUT_TOKENS,
+            cache_creation_1h,
+        )
 
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, complete_response.get("model")

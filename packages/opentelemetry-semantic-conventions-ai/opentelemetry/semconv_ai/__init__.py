@@ -67,6 +67,15 @@ class SpanAttributes:
     # GenAI Usage Cache Attributes (not yet in upstream OTel incubating semconv)
     GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
     GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
+    # Anthropic-specific TTL split of cache_creation tokens. Pricing differs per TTL
+    # (5m writes are 1.25x base input; 1h writes are 2.0x), so distinguishing them
+    # matters for accurate cost attribution.
+    GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_5M_INPUT_TOKENS = (
+        "gen_ai.usage.cache_creation.ephemeral_5m_input_tokens"
+    )
+    GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_1H_INPUT_TOKENS = (
+        "gen_ai.usage.cache_creation.ephemeral_1h_input_tokens"
+    )
 
     # LLM — project-policy attributes (not in upstream OTel spec)
     GEN_AI_USAGE_TOTAL_TOKENS = "gen_ai.usage.total_tokens"

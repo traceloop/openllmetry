@@ -156,6 +156,18 @@ class TestSpanAttributesCacheDotSeparator:
     def test_gen_ai_usage_cache_creation_input_tokens(self):
         assert SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
 
+    def test_gen_ai_usage_cache_creation_ephemeral_5m_input_tokens(self):
+        assert (
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_5M_INPUT_TOKENS
+            == "gen_ai.usage.cache_creation.ephemeral_5m_input_tokens"
+        )
+
+    def test_gen_ai_usage_cache_creation_ephemeral_1h_input_tokens(self):
+        assert (
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_EPHEMERAL_1H_INPUT_TOKENS
+            == "gen_ai.usage.cache_creation.ephemeral_1h_input_tokens"
+        )
+
 
 # ---------------------------------------------------------------------------
 # SpanAttributes — project-policy attributes use gen_ai namespace
