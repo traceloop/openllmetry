@@ -100,6 +100,15 @@ def set_model_response_attributes(
         )
         set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
 
+        prompt_token_details = usage.get("prompt_token_details") or {}
+        cached_tokens = prompt_token_details.get("cached_tokens")
+        if cached_tokens is not None:
+            set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_tokens,
+            )
+
     metrics_attributes = response_attributes(response, method)
 
     if (
