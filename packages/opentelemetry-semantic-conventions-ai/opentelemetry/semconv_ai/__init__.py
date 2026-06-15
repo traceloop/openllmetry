@@ -64,10 +64,6 @@ class Meters:
 
 
 class SpanAttributes:
-    # GenAI Usage Cache Attributes (not yet in upstream OTel incubating semconv)
-    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens"
-    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
-
     # LLM — project-policy attributes (not in upstream OTel spec)
     GEN_AI_USAGE_TOTAL_TOKENS = "gen_ai.usage.total_tokens"
     GEN_AI_USAGE_TOKEN_TYPE = "gen_ai.usage.token_type"
