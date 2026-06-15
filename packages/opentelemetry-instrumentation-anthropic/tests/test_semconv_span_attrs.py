@@ -1566,6 +1566,43 @@ def test_event_attributes_uses_provider_name_not_system():
         "Deprecated GEN_AI_SYSTEM should not be in EVENT_ATTRIBUTES"
 
 
+def test_emit_input_events_not_given_tools_emits_no_tools_event():
+    """tools=NOT_GIVEN must not produce a tools MessageEvent.
+
+    anthropic.NOT_GIVEN is not None, so the previous `is not None` guard
+    caused the sentinel to leak into the OTLP log body on tool-free requests.
+    """
+    import anthropic
+    from unittest.mock import MagicMock, patch
+    from opentelemetry.instrumentation.anthropic.event_emitter import emit_input_events
+
+    event_logger = MagicMock()
+    with patch(
+        "opentelemetry.instrumentation.anthropic.event_emitter.should_emit_events",
+        return_value=True,
+    ), patch(
+        "opentelemetry.instrumentation.anthropic.event_emitter.should_send_prompts",
+        return_value=True,
+    ):
+        emit_input_events(
+            event_logger,
+            {
+                "messages": [{"role": "user", "content": "hello"}],
+                "tools": anthropic.NOT_GIVEN,
+            },
+        )
+
+    # Only the user message event should be emitted — no tools event.
+    assert event_logger.emit.call_count == 1, (
+        f"Expected 1 emit call (user message only), got {event_logger.emit.call_count}; "
+        f"NOT_GIVEN sentinel must not trigger a tools MessageEvent"
+    )
+    emitted_event_name = event_logger.emit.call_args_list[0].args[0].event_name
+    assert emitted_event_name == "gen_ai.user.message", (
+        f"Expected gen_ai.user.message, got {emitted_event_name}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Regression: streaming must set token usage from API data even when
 # enrich_token_usage is False (the default). Fixes #3949.
