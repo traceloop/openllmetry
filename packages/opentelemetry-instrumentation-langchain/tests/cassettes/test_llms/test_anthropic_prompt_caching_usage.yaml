@@ -1,0 +1,32 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "Summarize
+      the cached document."}], "model": "claude-3-5-sonnet-20241022", "system": [{"type":
+      "text", "text": "You are a helpful assistant.", "cache_control": {"type": "ephemeral"}}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: '{"id": "msg_01PromptCacheCreation00000000", "type": "message", "role":
+        "assistant", "model": "claude-3-5-sonnet-20241022", "content": [{"type": "text",
+        "text": "Cached context acknowledged."}], "stop_reason": "end_turn", "stop_sequence":
+        null, "usage": {"input_tokens": 12, "output_tokens": 8, "cache_creation_input_tokens":
+        1024, "cache_read_input_tokens": 0}}'
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1

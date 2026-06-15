@@ -611,6 +611,33 @@ def test_openai_functions_with_events_with_no_content(
 
 
 @pytest.mark.vcr
+def test_anthropic_prompt_caching_usage(instrument_legacy, span_exporter, log_exporter):
+    # The recorded response carries prompt-cache usage as returned by Anthropic on a
+    # cache write: cache_creation_input_tokens > 0 (tokens used to create the cache)
+    # and cache_read_input_tokens == 0. langchain-anthropic surfaces these via
+    # usage_metadata["input_token_details"]["cache_creation"] / ["cache_read"]; the
+    # instrumentation must emit both as span attributes.
+    model = ChatAnthropic(model="claude-3-5-sonnet-20241022")
+
+    model.invoke("Summarize the cached document.")
+
+    spans = span_exporter.get_finished_spans()
+    anthropic_span = next(span for span in spans if span.name == "ChatAnthropic.chat")
+
+    # cache_creation is the attribute this test guards; cache_read is asserted too so
+    # a regression in the existing behavior is caught alongside it.
+    assert (
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS]
+        == 1024
+    )
+    assert (
+        anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS]
+        == 0
+    )
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 8
+
+
+@pytest.mark.vcr
 def test_anthropic(instrument_legacy, span_exporter, log_exporter):
     prompt = ChatPromptTemplate.from_messages(
         [("system", "You are a helpful assistant"), ("user", "{input}")]

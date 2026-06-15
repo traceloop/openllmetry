@@ -394,6 +394,7 @@ def set_chat_response_usage(
     output_tokens = 0
     total_tokens = 0
     cache_read_tokens = 0
+    cache_creation_tokens = 0
 
     # Early return if no generations to avoid potential issues
     if not response.generations:
@@ -424,6 +425,9 @@ def set_chat_response_usage(
                             "input_token_details", {}
                         )
                         cache_read_tokens += input_token_details.get("cache_read", 0)
+                        cache_creation_tokens += input_token_details.get(
+                            "cache_creation", 0
+                        )
     except Exception as e:
         # If there's any issue processing usage metadata, continue without it
         logger.warning("Error processing usage metadata: %s", e)
@@ -434,6 +438,7 @@ def set_chat_response_usage(
         or output_tokens > 0
         or total_tokens > 0
         or cache_read_tokens > 0
+        or cache_creation_tokens > 0
     ):
         _set_span_attribute(
             span,
@@ -454,6 +459,11 @@ def set_chat_response_usage(
             span,
             SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
             cache_read_tokens,
+        )
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            cache_creation_tokens,
         )
         if record_token_usage:
             vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
