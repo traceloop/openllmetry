@@ -437,8 +437,8 @@ def set_chat_response_usage(
         input_tokens > 0
         or output_tokens > 0
         or total_tokens > 0
-        or cache_read_tokens > 0
-        or cache_creation_tokens > 0
+        or cache_read_tokens >= 0
+        or cache_creation_tokens >= 0
     ):
         _set_span_attribute(
             span,
@@ -462,7 +462,7 @@ def set_chat_response_usage(
         )
         _set_span_attribute(
             span,
-            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
             cache_creation_tokens,
         )
         if record_token_usage:
