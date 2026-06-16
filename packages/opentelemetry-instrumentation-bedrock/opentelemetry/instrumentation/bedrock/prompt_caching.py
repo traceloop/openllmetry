@@ -53,8 +53,12 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
             GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
             write_cached_tokens,
         )
-    if write_cached_tokens is not None or read_cached_tokens is not None:
-        if (write_cached_tokens or 0) >= (read_cached_tokens or 0):
-            span.set_attribute(CacheSpanAttrs.CACHED, "write")
-        else:
-            span.set_attribute(CacheSpanAttrs.CACHED, "read")
+    if write_cached_tokens is not None and read_cached_tokens is not None:
+        span.set_attribute(
+            CacheSpanAttrs.CACHED,
+            "write" if write_cached_tokens >= read_cached_tokens else "read",
+        )
+    elif write_cached_tokens is not None:
+        span.set_attribute(CacheSpanAttrs.CACHED, "write")
+    elif read_cached_tokens is not None:
+        span.set_attribute(CacheSpanAttrs.CACHED, "read")
