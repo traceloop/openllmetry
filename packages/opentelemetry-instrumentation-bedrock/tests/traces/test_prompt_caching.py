@@ -41,7 +41,8 @@ def test_invoke_model_cache_tokens(instrument_legacy, brt, span_exporter, log_ex
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 2
 
-    write_span, read_span = spans[0], spans[1]
+    write_span = next(s for s in spans if s.attributes.get(CacheSpanAttrs.CACHED) == "write")
+    read_span = next(s for s in spans if s.attributes.get(CacheSpanAttrs.CACHED) == "read")
 
     # legacy marker
     assert write_span.attributes.get(CacheSpanAttrs.CACHED) == "write"
