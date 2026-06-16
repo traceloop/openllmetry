@@ -393,8 +393,8 @@ def set_chat_response_usage(
     input_tokens = 0
     output_tokens = 0
     total_tokens = 0
-    cache_read_tokens = 0
-    cache_creation_tokens = 0
+    cache_read_tokens = None
+    cache_creation_tokens = None
 
     # Early return if no generations to avoid potential issues
     if not response.generations:
@@ -424,10 +424,12 @@ def set_chat_response_usage(
                         input_token_details = generation.message.usage_metadata.get(
                             "input_token_details", {}
                         )
-                        cache_read_tokens += input_token_details.get("cache_read", 0)
-                        cache_creation_tokens += input_token_details.get(
-                            "cache_creation", 0
-                        )
+                        raw_cache_read = input_token_details.get("cache_read")
+                        if isinstance(raw_cache_read, (int, float)):
+                            cache_read_tokens = (cache_read_tokens or 0) + raw_cache_read
+                        raw_cache_creation = input_token_details.get("cache_creation")
+                        if isinstance(raw_cache_creation, (int, float)):
+                            cache_creation_tokens = (cache_creation_tokens or 0) + raw_cache_creation
     except Exception as e:
         # If there's any issue processing usage metadata, continue without it
         logger.warning("Error processing usage metadata: %s", e)
@@ -437,8 +439,8 @@ def set_chat_response_usage(
         input_tokens > 0
         or output_tokens > 0
         or total_tokens > 0
-        or cache_read_tokens >= 0
-        or cache_creation_tokens >= 0
+        or cache_read_tokens is not None
+        or cache_creation_tokens is not None
     ):
         _set_span_attribute(
             span,
