@@ -9,7 +9,10 @@ from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
 from openai._response import APIResponse, AsyncAPIResponse
 from opentelemetry import context as context_api
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    suppress_http_instrumentation,
+)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
     openai_attributes as OpenAIAttributes,
@@ -491,7 +494,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     try:
-        response = wrapped(*args, **kwargs)
+        # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+        with suppress_http_instrumentation():
+            response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
@@ -662,7 +667,9 @@ async def async_responses_get_or_create_wrapper(
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     try:
-        response = await wrapped(*args, **kwargs)
+        # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+        with suppress_http_instrumentation():
+            response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
@@ -825,7 +832,9 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
 
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
-    response = wrapped(*args, **kwargs)
+    # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+    with suppress_http_instrumentation():
+        response = wrapped(*args, **kwargs)
     if isinstance(response, Stream):
         return response
     parsed_response = parse_response(response)
@@ -857,7 +866,9 @@ async def async_responses_cancel_wrapper(
 
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
-    response = await wrapped(*args, **kwargs)
+    # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+    with suppress_http_instrumentation():
+        response = await wrapped(*args, **kwargs)
     if isinstance(response, (Stream, AsyncStream)):
         return response
     parsed_response = await async_parse_response(response)

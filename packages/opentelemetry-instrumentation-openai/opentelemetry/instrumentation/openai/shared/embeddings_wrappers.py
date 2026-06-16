@@ -30,7 +30,10 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
     start_as_current_span_async,
 )
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    suppress_http_instrumentation,
+)
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv._incubating.attributes import (
@@ -80,7 +83,9 @@ def embeddings_wrapper(
         try:
             # record time for duration
             start_time = time.time()
-            response = wrapped(*args, **kwargs)
+            # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+            with suppress_http_instrumentation():
+                response = wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
             end_time = time.time()
@@ -145,7 +150,9 @@ async def aembeddings_wrapper(
         try:
             # record time for duration
             start_time = time.time()
-            response = await wrapped(*args, **kwargs)
+            # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+            with suppress_http_instrumentation():
+                response = await wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
             end_time = time.time()
