@@ -88,20 +88,20 @@ async def test_fastmcp_comprehensive_attributes(span_exporter, tracer_provider) 
     if output_attr:  # Content tracing enabled
         output_data = json.loads(output_attr)
 
-        # Actual format: [{"content": "...", "type": "text"}]
+        # Actual format: [{"text": "...", "type": "text", ...}]
         assert isinstance(output_data, list)
         assert len(output_data) > 0
 
-        # First item should have content
+        # First item should have text field (FastMCP Content object)
         first_item = output_data[0]
-        assert "content" in first_item
+        assert "text" in first_item
         assert "type" in first_item
 
-        # The content should contain the JSON-encoded tool result
-        content = first_item["content"]
-        assert "15" in content  # Sum of [1,2,3,4,5]
-        assert "sum" in content
-        assert "test_user" in content
+        # The text should contain the JSON-encoded tool result
+        text_content = first_item["text"]
+        assert "15" in text_content  # Sum of [1,2,3,4,5]
+        assert "sum" in text_content
+        assert "test_user" in text_content
 
     # Test 6: Verify resource spans
     resource_spans = [span for span in spans if span.name == "fastmcp.resource.read"]
