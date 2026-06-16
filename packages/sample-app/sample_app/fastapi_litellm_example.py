@@ -2,7 +2,8 @@ import os
 
 import litellm
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from pydantic import BaseModel
 
 from traceloop.sdk import Traceloop
@@ -10,7 +11,7 @@ from traceloop.sdk.decorators import task, workflow
 
 load_dotenv()
 
-Traceloop.init(app_name="fastapi_litellm_example", disable_batch=True)
+Traceloop.init(app_name="fastapi_litellm_example", disable_batch=True, exporter=ConsoleSpanExporter())
 
 app = FastAPI()
 
@@ -24,6 +25,8 @@ def call_llm(message: str) -> str:
         messages=[{"role": "user", "content": message}],
         api_base=os.environ.get("LLM_API_BASE", None),
     )
+    if not response.choices or not response.choices[0].message.content:
+        raise ValueError("Empty response from LLM")
     return response.choices[0].message.content
 
 @workflow(name="chat_workflow")
@@ -32,6 +35,9 @@ def chat_workflow(message: str) -> str:
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    reply = chat_workflow(request.message)
+    try:
+        reply = chat_workflow(request.message)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
     return {"reply": reply}
 
