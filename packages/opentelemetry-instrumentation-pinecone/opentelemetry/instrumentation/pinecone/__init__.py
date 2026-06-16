@@ -67,12 +67,92 @@ WRAPPED_METHODS = [
         "method": "delete",
         "span_name": "pinecone.delete",
     },
+    {
+        "object": "PineconeInference",
+        "method": "embed",
+        "span_name": "pinecone.inference.embed",
+    },
+    {
+        "object": "PineconeInference",
+        "method": "rerank",
+        "span_name": "pinecone.inference.rerank",
+    },
 ]
 
 
 @dont_throw
 def _set_input_attributes(span, instance, kwargs):
     set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, instance._config.host)
+
+
+@dont_throw
+def _set_inference_input_attributes(span, kwargs):
+    """Set span attributes for Pinecone Inference API calls."""
+    model = kwargs.get("model")
+    if model:
+        set_span_attribute(span, AISpanAttributes.GEN_AI_REQUEST_MODEL, str(model))
+
+    # For embed: inputs is a list of texts
+    inputs = kwargs.get("inputs")
+    if inputs is not None:
+        if isinstance(inputs, list):
+            set_span_attribute(
+                span, AISpanAttributes.GEN_AI_USAGE_INPUT_COUNT, len(inputs)
+            )
+        else:
+            set_span_attribute(span, AISpanAttributes.GEN_AI_USAGE_INPUT_COUNT, 1)
+
+    # For rerank: query and documents
+    query = kwargs.get("query")
+    if query:
+        set_span_attribute(span, AISpanAttributes.GEN_AI_INPUT_CONTENT, str(query))
+
+    top_n = kwargs.get("top_n")
+    if top_n is not None:
+        set_span_attribute(span, SpanAttributes.PINECONE_RERANK_TOP_N, top_n)
+
+
+@dont_throw
+def _set_inference_response_attributes(span, response):
+    """Set span attributes for Pinecone Inference API responses."""
+    if response is None:
+        return
+
+    # For embed responses
+    if hasattr(response, "data") and response.data:
+        set_span_attribute(
+            span, AISpanAttributes.GEN_AI_USAGE_OUTPUT_COUNT, len(response.data)
+        )
+        # Embedding dimensions from first embedding
+        first_emb = response.data[0]
+        if hasattr(first_emb, "values") and first_emb.values:
+            set_span_attribute(
+                span,
+                SpanAttributes.PINECONE_EMBEDDING_DIMENSIONALITY,
+                len(first_emb.values),
+            )
+
+    # For rerank responses
+    if hasattr(response, "results") and response.results:
+        set_span_attribute(
+            span, SpanAttributes.PINECONE_RERANK_RESULT_COUNT, len(response.results)
+        )
+
+    # Usage info
+    usage = None
+    if hasattr(response, "usage"):
+        usage = response.usage
+    elif isinstance(response, dict) and response.get("usage"):
+        usage = response["usage"]
+
+    if usage:
+        read_units = getattr(usage, "read_units", None) or (
+            usage.get("read_units") if isinstance(usage, dict) else None
+        )
+        if read_units:
+            set_span_attribute(
+                span, AISpanAttributes.PINECONE_USAGE_READ_UNITS, read_units
+            )
 
 
 @dont_throw
@@ -138,19 +218,26 @@ def _wrap(
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
+    is_inference = name is not None and name.startswith("pinecone.inference.")
+
+    span_attributes = {}
+    if not is_inference:
+        span_attributes[AISpanAttributes.VECTOR_DB_VENDOR] = "Pinecone"
+
     with tracer.start_as_current_span(
         name,
         kind=SpanKind.CLIENT,
-        attributes={
-            AISpanAttributes.VECTOR_DB_VENDOR: "Pinecone",
-        },
+        attributes=span_attributes,
         record_exception=False,
         set_status_on_exception=False,
     ) as span:
         if span.is_recording():
-            _set_input_attributes(span, instance, kwargs)
-            if to_wrap.get("method") == "query":
-                set_query_input_attributes(span, kwargs)
+            if is_inference:
+                _set_inference_input_attributes(span, kwargs)
+            else:
+                _set_input_attributes(span, instance, kwargs)
+                if to_wrap.get("method") == "query":
+                    set_query_input_attributes(span, kwargs)
 
         shared_attributes = {}
         if hasattr(instance, "_config"):
@@ -172,16 +259,21 @@ def _wrap(
 
         if response:
             if span.is_recording():
-                if to_wrap.get("method") == "query":
-                    set_query_response(span, scores_metric, shared_attributes, response)
+                if is_inference:
+                    _set_inference_response_attributes(span, response)
+                else:
+                    if to_wrap.get("method") == "query":
+                        set_query_response(
+                            span, scores_metric, shared_attributes, response
+                        )
 
-                _set_response_attributes(
-                    span,
-                    read_units_metric,
-                    write_units_metric,
-                    shared_attributes,
-                    response,
-                )
+                    _set_response_attributes(
+                        span,
+                        read_units_metric,
+                        write_units_metric,
+                        shared_attributes,
+                        response,
+                    )
 
                 span.set_status(Status(StatusCode.OK))
 
@@ -265,40 +357,26 @@ class PineconeInstrumentor(BaseInstrumentor):
                             wrapped_method,
                         ),
                     )
-            elif wrap_object == "GRPCIndex":
+            elif wrap_object == "PineconeInference":
+                # Pinecone Inference API (embed, rerank)
+                # The inference module is at pinecone.inference
                 try:
-                    if importlib.util.find_spec("pinecone.db_data.index") is not None:
-                        try:
-                            wrap_function_wrapper(
-                                "pinecone.db_data.index",
-                                f"{wrap_object}.{wrap_method}",
-                                _wrap(
-                                    tracer,
-                                    query_duration_metric,
-                                    read_units_metric,
-                                    write_units_metric,
-                                    scores_metric,
-                                    wrapped_method,
-                                ),
-                            )
-                            continue
-                        except (ImportError, AttributeError):
-                            pass
-                except (ModuleNotFoundError, ImportError):
-                    pass
-
-                if getattr(pinecone, wrap_object, None):
-                    wrap_function_wrapper(
-                        "pinecone",
-                        f"{wrap_object}.{wrap_method}",
-                        _wrap(
-                            tracer,
-                            query_duration_metric,
-                            read_units_metric,
-                            write_units_metric,
-                            scores_metric,
-                            wrapped_method,
-                        ),
+                    if getattr(pinecone, "inference", None):
+                        wrap_function_wrapper(
+                            "pinecone.inference",
+                            f"{wrap_object}.{wrap_method}",
+                            _wrap(
+                                tracer,
+                                query_duration_metric,
+                                read_units_metric,
+                                write_units_metric,
+                                scores_metric,
+                                wrapped_method,
+                            ),
+                        )
+                except (ModuleNotFoundError, ImportError, AttributeError) as e:
+                    logger.debug(
+                        f"Failed to wrap pinecone.inference.{wrap_object}.{wrap_method}: {e}"
                     )
 
     def _uninstrument(self, **kwargs):
@@ -320,6 +398,14 @@ class PineconeInstrumentor(BaseInstrumentor):
                 except Exception as e:
                     logger.debug(
                         f"Failed to unwrap pinecone.db_data.index.GRPCIndex.{wrap_method_name}: {e}"
+                    )
+
+            if wrap_object == "PineconeInference":
+                try:
+                    unwrap(f"pinecone.inference.{wrap_object}", wrap_method_name)
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to unwrap pinecone.inference.{wrap_object}.{wrap_method_name}: {e}"
                     )
 
             try:
