@@ -106,11 +106,11 @@ def set_llm_chat_response_model_attributes(event, span):
         span.set_attribute(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, int(usage.total_tokens))
     if usage.cache_read_tokens is not None:
         span.set_attribute(
-            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, int(usage.cache_read_tokens)
+            GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, int(usage.cache_read_tokens)
         )
     if usage.cache_creation_tokens is not None:
         span.set_attribute(
-            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
             int(usage.cache_creation_tokens),
         )
 
