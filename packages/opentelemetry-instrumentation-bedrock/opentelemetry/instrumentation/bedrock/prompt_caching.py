@@ -36,10 +36,10 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
                 CacheSpanAttrs.TYPE: "read",
             },
         )
-        if read_cached_tokens > 0:
+        if read_cached_tokens >= 0:
             span.set_attribute(CacheSpanAttrs.CACHED, "read")
         span.set_attribute(
-            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, read_cached_tokens
+            GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, read_cached_tokens
         )
     if CachingHeaders.WRITE in headers:
         write_cached_tokens = int(headers[CachingHeaders.WRITE])
@@ -50,9 +50,9 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
                 CacheSpanAttrs.TYPE: "write",
             },
         )
-        if write_cached_tokens > 0:
+        if write_cached_tokens >= 0:
             span.set_attribute(CacheSpanAttrs.CACHED, "write")
         span.set_attribute(
-            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
             write_cached_tokens,
         )
