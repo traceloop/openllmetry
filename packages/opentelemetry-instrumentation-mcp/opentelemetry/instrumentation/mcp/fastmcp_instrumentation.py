@@ -9,7 +9,7 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw, should_send_prompts
+from .utils import dont_throw, should_send_prompts, SUPPRESSED_ERROR_DESCRIPTION
 
 
 class FastMCPInstrumentor:
@@ -81,8 +81,15 @@ class FastMCPInstrumentor:
 
             entity_name = tool_key if tool_key else "unknown_tool"
 
-            # Create parent server.mcp span
-            with self._tracer.start_as_current_span("mcp.server") as mcp_span:
+            # Create parent server.mcp span. Disable the SDK's automatic
+            # exception recording/status so that, when content tracing is off,
+            # the exception message and stacktrace (which can echo tool content)
+            # are not leaked onto the span - we set status/record explicitly below.
+            with self._tracer.start_as_current_span(
+                "mcp.server",
+                record_exception=False,
+                set_status_on_exception=False,
+            ) as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
                 if self._server_name:
@@ -90,7 +97,11 @@ class FastMCPInstrumentor:
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
-                with self._tracer.start_as_current_span(span_name) as tool_span:
+                with self._tracer.start_as_current_span(
+                    span_name,
+                    record_exception=False,
+                    set_status_on_exception=False,
+                ) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                     if self._server_name:
@@ -111,13 +122,21 @@ class FastMCPInstrumentor:
                     try:
                         result = await wrapped(*args, **kwargs)
                     except Exception as e:
+                        # The exception message/stacktrace can echo tool content
+                        # (the tool's error text or arguments), so only record it
+                        # when content tracing is enabled. The ERROR status and
+                        # error type are kept either way so failures stay visible.
                         tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        tool_span.record_exception(e)
-                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
-
                         mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        mcp_span.record_exception(e)
-                        mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        if self._should_send_prompts():
+                            tool_span.record_exception(e)
+                            tool_span.set_status(Status(StatusCode.ERROR, str(e)))
+                            mcp_span.record_exception(e)
+                            mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        else:
+                            suppressed = f"{type(e).__name__} {SUPPRESSED_ERROR_DESCRIPTION}"
+                            tool_span.set_status(Status(StatusCode.ERROR, suppressed))
+                            mcp_span.set_status(Status(StatusCode.ERROR, suppressed))
                         raise
 
                     try:
