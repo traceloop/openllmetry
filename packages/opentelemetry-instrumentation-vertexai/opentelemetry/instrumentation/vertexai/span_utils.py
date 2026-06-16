@@ -318,6 +318,6 @@ def set_model_response_attributes(span, llm_model, token_usage):
         if cached_content_token_count is not None:
             _set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 cached_content_token_count,
             )
