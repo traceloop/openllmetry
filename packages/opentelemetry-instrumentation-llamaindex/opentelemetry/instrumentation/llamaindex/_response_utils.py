@@ -26,6 +26,8 @@ class TokenUsage:
     input_tokens: Optional[int] = None
     output_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
+    cache_read_tokens: Optional[int] = None
+    cache_creation_tokens: Optional[int] = None
 
 
 def detect_provider_name(instance_or_class_name: Any) -> Optional[str]:
@@ -63,10 +65,13 @@ def extract_response_id(raw: Any) -> Optional[str]:
 
 
 def extract_token_usage(raw: Any) -> TokenUsage:
-    """Extract token usage from raw response. Handles OpenAI, Cohere, and dict formats."""
+    """Extract token usage from raw response. Handles OpenAI, Anthropic, Cohere, and dict formats."""
     usage = _get_nested(raw, "usage")
     if usage:
         result = _extract_openai_usage(usage)
+        if result.input_tokens is not None:
+            return result
+        result = _extract_anthropic_usage(usage)
         if result.input_tokens is not None:
             return result
 
@@ -90,16 +95,53 @@ def _get_nested(obj: Any, key: str) -> Any:
 def _extract_openai_usage(usage: Any) -> TokenUsage:
     """Extract tokens from OpenAI-style usage object/dict."""
     if hasattr(usage, "completion_tokens"):
+        details = getattr(usage, "prompt_tokens_details", None)
+        cached = getattr(details, "cached_tokens", None) if details is not None else None
         return TokenUsage(
             input_tokens=usage.prompt_tokens,
             output_tokens=usage.completion_tokens,
             total_tokens=usage.total_tokens,
+            cache_read_tokens=cached,
         )
-    if isinstance(usage, dict):
+    if isinstance(usage, dict) and (
+        "prompt_tokens" in usage or "completion_tokens" in usage
+    ):
+        details = usage.get("prompt_tokens_details") or {}
         return TokenUsage(
             input_tokens=usage.get("prompt_tokens"),
             output_tokens=usage.get("completion_tokens"),
             total_tokens=usage.get("total_tokens"),
+            cache_read_tokens=details.get("cached_tokens"),
+        )
+    return TokenUsage()
+
+
+def _extract_anthropic_usage(usage: Any) -> TokenUsage:
+    """Extract tokens from Anthropic-style usage object/dict.
+
+    Anthropic uses `input_tokens` / `output_tokens` (not prompt/completion) and exposes
+    cache fields as siblings of input_tokens. Cache fields are disjoint from input_tokens
+    (additive), unlike OpenAI's subset semantics — see project-cache-token-semantics memo.
+    """
+    if hasattr(usage, "input_tokens") and hasattr(usage, "output_tokens"):
+        inp = getattr(usage, "input_tokens", None)
+        out = getattr(usage, "output_tokens", None)
+        return TokenUsage(
+            input_tokens=inp,
+            output_tokens=out,
+            total_tokens=_safe_sum(inp, out),
+            cache_read_tokens=getattr(usage, "cache_read_input_tokens", None),
+            cache_creation_tokens=getattr(usage, "cache_creation_input_tokens", None),
+        )
+    if isinstance(usage, dict) and "input_tokens" in usage and "output_tokens" in usage:
+        inp = usage.get("input_tokens")
+        out = usage.get("output_tokens")
+        return TokenUsage(
+            input_tokens=inp,
+            output_tokens=out,
+            total_tokens=_safe_sum(inp, out),
+            cache_read_tokens=usage.get("cache_read_input_tokens"),
+            cache_creation_tokens=usage.get("cache_creation_input_tokens"),
         )
     return TokenUsage()
 
