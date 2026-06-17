@@ -1,0 +1,31 @@
+interactions:
+- request:
+    body: '{"model":"mistral-tiny","messages":[{"content":"Tell me a joke about OpenTelemetry","role":"user"}],"stream":false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '115'
+      content-type:
+      - application/json
+      host:
+      - api.mistral.ai
+      user-agent:
+      - mistral-client-python/1.9.10
+    method: POST
+    uri: https://api.mistral.ai/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"abc123cached456","object":"chat.completion","created":1757759490,"model":"mistral-tiny","choices":[{"index":0,"message":{"role":"assistant","content":"Why
+        did OpenTelemetry go to therapy? Because it had too many unresolved traces!","tool_calls":null},"finish_reason":"stop","logprobs":null}],"usage":{"prompt_tokens":20,"completion_tokens":18,"total_tokens":38,"prompt_tokens_details":{"cached_tokens":10}}}'
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
