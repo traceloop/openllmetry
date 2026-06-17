@@ -172,6 +172,7 @@ def set_model_input_attributes(span, kwargs):
                 pass
 
 
+@dont_throw
 def set_streaming_response_attributes(
     span,
     accumulated_content,
@@ -194,6 +195,7 @@ def set_streaming_response_attributes(
         set_span_attribute(span, GEN_AI_DEEPSEEK_REASONING_CONTENT, accumulated_reasoning)
 
 
+@dont_throw
 def set_model_streaming_response_attributes(span, usage, finish_reasons=None):
     if not span.is_recording():
         return
@@ -256,6 +258,7 @@ def set_model_response_attributes(span, response, token_histogram):
         )
 
 
+@dont_throw
 def set_response_attributes(span, response):
     if not span.is_recording() or not should_send_prompts():
         return
