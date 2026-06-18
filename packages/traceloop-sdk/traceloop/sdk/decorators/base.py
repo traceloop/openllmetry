@@ -137,14 +137,12 @@ def _is_async_method(fn):
 
 def _setup_span(entity_name, tlp_span_kind, version):
     """Sets up the OpenTelemetry span and context"""
-    if tlp_span_kind in [
-        TraceloopSpanKindValues.WORKFLOW,
-        TraceloopSpanKindValues.AGENT,
-    ]:
+    if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
         set_workflow_name(entity_name)
-
-    if tlp_span_kind == TraceloopSpanKindValues.AGENT:
+    elif tlp_span_kind == TraceloopSpanKindValues.AGENT:
         set_agent_name(entity_name)
+        if context_api.get_value("workflow_name") is None:
+            set_workflow_name(entity_name)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
