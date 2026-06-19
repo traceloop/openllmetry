@@ -1,3 +1,33 @@
+## v0.61.0 (2026-05-31)
+
+### Feat
+
+- **sdk**: expose use_legacy_attributes via Traceloop.init() (#4133)
+- **bedrock**: add async support for aioboto3 (#4135)
+- **openai-agents**: GenAI semconv compliance (#3837)
+
+### Fix
+
+- **openai**: instrument responses.parse() for structured-output tracing (#4198)
+- **langchain,anthropic,groq,mistralai,bedrock,ollama,sagemaker,together**: record exceptions and set ERROR status on failed spans (#4101)
+- **vector-db**: emit consistent embeddings_count, result_count, similarity attrs across Pinecone and Milvus (#1870) (#4156)
+- **sdk**: warn when both exporter and processor are passed to Traceloop.init() (#4137)
+- **openai-agents**: capture response.instructions as system prompt in generation spans (#4131)
+- **openai-agents**: emit cache_read.input_tokens and reasoning_tokens (#4130)
+- **chromadb**: emit one result event per document across all queries (#4105)
+- **mcp**: set error.type attribute on protocol-level tool errors (#4103)
+- **sdk**: replace deprecated Pydantic .json() and double-encoding .model_dump_json() in JSONEncoders (#4098)
+- **chromadb,lancedb,weaviate,pinecone**: record exceptions and set ERROR status on failed span (#4102)
+- **langchain**: remove orphaned context_api.attach() in on_chain_end (#4100)
+- **langchain**: use positional args for wrap_function_wrapper for wrapt v1/v2 compat, fix BaseChatOpenAI uninstrument (#4082)
+- **langchain**: handle ToolNode in create_react_agent tool iteration (#4081)
+- **openai**: remove redundant try/finally in ResponseStream close and aclose (#4080)
+- **anthropic**: prevent KeyError/IndexError in streaming tool use delta handler (#4079)
+- **openai**: guard against AsyncAPIResponse without .id in async responses wrapper (#4078)
+- **anthropic**: always set streaming token usage from API data (#3949) (#3976)
+- **instrumentation**: langchain association properties context cleanup (#4055)
+- **evaluator**: add reason to PII detector response (#4026)
+
 ## v0.60.0 (2026-04-19)
 
 ### Feat
