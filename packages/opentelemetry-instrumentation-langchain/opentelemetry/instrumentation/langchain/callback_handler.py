@@ -683,11 +683,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
             serialized=serialized,
         )
-        set_request_params(span, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id], metadata)
         if should_emit_events():
             self._emit_chat_input_events(messages)
         else:
-            set_chat_request(span, serialized, messages, kwargs, self.spans[run_id])
+            set_chat_request(
+                span, serialized, messages, kwargs, self.spans[run_id], metadata
+            )
 
     @dont_throw
     def on_llm_start(
@@ -713,12 +715,14 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             LLMRequestTypeValues.COMPLETION,
             serialized=serialized,
         )
-        set_request_params(span, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id], metadata)
         if should_emit_events():
             for prompt in prompts:
                 emit_event(MessageEvent(content=prompt, role="user"))
         else:
-            set_llm_request(span, serialized, prompts, kwargs, self.spans[run_id])
+            set_llm_request(
+                span, serialized, prompts, kwargs, self.spans[run_id], metadata
+            )
 
     @dont_throw
     def on_llm_end(
