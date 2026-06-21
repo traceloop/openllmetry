@@ -84,8 +84,10 @@ def _set_response_attributes(span, method, response):
                         succeeded += 1
                 span.set_attribute("azure_search.affected_documents", affected)
                 span.set_attribute("azure_search.succeeded_documents", succeeded)
+                return affected, succeeded
     except Exception as e:
         logger.debug("Failed to set response attributes: %s", e)
+    return None, None
 
 
 def _wrap(tracer, to_wrap):
@@ -119,8 +121,11 @@ def _wrap(tracer, to_wrap):
                 span.set_attribute("azure_search.duration", round(duration, 4))
 
             if span.is_recording():
-                _set_response_attributes(span, method, response)
-                span.set_status(Status(StatusCode.OK))
+                affected, succeeded = _set_response_attributes(span, method, response)
+                if affected is not None and succeeded is not None and succeeded < affected:
+                    span.set_status(Status(StatusCode.ERROR, f"{affected - succeeded} document(s) failed to index"))
+                else:
+                    span.set_status(Status(StatusCode.OK))
 
             return response
 
