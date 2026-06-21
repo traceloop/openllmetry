@@ -26,8 +26,17 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
                 del o["callbacks"]
                 return o
 
-        if dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
+        if dataclasses.is_dataclass(o) and not isinstance(o, type):
+            try:
+                return dataclasses.asdict(o)
+            except TypeError:
+                # asdict() deep-copies every field, which fails when an
+                # attribute holds a non-copyable object such as a threading
+                # lock (seen with langchain HTTP-client wrappers). Fall back
+                # to a shallow field map and let the encoder recurse / stringify.
+                return {
+                    f.name: getattr(o, f.name) for f in dataclasses.fields(o)
+                }
 
         if hasattr(o, "to_json"):
             return o.to_json()
