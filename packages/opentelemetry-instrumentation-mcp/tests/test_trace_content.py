@@ -55,6 +55,8 @@ async def test_trace_content_false_suppresses_mcp_method_spans(
     mcp_spans = [s for s in spans if s.name.endswith(".mcp")]
     assert len(mcp_spans) >= 1, f"Expected .mcp spans, got: {[s.name for s in spans]}"
 
+    from opentelemetry.trace.status import StatusCode
+
     for span in mcp_spans:
         assert "traceloop.entity.input" not in span.attributes, (
             f"Input must be absent on {span.name} when TRACELOOP_TRACE_CONTENT=false"
@@ -62,6 +64,21 @@ async def test_trace_content_false_suppresses_mcp_method_spans(
         assert "traceloop.entity.output" not in span.attributes, (
             f"Output must be absent on {span.name} when TRACELOOP_TRACE_CONTENT=false"
         )
+        # Metadata must survive content suppression: the method name is encoded
+        # in the span name, and the call's success status is still recorded.
+        method = span.name[: -len(".mcp")]
+        assert method, (
+            f"Method name metadata must be preserved in span name, got: {span.name!r}"
+        )
+        assert span.status.status_code == StatusCode.OK, (
+            f"Status metadata must be preserved on {span.name}, "
+            f"got: {span.status.status_code}"
+        )
+
+    # The specific method invoked must be among the traced metadata.
+    assert any(s.name == "tools/list.mcp" for s in mcp_spans), (
+        f"Expected a tools/list.mcp span, got: {[s.name for s in mcp_spans]}"
+    )
 
 
 async def test_trace_content_true_includes_tool_input_output(
@@ -125,6 +142,14 @@ async def test_trace_content_false_suppresses_error_response_text(
     error_spans = [s for s in spans if s.status.status_code == StatusCode.ERROR]
     assert len(error_spans) >= 1, (
         f"Expected at least one ERROR span, got: {[s.name for s in spans]}"
+    )
+
+    # Error metadata must survive content suppression: even though the message
+    # text is redacted, the error class is still recorded so failures remain
+    # diagnosable by type.
+    assert all(s.attributes.get("error.type") for s in error_spans), (
+        "error.type metadata must be preserved on ERROR spans when "
+        f"TRACELOOP_TRACE_CONTENT=false, got: {[dict(s.attributes) for s in error_spans]}"
     )
 
     # secret_ticker is both the call argument and part of the tool's error
