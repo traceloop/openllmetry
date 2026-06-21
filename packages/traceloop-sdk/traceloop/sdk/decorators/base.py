@@ -141,8 +141,6 @@ def _setup_span(entity_name, tlp_span_kind, version):
         set_workflow_name(entity_name)
     elif tlp_span_kind == TraceloopSpanKindValues.AGENT:
         set_agent_name(entity_name)
-        if context_api.get_value("workflow_name") is None:
-            set_workflow_name(entity_name)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
