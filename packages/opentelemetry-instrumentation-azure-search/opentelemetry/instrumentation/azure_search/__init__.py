@@ -1,4 +1,4 @@
-""" OpenTelemetry Azure AI Search instrumentation """
+"""OpenTelemetry Azure AI Search instrumentation"""
 
 import logging
 import time
@@ -75,14 +75,17 @@ def _set_response_attributes(span, method, response):
     try:
         if method in ("upload_documents", "merge_documents",
                       "merge_or_upload_documents", "delete_documents"):
-            results = list(response) if hasattr(response, "__iter__") else []
-            succeeded = sum(1 for r in results if r.succeeded)
-            span.set_attribute("azure_search.affected_documents", len(results))
-            span.set_attribute("azure_search.succeeded_documents", succeeded)
-            return results
+            if hasattr(response, "__iter__"):
+                affected = 0
+                succeeded = 0
+                for r in response:
+                    affected += 1
+                    if getattr(r, "succeeded", False):
+                        succeeded += 1
+                span.set_attribute("azure_search.affected_documents", affected)
+                span.set_attribute("azure_search.succeeded_documents", succeeded)
     except Exception as e:
         logger.debug("Failed to set response attributes: %s", e)
-    return response
 
 
 def _wrap(tracer, to_wrap):
@@ -116,10 +119,8 @@ def _wrap(tracer, to_wrap):
                 span.set_attribute("azure_search.duration", round(duration, 4))
 
             if span.is_recording():
-                result = _set_response_attributes(span, method, response)
+                _set_response_attributes(span, method, response)
                 span.set_status(Status(StatusCode.OK))
-                if result is not response:
-                    return iter(result)
 
             return response
 
