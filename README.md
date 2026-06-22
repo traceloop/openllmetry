@@ -55,6 +55,14 @@ OpenLLMetry is a set of extensions built on top of [OpenTelemetry](https://opent
 
 It's built and maintained by Traceloop under the Apache 2.0 license.
 
+## Atlas Cloud
+
+> 🎁 **[Atlas Cloud](https://www.atlascloud.ai/?utm_source=github&utm_medium=link&utm_campaign=openllmetry)** is a full-modal AI inference platform that gives developers a single AI API to access video generation, image generation, and LLM APIs. Instead of managing multiple vendor integrations, you connect once and get unified access to 300+ curated models across all modalities.
+>
+> Check out Atlas Cloud's new coding plan promotion for more budget-friendly API access: [https://www.atlascloud.ai/console/coding-plan](https://www.atlascloud.ai/console/coding-plan)
+
+The sample app now ships with a validated Atlas Cloud LLM pool of 50 models for `ATLASCLOUD_MODEL`, starting with `deepseek-ai/DeepSeek-V3-0324` and reusing the same tested rollout set across provider integrations.
+
 The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
 If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
 
