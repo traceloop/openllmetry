@@ -86,6 +86,42 @@ def _set_span_attribute(span: Span, key: str, value: Any) -> None:
             span.set_attribute(key, "")
 
 
+def _get_token_count(usage: dict[str, Any], *keys: str) -> int:
+    for key in keys:
+        value = usage.get(key)
+        if isinstance(value, (int, float)):
+            return int(value)
+    return 0
+
+
+def _extract_message_usage(message: BaseMessage) -> dict[str, Any] | None:
+    usage_metadata = getattr(message, "usage_metadata", None)
+    if usage_metadata is not None:
+        return usage_metadata
+
+    response_metadata = getattr(message, "response_metadata", None)
+    if not isinstance(response_metadata, dict):
+        return None
+
+    response_usage = response_metadata.get("usage")
+    if isinstance(response_usage, dict):
+        return response_usage
+
+    if any(
+        key in response_metadata
+        for key in (
+            "prompt_tokens",
+            "completion_tokens",
+            "total_tokens",
+            "input_tokens",
+            "output_tokens",
+        )
+    ):
+        return response_metadata
+
+    return None
+
+
 def _content_to_parts(content) -> list[dict]:
     """Convert LangChain message content (str or list-of-blocks) into OTel parts."""
     if isinstance(content, str):
@@ -405,25 +441,24 @@ def set_chat_response_usage(
             for generation in generations:
                 if (
                     hasattr(generation, "message")
-                    and hasattr(generation.message, "usage_metadata")
-                    and generation.message.usage_metadata is not None
+                    and (usage := _extract_message_usage(generation.message)) is not None
                 ):
-                    input_tokens += (
-                        generation.message.usage_metadata.get("input_tokens")
-                        or generation.message.usage_metadata.get("prompt_tokens")
-                        or 0
+                    generation_input_tokens = _get_token_count(
+                        usage, "input_tokens", "prompt_tokens", "input_token_count"
                     )
-                    output_tokens += (
-                        generation.message.usage_metadata.get("output_tokens")
-                        or generation.message.usage_metadata.get("completion_tokens")
-                        or 0
+                    generation_output_tokens = _get_token_count(
+                        usage, "output_tokens", "completion_tokens", "generated_token_count"
                     )
-                    total_tokens = input_tokens + output_tokens
+                    generation_total_tokens = _get_token_count(usage, "total_tokens")
 
-                    if generation.message.usage_metadata.get("input_token_details"):
-                        input_token_details = generation.message.usage_metadata.get(
-                            "input_token_details", {}
-                        )
+                    input_tokens += generation_input_tokens
+                    output_tokens += generation_output_tokens
+                    total_tokens += generation_total_tokens or (
+                        generation_input_tokens + generation_output_tokens
+                    )
+
+                    if usage.get("input_token_details"):
+                        input_token_details = usage.get("input_token_details", {})
                         raw_cache_read = input_token_details.get("cache_read")
                         if isinstance(raw_cache_read, (int, float)):
                             cache_read_tokens = (cache_read_tokens or 0) + raw_cache_read
