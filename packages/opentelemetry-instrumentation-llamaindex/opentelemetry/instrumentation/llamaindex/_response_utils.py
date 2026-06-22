@@ -167,7 +167,11 @@ def _extract_google_usage_metadata(usage_metadata: Any) -> TokenUsage:
     return TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        total_tokens=total_tokens or _safe_sum(input_tokens, output_tokens),
+        total_tokens=(
+            total_tokens
+            if total_tokens is not None
+            else _safe_sum(input_tokens, output_tokens)
+        ),
     )
 
 

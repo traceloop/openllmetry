@@ -125,34 +125,104 @@ class TestExtractTokenUsage:
         assert result == TokenUsage(input_tokens=10, output_tokens=20, total_tokens=30)
 
     @pytest.mark.parametrize(
-        "raw",
+        "raw, expected_total_tokens",
         [
-            {
-                "usage_metadata": {
-                    "prompt_token_count": 10,
-                    "candidates_token_count": 20,
-                    "total_token_count": 30,
-                }
-            },
-            SimpleNamespace(
-                usage_metadata=SimpleNamespace(
-                    prompt_token_count=10,
-                    candidates_token_count=20,
-                    total_token_count=30,
-                )
+            (
+                {
+                    "usage_metadata": {
+                        "prompt_token_count": 10,
+                        "candidates_token_count": 20,
+                        "total_token_count": 30,
+                    }
+                },
+                30,
             ),
-            {
-                "usageMetadata": {
-                    "promptTokenCount": 10,
-                    "candidatesTokenCount": 20,
-                    "totalTokenCount": 30,
-                }
-            },
+            (
+                SimpleNamespace(
+                    usage_metadata=SimpleNamespace(
+                        prompt_token_count=10,
+                        candidates_token_count=20,
+                        total_token_count=30,
+                    )
+                ),
+                30,
+            ),
+            (
+                {
+                    "usageMetadata": {
+                        "promptTokenCount": 10,
+                        "candidatesTokenCount": 20,
+                        "totalTokenCount": 30,
+                    }
+                },
+                30,
+            ),
+            (
+                {
+                    "usage_metadata": {
+                        "prompt_token_count": 10,
+                        "candidates_token_count": 20,
+                        "total_token_count": 0,
+                    }
+                },
+                0,
+            ),
+            (
+                SimpleNamespace(
+                    usage_metadata=SimpleNamespace(
+                        prompt_token_count=10,
+                        candidates_token_count=20,
+                        total_token_count=0,
+                    )
+                ),
+                0,
+            ),
+            (
+                {
+                    "usageMetadata": {
+                        "promptTokenCount": 10,
+                        "candidatesTokenCount": 20,
+                        "totalTokenCount": 0,
+                    }
+                },
+                0,
+            ),
+            (
+                {
+                    "usage_metadata": {
+                        "prompt_token_count": 10,
+                        "candidates_token_count": 20,
+                    }
+                },
+                30,
+            ),
+            (
+                SimpleNamespace(
+                    usage_metadata=SimpleNamespace(
+                        prompt_token_count=10,
+                        candidates_token_count=20,
+                    )
+                ),
+                30,
+            ),
+            (
+                {
+                    "usageMetadata": {
+                        "promptTokenCount": 10,
+                        "candidatesTokenCount": 20,
+                    }
+                },
+                30,
+            ),
         ],
     )
-    def test_google_vertexai_usage_metadata(self, raw):
+    def test_google_vertexai_usage_metadata(self, raw, expected_total_tokens):
         result = extract_token_usage(raw)
-        assert result == TokenUsage(input_tokens=10, output_tokens=20, total_tokens=30)
+        assert result == TokenUsage(
+            input_tokens=10,
+            output_tokens=20,
+            total_tokens=expected_total_tokens,
+        )
 
     def test_cohere_meta_tokens_format(self):
         raw = SimpleNamespace(

@@ -449,7 +449,9 @@ def set_chat_response_usage(
                     generation_output_tokens = _get_token_count(
                         usage, "output_tokens", "completion_tokens", "generated_token_count"
                     )
-                    generation_total_tokens = _get_token_count(usage, "total_tokens")
+                    generation_total_tokens = _get_token_count(
+                        usage, "total_tokens", "total_token_count"
+                    )
 
                     input_tokens += generation_input_tokens
                     output_tokens += generation_output_tokens

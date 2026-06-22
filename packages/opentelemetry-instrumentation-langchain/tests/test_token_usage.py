@@ -35,6 +35,19 @@ def _mock_span():
             "completion_tokens": 16,
             "total_tokens": 26,
         },
+        {
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 16,
+            }
+        },
+        {
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 16,
+                "total_token_count": 26,
+            }
+        },
     ],
 )
 def test_chat_response_usage_reads_databricks_response_metadata(response_metadata):
