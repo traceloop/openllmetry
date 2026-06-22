@@ -58,6 +58,7 @@ dependencies = [
   "opentelemetry-instrumentation-vertexai",
   "opentelemetry-instrumentation-google-generativeai",
   "opentelemetry-instrumentation-groq",
+  "opentelemetry-instrumentation-deepseek",
   "opentelemetry-instrumentation-crewai",
   "opentelemetry-instrumentation-openai-agents",
   "opentelemetry-instrumentation-agno",
@@ -78,6 +79,7 @@ opentelemetry-instrumentation-replicate = { path = "../opentelemetry-instrumenta
 opentelemetry-instrumentation-vertexai = { path = "../opentelemetry-instrumentation-vertexai", editable = true }
 opentelemetry-instrumentation-google-generativeai = { path = "../opentelemetry-instrumentation-google-generativeai", editable = true }
 opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-groq", editable = true }
+opentelemetry-instrumentation-deepseek = { path = "../opentelemetry-instrumentation-deepseek", editable = true }
 opentelemetry-instrumentation-crewai = { path = "../opentelemetry-instrumentation-crewai", editable = true }
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
 opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-agno", editable = true }
