@@ -8,6 +8,9 @@ from opentelemetry.instrumentation.writer.utils import (dont_throw,
                                                         set_span_attribute,
                                                         should_send_prompts)
 
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 @dont_throw
 def set_input_attributes(span: Span, kwargs: dict) -> None:
@@ -99,6 +102,15 @@ def set_model_response_attributes(
             span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens
         )
         set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+
+        prompt_token_details = usage.get("prompt_token_details") or {}
+        cached_tokens = prompt_token_details.get("cached_tokens")
+        if cached_tokens is not None:
+            set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_tokens,
+            )
 
     metrics_attributes = response_attributes(response, method)
 

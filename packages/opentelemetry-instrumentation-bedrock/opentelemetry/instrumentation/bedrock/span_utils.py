@@ -1072,8 +1072,11 @@ def converse_usage_record(span, response, metric_params):
     if "usage" not in response:
         return
 
-    prompt_tokens = response["usage"].get("inputTokens", 0)
-    completion_tokens = response["usage"].get("outputTokens", 0)
+    usage = response["usage"]
+    prompt_tokens = usage.get("inputTokens", 0)
+    completion_tokens = usage.get("outputTokens", 0)
+    cache_read_tokens = usage.get("cacheReadInputTokens")
+    cache_write_tokens = usage.get("cacheWriteInputTokens")
 
     _record_usage_to_span(
         span,
@@ -1081,3 +1084,16 @@ def converse_usage_record(span, response, metric_params):
         completion_tokens,
         metric_params,
     )
+
+    if cache_read_tokens is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+            cache_read_tokens,
+        )
+    if cache_write_tokens is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            cache_write_tokens,
+        )
