@@ -42,7 +42,7 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
-from wrapt import wrap_function_wrapper
+from wrapt import ObjectProxy, wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -511,8 +511,8 @@ def _wrap_factory(tracer, metrics, event_logger, to_wrap):
         duration = time.time() - start
 
         if kwargs.get("stream") and response is not None:
-            return _accumulate_streaming_response(
-                span, metrics, event_logger, to_wrap, response, model, kwargs, start
+            return _LiteLLMStream(
+                response, span, metrics, event_logger, to_wrap, model, kwargs, start
             )
 
         _finalize(span, metrics, event_logger, request_type, response, model, kwargs, duration)
@@ -547,8 +547,8 @@ def _awrap_factory(tracer, metrics, event_logger, to_wrap):
         duration = time.time() - start
 
         if kwargs.get("stream") and response is not None:
-            return _aaccumulate_streaming_response(
-                span, metrics, event_logger, to_wrap, response, model, kwargs, start
+            return _LiteLLMAsyncStream(
+                response, span, metrics, event_logger, to_wrap, model, kwargs, start
             )
 
         _finalize(span, metrics, event_logger, request_type, response, model, kwargs, duration)
@@ -565,20 +565,102 @@ def _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, k
     )
 
 
-def _accumulate_streaming_response(span, metrics, event_logger, to_wrap, response, model, kwargs, start):
-    accumulated = _new_accumulator()
-    for chunk in response:
-        yield chunk
-        _accumulate_chunk(accumulated, chunk)
-    _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, kwargs, start)
+class _StreamWrapper(ObjectProxy):
+    """Proxy over litellm's ``CustomStreamWrapper`` that accumulates chunks and ends
+    the span when the stream is exhausted, errors, or is abandoned early — while
+    preserving the wrapped object's interface (helper methods, ``isinstance`` checks).
+
+    A bare generator would tie the span's lifecycle to full consumption: an early
+    ``break``, a timeout, or an exception in the consumer would leave the span open
+    forever. Ending the span from ``__next__``/``__anext__`` (on stop or error) and
+    from ``close``/``aclose``/``__del__`` guarantees it always closes exactly once.
+    """
+
+    def __init__(self, response, span, metrics, event_logger, to_wrap, model, kwargs, start):
+        super().__init__(response)
+        self._self_span = span
+        self._self_metrics = metrics
+        self._self_event_logger = event_logger
+        self._self_to_wrap = to_wrap
+        self._self_model = model
+        self._self_kwargs = kwargs
+        self._self_start = start
+        self._self_accumulated = _new_accumulator()
+        self._self_done = False
+
+    @dont_throw
+    def _finish(self):
+        if self._self_done:
+            return
+        self._self_done = True
+        _finalize_stream(
+            self._self_span, self._self_metrics, self._self_event_logger,
+            self._self_to_wrap, self._self_accumulated, self._self_model,
+            self._self_kwargs, self._self_start,
+        )
+
+    def _finish_error(self, error):
+        if self._self_done:
+            return
+        self._self_done = True
+        _handle_exception(
+            self._self_span, self._self_metrics, error, self._self_model, self._self_kwargs
+        )
+
+    def __del__(self):
+        self._finish()
 
 
-async def _aaccumulate_streaming_response(span, metrics, event_logger, to_wrap, response, model, kwargs, start):
-    accumulated = _new_accumulator()
-    async for chunk in response:
-        yield chunk
-        _accumulate_chunk(accumulated, chunk)
-    _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, kwargs, start)
+class _LiteLLMStream(_StreamWrapper):
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            chunk = self.__wrapped__.__next__()
+        except StopIteration:
+            self._finish()
+            raise
+        except Exception as error:
+            self._finish_error(error)
+            raise
+        _accumulate_chunk(self._self_accumulated, chunk)
+        return chunk
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._finish()
+
+    def close(self):
+        self._finish()
+        wrapped_close = getattr(self.__wrapped__, "close", None)
+        if callable(wrapped_close):
+            wrapped_close()
+
+
+class _LiteLLMAsyncStream(_StreamWrapper):
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            chunk = await self.__wrapped__.__anext__()
+        except StopAsyncIteration:
+            self._finish()
+            raise
+        except Exception as error:
+            self._finish_error(error)
+            raise
+        _accumulate_chunk(self._self_accumulated, chunk)
+        return chunk
+
+    async def aclose(self):
+        self._finish()
+        wrapped_aclose = getattr(self.__wrapped__, "aclose", None)
+        if callable(wrapped_aclose):
+            await wrapped_aclose()
 
 
 def _build_metrics(meter):
