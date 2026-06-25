@@ -140,8 +140,20 @@ class TracerWrapper(object):
                     original_on_end = obj.__spans_processor.on_end
 
                     def wrapped_on_end(span):
-                        # Call the custom on_end first
-                        span_postprocess_callback(span)
+                        # OTel freezes a span's attributes (sets `_immutable`) in
+                        # Span.end() before on_end runs, so the postprocess callback
+                        # can't modify them. Temporarily unfreeze around the callback
+                        # so it can redact/mutate attributes, then restore the flag.
+                        attributes = getattr(span, "_attributes", None)
+                        was_immutable = getattr(attributes, "_immutable", False)
+                        if was_immutable:
+                            attributes._immutable = False
+                        try:
+                            # Call the custom on_end first
+                            span_postprocess_callback(span)
+                        finally:
+                            if was_immutable:
+                                attributes._immutable = True
                         # Then call the original to ensure normal processing
                         original_on_end(span)
 
