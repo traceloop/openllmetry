@@ -202,10 +202,9 @@ def _set_tool_calls(span, prefix, tool_calls):
 
 
 @dont_throw
-def _set_response_attributes(span, request_type, response):
-    if not span.is_recording() or response is None:
+def _set_response_attributes(span, request_type, response_dict):
+    if not span.is_recording() or not response_dict:
         return
-    response_dict = _model_as_dict(response)
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_dict.get("id"))
     _set_span_attribute(
@@ -280,10 +279,9 @@ def _emit_input_events(request_type, args, kwargs, event_logger):
 
 
 @dont_throw
-def _emit_choice_events(request_type, response, event_logger):
-    if request_type == LLMRequestTypeValues.EMBEDDING or response is None:
+def _emit_choice_events(request_type, response_dict, event_logger):
+    if request_type == LLMRequestTypeValues.EMBEDDING or not response_dict:
         return
-    response_dict = _model_as_dict(response)
     for choice in response_dict.get("choices", []):
         message = choice.get("message") or {}
         emit_event(
@@ -307,17 +305,17 @@ def _handle_input(span, request_type, args, kwargs, event_logger):
         _set_prompts(span, request_type, args, kwargs)
 
 
-def _handle_response(span, request_type, response, event_logger):
-    _set_response_attributes(span, request_type, response)
+def _handle_response(span, request_type, response_dict, event_logger):
+    _set_response_attributes(span, request_type, response_dict)
     if should_emit_events() and event_logger:
-        _emit_choice_events(request_type, response, event_logger)
+        _emit_choice_events(request_type, response_dict, event_logger)
 
 
 # -- metrics -----------------------------------------------------------------
 
 
 @dont_throw
-def _record_metrics(metrics, system, model, duration, response, request_type):
+def _record_metrics(metrics, system, model, duration, response_dict, request_type):
     if not metrics:
         return
     attributes = {
@@ -331,7 +329,6 @@ def _record_metrics(metrics, system, model, duration, response, request_type):
     if metrics.get("duration_histogram"):
         metrics["duration_histogram"].record(duration, attributes=attributes)
 
-    response_dict = _model_as_dict(response)
     usage = response_dict.get("usage")
     if usage and metrics.get("tokens_histogram"):
         usage = _model_as_dict(usage)
@@ -443,9 +440,12 @@ def _finalize(span, metrics, event_logger, request_type, response, model, kwargs
         or _resolve_system_from_response(response)
         or _resolve_system_from_kwargs(kwargs)
     )
+    # Serialize the response once and reuse it for attributes, events, and metrics —
+    # model_dump() on a ModelResponse is the most expensive step in the wrapper.
+    response_dict = _model_as_dict(response)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, system)
-    _handle_response(span, request_type, response, event_logger)
-    _record_metrics(metrics, system, model, duration, response, request_type)
+    _handle_response(span, request_type, response_dict, event_logger)
+    _record_metrics(metrics, system, model, duration, response_dict, request_type)
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
     span.end()
@@ -557,17 +557,20 @@ def _awrap_factory(tracer, metrics, event_logger, to_wrap):
     return wrapper
 
 
+def _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, kwargs, start):
+    final = _build_accumulated_response(accumulated)
+    _finalize(
+        span, metrics, event_logger, to_wrap["request_type"], final, model, kwargs,
+        time.time() - start, accumulated_system=accumulated.get("system"),
+    )
+
+
 def _accumulate_streaming_response(span, metrics, event_logger, to_wrap, response, model, kwargs, start):
     accumulated = _new_accumulator()
     for chunk in response:
         yield chunk
         _accumulate_chunk(accumulated, chunk)
-    duration = time.time() - start
-    final = _build_accumulated_response(accumulated)
-    _finalize(
-        span, metrics, event_logger, to_wrap["request_type"], final, model, kwargs,
-        duration, accumulated_system=accumulated.get("system"),
-    )
+    _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, kwargs, start)
 
 
 async def _aaccumulate_streaming_response(span, metrics, event_logger, to_wrap, response, model, kwargs, start):
@@ -575,12 +578,7 @@ async def _aaccumulate_streaming_response(span, metrics, event_logger, to_wrap, 
     async for chunk in response:
         yield chunk
         _accumulate_chunk(accumulated, chunk)
-    duration = time.time() - start
-    final = _build_accumulated_response(accumulated)
-    _finalize(
-        span, metrics, event_logger, to_wrap["request_type"], final, model, kwargs,
-        duration, accumulated_system=accumulated.get("system"),
-    )
+    _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, kwargs, start)
 
 
 def _build_metrics(meter):
