@@ -160,14 +160,17 @@ def _set_prompts(span, request_type, args, kwargs):
         for index, message in enumerate(_get_messages(args, kwargs) or []):
             if not isinstance(message, dict):
                 message = _model_as_dict(message)
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role", message.get("role")
-            )
+            prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{index}"
+            _set_span_attribute(span, f"{prefix}.role", message.get("role"))
             content = message.get("content")
             if content is not None and not isinstance(content, str):
                 content = json.dumps(content)
+            _set_span_attribute(span, f"{prefix}.content", content)
+            tool_calls = message.get("tool_calls")
+            if tool_calls:
+                _set_tool_calls(span, prefix, tool_calls)
             _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content", content
+                span, f"{prefix}.tool_call_id", message.get("tool_call_id")
             )
     else:
         embedding_input = _get_embedding_input(args, kwargs)
@@ -262,7 +265,9 @@ def _emit_input_events(request_type, args, kwargs, event_logger):
                 message = _model_as_dict(message)
             emit_event(
                 MessageEvent(
-                    content=message.get("content"), role=message.get("role", "user")
+                    content=message.get("content"),
+                    role=message.get("role", "user"),
+                    tool_calls=message.get("tool_calls"),
                 ),
                 event_logger,
             )

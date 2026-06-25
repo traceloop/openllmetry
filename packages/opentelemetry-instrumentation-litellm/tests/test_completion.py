@@ -56,6 +56,52 @@ async def test_acompletion(instrument_legacy, span_exporter):
     assert attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == "Paris."
 
 
+def test_completion_serializes_input_tool_calls(instrument_legacy, span_exporter):
+    """An assistant turn carrying tool_calls (and null content) must serialize the
+    tool calls on the input side, not collapse to a bare role. Regression for input
+    messages dropping tool_calls while the output path serialized them."""
+    messages = [
+        {"role": "user", "content": "What's the weather in Paris?"},
+        {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [
+                {
+                    "id": "call_abc",
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_weather",
+                        "arguments": '{"location": "Paris"}',
+                    },
+                }
+            ],
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_abc",
+            "content": '{"temperature": 18}',
+        },
+    ]
+
+    litellm.completion(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        mock_response="It's 18°C in Paris.",
+    )
+
+    attrs = span_exporter.get_finished_spans()[0].attributes
+    prompt = GenAIAttributes.GEN_AI_PROMPT
+
+    # The assistant turn keeps its tool_calls instead of collapsing to just a role.
+    assert attrs[f"{prompt}.1.role"] == "assistant"
+    assert attrs[f"{prompt}.1.tool_calls.0.id"] == "call_abc"
+    assert attrs[f"{prompt}.1.tool_calls.0.name"] == "get_current_weather"
+    assert attrs[f"{prompt}.1.tool_calls.0.arguments"] == '{"location": "Paris"}'
+    # The tool result is linked back to its call.
+    assert attrs[f"{prompt}.2.role"] == "tool"
+    assert attrs[f"{prompt}.2.tool_call_id"] == "call_abc"
+
+
 def test_completion_emits_metrics(instrument_legacy, span_exporter, metric_reader):
     from opentelemetry.semconv_ai import Meters
 
