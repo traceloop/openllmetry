@@ -536,6 +536,9 @@ def init_instrumentations(
         elif instrument == Instruments.LANGCHAIN:
             if init_langchain_instrumentor(use_attributes):
                 instrument_set = True
+        elif instrument == Instruments.LITELLM:
+            if init_litellm_instrumentor(use_attributes):
+                instrument_set = True
         elif instrument == Instruments.LLAMA_INDEX:
             if init_llama_index_instrumentor():
                 instrument_set = True
@@ -793,6 +796,23 @@ def init_mistralai_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing MistralAI instrumentor: {e}")
+    return False
+
+
+def init_litellm_instrumentor(use_attributes: bool = True):
+    try:
+        if is_package_installed("litellm"):
+            from opentelemetry.instrumentation.litellm import LiteLLMInstrumentor
+
+            instrumentor = LiteLLMInstrumentor(
+                get_common_metrics_attributes=metrics_common_attributes,
+                use_legacy_attributes=use_attributes,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing LiteLLM instrumentor: {e}")
     return False
 
 
