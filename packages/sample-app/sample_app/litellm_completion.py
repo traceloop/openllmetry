@@ -13,7 +13,8 @@ each requested tool by name and feeding results back. Every `litellm.completion`
 call produces one `litellm.chat` span with `gen_ai.*` attributes; the tool
 functions are wrapped with `@tool` so they appear as their own spans.
 
-Requires: OPENAI_API_KEY
+Requires: OPENAI_API_KEY, and TRACELOOP_API_KEY unless a custom exporter/endpoint
+is configured (the default `Traceloop.init()` path needs it to emit spans).
 """
 
 import json
@@ -152,10 +153,16 @@ def execute_tools(tool_calls: list) -> list:
     """
     tool_messages = []
     for tc in tool_calls:
-        args = json.loads(tc.function.arguments or "{}")
         impl = TOOL_REGISTRY.get(tc.function.name)
-        result = impl(**args) if impl else json.dumps({"error": f"unknown tool {tc.function.name}"})
-        print(f"[tool] {tc.function.name}({args}) -> {result}")
+        try:
+            args = json.loads(tc.function.arguments or "{}")
+            if impl is None:
+                result = json.dumps({"error": f"unknown tool {tc.function.name}"})
+            else:
+                result = impl(**args)
+        except Exception as exc:  # noqa: BLE001 - surface tool failures back to the model
+            result = json.dumps({"error": str(exc)})
+        print(f"[tool] {tc.function.name}({tc.function.arguments}) -> {result}")
         tool_messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": result}
         )

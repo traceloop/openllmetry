@@ -36,6 +36,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    GenAISystem,
     LLMRequestTypeValues,
     Meters,
     SpanAttributes,
@@ -104,21 +105,42 @@ def _model_as_dict(obj):
 
 # -- provider resolution -----------------------------------------------------
 
+# LiteLLM provider prefixes that differ from the published ``gen_ai.system`` values
+# in opentelemetry-semantic-conventions-ai. Normalizing here keeps litellm spans and
+# metrics under the same system key as the rest of the repo (e.g. ``az.ai.openai``
+# rather than the raw ``azure`` prefix).
+_SYSTEM_ALIASES = {
+    "azure": GenAISystem.AZURE.value,
+    "azure_ai": GenAISystem.AZURE.value,
+    "bedrock": GenAISystem.AWS.value,
+    "vertex_ai": GenAISystem.GOOGLE.value,
+    "gemini": GenAISystem.GOOGLE.value,
+    "mistral": GenAISystem.MISTRALAI.value,
+    "huggingface": GenAISystem.HUGGINGFACE.value,
+    "fireworks_ai": GenAISystem.FIREWORKS.value,
+}
+
+
+def _normalize_system(provider):
+    if not provider:
+        return provider
+    return _SYSTEM_ALIASES.get(provider, provider)
+
 
 def _resolve_system_from_response(response):
     hidden = getattr(response, "_hidden_params", None) or {}
     if isinstance(hidden, dict):
-        return hidden.get("custom_llm_provider")
+        return _normalize_system(hidden.get("custom_llm_provider"))
     return None
 
 
 def _resolve_system_from_kwargs(kwargs):
     provider = kwargs.get("custom_llm_provider")
     if provider:
-        return provider
+        return _normalize_system(provider)
     model = kwargs.get("model") or ""
     if "/" in model:
-        return model.split("/", 1)[0]
+        return _normalize_system(model.split("/", 1)[0])
     return LITELLM_SYSTEM
 
 

@@ -71,9 +71,13 @@ def test_both_openai_and_litellm_instrumented(span_exporter, tracer_provider, me
 
     openai_instrumentor = OpenAIInstrumentor()
     litellm_instrumentor = LiteLLMInstrumentor()
-    openai_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
-    litellm_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
     try:
+        openai_instrumentor.instrument(
+            tracer_provider=tracer_provider, meter_provider=meter_provider
+        )
+        litellm_instrumentor.instrument(
+            tracer_provider=tracer_provider, meter_provider=meter_provider
+        )
         litellm.completion(
             model="gpt-3.5-turbo",
             messages=MESSAGES,

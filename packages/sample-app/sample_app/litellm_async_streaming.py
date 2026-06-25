@@ -14,11 +14,14 @@ accumulates the streamed deltas (content *and* tool calls) into that span.
 Pass `stream_options={"include_usage": True}` so the provider reports token usage on
 the final chunk.
 
-Requires: OPENAI_API_KEY
+Requires: OPENAI_API_KEY, and TRACELOOP_API_KEY unless a custom exporter/endpoint
+is configured (the default `Traceloop.init()` path needs it to emit spans).
 """
 
+import ast
 import asyncio
 import json
+import operator
 
 import litellm
 from traceloop.sdk import Traceloop
@@ -106,14 +109,37 @@ def get_current_time(location: str) -> str:
     return json.dumps({"location": location, "time": fake_clock.get(location.lower(), "12:00")})
 
 
+# Only the four basic binary operators and unary +/- are allowed — note the absence
+# of ast.Pow, so model-supplied expressions like ``9**9**9`` can't hang the sample.
+_BIN_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+}
+_UNARY_OPS = {ast.UAdd: operator.pos, ast.USub: operator.neg}
+
+
+def _eval_arith(node):
+    if isinstance(node, ast.Expression):
+        return _eval_arith(node.body)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in _BIN_OPS:
+        return _BIN_OPS[type(node.op)](_eval_arith(node.left), _eval_arith(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
+        return _UNARY_OPS[type(node.op)](_eval_arith(node.operand))
+    raise ValueError("unsupported expression")
+
+
 @tool(name="calculate")
 def calculate(expression: str) -> str:
-    """Evaluate a simple arithmetic expression (digits and + - * / . () only)."""
-    if not all(ch in "0123456789+-*/(). " for ch in expression):
-        return json.dumps({"error": "unsupported characters in expression"})
+    """Evaluate a simple arithmetic expression (+, -, *, / on numbers)."""
+    if len(expression) > 100:
+        return json.dumps({"error": "expression too long"})
     try:
-        result = eval(expression, {"__builtins__": {}}, {})  # noqa: S307 - sandboxed input
-    except Exception as exc:  # noqa: BLE001
+        result = _eval_arith(ast.parse(expression, mode="eval"))
+    except Exception as exc:  # noqa: BLE001 - report the failure back to the model
         return json.dumps({"error": str(exc)})
     return json.dumps({"expression": expression, "result": result})
 
@@ -131,6 +157,10 @@ async def _consume_stream(stream):
     content = ""
     tool_calls: list[dict] = []
     async for chunk in stream:
+        # The final `include_usage` chunk carries token usage with an empty choices
+        # array — skip it so we don't index into a non-existent choice.
+        if not chunk.choices:
+            continue
         delta = chunk.choices[0].delta
         if delta.content:
             content += delta.content
@@ -172,10 +202,16 @@ def execute_tools(tool_calls: list) -> list:
     """
     tool_messages = []
     for tc in tool_calls:
-        args = json.loads(tc["arguments"] or "{}")
         impl = TOOL_REGISTRY.get(tc["name"])
-        result = impl(**args) if impl else json.dumps({"error": f"unknown tool {tc['name']}"})
-        print(f"\n[tool] {tc['name']}({args}) -> {result}")
+        try:
+            args = json.loads(tc["arguments"] or "{}")
+            if impl is None:
+                result = json.dumps({"error": f"unknown tool {tc['name']}"})
+            else:
+                result = impl(**args)
+        except Exception as exc:  # noqa: BLE001 - surface tool failures back to the model
+            result = json.dumps({"error": str(exc)})
+        print(f"\n[tool] {tc['name']}({tc['arguments']}) -> {result}")
         tool_messages.append(
             {"role": "tool", "tool_call_id": tc["id"], "content": result}
         )

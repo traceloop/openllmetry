@@ -69,15 +69,14 @@ def instrument_legacy(tracer_provider, meter_provider):
 @pytest.fixture(scope="function")
 def instrument_with_content(tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
-
     instrumentor = LiteLLMInstrumentor(use_legacy_attributes=False)
-    instrumentor.instrument(
-        tracer_provider=tracer_provider,
-        logger_provider=logger_provider,
-        meter_provider=meter_provider,
-    )
-
-    yield instrumentor
-
-    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
-    instrumentor.uninstrument()
+    try:
+        instrumentor.instrument(
+            tracer_provider=tracer_provider,
+            logger_provider=logger_provider,
+            meter_provider=meter_provider,
+        )
+        yield instrumentor
+    finally:
+        os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
+        instrumentor.uninstrument()
