@@ -12,7 +12,13 @@ def vcr_config():
     Filters authorization headers to avoid storing API keys in cassettes.
     """
     return {
-        "filter_headers": ["authorization", "Authorization"],
+        "filter_headers": [
+            "authorization",
+            "Authorization",
+            "api-key",
+            "x-api-key",
+        ],
+        "filter_query_parameters": ["api_key"],
         "record_mode": "once",
     }
 
