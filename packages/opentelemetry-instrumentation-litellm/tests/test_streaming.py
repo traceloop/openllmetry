@@ -1,5 +1,7 @@
 """Streaming tracing tests (offline via litellm mock_response)."""
 
+import json
+
 import litellm
 import pytest
 from opentelemetry.semconv._incubating.attributes import (
@@ -25,8 +27,9 @@ def test_streaming_completion(instrument_legacy, span_exporter):
     assert [span.name for span in spans] == ["litellm.chat"]
     attrs = spans[0].attributes
     assert attrs[SpanAttributes.LLM_IS_STREAMING] is True
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-    assert attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == "one two three"
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
+    output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output[0]["parts"] == [{"type": "text", "content": "one two three"}]
 
 
 def test_streaming_preserves_custom_stream_wrapper(instrument_legacy, span_exporter):
@@ -92,4 +95,5 @@ async def test_astreaming_completion(instrument_legacy, span_exporter):
     assert [span.name for span in spans] == ["litellm.chat"]
     attrs = spans[0].attributes
     assert attrs[SpanAttributes.LLM_IS_STREAMING] is True
-    assert attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == "one two three"
+    output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output[0]["parts"] == [{"type": "text", "content": "one two three"}]

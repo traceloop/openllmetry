@@ -5,14 +5,28 @@ litellm still resolves the provider (``openai`` for ``gpt-*``) and returns a nor
 ``ModelResponse``, exercising the same code path as a real call.
 """
 
+import json
+
 import litellm
 import pytest
+from opentelemetry.instrumentation.litellm import (
+    _map_finish_reason,
+    _set_response_attributes,
+)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 MESSAGES = [{"role": "user", "content": "What is the capital of France?"}]
+
+
+def _input_messages(attrs):
+    return json.loads(attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+
+
+def _output_messages(attrs):
+    return json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
 
 
 def test_completion(instrument_legacy, span_exporter):
@@ -27,15 +41,28 @@ def test_completion(instrument_legacy, span_exporter):
     span = spans[0]
     attrs = span.attributes
 
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-    assert attrs[SpanAttributes.LLM_REQUEST_TYPE] == LLMRequestTypeValues.CHAT.value
-    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert attrs[f"{GenAIAttributes.GEN_AI_PROMPT}.0.role"] == "user"
-    assert attrs[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"] == MESSAGES[0]["content"]
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
     assert (
-        attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == "The capital of France is Paris."
+        attrs[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAIAttributes.GenAiOperationNameValues.CHAT.value
     )
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+
+    assert _input_messages(attrs) == [
+        {
+            "role": "user",
+            "parts": [{"type": "text", "content": "What is the capital of France?"}],
+        }
+    ]
+
+    output = _output_messages(attrs)
+    assert output[0]["role"] == "assistant"
+    assert output[0]["parts"] == [
+        {"type": "text", "content": "The capital of France is Paris."}
+    ]
+    assert output[0]["finish_reason"] == "stop"
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
     assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
     assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] > 0
     assert response.choices[0].message.content == "The capital of France is Paris."
@@ -52,8 +79,10 @@ async def test_acompletion(instrument_legacy, span_exporter):
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == ["litellm.chat"]
     attrs = spans[0].attributes
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == "openai"
-    assert attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"] == "Paris."
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
+    assert _output_messages(attrs)[0]["parts"] == [
+        {"type": "text", "content": "Paris."}
+    ]
 
 
 def test_completion_serializes_input_tool_calls(instrument_legacy, span_exporter):
@@ -89,17 +118,33 @@ def test_completion_serializes_input_tool_calls(instrument_legacy, span_exporter
         mock_response="It's 18°C in Paris.",
     )
 
-    attrs = span_exporter.get_finished_spans()[0].attributes
-    prompt = GenAIAttributes.GEN_AI_PROMPT
+    input_messages = _input_messages(span_exporter.get_finished_spans()[0].attributes)
 
-    # The assistant turn keeps its tool_calls instead of collapsing to just a role.
-    assert attrs[f"{prompt}.1.role"] == "assistant"
-    assert attrs[f"{prompt}.1.tool_calls.0.id"] == "call_abc"
-    assert attrs[f"{prompt}.1.tool_calls.0.name"] == "get_current_weather"
-    assert attrs[f"{prompt}.1.tool_calls.0.arguments"] == '{"location": "Paris"}'
-    # The tool result is linked back to its call.
-    assert attrs[f"{prompt}.2.role"] == "tool"
-    assert attrs[f"{prompt}.2.tool_call_id"] == "call_abc"
+    assert input_messages[0]["role"] == "user"
+
+    # The assistant turn keeps its tool call instead of collapsing to just a role,
+    # and arguments are parsed into a dict per the OTel tool_call part schema.
+    assistant = input_messages[1]
+    assert assistant["role"] == "assistant"
+    assert assistant["parts"] == [
+        {
+            "type": "tool_call",
+            "name": "get_current_weather",
+            "id": "call_abc",
+            "arguments": {"location": "Paris"},
+        }
+    ]
+
+    # The tool result is linked back to its call via a tool_call_response part.
+    tool_message = input_messages[2]
+    assert tool_message["role"] == "tool"
+    assert tool_message["parts"] == [
+        {
+            "type": "tool_call_response",
+            "id": "call_abc",
+            "response": '{"temperature": 18}',
+        }
+    ]
 
 
 def test_completion_emits_metrics(instrument_legacy, span_exporter, metric_reader):
@@ -130,9 +175,66 @@ def test_completion_no_content_when_disabled(instrument_legacy, span_exporter, m
         mock_response="Paris.",
     )
 
-    span = span_exporter.get_finished_spans()[0]
-    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in span.attributes
-    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in span.attributes
-    # non-content attributes are still present
-    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
-    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    attrs = span_exporter.get_finished_spans()[0].attributes
+    # Content-bearing message attributes are omitted.
+    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES not in attrs
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in attrs
+    # Non-content attributes are still present, including finish_reasons (which is
+    # not gated by the content opt-in).
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo"
+    assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
+
+def test_map_finish_reason_normalizes_to_otel_vocabulary():
+    assert _map_finish_reason("tool_calls") == "tool_call"
+    assert _map_finish_reason("function_call") == "tool_call"
+    assert _map_finish_reason("stop") == "stop"
+    assert _map_finish_reason(None) == ""
+    assert _map_finish_reason("") == ""
+
+
+def test_finish_reasons_are_mapped_and_deduped(tracer_provider, span_exporter):
+    """gen_ai.response.finish_reasons must map provider values (tool_calls ->
+    tool_call) and contain unique values only, and the per-message output finish
+    reason must be mapped too."""
+    tracer = tracer_provider.get_tracer(__name__)
+    span = tracer.start_span("litellm.chat")
+    response_dict = {
+        "id": "chatcmpl-x",
+        "model": "gpt-4o",
+        "choices": [
+            {
+                "index": 0,
+                "finish_reason": "tool_calls",
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "c1",
+                            "type": "function",
+                            "function": {"name": "f", "arguments": "{}"},
+                        }
+                    ],
+                },
+            },
+            {
+                "index": 1,
+                "finish_reason": "tool_calls",
+                "message": {"role": "assistant", "content": "hi"},
+            },
+        ],
+    }
+
+    _set_response_attributes(span, LLMRequestTypeValues.CHAT, response_dict)
+    span.end()
+
+    attrs = span_exporter.get_finished_spans()[0].attributes
+    # Deduped to a single mapped value despite two tool_calls choices.
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("tool_call",)
+
+    output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output[0]["finish_reason"] == "tool_call"
+    tool_parts = [p for p in output[0]["parts"] if p["type"] == "tool_call"]
+    assert tool_parts[0]["name"] == "f"

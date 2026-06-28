@@ -33,7 +33,6 @@ class GenAISystem(Enum):
 
     LANGCHAIN = "langchain"
     CREWAI = "crewai"
-    LITELLM = "litellm"
 
 
 class Meters:

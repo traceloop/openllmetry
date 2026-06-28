@@ -36,7 +36,6 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    GenAISystem,
     LLMRequestTypeValues,
     Meters,
     SpanAttributes,
@@ -49,35 +48,41 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("litellm >= 1.0.0",)
 
-# Fallback ``gen_ai.system`` value when the provider cannot be resolved from the
-# response or the model prefix. Kept as a literal (mirroring other instrumentors) to
-# avoid coupling to a specific opentelemetry-semantic-conventions-ai release that adds
-# ``GenAISystem.LITELLM``.
-LITELLM_SYSTEM = "litellm"
+# Fallback ``gen_ai.provider.name`` value when the provider cannot be resolved from
+# the response or the model prefix. ``gen_ai.provider.name`` is ``anyOf [enum, string]``
+# so a litellm-specific string is a valid value when no upstream well-known one applies.
+LITELLM_PROVIDER = "litellm"
+
+_CHAT = GenAIAttributes.GenAiOperationNameValues.CHAT.value
+_EMBEDDINGS = GenAIAttributes.GenAiOperationNameValues.EMBEDDINGS.value
 
 WRAPPED_METHODS = [
     {
         "method": "completion",
         "span_name": "litellm.chat",
         "request_type": LLMRequestTypeValues.CHAT,
+        "operation": _CHAT,
         "is_async": False,
     },
     {
         "method": "acompletion",
         "span_name": "litellm.chat",
         "request_type": LLMRequestTypeValues.CHAT,
+        "operation": _CHAT,
         "is_async": True,
     },
     {
         "method": "embedding",
         "span_name": "litellm.embeddings",
         "request_type": LLMRequestTypeValues.EMBEDDING,
+        "operation": _EMBEDDINGS,
         "is_async": False,
     },
     {
         "method": "aembedding",
         "span_name": "litellm.embeddings",
         "request_type": LLMRequestTypeValues.EMBEDDING,
+        "operation": _EMBEDDINGS,
         "is_async": True,
     },
 ]
@@ -105,43 +110,42 @@ def _model_as_dict(obj):
 
 # -- provider resolution -----------------------------------------------------
 
-# LiteLLM provider prefixes that differ from the published ``gen_ai.system`` values
-# in opentelemetry-semantic-conventions-ai. Normalizing here keeps litellm spans and
-# metrics under the same system key as the rest of the repo (e.g. ``az.ai.openai``
-# rather than the raw ``azure`` prefix).
-_SYSTEM_ALIASES = {
-    "azure": GenAISystem.AZURE.value,
-    "azure_ai": GenAISystem.AZURE.value,
-    "bedrock": GenAISystem.AWS.value,
-    "vertex_ai": GenAISystem.GOOGLE.value,
-    "gemini": GenAISystem.GOOGLE.value,
-    "mistral": GenAISystem.MISTRALAI.value,
-    "huggingface": GenAISystem.HUGGINGFACE.value,
-    "fireworks_ai": GenAISystem.FIREWORKS.value,
+# LiteLLM provider prefixes whose names differ from the OTel ``gen_ai.provider.name``
+# well-known values. Normalizing here keeps litellm spans and metrics under the same
+# provider key as the rest of the repo. Unknown prefixes pass through unchanged
+# (``gen_ai.provider.name`` is ``anyOf [enum, string]``).
+_ProviderName = GenAIAttributes.GenAiProviderNameValues
+_PROVIDER_ALIASES = {
+    "azure": _ProviderName.AZURE_AI_OPENAI.value,
+    "azure_ai": _ProviderName.AZURE_AI_INFERENCE.value,
+    "bedrock": _ProviderName.AWS_BEDROCK.value,
+    "vertex_ai": _ProviderName.GCP_VERTEX_AI.value,
+    "gemini": _ProviderName.GCP_GEMINI.value,
+    "mistral": _ProviderName.MISTRAL_AI.value,
 }
 
 
-def _normalize_system(provider):
+def _normalize_provider(provider):
     if not provider:
         return provider
-    return _SYSTEM_ALIASES.get(provider, provider)
+    return _PROVIDER_ALIASES.get(provider, provider)
 
 
-def _resolve_system_from_response(response):
+def _resolve_provider_from_response(response):
     hidden = getattr(response, "_hidden_params", None) or {}
     if isinstance(hidden, dict):
-        return _normalize_system(hidden.get("custom_llm_provider"))
+        return _normalize_provider(hidden.get("custom_llm_provider"))
     return None
 
 
-def _resolve_system_from_kwargs(kwargs):
+def _resolve_provider_from_kwargs(kwargs):
     provider = kwargs.get("custom_llm_provider")
     if provider:
-        return _normalize_system(provider)
+        return _normalize_provider(provider)
     model = kwargs.get("model") or ""
     if "/" in model:
-        return _normalize_system(model.split("/", 1)[0])
-    return LITELLM_SYSTEM
+        return _normalize_provider(model.split("/", 1)[0])
+    return LITELLM_PROVIDER
 
 
 def _get_model(args, kwargs):
@@ -179,21 +183,7 @@ def _set_prompts(span, request_type, args, kwargs):
     if not span.is_recording() or not should_send_prompts():
         return
     if request_type == LLMRequestTypeValues.CHAT:
-        for index, message in enumerate(_get_messages(args, kwargs) or []):
-            if not isinstance(message, dict):
-                message = _model_as_dict(message)
-            prefix = f"{GenAIAttributes.GEN_AI_PROMPT}.{index}"
-            _set_span_attribute(span, f"{prefix}.role", message.get("role"))
-            content = message.get("content")
-            if content is not None and not isinstance(content, str):
-                content = json.dumps(content)
-            _set_span_attribute(span, f"{prefix}.content", content)
-            tool_calls = message.get("tool_calls")
-            if tool_calls:
-                _set_tool_calls(span, prefix, tool_calls)
-            _set_span_attribute(
-                span, f"{prefix}.tool_call_id", message.get("tool_call_id")
-            )
+        _set_input_messages(span, _get_messages(args, kwargs))
     else:
         embedding_input = _get_embedding_input(args, kwargs)
         if isinstance(embedding_input, str):
@@ -207,20 +197,149 @@ def _set_prompts(span, request_type, args, kwargs):
             )
 
 
-# -- response attributes -----------------------------------------------------
+# -- OTel JSON message schema ------------------------------------------------
+#
+# Mirrors the parts-based ``gen_ai.input.messages`` / ``gen_ai.output.messages``
+# schema emitted by the OpenAI instrumentation so litellm spans carry the same
+# shape as the rest of the repo (the flat ``gen_ai.prompt.*`` / ``gen_ai.completion.*``
+# attributes have been retired everywhere in favor of this).
+
+# LiteLLM normalizes provider finish reasons to OpenAI values; map the ones that
+# differ from the OTel GenAI vocabulary (``tool_calls`` -> ``tool_call``).
+LITELLM_FINISH_REASON_MAP = {
+    "tool_calls": "tool_call",
+    "function_call": "tool_call",
+}
 
 
-def _set_tool_calls(span, prefix, tool_calls):
-    for index, tool_call in enumerate(tool_calls):
+def _map_finish_reason(reason):
+    if not reason:
+        return ""
+    return LITELLM_FINISH_REASON_MAP.get(reason, reason)
+
+
+def _parse_arguments(raw_args):
+    """Best-effort parse of a JSON argument string to dict; falls back to raw."""
+    if raw_args is None:
+        return None
+    if isinstance(raw_args, dict):
+        return raw_args
+    try:
+        return json.loads(raw_args)
+    except (json.JSONDecodeError, TypeError):
+        return raw_args
+
+
+def _map_content_block(block):
+    """Map an OpenAI content block to an OTel-compliant part."""
+    if not isinstance(block, dict):
+        return block
+    block_type = block.get("type")
+    if block_type == "text":
+        return {"type": "text", "content": block.get("text", "")}
+    if block_type == "image_url":
+        url = ""
+        image_url = block.get("image_url")
+        if isinstance(image_url, dict):
+            url = image_url.get("url", "")
+        if url.startswith("data:"):
+            # Parse data URI: data:<mime_type>;base64,<content>
+            try:
+                header, content = url.split(",", 1)
+                mime_type = header.split(":", 1)[1].split(";", 1)[0]
+            except (ValueError, IndexError):
+                mime_type = "image/unknown"
+                content = url
+            return {
+                "type": "blob",
+                "modality": "image",
+                "mime_type": mime_type,
+                "content": content,
+            }
+        return {"type": "uri", "modality": "image", "uri": url}
+    # GenericPart: spread properties for unrecognized blocks.
+    return {"type": block_type or "unknown", **{k: v for k, v in block.items() if k != "type"}}
+
+
+def _map_content_parts(content):
+    """Convert message content to an OTel parts list. Handles str, list, and None."""
+    if isinstance(content, str):
+        return [{"content": content, "type": "text"}]
+    if isinstance(content, list):
+        return [_map_content_block(block) for block in content]
+    return content or []
+
+
+def _tool_call_parts(tool_calls):
+    parts = []
+    for tool_call in tool_calls or []:
         tool_call = _model_as_dict(tool_call)
         function = tool_call.get("function") or {}
-        _set_span_attribute(span, f"{prefix}.tool_calls.{index}.id", tool_call.get("id"))
-        _set_span_attribute(
-            span, f"{prefix}.tool_calls.{index}.name", function.get("name")
+        parts.append(
+            {
+                "type": "tool_call",
+                "name": function.get("name"),
+                "id": tool_call.get("id"),
+                "arguments": _parse_arguments(function.get("arguments")),
+            }
         )
-        _set_span_attribute(
-            span, f"{prefix}.tool_calls.{index}.arguments", function.get("arguments")
+    return parts
+
+
+def _set_input_messages(span, messages):
+    if not span.is_recording() or messages is None:
+        return
+    attr_messages = []
+    for message in messages:
+        message = _model_as_dict(message)
+        role = message.get("role")
+        content = message.get("content")
+        if role == "tool":
+            attr_messages.append(
+                {
+                    "role": role,
+                    "parts": [
+                        {
+                            "type": "tool_call_response",
+                            "id": message.get("tool_call_id"),
+                            "response": content,
+                        }
+                    ],
+                }
+            )
+            continue
+        parts = _map_content_parts(content)
+        if role == "assistant":
+            parts = parts + _tool_call_parts(message.get("tool_calls"))
+        attr_messages.append({"role": role or "user", "parts": parts})
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages)
+    )
+
+
+def _set_output_messages(span, choices):
+    if not span.is_recording() or not choices:
+        return
+    messages = []
+    for choice in choices:
+        choice = _model_as_dict(choice)
+        message = choice.get("message") or {}
+        parts = _map_content_parts(message.get("content"))
+        parts = parts + _tool_call_parts(message.get("tool_calls"))
+        messages.append(
+            {
+                "role": message.get("role") or "assistant",
+                "parts": parts,
+                # OutputMessage.finish_reason must be a string, never null.
+                "finish_reason": _map_finish_reason(choice.get("finish_reason")),
+            }
         )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages)
+    )
+
+
+# -- response attributes -----------------------------------------------------
 
 
 @dont_throw
@@ -259,20 +378,24 @@ def _set_response_attributes(span, request_type, response_dict):
     if request_type == LLMRequestTypeValues.EMBEDDING:
         return
 
+    choices = response_dict.get("choices") or []
+
+    # gen_ai.response.finish_reasons is a top-level recommended attribute and is
+    # NOT gated by the content opt-in. Dedupe while preserving order.
+    finish_reasons = tuple(
+        dict.fromkeys(
+            _map_finish_reason(choice.get("finish_reason"))
+            for choice in choices
+            if choice.get("finish_reason")
+        )
+    )
+    if finish_reasons:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+        )
+
     if should_send_prompts():
-        for choice in response_dict.get("choices", []):
-            index = choice.get("index", 0)
-            prefix = f"{GenAIAttributes.GEN_AI_COMPLETION}.{index}"
-            _set_span_attribute(span, f"{prefix}.finish_reason", choice.get("finish_reason"))
-            message = choice.get("message") or {}
-            _set_span_attribute(span, f"{prefix}.role", message.get("role"))
-            content = message.get("content")
-            if content is not None and not isinstance(content, str):
-                content = json.dumps(content)
-            _set_span_attribute(span, f"{prefix}.content", content)
-            tool_calls = message.get("tool_calls")
-            if tool_calls:
-                _set_tool_calls(span, prefix, tool_calls)
+        _set_output_messages(span, choices)
 
 
 # -- events ------------------------------------------------------------------
@@ -313,7 +436,8 @@ def _emit_choice_events(request_type, response_dict, event_logger):
                     "content": message.get("content"),
                     "role": message.get("role") or "assistant",
                 },
-                finish_reason=choice.get("finish_reason") or "unknown",
+                finish_reason=_map_finish_reason(choice.get("finish_reason")) or "unknown",
+                tool_calls=message.get("tool_calls"),
             ),
             event_logger,
         )
@@ -337,11 +461,11 @@ def _handle_response(span, request_type, response_dict, event_logger):
 
 
 @dont_throw
-def _record_metrics(metrics, system, model, duration, response_dict, request_type):
+def _record_metrics(metrics, provider, model, duration, response_dict, request_type):
     if not metrics:
         return
     attributes = {
-        GenAIAttributes.GEN_AI_SYSTEM: system,
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
         GenAIAttributes.GEN_AI_REQUEST_MODEL: model,
     }
     common = Config.get_common_metrics_attributes()
@@ -377,13 +501,13 @@ def _record_metrics(metrics, system, model, duration, response_dict, request_typ
 
 
 @dont_throw
-def _record_exception_metric(metrics, system, model, error):
+def _record_exception_metric(metrics, provider, model, error):
     if not metrics or not metrics.get("exception_counter"):
         return
     metrics["exception_counter"].add(
         1,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: system,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: provider,
             GenAIAttributes.GEN_AI_REQUEST_MODEL: model,
             ERROR_TYPE: error.__class__.__name__,
         },
@@ -402,10 +526,10 @@ def _accumulate_chunk(accumulated, chunk):
         accumulated["model"] = chunk_dict["model"]
     if chunk_dict.get("usage"):
         accumulated["usage"] = chunk_dict["usage"]
-    if accumulated.get("system") is None:
-        system = _resolve_system_from_response(chunk)
-        if system:
-            accumulated["system"] = system
+    if accumulated.get("provider") is None:
+        provider = _resolve_provider_from_response(chunk)
+        if provider:
+            accumulated["provider"] = provider
 
     for choice in chunk_dict.get("choices", []):
         index = choice.get("index", 0)
@@ -456,18 +580,18 @@ def _build_accumulated_response(accumulated):
     }
 
 
-def _finalize(span, metrics, event_logger, request_type, response, model, kwargs, duration, accumulated_system=None):
-    system = (
-        accumulated_system
-        or _resolve_system_from_response(response)
-        or _resolve_system_from_kwargs(kwargs)
+def _finalize(span, metrics, event_logger, request_type, response, model, kwargs, duration, accumulated_provider=None):
+    provider = (
+        accumulated_provider
+        or _resolve_provider_from_response(response)
+        or _resolve_provider_from_kwargs(kwargs)
     )
     # Serialize the response once and reuse it for attributes, events, and metrics —
     # model_dump() on a ModelResponse is the most expensive step in the wrapper.
     response_dict = _model_as_dict(response)
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, system)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider)
     _handle_response(span, request_type, response_dict, event_logger)
-    _record_metrics(metrics, system, model, duration, response_dict, request_type)
+    _record_metrics(metrics, provider, model, duration, response_dict, request_type)
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
     span.end()
@@ -478,13 +602,13 @@ def _handle_exception(span, metrics, error, model, kwargs):
         span.set_attribute(ERROR_TYPE, error.__class__.__name__)
         span.record_exception(error)
         span.set_status(Status(StatusCode.ERROR, str(error)))
-        _record_exception_metric(metrics, _resolve_system_from_kwargs(kwargs), model, error)
+        _record_exception_metric(metrics, _resolve_provider_from_kwargs(kwargs), model, error)
     finally:
         span.end()
 
 
 def _new_accumulator():
-    return {"id": None, "model": None, "choices": {}, "usage": None, "system": None}
+    return {"id": None, "model": None, "choices": {}, "usage": None, "provider": None}
 
 
 # -- wrappers ----------------------------------------------------------------
@@ -495,8 +619,8 @@ def _start_span(tracer, to_wrap, kwargs):
         to_wrap["span_name"],
         kind=SpanKind.CLIENT,
         attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: _resolve_system_from_kwargs(kwargs),
-            SpanAttributes.LLM_REQUEST_TYPE: to_wrap["request_type"].value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _resolve_provider_from_kwargs(kwargs),
+            GenAIAttributes.GEN_AI_OPERATION_NAME: to_wrap["operation"],
         },
     )
 
@@ -583,7 +707,7 @@ def _finalize_stream(span, metrics, event_logger, to_wrap, accumulated, model, k
     final = _build_accumulated_response(accumulated)
     _finalize(
         span, metrics, event_logger, to_wrap["request_type"], final, model, kwargs,
-        time.time() - start, accumulated_system=accumulated.get("system"),
+        time.time() - start, accumulated_provider=accumulated.get("provider"),
     )
 
 

@@ -10,6 +10,8 @@ context while the provider executes, which is what prevents a nested provider-SD
 instrumentor (e.g. OpenAI/Azure) from emitting a duplicate span.
 """
 
+import json
+
 import litellm
 import pytest
 from litellm import CustomLLM, ModelResponse
@@ -20,7 +22,6 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    LLMRequestTypeValues,
     SpanAttributes,
 )
 
@@ -81,12 +82,15 @@ def test_custom_provider_completion(instrument_legacy, span_exporter, custom_llm
     assert [span.name for span in spans] == ["litellm.chat"]
     attrs = spans[0].attributes
 
-    assert attrs[GenAIAttributes.GEN_AI_SYSTEM] == PROVIDER
-    assert attrs[SpanAttributes.LLM_REQUEST_TYPE] == LLMRequestTypeValues.CHAT.value
+    assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == PROVIDER
     assert (
-        attrs[f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content"]
-        == "pong from custom provider"
+        attrs[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAIAttributes.GenAiOperationNameValues.CHAT.value
     )
+    output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output[0]["parts"] == [
+        {"type": "text", "content": "pong from custom provider"}
+    ]
     assert attrs[SpanAttributes.LLM_USAGE_TOTAL_TOKENS] == 7
 
     # Suppression was active while the provider ran -> nested instrumentation skips.
@@ -99,5 +103,5 @@ async def test_custom_provider_acompletion(instrument_legacy, span_exporter, cus
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == ["litellm.chat"]
-    assert spans[0].attributes[GenAIAttributes.GEN_AI_SYSTEM] == PROVIDER
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == PROVIDER
     assert custom_llm.suppress_during_call is True
