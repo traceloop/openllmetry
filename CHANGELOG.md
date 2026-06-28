@@ -1,3 +1,19 @@
+## v0.62.0 (2026-06-28)
+
+### Feat
+
+- **instrumentation**: Add litellm package instrumentation (#4322)
+
+### Fix
+
+- **sdk**: @agent decorator no longer overwrites enclosing @workflow name (#4288)
+- **langchain**: emit cache creation tokens (#4261)
+- **vertexai**: emit cache tokens (#4263)
+- **writer**: emit cache tokens (#4262)
+- **llamaindex**: emit cache tokens (#4260)
+- **bedrock**: emit cache tokens (#4241)
+- **mistralai**: emit input cache tokens (#4238)
+
 ## v0.61.0 (2026-05-31)
 
 ### Feat
