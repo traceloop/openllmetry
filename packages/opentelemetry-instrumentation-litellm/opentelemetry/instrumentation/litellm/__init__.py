@@ -178,22 +178,52 @@ def _set_request_attributes(span, kwargs):
     )
 
 
+def _build_tool_def(tool):
+    """Build a tool definition dict matching the OTel source-system format."""
+    tool = _model_as_dict(tool)
+    function = _model_as_dict(tool.get("function")) or {}
+    tool_def = {}
+    tool_type = tool.get("type") or function.get("type")
+    if tool_type:
+        tool_def["type"] = tool_type
+    if function.get("name"):
+        tool_def["name"] = function["name"]
+    if function.get("description"):
+        tool_def["description"] = function["description"]
+    if function.get("parameters"):
+        tool_def["parameters"] = function["parameters"]
+    return tool_def
+
+
+def _set_tool_definitions(span, kwargs):
+    tools = kwargs.get("tools")
+    if not tools:
+        return
+    tool_defs = [d for tool in tools if (d := _build_tool_def(tool))]
+    if tool_defs:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+        )
+
+
 @dont_throw
 def _set_prompts(span, request_type, args, kwargs):
     if not span.is_recording() or not should_send_prompts():
         return
     if request_type == LLMRequestTypeValues.CHAT:
         _set_input_messages(span, _get_messages(args, kwargs))
+        _set_tool_definitions(span, kwargs)
     else:
         embedding_input = _get_embedding_input(args, kwargs)
         if isinstance(embedding_input, str):
             embedding_input = [embedding_input]
-        for index, prompt in enumerate(embedding_input or []):
+        messages = [
+            {"role": "user", "parts": [{"type": "text", "content": prompt}]}
+            for prompt in embedding_input or []
+        ]
+        if messages:
             _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role", "user"
-            )
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content", prompt
+                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages)
             )
 
 
@@ -264,7 +294,7 @@ def _map_content_block(block):
 def _map_content_parts(content):
     """Convert message content to an OTel parts list. Handles str, list, and None."""
     if isinstance(content, str):
-        return [{"content": content, "type": "text"}]
+        return [{"type": "text", "content": content}]
     if isinstance(content, list):
         return [_map_content_block(block) for block in content]
     return content or []
@@ -436,7 +466,7 @@ def _emit_choice_events(request_type, response_dict, event_logger):
                     "content": message.get("content"),
                     "role": message.get("role") or "assistant",
                 },
-                finish_reason=_map_finish_reason(choice.get("finish_reason")) or "unknown",
+                finish_reason=_map_finish_reason(choice.get("finish_reason")),
                 tool_calls=message.get("tool_calls"),
             ),
             event_logger,

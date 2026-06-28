@@ -30,6 +30,9 @@ def test_streaming_completion(instrument_legacy, span_exporter):
     assert attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "openai"
     output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output[0]["parts"] == [{"type": "text", "content": "one two three"}]
+    # finish_reason must survive streaming accumulation, per-message and top-level.
+    assert output[0]["finish_reason"] == "stop"
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
 
 def test_streaming_preserves_custom_stream_wrapper(instrument_legacy, span_exporter):
@@ -97,3 +100,5 @@ async def test_astreaming_completion(instrument_legacy, span_exporter):
     assert attrs[SpanAttributes.LLM_IS_STREAMING] is True
     output = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output[0]["parts"] == [{"type": "text", "content": "one two three"}]
+    assert output[0]["finish_reason"] == "stop"
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)

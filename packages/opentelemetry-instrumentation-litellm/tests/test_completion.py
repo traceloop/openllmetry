@@ -238,3 +238,42 @@ def test_finish_reasons_are_mapped_and_deduped(tracer_provider, span_exporter):
     assert output[0]["finish_reason"] == "tool_call"
     tool_parts = [p for p in output[0]["parts"] if p["type"] == "tool_call"]
     assert tool_parts[0]["name"] == "f"
+
+
+def test_tool_definitions_captured(instrument_legacy, span_exporter):
+    """tools passed to completion() are captured in gen_ai.tool.definitions."""
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Get the weather for a city",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}},
+                    "required": ["city"],
+                },
+            },
+        }
+    ]
+    litellm.completion(
+        model="gpt-3.5-turbo",
+        messages=MESSAGES,
+        tools=tools,
+        mock_response="It is sunny.",
+    )
+
+    attrs = span_exporter.get_finished_spans()[0].attributes
+    tool_defs = json.loads(attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tool_defs == [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather for a city",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"],
+            },
+        }
+    ]
