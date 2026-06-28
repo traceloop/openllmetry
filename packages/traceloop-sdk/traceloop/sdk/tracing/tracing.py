@@ -140,8 +140,20 @@ class TracerWrapper(object):
                     original_on_end = obj.__spans_processor.on_end
 
                     def wrapped_on_end(span):
-                        # Call the custom on_end first
-                        span_postprocess_callback(span)
+                        # OTel freezes a span's attributes (sets `_immutable`) in
+                        # Span.end() before on_end runs, so the postprocess callback
+                        # can't modify them. Temporarily unfreeze around the callback
+                        # so it can redact/mutate attributes, then restore the flag.
+                        attributes = getattr(span, "_attributes", None)
+                        was_immutable = getattr(attributes, "_immutable", False)
+                        if was_immutable:
+                            attributes._immutable = False
+                        try:
+                            # Call the custom on_end first
+                            span_postprocess_callback(span)
+                        finally:
+                            if was_immutable:
+                                attributes._immutable = True
                         # Then call the original to ensure normal processing
                         original_on_end(span)
 
@@ -536,6 +548,9 @@ def init_instrumentations(
         elif instrument == Instruments.LANGCHAIN:
             if init_langchain_instrumentor(use_attributes):
                 instrument_set = True
+        elif instrument == Instruments.LITELLM:
+            if init_litellm_instrumentor(use_attributes):
+                instrument_set = True
         elif instrument == Instruments.LLAMA_INDEX:
             if init_llama_index_instrumentor():
                 instrument_set = True
@@ -793,6 +808,23 @@ def init_mistralai_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing MistralAI instrumentor: {e}")
+    return False
+
+
+def init_litellm_instrumentor(use_attributes: bool = True):
+    try:
+        if is_package_installed("litellm"):
+            from opentelemetry.instrumentation.litellm import LiteLLMInstrumentor
+
+            instrumentor = LiteLLMInstrumentor(
+                get_common_metrics_attributes=metrics_common_attributes,
+                use_legacy_attributes=use_attributes,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing LiteLLM instrumentor: {e}")
     return False
 
 

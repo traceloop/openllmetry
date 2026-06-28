@@ -34,6 +34,7 @@ dependencies = [
   "opentelemetry-instrumentation-pinecone",
   "opentelemetry-instrumentation-qdrant",
   "opentelemetry-instrumentation-langchain",
+  "opentelemetry-instrumentation-litellm",
   "opentelemetry-instrumentation-lancedb",
   "opentelemetry-instrumentation-chromadb",
   "opentelemetry-instrumentation-transformers",
@@ -167,6 +168,7 @@ opentelemetry-instrumentation-groq = { path = "../opentelemetry-instrumentation-
 opentelemetry-instrumentation-haystack = { path = "../opentelemetry-instrumentation-haystack", editable = true }
 opentelemetry-instrumentation-lancedb = { path = "../opentelemetry-instrumentation-lancedb", editable = true }
 opentelemetry-instrumentation-langchain = { path = "../opentelemetry-instrumentation-langchain", editable = true }
+opentelemetry-instrumentation-litellm = { path = "../opentelemetry-instrumentation-litellm", editable = true }
 opentelemetry-instrumentation-llamaindex = { path = "../opentelemetry-instrumentation-llamaindex", editable = true }
 opentelemetry-instrumentation-marqo = { path = "../opentelemetry-instrumentation-marqo", editable = true }
 opentelemetry-instrumentation-mcp = { path = "../opentelemetry-instrumentation-mcp", editable = true }
