@@ -383,6 +383,69 @@ def _extract_prompt_attributes(otel_span, input_data, trace_content: bool):
         )
 
 
+def _extract_generation_span_data_attributes(otel_span, span_data, trace_content: bool):
+    """Extract OTel gen_ai.* attributes from a GenerationSpanData object.
+
+    GenerationSpanData (used by LiteLLM and other providers that do not go through
+    the OpenAI Responses API) exposes ``model``, ``model_config``, ``output``, and
+    ``usage`` *directly* on the span_data object rather than via a nested
+    ``response`` attribute.  This function maps those fields to the same OTel
+    attributes that :func:`_extract_response_attributes` populates for
+    ResponseSpanData, fixing the silent data loss reported in issue #4157.
+    """
+    # Response model name
+    model = getattr(span_data, "model", None)
+    if model:
+        otel_span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_MODEL, model)
+
+    # Model config: temperature, top_p, max_tokens (stored as a plain dict)
+    model_config = getattr(span_data, "model_config", None) or {}
+    if isinstance(model_config, dict):
+        temperature = model_config.get("temperature")
+        if temperature is not None:
+            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, temperature)
+        top_p = model_config.get("top_p")
+        if top_p is not None:
+            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_TOP_P, top_p)
+        max_tokens = model_config.get("max_tokens") or model_config.get("max_output_tokens")
+        if max_tokens is not None:
+            otel_span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, max_tokens)
+
+    # Output messages (each item is typically a dict with ``role`` and ``content``)
+    output = getattr(span_data, "output", None)
+    if output and trace_content:
+        output_messages = []
+        for item in output:
+            if isinstance(item, dict):
+                role = item.get("role", "assistant")
+                content = item.get("content", "")
+            else:
+                role = getattr(item, "role", "assistant")
+                content = getattr(item, "content", "")
+            if content is not None:
+                output_messages.append({
+                    "role": role,
+                    "parts": [{"type": "text", "content": str(content) if not isinstance(content, str) else content}],
+                })
+        if output_messages:
+            otel_span.set_attribute(
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages)
+            )
+
+    # Usage (stored as a plain dict with snake_case keys)
+    usage = getattr(span_data, "usage", None) or {}
+    if isinstance(usage, dict):
+        input_tokens = usage.get("input_tokens") or usage.get("prompt_tokens")
+        if input_tokens is not None:
+            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, input_tokens)
+        output_tokens = usage.get("output_tokens") or usage.get("completion_tokens")
+        if output_tokens is not None:
+            otel_span.set_attribute(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, output_tokens)
+        total_tokens = usage.get("total_tokens")
+        if total_tokens is not None:
+            otel_span.set_attribute(SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
+
+
 def _extract_response_attributes(otel_span, response, trace_content: bool):
     """
     Extract model settings, completions, and usage from a response object
@@ -975,6 +1038,14 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if response:
             _extract_response_attributes(otel_span, response, trace_content)
+        elif getattr(span_data, "output", None) is not None or getattr(span_data, "usage", None) is not None:
+            # GenerationSpanData (e.g. produced by LiteLLM and other non-OpenAI
+            # providers) does NOT have a ``response`` attribute.  Instead it exposes
+            # ``model``, ``model_config``, ``output``, and ``usage`` directly on the
+            # span_data object.  Without this branch those fields are silently ignored
+            # and *all* gen_ai.response.* / gen_ai.usage.* OTel attributes are missing.
+            # See https://github.com/traceloop/openllmetry/issues/4157
+            _extract_generation_span_data_attributes(otel_span, span_data, trace_content)
 
     def _end_function_span(self, otel_span, span_data, trace_content):
         """Handle on_span_end logic for function/tool spans.
