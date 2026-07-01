@@ -33,7 +33,7 @@ dev = [
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
   "ruff>=0.4.0",
-  "transformers>=4.51.3,<5",
+  "transformers>=4.51.3,<6",
 ]
 
 [build-system]
