@@ -33,7 +33,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "crewai>=1.0.0,<2",
+  "crewai>=1.7.0,<2",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
