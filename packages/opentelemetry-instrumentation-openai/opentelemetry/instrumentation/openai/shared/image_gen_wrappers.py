@@ -10,7 +10,10 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_image_gen_metric_wrapper,
 )
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    suppress_http_instrumentation,
+)
 from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 
@@ -32,7 +35,9 @@ def image_gen_metrics_wrapper(
     try:
         # record time for duration
         start_time = time.time()
-        response = wrapped(*args, **kwargs)
+        # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+        with suppress_http_instrumentation():
+            response = wrapped(*args, **kwargs)
         end_time = time.time()
     except Exception as e:  # pylint: disable=broad-except
         end_time = time.time()
