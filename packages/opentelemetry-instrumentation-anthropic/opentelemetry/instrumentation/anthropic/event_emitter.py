@@ -51,7 +51,7 @@ def emit_input_events(event_logger: Optional[Logger], kwargs):
                 MessageEvent(content=message.get("content"), role=message.get("role")),
                 event_logger,
             )
-    if kwargs.get("tools") is not None:
+    if kwargs.get("tools"):
         emit_event(
             MessageEvent(content={"tools": kwargs.get("tools")}, role="user"),
             event_logger,
