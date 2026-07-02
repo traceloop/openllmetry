@@ -31,6 +31,7 @@ _LITELLM_PREFIX_TO_OTEL_PROVIDER = {
     "vertex_ai":   GenAiProviderNameValues.GCP_VERTEX_AI.value,
     "bedrock":     GenAISystem.AWS.value,
     "azure":       GenAiProviderNameValues.AZURE_AI_OPENAI.value,
+    "azure_ai":    GenAiProviderNameValues.AZURE_AI_INFERENCE.value,
     "groq":        GenAISystem.GROQ.value,
     "mistral":     GenAISystem.MISTRALAI.value,
     "cohere":      GenAISystem.COHERE.value,
