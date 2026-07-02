@@ -14,7 +14,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GenAiOperationNameValues,
-    GenAiSystemValues,
+    GenAiProviderNameValues,
 )
 from opentelemetry.semconv_ai import GenAISystem, SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
@@ -23,14 +23,14 @@ from .utils import _messages_to_otel_input, _response_to_otel_output
 _instruments = ("crewai >= 1.0.0",)
 
 # Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
-# Uses GenAISystem (semconv-ai) and GenAiSystemValues (OTel upstream) — no raw strings.
+# Uses GenAISystem (semconv-ai) and GenAiProviderNameValues (OTel upstream) — no raw strings.
 _LITELLM_PREFIX_TO_OTEL_PROVIDER = {
     "openai":      GenAISystem.OPENAI.value,
     "anthropic":   GenAISystem.ANTHROPIC.value,
-    "gemini":      GenAiSystemValues.GCP_GEMINI.value,
-    "vertex_ai":   GenAiSystemValues.GCP_VERTEX_AI.value,
+    "gemini":      GenAiProviderNameValues.GCP_GEMINI.value,
+    "vertex_ai":   GenAiProviderNameValues.GCP_VERTEX_AI.value,
     "bedrock":     GenAISystem.AWS.value,
-    "azure":       GenAiSystemValues.AZURE_AI_OPENAI.value,
+    "azure":       GenAiProviderNameValues.AZURE_AI_OPENAI.value,
     "groq":        GenAISystem.GROQ.value,
     "mistral":     GenAISystem.MISTRALAI.value,
     "cohere":      GenAISystem.COHERE.value,
@@ -40,7 +40,7 @@ _LITELLM_PREFIX_TO_OTEL_PROVIDER = {
 # Maps bare model name patterns to OTel provider name values.
 _MODEL_PATTERN_TO_OTEL_PROVIDER = [
     ("claude",   GenAISystem.ANTHROPIC.value),
-    ("gemini",   GenAiSystemValues.GCP_GEMINI.value),
+    ("gemini",   GenAiProviderNameValues.GCP_GEMINI.value),
     ("mistral",  GenAISystem.MISTRALAI.value),
     ("command",  GenAISystem.COHERE.value),
 ]
