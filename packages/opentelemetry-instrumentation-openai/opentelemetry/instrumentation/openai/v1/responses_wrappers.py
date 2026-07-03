@@ -1,4 +1,5 @@
 import json
+from opentelemetry.trace.propagation import SPAN_KEY
 import pydantic
 import re
 import threading
@@ -31,6 +32,7 @@ from opentelemetry.instrumentation.openai.utils import (
     should_send_prompts,
 )
 
+from opentelemetry.overmind.processor import request_processor, clean_kwargs
 
 def _get_openai_sentinel_types() -> tuple:
     """Dynamically discover OpenAI sentinel types available in this SDK version.
@@ -501,6 +503,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     # Remove OpenAI sentinel values (NOT_GIVEN, Omit) to allow chained .get() calls
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
+    cleaned_kwargs = clean_kwargs(kwargs)
 
     try:
         response = wrapped(*args, **kwargs)
@@ -513,6 +516,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time=start_time,
                 context=ctx,
             )
+            request_processor(span, cleaned_kwargs, SPAN_NAME)
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
             return ResponseStream(
@@ -578,6 +582,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             ),
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -649,6 +654,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             start_time=int(traced_data.start_time),
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
@@ -679,6 +685,7 @@ async def async_responses_get_or_create_wrapper(
                 start_time=start_time,
                 context=ctx,
             )
+            request_processor(span, kwargs, SPAN_NAME)
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
             return ResponseStream(
@@ -740,6 +747,7 @@ async def async_responses_get_or_create_wrapper(
             ),
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -812,6 +820,7 @@ async def async_responses_get_or_create_wrapper(
             start_time=int(traced_data.start_time),
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
@@ -842,6 +851,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
             record_exception=True,
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
@@ -874,6 +884,7 @@ async def async_responses_cancel_wrapper(
             record_exception=True,
             context=ctx,
         )
+        request_processor(span, kwargs, SPAN_NAME)
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)

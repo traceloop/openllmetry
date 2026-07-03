@@ -27,6 +27,8 @@ from opentelemetry.trace import get_tracer, SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
+from opentelemetry.overmind.processor import request_processor
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("agno >= 2.0.0",)
@@ -330,6 +332,13 @@ class _AgentARunWrapper:
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                     )
+
+                # Capture prompt metadata (Agent.run signature: first arg is prompt)
+                prompt_kwargs = {}
+                if args:
+                    prompt_kwargs["prompt"] = args[0]
+                prompt_kwargs.update(kwargs or {})
+                request_processor(span, prompt_kwargs, "agno.agent.run")
 
                 import time
 

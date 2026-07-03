@@ -134,6 +134,8 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        from opentelemetry.overmind.processor import request_processor
+        request_processor(span, kwargs, "openai.assistant.run")
         if exception := run.get("exception"):
             span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
             span.record_exception(exception)
@@ -262,6 +264,8 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
 
     # Use the span as current context to ensure events get proper trace context
     with trace.use_span(span, end_on_exit=False):
+        from opentelemetry.overmind.processor import request_processor
+        request_processor(span, kwargs, "openai.assistant.run_stream")
         i = 0
         if assistants.get(assistant_id) is not None or Config.enrich_assistant:
             if Config.enrich_assistant:

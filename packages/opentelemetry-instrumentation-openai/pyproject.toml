@@ -15,6 +15,7 @@ dependencies = [
   "opentelemetry-instrumentation>=0.59b0",
   "opentelemetry-semantic-conventions-ai>=0.4.13,<0.5.0",
   "opentelemetry-semantic-conventions>=0.59b0",
+  "opentelemetry-overmind>=0.53.0",
 ]
 
 [project.urls]
@@ -52,6 +53,9 @@ packages = ["opentelemetry"]
 [tool.coverage.run]
 branch = true
 source = ["opentelemetry/instrumentation/openai"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.coverage.report]
 exclude_lines = ["if TYPE_CHECKING:"]

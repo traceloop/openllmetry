@@ -120,6 +120,8 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
 @dont_throw
 def _handle_request(span, kwargs, instance):
+    from opentelemetry.overmind.processor import request_processor
+    request_processor(span, kwargs, "openai.responses")
     _set_request_attributes(span, kwargs, instance)
     if should_emit_events():
         _emit_prompts_events(kwargs)

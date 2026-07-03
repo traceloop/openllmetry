@@ -52,6 +52,8 @@ from wrapt import wrap_function_wrapper
 
 from anthropic._streaming import AsyncStream, Stream
 
+from opentelemetry.overmind.processor import request_processor
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("anthropic >= 0.3.11",)
@@ -540,6 +542,10 @@ def _wrap(
         },
     )
 
+    # Capture prompt metadata for Anthropic messages/completions
+    request_type = "anthropic.messages"
+    request_processor(span, kwargs, request_type)
+
     _handle_input(span, event_logger, kwargs)
 
     start_time = time.time()
@@ -663,6 +669,10 @@ async def _awrap(
             SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
         },
     )
+    # Capture prompt metadata for Anthropic messages/completions
+    request_type = "anthropic.messages"
+    request_processor(span, kwargs, request_type)
+
     await _ahandle_input(span, event_logger, kwargs)
 
     start_time = time.time()

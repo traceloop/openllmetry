@@ -54,6 +54,7 @@ from opentelemetry.trace import SpanKind, Tracer
 from opentelemetry import trace
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
+from opentelemetry.overmind.processor import request_processor
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -266,6 +267,7 @@ async def achat_wrapper(
 
 @dont_throw
 async def _handle_request(span, kwargs, instance):
+    request_processor(span, kwargs, "openai.chat")
     _set_request_attributes(span, kwargs, instance)
     _set_client_attributes(span, instance)
     if should_emit_events():
