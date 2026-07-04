@@ -107,6 +107,22 @@ async def test_router_analytics_complete_workflow(exporter, workflow_agents):
     workflow_span = workflow_spans[0]
     handoff_span = handoff_spans[0]
 
+    # The handoff span must reflect the resolved target agent — both the span
+    # name and the gen_ai.handoff.to_agent attribute. Regression guard: the SDK
+    # only assigns ``to_agent`` between ``on_span_start`` and ``on_span_end``,
+    # so the instrumentation has to re-read it at end-of-span.
+    assert "unknown" not in handoff_span.name, (
+        f"Handoff span name should not contain 'unknown', got {handoff_span.name!r}"
+    )
+    assert handoff_span.name == "Data Router Agent → Analytics Agent.handoff", (
+        f"Unexpected handoff span name: {handoff_span.name!r}"
+    )
+    assert handoff_span.attributes.get("gen_ai.handoff.from_agent") == "Data Router Agent"
+    assert handoff_span.attributes.get("gen_ai.handoff.to_agent") == "Analytics Agent", (
+        "Handoff span should expose gen_ai.handoff.to_agent for the resolved target agent, "
+        f"got {dict(handoff_span.attributes)!r}"
+    )
+
     assert workflow_span.parent is None, "Agent Workflow should be root"
     assert analytics_span.parent is not None, "Analytics Agent should have parent"
     assert analytics_span.parent.span_id == workflow_span.context.span_id, "Analytics should be child of Workflow"
