@@ -542,6 +542,9 @@ def init_instrumentations(
         elif instrument == Instruments.HAYSTACK:
             if init_haystack_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.HTTPCLIENT:
+            if init_httpclient_instrumentor():
+                instrument_set = True
         elif instrument == Instruments.LANCEDB:
             if init_lancedb_instrumentor():
                 instrument_set = True
@@ -780,6 +783,20 @@ def init_haystack_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Haystack instrumentor: {e}")
+    return False
+
+
+def init_httpclient_instrumentor():
+    try:
+        if is_package_installed("httpx"):
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+            instrumentor = HTTPXClientInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing HTTPX instrumentor: {e}")
     return False
 
 

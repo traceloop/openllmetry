@@ -13,6 +13,7 @@ class Instruments(Enum):
     GOOGLE_GENERATIVEAI = "google_generativeai"
     GROQ = "groq"
     HAYSTACK = "haystack"
+    HTTPCLIENT = "httpclient"
     LANCEDB = "lancedb"
     LANGCHAIN = "langchain"
     LITELLM = "litellm"
