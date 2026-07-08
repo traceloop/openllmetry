@@ -1,0 +1,107 @@
+interactions:
+- request:
+    body: "{\"model\":\"command-r-08-2024\",\"messages\":[{\"role\":\"user\",\"content\":\"Write
+      a concise summary of the following:\\n\\n\\n\\\"Today, all ridges and faces
+      of the Matterhorn have been ascended in all seasons,\\n    and mountain guides
+      take a large number of people up the northeast H\xF6rnli route\\n    each summer.
+      In total, up to 150 climbers attempt the Matterhorn each day during\\n    summer.
+      By modern standards, the climb is fairly difficult (AD Difficulty rating),\\n
+      \   but not hard for skilled mountaineers according to French climbing grades.
+      There\\n    are fixed ropes on parts of the route to help. Still, it should
+      be remembered that\\n    several climbers may die on the mountain each year.\\n
+      \   The usual pattern of ascent is to take the Schwarzsee cable car up from
+      Zermatt,\\n    hike up to the H\xF6rnli Hut elev. 3,260 m (10,700 ft), a large
+      stone building at the\\n    base of the main ridge, and spend the night. The
+      next day, climbers rise at 3:30 am\\n    so as to reach the summit and descend
+      before the regular afternoon clouds and storms\\n    come in. The Solvay Hut
+      located on the ridge at 4,003 m (13,133 ft) can be used only\\n    in a case
+      of emergency.\\n    Other popular routes on the mountain include the Italian
+      (Lion) ridge (AD+ Difficulty\\n    rating) and the Zmutt ridge (D Difficulty
+      rating). The four faces, as well as the\\n    Furggen ridge, constitute the
+      most challenging routes to the summit. The north face\\n    is amongst the six
+      most difficult faces of the Alps, as well as \u2018The Trilogy\u2019, the\\n
+      \   three hardest of the six, along with the north faces of the Eiger and the
+      Grandes\\n    Jorasses (TD+ Difficulty rating).\\\"\\n\\n\\nCONCISE SUMMARY:\"}],\"temperature\":0.75,\"stream\":false}"
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1707'
+      Host:
+      - api.cohere.com
+      User-Agent:
+      - cohere/5.20.1
+      X-Client-Name:
+      - langchain:partner
+      X-Fern-Language:
+      - Python
+      X-Fern-SDK-Name:
+      - cohere
+      X-Fern-SDK-Version:
+      - 5.20.1
+      content-type:
+      - application/json
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3RSwW4bOQz9FULnsWHDsb07t0U2QBbYID3k1KIIaImaIaqhBIlKMwj8W/2B/lih
+        SZ0GBXoSSD4+Pj7qxbAzvfHHo99c4WFl8e/t6gp3doV7T6v9bnOFf3ncbg4H05mJSsGBTP9icgxk
+        eoOlcFEUNZ2xUZRETf/pxeicWlnpuVWWpzcPI8EdqlIeYxbgAggpphowgw08nVgGcFSUBZWjwFfW
+        EaYalFMgyLEqFYgenjDPC5a9Z9vqVNbwL5XESuD5mRzkmKgAioMpVlFkgaGyo9IBK2SakKUJsCOG
+        QDI0voZOsS3BGMIMDmWgHGt5lde9CvKoGLjNhGhtzbm1EtoRZsK8huuGpVxA58R2ISqJxAGC8DAq
+        oIKOBLffv2UJDLdV4UQ+ZoJmzpS0ETZEqdPECoQ5zEtC6FnB4QwaAZ8iO0CvlCVGgaIxT2UNzWWJ
+        WUfCom9DFvOa5Y1mikUvzv9cqqbGud1vXldt8hPlZRbLIoTyGu51pAwSFU+/DsJiQ3W0MP/XrEGB
+        zG6gDj5OVfUSNHf1Ig48WurARinsKJODKNRu+6bv7bhNQMv+E1JZm/Pnc2c8C5fxMROWKKY31/d3
+        H/6/ebgxnamXH3riEMg9VmEtLWZJVR81fiEppt8dj52JVd/nttvduTOX6PeO/R87LNqR3Dvg4Xz+
+        EQAA//8gmhGuWQMAAA==
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - Sat, 17 Jan 2026 18:15:51 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '2747'
+      num_tokens:
+      - '490'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin,Accept-Encoding
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - b604791f99936a6ab1799de883df1e0f
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '1840'
+      x-trial-endpoint-call-limit:
+      - '20'
+      x-trial-endpoint-call-remaining:
+      - '14'
+    status:
+      code: 200
+      message: OK
+version: 1

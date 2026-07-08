@@ -1,0 +1,375 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a joke, pirate style", "model": "command", "stream":
+      true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '79'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.6.1
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"613783cf-5a8b-4d4e-b34e-d6c2223a3387"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Ar"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"rr"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"r"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" mate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"y"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Sh"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"iver"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" tim"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"bers"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" here"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"style"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joke"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" for"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nI"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" asked"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" captain"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" if"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" we"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" could"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" go"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" get"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ourselves"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" snack"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" He"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" looked"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" at"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" all"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" seas"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ick"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" green"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" yelled"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \""}
+
+        {"is_finished":false,"event_type":"text-generation","text":"A"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" mate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"y"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!\""}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nThis"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" classic"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pun"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" combines"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" elements"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" vocabulary"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" humor"}
+
+        {"is_finished":false,"event_type":"text-generation","text":":"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" using"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"esque"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" expression"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \""}
+
+        {"is_finished":false,"event_type":"text-generation","text":"A"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" mate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"y"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"\""}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" express"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" agreement"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" while"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" also"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" playing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" on"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" phrase"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" highlight"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" captain"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" discomfort"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"ing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sea"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sickness"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" \n\nI"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" hope"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" find"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" this"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" joke"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" be"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fun"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" little"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" treasure"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" if"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" be"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" want"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"in"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" more"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" let"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" me"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" know"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" I"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" shall"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" provide"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ye"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" with"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" bounty"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" pirate"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"-"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"themed"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" humor"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"dcdb9a85-a8dc-4f4c-9779-f7c1801248f3","text":"Arrrr,
+        matey! Shiver me timbers, here''s a pirate-style joke for ye: \n\nI asked
+        the captain if we could go and get ourselves a snack. He looked at me, all
+        seasick and green, and yelled: \"Aye, matey!\" \n\nThis classic pirate pun
+        combines elements of pirate vocabulary and humor: using the pirate-esque expression
+        \"Aye, matey\" to express agreement, while also playing on the phrase to highlight
+        the captain''s discomforting sea sickness. \n\nI hope ye find this joke to
+        be a fun little treasure, and if ye be wantin'' more, let me know, and I shall
+        provide ye with a bounty of pirate-themed humor!","generation_id":"613783cf-5a8b-4d4e-b34e-d6c2223a3387","chat_history":[{"role":"USER","message":"Tell
+        me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
+        me timbers, here''s a pirate-style joke for ye: \n\nI asked the captain if
+        we could go and get ourselves a snack. He looked at me, all seasick and green,
+        and yelled: \"Aye, matey!\" \n\nThis classic pirate pun combines elements
+        of pirate vocabulary and humor: using the pirate-esque expression \"Aye, matey\"
+        to express agreement, while also playing on the phrase to highlight the captain''s
+        discomforting sea sickness. \n\nI hope ye find this joke to be a fun little
+        treasure, and if ye be wantin'' more, let me know, and I shall provide ye
+        with a bounty of pirate-themed humor!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"warnings":["model
+        ''command'' is deprecated and will be removed September 15 2025. Please consider
+        upgrading to a newer model to avoid future service disruptions"],"billed_units":{"input_tokens":7,"output_tokens":149},"tokens":{"input_tokens":69,"output_tokens":150}}},"finish_reason":"COMPLETE"}
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/stream+json
+      date:
+      - Sun, 14 Sep 2025 01:46:21 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 421516367f70f3860d54828ee98b1718
+      x-envoy-upstream-service-time:
+      - '79'
+    status:
+      code: 200
+      message: OK
+version: 1

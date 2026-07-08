@@ -1,0 +1,247 @@
+interactions:
+- request:
+    body: '{"messages": [{"content": "You are a helpful assistant", "role": "system"},
+      {"content": "\nOpenTelemetry: A Deep Dive into the Standard for Observability\nOpenTelemetry
+      is an open-source project under the Cloud Native Computing Foundation (CNCF)
+      that provides a unified set of APIs, libraries, agents, and instrumentation
+      to enable observability\u2014specifically tracing, metrics, and logs\u2014in
+      distributed systems. It was formed through the merger of two earlier CNCF projects:
+      OpenTracing and OpenCensus, both of which had overlapping goals but different
+      implementations and user bases. OpenTelemetry combines the best of both, aiming
+      to create a single, vendor-agnostic standard for telemetry data collection.\n\nBackground
+      and Motivation\nModern software systems are increasingly composed of microservices,
+      often deployed in cloud-native environments. These distributed architectures
+      bring significant operational complexity: services may scale dynamically, instances
+      may be short-lived, and failures may not be obvious. As a result, understanding
+      how systems behave in production requires powerful observability tools.\n\nHistorically,
+      developers had to integrate separate tools for logging, metrics, and tracing,
+      often using vendor-specific SDKs. This led to inconsistent data, vendor lock-in,
+      and high maintenance costs. OpenTelemetry addresses this by offering a standardized,
+      portable, and extensible approach to collecting telemetry data.\n\nCore Goals
+      of OpenTelemetry\nUnified Observability Framework\nOpenTelemetry provides a
+      single set of APIs and libraries to collect traces, metrics, and logs, promoting
+      consistency across services and languages.\nVendor-Neutral and Open Standards\nIt
+      enables instrumentation that is decoupled from any specific observability backend.
+      This makes it easy to switch or support multiple backends like Prometheus, Jaeger,
+      Zipkin, or commercial tools like Datadog, New Relic, and Honeycomb.\nAutomatic
+      and Manual Instrumentation\nOpenTelemetry supports both automatic instrumentation\u2014where
+      telemetry is collected with little to no code changes\u2014and manual instrumentation
+      for custom spans, metrics, and logs.\nSupport for Multiple Languages\nThe project
+      supports most major programming languages including Java, Go, Python, JavaScript/TypeScript,
+      .NET, C++, and more.\nPluggable Architecture\nThe design of OpenTelemetry is
+      modular, allowing developers to plug in their exporters, processors, and samplers,
+      and tailor the telemetry pipeline to suit their needs.\nKey Concepts and Components\n1.
+      Traces and Spans\nTracing is used to understand the flow of requests through
+      a system. In OpenTelemetry:\nA trace represents the complete journey of a request
+      across services.\nA span is a single operation within that journey (e.g., a
+      database call, an HTTP request). Each span includes metadata like name, duration,
+      parent-child relationships, and attributes.\nOpenTelemetry uses the W3C Trace
+      Context standard to propagate context across service boundaries, enabling distributed
+      tracing.\n2. Metrics\nMetrics capture numerical data about a system\u2019s behavior,
+      often for performance monitoring. OpenTelemetry supports:\nCounters: for counting
+      occurrences of events.\nGauges: for measuring values at a point in time.\nHistograms:
+      for measuring distributions of values (e.g., request durations).\nMetrics are
+      collected periodically and can be aggregated and exported efficiently.\n3. Logs
+      (Logging Signals)\nOpenTelemetry is actively working to bring logging into the
+      same ecosystem, creating semantic conventions and correlation mechanisms so
+      logs can be linked with traces and metrics. The vision is to allow logs to be
+      structured, contextualized, and used in conjunction with the other signals.\n4.
+      Context Propagation\nThe Context is a core abstraction that carries state between
+      different parts of a distributed system. OpenTelemetry provides mechanisms to
+      extract and inject context from and into messages (HTTP headers, gRPC metadata,
+      etc.), ensuring trace continuity across services.\nThe OpenTelemetry SDK Architecture\nThe
+      OpenTelemetry SDK is the implementation of the API and includes the full telemetry
+      pipeline. Its key parts include:\nInstrumentation Libraries: Provide pre-built
+      hooks for popular frameworks (e.g., Express.js, Spring, Django).\nAPI: Language-specific
+      interfaces to create and manipulate telemetry data.\nSDK: Implements the core
+      telemetry pipeline.\nExporter: Sends data to a backend (e.g., OTLP, Jaeger,
+      Prometheus).\nProcessor: Processes telemetry data before export, such as batching
+      or filtering.\nSampler: Determines which traces or spans are collected.\nOTLP:
+      OpenTelemetry Protocol\nOpenTelemetry defines its own protocol\u2014OTLP (OpenTelemetry
+      Protocol)\u2014for exporting telemetry data. OTLP supports gRPC and HTTP/Protobuf
+      and is designed for performance, extensibility, and interoperability.\nCollector\nThe
+      OpenTelemetry Collector is a key component that runs as an agent or gateway
+      between applications and telemetry backends. It has no vendor dependencies and
+      supports:\nReceivers: To receive telemetry data.\nProcessors: To manipulate
+      data (filtering, batching, transformation).\nExporters: To send data to one
+      or more observability backends.\nThe Collector makes it easier to centralize
+      telemetry processing, manage data pipelines, and enforce policies like sampling
+      or redaction.\nSemantic Conventions\nOpenTelemetry defines semantic conventions
+      for common operations and attributes. These conventions ensure consistency in
+      telemetry data across libraries, vendors, and teams. For example, HTTP spans
+      will have standardized attributes like http.method, http.status_code, http.route,
+      etc.\nThis standardization is critical for making dashboards, alerts, and queries
+      portable and meaningful.\nLanguage Support\nOpenTelemetry has a broad ecosystem
+      of language SDKs, each maturing at a slightly different pace. For instance:\nJava
+      and Go: Among the most mature and production-ready.\nPython, .NET, JavaScript:
+      Actively developed with good community support.\nC++, PHP, Ruby: Available but
+      may have partial support or fewer features.\nEach language SDK supports the
+      core signals (traces and metrics), with logs being integrated as work progresses.\nAdoption
+      and Ecosystem\nOpenTelemetry is backed by all major cloud providers, observability
+      vendors, and many large enterprises. It''s quickly becoming the default instrumentation
+      standard for open-source and commercial software. Projects and services like
+      Kubernetes, Istio, Envoy, gRPC, and many frameworks are adopting OpenTelemetry
+      natively.\nThe CNCF landscape now includes OpenTelemetry as a graduated project
+      (as of 2024), reflecting its stability, maturity, and widespread usage.\nBenefits
+      for Developers and Operators\nReduced Vendor Lock-in: Instrument once, export
+      anywhere.\nImproved Developer Productivity: Consistent APIs and tooling.\nBetter
+      System Understanding: Correlate logs, traces, and metrics to resolve incidents
+      faster.\nCost Optimization: Fine-grained control over data volume and sampling.\nCompliance
+      and Security: Centralized control over telemetry pipelines.\nFuture Directions\nOpenTelemetry\u2019s
+      roadmap includes:\nImproved support for logs, including unified correlation
+      with traces and metrics.\nBetter semantic conventions and user-defined schemas.\nAI/ML
+      for telemetry enrichment, anomaly detection, and intelligent sampling.\nContext-aware
+      observability through automatic context propagation in async/streaming environments.\nProfiling
+      signals integration in the long-term future.\nConclusion\nOpenTelemetry is not
+      just a tool or a library\u2014it\u2019s a movement toward a better way to understand
+      and manage modern software systems. With deep community support, growing enterprise
+      adoption, and a commitment to open standards, it is poised to be the foundation
+      for observability for the next decade.\nWhether you are building a single microservice
+      or running a complex mesh of applications across hybrid clouds, OpenTelemetry
+      offers the instrumentation, tools, and ecosystem needed to bring clarity to
+      your system''s behavior\u2014without the downsides of proprietary lock-in or
+      fragmented tooling.\n\n\n    ", "role": "user"}], "model": "gpt-4o-mini", "stream":
+      false}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '8261'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-10927ff75482206384e64a99196e689d-c45f6e0360ad2d46-01
+      user-agent:
+      - OpenAI/Python 1.60.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.60.1
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.5
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-RAY:
+      - 934e3602e926ade4-ATL
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 23 Apr 2025 14:57:17 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=D_yvCTgsGXq0.rWfaMJ1jcZhemL2JZKqRYPmjav7cXo-1745420237-1.0.1.1-BIW2fqxHi2n_Re2CQstnpWUeVMauOxmx0lu432FH4DdsgaSIhxFGzV.YDVoJ4IHyB2I.dFBax7PI1F4OvonADUPDiiDXStljcELMD1_R3vQ;
+        path=/; expires=Wed, 23-Apr-25 15:27:17 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=TxGXjtlbs0NpKIlywz39F_nZpg3bqQ9eaxcxX0OjLaM-1745420237217-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '15182'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '10000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '9997991'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 12ms
+      x-request-id:
+      - req_c1d5448a3120df6acce2f9619a9a633c
+    status:
+      code: 200
+      message: OK
+version: 1

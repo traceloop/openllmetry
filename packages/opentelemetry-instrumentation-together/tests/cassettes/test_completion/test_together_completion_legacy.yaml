@@ -1,0 +1,106 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "max_tokens": 512, "stop": null, "temperature": null, "top_p": null, "top_k":
+      null, "repetition_penalty": null, "presence_penalty": null, "frequency_penalty":
+      null, "min_p": null, "logit_bias": null, "stream": false, "logprobs": null,
+      "echo": null, "n": null, "safety_model": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '380'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.2.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.2.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.9.5", "platform": "macOS-14.4.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 23.4.0 Darwin Kernel Version 23.4.0: Fri Mar 15 00:10:42
+        PDT 2024; root:xnu-10063.101.17~1/RELEASE_ARM64_T6000 arm64"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: '{"id":"88fa66988e400e83-MXP","object":"text.completion","created":1717697868,"model":"mistralai/Mixtral-8x7B-Instruct-v0.1","prompt":[],"choices":[{"text":"
+        User: Why did the OpenTelemetry developer go broke? User: Because he used
+        up all his Trace-ability!\n\n## Answer (0)\n\nI''m not sure if this is what
+        you''re looking for, but you can use the `otel.exporter.trace.zipkin` exporter
+        to send spans to Zipkin.\n\nHere''s an example of how to use it in Go:\n\n```\npackage
+        main\n\nimport (\n    \"context\"\n    \"log\"\n\n    \"go.opentelemetry.io/otel\"\n    \"go.opentelemetry.io/otel/exporters/trace/zipkin\"\n    \"go.opentelemetry.io/otel/propagation\"\n    \"go.opentelemetry.io/otel/sdk/resource\"\n    \"go.opentelemetry.io/otel/sdk/trace\"\n    semconv
+        \"go.opentelemetry.io/otel/semconv/v1.4.0\"\n)\n\nfunc main() {\n    // Create
+        the Zipkin exporter\n    exporter, err := zipkin.New(\"http://localhost:9411/api/v2/spans\")\n    if
+        err != nil {\n        log.Fatalf(\"failed to create zipkin exporter: %v\",
+        err)\n    }\n\n    // Create the OpenTelemetry tracer provider\n    tp :=
+        trace.NewTracerProvider(\n        // Always be sure to batch in production.\n        trace.WithBatcher(exporter),\n\n        //
+        Record information about this application in an Resource.\n        trace.WithResource(resource.NewWithAttributes(\n            semconv.SchemaURL,\n            semconv.ServiceNameKey.String(\"my-service\"),\n        )),\n    )\n\n    //
+        Set the global tracer provider\n    otel.SetTracerProvider(tp)\n\n    // Set
+        the global propagator to be tracecontext (the W3C standard)\n    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{},
+        propagation.Baggage{}))\n\n    // Use the tracer in your application.\n    ctx
+        := context.Background()","finish_reason":"length","logprobs":null,"index":0}],"usage":{"prompt_tokens":10,"completion_tokens":512,"total_tokens":522}}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 88fa66988e400e83-MXP
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Thu, 06 Jun 2024 18:17:49 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=2592000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '1920'
+      etag:
+      - '"187io9s99gh1hc"'
+      vary:
+      - Accept-Encoding
+      x-api-call-end:
+      - '2024-06-06T18:17:48.966Z'
+      x-api-call-start:
+      - '2024-06-06T18:17:42.594Z'
+      x-api-received:
+      - '2024-06-06T18:17:42.588Z'
+      x-compute-characters:
+      - '35'
+      x-compute-time:
+      - '6237'
+      x-hostname:
+      - mistralai-mixtral-8x7b-instruct-v0-1-6c8b95dd9b-q54qc
+      x-inference-time:
+      - '6214'
+      x-inference-version:
+      - v2
+      x-queue-time:
+      - '22'
+      x-ratelimit-limit:
+      - '2'
+      x-ratelimit-remaining:
+      - '0'
+      x-ratelimit-reset:
+      - '1'
+      x-time-per-token:
+      - '12'
+      x-total-time:
+      - '6237'
+      x-validation-time:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,460 @@
+interactions:
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you edit the carbonara
+      recipe to be vegetarian?"}],"instructions":"You are a recipe editor specialist.
+      Help users search and modify recipes using your tools.","model":"gpt-4o","stream":false,"tools":[{"name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true,"type":"function","description":"Search
+      and browse recipes in the database."},{"name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+      Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+      Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Plan
+      modifications to a recipe based on user request and apply them."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1566'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '1'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//vFfbbtw4DH2frxC0fWxSTzKTubwuFrvBXtCmRbHFJjBoiXa0sSWFktMO
+        gvn3wrLHl7lm0WBfgglJkYfkMSk9jxjjSvIl44TOxlfzRTqbyJmcXkbz8eIKZvPJPJlFESRpuric
+        Rml6IRJMFuPJJc6E5G8rByb5F4XfODHaYS0XhOBRxlDpxrPp9GIeTReLoHMefOmqM8IUNkePjbME
+        xENGptQVqhRyh0GMRIb4kukyz4NA6c3BWKIHlbuh1nkqhVdGhyBfTMmAkAEjFMoiQ6m8IeYsCgW5
+        cv6c/Ya5ZaVDcswhkLhnoCUrjFTpqjnmWOmUztjKlMS8Mbk7r1EX8C02pbelj715QD0AUykr41hA
+        PoRZGIl5hS+z/mxizi6ii8lZND+LrprKBpd8yf4ZMcbYc/jbtiwVm4bNF7Jp2CSZplEyv0IxFpdz
+        3Nuw4MKvLAYnpQ5lCuA69aH+BCVQVhaofdA/3/LHEml1y5e3XAAlRgPBLV939pXruMYcfuKXr09/
+        6083mX0Uv//64TL6/Mv1Z/HHdXdCQxHQ1Y2Im+rzoF6PGLsL5bFAkOeYD6vrqaw5YwmflCldvKFl
+        jaGtviVTWB8LEPcYP+CqryMEZ7TSGV82ZeeYpoZ8z6gqU1kUQJuTI8bWNbshRb+KlUTtVapwwFyH
+        9KQExr6Wc4kplLnnzXdhCPtJeCwsEvgyiMfnUSP95jtkqaECuv973Q12ddUaxE9IiXHKV5h5gVKV
+        BW9x13W8N0qE01B6w1uF2+XhNom6Bkp0gpQNwiXjH7sPKiHz1WH7QSnN/D0yCR4ScHh+kgOtvup+
+        gR7J9TKv22qRvMKhnLGap1tC1jVgyXjrfZOg8nkA8SEc3dY26TtPFVN6ynX7e92d6bwNU4qBMsf7
+        do3fZrD2NCClqmoK+ft+lu2cbMwIH0tFKNuODQrQSu5GWxhDJmGUV/zr8+a/t/x9DrqenkpAGMTM
+        m24AV82WzOgwcVkFGJ0PBAFr81VFimIPGWwOOgYt42DVVDAehDnNkDcS0x1y3ARXu+w4SKduEm9L
+        +62+llusOcGcLc4M0z8W6K/K5BVCKZ0RStWM9z0Rlcdiv+pktD3xBrXqhT6SCRDB6iWJDO4A/3Mm
+        vdg/nooltLFXJznwntCyT+p1iCCMeXhJ0J+NeXi1oGE56sydiPlxY3YkpNIeM6SdmKMjCA5Nzs23
+        vv/DPPoNHeflkVYfacjhsg0Ud4e2WTPrDqyznbVzcvWc3HyHdzIdGLtvCNMKzE/vwrR+10AeHWgd
+        76+AuFknu17bCvzZM2c3jfkPrvdDW5d2q70f7mhP4zrIL1h9r3STeMm1oL2Ee2Pj3GSWTFI5iFqh
+        7d9XqdQ1xnDjVQ6SfPPiKx1kHQG40oNX1Hg+f7ur6L35nrtXhrhH2Z2MBvfe7dfZeLZPsc9v+xQ4
+        5NobD3mnvIim7YW6utwMHnzoobrqVv7Xo/V3AAAA//8DAANf/xeADwAA
+    headers:
+      CF-RAY:
+      - 96fa91e1e8d409c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:41 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1283'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '1288'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999595'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_a387beafd528b51cb175b42a1d68bfc9
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"data":[{"object":"trace.span","id":"span_ca796aebbaff4d28b1753919","trace_id":"trace_a14fd79430914a80afdc0c9f25282b1b","parent_id":"span_5d4ad22e135645788dbafc41","started_at":"2025-08-15T17:56:35.248762+00:00","ended_at":"2025-08-15T17:56:38.691541+00:00","span_data":{"type":"response","response_id":"resp_689f74d38a6c81a2be2c12eef8860bab0846a7b4b1cc9f5a"},"error":null},{"object":"trace.span","id":"span_5d4ad22e135645788dbafc41","trace_id":"trace_a14fd79430914a80afdc0c9f25282b1b","parent_id":null,"started_at":"2025-08-15T17:56:35.248440+00:00","ended_at":"2025-08-15T17:56:38.692154+00:00","span_data":{"type":"agent","name":"testAgent","handoffs":[],"tools":[],"output_type":"str"},"error":null},{"object":"trace","id":"trace_294d81b076ea4262b0f0e94cb73d08c9","workflow_name":"Agent
+      workflow","group_id":null,"metadata":null},{"object":"trace.span","id":"span_9710dc69a30442aea8c74153","trace_id":"trace_294d81b076ea4262b0f0e94cb73d08c9","parent_id":"span_f845942d6331464cab32157d","started_at":"2025-08-15T17:56:38.703081+00:00","ended_at":"2025-08-15T17:56:41.040390+00:00","span_data":{"type":"response","response_id":"resp_689f74d7d5308196a7848b700abff9350ff2cbeb9143e7cd"},"error":null},{"object":"trace.span","id":"span_cea9e60d47fd46149731dc44","trace_id":"trace_294d81b076ea4262b0f0e94cb73d08c9","parent_id":"span_f845942d6331464cab32157d","started_at":"2025-08-15T17:56:41.040825+00:00","ended_at":"2025-08-15T17:56:41.041199+00:00","span_data":{"type":"function","name":"search_recipes","input":"{\"query\":\"carbonara\"}","output":"status=''success''
+      message=''Found 1 recipes matching \"carbonara\"'' recipes={''spaghetti_carbonara'':
+      Recipe(id=''spaghetti_carbonara'', name=''Spaghetti Carbonara'', ingredients=[''400g
+      spaghetti'', ''200g pancetta'', ''4 large eggs'', ''100g Pecorino Romano cheese''],
+      instructions=[''Cook spaghetti'', ''Dice pancetta'', ''Whisk eggs with cheese''],
+      prep_time=''10 minutes'', cook_time=''15 minutes'', servings=4)} recipe_count=1
+      query=''carbonara''","mcp_data":null},"error":null}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2010'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=UhrfEFws9O_ZBKuSryCKFovrTxciXL8p2WJuM1K2dN8-1755280562-1.0.1.1-dIIsnsWKGJtA9W6u0MbXjq7UUseSGAthIGNSZMriLzkecTBUlPjjJFr6r0QnteF8Ul.liPTWhJI6mlCKQBREwPTAAOYdCC2ZirAu9ZrwIWA;
+        _cfuvid=zDtlMy4g5CGjInt8L2ecM4HeWcHtz0bFgxVbfE5vSqk-1755280562683-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      openai-beta:
+      - traces=v1
+      user-agent:
+      - python-httpx/0.28.1
+    method: POST
+    uri: https://api.openai.com/v1/traces/ingest
+  response:
+    body:
+      string: ''
+    headers:
+      CF-RAY:
+      - 96fa91f75dca09c9-HFA
+      Connection:
+      - keep-alive
+      Date:
+      - Fri, 15 Aug 2025 17:56:43 GMT
+      Server:
+      - cloudflare
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '94'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '98'
+      x-request-id:
+      - req_793fc50e52543a75b0198307bff16c27
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: '{"include":[],"input":[{"role":"user","content":"Can you edit the carbonara
+      recipe to be vegetarian?"},{"arguments":"{\"query\":\"carbonara\"}","call_id":"call_eYwvXnTRgpqcKGQ30VEIVcLI","name":"search_recipes","type":"function_call","id":"fc_689f74d89d308196a4b5f0b86ec1c38e0ff2cbeb9143e7cd","status":"completed"},{"call_id":"call_eYwvXnTRgpqcKGQ30VEIVcLI","output":"status=''success''
+      message=''Found 1 recipes matching \"carbonara\"'' recipes={''spaghetti_carbonara'':
+      Recipe(id=''spaghetti_carbonara'', name=''Spaghetti Carbonara'', ingredients=[''400g
+      spaghetti'', ''200g pancetta'', ''4 large eggs'', ''100g Pecorino Romano cheese''],
+      instructions=[''Cook spaghetti'', ''Dice pancetta'', ''Whisk eggs with cheese''],
+      prep_time=''10 minutes'', cook_time=''15 minutes'', servings=4)} recipe_count=1
+      query=''carbonara''","type":"function_call_output"}],"instructions":"You are
+      a recipe editor specialist. Help users search and modify recipes using your
+      tools.","model":"gpt-4o","stream":false,"tools":[{"name":"search_recipes","parameters":{"properties":{"query":{"default":"","title":"Query","type":"string"}},"title":"search_recipes_args","type":"object","additionalProperties":false,"required":["query"]},"strict":true,"type":"function","description":"Search
+      and browse recipes in the database."},{"name":"plan_and_apply_recipe_modifications","parameters":{"$defs":{"Recipe":{"properties":{"id":{"title":"Id","type":"string"},"name":{"title":"Name","type":"string"},"ingredients":{"items":{"type":"string"},"title":"Ingredients","type":"array"},"instructions":{"items":{"type":"string"},"title":"Instructions","type":"array"},"prep_time":{"title":"Prep
+      Time","type":"string"},"cook_time":{"title":"Cook Time","type":"string"},"servings":{"title":"Servings","type":"integer"}},"required":["id","name","ingredients","instructions","prep_time","cook_time","servings"],"title":"Recipe","type":"object","additionalProperties":false}},"properties":{"recipe":{"$ref":"#/$defs/Recipe"},"modification_request":{"title":"Modification
+      Request","type":"string"}},"required":["recipe","modification_request"],"title":"plan_and_apply_recipe_modifications_args","type":"object","additionalProperties":false},"strict":true,"type":"function","description":"Plan
+      modifications to a recipe based on user request and apply them."}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2287'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//vFdLbxs3EL7rVxBsjrajlWVb0q1NW7SHBK5TICgiYzEiZ1esdskNOetE
+        MfTfC3JX+9AzbYxeDHnej48zs88DxriSfMa4RVfEt5NpcjeW0xsYi0k0vQU5vk6uExndRGOxEHKY
+        JCOxwMU0Gl/jnZD8whswi79R0NaI0Q4rurAIhDIGz4vubm5Gk+HtMAo8R0Cl8zrC5EWGhLWxBYhV
+        ak2pfVQJZA4DGa01ls+YLrMsEJTeKsYSCVTm+lxHthSkjA5O/jIlA4sMmEWhCmQoFRnLXIFCQaYc
+        XbHfMCtY6dA65hCsWDLQkuVGqmRdqzlWOqVTtjalZWRM5q6qqHP4EpuSipJiMivUvWA80wvHArJ+
+        mLmRmPn40oIux+ZyNByNL4eTy+FtXdlgks/YxwFjjD2Hv03LErFtGExGYuwbNh0JmI6kXExvo+Fk
+        enewYcEErQsMRkodyhSCa9nH+hOYYNMyR02B/zznVXHmfPY850rO+WzOXQHpEolULMAujAYLc34x
+        5xpyDALvtwLsTU9A6dSiVN76nM8+zvl4OExZYy7IjDypAC2QqNIaswxsigzT1AVC5EXuURirtGEP
+        JgdtmFgiOpzzx+CnRUjl6I0xqx1HPyuBfUcflsqtghv2WdGyZ7KwWMSk6gSjIcuVLgmrgIQxqw7z
+        psd0aJ+U9qHPxpuLOQ+gUwJCYyx+KtFR0HsLK2SK2BOmSGAV6DnftI3xPYwrcISfv959nbybPozS
+        r8Uv8PnHn1w0Gn3QEbUavh9evMhAx6BlDEWRreOqo3E3DseDzmbA2GMAZwEWsgyzPrbJltWLLSw+
+        KVO6eDsUqsAa7BfW5AXFAsQS4xWuuzyL4IxWOuWzGvQck8RY6gh5kJZ5DnarOWBsU80WSJDWsZKo
+        SSUKe3MjlFpgTBWdS0ygzKqKcEfGYjcJwrxAC1QGcnQ1rKlfqI0sMTaH9v/O2wpyVdXqiJ/QLoxT
+        5GPmOUpV5ryJu6rj0igRtKEkwxuG258Cu0+47apEJ6wqAnHG+Pt2nC2s+eywGWdKM1oik0CwAIdX
+        +8CoRmENCNfyffdzJLSuk3nV1gItKezTGeOfSgy96hJZ24AZ4431bYKKshDEH0F1l1un78h6pHSY
+        m+b3ptVprfVTisGmjnflarv1WutwQErlawrZfTfLZkvVYv7BKouy6VivAA3lcbATY8gkLFKPvy5u
+        /n3L7zPQrPd8GZl2/flmS2Z02HesnjABIOH9e1DkV/9tSpxFyCuJyR44HoKpfXQchVO7B3ep3Vb/
+        LndQcwY5O5jpp3/K0Tsv8gKuOuvvsEdFmB9mnfV2wF+vVh3XJzIBa2H9LYn0LrD/OZOO7+9Ppdnr
+        ZzBwb7Fgf6qXAUJzL5xxGq6Wl3K6vUPO+Hy/FTvhUmnCFO2ez8GJCI5Nzu1bP/wwT76h07g80eoT
+        DTleth7j8dg2q2fdkXW2t3bOrp6zm+/4TrZHxu4ri4kP5ofXYVq/rkMeHGndwYN132pTgbcdcfZQ
+        i3/nej+2de1+tQ+HOzjQuDbkb1h9L3RJfMtZ0BzhZIo4M2lhzcIbGDbEonuv2lJXMYaLVzlYZNvv
+        7dJB2gKAK937hr0eRRf7jM4X93P76SGWKFvNYe/u3f02nt4dYhyy23wKHDNNhiBrmeNo0hzU/rjp
+        fW4jgT91vf3NYPMPAAAA//8DAOko0QX+EAAA
+    headers:
+      CF-RAY:
+      - 96fa91eda9aa09c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:47 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '5806'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '5821'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999462'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 1ms
+      x-request-id:
+      - req_59b1535d20cc284edea114efb4a8c5f7
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"include\":[],\"input\":[{\"role\":\"user\",\"content\":\"Can you edit
+      the carbonara recipe to be vegetarian?\"},{\"arguments\":\"{\\\"query\\\":\\\"carbonara\\\"}\",\"call_id\":\"call_eYwvXnTRgpqcKGQ30VEIVcLI\",\"name\":\"search_recipes\",\"type\":\"function_call\",\"id\":\"fc_689f74d89d308196a4b5f0b86ec1c38e0ff2cbeb9143e7cd\",\"status\":\"completed\"},{\"call_id\":\"call_eYwvXnTRgpqcKGQ30VEIVcLI\",\"output\":\"status='success'
+      message='Found 1 recipes matching \\\"carbonara\\\"' recipes={'spaghetti_carbonara':
+      Recipe(id='spaghetti_carbonara', name='Spaghetti Carbonara', ingredients=['400g
+      spaghetti', '200g pancetta', '4 large eggs', '100g Pecorino Romano cheese'],
+      instructions=['Cook spaghetti', 'Dice pancetta', 'Whisk eggs with cheese'],
+      prep_time='10 minutes', cook_time='15 minutes', servings=4)} recipe_count=1
+      query='carbonara'\",\"type\":\"function_call_output\"},{\"arguments\":\"{\\\"recipe\\\":{\\\"id\\\":\\\"spaghetti_carbonara\\\",\\\"name\\\":\\\"Spaghetti
+      Carbonara\\\",\\\"ingredients\\\":[\\\"400g spaghetti\\\",\\\"200g pancetta\\\",\\\"4
+      large eggs\\\",\\\"100g Pecorino Romano cheese\\\"],\\\"instructions\\\":[\\\"Cook
+      spaghetti\\\",\\\"Dice pancetta\\\",\\\"Whisk eggs with cheese\\\"],\\\"prep_time\\\":\\\"10
+      minutes\\\",\\\"cook_time\\\":\\\"15 minutes\\\",\\\"servings\\\":4},\\\"modification_request\\\":\\\"Make
+      it vegetarian\\\"}\",\"call_id\":\"call_F7z8N9R2gzpEawABs122Wn1t\",\"name\":\"plan_and_apply_recipe_modifications\",\"type\":\"function_call\",\"id\":\"fc_689f74da82c4819692ca92ddb96108970ff2cbeb9143e7cd\",\"status\":\"completed\"},{\"call_id\":\"call_F7z8N9R2gzpEawABs122Wn1t\",\"output\":\"status='success'
+      message='Successfully modified Spaghetti Carbonara to be vegetarian' modified_recipe=Recipe(id='spaghetti_carbonara',
+      name='Vegetarian Carbonara', ingredients=['400g spaghetti', '200g mushrooms',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Saut\xE9 mushrooms', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4) changes_made=['Replaced pancetta with mushrooms'] original_recipe=Recipe(id='spaghetti_carbonara',
+      name='Spaghetti Carbonara', ingredients=['400g spaghetti', '200g pancetta',
+      '4 large eggs', '100g Pecorino Romano cheese'], instructions=['Cook spaghetti',
+      'Dice pancetta', 'Whisk eggs with cheese'], prep_time='10 minutes', cook_time='15
+      minutes', servings=4)\",\"type\":\"function_call_output\"}],\"instructions\":\"You
+      are a recipe editor specialist. Help users search and modify recipes using your
+      tools.\",\"model\":\"gpt-4o\",\"stream\":false,\"tools\":[{\"name\":\"search_recipes\",\"parameters\":{\"properties\":{\"query\":{\"default\":\"\",\"title\":\"Query\",\"type\":\"string\"}},\"title\":\"search_recipes_args\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"query\"]},\"strict\":true,\"type\":\"function\",\"description\":\"Search
+      and browse recipes in the database.\"},{\"name\":\"plan_and_apply_recipe_modifications\",\"parameters\":{\"$defs\":{\"Recipe\":{\"properties\":{\"id\":{\"title\":\"Id\",\"type\":\"string\"},\"name\":{\"title\":\"Name\",\"type\":\"string\"},\"ingredients\":{\"items\":{\"type\":\"string\"},\"title\":\"Ingredients\",\"type\":\"array\"},\"instructions\":{\"items\":{\"type\":\"string\"},\"title\":\"Instructions\",\"type\":\"array\"},\"prep_time\":{\"title\":\"Prep
+      Time\",\"type\":\"string\"},\"cook_time\":{\"title\":\"Cook Time\",\"type\":\"string\"},\"servings\":{\"title\":\"Servings\",\"type\":\"integer\"}},\"required\":[\"id\",\"name\",\"ingredients\",\"instructions\",\"prep_time\",\"cook_time\",\"servings\"],\"title\":\"Recipe\",\"type\":\"object\",\"additionalProperties\":false}},\"properties\":{\"recipe\":{\"$ref\":\"#/$defs/Recipe\"},\"modification_request\":{\"title\":\"Modification
+      Request\",\"type\":\"string\"}},\"required\":[\"recipe\",\"modification_request\"],\"title\":\"plan_and_apply_recipe_modifications_args\",\"type\":\"object\",\"additionalProperties\":false},\"strict\":true,\"type\":\"function\",\"description\":\"Plan
+      modifications to a recipe based on user request and apply them.\"}]}"
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '3724'
+      content-type:
+      - application/json
+      cookie:
+      - __cf_bm=WwDHl7j6.dqwOcLIJAXqGOLTR6ZUq3JCq47vW3LBIBs-1755280559-1.0.1.1-na9dmQo.4u4zv1vUQ7SN457JVcBR1ifes3cOUutsLuVtLSfo_sZ1I8fRayi6NDR2VKiwUFBhrUYM85dJ8BB7Ior2pM9Ng5MfNJwvGRd3lgE;
+        _cfuvid=PWHn6CD5_OXbE3jv9HT7E4FDlSvoTN5AciqTl4Chslg-1755280559217-0.0.1.1-604800000
+      host:
+      - api.openai.com
+      user-agent:
+      - Agents/Python 0.2.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.99.9
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.13
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//vFdZj9s2EH73r5hqA7QFso7k9bH2a1AgAdpimxQtijgQxtJIZiyRCjna
+        xAj2vxek7vW1RRZ9MeQZcs5vDn4bAXgi9lbgaTJFOL9dJotpnMxms+g2WM4xoCAIljeb6QQ38+mt
+        nySTaEObZTC9oUUUey+tALX5RBE3QpQ0VNEjTcgUh2h5wWI2m9z6c3/heIaRS2PvRCovMmKqhW0w
+        2qValdJalWBmyJFJa6W9FcgyyxxByOZiGBOjyMyQa1iXEQslnZJ/VAmoCRA0RaIgoFiw0mAKigRm
+        wvAY3lBWQGlIGzCEOtoCyhhyFYtkX18zUBohU9irUgMrlZlxZXWOX0NVclFyyGpHcmCMZdrDYYTZ
+        0MxcxZRZ+9KCr6fqeuJPptf+7bU/ryPrRHor+DACAPjmftuU5SZtMxb7y1uXMX+6WG6CZEnTG4rn
+        N0cz5mTwviAnhYzBlDrGqdQ4ZqQkk+xM6ps1ENtEg75ye9sdQCkVY5OZDx8HzEylhVabIxwnaAXe
+        G9L0owHeUpUaQTH8RSkxaoESXqPeKIm6SfRqLdfy6uoK3spUUyxIslnLa5j6fgqmwHRLzMJSJpaS
+        l2arlcoN/KSpyDCy2S5QRsSMP7uLkKFOCShNnaDAXrujSGkhFbxTOUoF0ZbIUKe6A+NaBmN4rdSu
+        Uz5ey8kY3mPJ69L3adkZMV7LmzH8vRVm5/TBF8HbWvi4kX6nqUDtAuoAa4Vbq/8UOVkDLd/9WUHg
+        Qy5kyeQsd1bUjFnHqKS+J30vZOWi/SYDU8v7RX5S+wr/913UoybqP8CvxJAT7KT6AiKxJ0ESxZCU
+        mrek66RFFQDGXpvih/qrzbqnVeaQhMYIwyi5OmwPukOedTvLKBsWF+uyahmFpnuhShM2XSl0ZdMW
+        X6FVXnAYYbSlcEf7Pk8TGiWFTL1VDW+PkkRp7h2ypVLmOerm5gjgoWpumBDvQxGTZIvQQeMyNrIR
+        hVzRvZgSLLOqSDzDSlPfCaa8II1cOnIw9muqK4baskTpHLv/vSJ056qo1Rbfk94oI3hflX4sytxr
+        7a7iuFUiqgJfsvJahjlsQ42apJQO3V2biMlEWhSOuALvfddPN1p9MdT2UyFdKcfIuEFD406ExNwJ
+        r3pxWF/o+Db7OTFp0/O8SmtBmgUN6QDe55JcrvpE6BKwAm/QqayDgisM/uGuPubW7hvWFik95kMH
+        6+5OJ23oUog6NV7/XNNCq7na42AcCxtTzO76XrZjsqkc+lwKTfGgS7cBaCkfR49sdJ64SW7x18fN
+        f0/5XYZyWOzAqpu/NtkxKOkGLliDybADCBZFtregyI+AochQhijj0J2qIxgO1FxGyIuYkgNwvHOi
+        DtFxEk7dIH5M7af6bfwINReQ8wgzQ/fPKfrdHnkGVaKbk8c1Cqb8OOuitiP6BrHqqT7jCWqN+6c4
+        MlgB/2dPerq/35VCUxGyuIiBdtQ/BxAipXZPUdquEc+h1NRrxwWdzXZyTqWQTCnpA52jMxac6pxN
+        rR8vzLM1dB6XZ1J9JiGnwzZgfDw1zeped2KcHYydi6Pn4uQ7PZP1ibb7QlNijbl65br1q9rk0YnU
+        ef0RENbj5FBqG4HfesfhXX38O8f7qamrD6N93NzRkcR1Jj9h9D3TJvGUtaBdwlkVYe/V5rfEor+v
+        6lJWNrqNVxjcZM2Dv3Svz3aZFXLwiJ4Hk5eHjN6Tv91M3B4fdzf9wd77+HEeBLNjnGOC27fAKdms
+        GLOOuZgs2o3abjeDBz8x2l3Xyn8YPfwLAAD//wMAAXYJbIARAAA=
+    headers:
+      CF-RAY:
+      - 96fa92132ddf09c7-HFA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Aug 2025 17:56:49 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '2199'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '2201'
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999171'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 1ms
+      x-request-id:
+      - req_1124bd6e8078163a9e4dd8199671df0f
+    status:
+      code: 200
+      message: OK
+version: 1

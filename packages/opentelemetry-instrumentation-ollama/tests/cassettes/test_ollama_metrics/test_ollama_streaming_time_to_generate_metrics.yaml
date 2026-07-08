@@ -1,0 +1,66 @@
+# VCR cassette for test_ollama_streaming_time_to_generate_metrics
+# Use `pytest --vcr-record=once` to generate and record HTTP interactions 
+
+interactions:
+- request:
+    body: '{"model": "gemma3:1b", "stream": true, "prompt": "Tell me a joke about
+      OpenTelemetry"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '86'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+      user-agent:
+      - ollama-python/0.4.7 (arm64 darwin) Python/3.12.1
+    method: POST
+    uri: http://127.0.0.1:11434/api/generate
+  response:
+    body:
+      string: "{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.678947Z\",\"response\":\"Okay\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.689977Z\",\"response\":\",\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.698682Z\",\"response\":\"
+        here\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.705542Z\",\"response\":\"'\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.719443Z\",\"response\":\"s\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.727065Z\",\"response\":\"
+        a\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.734378Z\",\"response\":\"
+        joke\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.741338Z\",\"response\":\"
+        about\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.748548Z\",\"response\":\"
+        Open\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.755651Z\",\"response\":\"Telemetry\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.762923Z\",\"response\":\":\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.770238Z\",\"response\":\"\\n\\n\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.777345Z\",\"response\":\"Why\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.784452Z\",\"response\":\"
+        did\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.791322Z\",\"response\":\"
+        the\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.799592Z\",\"response\":\"
+        Open\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.807707Z\",\"response\":\"Telemetry\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.815026Z\",\"response\":\"
+        team\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.82255Z\",\"response\":\"
+        break\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.829539Z\",\"response\":\"
+        up\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.837091Z\",\"response\":\"?\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.844886Z\",\"response\":\"
+        \",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.851832Z\",\"response\":\"\\n\\n\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.858934Z\",\"response\":\"Because\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.86602Z\",\"response\":\"
+        they\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.87291Z\",\"response\":\"
+        couldn\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.880172Z\",\"response\":\"'\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.887737Z\",\"response\":\"t\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.895174Z\",\"response\":\"
+        stop\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.902823Z\",\"response\":\"
+        arguing\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.917946Z\",\"response\":\"
+        about\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.92544Z\",\"response\":\"
+        the\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.932778Z\",\"response\":\"
+        *\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.939594Z\",\"response\":\"trace\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.946936Z\",\"response\":\"
+        path\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.953976Z\",\"response\":\"*\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.96117Z\",\"response\":\"!\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.968478Z\",\"response\":\"
+        \",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.975841Z\",\"response\":\"\\n\\n\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.982851Z\",\"response\":\"---\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.989474Z\",\"response\":\"\\n\\n\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:26:59.996748Z\",\"response\":\"Would\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.003849Z\",\"response\":\"
+        you\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.010896Z\",\"response\":\"
+        like\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.018201Z\",\"response\":\"
+        to\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.025795Z\",\"response\":\"
+        hear\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.033527Z\",\"response\":\"
+        another\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.040887Z\",\"response\":\"
+        one\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.048069Z\",\"response\":\"?\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.055597Z\",\"response\":\"
+        \U0001F60A\",\"done\":false}\n{\"model\":\"gemma3:1b\",\"created_at\":\"2025-05-19T09:27:00.062985Z\",\"response\":\"\",\"done\":true,\"done_reason\":\"stop\",\"context\":[105,2364,107,54593,786,496,31481,1003,7607,236654,106,107,105,4368,107,19058,236764,1590,236789,236751,496,31481,1003,7607,236654,236787,108,11355,1602,506,7607,236654,2434,2541,872,236881,236743,108,17574,901,9225,236789,236745,4721,46256,1003,506,808,27807,2479,236829,236888,236743,108,7243,108,38786,611,1133,531,6899,2264,886,236881,103453],\"total_duration\":482007750,\"load_duration\":52719542,\"prompt_eval_count\":16,\"prompt_eval_duration\":44457208,\"eval_count\":51,\"eval_duration\":384438167}\n"
+    headers:
+      Content-Type:
+      - application/x-ndjson
+      Date:
+      - Mon, 19 May 2025 09:26:59 GMT
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1 

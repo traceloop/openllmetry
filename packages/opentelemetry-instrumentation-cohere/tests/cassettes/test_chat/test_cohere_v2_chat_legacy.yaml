@@ -1,0 +1,74 @@
+interactions:
+- request:
+    body: '{"model": "command", "messages": [{"role": "user", "content": "Tell me
+      a joke, pirate style"}], "stream": false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '112'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: "{\"id\":\"83e3e297-264b-478e-9b22-5058386292ed\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Arrrr,
+        matey! Shiver me timbers, here\u2019s a pirate-themed joke for ye: \\n\\nI
+        stumbled upon a shipwreck on the ocean floor,\\nBut instead of gold or silver,
+        all I found was dough.\\nI couldn\u2019t believe me peepers, so I rubbed me
+        eyes,\\nBut it was just a pizza restaurant, and I couldn\u2019t help but cry.\"}]},\"finish_reason\":\"COMPLETE\",\"usage\":{\"billed_units\":{\"input_tokens\":7,\"output_tokens\":88},\"tokens\":{\"input_tokens\":69,\"output_tokens\":89}}}"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '552'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 01:50:19 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '324'
+      num_tokens:
+      - '95'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 3ea490a581ea0c90e48fbdccabff104b
+      x-envoy-upstream-service-time:
+      - '2637'
+    status:
+      code: 200
+      message: OK
+version: 1

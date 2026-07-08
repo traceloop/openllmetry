@@ -1,0 +1,94 @@
+interactions:
+- request:
+    body: '{"contents": [{"parts": [{"text": "What is ai?"}], "role": "user"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '68'
+      Content-Type:
+      - application/json
+      Host:
+      - generativelanguage.googleapis.com
+      user-agent:
+      - google-genai-sdk/1.52.0 gl-python/3.11.11
+      x-goog-api-client:
+      - google-genai-sdk/1.52.0 gl-python/3.11.11
+      x-goog-api-key:
+      - DUMMY_GOOGLE_API_KEY
+    method: POST
+    uri: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Tue, 09 Dec 2025 12:45:46 GMT
+      Server:
+      - scaffolding on HTTPServer2
+      Server-Timing:
+      - gfet4t7; dur=11009
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - X-Origin
+      - Referer
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

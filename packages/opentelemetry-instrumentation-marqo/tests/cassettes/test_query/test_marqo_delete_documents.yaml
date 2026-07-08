@@ -1,0 +1,133 @@
+interactions:
+- request:
+    body: '{"model": "hf/e5-base-v2"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '26'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex
+  response:
+    body:
+      string: '{"acknowledged":true,"index":"TestIndex"}'
+    headers:
+      content-length:
+      - '41'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:17:58 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"documents": [{"Title": "The Travels of Marco Polo", "Description": "A
+      13th-century travelogue describing Polo''s travels"}, {"Title": "Extravehicular
+      Mobility Unit (EMU)", "Description": "The EMU is a spacesuit that provides environmental
+      protection, mobility, life support, and communications for astronauts", "_id":
+      "article_591"}], "useExistingTensors": false, "imageDownloadHeaders": {}, "mappings":
+      null, "modelAuth": null, "tensorFields": ["Description"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '462'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex/documents
+  response:
+    body:
+      string: '{"errors":false,"processingTimeMs":108.18553600256564,"index_name":"TestIndex","items":[{"status":200,"_id":"f4479eb1-782a-4a86-928e-9d8541bf4a03"},{"status":200,"_id":"article_591"}]}'
+    headers:
+      content-length:
+      - '184'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:18:05 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '["article_591"]'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '15'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+    method: POST
+    uri: http://localhost:8882/indexes/TestIndex/documents/delete-batch
+  response:
+    body:
+      string: '{"index_name":"TestIndex","status":"succeeded","type":"documentDeletion","items":[{"_id":"article_591","status":200,"result":"deleted"}],"details":{"receivedDocumentIds":1,"deletedDocuments":1},"duration":"PT0.012471S","startedAt":"2024-06-20T16:18:05.246898Z","finishedAt":"2024-06-20T16:18:05.259369Z"}'
+    headers:
+      content-length:
+      - '304'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:18:05 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - python-requests/2.32.3
+    method: DELETE
+    uri: http://localhost:8882/indexes/TestIndex
+  response:
+    body:
+      string: '{"acknowledged":true}'
+    headers:
+      content-length:
+      - '21'
+      content-type:
+      - application/json
+      date:
+      - Thu, 20 Jun 2024 16:18:05 GMT
+      server:
+      - uvicorn
+    status:
+      code: 200
+      message: OK
+version: 1

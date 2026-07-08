@@ -1,0 +1,295 @@
+interactions:
+- request:
+    body: '{"slug": "test-dataset-file-attachments", "name": "Products with Files",
+      "description": null, "columns": [{"slug": "name", "name": "Name", "type": "string"},
+      {"slug": "image", "name": "Image", "type": "file"}, {"slug": "manual", "name":
+      "Manual", "type": "file"}], "rows": [{"name": "Product A", "image": null, "manual":
+      null}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '328'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cmidi707h002001r5flvjw2kb","slug":"test-dataset-file-attachments","name":"Products
+        with Files","columns":{"image":{"slug":"image","name":"Image","type":"file"},"manual":{"slug":"manual","name":"Manual","type":"file"},"name":{"slug":"name","name":"Name","type":"string"}},"total_columns":3,"created_at":"2025-11-24T18:51:52.397956969Z","updated_at":"2025-11-24T18:51:52.397957046Z","rows":[{"id":"cmidi707m002101r55mui89ue","row_index":1,"values":{"image":null,"manual":null,"name":"Product
+        A"},"created_at":"2025-11-24T18:51:52.405313955Z","updated_at":"2025-11-24T18:51:52.405313955Z"}]}'
+    headers:
+      CF-RAY:
+      - 9a3b19a3fc8a935b-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '595'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:52 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 09b8232cac028f2ce957157a14730136
+      x-kong-upstream-latency:
+      - '14'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"type": "image", "file_name": "tmpdch0oqhw.jpg", "content_type": "image/jpeg",
+      "with_thumbnail": false, "metadata": {"alt_text": "Product A image"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '149'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-file-attachments/rows/cmidi707m002101r55mui89ue/cells/image/upload-url
+  response:
+    body:
+      string: '{"upload_url":"https://traceloop-staging-files.s3.amazonaws.com/c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/8a72d3a2-42fc-4128-b145-a6d9ae98cd94.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=ASIAQEMAC2MS4BWMXJDU%2F20251124%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20251124T185152Z\u0026X-Amz-Expires=3600\u0026X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJP%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQCONTCaBRlO5kvg8sAs%2Ff9Y6jTWVoxZYZD%2BLI9IhRMmzQIhAOtze2VPR8dSsR7%2BIHtuSdo2rO0er2cHV%2F2ANvAdVPnnKvkECFsQABoMMDA5Mzk1NDI2MDg1IgwNq0aTuMvw1ZbN%2BNQq1gQhtdA%2BEFf%2B1xvs%2FuaGdLHYlqH7Q%2BaCO3or%2B3lycbLEOv7bgnXE7avgnE37GeiVXODMLVPLuuHK5hQAdCQWN4nqGFU%2F9H3u7P0TPiyRhfPhmDqf2d6cDSaedp%2BBP%2F21iXDIZiSEI%2BTqef6PyVblw3d6wWWfhEN0qhNs%2FvVwlG69yfZuWa2VUoXLi4nJRNbZRYa0iARamvFmdPBR%2FywKYIXnkhsKranY6%2FZB5b1eRkXwCcrv3%2FvXlONQL2F1kkesrE4cJ83%2FUUN4LvKE27JENyMRSHNBiiZ1ADMfvtQc95G9zxAWSf6Ua5lSe2bQaC%2B9cB5nRreVIV%2F1Nnc1%2BNYvimEI7c7BVGXd99ELmGcoRqigisAEiJkTk0uxQ7rVlC5xpG8QIe7kdCDdXVMQl1c3UyubFeo2%2FYbNrSnVL23J1iceRbnbULtcwwvM67V4%2BPu%2BkK1Naqv47D5X3oKex%2B%2BcQkNW0KpYJBfDIfkTjvqnzK3JTKFJR2%2FXdZYj51%2FXfJFRpU4qDqO1L1lY9ZcLdltTv6OlkKp0g0iW716SH07i28arIGK5ZQVxJ%2FlxNHHSd6H4TGdiDyJJG%2FwhzAppOX732junQjTSxf2MG8DKYvcZQ3A9UAj700WRKzgObjdvyLDV76LmjxbtmYbXYODIqrBe8dDXiTuEO89QQCZtbLUmzPiIxZ%2BDdvKqBSoxJUQ%2BkI4joejm3QmbUpWXPUXGSJEuY86LvCHBBKCm%2B2Nf%2BrA7kse00OIXFNlwrmcypjEeqf%2Br12aAEtwarGL3lfJVaZRdJmxvgVNXsyYLMLfDkskGOpcBVMVnUCa%2FgQaCqJFcVSLdKCrwZSjtBJ5REA6s7OK81wrClfA6uvMDbmCeffxvbqPaOAF%2BetvyxRjBRw30cZmpM1bgagB7Dw5LgoiJF2O8oKgn3LcrCqJk%2FQeXf2w7v1Dmv3vQ%2FS0Fzuooax0O3MFHA7T6%2BpL1ckZ%2Fv0J%2BdGItqYDyoOXk6NBvx2Qymtu8u98DY0VZFm140g%3D%3D\u0026X-Amz-SignedHeaders=content-type%3Bhost\u0026X-Amz-Signature=b6b9c0ad1a888fe3d17c6e4b0f643e147ba18685e2e03fe47d9d4dcff9a09904","storage_key":"c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/8a72d3a2-42fc-4128-b145-a6d9ae98cd94.jpg","expires_at":"2025-11-24T19:51:52.613303009Z","method":"PUT"}'
+    headers:
+      CF-RAY:
+      - 9a3b19a538750bed-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:52 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 40c5c756858e7f7ee5a55f21c9f4e14c
+      x-kong-upstream-latency:
+      - '15'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "success", "metadata": {"alt_text": "Product A image", "size_bytes":
+      15}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '84'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: PUT
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-file-attachments/rows/cmidi707m002101r55mui89ue/cells/image/upload-status
+  response:
+    body:
+      string: '{"success":true,"status":"success"}'
+    headers:
+      CF-RAY:
+      - 9a3b19a68ea5d0ed-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '35'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:52 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 3e785a2cf7631358c20420649635d464
+      x-kong-upstream-latency:
+      - '14'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "file", "file_name": "tmpq7gdzjjq.pdf", "content_type": "application/pdf",
+      "with_thumbnail": false, "metadata": {"version": "1.0"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '140'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-file-attachments/rows/cmidi707m002101r55mui89ue/cells/manual/upload-url
+  response:
+    body:
+      string: '{"upload_url":"https://traceloop-staging-files.s3.amazonaws.com/c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/b1dbc28c-09f8-42e3-9492-b0b42832fd13.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=ASIAQEMAC2MS4BWMXJDU%2F20251124%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20251124T185153Z\u0026X-Amz-Expires=3600\u0026X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJP%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQCONTCaBRlO5kvg8sAs%2Ff9Y6jTWVoxZYZD%2BLI9IhRMmzQIhAOtze2VPR8dSsR7%2BIHtuSdo2rO0er2cHV%2F2ANvAdVPnnKvkECFsQABoMMDA5Mzk1NDI2MDg1IgwNq0aTuMvw1ZbN%2BNQq1gQhtdA%2BEFf%2B1xvs%2FuaGdLHYlqH7Q%2BaCO3or%2B3lycbLEOv7bgnXE7avgnE37GeiVXODMLVPLuuHK5hQAdCQWN4nqGFU%2F9H3u7P0TPiyRhfPhmDqf2d6cDSaedp%2BBP%2F21iXDIZiSEI%2BTqef6PyVblw3d6wWWfhEN0qhNs%2FvVwlG69yfZuWa2VUoXLi4nJRNbZRYa0iARamvFmdPBR%2FywKYIXnkhsKranY6%2FZB5b1eRkXwCcrv3%2FvXlONQL2F1kkesrE4cJ83%2FUUN4LvKE27JENyMRSHNBiiZ1ADMfvtQc95G9zxAWSf6Ua5lSe2bQaC%2B9cB5nRreVIV%2F1Nnc1%2BNYvimEI7c7BVGXd99ELmGcoRqigisAEiJkTk0uxQ7rVlC5xpG8QIe7kdCDdXVMQl1c3UyubFeo2%2FYbNrSnVL23J1iceRbnbULtcwwvM67V4%2BPu%2BkK1Naqv47D5X3oKex%2B%2BcQkNW0KpYJBfDIfkTjvqnzK3JTKFJR2%2FXdZYj51%2FXfJFRpU4qDqO1L1lY9ZcLdltTv6OlkKp0g0iW716SH07i28arIGK5ZQVxJ%2FlxNHHSd6H4TGdiDyJJG%2FwhzAppOX732junQjTSxf2MG8DKYvcZQ3A9UAj700WRKzgObjdvyLDV76LmjxbtmYbXYODIqrBe8dDXiTuEO89QQCZtbLUmzPiIxZ%2BDdvKqBSoxJUQ%2BkI4joejm3QmbUpWXPUXGSJEuY86LvCHBBKCm%2B2Nf%2BrA7kse00OIXFNlwrmcypjEeqf%2Br12aAEtwarGL3lfJVaZRdJmxvgVNXsyYLMLfDkskGOpcBVMVnUCa%2FgQaCqJFcVSLdKCrwZSjtBJ5REA6s7OK81wrClfA6uvMDbmCeffxvbqPaOAF%2BetvyxRjBRw30cZmpM1bgagB7Dw5LgoiJF2O8oKgn3LcrCqJk%2FQeXf2w7v1Dmv3vQ%2FS0Fzuooax0O3MFHA7T6%2BpL1ckZ%2Fv0J%2BdGItqYDyoOXk6NBvx2Qymtu8u98DY0VZFm140g%3D%3D\u0026X-Amz-SignedHeaders=content-type%3Bhost\u0026X-Amz-Signature=a80916a4f8087f32758ffc40c602de46bd9af2a6f91c4813d1fcc225a4940ac9","storage_key":"c108269c-cf1e-4ac6-a7e4-5a456cc9fdb7/b1dbc28c-09f8-42e3-9492-b0b42832fd13.pdf","expires_at":"2025-11-24T19:51:53.021374552Z","method":"PUT"}'
+    headers:
+      CF-RAY:
+      - 9a3b19a7d8919b09-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:53 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - d7a52c73f43c3f71d5747258b3ccd626
+      x-kong-upstream-latency:
+      - '19'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "success", "metadata": {"version": "1.0", "size_bytes": 13}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '71'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: PUT
+    uri: https://api-staging.traceloop.com/v2/datasets/test-dataset-file-attachments/rows/cmidi707m002101r55mui89ue/cells/manual/upload-status
+  response:
+    body:
+      string: '{"success":true,"status":"success"}'
+    headers:
+      CF-RAY:
+      - 9a3b19a92ad1d31d-TLV
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '35'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 24 Nov 2025 18:51:53 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 1a5b587bd4e798252abc4766ef6ac27b
+      x-kong-upstream-latency:
+      - '19'
+    status:
+      code: 200
+      message: OK
+version: 1

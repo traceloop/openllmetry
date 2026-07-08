@@ -1,0 +1,72 @@
+interactions:
+- request:
+    body: '{"inputText": "How do I play tennis in Japan?", "textGenerationConfig":
+      {"maxTokenCount": 1000, "temperature": 0.5}}'
+    headers:
+      Content-Length:
+      - '116'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNi41IG1kL0JvdG9jb3JlIzEuMzYuNSB1YS8yLjAgb3MvbWFjb3MjMjQuNi4wIG1k
+        L2FyY2gjYXJtNjQgbGFuZy9weXRob24jMy45LjYgbWQvcHlpbXBsI0NQeXRob24gY2ZnL3JldHJ5
+        LW1vZGUjbGVnYWN5IEJvdG9jb3JlLzEuMzYuNQ==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTA4MTlUMDgxNzE3Wg==
+      X-Amzn-Bedrock-GuardrailIdentifier:
+      - !!binary |
+        NXp3cm1kbHNyYTJl
+      X-Amzn-Bedrock-GuardrailVersion:
+      - !!binary |
+        RFJBRlQ=
+      X-Amzn-Bedrock-Trace:
+      - !!binary |
+        RU5BQkxFRA==
+      amz-sdk-invocation-id:
+      - !!binary |
+        MDQ3ODNmMDktM2E3OC00ZGZjLWIyZTAtYTIyNjMxNWYyMGJk
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-text-express-v1/invoke-with-response-stream
+  response:
+    body:
+      string: !!binary |
+        AAAEcQAAAEvbD8wYCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0
+        aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SnZkWFJ3ZFhSVVpYaDBJ
+        am9pU1c1d2RYUWdZbXh2WTJ0bFpDSXNJbWx1WkdWNElqb3dMakFzSW5SdmRHRnNUM1YwY0hWMFZH
+        VjRkRlJ2YTJWdVEyOTFiblFpT2pNdU1Dd2lhVzV3ZFhSVVpYaDBWRzlyWlc1RGIzVnVkQ0k2Tmk0
+        d0xDSmhiV0Y2YjI0dFltVmtjbTlqYXkxbmRXRnlaSEpoYVd4QlkzUnBiMjRpT2lKSlRsUkZVbFpG
+        VGtWRUlpd2lZVzFoZW05dUxXSmxaSEp2WTJzdGRISmhZMlVpT25zaVozVmhjbVJ5WVdsc0lqcDdJ
+        bWx1Y0hWMElqcDdJalY2ZDNKdFpHeHpjbUV5WlNJNmV5SjBiM0JwWTFCdmJHbGplU0k2ZXlKMGIz
+        QnBZM01pT2x0N0ltNWhiV1VpT2lKMGIzQnBZeTB4SWl3aWRIbHdaU0k2SWtSRlRsa2lMQ0poWTNS
+        cGIyNGlPaUpDVEU5RFMwVkVJaXdpWkdWMFpXTjBaV1FpT25SeWRXVjlYWDBzSW1sdWRtOWpZWFJw
+        YjI1TlpYUnlhV056SWpwN0ltZDFZWEprY21GcGJGQnliMk5sYzNOcGJtZE1ZWFJsYm1ONUlqb3lO
+        amNzSW5WellXZGxJanA3SW5SdmNHbGpVRzlzYVdONVZXNXBkSE1pT2pFc0ltTnZiblJsYm5SUWIy
+        eHBZM2xWYm1sMGN5STZNU3dpZDI5eVpGQnZiR2xqZVZWdWFYUnpJam94TENKaGRYUnZiV0YwWldS
+        U1pXRnpiMjVwYm1kUWIyeHBZM2xWYm1sMGN5STZNQ3dpWVhWMGIyMWhkR1ZrVW1WaGMyOXVhVzVu
+        VUc5c2FXTnBaWE1pT2pBc0luTmxibk5wZEdsMlpVbHVabTl5YldGMGFXOXVVRzlzYVdONVZXNXBk
+        SE1pT2pFc0luTmxibk5wZEdsMlpVbHVabTl5YldGMGFXOXVVRzlzYVdONVJuSmxaVlZ1YVhSeklq
+        b3dMQ0pqYjI1MFpYaDBkV0ZzUjNKdmRXNWthVzVuVUc5c2FXTjVWVzVwZEhNaU9qQXNJbU52Ym5S
+        bGJuUlFiMnhwWTNsSmJXRm5aVlZ1YVhSeklqb3dmU3dpWjNWaGNtUnlZV2xzUTI5MlpYSmhaMlVp
+        T25zaWRHVjRkRU5vWVhKaFkzUmxjbk1pT25zaVozVmhjbVJsWkNJNk16QXNJblJ2ZEdGc0lqb3pN
+        SDE5ZlgxOUxDSmhZM1JwYjI1U1pXRnpiMjRpT2lKSGRXRnlaSEpoYVd3Z1lteHZZMnRsWkM0aWZY
+        MTkiLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNIn1LCkaQ
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/vnd.amazon.eventstream
+      Date:
+      - Tue, 19 Aug 2025 08:17:18 GMT
+      Transfer-Encoding:
+      - chunked
+      X-Amzn-Bedrock-Content-Type:
+      - application/json
+      x-amzn-RequestId:
+      - c222b086-9d88-4ff2-bcea-57009b037d3d
+    status:
+      code: 200
+      message: OK
+version: 1

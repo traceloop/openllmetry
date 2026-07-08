@@ -1,0 +1,39 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"What is the weather like in Zakopane,
+      Warsaw, Lodz, Katowice, Krakow, Poznan and Lublin today?"}],"model":"palmyra-x4","max_tokens":340,"stop":"I
+      am","stream":false,"temperature":0.7,"tools":[{"function":{"description":"Return
+      weather in the specific location.","name":"get_weather","parameters":{"properties":{"location":{"description":"Location
+      to return weather at","type":"string"}},"required":["location"],"type":"object"}},"type":"function"}],"top_p":0.9}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '500'
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/chat
+  response:
+    body:
+      string: '{"id":"48dfd042-80b7-49ac-8cd9-ea800839a0dc","object":"chat.completion","choices":[{"index":0,"finish_reason":"tool_calls","message":{"content":null,"role":"assistant","tool_calls":[{"index":null,"id":"chatcmpl-tool-429aded05dbe483697404967c567cbd6","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Zakopane\"}"}},{"index":null,"id":"chatcmpl-tool-d5ac8291d8b749cda1d03b18baa013fa","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Warsaw\"}"}},{"index":null,"id":"chatcmpl-tool-cd3559179f45440f8b62c90061810568","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Lodz\"}"}},{"index":null,"id":"chatcmpl-tool-6d25c273232f49febba77f29ec73f103","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Katowice\"}"}},{"index":null,"id":"chatcmpl-tool-f639e3c813c9409baf07d08ca2e2e456","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Krakow\"}"}},{"index":null,"id":"chatcmpl-tool-f17729a2f75f46afb9a74d66b80580ff","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Poznan\"}"}},{"index":null,"id":"chatcmpl-tool-d3982e8dc28241fbad74d2b7168a3aa6","type":"function","function":{"name":"get_weather","arguments":"{\"location\":
+        \"Lublin\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1756221098,"model":"palmyra-x4","usage":{"prompt_tokens":212,"total_tokens":365,"completion_tokens":153,"prompt_token_details":null,"completion_tokens_details":null},"system_fingerprint":"v1","service_tier":null}'
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1
