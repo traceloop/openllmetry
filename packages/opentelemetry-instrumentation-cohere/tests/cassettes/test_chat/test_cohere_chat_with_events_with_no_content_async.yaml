@@ -1,0 +1,83 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a joke, pirate style", "model": "command", "stream":
+      false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '80'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.6.1
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"response_id":"c0b03212-d862-46a1-aa94-2fa6f491fd17","text":"Arrrr,
+        matey! Shiver me timbers, here''s a pirate-style joke for ye: \n\nI asked
+        the pirate captain how he lost his leg. He said, \"I was just a kid, matey!\"
+        \n\nArrrr, matey! Now ye squiggly little skeleton and walk the plank laughing
+        like a pirate! \n\nIf ye want more pirate jokes, I can make ye walk the plank
+        and whip ye with me cannonball launcher!","generation_id":"a3203475-c8f3-488d-8682-f6da563cd1d7","chat_history":[{"role":"USER","message":"Tell
+        me a joke, pirate style"},{"role":"CHATBOT","message":"Arrrr, matey! Shiver
+        me timbers, here''s a pirate-style joke for ye: \n\nI asked the pirate captain
+        how he lost his leg. He said, \"I was just a kid, matey!\" \n\nArrrr, matey!
+        Now ye squiggly little skeleton and walk the plank laughing like a pirate!
+        \n\nIf ye want more pirate jokes, I can make ye walk the plank and whip ye
+        with me cannonball launcher!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"warnings":["model
+        ''command'' is deprecated and will be removed September 15 2025. Please consider
+        upgrading to a newer model to avoid future service disruptions"],"billed_units":{"input_tokens":7,"output_tokens":99},"tokens":{"input_tokens":69,"output_tokens":100}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '1264'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 01:23:16 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '324'
+      num_tokens:
+      - '106'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - c3f40eb96fedb33840b13a84344b7f6e
+      x-envoy-upstream-service-time:
+      - '2980'
+    status:
+      code: 200
+      message: OK
+version: 1

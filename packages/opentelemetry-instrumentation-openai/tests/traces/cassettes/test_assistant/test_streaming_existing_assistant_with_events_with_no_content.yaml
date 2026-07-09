@@ -1,0 +1,864 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      OpenAI-Beta:
+      - assistants=v2
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/threads
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6vmUlBQykxRslJQKskoSk1Mia8KNAmt9Az1LfYoSYoISDS3DDHK8yj1SVPSASnN
+        T8pKTS5BKIeIJgOZJakp8YkgGUNzcxNLM1NLUxOwXG5qSWJKYkkiUKa6FixSkp+fE1+UWpxfWpSc
+        WgwW56oFAFXpJFiJAAAA
+    headers:
+      CF-RAY:
+      - 9e4fe95e2c899880-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 14:05:54 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '103'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=XdyS.ZYb7Een0bpVa1ZxHqRQQtmgD9vG6TOl9g1qnSM-1774965954.2615173-1.0.1.1-6mEkb.JFLXkc7yakYIZ04sUhWdyJrmgtcRHImPk0XaStvPMa2yzetGsKqh98ln4D0LrriyOnw32bNtO6NHZYgnGU3dicJeNA6SbGdmor6P9QTR3jToDkv57DyVFopzQL;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        14:35:54 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_46a0639426e7437fa858c9e648151bbc
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"content":"I need to solve the equation `3x + 11 = 14`. Can you help me?","role":"user"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '89'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=XdyS.ZYb7Een0bpVa1ZxHqRQQtmgD9vG6TOl9g1qnSM-1774965954.2615173-1.0.1.1-6mEkb.JFLXkc7yakYIZ04sUhWdyJrmgtcRHImPk0XaStvPMa2yzetGsKqh98ln4D0LrriyOnw32bNtO6NHZYgnGU3dicJeNA6SbGdmor6P9QTR3jToDkv57DyVFopzQL
+      Host:
+      - api.openai.com
+      OpenAI-Beta:
+      - assistants=v2
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/threads/thread_zQ4UyIUMsHtbXPa79T2nHuLf/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/12QQWvCQBCF7/kVQ64tQtrYEKEUbCkRW2hBi7RIHJOpiSS7NjtrTcX/bnZXPfQy
+        MG++mfeYvQfgl7k/AL9WqzTfLdt18jmczcb8JMeT4Wo9ff79aPxrw8nlmjI2LBcNYd6rSSlckZtm
+        ncSUp2iIIIrC+K4f90M7Q6VKxSg4tV5CV5XV3R0nnpu/93DajqavKuHl7A2jeHIjEv3y7VwaLf7d
+        aGRFZl0rOuXMpGASJsZX1wLsbTV27caiTDu2qFNNN7hQnbLFSltwBIIoB5agZLUl4IKAfjRyKQUs
+        bndwBUEA9xCEix48ooBWaiio2kBNDxcH8wAhJNs1ZWLNT5ODd65z9ydmzIq6C+8wK9bEmCOjyXjw
+        Dkd/c9hoswEAAA==
+    headers:
+      CF-RAY:
+      - 9e4fe9617d0fecfd-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 14:05:55 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '144'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_2cf6099308824ac992ab21a106e0f209
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Cookie:
+      - __cf_bm=XdyS.ZYb7Een0bpVa1ZxHqRQQtmgD9vG6TOl9g1qnSM-1774965954.2615173-1.0.1.1-6mEkb.JFLXkc7yakYIZ04sUhWdyJrmgtcRHImPk0XaStvPMa2yzetGsKqh98ln4D0LrriyOnw32bNtO6NHZYgnGU3dicJeNA6SbGdmor6P9QTR3jToDkv57DyVFopzQL
+      Host:
+      - api.openai.com
+      OpenAI-Beta:
+      - assistants=v2
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: GET
+    uri: https://api.openai.com/v1/assistants/asst_D2BqLQ9rNgOjd5A3NpS9m9s4
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/2VRXUsDMRB8768I92yL2tZyfVN81IooiEgJ8bKtKZePbjaIlPvvZpOihb4Edmdm
+        Z3ZzGAnRGN0sRaNiJHl/fbd/eG5xtX3a6fntdBVeWtvGWXPBRP+5g46OZBNJOapAh6AItFQMXi0W
+        s/ZmPp9OC+aUBZY8KvoSr4k8Vo2G2KEJZLzLsEt9X9rWa+iZvw00nvmxNc5UgXGRMHUsiEx490ko
+        BKFEAIzeqV5Y9iD2mIg3NJRBpwUmJ7o8VpDPdfwGrMR9glimTaoBed/z5I9cCHEoL7d/QlmAR0jj
+        CDAg5LcphCG/66M8yMD7Ty5rDTYHU5QQTrr5UjmrcVsJm41HOt2dA0iE6BN2wElqhnPn5X+6jekz
+        pkvu9V+iod4SSGlFivnD0T2GvDDIbG1V/cp8rmY0/AJmy6BFCgIAAA==
+    headers:
+      CF-RAY:
+      - 9e4fe964dcbbcd0c-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 14:05:55 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '169'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_5873d2359d314a458ed0fe508f6d40c0
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","instructions":"Please
+      address the user as Jane Doe. The user has a premium account.","stream":true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '148'
+      Content-Type:
+      - application/json
+      Cookie:
+      - __cf_bm=XdyS.ZYb7Een0bpVa1ZxHqRQQtmgD9vG6TOl9g1qnSM-1774965954.2615173-1.0.1.1-6mEkb.JFLXkc7yakYIZ04sUhWdyJrmgtcRHImPk0XaStvPMa2yzetGsKqh98ln4D0LrriyOnw32bNtO6NHZYgnGU3dicJeNA6SbGdmor6P9QTR3jToDkv57DyVFopzQL
+      Host:
+      - api.openai.com
+      OpenAI-Beta:
+      - assistants=v2
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Custom-Event-Handler:
+      - 'true'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      X-Stainless-Stream-Helper:
+      - threads.runs.create_and_stream
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/threads/thread_zQ4UyIUMsHtbXPa79T2nHuLf/runs
+  response:
+    body:
+      string: 'event: thread.run.created
+
+        data: {"id":"run_2zWHABJr7mUVxSxn1QmRYsSp","object":"thread.run","created_at":1774965956,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","status":"queued","started_at":null,"expires_at":1774966556,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4o-mini","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"tool_resources":{"code_interpreter":{"file_ids":[]}},"metadata":{},"temperature":1.0,"top_p":1.0,"reasoning_effort":null,"max_completion_tokens":null,"max_prompt_tokens":null,"truncation_strategy":{"type":"auto","last_messages":null},"incomplete_details":null,"usage":null,"response_format":"auto","tool_choice":"auto","parallel_tool_calls":true}
+
+
+        event: thread.run.queued
+
+        data: {"id":"run_2zWHABJr7mUVxSxn1QmRYsSp","object":"thread.run","created_at":1774965956,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","status":"queued","started_at":null,"expires_at":1774966556,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4o-mini","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"tool_resources":{"code_interpreter":{"file_ids":[]}},"metadata":{},"temperature":1.0,"top_p":1.0,"reasoning_effort":null,"max_completion_tokens":null,"max_prompt_tokens":null,"truncation_strategy":{"type":"auto","last_messages":null},"incomplete_details":null,"usage":null,"response_format":"auto","tool_choice":"auto","parallel_tool_calls":true}
+
+
+        event: thread.run.in_progress
+
+        data: {"id":"run_2zWHABJr7mUVxSxn1QmRYsSp","object":"thread.run","created_at":1774965956,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","status":"in_progress","started_at":1774965956,"expires_at":1774966556,"cancelled_at":null,"failed_at":null,"completed_at":null,"required_action":null,"last_error":null,"model":"gpt-4o-mini","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"tool_resources":{"code_interpreter":{"file_ids":[]}},"metadata":{},"temperature":1.0,"top_p":1.0,"reasoning_effort":null,"max_completion_tokens":null,"max_prompt_tokens":null,"truncation_strategy":{"type":"auto","last_messages":null},"incomplete_details":null,"usage":null,"response_format":"auto","tool_choice":"auto","parallel_tool_calls":true}
+
+
+        event: thread.run.step.created
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step","created_at":1774965957,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"tool_calls","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[]},"usage":null}
+
+
+        event: thread.run.step.in_progress
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step","created_at":1774965957,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"tool_calls","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[]},"usage":null}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"id":"call_KmUnOk5bRseiygzVpXOWQ6oI","type":"code_interpreter","code_interpreter":{"input":"","outputs":[]}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"import"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        sym"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"py"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        as"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        sp"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Define"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        variable"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        sp"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":".symbol"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"s"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"(''"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"'')\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Define"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        equation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"equ"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"ation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        sp"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":".E"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"q"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"("}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"3"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"*x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        +"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        "}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"11"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        "}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"14"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":")\n\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"#"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        Solve"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        the"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        equation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"solution"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        ="}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        sp"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":".solve"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"(e"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"qu"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"ation"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":","}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"
+        x"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":")\n"}}]}}}
+
+
+        event: thread.run.step.delta
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step.delta","delta":{"step_details":{"type":"tool_calls","tool_calls":[{"index":0,"type":"code_interpreter","code_interpreter":{"input":"solution"}}]}}}
+
+
+        event: thread.run.step.completed
+
+        data: {"id":"step_59u8BEWk0xk48rH4LpWaMXaP","object":"thread.run.step","created_at":1774965957,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"tool_calls","status":"completed","cancelled_at":null,"completed_at":1774965963,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"tool_calls","tool_calls":[{"id":"call_KmUnOk5bRseiygzVpXOWQ6oI","type":"code_interpreter","code_interpreter":{"input":"import
+        sympy as sp\n\n# Define the variable\nx = sp.symbols(''x'')\n\n# Define the
+        equation\nequation = sp.Eq(3*x + 11, 14)\n\n# Solve the equation\nsolution
+        = sp.solve(equation, x)\nsolution","outputs":[]}}]},"usage":{"prompt_tokens":154,"completion_tokens":62,"total_tokens":216,"prompt_token_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}}}
+
+
+        event: thread.run.step.created
+
+        data: {"id":"step_QoO0c2Q8xEKZ9uJJZ1aJ54qT","object":"thread.run.step","created_at":1774965963,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_kaj6WhBeno87PJ85kgdFpuoZ"}},"usage":null}
+
+
+        event: thread.run.step.in_progress
+
+        data: {"id":"step_QoO0c2Q8xEKZ9uJJZ1aJ54qT","object":"thread.run.step","created_at":1774965963,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"message_creation","status":"in_progress","cancelled_at":null,"completed_at":null,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_kaj6WhBeno87PJ85kgdFpuoZ"}},"usage":null}
+
+
+        event: thread.message.created
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message","created_at":1774965963,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"attachments":[],"metadata":{}}
+
+
+        event: thread.message.in_progress
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message","created_at":1774965963,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","status":"in_progress","incomplete_details":null,"incomplete_at":null,"completed_at":null,"role":"assistant","content":[],"attachments":[],"metadata":{}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"The","annotations":[]}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        solution"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        to"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        the"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        equation"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"3"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        +"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"11"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ="}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"14"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":")"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        is"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        \\("}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"x"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        ="}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"
+        "}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"1"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":"\\"}}]}}
+
+
+        event: thread.message.delta
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message.delta","delta":{"content":[{"index":0,"type":"text","text":{"value":")."}}]}}
+
+
+        event: thread.message.completed
+
+        data: {"id":"msg_kaj6WhBeno87PJ85kgdFpuoZ","object":"thread.message","created_at":1774965963,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","status":"completed","incomplete_details":null,"incomplete_at":null,"completed_at":1774965964,"role":"assistant","content":[{"type":"text","text":{"value":"The
+        solution to the equation \\(3x + 11 = 14\\) is \\(x = 1\\).","annotations":[]}}],"attachments":[],"metadata":{}}
+
+
+        event: thread.run.step.completed
+
+        data: {"id":"step_QoO0c2Q8xEKZ9uJJZ1aJ54qT","object":"thread.run.step","created_at":1774965963,"run_id":"run_2zWHABJr7mUVxSxn1QmRYsSp","assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","type":"message_creation","status":"completed","cancelled_at":null,"completed_at":1774965964,"expires_at":1774966556,"failed_at":null,"last_error":null,"step_details":{"type":"message_creation","message_creation":{"message_id":"msg_kaj6WhBeno87PJ85kgdFpuoZ"}},"usage":{"prompt_tokens":227,"completion_tokens":26,"total_tokens":253,"prompt_token_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}}}
+
+
+        event: thread.run.completed
+
+        data: {"id":"run_2zWHABJr7mUVxSxn1QmRYsSp","object":"thread.run","created_at":1774965956,"assistant_id":"asst_D2BqLQ9rNgOjd5A3NpS9m9s4","thread_id":"thread_zQ4UyIUMsHtbXPa79T2nHuLf","status":"completed","started_at":1774965956,"expires_at":null,"cancelled_at":null,"failed_at":null,"completed_at":1774965964,"required_action":null,"last_error":null,"model":"gpt-4o-mini","instructions":"Please
+        address the user as Jane Doe. The user has a premium account.","tools":[{"type":"code_interpreter"}],"tool_resources":{"code_interpreter":{"file_ids":[]}},"metadata":{},"temperature":1.0,"top_p":1.0,"reasoning_effort":null,"max_completion_tokens":null,"max_prompt_tokens":null,"truncation_strategy":{"type":"auto","last_messages":null},"incomplete_details":null,"usage":{"prompt_tokens":381,"completion_tokens":88,"total_tokens":469,"prompt_token_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}},"response_format":"auto","tool_choice":"auto","parallel_tool_calls":true}
+
+
+        event: done
+
+        data: [DONE]
+
+
+        '
+    headers:
+      CF-RAY:
+      - 9e4fe9686eb4129d-LHR
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Tue, 31 Mar 2026 14:05:56 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '747'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-request-id:
+      - req_3129860b687743ab80b8e1bd1ad48d2d
+    status:
+      code: 200
+      message: OK
+version: 1

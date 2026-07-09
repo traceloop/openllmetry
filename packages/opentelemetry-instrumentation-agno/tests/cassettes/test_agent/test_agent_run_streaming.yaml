@@ -1,0 +1,184 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "developer", "content": "A streaming test agent"},
+      {"role": "user", "content": "What is 10 + 5?"}], "model": "gpt-4o-mini", "stream":
+      true, "stream_options": {"include_usage": true}}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '190'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.7
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: 'data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"LPXc94h4G"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"10"},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"6T3lgPpF9"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"
+        +"},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"2ueBQ6HRL"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"
+        "},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"Slu7xVhBqH"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"5"},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"ceZThojkDv"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"
+        equals"},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"Z1wg"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"
+        "},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"3SnjI07Zaw"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"15"},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"utv78xVby"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}],"usage":null,"obfuscation":"U6nZlKLMOG"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}],"usage":null,"obfuscation":"J32gM"}
+
+
+        data: {"id":"chatcmpl-ChZNa5AVXUvGOZAleY7FgQlVr6bxn","object":"chat.completion.chunk","created":1764500138,"model":"gpt-4o-mini-2024-07-18","service_tier":"default","system_fingerprint":"fp_50906f2aac","choices":[],"usage":{"prompt_tokens":23,"completion_tokens":8,"total_tokens":31,"prompt_tokens_details":{"cached_tokens":0,"audio_tokens":0},"completion_tokens_details":{"reasoning_tokens":0,"audio_tokens":0,"accepted_prediction_tokens":0,"rejected_prediction_tokens":0}},"obfuscation":"eUG8yTXdybZ"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      CF-RAY:
+      - 9a69d04a5d28c222-TLV
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream; charset=utf-8
+      Date:
+      - Sun, 30 Nov 2025 10:55:38 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=0A6vzsZqQJIcRNkAI9bEthhYCU5lSOir3tvToBJS_00-1764500138-1.0.1.1-ep_jbuMItvBDryGMoy.j620ijXQ5rKR3dfDzWrqFGldkY5nkJ.7a8hz.p4keQXwVHH6TVAQ90fNSpo4eVCm3vZtPNsVLi5WdioIuxNyx2i4;
+        path=/; expires=Sun, 30-Nov-25 11:25:38 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=WXukXV8S1Di4DqhkRFo1F.ySxtweSHR_vR1NL6lTgAs-1764500138962-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '157'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '173'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999987'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_749ae20b6a8a467ca2ae1ad496a8e190
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"session_id": "e5ece810-530f-48fa-964a-72564179fa40", "run_id": "6ebff03b-9dd6-4eab-a06b-394809a84f27",
+      "data": {"agent_id": "streamagent", "db_type": null, "model_provider": "OpenAI",
+      "model_name": "OpenAIChat", "model_id": "gpt-4o-mini", "parser_model": null,
+      "output_model": null, "has_tools": true, "has_memory": false, "has_culture":
+      false, "has_reasoning": false, "has_knowledge": false, "has_input_schema": false,
+      "has_output_schema": false, "has_team": false}, "sdk_version": "2.2.13", "type":
+      "agent"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '473'
+      content-type:
+      - application/json
+      host:
+      - os-api.agno.com
+      user-agent:
+      - agno/2.2.13
+    method: POST
+    uri: https://os-api.agno.com/telemetry/runs
+  response:
+    body:
+      string: '{"message":"Run creation acknowledged: 6ebff03b-9dd6-4eab-a06b-394809a84f27","status":"success"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '96'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 30 Nov 2025 10:55:39 GMT
+      server:
+      - uvicorn
+    status:
+      code: 201
+      message: Created
+version: 1

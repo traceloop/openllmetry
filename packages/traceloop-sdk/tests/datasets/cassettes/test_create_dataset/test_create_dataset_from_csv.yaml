@@ -1,0 +1,64 @@
+interactions:
+- request:
+    body: '{"slug": "test-csv-dataset", "name": "Test CSV Dataset", "description":
+      "Dataset created from CSV for testing", "columns": [{"slug": "name", "name":
+      "Name", "type": "string"}, {"slug": "price", "name": "Price", "type": "string"},
+      {"slug": "in-stock", "name": "In Stock", "type": "string"}], "rows": [{"name":
+      "Laptop", "price": "999.99", "in-stock": "true"}, {"name": "Mouse", "price":
+      "29.99", "in-stock": "false"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '426'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cme7h01j3003a0105krd8c5de","slug":"test-csv-dataset","name":"Test
+        CSV Dataset","description":"Dataset created from CSV for testing","columns":{"name":{"slug":"name","name":"Name","type":"string"},"price":{"slug":"price","name":"Price","type":"string"},"in-stock":{"slug":"in-stock","name":"In Stock","type":"string"}},"created_at":"2025-08-11T18:53:01.50360709Z","updated_at":"2025-08-11T18:53:01.503607146Z","rows":[{"id":"cme7h01jt003b0105w9q0str5","row_index":1,"values":{"name":"Laptop","price":"999.99","in-stock":"true"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"},{"id":"cme7h01jt003c0105mvd0d8fx","row_index":2,"values":{"name":"Mouse","price":"29.99","in-stock":"false"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"}]}'
+    headers:
+      CF-RAY:
+      - 96d9cc1c6e10bc12-ZRH
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '850'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 18:29:14 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '0'
+      x-kong-request-id:
+      - 0d57ca239631c0164ce86d3feab64256
+      x-kong-upstream-latency:
+      - '8'
+    status:
+      code: 201
+      message: Created
+version: 1

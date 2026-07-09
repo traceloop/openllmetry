@@ -1,0 +1,53 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"What is the weather like in Zakopane
+      today?"}],"model":"palmyra-x4","max_tokens":340,"stop":"I am","stream":true,"stream_options":{"include_usage":true},"temperature":0.7,"tools":[{"function":{"description":"Return
+      weather in the specific location.","name":"get_weather","parameters":{"properties":{"location":{"description":"Location
+      to return weather at","type":"string"}},"required":["location"],"type":"object"}},"type":"function"}],"top_p":0.9}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '488'
+      content-type:
+      - application/json
+      host:
+      - api.writer.com
+    method: POST
+    uri: https://api.writer.com/v1/chat
+  response:
+    body:
+      string: 'data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1755878837,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":"chatcmpl-tool-a31f1a5690b14b7daf0e78d2a2d23da2","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":"chatcmpl-tool-a31f1a5690b14b7daf0e78d2a2d23da2","type":"function","function":{"name":"get_weather","arguments":null}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1755878837,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"{\"location\":"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1755878837,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":null,"message":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Zakopane\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":[{"index":0,"id":null,"type":null,"function":{"name":null,"arguments":"
+        \"Zakopane\"}"}}],"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1755878837,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[{"index":0,"finish_reason":"tool_calls","message":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"delta":{"content":null,"role":"assistant","tool_calls":null,"graph_data":{"sources":null,"status":null,"subqueries":null},"llm_data":null,"image_data":null,"translation_data":null,"web_search_data":null,"refusal":null},"logprobs":null,"trace_details":null}],"created":1755878837,"model":"palmyra-x4","usage":null,"system_fingerprint":"v1","service_tier":null}
+
+
+        data: {"id":"a2c90cfe-1887-47df-9b3b-f8a20ba21ff2","object":"chat.completion.chunk","choices":[],"created":1755878837,"model":"palmyra-x4","usage":{"prompt_tokens":194,"total_tokens":216,"completion_tokens":22,"prompt_token_details":null,"completion_tokens_details":null},"system_fingerprint":"v1","service_tier":null}
+
+
+        '
+    headers:
+      Content-Type:
+      - text/event-stream
+      Transfer-Encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

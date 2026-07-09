@@ -1,0 +1,58 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: GET
+    uri: https://api-staging.traceloop.com/v2/datasets/test-qa
+  response:
+    body:
+      string: '{"id":"cme75m4is00004lp0dtfaczb9","slug":"test-qa","name":"Test QA","columns":{"new-column-1":{"name":"New
+        Column 1","type":"string"},"new-column-2":{"name":"New Column 2","type":"number"},"new-column-3":{"name":"New
+        Column 3","type":"boolean"}},"created_at":"2025-08-11T16:34:16.42Z","updated_at":"2025-08-11T18:44:10.497Z","rows":[{"id":"cme7gnq9b00380105kiulzk3n","row_index":1,"values":{"new-column-1":"hallo","new-column-2":0,"new-column-3":false},"created_at":"2025-08-11T18:43:27.027Z","updated_at":"2025-08-11T18:43:27.027Z"}]}'
+    headers:
+      CF-RAY:
+      - 96d9efc8091aef3c-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 18:53:35 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - 174b0519b0b8e3350aeec41a98e9314e
+      x-kong-upstream-latency:
+      - '11'
+    status:
+      code: 200
+      message: OK
+version: 1

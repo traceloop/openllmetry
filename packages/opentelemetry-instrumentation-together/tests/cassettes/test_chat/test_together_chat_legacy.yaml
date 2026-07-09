@@ -1,0 +1,94 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry.",
+      "tool_calls": null}], "model": "mistralai/Mixtral-8x7B-Instruct-v0.1", "max_tokens":
+      null, "stop": null, "temperature": null, "top_p": null, "top_k": null, "repetition_penalty":
+      null, "presence_penalty": null, "frequency_penalty": null, "min_p": null, "logit_bias":
+      null, "stream": false, "logprobs": null, "echo": null, "n": null, "safety_model":
+      null, "response_format": null, "tools": null, "tool_choice": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '495'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.2.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.2.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.9.5", "platform": "macOS-14.4.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 23.4.0 Darwin Kernel Version 23.4.0: Fri Mar 15 00:10:42
+        PDT 2024; root:xnu-10063.101.17~1/RELEASE_ARM64_T6000 arm64"}'
+    method: POST
+    uri: https://api.together.xyz/v1/chat/completions
+  response:
+    body:
+      string: '{"id":"88fa668fac30bb19-MXP","object":"chat.completion","created":1717697862,"model":"mistralai/Mixtral-8x7B-Instruct-v0.1","prompt":[],"choices":[{"finish_reason":"eos","logprobs":null,"index":0,"message":{"role":"assistant","content":"
+        Why don''t we ever hear secrets at a OpenTelemetry convention? Because it''s
+        an ex-spy place! (I''ll show myself out)"}}],"usage":{"prompt_tokens":18,"completion_tokens":35,"total_tokens":53}}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 88fa668fac30bb19-MXP
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Thu, 06 Jun 2024 18:17:42 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=2592000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '427'
+      etag:
+      - W/"gjpltr7c8obv"
+      vary:
+      - Accept-Encoding
+      x-api-call-end:
+      - '2024-06-06T18:17:42.258Z'
+      x-api-call-start:
+      - '2024-06-06T18:17:41.736Z'
+      x-api-received:
+      - '2024-06-06T18:17:41.732Z'
+      x-compute-characters:
+      - '53'
+      x-compute-time:
+      - '384'
+      x-hostname:
+      - mistralai-mixtral-8x7b-instruct-v0-1-776c5b5559-wrrj9
+      x-inference-time:
+      - '384'
+      x-inference-version:
+      - v2
+      x-queue-time:
+      - '0'
+      x-ratelimit-limit:
+      - '2'
+      x-ratelimit-remaining:
+      - '1'
+      x-ratelimit-reset:
+      - '2'
+      x-time-per-token:
+      - '10'
+      x-total-time:
+      - '384'
+      x-validation-time:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

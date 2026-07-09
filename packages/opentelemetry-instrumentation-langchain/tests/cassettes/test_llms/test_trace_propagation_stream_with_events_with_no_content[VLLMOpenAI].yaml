@@ -1,0 +1,129 @@
+interactions:
+- request:
+    body: '{"model": "facebook/opt-125m", "prompt": "System: You are a helpful assistant
+      \nHuman: Tell me a joke about OpenTelemetry", "frequency_penalty": 0.0, "logit_bias":
+      null, "max_tokens": 20, "n": 1, "presence_penalty": 0.0, "stream": true, "temperature":
+      0.7, "top_p": 1.0}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '270'
+      content-type:
+      - application/json
+      host:
+      - localhost:8000
+      traceparent:
+      - 00-8f1996cf9b88a5dbbf23d49c33254a33-5b71b7e26f9d69d2-01
+      user-agent:
+      - OpenAI/Python 1.45.1
+      x-stainless-arch:
+      - x64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.45.1
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.10.12
+    method: POST
+    uri: http://localhost:8000/v1/completions
+  response:
+    body:
+      string: 'data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":".","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"\n","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"\n","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"\"","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"Human","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"\"","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        here","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        means","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        \"","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"someone","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        who","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        has","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        access","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        to","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        the","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        Open","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        Tele","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"metry","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":"
+        network","logprobs":null,"finish_reason":null,"stop_reason":null}],"usage":null}
+
+
+        data: {"id":"cmpl-606a18e6c4ce4c39b0bc404c3cd490dc","object":"text_completion","created":1729072359,"model":"facebook/opt-125m","choices":[{"index":0,"text":".\"","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":null}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      content-type:
+      - text/event-stream; charset=utf-8
+      date:
+      - Wed, 16 Oct 2024 09:52:39 GMT
+      server:
+      - uvicorn
+      transfer-encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1

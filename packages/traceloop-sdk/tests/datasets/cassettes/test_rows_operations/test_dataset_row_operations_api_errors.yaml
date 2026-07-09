@@ -1,0 +1,54 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: GET
+    uri: https://api-staging.traceloop.com/v2/datasets/definitely-non-existent-dataset-12345
+  response:
+    body:
+      string: '{"error":"Dataset not found"}'
+    headers:
+      CF-RAY:
+      - 96d8ccacfed7c95a-IAD
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '29'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 15:34:51 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - e3d807493f568218413e0d1c920f3103
+      x-kong-upstream-latency:
+      - '3'
+    status:
+      code: 404
+      message: Not Found
+version: 1

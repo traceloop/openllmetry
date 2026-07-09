@@ -1,0 +1,77 @@
+{
+  "name": "opentelemetry-instrumentation-agno",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-agno/opentelemetry/instrumentation/agno",
+  "targets": {
+    "lock": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv lock",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "options": {
+        "outputPath": "packages/opentelemetry-instrumentation-agno/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-agno/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-agno"
+      ],
+      "options": {
+        "command": "uv run pytest tests/",
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    },
+    "build-release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-agno"
+      }
+    }
+  },
+  "tags": [
+    "instrumentation"
+  ]
+}

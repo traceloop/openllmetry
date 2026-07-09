@@ -1,0 +1,1060 @@
+import json
+
+import pytest
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+    GenAiSystemValues,
+)
+from opentelemetry.semconv_ai import SpanAttributes
+
+from tests.traces import assert_message_in_logs
+
+
+@pytest.mark.vcr
+def test_titan_completion(instrument_legacy, brt, span_exporter, log_exporter):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model(
+        body=body, modelId=modelId, accept=accept, contentType=contentType
+    )
+
+    response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on prompt
+    expected_prompt = (
+        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+        "scale generative AI applications with base models (FMs)'."
+    )
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == expected_prompt
+
+    # Assert on response
+    generated_text = response_body["results"][0]["outputText"]
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == generated_text
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_titan_completion_with_events_with_content(
+    instrument_with_content, brt, span_exporter, log_exporter
+):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model(
+        body=body, modelId=modelId, accept=accept, contentType=contentType
+    )
+
+    response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log,
+        "gen_ai.user.message",
+        {
+            "content": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'."
+        },
+    )
+
+    # Validate the ai response
+    generated_text = response_body["results"][0]["outputText"]
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {"content": generated_text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_completion_with_events_with_no_content(
+    instrument_with_no_content, brt, span_exporter, log_exporter
+):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    brt.invoke_model(body=body, modelId=modelId, accept=accept, contentType=contentType)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model_with_response_stream(
+        body=body, modelId=modelId, accept=accept, contentType=contentType
+    )
+
+    stream = response.get("body")
+    response_body = None
+    generated_text = []
+    if stream:
+        for event in stream:
+            if "chunk" in event:
+                response_body = json.loads(event["chunk"].get("bytes").decode())
+                generated_text.append(response_body["outputText"])
+
+    assert len(generated_text) > 0
+    # response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on prompt
+    expected_prompt = (
+        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+        "scale generative AI applications with base models (FMs)'."
+    )
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert input_messages[0]["parts"][0]["content"] == expected_prompt
+
+    # Assert on response
+    completion_text = "".join(generated_text)
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == completion_text
+    assert output_messages[0]["finish_reason"] == "stop"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_titan_invoke_stream_with_events_with_content(
+    instrument_with_content, brt, span_exporter, log_exporter
+):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model_with_response_stream(
+        body=body, modelId=modelId, accept=accept, contentType=contentType
+    )
+
+    stream = response.get("body")
+    response_body = None
+    generated_text = []
+    if stream:
+        for event in stream:
+            if "chunk" in event:
+                response_body = json.loads(event["chunk"].get("bytes").decode())
+                generated_text.append(response_body["outputText"])
+
+    assert len(generated_text) > 0
+    # response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    expected_prompt = (
+        "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+        "scale generative AI applications with base models (FMs)'."
+    )
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log, "gen_ai.user.message", {"content": expected_prompt}
+    )
+
+    # Validate the ai response
+    completion_text = "".join(generated_text)
+    choice_event = {
+        "index": 0,
+        "message": {"content": completion_text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_invoke_stream_with_events_with_no_content(
+    instrument_with_no_content, brt, span_exporter, log_exporter
+):
+    body = json.dumps(
+        {
+            "inputText": "Translate to spanish: 'Amazon Bedrock is the easiest way to build and"
+            + "scale generative AI applications with base models (FMs)'.",
+            "textGenerationConfig": {
+                "maxTokenCount": 200,
+                "temperature": 0.5,
+                "topP": 0.5,
+            },
+        }
+    )
+
+    modelId = "amazon.titan-text-express-v1"
+    accept = "application/json"
+    contentType = "application/json"
+
+    response = brt.invoke_model_with_response_stream(
+        body=body, modelId=modelId, accept=accept, contentType=contentType
+    )
+
+    stream = response.get("body")
+    response_body = None
+    generated_text = []
+    if stream:
+        for event in stream:
+            if "chunk" in event:
+                response_body = json.loads(event["chunk"].get("bytes").decode())
+                generated_text.append(response_body["outputText"])
+
+    assert len(generated_text) > 0
+    # response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "text_completion titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.TEXT_COMPLETION.value
+    )
+
+    # Assert on other request parameters
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 200
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.5
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.5
+    # There is no response id for Amazon Titan models in the response body,
+    # only request id in the response.
+    assert bedrock_span.attributes.get("gen_ai.response.id") is None
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_converse(instrument_legacy, brt, span_exporter, log_exporter):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    response = brt.converse(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    # Assert on prompt
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    # guardContent blocks become text parts with json.dumps of each block
+    assert len(input_messages[0]["parts"]) == 2
+    for i, block in enumerate(messages[0]["content"]):
+        assert input_messages[0]["parts"][i]["type"] == "text"
+        assert input_messages[0]["parts"][i]["content"] == json.dumps(block, default=str)
+
+    # Assert on response
+    generated_text = response["output"]["message"]["content"]
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == generated_text[0]["text"]
+    assert output_messages[0]["finish_reason"] == "content_filter"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_titan_converse_with_events_with_content(
+    instrument_with_content, brt, span_exporter, log_exporter
+):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    response = brt.converse(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log, "gen_ai.user.message", {"content": messages[0]["content"]}
+    )
+
+    # Validate the ai response
+    generated_text = response["output"]["message"]["content"]
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {"content": generated_text},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_converse_with_events_with_no_content(
+    instrument_with_no_content, brt, span_exporter, log_exporter
+):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    brt.converse(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_converse_stream(instrument_legacy, brt, span_exporter, log_exporter):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    response = brt.converse_stream(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+
+    stream = response.get("stream")
+
+    response_role = None
+    content = ""
+    inputTokens = 0
+    outputTokens = 0
+
+    if stream:
+        for event in stream:
+            if "messageStart" in event:
+                response_role = event["messageStart"]["role"]
+
+            if "contentBlockDelta" in event:
+                content += event["contentBlockDelta"]["delta"]["text"]
+
+            if "metadata" in event:
+                metadata = event["metadata"]
+                if "usage" in metadata:
+                    inputTokens = metadata["usage"]["inputTokens"]
+                    outputTokens = metadata["usage"]["outputTokens"]
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    # Assert on prompt
+    input_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["role"] == "user"
+    # guardContent blocks become text parts with json.dumps of each block
+    assert len(input_messages[0]["parts"]) == 2
+    for i, block in enumerate(messages[0]["content"]):
+        assert input_messages[0]["parts"][i]["type"] == "text"
+        assert input_messages[0]["parts"][i]["content"] == json.dumps(block, default=str)
+
+    # Assert on response
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == response_role
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert output_messages[0]["parts"][0]["content"] == content
+    assert output_messages[0]["finish_reason"] == "content_filter"
+
+    # Assert on finish reasons
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("content_filter",)
+
+    # Assert on usage data
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
+    )
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == outputTokens
+    )
+    assert (
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        == inputTokens + outputTokens
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert (
+        len(logs) == 0
+    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_titan_converse_stream_with_events_with_content(
+    instrument_with_content, brt, span_exporter, log_exporter
+):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    response = brt.converse_stream(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+
+    stream = response.get("stream")
+
+    content = ""
+    inputTokens = 0
+    outputTokens = 0
+
+    if stream:
+        for event in stream:
+            if "contentBlockDelta" in event:
+                content += event["contentBlockDelta"]["delta"]["text"]
+
+            if "metadata" in event:
+                metadata = event["metadata"]
+                if "usage" in metadata:
+                    inputTokens = metadata["usage"]["inputTokens"]
+                    outputTokens = metadata["usage"]["outputTokens"]
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    # Assert on usage data
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
+    )
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == outputTokens
+    )
+    assert (
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        == inputTokens + outputTokens
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(
+        user_message_log, "gen_ai.user.message", {"content": messages[0]["content"]}
+    )
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {"content": content},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+
+
+@pytest.mark.vcr
+def test_titan_converse_stream_with_events_with_no_content(
+    instrument_with_no_content, brt, span_exporter, log_exporter
+):
+    guardrail = {
+        "guardrailIdentifier": "5zwrmdlsra2e",
+        "guardrailVersion": "DRAFT",
+        "trace": "enabled",
+    }
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "Tokyo is the capital of Japan.",
+                            "qualifiers": ["grounding_source"],
+                        }
+                    }
+                },
+                {
+                    "guardContent": {
+                        "text": {
+                            "text": "What is the capital of Japan?",
+                            "qualifiers": ["query"],
+                        }
+                    }
+                },
+            ],
+        }
+    ]
+
+    modelId = "amazon.titan-text-express-v1"
+
+    response = brt.converse_stream(
+        modelId=modelId,
+        messages=messages,
+        guardrailConfig=guardrail,
+    )
+
+    stream = response.get("stream")
+
+    content = ""
+    inputTokens = 0
+    outputTokens = 0
+
+    if stream:
+        for event in stream:
+            if "contentBlockDelta" in event:
+                content += event["contentBlockDelta"]["delta"]["text"]
+
+            if "metadata" in event:
+                metadata = event["metadata"]
+                if "usage" in metadata:
+                    inputTokens = metadata["usage"]["inputTokens"]
+                    outputTokens = metadata["usage"]["outputTokens"]
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "chat titan-text-express-v1"
+
+    bedrock_span = spans[0]
+
+    # Assert on model name
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "titan-text-express-v1"
+    )
+
+    # Assert on vendor
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == GenAiSystemValues.AWS_BEDROCK.value
+
+    # Assert on request type
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+
+    # Assert on usage data
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == inputTokens
+    )
+    assert (
+        bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == outputTokens
+    )
+    assert (
+        bedrock_span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+        == inputTokens + outputTokens
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    # Validate user message Event
+    user_message_log = logs[0]
+    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+
+    # Validate the ai response
+    choice_event = {
+        "index": 0,
+        "finish_reason": "content_filter",
+        "message": {},
+    }
+    assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
+

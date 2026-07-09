@@ -1,0 +1,77 @@
+{
+  "name": "opentelemetry-instrumentation-pinecone",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-pinecone/opentelemetry/instrumentation/pinecone",
+  "targets": {
+    "lock": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv lock",
+        "cwd": "packages/opentelemetry-instrumentation-pinecone"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "options": {
+        "outputPath": "packages/opentelemetry-instrumentation-pinecone/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-pinecone"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-pinecone"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-pinecone/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-pinecone"
+      ],
+      "options": {
+        "command": "uv run pytest tests/",
+        "cwd": "packages/opentelemetry-instrumentation-pinecone"
+      }
+    },
+    "build-release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-pinecone"
+      }
+    }
+  },
+  "tags": [
+    "instrumentation"
+  ]
+}

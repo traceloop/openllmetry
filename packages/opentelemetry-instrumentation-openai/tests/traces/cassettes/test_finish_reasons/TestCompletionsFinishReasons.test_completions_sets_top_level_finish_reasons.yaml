@@ -1,0 +1,226 @@
+interactions:
+- request:
+    body: '{"model":"davinci-002","prompt":"Tell me a joke about opentelemetry"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '69'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-03e4e23d88cf7b1c5e2cb6538c268f55-4992e12dc7154e6d-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/0WQTW/CMAyG7/wKK2c6lYJox5kLTEM77LBpTCgkLs1I7YoExoT470tSBBdL9uv3
+        8cdlACCMFjMQqu1sNn97n2+r6oUW82W96lw9zT8/6vFpUf69shjGbt7+oPLR4fHsN4qDD71h6mV1
+        QOkxEkdlOXmeFlVVJqFljTbatDwZUmZW5MU4y8usGGWn4mZu2Ch0oesrpACXFKEfFb3DtQAmBK7B
+        N9iCdHvUQ5CkYw7yqA2SQqjRWnDGIvmnNa1pxcm2J/xNeRqXyIY0ngM6v1cs77oDb+MWdLT2Xq8N
+        Gddswn0uHBuWCfSdb0TSryF+pxuOTu4wyP3uIqDazm8875Eisup54vG3hzaa3kTPXtpHvZgM4oTr
+        4B9jTK59rwEAAA==
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4f9e7a7c95654a-LHR
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:14:47 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - envoy-router-58c876c69c-bwxtn
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci:2023-07-21-v2
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '360'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=1Vzf.GfoVNmzMKjbCyJP66dOO7wCyPa17nyK1eot6H0-1774962886.7941506-1.0.1.1-T_h0I7pDyYWejJFbH_yXVij09lkFeGlFO2z3dSiYH.meHSkP.WaUKldkFr26ASRynMPkq1WaBwnQPqjvnpY6iIWlwBquFfuR0qpYFwSGyZqrBafWU8WNkmMVLzrf_GRI;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:44:47 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249991'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 2ms
+      x-request-id:
+      - req_11ffeb8958e8452a87a895ca615cbf11
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"davinci-002","prompt":"Tell me a joke about opentelemetry"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '69'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - OpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.19
+      traceparent:
+      - 00-5b1d309bdd5e94f7fb81d859cc696df0-172fa36939156afd-01
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/0VQS2vCQBC++yuGvfTSQBKNrx5K6QPaUrRgS6EWiZsx2WazE5LRGsT/3t1E9DIw
+        8833mDn0AIRKxBSELErtPcwXs/fyrileHj+i+evX/d/EXwf52ycNZS6u3Tatf1GyYzDueSXJ8pAV
+        mQ6WFcaMTjEYjQaTYT+Kxi1QUILa0ZJ4p4xU09AP+54/8sLA24UnckZKYm23vm0LcGgrdFaOC5K0
+        tvZU1bdL86RsU8GGKpjNb5bmGTKMqwQa2kJC5opBqxyBCRi1htg0rU2rqEyCeyvpnyea0rKitXM3
+        W63P840yqs5W9q7aHmlDaDQpZ6LFj7b+tNm3dZyihbvMwkoVJa+YcjROctzpicu/LlgwPIFMHOvL
+        PBz0nMOx9w+pwu/MpwEAAA==
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - 9e4faed98a1bae16-LHR
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 31 Mar 2026 13:25:58 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Via:
+      - envoy-router-68fbbcc786-8xrbw
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - davinci:2023-07-21-v2
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '958'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=VAuGJAE.NICEpnflg4N_oi56bfp2IKi6iIJ8Z5zPHyY-1774963557.370263-1.0.1.1-K3ZAxArSXs6icJno_uk6uvU2sDju8dDLVHAOMxJfwebd77HK8v1uwdSITO3SOcwsA5PX9_RLsG9FEYqrFFdljAyMD4Dz7wA3CiScCsG106ugKbUKW.0KjHtk3orGZ8g.;
+        HttpOnly; Secure; Path=/; Domain=api.openai.com; Expires=Tue, 31 Mar 2026
+        13:55:58 GMT
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '3000'
+      x-ratelimit-limit-tokens:
+      - '250000'
+      x-ratelimit-remaining-requests:
+      - '2999'
+      x-ratelimit-remaining-tokens:
+      - '249991'
+      x-ratelimit-reset-requests:
+      - 20ms
+      x-ratelimit-reset-tokens:
+      - 2ms
+      x-request-id:
+      - req_4d2db1956f2441f2ade86cba5daed780
+    status:
+      code: 200
+      message: OK
+version: 1

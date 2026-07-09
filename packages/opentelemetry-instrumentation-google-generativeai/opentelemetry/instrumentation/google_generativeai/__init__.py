@@ -1,0 +1,468 @@
+"""OpenTelemetry Google Generative AI API instrumentation"""
+
+import logging
+import os
+import time
+import types
+from typing import Collection
+
+from google.genai.types import GenerateContentResponse
+from opentelemetry import context as context_api
+from opentelemetry._logs import get_logger
+from opentelemetry.instrumentation.google_generativeai.config import Config
+from opentelemetry.instrumentation.google_generativeai.event_emitter import (
+    emit_choice_events,
+    emit_message_events,
+)
+from opentelemetry.instrumentation.google_generativeai.span_utils import (
+    _collect_finish_reasons_from_response,
+    set_input_attributes,
+    set_input_attributes_sync,
+    set_model_request_attributes,
+    set_model_response_attributes,
+    set_response_attributes,
+)
+from opentelemetry.instrumentation.google_generativeai.utils import (
+    dont_throw,
+    should_emit_events,
+)
+from opentelemetry.instrumentation.google_generativeai.version import __version__
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY, unwrap
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    Meters,
+)
+from opentelemetry.metrics import Meter, get_meter
+from opentelemetry.trace import SpanKind, get_tracer, StatusCode
+from wrapt import wrap_function_wrapper
+
+_GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
+_GEN_CONTENT = GenAIAttributes.GenAiOperationNameValues.GENERATE_CONTENT.value
+
+logger = logging.getLogger(__name__)
+
+WRAPPED_METHODS = [
+    {
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels",
+        "method": "generate_content",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "Models",
+        "method": "generate_content_stream",
+    },
+    {
+        "package": "google.genai.models",
+        "object": "AsyncModels",
+        "method": "generate_content_stream",
+    },
+]
+
+
+def is_streaming_response(response):
+    return isinstance(response, types.GeneratorType)
+
+
+def is_async_streaming_response(response):
+    return isinstance(response, types.AsyncGeneratorType)
+
+
+def _build_from_streaming_response(
+    span,
+    response: GenerateContentResponse,
+    llm_model,
+    event_logger,
+    token_histogram,
+):
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
+    last_chunk = None
+    for item in response:
+        item_to_yield = item
+        last_chunk = item
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
+
+        yield item_to_yield
+
+    complete_response = "".join(text_parts)
+
+    if emit_events:
+        emit_choice_events(response, event_logger)
+    else:
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
+
+    # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
+    # so the last chunk reflects all candidates without deduplication artifacts.
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
+    set_model_response_attributes(
+        span,
+        last_chunk or response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_reasons or None,
+    )
+    span.end()
+
+
+async def _abuild_from_streaming_response(
+    span, response: GenerateContentResponse, llm_model, event_logger, token_histogram
+):
+    emit_events = should_emit_events() and event_logger
+    text_parts = []
+    last_chunk = None
+    async for item in response:
+        item_to_yield = item
+        last_chunk = item
+        if not emit_events:
+            t = getattr(item, "text", None)
+            if isinstance(t, str):
+                text_parts.append(t)
+
+        yield item_to_yield
+
+    complete_response = "".join(text_parts)
+
+    if emit_events:
+        emit_choice_events(response, event_logger)
+    else:
+        if last_chunk is not None and getattr(last_chunk, "candidates", None):
+            set_response_attributes(span, last_chunk, llm_model)
+        else:
+            set_response_attributes(
+                span, complete_response, llm_model, stream_last_chunk=last_chunk
+            )
+
+    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
+    set_model_response_attributes(
+        span,
+        last_chunk if last_chunk else response,
+        llm_model,
+        token_histogram,
+        stream_finish_reasons=stream_reasons or None,
+    )
+    span.end()
+
+
+@dont_throw
+def _handle_request(span, args, kwargs, llm_model, event_logger):
+    if should_emit_events() and event_logger:
+        emit_message_events(args, kwargs, event_logger)
+    else:
+        set_input_attributes_sync(span, args, kwargs, llm_model)
+
+    set_model_request_attributes(span, kwargs, llm_model)
+
+
+@dont_throw
+async def _handle_request_async(span, args, kwargs, llm_model, event_logger):
+    if should_emit_events() and event_logger:
+        emit_message_events(args, kwargs, event_logger)
+    else:
+        await set_input_attributes(span, args, kwargs, llm_model)
+
+    set_model_request_attributes(span, kwargs, llm_model)
+
+
+@dont_throw
+def _handle_response(span, response, llm_model, event_logger, token_histogram):
+    if should_emit_events() and event_logger:
+        emit_choice_events(response, event_logger)
+    else:
+        set_response_attributes(span, response, llm_model)
+
+    set_model_response_attributes(span, response, llm_model, token_histogram)
+
+
+def _with_tracer_wrapper(func):
+    """Helper for providing tracer for wrapper functions."""
+
+    def _with_tracer(
+        tracer, event_logger, to_wrap, token_histogram, duration_histogram
+    ):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                event_logger,
+                to_wrap,
+                token_histogram,
+                duration_histogram,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_tracer
+
+
+@_with_tracer_wrapper
+async def _awrap(
+    tracer,
+    event_logger,
+    to_wrap,
+    token_histogram,
+    duration_histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return await wrapped(*args, **kwargs)
+
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id.replace("models/", "")
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
+
+    span = tracer.start_span(
+        f"{_GEN_CONTENT} {llm_model}",
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+        },
+    )
+    start_time = time.perf_counter()
+    await _handle_request_async(span, args, kwargs, llm_model, event_logger)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR)
+        span.end()
+        raise e
+
+    if duration_histogram:
+        duration = time.perf_counter() - start_time
+        duration_histogram.record(
+            duration,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+            },
+        )
+    if response:
+        if is_streaming_response(response):
+            return _build_from_streaming_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+        elif is_async_streaming_response(response):
+            return _abuild_from_streaming_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+        else:
+            _handle_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+
+    span.end()
+    return response
+
+
+@_with_tracer_wrapper
+def _wrap(
+    tracer,
+    event_logger,
+    to_wrap,
+    token_histogram,
+    duration_histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every function defined in TO_WRAP."""
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        return wrapped(*args, **kwargs)
+
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id.replace("models/", "")
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace(
+            "publishers/google/models/", ""
+        ).replace("models/", "")
+    if hasattr(instance, "model") and hasattr(instance.model, "model_name"):
+        llm_model = instance.model.model_name.replace("models/", "")
+    if "model" in kwargs:
+        llm_model = kwargs["model"].replace("models/", "")
+
+    span = tracer.start_span(
+        f"{_GEN_CONTENT} {llm_model}",
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+        },
+    )
+
+    start_time = time.perf_counter()
+    _handle_request(span, args, kwargs, llm_model, event_logger)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR)
+        span.end()
+        raise e
+
+    if duration_histogram:
+        duration = time.perf_counter() - start_time
+        duration_histogram.record(
+            duration,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+            },
+        )
+    if response:
+        if is_streaming_response(response):
+            return _build_from_streaming_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+        elif is_async_streaming_response(response):
+            return _abuild_from_streaming_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+        else:
+            _handle_response(
+                span, response, llm_model, event_logger, token_histogram
+            )
+
+    span.end()
+    return response
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
+def _create_metrics(meter: Meter):
+    token_histogram = meter.create_histogram(
+        name=Meters.LLM_TOKEN_USAGE,
+        unit="token",
+        description="Measures number of input and output tokens used",
+    )
+
+    duration_histogram = meter.create_histogram(
+        name=Meters.LLM_OPERATION_DURATION,
+        unit="s",
+        description="GenAI operation duration",
+    )
+
+    return token_histogram, duration_histogram
+
+
+class GoogleGenerativeAiInstrumentor(BaseInstrumentor):
+    """An instrumentor for Google Generative AI's client library."""
+
+    def __init__(
+        self,
+        exception_logger=None,
+        use_legacy_attributes=True,
+        upload_base64_image=None,
+    ):
+        super().__init__()
+        Config.exception_logger = exception_logger
+        Config.use_legacy_attributes = use_legacy_attributes
+        if upload_base64_image:
+            Config.upload_base64_image = upload_base64_image
+
+    def instrumentation_dependencies(self) -> Collection[str]:
+        return ("google-genai >= 1.0.0",)
+
+    def _wrapped_methods(self):
+        return WRAPPED_METHODS
+
+    def _instrument(self, **kwargs):
+        tracer_provider = kwargs.get("tracer_provider")
+        tracer = get_tracer(__name__, __version__, tracer_provider)
+
+        meter_provider = kwargs.get("meter_provider")
+        meter = get_meter(__name__, __version__, meter_provider)
+
+        token_histogram = None
+        duration_histogram = None
+
+        if is_metrics_enabled():
+            token_histogram, duration_histogram = _create_metrics(meter)
+
+        event_logger = None
+        if not Config.use_legacy_attributes:
+            logger_provider = kwargs.get("logger_provider")
+            event_logger = get_logger(
+                __name__, __version__, logger_provider=logger_provider
+            )
+
+        for wrapped_method in self._wrapped_methods():
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            wrap_method = wrapped_method.get("method")
+
+            wrapper_args = (
+                tracer,
+                event_logger,
+                wrapped_method,
+                token_histogram,
+                duration_histogram,
+            )
+
+            wrapper = (
+                _awrap(*wrapper_args)
+                if wrap_object == "AsyncModels"
+                else _wrap(*wrapper_args)
+            )
+
+            wrap_function_wrapper(
+                wrap_package,
+                f"{wrap_object}.{wrap_method}",
+                wrapper,
+            )
+
+    def _uninstrument(self, **kwargs):
+        for wrapped_method in self._wrapped_methods():
+            wrap_package = wrapped_method.get("package")
+            wrap_object = wrapped_method.get("object")
+            unwrap(
+                f"{wrap_package}.{wrap_object}",
+                wrapped_method.get("method", ""),
+            )

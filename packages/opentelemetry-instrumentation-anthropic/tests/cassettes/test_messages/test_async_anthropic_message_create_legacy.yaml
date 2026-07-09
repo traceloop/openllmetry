@@ -1,0 +1,91 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "Tell me
+      a joke about OpenTelemetry"}], "model": "claude-3-opus-20240229"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '136'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - AsyncAnthropic/Python 0.21.3
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Windows
+      x-stainless-package-version:
+      - 0.21.3
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.13
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA3xTXW/UQAz8K2ZfClJatQUEzQuiKgge+BJFCHGo8mWdZNuNHdbeS0PV/4427VEV
+        JJ4uWs+M7fHclQve1W7Q7mz/4Mvrk5Nzfc1Pjz9+4vb9NOg7fvnNVc7mkQqKVLEjV7kksTygalBD
+        Nle5RtiIzdXfr7Z4o8tSWX5q9zknqqCnRDsKCOdyQYBryQYfRuJTijSQpble8Yq/9jP44MF6Ak8b
+        ijJSAk9N8AQmkJXus14U1jE1WCrW0wwTspEvYEvYLI8hAY5jDA1aEN5RoA2lGQbZ0IPCf3U5RuSl
+        WK/4nj4EBWSQkXhXJaeGQNZKaYPrEIPN0CYcaJJ0AdajwZhkEzyVRYtBHpOHCecyTkdMCY0qaCRG
+        aqwCZA90OUoysD8dPRrCw/IdGq0gSqc3yGUffQStJPBBLYV1LqvqrEaD7sFbA4xRJr3zTkvnwGop
+        D8T2rxu6SHcYuMBC15tC4OJeT7CmHjdB0oIZKbWSBuTiQXurtO1dbDzt6ea6Y8RZQXjRmCR5WLll
+        +GrlYOpD00OPxSIveR0JBkIO3C0Z2YO3N7wlV5dWWt27SLUVWzlI1N6uWBjbk9ye/mKZGhnj/GuJ
+        AbRRpqKX6GcmNQXrk+SuL5P84+cevJGpBKVauMtifR4kSdY4g+auu9VA+yuvJYL6/wSu3F0Giyuo
+        ENqbLe5wS/iK7yoMayoWNVGUYuFxMEnkQRK0Uq5Ofs9d/6jcIJ6iq10TMXvafbwrY9bdw/3DJ/uH
+        h0eucmoyniVCFXa1I/ZnlhNvC1rM4YZczTnGyuXlr19fucBjtjOTC2J19cGzykm2e0/Pj66vfwMA
+        AP//AwDpcnXwWQQAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 87084fd0e8292b96-LAX
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 07 Apr 2024 07:30:30 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      anthropic-ratelimit-requests-limit:
+      - '5'
+      anthropic-ratelimit-requests-remaining:
+      - '3'
+      anthropic-ratelimit-requests-reset:
+      - '2024-04-07T07:31:00Z'
+      anthropic-ratelimit-tokens-limit:
+      - '10000'
+      anthropic-ratelimit-tokens-remaining:
+      - '8000'
+      anthropic-ratelimit-tokens-reset:
+      - '2024-04-07T07:31:00Z'
+      request-id:
+      - req_01HBJrHQNkCXVEy7ctxYUHLu
+      via:
+      - 1.1 google
+      x-cloud-trace-context:
+      - 7576a88f449dc1524e86b032fde2dc7f
+    status:
+      code: 200
+      message: OK
+version: 1

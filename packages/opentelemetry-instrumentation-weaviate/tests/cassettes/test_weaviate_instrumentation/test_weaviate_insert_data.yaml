@@ -1,0 +1,291 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: GET
+    uri: http://localhost:8080/v1/meta
+  response:
+    body:
+      string: '{"hostname":"http://[::]:8080","modules":{"generative-cohere":{"documentationHref":"https://docs.cohere.com/reference/chat","name":"Generative
+        Search - Cohere"},"generative-openai":{"documentationHref":"https://platform.openai.com/docs/api-reference/completions","name":"Generative
+        Search - OpenAI"},"generative-palm":{"documentationHref":"https://cloud.google.com/vertex-ai/docs/generative-ai/chat/test-chat-prompts","name":"Generative
+        Search - Google PaLM"},"qna-openai":{"documentationHref":"https://platform.openai.com/docs/api-reference/completions","name":"OpenAI
+        Question & Answering Module"},"ref2vec-centroid":{},"reranker-cohere":{"documentationHref":"https://txt.cohere.com/rerank/","name":"Reranker
+        - Cohere"},"text2vec-cohere":{"documentationHref":"https://docs.cohere.ai/embedding-wiki/","name":"Cohere
+        Module"},"text2vec-huggingface":{"documentationHref":"https://huggingface.co/docs/api-inference/detailed_parameters#feature-extraction-task","name":"Hugging
+        Face Module"},"text2vec-openai":{"documentationHref":"https://platform.openai.com/docs/guides/embeddings/what-are-embeddings","name":"OpenAI
+        Module"},"text2vec-palm":{"documentationHref":"https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-text-embeddings","name":"Google
+        PaLM Module"}},"version":"1.25.1"}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '1298'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: GET
+    uri: http://localhost:8080/v1/schema
+  response:
+    body:
+      string: '{"classes":[]}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '15'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"description": "An Article class to store a text", "vectorIndexType":
+      "hnsw", "class": "Article", "properties": [{"name": "author", "dataType": ["text"],
+      "description": "The name of the author"}, {"name": "text", "dataType": ["text"],
+      "description": "The text content"}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '272'
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: http://localhost:8080/v1/schema
+  response:
+    body:
+      string: '{"class":"Article","description":"An Article class to store a text","invertedIndexConfig":{"bm25":{"b":0.75,"k1":1.2},"cleanupIntervalSeconds":60,"stopwords":{"additions":null,"preset":"en","removals":null}},"multiTenancyConfig":{"autoTenantCreation":false,"enabled":false},"properties":[{"dataType":["text"],"description":"The
+        name of the author","indexFilterable":true,"indexSearchable":true,"name":"author","tokenization":"word"},{"dataType":["text"],"description":"The
+        text content","indexFilterable":true,"indexSearchable":true,"name":"text","tokenization":"word"}],"replicationConfig":{"factor":1},"shardingConfig":{"virtualPerPhysical":128,"desiredCount":1,"actualCount":1,"desiredVirtualCount":128,"actualVirtualCount":128,"key":"_id","strategy":"hash","function":"murmur3"},"vectorIndexConfig":{"skip":false,"cleanupIntervalSeconds":300,"maxConnections":64,"efConstruction":128,"ef":-1,"dynamicEfMin":100,"dynamicEfMax":500,"dynamicEfFactor":8,"vectorCacheMaxObjects":1000000000000,"flatSearchCutoff":40000,"distance":"cosine","pq":{"enabled":false,"bitCompression":false,"segments":0,"centroids":256,"trainingLimit":100000,"encoder":{"type":"kmeans","distribution":"log-normal"}},"bq":{"enabled":false}},"vectorIndexType":"hnsw","vectorizer":"none"}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '1260'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"class": "Article", "properties": {"author": "Robert", "text": "Once upon
+      a time, someone wrote a book..."}, "id": "0fa769e6-2f64-4717-97e3-f0297cf84138"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '155'
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: POST
+    uri: http://localhost:8080/v1/objects
+  response:
+    body:
+      string: '{"class":"Article","creationTimeUnix":1716804426258,"id":"0fa769e6-2f64-4717-97e3-f0297cf84138","lastUpdateTimeUnix":1716804426258,"properties":{"author":"Robert","text":"Once
+        upon a time, someone wrote a book..."}}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '216'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: GET
+    uri: http://localhost:8080/v1/schema
+  response:
+    body:
+      string: '{"classes":[{"class":"Article","description":"An Article class to store
+        a text","invertedIndexConfig":{"bm25":{"b":0.75,"k1":1.2},"cleanupIntervalSeconds":60,"stopwords":{"additions":null,"preset":"en","removals":null}},"multiTenancyConfig":{"autoTenantCreation":false,"enabled":false},"properties":[{"dataType":["text"],"description":"The
+        name of the author","indexFilterable":true,"indexSearchable":true,"name":"author","tokenization":"word"},{"dataType":["text"],"description":"The
+        text content","indexFilterable":true,"indexSearchable":true,"name":"text","tokenization":"word"}],"replicationConfig":{"factor":1},"shardingConfig":{"actualCount":1,"actualVirtualCount":128,"desiredCount":1,"desiredVirtualCount":128,"function":"murmur3","key":"_id","strategy":"hash","virtualPerPhysical":128},"vectorIndexConfig":{"bq":{"enabled":false},"cleanupIntervalSeconds":300,"distance":"cosine","dynamicEfFactor":8,"dynamicEfMax":500,"dynamicEfMin":100,"ef":-1,"efConstruction":128,"flatSearchCutoff":40000,"maxConnections":64,"pq":{"bitCompression":false,"centroids":256,"enabled":false,"encoder":{"distribution":"log-normal","type":"kmeans"},"segments":0,"trainingLimit":100000},"skip":false,"vectorCacheMaxObjects":1000000000000},"vectorIndexType":"hnsw","vectorizer":"none"}]}
+
+        '
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '1274'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - localhost:8080
+      user-agent:
+      - python-httpx/0.27.0
+    method: DELETE
+    uri: http://localhost:8080/v1/schema/Article
+  response:
+    body:
+      string: ''
+    headers:
+      Access-Control-Allow-Headers:
+      - Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization,
+        X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key,
+        X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Google-Api-Key,
+        X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key,
+        X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key,
+        X-Mistral-Baseurl, X-Mistral-Api-Key, X-OctoAI-Api-Key
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Content-Length:
+      - '0'
+      Date:
+      - Mon, 27 May 2024 10:07:06 GMT
+      Vary:
+      - Origin
+    status:
+      code: 200
+      message: OK
+version: 1

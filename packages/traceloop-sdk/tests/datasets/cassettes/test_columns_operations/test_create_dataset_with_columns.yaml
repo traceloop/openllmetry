@@ -1,0 +1,69 @@
+interactions:
+- request:
+    body: '{"slug": "test-columns-dataset", "name": "Test Columns Dataset", "description":
+      "Dataset for testing column operations", "columns": [{"slug": "name", "name":
+      "Name", "type": "string"}, {"slug": "price", "name": "Price", "type": "string"},
+      {"slug": "instock", "name": "InStock", "type": "string"}, {"slug": "rating",
+      "name": "Rating", "type": "string"}], "rows": [{"name": "Product A", "price":
+      "99.99", "instock": "true", "rating": "4.5"}, {"name": "Product B", "price":
+      "149.99", "instock": "false", "rating": "3.8"}, {"name": "Product C", "price":
+      "79.99", "instock": "true", "rating": "4.2"}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '599'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"id":"cme7h01j3003a0105krd8c5de","slug":"test-columns-dataset","name":"Test
+        Columns Dataset","description":"Dataset for testing column operations","columns":{"instock":{"slug":"instock","name":"InStock","type":"string"},"name":{"slug":"name","name":"Name","type":"string"},"price":{"slug":"price","name":"Price","type":"string"},"rating":{"slug":"rating","name":"Rating","type":"string"}},"created_at":"2025-08-11T18:53:01.50360709Z","updated_at":"2025-08-11T18:53:01.503607146Z","rows":[{"id":"cme7h01jt003b0105w9q0str5","row_index":1,"values":{"instock":"true","name":"Product
+        A","price":"99.99","rating":"4.5"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"},{"id":"cme7h01jt003c0105mvd0d8fx","row_index":2,"values":{"instock":"false","name":"Product
+        B","price":"149.99","rating":"3.8"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"},{"id":"cme7h01jt003d0105atpespe6","row_index":3,"values":{"instock":"true","name":"Product
+        C","price":"79.99","rating":"4.2"},"created_at":"2025-08-11T18:53:01.542730767Z","updated_at":"2025-08-11T18:53:01.542730767Z"}]}'
+    headers:
+      CF-RAY:
+      - 96d9eef2ce92bc5c-ZRH
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1152'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 18:53:01 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - 6355be2c456297473f6af24b5c001c10
+      x-kong-upstream-latency:
+      - '75'
+    status:
+      code: 201
+      message: Created
+version: 1

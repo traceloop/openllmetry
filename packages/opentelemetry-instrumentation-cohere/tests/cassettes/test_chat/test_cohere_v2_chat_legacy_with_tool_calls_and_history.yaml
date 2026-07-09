@@ -1,0 +1,164 @@
+interactions:
+- request:
+    body: '{"model": "command-r", "messages": [{"role": "user", "content": "What is
+      the weather and current time in Tokyo?"}], "tools": [{"type": "function", "function":
+      {"name": "get_weather", "description": "Get the current weather in a given location",
+      "parameters": {"type": "object", "properties": {"location": {"type": "string",
+      "description": "The city and state, e.g. San Francisco, CA"}}, "required": ["location"]}}},
+      {"type": "function", "function": {"name": "get_time", "description": "Get the
+      current time in a given location", "parameters": {"type": "object", "properties":
+      {"location": {"type": "string", "description": "The city and state, e.g. San
+      Francisco, CA"}}, "required": ["location"]}}}], "stream": false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '717'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: '{"id":"965405bb-b9da-4dc5-b329-e708a795e188","message":{"role":"assistant","tool_plan":"I
+        will search for the current time and weather in Tokyo.","tool_calls":[{"id":"get_time_dp3men9jrvhf","type":"function","function":{"name":"get_time","arguments":"{\"location\":\"Tokyo\"}"}},{"id":"get_weather_d7arjgsc96yf","type":"function","function":{"name":"get_weather","arguments":"{\"location\":\"Tokyo\"}"}}]},"finish_reason":"TOOL_CALL","usage":{"billed_units":{"input_tokens":62,"output_tokens":28},"tokens":{"input_tokens":968,"output_tokens":83}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '547'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 02:36:03 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '4591'
+      num_tokens:
+      - '90'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command-r' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - 42d840ed9dd60e834b9f33cc4a811aa8
+      x-envoy-upstream-service-time:
+      - '1761'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "command-r", "messages": [{"role": "user", "content": "What is
+      the weather and current time in Tokyo?"}, {"role": "assistant", "content": null,
+      "tool_calls": [{"id": "get_time_dp3men9jrvhf", "type": "function", "function":
+      {"name": "get_time", "arguments": "{\"location\":\"Tokyo\"}"}}, {"id": "get_weather_d7arjgsc96yf",
+      "type": "function", "function": {"name": "get_weather", "arguments": "{\"location\":\"Tokyo\"}"}}]},
+      {"role": "tool", "tool_call_id": "get_time_dp3men9jrvhf", "content": "4:20 PM"},
+      {"role": "tool", "tool_call_id": "get_weather_d7arjgsc96yf", "content": "Sunny
+      20 degrees Celsius"}], "tools": [{"type": "function", "function": {"name": "get_weather",
+      "description": "Get the current weather in a given location", "parameters":
+      {"type": "object", "properties": {"location": {"type": "string", "description":
+      "The city and state, e.g. San Francisco, CA"}}, "required": ["location"]}}},
+      {"type": "function", "function": {"name": "get_time", "description": "Get the
+      current time in a given location", "parameters": {"type": "object", "properties":
+      {"location": {"type": "string", "description": "The city and state, e.g. San
+      Francisco, CA"}}, "required": ["location"]}}}], "stream": false}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '1217'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - cohere/5.18.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.18.0
+    method: POST
+    uri: https://api.cohere.com/v2/chat
+  response:
+    body:
+      string: "{\"id\":\"00f7ec58-cd22-4b62-b068-0e7ece6bbf67\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"The
+        current time in Tokyo is 4:20 PM and the weather is sunny with a temperature
+        of 20\xB0C.\"}],\"citations\":[{\"start\":29,\"end\":36,\"text\":\"4:20 PM\",\"sources\":[{\"type\":\"tool\",\"id\":\"get_time_dp3men9jrvhf:0\",\"tool_output\":{\"content\":\"4:20
+        PM\"}}],\"type\":\"TEXT_CONTENT\"},{\"start\":56,\"end\":89,\"text\":\"sunny
+        with a temperature of 20\xB0C.\",\"sources\":[{\"type\":\"tool\",\"id\":\"get_weather_d7arjgsc96yf:0\",\"tool_output\":{\"content\":\"Sunny
+        20 degrees Celsius\"}}],\"type\":\"TEXT_CONTENT\"}]},\"finish_reason\":\"COMPLETE\",\"usage\":{\"billed_units\":{\"input_tokens\":94,\"output_tokens\":27},\"tokens\":{\"input_tokens\":1094,\"output_tokens\":102}}}"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '719'
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/json
+      date:
+      - Sun, 14 Sep 2025 02:36:05 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      num_chars:
+      - '5100'
+      num_tokens:
+      - '121'
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-api-warning:
+      - model 'command-r' is deprecated and will be removed September 15 2025. Please
+        consider upgrading to a newer model to avoid future service disruptions
+      x-debug-trace-id:
+      - f6bf3b4e64a9e3a3355b5c7050aa95fd
+      x-envoy-upstream-service-time:
+      - '1282'
+    status:
+      code: 200
+      message: OK
+version: 1

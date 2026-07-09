@@ -1,0 +1,61 @@
+interactions:
+- request:
+    body: '{"slug": "duplicate-df-test-slug", "name": "Duplicate DataFrame Dataset",
+      "description": null, "columns": [{"slug": "name", "name": "Name", "type": "string"},
+      {"slug": "price", "name": "Price", "type": "number"}], "rows": [{"name": "Laptop",
+      "price": 999.99}]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '260'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.3
+      X-Traceloop-SDK-Version:
+      - 1.0.0
+    method: POST
+    uri: https://api-staging.traceloop.com/v2/datasets
+  response:
+    body:
+      string: '{"error":"duplicate key value violates unique constraint"}'
+    headers:
+      CF-RAY:
+      - 96d8cbf5e9b7c9a9-IAD
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '58'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Mon, 11 Aug 2025 15:34:22 GMT
+      Permissions-Policy:
+      - geolocation=(self), microphone=()
+      Server:
+      - cloudflare
+      cf-cache-status:
+      - DYNAMIC
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      strict-transport-security:
+      - max-age=7776000; includeSubDomains
+      via:
+      - kong/3.7.1
+      x-content-type:
+      - nosniff
+      x-kong-proxy-latency:
+      - '1'
+      x-kong-request-id:
+      - 7f1fbd0aa26702609698c038ccda8c6b
+      x-kong-upstream-latency:
+      - '16'
+    status:
+      code: 409
+      message: Conflict
+version: 1

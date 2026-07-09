@@ -1,0 +1,110 @@
+interactions:
+- request:
+    body: '{"max_tokens": 1024, "messages": [{"role": "user", "content": "Hey, what''s
+      the weather in San Francisco? Also, any news in town?"}], "model": "claude-3-5-haiku-latest",
+      "tools": [{"name": "get_weather", "input_schema": {"properties": {"location":
+      {"type": "string"}}, "required": ["location"], "type": "object"}, "description":
+      ""}, {"name": "get_news", "input_schema": {"properties": {"location": {"type":
+      "string"}}, "required": ["location"], "type": "object"}, "description": ""}]}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '484'
+      content-type:
+      - application/json
+      host:
+      - api.anthropic.com
+      user-agent:
+      - Anthropic/Python 0.51.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.51.0
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.9.6
+      x-stainless-timeout:
+      - NOT_GIVEN
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//ZJBNTyMxDIb/SuQLl+mqpbB0c0OISov2guaAKKCRyZhJtqkzJA6lqua/
+        owxbUbQny35fP/7Yg2tBwyZ1zXT2p363t6vF5eXNPJzf3G1Woe6jQAWy66m4KCXsCCqIwZcCpuSS
+        IBfPJrTkQYPxmFuazCfnE4tunScehVJxmMBCLKAf9gei0PvIL0HD7xPvlSXfq13IauvEKrEo6nmn
+        jCWzdtwpsaS2hGIpKuRWMW2TeglR1chqGZGNSyao6DorCre4+/HIj7x0MUmlPMlJ+mQdgzQM1ddK
+        Ifgmp3Ll+JqS52Y6+/n6603qdnF1f/rGq7q/7md/zwJUwLgpfR1J849XWrnPAnoPPhgUFxg0fNsQ
+        huGpgiShbyJhGg1Ho0ch0WsmNgSas/cV5PH7ev9JbySsiRPo+cVZBQaNpcZEGqc13x3Tgx4J2/+1
+        kOW4sjgdhg8AAAD//wMAQcarwBgCAAA=
+    headers:
+      CF-RAY:
+      - 93f292b508b18879-LHR
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 13 May 2025 13:41:25 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 04aa8588-6567-40cb-9042-a54b20ebaf4f
+      anthropic-ratelimit-input-tokens-limit:
+      - '400000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '400000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-05-13T13:41:24Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '80000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '80000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-05-13T13:41:25Z'
+      anthropic-ratelimit-requests-limit:
+      - '4000'
+      anthropic-ratelimit-requests-remaining:
+      - '3999'
+      anthropic-ratelimit-requests-reset:
+      - '2025-05-13T13:41:23Z'
+      anthropic-ratelimit-tokens-limit:
+      - '480000'
+      anthropic-ratelimit-tokens-remaining:
+      - '480000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-05-13T13:41:24Z'
+      cf-cache-status:
+      - DYNAMIC
+      request-id:
+      - req_011CP5dDgqGjtGgEZkm627cb
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      via:
+      - 1.1 google
+    status:
+      code: 200
+      message: OK
+version: 1

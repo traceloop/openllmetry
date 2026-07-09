@@ -1,0 +1,119 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"system","content":"Extract invoice information from
+      the following text."},{"role":"user","content":"Invoice #67890 for $299.99 to
+      Jane Doe"}],"model":"gpt-4o","response_format":{"type":"json_schema","json_schema":{"schema":{"description":"Example
+      model for structured output testing.","properties":{"invoice_id":{"description":"Invoice
+      identifier","title":"Invoice Id","type":"string"},"amount":{"description":"Invoice
+      amount","title":"Amount","type":"number"},"customer_name":{"description":"Customer
+      name","title":"Customer Name","type":"string"}},"required":["invoice_id","amount","customer_name"],"title":"Invoice","type":"object","additionalProperties":false},"name":"Invoice","strict":true}},"stream":false,"temperature":0.5}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '753'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      traceparent:
+      - 00-6d745997adc70966924c1b32baebea9a-a576b7c476e88e7d-01
+      user-agent:
+      - AsyncOpenAI/Python 1.109.1
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 1.109.1
+      x-stainless-read-timeout:
+      - '60.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.6
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAAwAAAP//jFLLbtswELzrK4g9y4H8iGLp2BQo0B5a9NJDFQg0ubKZUFyGpIwIhv+9
+        oORYSpoCvfCws7Ocmd1TwhgoCSUDceBBtFYv7vv+uf/04/jr5wvtisf77+FZ9/nTZvnt9ksGaWTQ
+        7hFFeGXdCGqtxqDIjLBwyAPGqcu7fJtvinydD0BLEnWk7W1YbGixylabRbZdZPmFeCAl0EPJfieM
+        MXYa3ijRSHyBkmXpa6VF7/keobw2MQaOdKwA9175wE2AdAIFmYBmUH2qQJlj/KtWsoKygvxuW2QV
+        pBXwljoTKihXRXFTFGkFovOBWnS14S0O3V+5QfaZsILz/AeHTed5NGg6rWcAN4YCjwEN3h4uyPnq
+        RtPeOtr5d1RolFH+UDvknkxU7gNZGNBzwtjDkFr3Jgiwjlob6kBPOHy3XK7HeTDtaYYWFzBQ4HpW
+        X6/SD+bVEgNX2s9yB8HFAeVEnZbEO6loBiQz13+r+Wj26FyZ/f+MnwAh0AaUtXUolXjreGpzGM/4
+        X23XlAfB4NEd48EEhS5uQmLDOz1eGPjeB2zrRpk9OuvUeGaNrSVyIeVtkzeQnJM/AAAA//8DAHw8
+        IB9vAwAA
+    headers:
+      CF-RAY:
+      - 9bf58a5ccd262212-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 17 Jan 2026 11:33:56 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=c3_CnAEbB.9SyITE3n8Puex6OpmW13Vwh5yVPbOET0I-1768649636-1.0.1.1-eGR9AlhVdUO2IIaPaYsMs4sWVDdXlxz8CRaNrBv_dxZdJS5YwWuYYeilS8bDogL3deMXBH.XMM32Bk1tgbRf4RFhLnVYPSJakaNJN1X2yto;
+        path=/; expires=Sat, 17-Jan-26 12:03:56 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=vU_raKux5YHzrnZNQAGtN2fcZAz6mA.zAfb.REhVnBA-1768649636383-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '275'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      x-envoy-upstream-service-time:
+      - '467'
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - '10000'
+      x-ratelimit-limit-tokens:
+      - '30000000'
+      x-ratelimit-remaining-requests:
+      - '9999'
+      x-ratelimit-remaining-tokens:
+      - '29999974'
+      x-ratelimit-reset-requests:
+      - 6ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_16ac34cc602a4c3ca290f43ca106b5af
+    status:
+      code: 200
+      message: OK
+version: 1
