@@ -16,11 +16,6 @@
     },
     {
         "object": "QdrantClient",
-        "method": "upload_records",
-        "span_name": "qdrant.upload_records"
-    },
-    {
-        "object": "QdrantClient",
         "method": "upload_collection",
         "span_name": "qdrant.upload_collection"
     },
