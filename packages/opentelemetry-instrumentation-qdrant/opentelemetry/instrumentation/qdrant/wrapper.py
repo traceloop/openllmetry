@@ -53,7 +53,6 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_upload_attributes(span, args, kwargs, method, "documents")
         elif method == "upload_points":
             _set_upload_attributes(span, args, kwargs, method, "points")
-            _set_upload_attributes(span, args, kwargs, method, "records")
         elif method == "upload_collection":
             _set_upload_attributes(span, args, kwargs, method, "vectors")
         elif method in [
