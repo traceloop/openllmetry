@@ -186,3 +186,47 @@ def test_set_model_request_attributes_reads_system_instruction_from_config(monke
     parts = json.loads(sys_attr_calls[0][1])
     assert parts[0]["type"] == "text"
     assert parts[0]["content"] == "Reply in one sentence."
+
+
+def test_set_model_response_attributes_emits_cache_read_tokens():
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    class UsageMetadata:
+        total_token_count = 150
+        candidates_token_count = 50
+        prompt_token_count = 100
+        cached_content_token_count = 40
+
+    class Response:
+        usage_metadata = UsageMetadata()
+        response_id = None
+
+    su.set_model_response_attributes(span, Response(), "gemini-pro", token_histogram=None)
+
+    set_attr_calls = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
+    assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 40
+
+
+def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    class UsageMetadata:
+        total_token_count = 150
+        candidates_token_count = 50
+        prompt_token_count = 100
+        # no cached_content_token_count attribute
+
+    class Response:
+        usage_metadata = UsageMetadata()
+        response_id = None
+
+    su.set_model_response_attributes(span, Response(), "gemini-pro", token_histogram=None)
+
+    set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
+    assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys

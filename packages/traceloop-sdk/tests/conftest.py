@@ -64,7 +64,6 @@ def exporter_with_custom_span_processor():
 
     exporter = InMemorySpanExporter()
     Traceloop.init(
-        exporter=exporter,
         processor=CustomSpanProcessor(exporter),
     )
 

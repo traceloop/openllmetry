@@ -84,6 +84,7 @@ class TracerWrapper(object):
         block_instruments: Optional[Set[Instruments]] = None,
         image_uploader: ImageUploader = None,
         span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
+        use_attributes: bool = True,
     ) -> "TracerWrapper":
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(TracerWrapper, cls).__new__(cls)
@@ -139,8 +140,20 @@ class TracerWrapper(object):
                     original_on_end = obj.__spans_processor.on_end
 
                     def wrapped_on_end(span):
-                        # Call the custom on_end first
-                        span_postprocess_callback(span)
+                        # OTel freezes a span's attributes (sets `_immutable`) in
+                        # Span.end() before on_end runs, so the postprocess callback
+                        # can't modify them. Temporarily unfreeze around the callback
+                        # so it can redact/mutate attributes, then restore the flag.
+                        attributes = getattr(span, "_attributes", None)
+                        was_immutable = getattr(attributes, "_immutable", False)
+                        if was_immutable:
+                            attributes._immutable = False
+                        try:
+                            # Call the custom on_end first
+                            span_postprocess_callback(span)
+                        finally:
+                            if was_immutable:
+                                attributes._immutable = True
                         # Then call the original to ensure normal processing
                         original_on_end(span)
 
@@ -160,6 +173,7 @@ class TracerWrapper(object):
                 image_uploader.aupload_base64_image,
                 instruments,
                 block_instruments,
+                use_attributes,
             )
 
             obj.__content_allow_list = ContentAllowList()
@@ -483,6 +497,7 @@ def init_instrumentations(
     base64_image_uploader: Callable[[str, str, str, str], str],
     instruments: Optional[Set[Instruments]] = None,
     block_instruments: Optional[Set[Instruments]] = None,
+    use_attributes: bool = True,
 ):
     block_instruments = block_instruments or set()
     # explictly test for None since empty set is a False value
@@ -501,11 +516,11 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.ANTHROPIC:
             if init_anthropic_instrumentor(
-                should_enrich_metrics, base64_image_uploader
+                should_enrich_metrics, base64_image_uploader, use_attributes
             ):
                 instrument_set = True
         elif instrument == Instruments.BEDROCK:
-            if init_bedrock_instrumentor(should_enrich_metrics):
+            if init_bedrock_instrumentor(should_enrich_metrics, use_attributes):
                 instrument_set = True
         elif instrument == Instruments.CHROMA:
             if init_chroma_instrumentor():
@@ -522,7 +537,7 @@ def init_instrumentations(
             ):
                 instrument_set = True
         elif instrument == Instruments.GROQ:
-            if init_groq_instrumentor():
+            if init_groq_instrumentor(use_attributes):
                 instrument_set = True
         elif instrument == Instruments.HAYSTACK:
             if init_haystack_instrumentor():
@@ -531,7 +546,10 @@ def init_instrumentations(
             if init_lancedb_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.LANGCHAIN:
-            if init_langchain_instrumentor():
+            if init_langchain_instrumentor(use_attributes):
+                instrument_set = True
+        elif instrument == Instruments.LITELLM:
+            if init_litellm_instrumentor(use_attributes):
                 instrument_set = True
         elif instrument == Instruments.LLAMA_INDEX:
             if init_llama_index_instrumentor():
@@ -552,7 +570,7 @@ def init_instrumentations(
             if init_ollama_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.OPENAI:
-            if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader):
+            if init_openai_instrumentor(should_enrich_metrics, base64_image_uploader, use_attributes):
                 instrument_set = True
         elif instrument == Instruments.OPENAI_AGENTS:
             if init_openai_agents_instrumentor():
@@ -576,10 +594,10 @@ def init_instrumentations(
             if init_requests_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.SAGEMAKER:
-            if init_sagemaker_instrumentor(should_enrich_metrics):
+            if init_sagemaker_instrumentor(should_enrich_metrics, use_attributes):
                 instrument_set = True
         elif instrument == Instruments.TOGETHER:
-            if init_together_instrumentor():
+            if init_together_instrumentor(use_attributes):
                 instrument_set = True
         elif instrument == Instruments.TRANSFORMERS:
             if init_transformers_instrumentor():
@@ -594,7 +612,7 @@ def init_instrumentations(
             if init_voyageai_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.WATSONX:
-            if init_watsonx_instrumentor():
+            if init_watsonx_instrumentor(use_attributes):
                 instrument_set = True
         elif instrument == Instruments.WEAVIATE:
             if init_weaviate_instrumentor():
@@ -626,6 +644,7 @@ def init_instrumentations(
 def init_openai_instrumentor(
     should_enrich_metrics: bool,
     base64_image_uploader: Callable[[str, str, str, str], str],
+    use_attributes: bool = True,
 ):
     try:
         if is_package_installed("openai"):
@@ -635,6 +654,7 @@ def init_openai_instrumentor(
                 enrich_assistant=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
+                use_attributes=use_attributes,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -648,6 +668,7 @@ def init_openai_instrumentor(
 def init_anthropic_instrumentor(
     should_enrich_metrics: bool,
     base64_image_uploader: Callable[[str, str, str, str], str],
+    use_attributes: bool = True,
 ):
     try:
         if is_package_installed("anthropic"):
@@ -657,6 +678,7 @@ def init_anthropic_instrumentor(
                 enrich_token_usage=should_enrich_metrics,
                 get_common_metrics_attributes=metrics_common_attributes,
                 upload_base64_image=base64_image_uploader,
+                use_attributes=use_attributes,
             )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
@@ -761,12 +783,12 @@ def init_haystack_instrumentor():
     return False
 
 
-def init_langchain_instrumentor():
+def init_langchain_instrumentor(use_attributes: bool = True):
     try:
         if is_package_installed("langchain") or is_package_installed("langgraph"):
             from opentelemetry.instrumentation.langchain import LangchainInstrumentor
 
-            instrumentor = LangchainInstrumentor()
+            instrumentor = LangchainInstrumentor(use_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
@@ -786,6 +808,23 @@ def init_mistralai_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing MistralAI instrumentor: {e}")
+    return False
+
+
+def init_litellm_instrumentor(use_attributes: bool = True):
+    try:
+        if is_package_installed("litellm"):
+            from opentelemetry.instrumentation.litellm import LiteLLMInstrumentor
+
+            instrumentor = LiteLLMInstrumentor(
+                get_common_metrics_attributes=metrics_common_attributes,
+                use_legacy_attributes=use_attributes,
+            )
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing LiteLLM instrumentor: {e}")
     return False
 
 
@@ -819,12 +858,12 @@ def init_transformers_instrumentor():
     return False
 
 
-def init_together_instrumentor():
+def init_together_instrumentor(use_attributes: bool = True):
     try:
         if is_package_installed("together"):
             from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
-            instrumentor = TogetherAiInstrumentor()
+            instrumentor = TogetherAiInstrumentor(use_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
@@ -903,12 +942,13 @@ def init_pymysql_instrumentor():
     return False
 
 
-def init_bedrock_instrumentor(should_enrich_metrics: bool):
+def init_bedrock_instrumentor(should_enrich_metrics: bool, use_attributes: bool = True):
     if is_package_installed("boto3"):
         from opentelemetry.instrumentation.bedrock import BedrockInstrumentor
 
         instrumentor = BedrockInstrumentor(
             enrich_token_usage=should_enrich_metrics,
+            use_attributes=use_attributes,
         )
         if not instrumentor.is_instrumented_by_opentelemetry:
             instrumentor.instrument()
@@ -916,12 +956,12 @@ def init_bedrock_instrumentor(should_enrich_metrics: bool):
     return False
 
 
-def init_sagemaker_instrumentor(should_enrich_metrics: bool):
+def init_sagemaker_instrumentor(should_enrich_metrics: bool, use_attributes: bool = True):
     try:
         if is_package_installed("boto3"):
             from opentelemetry.instrumentation.sagemaker import SageMakerInstrumentor
 
-            instrumentor = SageMakerInstrumentor()
+            instrumentor = SageMakerInstrumentor(use_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
@@ -977,14 +1017,14 @@ def init_voyageai_instrumentor():
     return False
 
 
-def init_watsonx_instrumentor():
+def init_watsonx_instrumentor(use_attributes: bool = True):
     try:
         if is_package_installed("ibm-watsonx-ai") or is_package_installed(
             "ibm_watson_machine_learning"
         ):
             from opentelemetry.instrumentation.watsonx import WatsonxInstrumentor
 
-            instrumentor = WatsonxInstrumentor()
+            instrumentor = WatsonxInstrumentor(use_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
@@ -1091,12 +1131,12 @@ def init_redis_instrumentor():
     return False
 
 
-def init_groq_instrumentor():
+def init_groq_instrumentor(use_attributes: bool = True):
     try:
         if is_package_installed("groq"):
             from opentelemetry.instrumentation.groq import GroqInstrumentor
 
-            instrumentor = GroqInstrumentor()
+            instrumentor = GroqInstrumentor(use_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True

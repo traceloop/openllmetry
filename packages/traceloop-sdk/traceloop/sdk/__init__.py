@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from pathlib import Path
 
 from typing import Callable, List, Optional, Set, Union
@@ -70,7 +71,43 @@ class Traceloop:
         image_uploader: Optional[ImageUploader] = None,
         span_postprocess_callback: Optional[Callable[[ReadableSpan], None]] = None,
         endpoint_is_traceloop: Optional[bool] = False,
+        use_attributes: Optional[bool] = None,
+        use_legacy_attributes: Optional[bool] = None,
     ) -> Optional[Client]:
+        """Initialize Traceloop tracing, metrics, and instrumentation.
+
+        Args:
+            use_attributes: Controls how prompts/completions are emitted by the
+                bundled instrumentations.
+                If ``True`` (default), they are set as span attributes
+                (``gen_ai.input.messages`` / ``gen_ai.output.messages``), per the current
+                OpenTelemetry GenAI semantic-convention spec.
+                If ``False``, they are emitted as OTel log events instead. This path
+                requires the application to have configured an ``EventLoggerProvider``
+                (via ``opentelemetry._events.set_event_logger_provider``); otherwise
+                events have nowhere to go and no prompt/completion data will be recorded.
+            use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
+                removed in a future release.
+        """
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead. The current OTel "
+                "GenAI spec emits prompts/completions as span attributes "
+                "(`gen_ai.input.messages` / `gen_ai.output.messages`), which is "
+                "what `use_attributes=True` (the default) does. "
+                "`use_attributes=False` opts into the events path instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -89,6 +126,15 @@ class Traceloop:
             return
 
         enable_content_tracing = is_content_tracing_enabled()
+
+        if exporter and processor:
+            warnings.warn(
+                "Both 'exporter' and 'processor' were provided to Traceloop.init(). "
+                "The 'exporter' will be ignored — your processor should already wrap the exporter. "
+                "Wrap your exporter inside the processor, e.g.: SimpleSpanProcessor(my_exporter).",
+                UserWarning,
+                stacklevel=2,
+            )
 
         if exporter or processor:
             print(Fore.GREEN + "Traceloop exporting traces to a custom exporter")
@@ -146,6 +192,7 @@ class Traceloop:
             instruments=instruments,
             block_instruments=block_instruments,
             span_postprocess_callback=span_postprocess_callback,
+            use_attributes=use_attributes,
         )
 
         metrics_disabled_by_config = not is_metrics_enabled()
