@@ -1,5 +1,5 @@
 # VCR cassette for test_ollama_streaming_time_to_generate_metrics
-# Use `pytest --vcr-record=once` to generate and record HTTP interactions 
+# Use `pytest --vcr-record=once` to generate and record HTTP interactions
 
 interactions:
 - request:
@@ -63,4 +63,4 @@ interactions:
     status:
       code: 200
       message: OK
-version: 1 
+version: 1
