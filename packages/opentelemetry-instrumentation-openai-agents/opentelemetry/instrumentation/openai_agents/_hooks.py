@@ -651,6 +651,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._root_spans: Dict[str, Any] = {}  # trace_id -> root span
         self._otel_spans: Dict[str, Any] = {}  # agents span -> otel span
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
+        # agents span -> token from set_agent_name(); detached in on_span_end so the
+        # agent name does not leak onto sibling/parent agent spans.
+        self._agent_name_tokens: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
 
     @dont_throw
@@ -750,6 +753,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if otel_span:
             self._otel_spans[span] = otel_span
+            # If _start_agent_span attached an agent name, key its detach token to
+            # this SDK span so on_span_end can detach it.
+            pending_name_token = getattr(self, "_pending_agent_name_token", None)
+            if pending_name_token is not None:
+                self._agent_name_tokens[span] = pending_name_token
+                self._pending_agent_name_token = None
             # Set as current span
             token = context.attach(set_span_in_context(otel_span))
             self._span_contexts[span] = token
@@ -793,6 +802,11 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if span in self._span_contexts:
                 context.detach(self._span_contexts[span])
                 del self._span_contexts[span]
+            # Detach the agent name attached in _start_agent_span so it does not
+            # leak onto sibling/parent agent spans later in the trace.
+            if span in self._agent_name_tokens:
+                context.detach(self._agent_name_tokens[span])
+                del self._agent_name_tokens[span]
 
     # ------------------------------------------------------------------
     # on_span_start handlers (extracted from the former if-elif chain)
@@ -809,8 +823,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         """Create an OTel span for an AgentSpanData."""
         agent_name = getattr(span_data, "name", None) or "unknown_agent"
 
+        # set_agent_name attaches the name to the OTel context and returns a detach
+        # token. Stash it so on_span_start can key it to this SDK span and detach it
+        # in on_span_end; otherwise the name sticks and leaks onto later agent spans.
+        self._pending_agent_name_token = None
         if set_agent_name is not None:
-            set_agent_name(agent_name)
+            self._pending_agent_name_token = set_agent_name(agent_name)
 
         handoff_parent = None
         if trace_id:

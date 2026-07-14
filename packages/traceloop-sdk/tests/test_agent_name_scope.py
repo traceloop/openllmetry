@@ -235,3 +235,57 @@ def test_sibling_task_entity_path_does_not_leak(exporter):
     assert by_name["a.child"].attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "child_a"
     # The crux: child_a's path must not leak onto child_b's subtree.
     assert by_name["b.child"].attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "child_b"
+
+
+# --- Generator cleanup paths (the most reworked part of the fix) --------------
+
+
+def test_sync_generator_agent_name_does_not_leak_after_exhaustion(exporter):
+    """A @agent generator's name is detached in _handle_generator's finally.
+
+    We probe two ways, because a following @agent would mask a leak by attaching its
+    own name on top:
+      1. a plain child span created AFTER exhaustion must carry no agent name;
+      2. the context value itself must be cleared.
+    """
+
+    @agent(name="streamer")
+    def streaming_agent():
+        _make_child_span("stream.child")
+        yield 1
+        yield 2
+
+    # Fully consume the generator so its finally-block cleanup runs.
+    assert list(streaming_agent()) == [1, 2]
+
+    # Context value must be gone once the generator is exhausted.
+    assert context_api.get_value("agent_name") is None
+
+    # A plain span created afterwards (no @agent to mask a leak) must be unnamed.
+    _make_child_span("after.plain")
+
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+    assert by_name["stream.child"].attributes[GEN_AI_AGENT_NAME] == "streamer"
+    assert GEN_AI_AGENT_NAME not in by_name["after.plain"].attributes
+
+
+@pytest.mark.asyncio
+async def test_async_generator_agent_name_does_not_leak_after_exhaustion(exporter):
+    """Same scoping guarantee for the async-generator path (_ahandle_generator)."""
+
+    @agent(name="astreamer")
+    async def streaming_agent():
+        _make_child_span("astream.child")
+        yield 1
+        yield 2
+
+    collected = [item async for item in streaming_agent()]
+    assert collected == [1, 2]
+
+    assert context_api.get_value("agent_name") is None
+
+    _make_child_span("aafter.plain")
+
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+    assert by_name["astream.child"].attributes[GEN_AI_AGENT_NAME] == "astreamer"
+    assert GEN_AI_AGENT_NAME not in by_name["aafter.plain"].attributes

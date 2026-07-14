@@ -151,3 +151,37 @@ def test_conversation_decorator_standalone(exporter):
 
     # Should have conversation_id
     assert spans[0].attributes[GEN_AI_CONVERSATION_ID] == "conv-standalone"
+
+
+def test_conversation_id_does_not_leak_to_later_sibling(exporter):
+    """conversation_id is scoped to the decorated function, not the rest of the thread.
+
+    The @conversation decorator attaches conversation_id to the OTel context. If the
+    token is never detached, the id sticks after the decorated function returns and
+    leaks onto unrelated work that runs later on the same thread.
+    """
+
+    @conversation(conversation_id="conv-scoped")
+    @workflow(name="chat_session")
+    def chat_session():
+        return "answer"
+
+    @workflow(name="unrelated_later")
+    def unrelated_later():
+        return "other"
+
+    chat_session()
+    unrelated_later()
+
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+
+    # The decorated function's own span carries the id (that is the contract).
+    assert (
+        by_name["chat_session.workflow"].attributes[GEN_AI_CONVERSATION_ID]
+        == "conv-scoped"
+    )
+    # The crux: work that runs AFTER the @conversation function returned must not
+    # inherit its conversation_id.
+    assert (
+        GEN_AI_CONVERSATION_ID not in by_name["unrelated_later.workflow"].attributes
+    )

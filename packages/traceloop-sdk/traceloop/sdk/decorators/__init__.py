@@ -51,20 +51,31 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
             response = llm.chat(user_message)
             return response
     """
+    from opentelemetry import context as context_api
+
     from traceloop.sdk.tracing.tracing import set_conversation_id
 
     def decorator(fn: F) -> F:
         if inspect.iscoroutinefunction(fn):
             @wraps(fn)
             async def async_wrapper(*args, **kwargs):
-                set_conversation_id(conversation_id)
-                return await fn(*args, **kwargs)
+                # Scope conversation_id to this call: detach the token when the
+                # function returns so the id does not leak onto unrelated work
+                # that runs later on the same context/thread.
+                token = set_conversation_id(conversation_id)
+                try:
+                    return await fn(*args, **kwargs)
+                finally:
+                    context_api.detach(token)
             return async_wrapper
         else:
             @wraps(fn)
             def sync_wrapper(*args, **kwargs):
-                set_conversation_id(conversation_id)
-                return fn(*args, **kwargs)
+                token = set_conversation_id(conversation_id)
+                try:
+                    return fn(*args, **kwargs)
+                finally:
+                    context_api.detach(token)
             return sync_wrapper
 
     return decorator
