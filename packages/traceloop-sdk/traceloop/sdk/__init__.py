@@ -73,6 +73,7 @@ class Traceloop:
         endpoint_is_traceloop: Optional[bool] = False,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
+        trace_content: Optional[bool] = None,
     ) -> Optional[Client]:
         """Initialize Traceloop tracing, metrics, and instrumentation.
 
@@ -88,6 +89,10 @@ class Traceloop:
                 events have nowhere to go and no prompt/completion data will be recorded.
             use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
                 removed in a future release.
+            trace_content: Whether to trace prompt/completion content. If not set,
+                uses the ``TRACELOOP_TRACE_CONTENT`` environment variable
+                (defaults to ``True``). Set to ``False`` to disable sending
+                sensitive content in traces.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -125,7 +130,7 @@ class Traceloop:
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
 
-        enable_content_tracing = is_content_tracing_enabled()
+        enable_content_tracing = is_content_tracing_enabled(trace_content)
 
         if exporter and processor:
             warnings.warn(
