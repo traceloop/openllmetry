@@ -74,11 +74,7 @@ def _emit_message_event(event: MessageEvent) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
-        body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name=name
-    )
+    log_record = LogRecord(body=body, attributes=EVENT_ATTRIBUTES, event_name=name)
     Config.event_logger.emit(log_record)
 
 
@@ -98,9 +94,5 @@ def _emit_choice_event(event: ChoiceEvent) -> None:
             for tool_call in body["tool_calls"]:
                 tool_call["function"].pop("arguments", None)
 
-    log_record = LogRecord(
-        body=body,
-        attributes=EVENT_ATTRIBUTES,
-        event_name="gen_ai.choice"
-    )
+    log_record = LogRecord(body=body, attributes=EVENT_ATTRIBUTES, event_name="gen_ai.choice")
     Config.event_logger.emit(log_record)

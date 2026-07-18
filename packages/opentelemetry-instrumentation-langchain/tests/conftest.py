@@ -55,9 +55,7 @@ def fixture_logger_provider(log_exporter):
 
 @pytest.fixture(scope="session", name="reader")
 def fixture_reader():
-    reader = InMemoryMetricReader(
-        {Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA}
-    )
+    reader = InMemoryMetricReader({Counter: AggregationTemporality.DELTA, Histogram: AggregationTemporality.DELTA})
     return reader
 
 
@@ -72,14 +70,10 @@ def fixture_meter_provider(reader):
 @pytest.fixture(scope="session")
 def instrument_legacy(reader, tracer_provider, meter_provider):
     openai_instrumentor = OpenAIInstrumentor()
-    openai_instrumentor.instrument(
-        tracer_provider=tracer_provider, meter_provider=meter_provider
-    )
+    openai_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
 
     langchain_instrumentor = LangchainInstrumentor()
-    langchain_instrumentor.instrument(
-        tracer_provider=tracer_provider, meter_provider=meter_provider
-    )
+    langchain_instrumentor.instrument(tracer_provider=tracer_provider, meter_provider=meter_provider)
 
     bedrock_instrumentor = BedrockInstrumentor()
     bedrock_instrumentor.instrument(tracer_provider=tracer_provider)
@@ -96,9 +90,7 @@ def instrument_with_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = logger_provider.get_logger(
-        __name__, __version__
-    )
+    Config.event_logger = logger_provider.get_logger(__name__, __version__)
     instrumentor = instrument_legacy
 
     yield instrumentor
@@ -113,9 +105,7 @@ def instrument_with_no_content(instrument_legacy, logger_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
     Config.use_legacy_attributes = False
-    Config.event_logger = logger_provider.get_logger(
-        __name__, __version__
-    )
+    Config.event_logger = logger_provider.get_logger(__name__, __version__)
     instrumentor = instrument_legacy
 
     yield instrumentor
@@ -150,11 +140,7 @@ def vcr_config():
 
             try:
                 if isinstance(request.body, (str, bytes)):
-                    body_str = (
-                        request.body.decode("utf-8")
-                        if isinstance(request.body, bytes)
-                        else request.body
-                    )
+                    body_str = request.body.decode("utf-8") if isinstance(request.body, bytes) else request.body
                     body_data = json.loads(body_str)
                     if "api_key" in body_data:
                         body_data["api_key"] = "FILTERED"

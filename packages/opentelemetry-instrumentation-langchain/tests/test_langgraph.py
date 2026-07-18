@@ -61,6 +61,7 @@ def test_langgraph_invoke(instrument_legacy, span_exporter):
     # The openai_span comes from the OpenAI instrumentation (direct SDK call),
     # which now uses the parts-based JSON message format
     import json as _json
+
     input_msgs = _json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     system_content = next(m for m in input_msgs if m["role"] == "system")["parts"][0]["content"]
     assert system_content == "You are a mathematician."
@@ -328,9 +329,7 @@ def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_pro
     for span in spans:
         parent_name = "None"
         if span.parent:
-            parent_span = next(
-                (s for s in spans if s.context.span_id == span.parent.span_id), None
-            )
+            parent_span = next((s for s in spans if s.context.span_id == span.parent.span_id), None)
             if parent_span:
                 parent_name = parent_span.name
             else:
@@ -362,17 +361,15 @@ def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_pro
     print("\nHierarchy check:")
     print(f"POST parent: {post_span.parent.span_id if post_span.parent else 'None'}")
     print(f"execute_task http_call ID: {http_call_task_span.context.span_id}")
-    print(
-        f"test_agent_span parent: {test_agent_span.parent.span_id if test_agent_span.parent else 'None'}"
-    )
+    print(f"test_agent_span parent: {test_agent_span.parent.span_id if test_agent_span.parent else 'None'}")
     print(f"execute_task otel_span ID: {otel_span_task_span.context.span_id}")
 
-    assert (
-        post_span.parent.span_id == http_call_task_span.context.span_id
-    ), "POST span should be child of execute_task http_call span"
-    assert (
-        test_agent_span.parent.span_id == otel_span_task_span.context.span_id
-    ), "test_agent_span should be child of execute_task otel_span span"
+    assert post_span.parent.span_id == http_call_task_span.context.span_id, (
+        "POST span should be child of execute_task http_call span"
+    )
+    assert test_agent_span.parent.span_id == otel_span_task_span.context.span_id, (
+        "test_agent_span should be child of execute_task otel_span span"
+    )
 
     assert http_call_task_span.parent.span_id == workflow_span.context.span_id
     assert otel_span_task_span.parent.span_id == workflow_span.context.span_id
@@ -380,9 +377,7 @@ def test_nesting_of_langgraph_spans(instrument_legacy, span_exporter, tracer_pro
     assert graph_span.parent.span_id == root_span.context.span_id
 
 
-def test_context_detachment_error_handling(
-    instrument_legacy, span_exporter, tracer_provider, caplog
-):
+def test_context_detachment_error_handling(instrument_legacy, span_exporter, tracer_provider, caplog):
     """
     Test that context detachment errors are handled properly without logging.
 
@@ -436,9 +431,7 @@ def test_context_detachment_error_handling(
 
             tasks = [parallel_task(i) for i in range(5)]
             parallel_results = await asyncio.gather(*tasks)
-            combined_result = (
-                f"{state['result']} + parallel_results: {','.join(parallel_results)}"
-            )
+            combined_result = f"{state['result']} + parallel_results: {','.join(parallel_results)}"
             return {"counter": state["counter"], "result": combined_result}
 
         def build_context_stress_graph():
@@ -482,27 +475,13 @@ def test_context_detachment_error_handling(
         nested_spans = [s for s in spans if s.name == "nested_span"]
         parallel_task_spans = [s for s in spans if s.name.startswith("parallel_task_")]
 
-        assert (
-            len(workflow_spans) == 10
-        ), f"Expected 10 workflow spans, got {len(workflow_spans)}"
-        assert (
-            len(concurrent_spans) == 10
-        ), f"Expected 10 concurrent spans, got {len(concurrent_spans)}"
-        assert (
-            len(nested_spans) == 10
-        ), f"Expected 10 nested spans, got {len(nested_spans)}"
-        assert (
-            len(parallel_task_spans) == 50
-        ), f"Expected 50 parallel task spans, got {len(parallel_task_spans)}"
+        assert len(workflow_spans) == 10, f"Expected 10 workflow spans, got {len(workflow_spans)}"
+        assert len(concurrent_spans) == 10, f"Expected 10 concurrent spans, got {len(concurrent_spans)}"
+        assert len(nested_spans) == 10, f"Expected 10 nested spans, got {len(nested_spans)}"
+        assert len(parallel_task_spans) == 50, f"Expected 50 parallel task spans, got {len(parallel_task_spans)}"
 
-        error_logs = [
-            record.message
-            for record in caplog.records
-            if record.levelno >= logging.ERROR
-        ]
-        context_errors = [
-            msg for msg in error_logs if "Failed to detach context" in msg
-        ]
+        error_logs = [record.message for record in caplog.records if record.levelno >= logging.ERROR]
+        context_errors = [msg for msg in error_logs if "Failed to detach context" in msg]
 
         assert len(context_errors) == 0, (
             f"Found {len(context_errors)} context detachment errors in logs. "
@@ -516,9 +495,7 @@ def test_context_detachment_error_handling(
                 None,
             )
             assert parent_span is not None, "Parent span should exist"
-            assert (
-                parent_span.name == "concurrent_async_span"
-            ), "Nested span should be child of concurrent_async_span"
+            assert parent_span.name == "concurrent_async_span", "Nested span should be child of concurrent_async_span"
 
 
 def test_create_react_agent_span(instrument_legacy, span_exporter):
@@ -562,9 +539,7 @@ def test_retriever_span_attributes(instrument_legacy, span_exporter):
     from langchain_core.retrievers import BaseRetriever
 
     class MockRetriever(BaseRetriever):
-        def _get_relevant_documents(
-            self, query: str, *, run_manager: CallbackManagerForRetrieverRun
-        ) -> List[Document]:
+        def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
             return [Document(page_content="Test", metadata={"source": "test.txt"})]
 
     MockRetriever().invoke("test query")
@@ -593,8 +568,7 @@ def test_middleware_hook_span_attributes(instrument_legacy, span_exporter):
     middleware_span = next(s for s in spans if "TestMiddleware" in s.name)
 
     assert (
-        middleware_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAICustomOperationName.EXECUTE_TASK.value
+        middleware_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAICustomOperationName.EXECUTE_TASK.value
     )
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_KIND] == "TestMiddleware"
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_STATUS] == "success"
@@ -731,7 +705,7 @@ def test_create_agent_with_system_prompt(instrument_legacy, span_exporter):
         model=MockChatModel(),
         tools=[get_info],
         name="PromptAgent",
-        prompt="You are a helpful assistant that provides accurate information."
+        prompt="You are a helpful assistant that provides accurate information.",
     )
 
     spans = span_exporter.get_finished_spans()
@@ -759,8 +733,7 @@ async def test_async_middleware_hook(instrument_legacy, span_exporter):
     assert len(middleware_spans) >= 1
     middleware_span = middleware_spans[0]
     assert (
-        middleware_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAICustomOperationName.EXECUTE_TASK.value
+        middleware_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAICustomOperationName.EXECUTE_TASK.value
     )
     assert middleware_span.attributes[SpanAttributes.GEN_AI_TASK_KIND] == "AsyncTestMiddleware"
 
@@ -814,9 +787,7 @@ def test_create_react_agent_with_toolnode(instrument_legacy, span_exporter):
             return "mock"
 
         def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-            return ChatResult(
-                generations=[ChatGeneration(message=AIMessage(content="Mock"))]
-            )
+            return ChatResult(generations=[ChatGeneration(message=AIMessage(content="Mock"))])
 
         def bind_tools(self, tools, **kwargs):
             return self
@@ -834,22 +805,15 @@ def test_create_react_agent_with_toolnode(instrument_legacy, span_exporter):
     tool_node = ToolNode([get_weather, get_time])
 
     # Before the fix this raised: TypeError: 'ToolNode' object is not iterable
-    _ = create_react_agent(
-        model=MockChatModel(), tools=tool_node, name="ToolNodeAgent"
-    )
+    _ = create_react_agent(model=MockChatModel(), tools=tool_node, name="ToolNodeAgent")
 
     spans = span_exporter.get_finished_spans()
     create_span = next(s for s in spans if "create_agent" in s.name)
 
-    assert (
-        create_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
-        == GenAiOperationNameValues.CREATE_AGENT.value
-    )
+    assert create_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CREATE_AGENT.value
     assert create_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "ToolNodeAgent"
     assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS in create_span.attributes
 
-    tool_defs = json.loads(
-        create_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS]
-    )
+    tool_defs = json.loads(create_span.attributes[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
     tool_names = {td["name"] for td in tool_defs}
     assert tool_names == {"get_weather", "get_time"}

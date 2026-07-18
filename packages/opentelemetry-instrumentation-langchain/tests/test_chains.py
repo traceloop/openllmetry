@@ -21,12 +21,8 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -43,9 +39,7 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    overall_chain.invoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    overall_chain.invoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -57,32 +51,15 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    workflow_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    task_spans = [
-        span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]
-    ]
+    workflow_span = next(span for span in spans if span.name == "SequentialChain.workflow")
+    task_spans = [span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]]
     llm_spans = [span for span in spans if span.name == "OpenAI.completion"]
 
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "workflow"
-    assert (
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "SequentialChain"
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task"
-        for span in task_spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain"
-        for span in spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
-        in ["synopsis", "LLMChain"]
-        for span in llm_spans
-    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "SequentialChain"
+    assert all(span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task" for span in task_spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain" for span in spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] in ["synopsis", "LLMChain"] for span in llm_spans)
 
     synopsis_span = next(span for span in spans if span.name == "execute_task synopsis")
     review_span = next(span for span in spans if span.name == "execute_task LLMChain")
@@ -106,9 +83,7 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         "review",
     }
 
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
+    overall_span = next(span for span in spans if span.name == "SequentialChain.workflow")
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
         "title": "Tragedy at sunset on the beach",
@@ -119,39 +94,25 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
     assert data["outputs"].keys() == {"synopsis", "review"}
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
-    assert (
-        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-3.5-turbo-instruct"
-    )
-    assert (
-        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
-        == "gpt-3.5-turbo-instruct"
-    )
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo-instruct"
+    assert (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]) == "gpt-3.5-turbo-instruct"
     input_messages = json.loads(openai_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["parts"][0]["content"]
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_sequential_chain_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_sequential_chain_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -168,9 +129,7 @@ def test_sequential_chain_with_events_with_content(
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    response = overall_chain.invoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    response = overall_chain.invoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -182,42 +141,19 @@ def test_sequential_chain_with_events_with_content(
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    workflow_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    task_spans = [
-        span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]
-    ]
+    workflow_span = next(span for span in spans if span.name == "SequentialChain.workflow")
+    task_spans = [span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]]
     llm_spans = [span for span in spans if span.name == "OpenAI.completion"]
 
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "workflow"
-    assert (
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "SequentialChain"
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task"
-        for span in task_spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain"
-        for span in spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
-        in ["synopsis", "LLMChain"]
-        for span in llm_spans
-    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "SequentialChain"
+    assert all(span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task" for span in task_spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain" for span in spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] in ["synopsis", "LLMChain"] for span in llm_spans)
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
-    assert (
-        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-3.5-turbo-instruct"
-    )
-    assert (
-        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
-        == "gpt-3.5-turbo-instruct"
-    )
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo-instruct"
+    assert (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]) == "gpt-3.5-turbo-instruct"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -226,11 +162,7 @@ def test_sequential_chain_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {
-            "content": synopsis_template.format(
-                title="Tragedy at sunset on the beach", era="Victorian England"
-            )
-        },
+        {"content": synopsis_template.format(title="Tragedy at sunset on the beach", era="Victorian England")},
     )
 
     # Validate AI choice Event in the first chain
@@ -258,21 +190,15 @@ def test_sequential_chain_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_sequential_chain_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_sequential_chain_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis", name="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -289,9 +215,7 @@ def test_sequential_chain_with_events_with_no_content(
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    overall_chain.invoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    overall_chain.invoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -303,42 +227,19 @@ def test_sequential_chain_with_events_with_no_content(
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    workflow_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
-    task_spans = [
-        span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]
-    ]
+    workflow_span = next(span for span in spans if span.name == "SequentialChain.workflow")
+    task_spans = [span for span in spans if span.name in ["execute_task synopsis", "execute_task LLMChain"]]
     llm_spans = [span for span in spans if span.name == "OpenAI.completion"]
 
     assert workflow_span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "workflow"
-    assert (
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME]
-        == "SequentialChain"
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task"
-        for span in task_spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain"
-        for span in spans
-    )
-    assert all(
-        span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH]
-        in ["synopsis", "LLMChain"]
-        for span in llm_spans
-    )
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] == "SequentialChain"
+    assert all(span.attributes[SpanAttributes.TRACELOOP_SPAN_KIND] == "task" for span in task_spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "SequentialChain" for span in spans)
+    assert all(span.attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] in ["synopsis", "LLMChain"] for span in llm_spans)
 
     openai_span = next(span for span in spans if span.name == "OpenAI.completion")
-    assert (
-        openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
-        == "gpt-3.5-turbo-instruct"
-    )
-    assert (
-        (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL])
-        == "gpt-3.5-turbo-instruct"
-    )
+    assert openai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-3.5-turbo-instruct"
+    assert (openai_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]) == "gpt-3.5-turbo-instruct"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -367,12 +268,8 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -389,9 +286,7 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    await overall_chain.ainvoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    await overall_chain.ainvoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -403,9 +298,7 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [
-        span for span in spans if span.name == "execute_task LLMChain"
-    ]
+    synopsis_span, review_span = [span for span in spans if span.name == "execute_task LLMChain"]
 
     data = json.loads(synopsis_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
@@ -426,9 +319,7 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
         "review",
     }
 
-    overall_span = next(
-        span for span in spans if span.name == "SequentialChain.workflow"
-    )
+    overall_span = next(span for span in spans if span.name == "SequentialChain.workflow")
     data = json.loads(overall_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
     assert data["inputs"] == {
         "title": "Tragedy at sunset on the beach",
@@ -439,28 +330,20 @@ async def test_asequential_chain(instrument_legacy, span_exporter, log_exporter)
     assert data["outputs"].keys() == {"synopsis", "review"}
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_asequential_chain_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+async def test_asequential_chain_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -477,9 +360,7 @@ async def test_asequential_chain_with_events_with_content(
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    response = await overall_chain.ainvoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    response = await overall_chain.ainvoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -499,9 +380,7 @@ async def test_asequential_chain_with_events_with_content(
         logs[0],
         "gen_ai.user.message",
         {
-            "content": synopsis_template.format(
-                title="Tragedy at sunset on the beach", era="Victorian England"
-            ),
+            "content": synopsis_template.format(title="Tragedy at sunset on the beach", era="Victorian England"),
         },
     )
 
@@ -531,21 +410,15 @@ async def test_asequential_chain_with_events_with_content(
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_asequential_chain_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+async def test_asequential_chain_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     llm = OpenAI(temperature=0.7)
     synopsis_template = """You are a playwright. Given the title of play and the era it is set in, it is your job to write a synopsis for that title.
 
     Title: {title}
     Era: {era}
     Playwright: This is a synopsis for the above play:"""  # noqa: E501
-    synopsis_prompt_template = PromptTemplate(
-        input_variables=["title", "era"], template=synopsis_template
-    )
-    synopsis_chain = LLMChain(
-        llm=llm, prompt=synopsis_prompt_template, output_key="synopsis"
-    )
+    synopsis_prompt_template = PromptTemplate(input_variables=["title", "era"], template=synopsis_template)
+    synopsis_chain = LLMChain(llm=llm, prompt=synopsis_prompt_template, output_key="synopsis")
 
     template = """You are a play critic from the New York Times. Given the synopsis of play, it is your job to write a review for that play.
 
@@ -562,9 +435,7 @@ async def test_asequential_chain_with_events_with_no_content(
         output_variables=["synopsis", "review"],
         verbose=True,
     )
-    await overall_chain.ainvoke(
-        {"title": "Tragedy at sunset on the beach", "era": "Victorian England"}
-    )
+    await overall_chain.ainvoke({"title": "Tragedy at sunset on the beach", "era": "Victorian England"})
 
     spans = span_exporter.get_finished_spans()
 
@@ -576,9 +447,7 @@ async def test_asequential_chain_with_events_with_no_content(
         "SequentialChain.workflow",
     ] == [span.name for span in spans]
 
-    synopsis_span, review_span = [
-        span for span in spans if span.name == "execute_task LLMChain"
-    ]
+    synopsis_span, review_span = [span for span in spans if span.name == "execute_task LLMChain"]
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 4
@@ -601,9 +470,7 @@ async def test_asequential_chain_with_events_with_no_content(
 @pytest.mark.vcr
 def test_stream(instrument_legacy, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    prompt = PromptTemplate.from_template(
-        "write 2 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 2 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
 
     chunks = list(runnable.stream({"product": "colorful socks"}))
@@ -620,15 +487,11 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
     assert len(chunks) == 61
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_stream_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_stream_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt_template = "write 2 lines of random text about ${product}"
     prompt = PromptTemplate.from_template(prompt_template)
@@ -669,13 +532,9 @@ def test_stream_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_stream_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_stream_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    prompt = PromptTemplate.from_template(
-        "write 2 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 2 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
 
     chunks = list(runnable.stream({"product": "colorful socks"}))
@@ -710,9 +569,7 @@ def test_stream_with_events_with_no_content(
 @pytest.mark.asyncio
 async def test_astream(instrument_legacy, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    prompt = PromptTemplate.from_template(
-        "write 2 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 2 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
 
     chunks = []
@@ -731,16 +588,12 @@ async def test_astream(instrument_legacy, span_exporter, log_exporter):
     assert len(chunks) == 62
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_astream_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+async def test_astream_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
     prompt_template = "write 2 lines of random text about ${product}"
     prompt = PromptTemplate.from_template(prompt_template)
@@ -782,13 +635,9 @@ async def test_astream_with_events_with_content(
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_astream_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+async def test_astream_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    prompt = PromptTemplate.from_template(
-        "write 2 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 2 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
 
     chunks = []

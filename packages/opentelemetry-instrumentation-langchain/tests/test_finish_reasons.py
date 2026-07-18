@@ -32,21 +32,25 @@ def mock_span():
 
 # ---------- _map_finish_reason unit tests ----------
 
+
 class TestMapFinishReason:
-    @pytest.mark.parametrize("raw,expected", [
-        ("stop", "stop"),
-        ("length", "length"),
-        ("tool_calls", "tool_call"),
-        ("function_call", "tool_call"),
-        ("content_filter", "content_filter"),
-        # Anthropic
-        ("end_turn", "stop"),
-        ("stop_sequence", "stop"),
-        ("tool_use", "tool_call"),
-        ("max_tokens", "length"),
-        # Unknown passthrough
-        ("some_future_reason", "some_future_reason"),
-    ])
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("stop", "stop"),
+            ("length", "length"),
+            ("tool_calls", "tool_call"),
+            ("function_call", "tool_call"),
+            ("content_filter", "content_filter"),
+            # Anthropic
+            ("end_turn", "stop"),
+            ("stop_sequence", "stop"),
+            ("tool_use", "tool_call"),
+            ("max_tokens", "length"),
+            # Unknown passthrough
+            ("some_future_reason", "some_future_reason"),
+        ],
+    )
     def test_known_and_unknown_reasons(self, raw, expected):
         assert _map_finish_reason(raw) == expected
 
@@ -58,6 +62,7 @@ class TestMapFinishReason:
 
 
 # ---------- span-level finish_reasons tests ----------
+
 
 class TestFinishReasonsSpanAttribute:
     def _make_generation(self, content="OK", finish_reason=None):

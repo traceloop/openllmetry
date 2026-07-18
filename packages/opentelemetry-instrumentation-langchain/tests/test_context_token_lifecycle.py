@@ -6,6 +6,7 @@ logic in isolation by calling internal methods directly.
 
 No real HTTP is performed — the Tracer is backed by an InMemorySpanExporter.
 """
+
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -68,6 +69,7 @@ def _association_properties() -> dict:
 # Ordering fix (commit 2) — normal single-call lifecycle
 # ---------------------------------------------------------------------------
 
+
 def test_suppression_active_after_create_llm_span(handler):
     """After a normal _create_llm_span call the suppression flag must be set."""
     run_id = uuid4()
@@ -76,8 +78,7 @@ def test_suppression_active_after_create_llm_span(handler):
     handler._create_llm_span(run_id, None, "gpt-4", LLMRequestTypeValues.CHAT)
 
     assert _suppression_active(), (
-        "Suppression must be active so downstream OpenAI/Bedrock instrumentation "
-        "is skipped for this LLM call."
+        "Suppression must be active so downstream OpenAI/Bedrock instrumentation is skipped for this LLM call."
     )
 
     span = handler.spans[run_id].span
@@ -115,14 +116,14 @@ def test_association_properties_cleared_after_end_span(handler):
     handler._end_span(span, run_id)
 
     assert _association_properties() == {}, (
-        "association_properties must be detached when the span ends; otherwise "
-        "later spans can inherit stale metadata."
+        "association_properties must be detached when the span ends; otherwise later spans can inherit stale metadata."
     )
 
 
 # ---------------------------------------------------------------------------
 # P2 — duplicate run_id leaks supp_token_1 (issue #3957)
 # ---------------------------------------------------------------------------
+
 
 def test_duplicate_run_id_leaks_suppression_token(handler):
     """
@@ -233,14 +234,14 @@ def test_duplicate_run_id_replaces_association_properties(handler):
     handler._end_span(second_span, run_id)
 
     assert _association_properties() == {}, (
-        "association_properties from the replacement span should also be cleaned up "
-        "when the surviving holder is ended."
+        "association_properties from the replacement span should also be cleaned up when the surviving holder is ended."
     )
 
 
 # ---------------------------------------------------------------------------
 # Issue #3526 — orphaned context_api.attach() in on_chain_end corrupts context stack
 # ---------------------------------------------------------------------------
+
 
 def test_on_chain_end_does_not_leak_context_frame(handler):
     """
@@ -370,8 +371,7 @@ def test_duplicate_llm_run_id_replaces_association_properties(handler):
     handler._end_span(second_span, run_id)
 
     assert _association_properties() == {}, (
-        "association_properties from the replacement LLM span should be cleaned up "
-        "when the surviving holder is ended."
+        "association_properties from the replacement LLM span should be cleaned up when the surviving holder is ended."
     )
     assert not _suppression_active(), (
         "Suppression must be cleared after ending the replacement LLM span, matching "
