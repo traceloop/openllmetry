@@ -63,8 +63,7 @@ Traceloop.init(app_name="alephalpha_beginner_example")
 # ---------------------------------------------------------------------------
 # Step 3 – Create the Aleph Alpha client
 # ---------------------------------------------------------------------------
-aleph_alpha_client = Client(token=os.environ.get("AA_TOKEN", ""))
-
+aleph_alpha_client = Client(token=os.environ["AA_TOKEN"])
 
 # ---------------------------------------------------------------------------
 # Step 4 – Define a traced task that performs a single completion
