@@ -363,6 +363,34 @@ def test_finish_reasons_set_when_content_tracing_disabled():
     assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in span.attributes
 
 
+def test_streaming_empty_content_records_finish_reason():
+    """Empty content stream still records finish_reasons from message-level stop_reason (#4362)."""
+    span = make_span()
+    complete_response = {"events": [], "stop_reason": "end_turn", "model": "claude-x", "usage": {}, "id": ""}
+    set_streaming_response_attributes(span, complete_response)
+
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output[0]["role"] == "assistant"
+    assert output[0]["parts"] == []
+    assert output[0]["finish_reason"] == "stop"
+
+
+def test_streaming_process_response_item_stores_message_stop_reason():
+    """message_delta must store stop_reason even when no content blocks exist (#4362)."""
+    from types import SimpleNamespace
+    from opentelemetry.instrumentation.anthropic.streaming import _process_response_item
+
+    complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
+    item = SimpleNamespace(
+        type="message_delta",
+        delta=SimpleNamespace(stop_reason="end_turn"),
+        usage=None,
+    )
+    _process_response_item(item, complete_response)
+    assert complete_response["stop_reason"] == "end_turn"
+
+
 def test_streaming_finish_reasons_set_when_content_tracing_disabled():
     """Streaming finish_reasons must be recorded even when TRACELOOP_TRACE_CONTENT=false."""
     os.environ[TRACELOOP_TRACE_CONTENT] = "false"

@@ -392,10 +392,27 @@ def set_response_attributes(span, response):
 
 
 @dont_throw
-def set_streaming_response_attributes(span, complete_response_events):
+def set_streaming_response_attributes(span, complete_response_or_events):
+    """Record finish_reasons / output messages for a streaming response.
+
+    Accepts either the full ``complete_response`` dict (preferred; carries a
+    message-level ``stop_reason`` when content blocks are empty — #4362) or the
+    legacy bare events list used by existing unit tests.
+    """
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    if not span.is_recording() or not complete_response_events:
+    if not span.is_recording():
+        return
+
+    if isinstance(complete_response_or_events, dict):
+        complete_response_events = complete_response_or_events.get("events") or []
+        message_stop_reason = complete_response_or_events.get("stop_reason")
+    else:
+        complete_response_events = complete_response_or_events or []
+        message_stop_reason = None
+
+    # Empty stream with no stop_reason: nothing to record.
+    if not complete_response_events and not message_stop_reason:
         return
 
     # Collect all parts and determine finish_reason
@@ -436,6 +453,10 @@ def set_streaming_response_attributes(span, complete_response_events):
                     "content": event.get("text"),
                 })
 
+    # Fallback for empty-content streams: use message-level stop_reason.
+    if not finish_reasons and message_stop_reason:
+        finish_reasons.append(_map_finish_reason(message_stop_reason))
+
     if finish_reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
@@ -451,4 +472,17 @@ def set_streaming_response_attributes(span, complete_response_events):
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages, cls=JSONEncoder),
+        )
+    elif finish_reasons and should_send_prompts():
+        # Empty content but we still have a stop_reason — record an empty
+        # assistant message so output.messages is present (#4362).
+        msg = {
+            "role": "assistant",
+            "parts": [],
+            "finish_reason": finish_reasons[-1],
+        }
+        set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([msg], cls=JSONEncoder),
         )
