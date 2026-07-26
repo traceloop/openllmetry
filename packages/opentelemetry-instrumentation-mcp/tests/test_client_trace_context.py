@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.mcp.instrumentation import McpInstrumentor
     ],
 )
 async def test_client_trace_context_is_injected_without_replacing_metadata(monkeypatch, meta, expected_custom_value):
+    """Verify ordinary tool calls propagate trace context and preserve metadata."""
     propagator = AsyncMock()
     propagator.inject = lambda carrier: carrier.update(
         {
