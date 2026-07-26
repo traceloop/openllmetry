@@ -10,6 +10,8 @@ These tests pin the fixed behavior:
 - @agent nested inside @workflow inherits workflow_name from the workflow.
 - The same agent name running under two different workflows stays distinct.
 - A bare @agent (no enclosing @workflow) leaves workflow_name unset.
+- A completed @agent does not tag later independent work.
+- A completed @agent restores the enclosing workflow context for sibling tasks.
 """
 
 from opentelemetry import trace
@@ -126,3 +128,50 @@ def test_bare_agent_does_not_set_workflow_name(exporter):
 
     assert SpanAttributes.TRACELOOP_WORKFLOW_NAME not in child_span.attributes
     assert child_span.attributes[GEN_AI_AGENT_NAME] == "solo"
+
+
+def test_completed_agent_does_not_tag_following_task(exporter):
+    """Agent metadata must not leak into a later independent task."""
+
+    @agent(name="completed")
+    def completed_agent():
+        pass
+
+    @task(name="standalone")
+    def standalone_task():
+        pass
+
+    completed_agent()
+    standalone_task()
+
+    spans = {span.name: span for span in exporter.get_finished_spans()}
+    standalone_span = spans["standalone.task"]
+
+    assert GEN_AI_AGENT_NAME not in standalone_span.attributes
+    assert standalone_span.parent is None
+
+
+def test_completed_agent_restores_enclosing_workflow_context(exporter):
+    """A task after an agent keeps its workflow but not the completed agent."""
+
+    @agent(name="planner")
+    def planner_agent():
+        pass
+
+    @task(name="after_agent")
+    def task_after_agent():
+        pass
+
+    @workflow(name="rag")
+    def rag_workflow():
+        planner_agent()
+        task_after_agent()
+
+    rag_workflow()
+
+    spans = {span.name: span for span in exporter.get_finished_spans()}
+    task_span = spans["after_agent.task"]
+
+    assert task_span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "rag"
+    assert GEN_AI_AGENT_NAME not in task_span.attributes
+    assert task_span.parent.span_id == spans["rag.workflow"].context.span_id
