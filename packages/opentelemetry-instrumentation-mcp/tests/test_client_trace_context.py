@@ -27,9 +27,9 @@ async def test_client_trace_context_is_injected_without_replacing_metadata(monke
     # BaseInstrumentor is a singleton. Bypass it so this unit test cannot mutate
     # the session-scoped instrumentor used by the integration tests.
     instrumentor = object.__new__(McpInstrumentor)
-    instrumentor._handle_mcp_method = AsyncMock(return_value="sent")
+    instrumentor._handle_tool_call = AsyncMock(return_value="sent")
     params = CallToolRequestParams(name="test", arguments={}, _meta=meta)
-    message = SimpleNamespace(root=SimpleNamespace(method="test/request", params=params))
+    message = SimpleNamespace(root=SimpleNamespace(method="tools/call", params=params))
 
     wrapped = AsyncMock()
     result = await instrumentor.patch_mcp_client(AsyncMock())(wrapped, None, (message,), {})
