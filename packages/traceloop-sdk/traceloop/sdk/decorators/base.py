@@ -20,10 +20,9 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_TOOL_NAME,
 )
 
-from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
+from traceloop.sdk.tracing import get_tracer, set_agent_name
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
-    set_entity_path,
     get_chained_entity_path,
 )
 from traceloop.sdk.utils import camel_to_snake
@@ -91,34 +90,56 @@ def aentity_class(
     )
 
 
-def _handle_generator(span, res):
-    # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
-    context_api.attach(trace.set_span_in_context(span))
+def _handle_generator(span, ctx, res):
+    generator_ctx = ctx
     try:
-        for item in res:
+        while True:
+            ctx_token = context_api.attach(generator_ctx)
+            try:
+                item = next(res)
+            except StopIteration:
+                return
+            finally:
+                generator_ctx = context_api.get_current()
+                context_api.detach(ctx_token)
             yield item
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
         raise
     finally:
-        span.end()
-        # Note: we don't detach the context here as this fails in some situations
-        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
-        # This is not a problem since the context will be detached automatically during garbage collection
+        ctx_token = context_api.attach(generator_ctx)
+        try:
+            res.close()
+        finally:
+            context_api.detach(ctx_token)
+            span.end()
 
 
-async def _ahandle_generator(span, ctx_token, res):
+async def _ahandle_generator(span, ctx, res):
+    generator_ctx = ctx
     try:
-        async for part in res:
+        while True:
+            ctx_token = context_api.attach(generator_ctx)
+            try:
+                part = await anext(res)
+            except StopAsyncIteration:
+                return
+            finally:
+                generator_ctx = context_api.get_current()
+                context_api.detach(ctx_token)
             yield part
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
         raise
     finally:
-        span.end()
-        context_api.detach(ctx_token)
+        ctx_token = context_api.attach(generator_ctx)
+        try:
+            await res.aclose()
+        finally:
+            context_api.detach(ctx_token)
+            span.end()
 
 
 def _should_send_prompts():
@@ -137,9 +158,7 @@ def _is_async_method(fn):
 
 def _setup_span(entity_name, tlp_span_kind, version):
     """Sets up the OpenTelemetry span and context"""
-    if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
-        set_workflow_name(entity_name)
-    elif tlp_span_kind == TraceloopSpanKindValues.AGENT:
+    if tlp_span_kind == TraceloopSpanKindValues.AGENT:
         set_agent_name(entity_name)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
@@ -147,17 +166,20 @@ def _setup_span(entity_name, tlp_span_kind, version):
     with get_tracer() as tracer:
         span = tracer.start_span(span_name)
         ctx = trace.set_span_in_context(span)
-        ctx_token = context_api.attach(ctx)
-
+        if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
+            ctx = context_api.set_value("workflow_name", entity_name, ctx)
         if tlp_span_kind in [
             TraceloopSpanKindValues.TASK,
             TraceloopSpanKindValues.TOOL,
         ]:
             entity_path = get_chained_entity_path(entity_name)
-            set_entity_path(entity_path)
+            ctx = context_api.set_value("entity_path", entity_path, ctx)
+        ctx_token = context_api.attach(ctx)
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+        if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
+            span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, entity_name)
         if tlp_span_kind == TraceloopSpanKindValues.TOOL:
             span.set_attribute(GEN_AI_TOOL_NAME, entity_name)
         if version:
@@ -224,10 +246,13 @@ def entity_method(
                         entity_name, tlp_span_kind, version
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                    async for item in _ahandle_generator(
-                        span, ctx_token, fn(*args, **kwargs)
-                    ):
-                        yield item
+                    context_api.detach(ctx_token)
+                    generator = _ahandle_generator(span, ctx, fn(*args, **kwargs))
+                    try:
+                        async for item in generator:
+                            yield item
+                    finally:
+                        await generator.aclose()
 
                 return cast(F, async_gen_wrap)
             else:
@@ -254,6 +279,22 @@ def entity_method(
 
                 return cast(F, async_wrap)
         else:
+            if inspect.isgeneratorfunction(fn):
+
+                @wraps(fn)
+                def sync_gen_wrap(*args: Any, **kwargs: Any) -> Any:
+                    if not TracerWrapper.verify_initialized():
+                        yield from fn(*args, **kwargs)
+                        return
+
+                    span, ctx, ctx_token = _setup_span(
+                        entity_name, tlp_span_kind, version
+                    )
+                    _handle_span_input(span, args, kwargs, cls=JSONEncoder)
+                    context_api.detach(ctx_token)
+                    yield from _handle_generator(span, ctx, fn(*args, **kwargs))
+
+                return cast(F, sync_gen_wrap)
 
             @wraps(fn)
             def sync_wrap(*args: Any, **kwargs: Any) -> Any:
@@ -272,7 +313,8 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, res)
+                    context_api.detach(ctx_token)
+                    return _handle_generator(span, ctx, res)
 
                 _handle_span_output(span, res, cls=JSONEncoder)
                 _cleanup_span(span, ctx_token)
