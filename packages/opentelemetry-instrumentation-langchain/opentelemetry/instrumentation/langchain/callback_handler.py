@@ -1053,6 +1053,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         span = self._get_span(run_id)
+        if isinstance(error, GeneratorExit):
+            _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "success")
+            self._end_span(span, run_id)
+            return
+
         # Set task status to failure
         _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_STATUS, "failure")
         span.set_attribute(ERROR_TYPE, type(error).__name__)
