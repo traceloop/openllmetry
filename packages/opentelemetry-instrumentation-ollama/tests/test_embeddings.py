@@ -280,6 +280,7 @@ def test_ollama_embeddings_legacy_response_with_events_with_content(
     assert calls[0]["kwargs"]["json"]["prompt"] == "OpenTelemetry"
 
     spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
     ollama_span = spans[0]
     _assert_embed_span(ollama_span)
 
