@@ -12,6 +12,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 
 EMBED_RESPONSE = {"embeddings": [[0.1, 0.2, 0.3]]}
+BATCH_EMBED_RESPONSE = {"embeddings": [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]}
 
 
 def _mock_ollama_requests(monkeypatch, response=EMBED_RESPONSE):
@@ -20,11 +21,11 @@ def _mock_ollama_requests(monkeypatch, response=EMBED_RESPONSE):
 
     def request(self, cls, *args, stream=False, **kwargs):
         calls.append({"args": args, "kwargs": kwargs})
-        return response
+        return cls(**response)
 
     async def async_request(self, cls, *args, stream=False, **kwargs):
         calls.append({"args": args, "kwargs": kwargs})
-        return response
+        return cls(**response)
 
     monkeypatch.setattr(client_module.Client, "_request", request)
     monkeypatch.setattr(client_module.AsyncClient, "_request", async_request)
@@ -86,7 +87,7 @@ def test_ollama_embed_legacy(
     finally:
         instrumentor.uninstrument()
 
-    assert response == EMBED_RESPONSE
+    assert response.embeddings == EMBED_RESPONSE["embeddings"]
     _assert_embed_request(calls, "OpenTelemetry")
 
     spans = span_exporter.get_finished_spans()
@@ -159,7 +160,7 @@ async def test_ollama_async_embed_with_events_with_content(
     finally:
         instrumentor.uninstrument()
 
-    assert response == EMBED_RESPONSE
+    assert response.embeddings == EMBED_RESPONSE["embeddings"]
     _assert_embed_request(calls, "OpenTelemetry")
 
     spans = span_exporter.get_finished_spans()
@@ -177,7 +178,73 @@ async def test_ollama_async_embed_with_events_with_content(
         {
             "index": 0,
             "finish_reason": "unknown",
-            "message": {"content": EMBED_RESPONSE["embeddings"]},
+            "message": {"content": EMBED_RESPONSE["embeddings"][0]},
+        },
+    )
+
+
+def test_ollama_embed_multiple_inputs_with_events_with_content(
+    monkeypatch,
+    tracer_provider,
+    logger_provider,
+    meter_provider,
+    span_exporter,
+    log_exporter,
+):
+    monkeypatch.setenv(TRACELOOP_TRACE_CONTENT, "True")
+    inputs = ["first text", "second text"]
+    calls = _mock_ollama_requests(monkeypatch, response=BATCH_EMBED_RESPONSE)
+    instrumentor = _instrument_ollama(
+        tracer_provider,
+        meter_provider,
+        logger_provider=logger_provider,
+        use_legacy_attributes=False,
+    )
+
+    try:
+        response = ollama.Client().embed(model="nomic-embed-text", input=inputs)
+    finally:
+        instrumentor.uninstrument()
+
+    assert response.embeddings == BATCH_EMBED_RESPONSE["embeddings"]
+    _assert_embed_request(calls, inputs)
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    _assert_embed_span(ollama_span)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 4
+
+    user_message_logs = [
+        log for log in logs if log.log_record.event_name == "gen_ai.user.message"
+    ]
+    choice_logs = [log for log in logs if log.log_record.event_name == "gen_ai.choice"]
+    assert len(user_message_logs) == 2
+    assert len(choice_logs) == 2
+
+    assert_message_in_logs(
+        user_message_logs[0], "gen_ai.user.message", {"content": inputs[0]}
+    )
+    assert_message_in_logs(
+        user_message_logs[1], "gen_ai.user.message", {"content": inputs[1]}
+    )
+    assert_message_in_logs(
+        choice_logs[0],
+        "gen_ai.choice",
+        {
+            "index": 0,
+            "finish_reason": "unknown",
+            "message": {"content": BATCH_EMBED_RESPONSE["embeddings"][0]},
+        },
+    )
+    assert_message_in_logs(
+        choice_logs[1],
+        "gen_ai.choice",
+        {
+            "index": 1,
+            "finish_reason": "unknown",
+            "message": {"content": BATCH_EMBED_RESPONSE["embeddings"][1]},
         },
     )
 
