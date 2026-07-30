@@ -13,6 +13,7 @@ from opentelemetry.semconv_ai import SpanAttributes
 
 EMBED_RESPONSE = {"embeddings": [[0.1, 0.2, 0.3]]}
 BATCH_EMBED_RESPONSE = {"embeddings": [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]}
+LEGACY_EMBEDDING_RESPONSE = {"embedding": [0.1, 0.2, 0.3]}
 
 
 def _mock_ollama_requests(monkeypatch, response=EMBED_RESPONSE):
@@ -245,6 +246,60 @@ def test_ollama_embed_multiple_inputs_with_events_with_content(
             "index": 1,
             "finish_reason": "unknown",
             "message": {"content": BATCH_EMBED_RESPONSE["embeddings"][1]},
+        },
+    )
+
+
+def test_ollama_embeddings_legacy_response_with_events_with_content(
+    monkeypatch,
+    tracer_provider,
+    logger_provider,
+    meter_provider,
+    span_exporter,
+    log_exporter,
+):
+    monkeypatch.setenv(TRACELOOP_TRACE_CONTENT, "True")
+    calls = _mock_ollama_requests(monkeypatch, response=LEGACY_EMBEDDING_RESPONSE)
+    instrumentor = _instrument_ollama(
+        tracer_provider,
+        meter_provider,
+        logger_provider=logger_provider,
+        use_legacy_attributes=False,
+    )
+
+    try:
+        response = ollama.Client().embeddings(
+            model="nomic-embed-text", prompt="OpenTelemetry"
+        )
+    finally:
+        instrumentor.uninstrument()
+
+    assert response.embedding == LEGACY_EMBEDDING_RESPONSE["embedding"]
+    assert len(calls) == 1
+    assert calls[0]["args"][1] == "/api/embeddings"
+    assert calls[0]["kwargs"]["json"]["prompt"] == "OpenTelemetry"
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    _assert_embed_span(ollama_span)
+
+    logs = log_exporter.get_finished_logs()
+    user_message_logs = [
+        log for log in logs if log.log_record.event_name == "gen_ai.user.message"
+    ]
+    choice_logs = [log for log in logs if log.log_record.event_name == "gen_ai.choice"]
+    assert len(user_message_logs) == 1
+    assert len(choice_logs) == 1
+    assert_message_in_logs(
+        user_message_logs[0], "gen_ai.user.message", {"content": "OpenTelemetry"}
+    )
+    assert_message_in_logs(
+        choice_logs[0],
+        "gen_ai.choice",
+        {
+            "index": 0,
+            "finish_reason": "unknown",
+            "message": {"content": LEGACY_EMBEDDING_RESPONSE["embedding"]},
         },
     )
 
