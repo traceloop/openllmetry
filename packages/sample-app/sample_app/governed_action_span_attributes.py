@@ -25,6 +25,8 @@ ACTION_ATTRIBUTES = {
 
 
 def main():
+    """Emit an example span with governed action metadata."""
+
     Traceloop.init(
         app_name="governed-action-span-attributes",
         disable_batch=True,
