@@ -1,3 +1,4 @@
+import gc
 from unittest.mock import patch
 
 import httpx
@@ -394,6 +395,55 @@ def test_completion_streaming(
 
 
 @pytest.mark.vcr
+@pytest.mark.default_cassette("test_completion_streaming.yaml")
+def test_completion_streaming_early_close(
+    instrument_legacy, span_exporter, log_exporter, mock_openai_client
+):
+    response = mock_openai_client.completions.create(
+        model="davinci-002",
+        prompt="Tell me a joke about opentelemetry",
+        stream=True,
+    )
+
+    next(response)
+    response.close()
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_completion_streaming.yaml")
+def test_completion_streaming_exception_during_consumption(
+    instrument_legacy, span_exporter, log_exporter, mock_openai_client
+):
+    """The span is still ended when the caller aborts consumption by raising."""
+
+    response = mock_openai_client.completions.create(
+        model="davinci-002",
+        prompt="Tell me a joke about opentelemetry",
+        stream=True,
+    )
+
+    with pytest.raises(ValueError, match="simulated interruption"):
+        for _ in response:
+            raise ValueError("simulated interruption")
+
+    del response
+    gc.collect()
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
+    # Status is deliberately not asserted: what an incompletely observed
+    # completion should report is a separate question from ending the span.
+    assert spans[0].end_time is not None
+
+
+@pytest.mark.vcr
 def test_completion_streaming_with_events_with_content(
     instrument_with_content, span_exporter, log_exporter, openai_client
 ):
@@ -546,6 +596,27 @@ async def test_async_completion_streaming(
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_async_completion_streaming.yaml")
+@pytest.mark.asyncio
+async def test_async_completion_streaming_early_close(
+    instrument_legacy, span_exporter, log_exporter, async_openai_client
+):
+    response = await async_openai_client.completions.create(
+        model="davinci-002",
+        prompt="Tell me a joke about opentelemetry",
+        stream=True,
+    )
+
+    await anext(response)
+    await response.aclose()
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == [
+        "openai.completion",
+    ]
 
 
 @pytest.mark.vcr
