@@ -20,7 +20,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
     GEN_AI_TOOL_NAME,
 )
 
-from traceloop.sdk.tracing import get_tracer, set_workflow_name, set_agent_name
+from traceloop.sdk.tracing import get_tracer
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
     set_entity_path,
@@ -137,16 +137,28 @@ def _is_async_method(fn):
 
 def _setup_span(entity_name, tlp_span_kind, version):
     """Sets up the OpenTelemetry span and context"""
+    # Build the entity name into a context value instead of attaching it on its
+    # own. `set_workflow_name`/`set_agent_name` attach and drop the token, so
+    # nothing ever restores it and the name leaks onto sibling spans created
+    # after this entity returns. The name still has to be in the *active*
+    # context while the span starts, because the span processor's `on_start`
+    # reads it from there -- so attach it, start the span, then fold it into the
+    # single long-lived context that `_cleanup_span` detaches.
+    entity_ctx = context_api.get_current()
     if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
-        set_workflow_name(entity_name)
+        entity_ctx = context_api.set_value("workflow_name", entity_name, entity_ctx)
     elif tlp_span_kind == TraceloopSpanKindValues.AGENT:
-        set_agent_name(entity_name)
+        entity_ctx = context_api.set_value("agent_name", entity_name, entity_ctx)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
     with get_tracer() as tracer:
-        span = tracer.start_span(span_name)
-        ctx = trace.set_span_in_context(span)
+        entity_token = context_api.attach(entity_ctx)
+        try:
+            span = tracer.start_span(span_name)
+        finally:
+            context_api.detach(entity_token)
+        ctx = trace.set_span_in_context(span, entity_ctx)
         ctx_token = context_api.attach(ctx)
 
         if tlp_span_kind in [

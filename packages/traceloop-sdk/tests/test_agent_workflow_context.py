@@ -6,10 +6,16 @@ the name set by an enclosing @workflow. Any child span (LLM or manual)
 created inside the agent then inherited the wrong workflow name, breaking
 downstream aggregations that group by (agent_name, workflow_name).
 
+A second, related leak lived in the same place: the entity name was attached
+to the OTel context on its own and the token was dropped, so nothing restored
+it when the entity returned. Spans created *after* a completed @agent kept
+inheriting `gen_ai.agent.name`.
+
 These tests pin the fixed behavior:
 - @agent nested inside @workflow inherits workflow_name from the workflow.
 - The same agent name running under two different workflows stays distinct.
 - A bare @agent (no enclosing @workflow) leaves workflow_name unset.
+- A completed entity's name does not leak onto later sibling spans.
 """
 
 from opentelemetry import trace
@@ -126,3 +132,76 @@ def test_bare_agent_does_not_set_workflow_name(exporter):
 
     assert SpanAttributes.TRACELOOP_WORKFLOW_NAME not in child_span.attributes
     assert child_span.attributes[GEN_AI_AGENT_NAME] == "solo"
+
+
+def test_task_after_bare_agent_is_not_tagged_with_agent_name(exporter):
+    """A task run after a completed bare @agent must not inherit its name."""
+
+    @agent(name="planner")
+    def planner_agent():
+        pass
+
+    @task(name="after_agent")
+    def task_after_agent():
+        pass
+
+    planner_agent()
+    task_after_agent()
+
+    spans = exporter.get_finished_spans()
+    by_name = {span.name: span for span in spans}
+
+    assert by_name["planner.agent"].attributes[GEN_AI_AGENT_NAME] == "planner"
+    assert GEN_AI_AGENT_NAME not in by_name["after_agent.task"].attributes
+
+
+def test_sibling_task_in_workflow_is_not_tagged_with_agent_name(exporter):
+    """A sibling task after a nested @agent keeps the workflow, drops the agent."""
+
+    @agent(name="planner")
+    def planner_agent():
+        pass
+
+    @task(name="after_agent")
+    def task_after_agent():
+        pass
+
+    @workflow(name="rag")
+    def rag_workflow():
+        planner_agent()
+        task_after_agent()
+
+    rag_workflow()
+
+    spans = exporter.get_finished_spans()
+    by_name = {span.name: span for span in spans}
+
+    sibling_span = by_name["after_agent.task"]
+    assert sibling_span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "rag"
+    assert GEN_AI_AGENT_NAME not in sibling_span.attributes
+
+    assert by_name["planner.agent"].attributes[GEN_AI_AGENT_NAME] == "planner"
+
+
+def test_workflow_name_does_not_leak_after_workflow_returns(exporter):
+    """The same restore applies to @workflow: a later task is not tagged with it."""
+
+    @workflow(name="rag")
+    def rag_workflow():
+        pass
+
+    @task(name="standalone")
+    def standalone_task():
+        pass
+
+    rag_workflow()
+    standalone_task()
+
+    spans = exporter.get_finished_spans()
+    by_name = {span.name: span for span in spans}
+
+    workflow_span = by_name["rag.workflow"]
+    assert workflow_span.attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "rag"
+
+    standalone_span = by_name["standalone.task"]
+    assert SpanAttributes.TRACELOOP_WORKFLOW_NAME not in standalone_span.attributes
