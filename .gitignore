@@ -179,7 +179,12 @@ cython_debug/
 chroma.sqlite3
 
 # Claude
-.claude
+.claude/*
+!.claude/skills/
 
 # Development files
 packages/sample-app/sample_app/development/
+
+# semconv contract build scratch (vendored registry itself IS committed)
+.semconv/.build/
+.semconv/registry/.build/

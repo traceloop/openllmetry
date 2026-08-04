@@ -655,7 +655,7 @@ def test_mistralai_chat_with_cache_tokens(
     assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
     assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 18
     assert (
-        mistral_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
+        mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
         == 10
     )
 

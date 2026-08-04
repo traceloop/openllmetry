@@ -1,0 +1,845 @@
+file_format: definition/2
+attribute_groups:
+  - id: attributes.gen_ai.error
+    visibility: internal
+    attributes:
+      - ref: error.type
+        requirement_level:
+          conditionally_required: "If the operation ended in an error."
+        note: |
+          The `error.type` SHOULD match the error code returned by the Generative AI provider or the client library,
+          the canonical name of exception that occurred, or another low-cardinality error identifier.
+          Instrumentations SHOULD document the list of errors they report.
+
+  - id: attributes.gen_ai.common
+    visibility: internal
+    attributes:
+      - ref: gen_ai.request.model
+        requirement_level:
+          conditionally_required: If available.
+        note: >
+          The name of the GenAI model a request is being made to. If the model is supplied by a vendor,
+          then the value must be the exact name of the model requested. If the model is a fine-tuned
+          custom model, the value should have a more specific name than the base model that's been fine-tuned.
+      - ref: gen_ai.operation.name
+        requirement_level: required
+
+  - id: attributes.gen_ai.address_and_port
+    visibility: internal
+    attributes:
+      - ref: server.address
+        brief: GenAI server address.
+        requirement_level: recommended
+      - ref: server.port
+        brief: GenAI server port.
+        requirement_level:
+          conditionally_required: If `server.address` is set.
+
+  - id: attributes.gen_ai.usage
+    visibility: internal
+    attributes:
+      - ref: gen_ai.usage.input_tokens
+        requirement_level: recommended
+      - ref: gen_ai.usage.cache_read.input_tokens
+        requirement_level: recommended
+      - ref: gen_ai.usage.cache_creation.input_tokens
+        requirement_level: recommended
+      - ref: gen_ai.usage.output_tokens
+        requirement_level: recommended
+
+  - id: attributes.gen_ai.content
+    visibility: internal
+    attributes:
+      - ref: gen_ai.system_instructions
+        requirement_level: opt_in
+      - ref: gen_ai.input.messages
+        requirement_level: opt_in
+      - ref: gen_ai.output.messages
+        requirement_level: opt_in
+      - ref: gen_ai.tool.definitions
+        requirement_level: opt_in
+
+  - id: attributes.gen_ai.invoked_agent.internal.common
+    visibility: internal
+    attributes:
+      - ref: gen_ai.agent.name
+        brief: The human-readable name of the invoked GenAI agent.
+        requirement_level:
+          conditionally_required: When available.
+      # not including agent description since this group is shared between 
+      # spans and metrics and description is not needed on metrics
+      - ref: gen_ai.request.model
+        brief: The name of the GenAI model configured for the agent.
+        requirement_level:
+          recommended: If applicable.
+        note: >
+            This attribute SHOULD be populated if and only if the instrumented
+            library allows to set only a single model per agent. It SHOULD NOT
+            be populated for agents that support multiple models or dynamic selection.
+
+  - id: attributes.gen_ai.invoke_agent.common
+    visibility: internal
+    attributes:
+      - ref_group: attributes.gen_ai.usage
+      - ref_group: attributes.gen_ai.content
+      - ref_group: attributes.gen_ai.error
+      - ref_group: attributes.gen_ai.invoked_agent.internal.common
+      - ref: gen_ai.operation.name
+        requirement_level: required
+      - ref: gen_ai.request.max_tokens
+        requirement_level: recommended
+      - ref: gen_ai.request.choice.count
+        requirement_level:
+          conditionally_required: If available, in the request, and !=1.
+      - ref: gen_ai.request.temperature
+        requirement_level: recommended
+      - ref: gen_ai.request.top_p
+        requirement_level: recommended
+      - ref: gen_ai.request.stop_sequences
+        requirement_level: recommended
+      - ref: gen_ai.request.frequency_penalty
+        requirement_level: recommended
+      - ref: gen_ai.request.presence_penalty
+        requirement_level: recommended
+      - ref: gen_ai.request.seed
+        requirement_level:
+          conditionally_required: If applicable and if the request includes a seed.
+      - ref: gen_ai.output.type
+        requirement_level:
+          conditionally_required: When applicable and if the request includes an output format.
+      - ref: gen_ai.response.finish_reasons
+        requirement_level: recommended
+      - ref: gen_ai.conversation.id
+        requirement_level:
+          conditionally_required: When available.
+        note: |
+          Instrumentations SHOULD populate conversation id when they have an identifier
+          for the conversation readily available for a given operation, for example:
+
+          - when client framework being instrumented manages conversation history
+          (see [LlamaIndex chat store](https://docs.llamaindex.ai/en/stable/module_guides/storing/chat_stores/))
+          - when instrumenting GenAI client libraries that maintain conversation on the backend side
+          (see [AWS Bedrock agent sessions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-session-state.html),
+          [OpenAI Assistant threads](https://platform.openai.com/docs/api-reference/threads))
+
+          When no identifier for the conversation is available, instrumentations SHOULD NOT
+          populate conversation id. For example, a new UUID, a trace identifier, or a hash
+          of request content SHOULD NOT be used as a fallback value.
+
+          Application developers that manage conversation history MAY add conversation id to GenAI and other
+          spans or logs using custom span or log record processors or hooks provided by instrumentation
+          libraries.
+      - ref: gen_ai.data_source.id
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.agent.description
+        brief: The free-form description of the invoked GenAI agent.
+        requirement_level:
+          conditionally_required: When available.
+
+
+  - id: attributes.gen_ai.execute_tool.common
+    visibility: internal
+    attributes:
+      - ref: gen_ai.tool.name
+        requirement_level: required
+      - ref: gen_ai.tool.type
+        requirement_level:
+          recommended: If available.
+      - ref: gen_ai.agent.name
+        brief: The human-readable name of the agent executing the tool.
+        requirement_level:
+          conditionally_required: When applicable.
+
+spans:
+  - type: gen_ai.inference.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `{gen_ai.operation.name} {gen_ai.request.model}`.
+        Semantic conventions for individual GenAI systems and frameworks MAY specify different span name format
+        and MUST follow the overall [guidelines for span names](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.56.0/specification/trace/api.md#span).
+    brief: >
+      This span represents a client call to Generative AI model or service that generates
+      a response or requests a tool call based on the input prompt.
+    note: |
+      **Span kind** SHOULD be `CLIENT` and MAY be set to `INTERNAL` on spans representing
+      call to models running in the same process. It's RECOMMENDED to use `CLIENT` kind
+      when the GenAI system being instrumented usually runs in a different process than its
+      client or when the GenAI call happens over instrumented protocol such as HTTP.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.common
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.usage
+      - ref_group: attributes.gen_ai.content
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.request.max_tokens
+        requirement_level: recommended
+      - ref: gen_ai.request.choice.count
+        requirement_level:
+          conditionally_required: If available, in the request, and !=1.
+      - ref: gen_ai.request.temperature
+        requirement_level: recommended
+      - ref: gen_ai.request.top_k
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.request.top_p
+        requirement_level: recommended
+      - ref: gen_ai.request.stop_sequences
+        requirement_level: recommended
+      - ref: gen_ai.request.frequency_penalty
+        requirement_level: recommended
+      - ref: gen_ai.request.presence_penalty
+        requirement_level: recommended
+      - ref: gen_ai.request.seed
+        requirement_level:
+          conditionally_required: If applicable and if the request includes a seed.
+      - ref: gen_ai.output.type
+        requirement_level:
+          conditionally_required: When applicable and if the request includes an output format.
+      - ref: gen_ai.request.stream
+        requirement_level:
+          conditionally_required: If and only if the request is streaming. If unset, the request is assumed to be non-streaming.
+      - ref: gen_ai.request.reasoning.level
+        requirement_level:
+          recommended: When applicable.
+      - ref: gen_ai.request.previous_response.id
+        requirement_level:
+          recommended: When available and if the request references a previous response.
+      - ref: gen_ai.response.id
+        requirement_level: recommended
+      - ref: gen_ai.response.model
+        requirement_level: recommended
+        note: >
+          If available. The name of the GenAI model that provided the response. If the model is supplied by a vendor,
+          then the value must be the exact name of the model actually used. If the model is a
+          fine-tuned custom model, the value should have a more specific name than the base model that's been fine-tuned.
+      - ref: gen_ai.response.finish_reasons
+        requirement_level: recommended
+      - ref: gen_ai.response.time_to_first_chunk
+        requirement_level:
+          recommended: If the request was a streaming request.
+      - ref: gen_ai.usage.reasoning.output_tokens
+        requirement_level:
+          recommended: When applicable.
+        note: >
+          The value SHOULD be included in `gen_ai.usage.output_tokens`.
+      - ref: gen_ai.prompt.name
+        requirement_level:
+          conditionally_required: when a named prompt template is used
+      - ref: gen_ai.prompt.version
+        requirement_level:
+          conditionally_required: when `gen_ai.prompt.name` is set and a version is available
+      - ref: gen_ai.prompt.variable
+        requirement_level: opt_in
+      - ref: gen_ai.conversation.id
+        requirement_level:
+          conditionally_required: When available.
+        note: |
+          Instrumentations SHOULD populate conversation id when they have an identifier
+          for the conversation readily available for a given operation, for example:
+
+          - when client framework being instrumented manages conversation history
+          (see [LlamaIndex chat store](https://docs.llamaindex.ai/en/stable/module_guides/storing/chat_stores/))
+          - when instrumenting GenAI client libraries that maintain conversation on the backend side
+          (see [AWS Bedrock agent sessions](https://docs.aws.amazon.com/bedrock/latest/userguide/agents-session-state.html),
+          [OpenAI Assistant threads](https://platform.openai.com/docs/api-reference/threads))
+
+          When no identifier for the conversation is available, instrumentations SHOULD NOT
+          populate conversation id. For example, a new UUID, a trace identifier, or a hash
+          of request content SHOULD NOT be used as a fallback value.
+
+          Application developers that manage conversation history MAY add conversation id to GenAI and other
+          spans or logs using custom span or log record processors or hooks provided by instrumentation
+          libraries.
+      - ref: gen_ai.conversation.compacted
+        requirement_level:
+          recommended: when available
+      - ref: gen_ai.provider.name
+        # TODO: Not adding to common attributes because of https://github.com/open-telemetry/weaver/issues/479
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.operation.name
+        sampling_relevant: true
+      - ref: server.address
+        sampling_relevant: true
+      - ref: server.port
+        sampling_relevant: true
+      - ref: gen_ai.request.model
+        sampling_relevant: true
+
+  - type: gen_ai.embeddings.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: >
+        **Span name** SHOULD be `{gen_ai.operation.name} {gen_ai.request.model}`.
+    brief: >
+      Describes GenAI embeddings span - a request to a Generative AI model or service
+      that generates an embeddings based on the input.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `embeddings`.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.common
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.provider.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.operation.name
+        sampling_relevant: true
+      - ref: server.address
+        sampling_relevant: true
+      - ref: server.port
+        sampling_relevant: true
+      - ref: gen_ai.request.model
+        sampling_relevant: true
+      - ref: gen_ai.request.encoding_formats
+        requirement_level: recommended
+      - ref: gen_ai.usage.input_tokens
+        requirement_level: recommended
+      - ref: gen_ai.embeddings.dimension.count
+        requirement_level: recommended
+      - ref: gen_ai.response.model
+        requirement_level: recommended
+
+  - type: gen_ai.retrieval.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `{gen_ai.operation.name} {gen_ai.data_source.id}`. Semantic conventions
+        for individual GenAI providers and retrievers MAY specify different span name format.
+    brief: >
+      Describes GenAI retrieval span - a request to a Generative AI service or framework
+      that retrieves relevant information or context from a vector database or search system.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `retrieval`.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.common
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.retrieval.query.text
+        requirement_level: opt_in
+      - ref: gen_ai.retrieval.top_k
+        requirement_level: recommended
+      - ref: gen_ai.retrieval.documents
+        requirement_level: opt_in
+      - ref: gen_ai.provider.name
+        requirement_level:
+          conditionally_required: When applicable.
+      - ref: gen_ai.data_source.id
+        requirement_level:
+          conditionally_required: When applicable.
+
+  - type: gen_ai.fetch_response.client
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `{gen_ai.operation.name}`. The response identifier is high
+        cardinality, so it is not included in the span name. Semantic conventions for individual
+        GenAI providers MAY specify a different span name format.
+    brief: >
+      Describes a request to a Generative AI provider that fetches a
+      previously generated model response by its identifier.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `fetch_response`.
+
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.provider.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.operation.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: server.address
+        sampling_relevant: true
+      - ref: server.port
+        sampling_relevant: true
+      - ref: gen_ai.response.id
+        requirement_level: required
+        note: >
+          The identifier of the response being fetched, as used in the request and returned in the response.
+      - ref: gen_ai.request.stream_cursor
+        requirement_level:
+          conditionally_required: When the fetch resumes a streamed response from a prior position.
+        note: >
+          The cursor identifying the last streamed event already received, used to resume a
+          streamed fetch from that position. Maps to `starting_after` in the OpenAI Responses
+          API and `last_event_id` in the Google GenAI Interactions API.
+      - ref: gen_ai.system_instructions
+        requirement_level: opt_in
+        note: >
+          Only content carried on the fetched response is recorded. A fetched response contains
+          the system instructions, output messages, and tool definitions but not the original
+          input messages, so `gen_ai.input.messages` is not set on this span.
+      - ref: gen_ai.output.messages
+        requirement_level: opt_in
+      - ref: gen_ai.tool.definitions
+        requirement_level: opt_in
+      - ref: gen_ai.response.model
+        requirement_level: recommended
+      - ref: gen_ai.response.status
+        requirement_level: recommended
+        note: >
+          The lifecycle status of the fetched response as reported by the provider, mapped onto the
+          cross-provider enum. For a background or streamed response this conveys whether generation
+          is still queued or in progress, or has reached a terminal state such as completed, failed,
+          or cancelled.
+      - ref: gen_ai.response.finish_reasons
+        requirement_level: recommended
+        note: >
+          Conveys the outcome of the original generation as recorded on the fetched response,
+          derived from its status: a completed generation maps to its stop reason, an incomplete
+          one to why it was cut short (for example `length` or `content_filter`), and a failed or
+          cancelled generation to `error`.
+
+  - type: gen_ai.memory.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `{gen_ai.operation.name}`.
+    brief: >
+      Describes a memory operation, including memory store lifecycle operations and memory record operations.
+    note: |
+      The `gen_ai.operation.name` SHOULD be one of `create_memory_store`, `search_memory`, `create_memory`,
+      `update_memory`, `upsert_memory`, `delete_memory`, or `delete_memory_store`.
+
+      `create_memory_store` and `delete_memory_store` cover memory store lifecycle operations.
+      `create_memory`, `update_memory`, `upsert_memory`, `search_memory`, and `delete_memory`
+      cover memory record operations.
+
+      Use `create_memory` when the caller requests creation of new memory records.
+      Use `update_memory` when the caller requests modification of known existing memory records.
+      Use `upsert_memory` when the caller invokes a public API that may create, update, or consolidate
+      memory records without the caller choosing which.
+
+      **Span kind** SHOULD be `CLIENT` and MAY be set to `INTERNAL` on spans representing
+      calls to memory systems running in the same process. It's RECOMMENDED to use `CLIENT` kind
+      when the memory system being instrumented usually runs in a different process than its
+      client or when the memory call happens over instrumented protocol such as HTTP.
+
+      For `delete_memory`, lack of `gen_ai.memory.record.id` may indicate that
+      the operation intends to delete all memory records in the specified store.
+    stability: development
+    attributes:
+      - ref: gen_ai.operation.name
+        requirement_level: required
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.provider.name
+        requirement_level:
+          conditionally_required: If the operation is handled by a named external GenAI provider or service.
+      - ref: gen_ai.memory.store.id
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.memory.record.id
+        requirement_level:
+          conditionally_required: When the operation applies to a specific memory record.
+      - ref: gen_ai.memory.record.count
+        requirement_level:
+          recommended: If the operation involves memory records and the count is available.
+      - ref: gen_ai.memory.query.text
+        requirement_level: opt_in
+      - ref: gen_ai.memory.records
+        requirement_level: opt_in
+
+  - type: gen_ai.create_agent.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `create_agent {gen_ai.agent.name}`.
+        Semantic conventions for individual GenAI systems and frameworks MAY specify different span name format.
+    brief: >
+      Describes GenAI agent creation and is usually applicable when working
+      with remote agent services.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `create_agent`.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.common
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.provider.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.operation.name
+        sampling_relevant: true
+      - ref: server.address
+        sampling_relevant: true
+      - ref: server.port
+        sampling_relevant: true
+      - ref: gen_ai.request.model
+        sampling_relevant: true
+      - ref: gen_ai.agent.id
+        brief: The stable unique identifier of the GenAI agent created during this operation.
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.agent.name
+        brief: The human-readable name of the GenAI agent created during this operation.
+        requirement_level:
+          conditionally_required: If provided by the application.
+        sampling_relevant: true
+      - ref: gen_ai.agent.description
+        brief: The free-form description of the GenAI agent created during this operation.
+        requirement_level:
+          conditionally_required: If provided by the application.
+      - ref: gen_ai.agent.version
+        brief: The version of the GenAI agent created during this operation.
+        requirement_level:
+          conditionally_required: If provided by the application.
+      - ref: gen_ai.system_instructions
+        requirement_level: opt_in
+        note: ""  # note is not needed here
+
+
+  - type: gen_ai.invoke_agent.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD be `invoke_agent {gen_ai.agent.name}` if `gen_ai.agent.name` is readily available.
+        When `gen_ai.agent.name` is not available, it SHOULD be `invoke_agent`.
+        Semantic conventions for individual GenAI systems and frameworks MAY specify different span name format.
+    brief: >
+      Describes GenAI agent invocation over a remote service.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `invoke_agent`.
+
+      Examples: OpenAI Assistants API, AWS Bedrock Agents.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.invoke_agent.common
+      - ref_group: attributes.gen_ai.address_and_port
+      - ref: gen_ai.provider.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.operation.name
+        sampling_relevant: true
+      - ref: gen_ai.request.model
+        sampling_relevant: true
+      - ref: gen_ai.agent.name
+        sampling_relevant: true
+      - ref: server.address
+        sampling_relevant: true
+      - ref: server.port
+        sampling_relevant: true
+      - ref: gen_ai.request.previous_response.id
+        requirement_level:
+          recommended: When available and if the request references a previous response.
+      - ref: gen_ai.agent.id
+        brief: The stable unique identifier of the invoked GenAI agent.
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.agent.version
+        brief: The version of the invoked GenAI agent.
+        requirement_level:
+          conditionally_required: When available.
+
+  - type: gen_ai.invoke_agent.internal
+    requirement_level: recommended
+    kind: internal
+    name:
+      note: |
+        **Span name** SHOULD be `invoke_agent {gen_ai.agent.name}` if `gen_ai.agent.name` is readily available.
+        When `gen_ai.agent.name` is not available, it SHOULD be `invoke_agent`.
+        Semantic conventions for individual GenAI systems and frameworks MAY specify different span name format.
+    brief: >
+      Describes GenAI agent invocation within the same process.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `invoke_agent`.
+
+      Examples: LangChain agents, CrewAI agents.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.invoke_agent.common
+      - ref: gen_ai.operation.name
+        sampling_relevant: true
+      - ref: gen_ai.request.model
+        sampling_relevant: true
+      - ref: gen_ai.agent.name
+        sampling_relevant: true
+
+  - type: gen_ai.execute_tool.internal
+    requirement_level: recommended
+    kind: internal
+    name:
+      note: >
+        **Span name** SHOULD be `execute_tool {gen_ai.tool.name}`.
+    brief: Describes tool execution span.
+    note: |
+      `gen_ai.operation.name` SHOULD be `execute_tool`.
+
+      GenAI instrumentations that can instrument tool execution calls SHOULD do so,
+      unless another instrumentation can reliably cover all supported tool types.
+      MCP tool executions may also be traced by the
+      [corresponding MCP instrumentation](/docs/gen-ai/mcp.md#client).
+
+      Tools are often executed directly by application code. Application developers
+      are encouraged to follow this semantic convention for tools invoked by their
+      own code and to manually instrument any tool calls that automatic
+      instrumentations do not cover.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.error
+      - ref_group: attributes.gen_ai.execute_tool.common
+      - ref: gen_ai.operation.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.tool.name
+        sampling_relevant: true
+      - ref: gen_ai.tool.call.id
+        requirement_level:
+          recommended: If available.
+      - ref: gen_ai.tool.description
+        requirement_level:
+          recommended: If available.
+      - ref: gen_ai.tool.type
+        sampling_relevant: true
+      - ref: gen_ai.tool.call.arguments
+        requirement_level: opt_in
+      - ref: gen_ai.tool.call.result
+        requirement_level: opt_in
+
+  - type: gen_ai.invoke_workflow.internal
+    requirement_level: recommended
+    kind: internal
+    name:
+      note: >
+        **Span name** SHOULD be `invoke_workflow {gen_ai.workflow.name}`.
+    brief: >
+      Represents an operation that executes a coordinated process composed of multiple agents
+      or other operations involving generative AI.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `invoke_workflow`.
+
+      This span SHOULD be reported by the instrumentations when they can
+      reliably determine that invocation is a workflow (i.e. groups several agent
+      invocations) and SHOULD NOT be reported by instrumentations that
+      can't distinguish it `invoke_workflow` from `invoke_agent`.
+      eg: Some frameworks like ADK have workflow agents that orchestrate other agents
+      and report `invoke_agent` spans, so `invoke_workflow` SHOULD NOT be reported by such instrumentations.
+      Conversely, frameworks like CrewAI have a distinct concept of crew (similar to workflow)
+      that is separate from individual agents, so they SHOULD report `invoke_workflow` spans.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.operation.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.workflow.name
+        requirement_level:
+          conditionally_required: When available.
+      - ref: gen_ai.input.messages
+        requirement_level: opt_in
+      - ref: gen_ai.output.messages
+        requirement_level: opt_in
+
+  - type: gen_ai.plan.internal
+    requirement_level: recommended
+    kind: internal
+    name:
+      note: >
+        **Span name** SHOULD be `plan {gen_ai.agent.name}` if `gen_ai.agent.name` is readily available.
+        When `gen_ai.agent.name` is not available, it SHOULD be `plan`.
+    brief: >
+      Represents an agent planning or task decomposition phase.
+    note: |
+      The `gen_ai.operation.name` SHOULD be `plan`.
+
+      A plan span represents the decision phase where an agent formulates
+      a strategy before executing it. The LLM call that generates the plan
+      SHOULD be a child of the plan span, and the tool or task spans produced
+      from the plan are typically sibling operations under the same
+      `invoke_agent` span.
+
+      This span SHOULD be reported by instrumentations when they can reliably determine
+      that the operation being instrumented is planning or task decomposition, and SHOULD
+      NOT be reported when the instrumentation cannot distinguish planning from generic
+      reasoning or normal inference.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.operation.name
+        requirement_level: required
+        sampling_relevant: true
+      - ref: gen_ai.agent.name
+        brief: The human-readable name of the agent performing the planning.
+        requirement_level:
+          conditionally_required: When available.
+
+span_refinements:
+  - id: openai.inference.client
+    ref: gen_ai.inference.client
+    brief: >
+      Semantic Conventions for [OpenAI](https://openai.com/) client spans extend
+      and override the semantic conventions for [Gen AI Spans](gen-ai-spans.md).
+    note: |
+      `gen_ai.provider.name` MUST be set to `"openai"` and SHOULD be provided **at span creation time**.
+    stability: development
+    attributes:
+      # TODO https://github.com/open-telemetry/weaver/pull/1407: use a shared ref_group again once note overrides are preserved.
+      - ref: gen_ai.output.type
+        note: |
+          This attribute SHOULD be set to the output type requested by the client:
+
+          - `json` for structured outputs with defined or undefined schema
+          - `image` for image output
+          - `speech` for speech output
+          - `text` for plain text output
+
+          The attribute specifies the output modality and not the actual output format.
+          For example, if an image is requested, the actual output could be a
+          URL pointing to an image file.
+
+          Additional output format details may be recorded in the future in the
+          `gen_ai.output.{type}.*` attributes.
+      - ref: gen_ai.request.model
+        requirement_level: required
+      - ref: gen_ai.usage.input_tokens
+        note: >
+          The total input token count is returned by `usage.input_tokens` or a similar property in the model response.
+      - ref: gen_ai.usage.cache_read.input_tokens
+        note: >
+          Corresponds to `usage.input_tokens_details.cached_tokens` or a similar property in the model response.
+      - ref: gen_ai.usage.reasoning.output_tokens
+        note: >
+          Corresponds to `usage.output_tokens_details.reasoning_tokens` in the model response.
+      - ref: gen_ai.request.reasoning.level
+        note: >
+          Corresponds to the [`reasoning.effort`](https://platform.openai.com/docs/guides/reasoning#reasoning-effort) request parameter.
+      - ref: openai.request.service_tier
+        requirement_level:
+          conditionally_required: If the request includes a service_tier and the value is not 'auto'.
+      - ref: openai.response.service_tier
+        requirement_level:
+          conditionally_required: If the response was received and includes a service_tier.
+      - ref: openai.response.system_fingerprint
+        requirement_level: recommended
+      - ref: openai.api.type
+        requirement_level: recommended
+
+  - id: openai.fetch_response.client
+    ref: gen_ai.fetch_response.client
+    brief: >
+      Semantic Conventions for the [OpenAI](https://openai.com/) [Get a model response](https://platform.openai.com/docs/api-reference/responses/get)
+      operation extend and override the semantic conventions for [Gen AI Spans](gen-ai-spans.md).
+    note: |
+      Describes the [OpenAI Get a model response](https://platform.openai.com/docs/api-reference/responses/get)
+      operation, which fetches a stored response from the Responses API by its identifier. No
+      inference is performed and no tokens are consumed by this operation.
+
+      `gen_ai.provider.name` MUST be set to `"openai"` and SHOULD be provided **at span creation time**.
+    stability: development
+    attributes:
+      - ref: openai.api.type
+        requirement_level: recommended
+        note: >
+          For this operation `openai.api.type` SHOULD be set to `responses`.
+      - ref: gen_ai.response.status
+        requirement_level: recommended
+        note: >
+          Set from the fetched response `status` field, whose values (`queued`, `in_progress`,
+          `completed`, `incomplete`, `failed`, `cancelled`) map directly onto this attribute.
+      - ref: gen_ai.response.finish_reasons
+        requirement_level: recommended
+        note: >
+          Derived from the fetched response `status`: a `completed` response maps to its stop
+          reason, a `failed` or `cancelled` response to `error`, and an `incomplete` response to
+          its `incomplete_details.reason` (for example `max_output_tokens` maps to `length` and
+          `content_filter` to `content_filter`).
+      - ref: openai.response.service_tier
+        requirement_level:
+          conditionally_required: If the response was received and includes a service_tier.
+
+  - id: azure.ai.inference.client
+    ref: gen_ai.inference.client
+    brief: >
+      Semantic Conventions for [Azure AI Inference](https://learn.microsoft.com/rest/api/microsoft-foundry/modelinference/)
+      client spans extend and override the semantic conventions for [Gen AI Spans](gen-ai-spans.md).
+    note: |
+      `gen_ai.provider.name` MUST be set to `"azure.ai.inference"` and SHOULD be provided **at span creation time**.
+    stability: development
+    attributes:
+      # TODO https://github.com/open-telemetry/weaver/pull/1407: use a shared ref_group again once note overrides are preserved.
+      - ref: gen_ai.output.type
+        note: |
+          This attribute SHOULD be set to the output type requested by the client:
+
+          - `json` for structured outputs with defined or undefined schema
+          - `image` for image output
+          - `speech` for speech output
+          - `text` for plain text output
+
+          The attribute specifies the output modality and not the actual output format.
+          For example, if an image is requested, the actual output could be a
+          URL pointing to an image file.
+
+          Additional output format details may be recorded in the future in the
+          `gen_ai.output.{type}.*` attributes.
+      - ref: azure.resource_provider.namespace
+        note: >
+          When `azure.resource_provider.namespace` attribute is populated, it MUST
+          be set to `Microsoft.CognitiveServices` for all operations performed by Azure AI Inference clients.
+        examples: ["Microsoft.CognitiveServices"]
+      - ref: gen_ai.usage.input_tokens
+        brief: >
+          The number of prompt tokens as reported in the usage prompt_tokens property of the response.
+      - ref: gen_ai.usage.output_tokens
+        brief: >
+          The number of completion tokens as reported in the usage completion_tokens property of the response.
+      - ref: server.port
+        requirement_level:
+          conditionally_required: If not default (443).
+
+  - id: anthropic.inference.client
+    ref: gen_ai.inference.client
+    brief: >
+      Semantic Conventions for [Anthropic](https://www.anthropic.com/) client spans extend
+      and override the semantic conventions for [Gen AI Spans](gen-ai-spans.md).
+    note: |
+      `gen_ai.provider.name` MUST be set to `"anthropic"` and SHOULD be provided **at span creation time**.
+    stability: development
+    attributes:
+      - ref: gen_ai.request.top_k
+        requirement_level: recommended
+      - ref: gen_ai.request.reasoning.level
+        note: >
+          Corresponds to the [`output_config.effort`](https://docs.anthropic.com/en/docs/build-with-claude/effort) request parameter.
+      - ref: gen_ai.usage.input_tokens
+        note: >
+          Anthropic `input_tokens` excludes cached tokens. Compute:
+          `gen_ai.usage.input_tokens = input_tokens + cache_read_input_tokens + cache_creation_input_tokens`
+      - ref: gen_ai.usage.cache_read.input_tokens
+        note: >
+          Anthropic reports this separately from `input_tokens`.
+          This value MUST be added to the Anthropic `input_tokens` to compute `gen_ai.usage.input_tokens`.
+      - ref: gen_ai.usage.cache_creation.input_tokens
+        note: >
+          Anthropic reports this separately from `input_tokens`.
+          This value MUST be added to the Anthropic `input_tokens` to compute `gen_ai.usage.input_tokens`.
+
+  - id: aws.bedrock.inference.client
+    ref: gen_ai.inference.client
+    brief: >
+      Semantic Conventions for [AWS Bedrock](https://aws.amazon.com/bedrock/) client spans extend
+      and override the semantic conventions for [Gen AI Spans](gen-ai-spans.md).
+    note: |
+      `gen_ai.provider.name` MUST be set to `"aws.bedrock"` and SHOULD be provided **at span creation time**.
+    stability: development
+    attributes:
+      - ref: gen_ai.request.top_k
+        requirement_level: recommended
+      - ref: aws.bedrock.guardrail.id
+        requirement_level: required
+      - ref: aws.bedrock.knowledge_base.id
+        requirement_level: recommended

@@ -1,0 +1,44 @@
+{
+    "$defs": {
+        "RetrievalDocument": {
+            "additionalProperties": true,
+            "description": "Represents a single document retrieved from a vector database or search system.",
+            "properties": {
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "A unique identifier for the document.",
+                    "title": "Id"
+                },
+                "score": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "The relevance score of the document.",
+                    "title": "Score"
+                }
+            },
+            "title": "RetrievalDocument",
+            "type": "object"
+        }
+    },
+    "description": "Represents the list of documents retrieved from a vector database or search system.",
+    "items": {
+        "$ref": "#/$defs/RetrievalDocument"
+    },
+    "title": "RetrievalDocuments",
+    "type": "array"
+}

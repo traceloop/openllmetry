@@ -195,3 +195,73 @@ jobs:
           find packages -name ".pytest_cache" -type d -exec rm -rf {} + || true
           find packages -name "__pycache__" -type d -exec rm -rf {} + || true
           find packages -name "*.pyc" -delete || true
+
+  semconv-contract:
+    name: Semconv Contract
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      # Proves the vendored registry still matches the pinned upstream SHA. Without
+      # this, a hand-edited registry plus a regenerated artifact passes `check`
+      # cleanly and silently weakens the contract.
+      - name: Verify vendored registry matches the pinned SHA
+        run: make -C .semconv verify-vendor
+
+      # Regenerates the committed contract module from the vendored registry and
+      # fails if it differs. This is what stops _contract/generated.py drifting
+      # from .semconv/registry/ without anyone noticing.
+      - name: Verify committed contract is current
+        run: make -C .semconv check
+
+  agent-substrate:
+    name: Agent Substrate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci --cache ~/.npm --prefer-offline
+      - name: Clean npm cache
+        run: npm cache clean --force || true
+
+      - run: npx nx run agent-substrate:install
+
+      # Enforces the substrate's portability invariants: CLAUDE.md stays a symlink,
+      # no knowledge accumulates under .claude/, and the OKF bundle stays valid.
+      - name: Verify agent substrate
+        run: npx nx run agent-substrate:test

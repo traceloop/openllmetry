@@ -1,0 +1,65 @@
+{
+    "$defs": {
+        "MemoryRecord": {
+            "additionalProperties": true,
+            "description": "Represents a single memory record stored in or retrieved from a memory store.",
+            "properties": {
+                "content": {
+                    "description": "The content of the memory record.",
+                    "title": "Content"
+                },
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "A unique identifier for the memory record.",
+                    "title": "Id"
+                },
+                "metadata": {
+                    "anyOf": [
+                        {
+                            "additionalProperties": true,
+                            "type": "object"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Provider-specific metadata associated with the memory record.",
+                    "title": "Metadata"
+                },
+                "score": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "The relevance score of the memory record when populated on search results.",
+                    "title": "Score"
+                }
+            },
+            "required": [
+                "content"
+            ],
+            "title": "MemoryRecord",
+            "type": "object"
+        }
+    },
+    "description": "Represents the list of memory records stored in or retrieved from a memory store.",
+    "items": {
+        "$ref": "#/$defs/MemoryRecord"
+    },
+    "title": "MemoryRecords",
+    "type": "array"
+}

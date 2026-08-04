@@ -1,0 +1,921 @@
+file_format: definition/2
+attributes:
+  - key: gen_ai.provider.name
+    type:
+      members:
+        - id: openai
+          stability: development
+          value: "openai"
+          brief: '[OpenAI](https://openai.com/)'
+        - id: gcp.gen_ai
+          stability: development
+          value: "gcp.gen_ai"
+          brief: "Any Google generative AI endpoint"
+          note: >
+            May be used when specific backend is unknown.
+        - id: gcp.vertex_ai
+          stability: development
+          value: "gcp.vertex_ai"
+          brief: "[Vertex AI](https://cloud.google.com/vertex-ai)"
+          note: >
+            Used when accessing the 'aiplatform.googleapis.com' endpoint.
+        - id: gcp.gemini
+          stability: development
+          value: "gcp.gemini"
+          brief: '[Gemini](https://cloud.google.com/products/gemini)'
+          note: >
+            Used when accessing the 'generativelanguage.googleapis.com' endpoint.
+            Also known as the AI Studio API.
+        - id: anthropic
+          stability: development
+          value: "anthropic"
+          brief: '[Anthropic](https://www.anthropic.com/)'
+        - id: cohere
+          stability: development
+          value: "cohere"
+          brief: '[Cohere](https://cohere.com/)'
+        - id: azure.ai.inference
+          stability: development
+          value: "azure.ai.inference"
+          brief: 'Azure AI Inference'
+        - id: azure.ai.openai
+          stability: development
+          value: "azure.ai.openai"
+          brief: '[Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)'
+        - id: ibm.watsonx.ai
+          stability: development
+          value: "ibm.watsonx.ai"
+          brief: '[IBM Watsonx AI](https://www.ibm.com/products/watsonx-ai)'
+        - id: aws.bedrock
+          stability: development
+          value: "aws.bedrock"
+          brief: '[AWS Bedrock](https://aws.amazon.com/bedrock)'
+        - id: perplexity
+          stability: development
+          value: "perplexity"
+          brief: '[Perplexity](https://www.perplexity.ai/)'
+        - id: x_ai
+          stability: development
+          value: "x_ai"
+          brief: '[xAI](https://x.ai/)'
+        - id: deepseek
+          stability: development
+          value: "deepseek"
+          brief: '[DeepSeek](https://www.deepseek.com/)'
+        - id: groq
+          stability: development
+          value: "groq"
+          brief: '[Groq](https://groq.com/)'
+        - id: mistral_ai
+          stability: development
+          value: "mistral_ai"
+          brief: '[Mistral AI](https://mistral.ai/)'
+        - id: moonshot_ai
+          stability: development
+          value: "moonshot_ai"
+          brief: '[Moonshot AI](https://www.moonshot.ai/)'
+
+    brief: The Generative AI provider as identified by the client or server instrumentation.
+    note: |
+      Semantic conventions for individual GenAI operations SHOULD clarify which
+      kinds of providers (e.g. inference, embeddings, retrieval, memory, hosted
+      agent providers) apply when it is not clear from context.
+
+      The attribute SHOULD be set based on the instrumentation's best knowledge
+      and may differ from the actual upstream provider. For example, a client SDK
+      may be configured against a proxy or hosting platform that transparently
+      relays requests to a different provider.
+
+      The `gen_ai.provider.name` attribute acts as a discriminator that
+      identifies the GenAI telemetry format flavor specific to that provider
+      within GenAI semantic conventions.
+      It SHOULD be set consistently with provider-specific attributes and signals.
+      For example, GenAI spans, metrics, and events related to AWS Bedrock
+      should have the `gen_ai.provider.name` set to `aws.bedrock` and include
+      applicable `aws.bedrock.*` attributes and are not expected to include
+      `openai.*` attributes.
+    stability: development
+  - key: gen_ai.request.model
+    type: string
+    brief: The name of the GenAI model a request is being made to.
+    examples: 'gpt-4'
+    stability: development
+  - key: gen_ai.request.max_tokens
+    type: int
+    brief: The maximum number of tokens the model generates for a request.
+    examples: [100]
+    stability: development
+  - key: gen_ai.request.choice.count
+    type: int
+    brief: The target number of candidate completions to return.
+    examples: [3]
+    stability: development
+  - key: gen_ai.request.temperature
+    type: double
+    brief: The temperature setting for the GenAI request.
+    examples: [0.0]
+    stability: development
+  - key: gen_ai.request.top_p
+    type: double
+    brief: The top_p sampling setting for the GenAI request.
+    examples: [1.0]
+    stability: development
+  - key: gen_ai.request.top_k
+    type: int
+    brief: >
+      The top-K sampling setting for the GenAI request: restricts token
+      generation at each step to the K most likely next tokens.
+    note: >
+      This is a decoding/sampling parameter (e.g., Anthropic `top_k`,
+      Cohere `k`, Google `topK`), not an output-shaping parameter. In
+      particular, OpenAI's `top_logprobs` controls how many per-token
+      log-probabilities are returned in the response and does not change
+      generation; it MUST NOT be reported as `gen_ai.request.top_k`.
+    examples: [40]
+    stability: development
+  - key: gen_ai.request.stop_sequences
+    type: string[]
+    brief: List of sequences that the model will use to stop generating further tokens.
+    examples:
+      - [forest, lived]
+    stability: development
+  - key: gen_ai.request.frequency_penalty
+    type: double
+    brief: The frequency penalty setting for the GenAI request.
+    examples: [0.1]
+    stability: development
+  - key: gen_ai.request.presence_penalty
+    type: double
+    brief: The presence penalty setting for the GenAI request.
+    examples: [0.1]
+    stability: development
+  - key: gen_ai.request.encoding_formats
+    type: string[]
+    brief: The encoding formats requested in an embeddings operation, if specified.
+    note: >
+      In some GenAI systems the encoding formats are called embedding types.
+      Also, some GenAI systems only accept a single format per request.
+    examples:
+      - ['base64']
+      - ['float', 'binary']
+    stability: development
+  - key: gen_ai.request.seed
+    type: int
+    brief: Requests with same seed value more likely to return same result.
+    examples: [100]
+    stability: development
+  - key: gen_ai.request.stream
+    type: boolean
+    brief: Indicates whether the GenAI request was made in streaming mode.
+    stability: development
+  - key: gen_ai.request.reasoning.level
+    type: string
+    brief: >
+      The reasoning or thinking effort level requested for a GenAI model.
+    note: >
+      The value SHOULD be the exact string value sent to the provider.
+      
+      Semantic conventions for individual providers SHOULD document
+      which input parameter maps to this attribute.
+    examples: ['low', 'medium', 'high']
+    stability: development
+  - key: gen_ai.request.previous_response.id
+    type: string
+    brief: The unique identifier of a previous response or interaction used to provide context for the current operation.
+    note: |
+      Instrumentations SHOULD populate this attribute when the request references a previous response or interaction identifier to continue a conversation or pass prior context.
+      For example, `previous_response_id` in [OpenAI Responses API](https://developers.openai.com/api/docs/guides/conversation-state#passing-context-from-the-previous-response)
+      or `previous_interaction_id` in [Google GenAI Interactions API](https://ai.google.dev/gemini-api/docs/interactions-overview).
+    examples: ['resp_0123456789aBCdef', 'interaction-123']
+    stability: development
+  - key: gen_ai.request.stream_cursor
+    type: string
+    brief: The cursor identifying the last streamed event already received, used to resume a streamed response from that position.
+    note: |
+      Instrumentations SHOULD populate this attribute when a request resumes a streamed response from a prior position, for example when fetching a stored response with streaming enabled.
+      For example, `starting_after` in the [OpenAI Responses API](https://developers.openai.com/api/docs/guides/background#streaming-a-background-response)
+      or `last_event_id` in the [Google GenAI Interactions API](https://ai.google.dev/api/interactions-api).
+    examples: ['42', 'event-abc123']
+    stability: development
+  - key: gen_ai.response.id
+    type: string
+    brief: The unique identifier for the completion.
+    examples: ['chatcmpl-123']
+    stability: development
+  - key: gen_ai.response.model
+    type: string
+    brief: The name of the model that generated the response.
+    examples: ['gpt-4-0613']
+    stability: development
+  - key: gen_ai.response.finish_reasons
+    type: string[]
+    brief: Array of reasons the model stopped generating tokens, corresponding to each generation received.
+    examples:
+      - [stop]
+      - [stop, length]
+    stability: development
+  - key: gen_ai.response.status
+    type:
+      members:
+        - id: queued
+          value: "queued"
+          brief: The response has been accepted by the provider but generation has not started yet.
+          stability: development
+        - id: in_progress
+          value: "in_progress"
+          brief: The response is still being generated, for example a background or streamed response that has not finished.
+          stability: development
+        - id: completed
+          value: "completed"
+          brief: The response finished generating successfully.
+          stability: development
+        - id: incomplete
+          value: "incomplete"
+          brief: The response stopped before generation completed, for example because a token limit or content filter was reached.
+          stability: development
+        - id: failed
+          value: "failed"
+          brief: The response generation failed with an error.
+          stability: development
+        - id: cancelled
+          value: "cancelled"
+          brief: The response generation was cancelled before it completed.
+          stability: development
+    brief: The lifecycle status of a generated response, as reported by the provider when the response is fetched or polled.
+    note: >
+      This attribute captures the lifecycle state of a (possibly background or long-running)
+      generation, such as whether it is queued, still running, or has reached a terminal state.
+      It is distinct from `gen_ai.response.finish_reasons`, which describes why the model stopped
+      once it began producing output.
+
+      The value SHOULD be the provider's response status mapped onto the closest member of this
+      enum or a provider-specific value when none of these apply.
+      Semantic conventions for individual GenAI providers SHOULD document how their status
+      values map to this attribute.
+    examples: ['completed', 'in_progress']
+    stability: development
+  - key: gen_ai.response.time_to_first_chunk
+    type: double
+    brief: >
+      Time to first chunk in a streaming response, measured from request issuance, in seconds.
+      The value is measured from when the client issues the generation request to when the first
+      chunk is received in the response stream.
+    examples: [0.5, 1.2]
+    stability: development
+  - key: gen_ai.usage.input_tokens
+    type: int
+    brief: The number of tokens used in the GenAI input (prompt).
+    note: |
+      This value SHOULD include all types of input tokens, including cached tokens.
+      Instrumentations SHOULD make a best effort to populate this value, using a total
+      provided by the provider when available or, depending on the provider API,
+      by summing different token types parsed from the provider output.
+
+      When the provider reports both billed token counts and model-consumed
+      token counts (for example, Cohere exposes both `usage.billed_units` and
+      `usage.tokens`), instrumentations SHOULD report the billed count so the
+      value matches the units the customer is charged for.
+    examples: [100]
+    stability: development
+  - key: gen_ai.usage.cache_read.input_tokens
+    type: int
+    brief: The number of input tokens served from a provider-managed cache.
+    note: >
+      The value SHOULD be included in `gen_ai.usage.input_tokens`.
+    examples: [50]
+    stability: development
+  - key: gen_ai.usage.cache_creation.input_tokens
+    type: int
+    brief: The number of input tokens written to a provider-managed cache.
+    note: >
+      The value SHOULD be included in `gen_ai.usage.input_tokens`.
+    examples: [25]
+    stability: development
+  - key: gen_ai.usage.output_tokens
+    type: int
+    brief: The number of tokens used in the GenAI response (completion).
+    note: |
+      When the provider reports both billed token counts and model-consumed
+      token counts (for example, Cohere exposes both `usage.billed_units` and
+      `usage.tokens`), instrumentations SHOULD report the billed count so the
+      value matches the units the customer is charged for.
+    examples: [180]
+    stability: development
+  - key: gen_ai.usage.reasoning.output_tokens
+    type: int
+    brief: The number of output tokens used for reasoning (e.g. chain-of-thought, extended thinking).
+    note: >
+      The value SHOULD be included in `gen_ai.usage.output_tokens`.
+    examples: [50]
+    stability: development
+  - key: gen_ai.token.type
+    type:
+      members:
+        - id: input
+          stability: development
+          value: "input"
+          brief: 'Input tokens (prompt, input, etc.)'
+        - id: output
+          stability: development
+          value: "output"
+          brief: 'Output tokens (completion, response, etc.)'
+    brief: The type of token being counted.
+    examples: ['input', 'output']
+    stability: development
+  - key: gen_ai.conversation.id
+    type: string
+    brief: The unique identifier for a conversation (session, thread), used to store and correlate messages within this conversation.
+    examples: ["conv_5j66UpCpwteGg4YSxUnt7lPY"]
+    stability: development
+  - key: gen_ai.conversation.compacted
+    type: boolean
+    brief: Indicates whether the effective conversation context used for this operation is a compacted view of a prior conversation.
+    note: |
+      This attribute is a positive indicator of context compaction. Instrumentations
+      SHOULD set it to `true` only when they can reliably determine that context
+      compaction was applied. Instrumentations SHOULD NOT set it to `false`; they
+      SHOULD leave it unset otherwise.
+    examples: [true]
+    stability: development
+  - key: gen_ai.agent.id
+    type: string
+    brief: The unique and stable identifier of the GenAI hosted agent resource.
+    note: >
+      For hosted agents, this SHOULD be the provider-assigned stable identifier of the
+      agent resource such as [AWS Bedrock agent ARN](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_Agent.html)
+      or [GCP Agent Registry identifier](https://docs.cloud.google.com/agent-registry/concepts#agent-identifier).
+
+      It's NOT RECOMMENDED to record in-memory agent instance ids on this attribute due to their transient nature.
+
+    examples: ['asst_5j66UpCpwteGg4YSxUnt7lPY', 'arn:aws:bedrock:us-east-1:123:agent/42', 'urn:agent:projects-123:projects:123:locations:us-east1:aiplatform:reasoningEngines:456']
+    stability: development
+  - key: gen_ai.agent.name
+    type: string
+    brief: Human-readable name of the GenAI agent provided by the application.
+    examples: ["Math Tutor", "Fiction Writer"]
+    stability: development
+  - key: gen_ai.agent.description
+    type: string
+    brief: Free-form description of the GenAI agent provided by the application.
+    examples: ["Helps with math problems", "Generates fiction stories"]
+    stability: development
+  - key: gen_ai.agent.version
+    type: string
+    brief: The version of the GenAI agent.
+    examples: ["1.0.0", "2025-05-01"]
+    stability: development
+  - key: gen_ai.tool.name
+    type: string
+    brief: Name of the tool utilized by the agent.
+    examples: ["Flights"]
+    stability: development
+  - key: gen_ai.tool.call.id
+    type: string
+    brief: The tool call identifier.
+    examples: ['call_mszuSIzqtI65i1wAUOE8w5H4']
+    stability: development
+  - key: gen_ai.tool.description
+    type: string
+    brief: The tool description.
+    examples: ["Multiply two numbers"]
+    stability: development
+  - key: gen_ai.tool.type
+    type: string
+    brief: Type of the tool utilized by the agent
+    note: >
+      Extension: A tool executed on the agent-side to directly call external APIs, bridging the gap between the agent and real-world systems.
+        Agent-side operations involve actions that are performed by the agent on the server or within the agent's controlled environment.
+      Function: A tool executed on the client-side, where the agent generates parameters for a predefined function, and the client executes the logic.
+        Client-side operations are actions taken on the user's end or within the client application.
+      Datastore: A tool used by the agent to access and query structured or unstructured external data for retrieval-augmented tasks or knowledge updates.
+    examples: ['function', 'extension', 'datastore']
+    stability: development
+  - key: gen_ai.tool.call.arguments
+    type: any
+    brief: Parameters passed to the tool call.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-tool-call-arguments.json
+    note: |
+      > [!WARNING]
+      > This attribute may contain sensitive information.
+
+      It's expected to be an object - in case a serialized string is available
+      to the instrumentation, the instrumentation SHOULD do the best effort to
+      deserialize it to an object.
+    examples:
+      - |
+        {
+            "location": "San Francisco?",
+            "date": "2025-10-01"
+        }
+    stability: development
+  - key: gen_ai.tool.call.result
+    type: any
+    brief: The result returned by the tool call (if any and if execution was successful).
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-tool-call-result.json
+    note: |
+      > [!WARNING]
+      > This attribute may contain sensitive information.
+
+      It's expected to be an object - in case a serialized string is available
+      to the instrumentation, the instrumentation SHOULD do the best effort to
+      deserialize it to an object.
+    examples:
+      - |
+        {
+          "temperature_range": {
+            "high": 75,
+            "low": 60
+          },
+          "conditions": "sunny"
+        }
+
+    stability: development
+  - key: gen_ai.tool.definitions
+    type: any
+    brief: The list of tool definitions available to the GenAI agent or model.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-tool-definitions.json
+    note: |
+      Since this attribute could be large, it's NOT RECOMMENDED to populate
+      non-required properties by default. Instrumentations MAY provide a way
+      to enable populating optional properties.
+    examples:
+      - |
+        [
+          {
+            "type": "function",
+            "name": "get_current_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "The city and state, e.g. San Francisco, CA"
+                },
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "celsius",
+                    "fahrenheit"
+                  ]
+                }
+              },
+              "required": [
+                "location",
+                "unit"
+              ]
+            }
+          }
+        ]
+
+    stability: development
+  - key: gen_ai.data_source.id
+    type: string
+    brief: The data source identifier.
+    note: >
+      Data sources are used by AI agents and RAG applications to store grounding data.
+      A data source may be an external database, object store, document collection, website, or any other storage system used by the GenAI agent or application.
+      The `gen_ai.data_source.id` SHOULD match the identifier used by the GenAI system rather than a name specific to the external storage, such as a database or
+      object store. Semantic conventions referencing `gen_ai.data_source.id` MAY also leverage additional attributes, such as `db.*`, to further identify and describe the data source.
+    examples: ['H7STPQYOND']
+    stability: development
+  - key: gen_ai.operation.name
+    type:
+      members:
+        - id: chat
+          value: "chat"
+          brief: 'Chat completion operation such as [OpenAI Chat API](https://platform.openai.com/docs/api-reference/chat)'
+          stability: development
+        - id: generate_content
+          value: "generate_content"
+          brief: 'Multimodal content generation operation such as [Gemini Generate Content](https://ai.google.dev/api/generate-content)'
+          stability: development
+        - id: text_completion
+          value: "text_completion"
+          brief: 'Text completions operation such as [OpenAI Completions API (Legacy)](https://platform.openai.com/docs/api-reference/completions)'
+          stability: development
+        - id: embeddings
+          value: "embeddings"
+          brief: 'Embeddings operation such as [OpenAI Create embeddings API](https://platform.openai.com/docs/api-reference/embeddings/create)'
+          stability: development
+        - id: retrieval
+          value: "retrieval"
+          brief: 'Retrieval operation such as [OpenAI Search Vector Store API](https://platform.openai.com/docs/api-reference/vector-stores/search)'
+          stability: development
+        - id: fetch_response
+          value: "fetch_response"
+          brief: 'Fetch a previously generated model response by its identifier, without performing inference, such as [OpenAI Get a model response](https://platform.openai.com/docs/api-reference/responses/get)'
+          note: >
+             Instrumentations SHOULD NOT report token usage (as attributes or metrics) for this operation.
+          stability: development
+        - id: create_agent
+          value: "create_agent"
+          brief: 'Create GenAI agent'
+          stability: development
+        - id: invoke_agent
+          value: "invoke_agent"
+          brief: 'Invoke GenAI agent'
+          stability: development
+        - id: execute_tool
+          value: "execute_tool"
+          brief: 'Execute a tool'
+          stability: development
+        - id: invoke_workflow
+          value: "invoke_workflow"
+          brief: 'Invoke GenAI workflow'
+          stability: development
+        - id: plan
+          value: "plan"
+          brief: 'Agent planning or task decomposition phase'
+          stability: development
+        - id: search_memory
+          value: "search_memory"
+          brief: 'Search/query memories from a memory store'
+          stability: development
+        - id: create_memory
+          value: "create_memory"
+          brief: 'Create new memory records'
+          stability: development
+        - id: update_memory
+          value: "update_memory"
+          brief: 'Update existing memory records'
+          stability: development
+        - id: upsert_memory
+          value: "upsert_memory"
+          brief: 'Create or update memory records without the caller choosing which'
+          stability: development
+        - id: delete_memory
+          value: "delete_memory"
+          brief: 'Delete memory records'
+          stability: development
+        - id: create_memory_store
+          value: "create_memory_store"
+          brief: 'Create or initialize a memory store'
+          stability: development
+        - id: delete_memory_store
+          value: "delete_memory_store"
+          brief: 'Delete or deprovision a memory store'
+          stability: development
+    brief: The name of the operation being performed.
+    note: >
+      If one of the predefined values applies, but specific system uses a different name it's RECOMMENDED to document it in the semantic
+      conventions for specific GenAI system and use system-specific name in the instrumentation.
+      If a different name is not documented, instrumentation libraries SHOULD use applicable predefined value.
+    stability: development
+  - key: gen_ai.output.type
+    type:
+      members:
+        - id: text
+          value: "text"
+          brief: 'Plain text'
+          stability: development
+        - id: json
+          value: "json"
+          brief: 'JSON object with known or unknown schema'
+          stability: development
+        - id: image
+          value: "image"
+          brief: 'Image'
+          stability: development
+        - id: speech
+          value: "speech"
+          brief: 'Speech'
+          stability: development
+        # we might need to record requested and actual output types on the same span/event
+        # at some point. In this case, we might need to add a new attribute.
+        # we may also need to record an array of types if multiple are requested/returned.
+    brief: Represents the content type requested by the client.
+    note: >
+      This attribute SHOULD be used when the client requests output of a
+      specific type. The model may return zero or more outputs of this type.
+
+      This attribute specifies the output modality and not the actual output format.
+      For example, if an image is requested, the actual output could be a
+      URL pointing to an image file.
+
+      Additional output format details may be recorded in the future in the
+      `gen_ai.output.{type}.*` attributes.
+    stability: development
+  - key: gen_ai.embeddings.dimension.count
+    type: int
+    brief: The number of dimensions the resulting output embeddings should have.
+    examples: [512, 1024]
+    stability: development
+  - key: gen_ai.retrieval.documents
+    type: any
+    brief: The documents retrieved.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-retrieval-documents.json
+    note: |
+      Each document object SHOULD contain the following properties when available:
+      `id` (string): A unique identifier for the document, `score` (double): The relevance score of the document
+    examples:
+      - |
+        [
+          {
+            "id": "doc_123",
+            "score": 0.95
+          },
+          {
+            "id": "doc_456",
+            "score": 0.87
+          },
+          {
+            "id": "doc_789",
+            "score": 0.82
+          }
+        ]
+    stability: development
+  - key: gen_ai.retrieval.query.text
+    type: string
+    brief: The query text used for retrieval.
+    note: |
+      > [!Warning]
+      > This attribute may contain sensitive information.
+    examples: ["What is the capital of France?", "weather in Paris"]
+    stability: development
+  - key: gen_ai.retrieval.top_k
+    type: int
+    brief: >
+      The maximum number of documents the retriever was asked to return
+      for the query (also known as `k`, `limit`, or `max_num_results`).
+    examples: [5]
+    stability: development
+  - key: gen_ai.memory.store.id
+    type: string
+    brief: The unique identifier of the memory store.
+    note: >
+      Semantic conventions for individual components SHOULD document what `gen_ai.memory.store.id` maps
+      to within the implementation.
+    examples: ["ms_abc123", "user-preferences-store"]
+    stability: development
+  - key: gen_ai.memory.record.id
+    type: string
+    brief: The unique identifier of the memory record.
+    examples: ["mem_5j66UpCpwteGg4YSxUnt7lPY"]
+    stability: development
+  - key: gen_ai.memory.record.count
+    type: int
+    brief: The number of memory records relevant to the operation.
+    note: >
+      For `search_memory` operations, this is the number of memory records returned by the operation.
+      For `create_memory` operations, this is the number of memory records the operation attempted to create.
+      For `update_memory` operations, this is the number of memory records the operation attempted to
+      modify. For `upsert_memory` operations, this is the number of memory records the operation
+      attempted to create or update. For `delete_memory` operations, this is the number of memory
+      records the operation attempted to delete.
+    examples: [3]
+    stability: development
+  - key: gen_ai.memory.query.text
+    type: string
+    brief: The search query used to retrieve memories.
+    note: |
+      Instrumentations SHOULD NOT capture this attribute by default. Capture SHOULD be gated
+      by an explicit user opt-in, for example `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`.
+
+      > [!Warning]
+      > This attribute may contain sensitive information.
+    examples: ["user dietary preferences", "past flight bookings"]
+    stability: development
+  - key: gen_ai.memory.records
+    type: any
+    brief: The memory records stored or retrieved in a memory operation.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-memory-records.json
+    note: |
+      Instrumentations SHOULD NOT capture this attribute by default. Capture SHOULD be gated
+      by an explicit user opt-in, for example `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`.
+
+      > [!Warning]
+      > This attribute may contain sensitive information including user/PII data.
+    examples:
+      - |
+        [
+          {
+            "content": "User prefers dark mode",
+            "id": "mem_123",
+            "score": 0.95
+          },
+          {
+            "content": {
+              "preference": "vegetarian meals",
+              "confidence": 0.9
+            },
+            "metadata": {
+              "source": "profile"
+            }
+          }
+        ]
+    stability: development
+  - key: gen_ai.system_instructions
+    type: any
+    brief: The system message or instructions provided to the GenAI model separately from the chat history.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-system-instructions.json
+    note: |
+      This attribute SHOULD be used when the corresponding provider or API
+      allows to provide system instructions or messages separately from the
+      chat history.
+
+      Instructions that are part of the chat history SHOULD be recorded in
+      `gen_ai.input.messages` attribute instead.
+
+      Instrumentations MAY provide a way for users to filter or truncate
+      system instructions.
+
+      > [!Warning]
+      > This attribute may contain sensitive information.
+
+      See [Recording content on attributes](/docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes)
+      section for more details.
+    examples:
+      - |
+        [
+          {
+            "type": "text",
+            "content": "You are an Agent that greet users, always use greetings tool to respond"
+          }
+        ]
+      - |
+        [
+          {
+            "type": "text",
+            "content": "You are a language translator."
+          },
+          {
+            "type": "text",
+            "content": "Your mission is to translate text in English to French."
+          }
+        ]
+    stability: development
+  - key: gen_ai.input.messages
+    type: any
+    brief: >
+      The chat history provided to the model as an input.
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-input-messages.json
+    note: |
+      Messages MUST be provided in the order they were sent to the model.
+      Instrumentations MAY provide a way for users to filter or truncate
+      input messages.
+
+      > [!Warning]
+      > This attribute is likely to contain sensitive information including user/PII data.
+
+      See [Recording content on attributes](/docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes)
+      section for more details.
+    examples:
+      - |
+        [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "type": "text",
+                "content": "Weather in Paris?"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "tool_call",
+                "id": "call_VSPygqKTWdrhaFErNvMV18Yl",
+                "name": "get_weather",
+                "arguments": {
+                  "location": "Paris"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "parts": [
+              {
+                "type": "tool_call_response",
+                "id": "call_VSPygqKTWdrhaFErNvMV18Yl",
+                "response": "rainy, 57°F"
+              }
+            ]
+          }
+        ]
+    stability: development
+  - key: gen_ai.output.messages
+    type: any
+    brief: Messages returned by the model where each message represents a specific model response (choice, candidate).
+    annotations:
+      type:
+        json_schema: model/gen-ai/gen-ai-output-messages.json
+    note: |
+      Each message represents a single output choice/candidate generated by
+      the model. Each message corresponds to exactly one generation
+      (choice/candidate) and vice versa - one choice cannot be split across
+      multiple messages or one message cannot contain parts from multiple choices.
+
+      Instrumentations MAY provide a way for users to filter or truncate
+      output messages.
+
+      > [!Warning]
+      > This attribute is likely to contain sensitive information including user/PII data.
+
+      See [Recording content on attributes](/docs/gen-ai/gen-ai-spans.md#recording-content-on-attributes)
+      section for more details.
+    examples:
+      - |
+        [
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "text",
+                "content": "The weather in Paris is currently rainy with a temperature of 57°F."
+              }
+            ],
+            "finish_reason": "stop"
+          }
+        ]
+    stability: development
+  - key: gen_ai.evaluation.name
+    type: string
+    brief: The name of the evaluation metric used for the GenAI response.
+    examples: ["Relevance", "IntentResolution"]
+    stability: development
+  - key: gen_ai.evaluation.score.value
+    type: double
+    brief: The evaluation score returned by the evaluator.
+    examples: [4.0]
+    stability: development
+  - key: gen_ai.evaluation.score.label
+    type: string
+    brief: Human readable label for evaluation.
+    note: >
+      This attribute provides a human-readable interpretation of the evaluation score produced by an evaluator.
+      For example, a score value of 1 could mean "relevant" in one evaluation system and "not relevant" in another, depending on the scoring range and evaluator.
+      The label SHOULD have low cardinality.
+      Possible values depend on the evaluation metric and evaluator used; implementations SHOULD document the possible values.
+    examples: ["relevant", "not_relevant", "correct", "incorrect", "pass", "fail"]
+    stability: development
+  - key: gen_ai.evaluation.explanation
+    type: string
+    brief: A free-form explanation for the assigned score provided by the evaluator.
+    examples: ["The response is factually accurate but lacks sufficient detail to fully address the question."]
+    stability: development
+  - key: gen_ai.prompt.name
+    type: string
+    brief: The name of the prompt that uniquely identifies it.
+    examples: ["analyze-code"]
+    stability: development
+  - key: gen_ai.prompt.version
+    type: string
+    brief: The version of the prompt template used.
+    note: |
+      The version string can follow any versioning scheme chosen by the
+      application (e.g., SemVer, date-based, or platform-specific tags).
+      When a prompt management system is in use, this SHOULD match the
+      version identifier used by that system.
+    examples: ["1.0.0", "2025-05-01", "prod", "v2"]
+    stability: development
+  - key: gen_ai.prompt.variable
+    type: template[string]
+    brief: The variables supplied to the prompt template, the `<key>` being the variable name, the value being the variable value.
+    note: |
+      Prompt templates are parameterized with variables that are filled in
+      at runtime. This attribute records the variable values passed to the
+      template. The attribute name defines the variable name, and the
+      attribute value is the variable value serialized as a string.
+
+      Examples:
+
+      - A variable `user_name` with value `Alice` SHOULD be recorded as
+        the `gen_ai.prompt.variable.user_name` attribute with value `"Alice"`.
+      - A variable `language` with value `French` SHOULD be recorded as
+        the `gen_ai.prompt.variable.language` attribute with value `"French"`.
+
+      > [!Warning]
+      > This attribute may contain sensitive information.
+    examples: ["Alice", "French"]
+    stability: development
+  - key: gen_ai.workflow.name
+    type: string
+    brief: Human-readable name of the GenAI workflow provided by the application.
+    note: |
+      This attribute can be populated in different frameworks; for example, as the name of the first chain in LangChain or the name of the crew in CrewAI.
+      The workflow name is usually provided by the application in a way that is specific to the generative AI framework or library that orchestrates the workflow.
+      It is usually a static name that is expected to be unique within an application.
+
+      `gen_ai.workflow.name` MUST have low cardinality.
+      Semantic conventions for individual Generative AI frameworks SHOULD document what `gen_ai.workflow.name` means in the context of that framework.
+      If there is no low-cardinality workflow name available for a given framework, this attribute MUST NOT be captured by default.
+    examples: ["multi_agent_rag", "customer_support_pipeline"]
+    stability: development

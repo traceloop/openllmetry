@@ -1,0 +1,137 @@
+file_format: definition/2
+attribute_groups:
+  - id: trace.mcp.common.attributes
+    visibility: internal
+    attributes:
+      - ref_group: mcp.common.attributes
+      - ref: mcp.session.id
+        requirement_level:
+          recommended: When the MCP request or notification is part of a session.
+      - ref: mcp.resource.uri
+        requirement_level:
+          conditionally_required: When the client executes a request type that includes a resource URI parameter.
+      - ref: jsonrpc.request.id
+        requirement_level:
+          conditionally_required: When the client executes a request.
+
+spans:
+  - type: mcp.client
+    requirement_level: recommended
+    kind: client
+    name:
+      note: |
+        **Span name** SHOULD follow the format `{mcp.method.name} {target}`
+        where target SHOULD match `{gen_ai.tool.name}` or `{gen_ai.prompt.name}` when
+        applicable.
+        If there is no low-cardinality `target` available, the Span name SHOULD be `{mcp.method.name}`.
+
+        Instrumentation MAY allow users to opt into including `{mcp.resource.uri}`
+        as `target` in the span name when it is available but SHOULD NOT include it by default
+        to avoid high cardinality span names.
+    brief: This span describes the MCP call from the client side.
+    note: |
+      It's reported by the MCP client when it initiates the request
+      or notification or by the MCP server when server initiates the operation.
+      It covers the time to receive the response or ack from the peer.
+
+      **Span status** SHOULD be set to `ERROR` when `error.type` attribute is present.
+      The status description SHOULD match the `JSONRPCError.message` if the message is available.
+
+      Refer to the [Recording Errors](https://github.com/open-telemetry/semantic-conventions/blob/v1.41.0/docs/general/recording-errors.md) document
+      for more details.
+
+      MCP tool call execution spans are compatible with GenAI [execute_tool spans](/docs/gen-ai/gen-ai-spans.md#execute-tool-span).
+
+      If the MCP instrumentation can reliably detect that outer GenAI instrumentation
+      is already tracing the tool execution, it SHOULD NOT create a separate span.
+      Instead, it SHOULD add MCP-specific attributes to the existing tool execution span.
+
+      Instrumentations that support this behavior MAY provide a configuration
+      option to enable it.
+    stability: development
+    attributes:
+      - ref_group: trace.mcp.common.attributes
+      - ref_group: mcp.client.address_and_port.attributes
+      - ref: gen_ai.tool.call.arguments
+        requirement_level: opt_in
+      - ref: gen_ai.tool.call.result
+        requirement_level: opt_in
+      - ref: gen_ai.prompt.variable
+        note: |
+          Prompt templates are parameterized with variables that are filled in
+          at runtime. This attribute records the variable values passed to the
+          template. The attribute name defines the variable name, and the
+          attribute value is the variable value serialized as a string.
+
+          Examples:
+
+          - A variable `user_name` with value `Alice` SHOULD be recorded as
+            the `gen_ai.prompt.variable.user_name` attribute with value `"Alice"`.
+          - A variable `language` with value `French` SHOULD be recorded as
+            the `gen_ai.prompt.variable.language` attribute with value `"French"`.
+
+          In MCP, [prompt arguments](https://modelcontextprotocol.io/specification/2025-11-25/schema#prompt)
+          supplied in `prompts/get` requests SHOULD be recorded as
+          `gen_ai.prompt.variable.<argument_name>` attributes.
+
+          > [!Warning]
+          > This attribute may contain sensitive information.
+
+  - type: mcp.server
+    requirement_level: recommended
+    kind: server
+    name:
+      note: |
+        **Span name** SHOULD follow the format `{mcp.method.name} {target}`
+        where target SHOULD match `{gen_ai.tool.name}` or `{gen_ai.prompt.name}` when
+        applicable.
+        If there is no low-cardinality `target` available, the Span name SHOULD be `{mcp.method.name}`.
+
+        Instrumentation MAY allow users to opt into including `{mcp.resource.uri}`
+        as `target` in the span name when it is available but SHOULD NOT include it by default
+        to avoid high cardinality span names.
+    brief: This span describes the processing of the MCP request or notification initiated by the peer.
+    note: |
+      It's reported by the MCP server when client initiates the request
+      (or notification) or by the MCP client when server initiates the operation.
+
+      **Span status** SHOULD be set to `ERROR` when `error.type` attribute is present.
+      The status description SHOULD match the `JSONRPCError.message` if the message is available.
+
+      Refer to the [Recording Errors](https://github.com/open-telemetry/semantic-conventions/blob/v1.41.0/docs/general/recording-errors.md) document
+      for more details.
+    stability: development
+    attributes:
+      - ref_group: trace.mcp.common.attributes
+      - ref: client.address
+        requirement_level:
+          recommended: If applicable.
+
+      - ref: client.port
+        requirement_level:
+          recommended: When `client.address` is set.
+
+      - ref: gen_ai.tool.call.arguments
+        requirement_level: opt_in
+      - ref: gen_ai.tool.call.result
+        requirement_level: opt_in
+      - ref: gen_ai.prompt.variable
+        note: |
+          Prompt templates are parameterized with variables that are filled in
+          at runtime. This attribute records the variable values passed to the
+          template. The attribute name defines the variable name, and the
+          attribute value is the variable value serialized as a string.
+
+          Examples:
+
+          - A variable `user_name` with value `Alice` SHOULD be recorded as
+            the `gen_ai.prompt.variable.user_name` attribute with value `"Alice"`.
+          - A variable `language` with value `French` SHOULD be recorded as
+            the `gen_ai.prompt.variable.language` attribute with value `"French"`.
+
+          In MCP, [prompt arguments](https://modelcontextprotocol.io/specification/2025-11-25/schema#prompt)
+          supplied in `prompts/get` requests SHOULD be recorded as
+          `gen_ai.prompt.variable.<argument_name>` attributes.
+
+          > [!Warning]
+          > This attribute may contain sensitive information.

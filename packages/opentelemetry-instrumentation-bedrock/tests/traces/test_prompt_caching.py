@@ -2,7 +2,9 @@ import json
 
 import pytest
 from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 
 
 @pytest.mark.vcr
@@ -49,7 +51,7 @@ def test_invoke_model_cache_tokens(instrument_legacy, brt, span_exporter, log_ex
     assert read_span.attributes.get(CacheSpanAttrs.CACHED) == "read"
 
     # numeric token counts
-    assert write_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS) == 18131
-    assert write_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 0
-    assert read_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 18131
-    assert read_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS) == 0
+    assert write_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS) == 18131
+    assert write_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 0
+    assert read_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 18131
+    assert read_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS) == 0

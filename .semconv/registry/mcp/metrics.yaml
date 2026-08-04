@@ -1,0 +1,59 @@
+file_format: definition/2
+attribute_groups:
+  - id: mcp.operation.metrics.attributes
+    visibility: internal
+    attributes:
+      - ref_group: mcp.common.attributes
+      - ref: mcp.resource.uri
+        requirement_level: opt_in
+
+  - id: mcp.session.metrics.attributes
+    visibility: internal
+    attributes:
+      - ref: mcp.protocol.version
+      - ref_group: mcp.network.protocol.attributes
+      - ref: error.type
+        requirement_level:
+          conditionally_required: If and only if session ends with an error.
+
+metrics:
+  - name: mcp.client.operation.duration
+    requirement_level: recommended
+    instrument: histogram
+    unit: s
+    brief: >
+      The duration of the MCP request or notification as observed on the sender
+      from the time it was sent until the response or ack is received.
+    stability: development
+    attributes:
+      - ref_group: mcp.operation.metrics.attributes
+      - ref_group: mcp.client.address_and_port.attributes
+
+  - name: mcp.server.operation.duration
+    requirement_level: recommended
+    instrument: histogram
+    unit: s
+    brief: >
+      MCP request or notification duration as observed on the receiver
+      from the time it was received until the result or ack is sent.
+    stability: development
+    attributes:
+      - ref_group: mcp.operation.metrics.attributes
+  - name: mcp.client.session.duration
+    requirement_level: recommended
+    instrument: histogram
+    unit: s
+    brief: The duration of the MCP session as observed on the MCP client.
+    stability: development
+    attributes:
+      - ref_group: mcp.session.metrics.attributes
+      - ref_group: mcp.client.address_and_port.attributes
+
+  - name: mcp.server.session.duration
+    requirement_level: recommended
+    instrument: histogram
+    unit: s
+    brief: The duration of the MCP session as observed on the MCP server.
+    stability: development
+    attributes:
+      - ref_group: mcp.session.metrics.attributes

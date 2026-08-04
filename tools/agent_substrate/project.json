@@ -1,0 +1,29 @@
+{
+  "name": "agent-substrate",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "tools/agent_substrate"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "tools/agent_substrate"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest test_substrate.py -v",
+        "cwd": "tools/agent_substrate"
+      }
+    }
+  },
+  "tags": ["tooling"]
+}

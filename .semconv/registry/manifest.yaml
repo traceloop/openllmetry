@@ -1,0 +1,20 @@
+name: semantic-conventions-genai
+description: >
+  OpenTelemetry Semantic Conventions for Generative AI.
+  This registry defines semantic conventions for GenAI, including
+  LLM inference, agents, tool calling, embeddings, and the
+  Model Context Protocol (MCP).
+schema_url: https://opentelemetry.io/schemas/gen-ai-dev/1.42.0-dev
+stability: development
+dependencies:
+  # NOTE: This is a local filtered copy of
+  # https://github.com/open-telemetry/semantic-conventions.git[model] at the
+  # SEMCONV_VERSION pinned in versions.env, with the gen-ai/, mcp/, and
+  # openai/ subdirectories removed. This repo is the canonical home for those
+  # conventions going forward; until upstream deletes its copies we strip them
+  # here so Weaver does not see the same group ids defined in two places. The
+  # Makefile target that produces `.build/sc-upstream-filtered` is invoked
+  # automatically by every generate / check target (e.g. `check-policies`,
+  # `generate-all`). Keep the schema_url below in sync with SEMCONV_VERSION.
+  - schema_url: https://opentelemetry.io/schemas/1.43.0
+    registry_path: ./.build/sc-upstream-filtered

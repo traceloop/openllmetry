@@ -1,0 +1,17 @@
+file_format: definition/2
+attributes:
+  - key: aws.bedrock.guardrail.id
+    type: string
+    brief: >
+      The unique identifier of the AWS Bedrock Guardrail.
+      A [guardrail](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html) helps safeguard and prevent unwanted behavior from model responses or user messages.
+    examples: ["sgi5gkybzqak"]
+    stability: development
+  - key: aws.bedrock.knowledge_base.id
+    type: string
+    brief: >
+      The unique identifier of the AWS Bedrock Knowledge base.
+      A [knowledge base](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html) is a bank of information
+      that can be queried by models to generate more relevant responses and augment prompts.
+    examples: ["XFWUPB9PAW"]
+    stability: development

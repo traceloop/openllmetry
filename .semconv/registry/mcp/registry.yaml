@@ -1,0 +1,151 @@
+file_format: definition/2
+attributes:
+  - key: mcp.method.name
+    type:
+      members:
+        - id: notifications_cancelled
+          value: notifications/cancelled
+          brief: >
+            Notification cancelling a previously-issued request.
+          stability: development
+        - id: initialize
+          value: initialize
+          brief: >
+            Request to initialize the MCP client.
+          stability: development
+        - id: notifications_initialized
+          value: notifications/initialized
+          brief: >
+            Notification indicating that the MCP client has been initialized.
+          stability: development
+        - id: notifications_progress
+          value: notifications/progress
+          brief: >
+            Notification indicating the progress for a long-running operation.
+          stability: development
+        - id: ping
+          value: ping
+          brief: >
+            Request to check that the other party is still alive.
+          stability: development
+        - id: resources_list
+          value: resources/list
+          brief: >
+            Request to list resources available on server.
+          stability: development
+        - id: resources_templates_list
+          value: resources/templates/list
+          brief: >
+            Request to list resource templates available on server.
+          stability: development
+        - id: resources_read
+          value: resources/read
+          brief: >
+            Request to read a resource.
+          stability: development
+        - id: notifications_resources_list_changed
+          value: notifications/resources/list_changed
+          brief: >
+            Notification indicating that the list of resources has changed.
+          stability: development
+        - id: resources_subscribe
+          value: resources/subscribe
+          brief: >
+            Request to subscribe to a resource.
+          stability: development
+        - id: resources_unsubscribe
+          value: resources/unsubscribe
+          brief: >
+            Request to unsubscribe from resource updates.
+          stability: development
+        - id: notifications_resources_updated
+          value: notifications/resources/updated
+          brief: >
+            Notification indicating that a resource has been updated.
+          stability: development
+        - id: prompts_list
+          value: prompts/list
+          brief: >
+            Request to list prompts available on server.
+          stability: development
+        - id: prompts_get
+          value: prompts/get
+          brief: >
+            Request to get a prompt.
+          stability: development
+        - id: notifications_prompts_list_changed
+          value: notifications/prompts/list_changed
+          brief: >
+            Notification indicating that the list of prompts has changed.
+          stability: development
+        - id: tools_list
+          value: tools/list
+          brief: >
+            Request to list tools available on server.
+          stability: development
+        - id: tools_call
+          value: tools/call
+          brief: >
+            Request to call a tool.
+          stability: development
+        - id: notifications_tools_list_changed
+          value: notifications/tools/list_changed
+          brief: >
+            Notification indicating that the list of tools has changed.
+          stability: development
+        - id: logging_set_level
+          value: logging/setLevel
+          brief: >
+            Request to set the logging level.
+          stability: development
+        - id: notifications_message
+          value: notifications/message
+          brief: >
+            Notification indicating that a message has been received.
+          stability: development
+        - id: sampling_create_message
+          value: sampling/createMessage
+          brief: >
+            Request to create a sampling message.
+          stability: development
+        - id: completion_complete
+          value: completion/complete
+          brief: >
+            Request to complete a prompt.
+          stability: development
+        - id: roots_list
+          value: roots/list
+          brief: >
+            Request to list roots available on server.
+          stability: development
+        - id: notifications_roots_list_changed
+          value: notifications/roots/list_changed
+          brief: >
+            Notification indicating that the list of roots has changed.
+          stability: development
+        - id: elicitation_create
+          value: elicitation/create
+          brief: >
+            Request from the server to elicit additional information from the
+            user via the client
+          stability: development
+    brief: The name of the request or notification method.
+    stability: development
+  - key: mcp.session.id
+    type: string
+    brief: Identifies [MCP session](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#session-management).
+    examples: ["191c4850af6c49e08843a3f6c80e5046"]
+    stability: development
+  - key: mcp.resource.uri
+    type: string
+    brief: The value of the resource uri.
+    note: >
+      This is a URI of the resource provided in the following requests or notifications:
+      `resources/read`, `resources/subscribe`, `resources/unsubscribe`, or `notifications/resources/updated`.
+    examples: ["postgres://database/customers/schema", "file:///home/user/documents/report.pdf"]
+    stability: development
+  - key: mcp.protocol.version
+    type: string
+    brief: The [version](https://modelcontextprotocol.io/specification/versioning) of the Model Context Protocol used.
+    examples: ["2025-06-18"]
+    stability: development

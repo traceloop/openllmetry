@@ -44,3 +44,8 @@ exclude = [".git", "__pycache__", "build", "dist", ".venv", ".pytest_cache"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# Generated, committed, and never hand-edited: long enum/condition literals are
+# expected. Regenerate via `make -C .semconv generate`, don't wrap lines by hand.
+"opentelemetry/semconv_ai/_contract/generated.py" = ["E501"]

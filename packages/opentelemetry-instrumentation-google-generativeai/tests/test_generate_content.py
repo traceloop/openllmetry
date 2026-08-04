@@ -207,7 +207,7 @@ def test_set_model_response_attributes_emits_cache_read_tokens():
     su.set_model_response_attributes(span, Response(), "gemini-pro", token_histogram=None)
 
     set_attr_calls = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
-    assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 40
+    assert set_attr_calls[GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS] == 40
 
 
 def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
@@ -229,4 +229,4 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
     su.set_model_response_attributes(span, Response(), "gemini-pro", token_histogram=None)
 
     set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
-    assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
+    assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys

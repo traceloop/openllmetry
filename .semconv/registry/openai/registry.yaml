@@ -1,0 +1,39 @@
+file_format: definition/2
+attributes:
+  - key: openai.request.service_tier
+    type:
+      members:
+        - id: auto
+          value: "auto"
+          brief: The system will utilize scale tier credits until they are exhausted.
+          stability: development
+        - id: default
+          value: "default"
+          brief: The system will utilize the default scale tier.
+          stability: development
+    brief: The service tier requested. May be a specific tier, default, or auto.
+    examples: ['auto', 'default']
+    stability: development
+  - key: openai.api.type
+    type:
+      members:
+        - id: chat_completions
+          value: "chat_completions"
+          brief: The OpenAI [Chat Completions API](https://developers.openai.com/api/reference/chat-completions/overview).
+          stability: development
+        - id: responses
+          value: "responses"
+          brief: The OpenAI [Responses API](https://developers.openai.com/api/reference/responses/overview).
+          stability: development
+    brief: The type of OpenAI API being used.
+    stability: development
+  - key: openai.response.service_tier
+    type: string
+    brief: The service tier used for the response.
+    examples: ['scale', 'default']
+    stability: development
+  - key: openai.response.system_fingerprint
+    type: string
+    brief: A fingerprint to track any eventual change in the Generative AI environment.
+    examples: ["fp_44709d6fcb"]
+    stability: development

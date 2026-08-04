@@ -1,0 +1,62 @@
+file_format: definition/2
+events:
+  - name: gen_ai.client.inference.operation.details
+    requirement_level: opt_in
+    brief: >
+      Describes the details of a GenAI completion request including chat history
+      and parameters.
+    note: >
+      This event could be used to store input and output details
+      independently from traces.
+    stability: development
+    attributes:
+      - ref_group: span.gen_ai.inference.client
+  - name: gen_ai.evaluation.result
+    requirement_level: recommended
+    brief: >
+      This event captures the result of evaluating GenAI output for quality, accuracy, or other characteristics.
+      This event SHOULD be parented to GenAI operation span being evaluated when possible
+      or set `gen_ai.response.id` when span id is not available.
+    stability: development
+    attributes:
+      - ref_group: attributes.gen_ai.error
+      - ref: gen_ai.evaluation.name
+        requirement_level: required
+      - ref: gen_ai.evaluation.score.value
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.evaluation.score.label
+        requirement_level:
+          conditionally_required: If applicable.
+      - ref: gen_ai.evaluation.explanation
+        requirement_level: recommended
+      - ref: gen_ai.response.id
+        requirement_level:
+          recommended: When available.
+        note: |
+          The unique identifier assigned to the specific
+          completion being evaluated. This attribute helps correlate the evaluation
+          event with the corresponding operation when span id is not available.
+
+  - name: gen_ai.client.operation.exception
+    requirement_level: recommended
+    brief: >
+      This event represents an exception that occurred during a Generative AI client operation,
+      such as API errors, rate limiting, model errors, timeouts, or other errors that prevent
+      the operation from completing successfully.
+    note: >
+      This event SHOULD be recorded when an exception occurs during Generative AI client operations.
+
+      Instrumentations SHOULD set the severity to WARN (severity number 13) when recording this event.
+
+      Instrumentations MAY provide a configuration option to populate exception events
+      with the attributes captured on the corresponding Generative AI client span.
+    stability: development
+    attributes:
+      - ref: exception.type
+        requirement_level:
+          conditionally_required: Required if `exception.message` is not set, recommended otherwise.
+      - ref: exception.message
+        requirement_level:
+          conditionally_required: Required if `exception.type` is not set, recommended otherwise.
+      - ref: exception.stacktrace
