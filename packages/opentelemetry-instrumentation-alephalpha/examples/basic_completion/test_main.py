@@ -8,4 +8,4 @@ def test_missing_token_returns_actionable_error(monkeypatch, capsys):
 
     assert main.main() == 2
     captured = capsys.readouterr()
-    assert "AA_TOKEN" in captured.err
+    assert "Set AA_TOKEN before running this example." in captured.err

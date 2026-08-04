@@ -29,7 +29,7 @@ The default model is `luminous-base`. Override it with `AA_MODEL` when your acco
 AA_MODEL="your-model" uv run --no-project --with-requirements requirements.txt python main.py
 ```
 
-The terminal prints the model response followed by an OpenTelemetry span named `alephalpha.completion`. The span includes the model, request type, and usage attributes. Prompt and completion content follows the instrumentation privacy setting; set `TRACELOOP_TRACE_CONTENT=false` to disable content capture.
+The terminal prints an OpenTelemetry span named `alephalpha.completion` followed by the model response. The span includes the model, request type, and usage attributes. Prompt and completion content follows the instrumentation privacy setting; set `TRACELOOP_TRACE_CONTENT=false` to disable content capture.
 
 ## What to look for
 
