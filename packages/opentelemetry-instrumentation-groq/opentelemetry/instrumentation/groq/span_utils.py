@@ -234,7 +234,7 @@ def set_model_response_attributes(span, response, token_histogram):
         if cached_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 cached_tokens,
             )
 

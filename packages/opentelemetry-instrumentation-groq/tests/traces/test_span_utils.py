@@ -473,20 +473,6 @@ class TestSetModelResponseAttributes:
         response["usage"]["prompt_tokens_details"] = {"cached_tokens": cached_tokens}
         return response
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "Genuine source bug, out of scope for this test-only fix: "
-            "span_utils.py's set_model_response_attributes (non-streaming path) still "
-            "references the removed opentelemetry.semconv_ai.SpanAttributes."
-            "GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS (deleted upstream in #4243 in favor of "
-            "GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS). The AttributeError is "
-            "swallowed by @dont_throw, so the attribute silently never gets set on "
-            "non-streaming spans with cached prompt tokens. The streaming counterpart "
-            "(set_model_streaming_response_attributes) already uses the correct "
-            "GenAIAttributes constant and is unaffected."
-        ),
-    )
     def test_with_cached_tokens_sets_cache_read_attribute(self):
         span = _span()
         set_model_response_attributes(span, self._response_with_cached_tokens(cached_tokens=20), None)
