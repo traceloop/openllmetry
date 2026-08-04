@@ -54,6 +54,32 @@ def test_ollama_chat_legacy(
 
 
 @pytest.mark.vcr
+@pytest.mark.default_cassette("test_ollama_chat_legacy")
+def test_ollama_chat_sets_finish_reasons(
+    instrument_legacy, ollama_client, span_exporter, log_exporter
+):
+    """Reproduces the gap: span_utils.py never sets
+    gen_ai.response.finish_reasons even though the Ollama API response
+    carries done_reason (see cassette test_ollama_chat_legacy.yaml)."""
+    ollama_client.chat(
+        model="llama3",
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            },
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    ollama_span = spans[0]
+    assert ollama_span.name == "ollama.chat"
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
+
+
+@pytest.mark.vcr
 def test_ollama_chat_with_events_with_content(
     instrument_with_content, ollama_client, span_exporter, log_exporter
 ):

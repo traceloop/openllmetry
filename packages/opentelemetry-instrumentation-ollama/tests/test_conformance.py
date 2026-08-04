@@ -25,13 +25,14 @@ CONTRACT_GROUP = "span.gen_ai.inference.client"
 # marks most of these merely `recommended`, so without this set the harness would
 # not notice them going missing. Adding a name here is a commitment.
 #
-# Note: `gen_ai.response.finish_reasons` is NOT emitted by this package in either
-# the legacy or streaming path (span_utils.py never sets it), so it is
-# deliberately absent from EXPECTED — a #4362-class gap.
+# `gen_ai.response.finish_reasons` is set from Ollama's `done_reason` in
+# span_utils.py (set_model_response_attributes), in both the legacy and
+# streaming paths — closing the #4362-class gap.
 EXPECTED = frozenset(
     {
         "gen_ai.request.model",
         "gen_ai.response.model",
+        "gen_ai.response.finish_reasons",
         "gen_ai.usage.input_tokens",
         "gen_ai.usage.output_tokens",
     }
