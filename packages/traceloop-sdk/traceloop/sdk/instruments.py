@@ -15,6 +15,7 @@ class Instruments(Enum):
     HAYSTACK = "haystack"
     LANCEDB = "lancedb"
     LANGCHAIN = "langchain"
+    LITELLM = "litellm"
     LLAMA_INDEX = "llama_index"
     MARQO = "marqo"
     MCP = "mcp"
