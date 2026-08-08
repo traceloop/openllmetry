@@ -153,6 +153,72 @@ def test_conversation_decorator_standalone(exporter):
     assert spans[0].attributes[GEN_AI_CONVERSATION_ID] == "conv-standalone"
 
 
+def test_conversation_decorator_sync_generator(exporter):
+    """@conversation on a generator must apply the id to spans produced during
+    iteration, not detach it before the body runs."""
+
+    @conversation(conversation_id="conv-gen")
+    def streaming_chat():
+        yield inner_task("a")
+        yield inner_task("b")
+
+    @task(name="inner_task")
+    def inner_task(msg: str):
+        return msg
+
+    # Fully consume the generator so its body (and the task spans) actually run.
+    assert list(streaming_chat()) == ["a", "b"]
+
+    task_spans = [s for s in exporter.get_finished_spans() if "task" in s.name]
+    assert len(task_spans) == 2
+    for span in task_spans:
+        assert span.attributes[GEN_AI_CONVERSATION_ID] == "conv-gen"
+
+
+@pytest.mark.asyncio
+async def test_conversation_decorator_async_generator(exporter):
+    """Same guarantee for async generators (which are NOT coroutine functions, so
+    they must not fall into a branch that detaches before iteration)."""
+
+    @conversation(conversation_id="conv-agen")
+    async def streaming_chat():
+        yield await inner_task("a")
+        yield await inner_task("b")
+
+    @task(name="inner_task")
+    async def inner_task(msg: str):
+        return msg
+
+    collected = [item async for item in streaming_chat()]
+    assert collected == ["a", "b"]
+
+    task_spans = [s for s in exporter.get_finished_spans() if "task" in s.name]
+    assert len(task_spans) == 2
+    for span in task_spans:
+        assert span.attributes[GEN_AI_CONVERSATION_ID] == "conv-agen"
+
+
+@pytest.mark.asyncio
+async def test_conversation_decorator_async_detach_does_not_crash(exporter, monkeypatch):
+    """Detach on the @conversation async path must not crash user code when the
+    coroutine resumes on a different context (the cross-Context ValueError case)."""
+    from opentelemetry import context as context_api
+
+    # Simulate the cross-task/thread resume: detach raises the ValueError that OTel
+    # raises for a token created in a different Context.
+    def raising_detach(token):
+        raise ValueError("was created in a different Context")
+
+    monkeypatch.setattr(context_api, "detach", raising_detach)
+
+    @conversation(conversation_id="conv-crash")
+    async def handler():
+        return "ok"
+
+    # Must return normally, not surface the detach ValueError.
+    assert await handler() == "ok"
+
+
 def test_conversation_id_does_not_leak_to_later_sibling(exporter):
     """conversation_id is scoped to the decorated function, not the rest of the thread.
 

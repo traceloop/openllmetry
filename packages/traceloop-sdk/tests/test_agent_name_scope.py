@@ -289,3 +289,72 @@ async def test_async_generator_agent_name_does_not_leak_after_exhaustion(exporte
     by_name = {span.name: span for span in exporter.get_finished_spans()}
     assert by_name["astream.child"].attributes[GEN_AI_AGENT_NAME] == "astreamer"
     assert GEN_AI_AGENT_NAME not in by_name["aafter.plain"].attributes
+
+
+def test_generator_span_not_current_after_exhaustion(exporter):
+    """_handle_generator re-attaches the span as current (SPAN_KEY) at entry and
+    detaches it on cleanup, so the generator's span is not left current afterwards.
+
+    NOTE: this is a smoke check, not a strict regression guard — with the redundant
+    re-attach left undetached, the surrounding token detach still nets out to the
+    right current span in this harness, so the assertions below pass either way. It
+    documents the intended end state and catches a gross imbalance, but the real
+    protection for the unbalanced attach is the capture+detach in _handle_generator.
+    """
+
+    @task(name="gen_task")
+    def gen_task():
+        yield 1
+        yield 2
+
+    gen = gen_task()
+    gen_obj_span_id = None
+    for item in gen:
+        # While iterating, the generator's span is the current one.
+        gen_obj_span_id = trace.get_current_span().get_span_context().span_id
+    # Generator exhausted -> its span-context re-attach must have been detached, so
+    # it is no longer the current span.
+    current_after = trace.get_current_span().get_span_context().span_id
+    assert current_after != gen_obj_span_id, (
+        "generator span is still current after exhaustion — the re-attached "
+        "span context was never detached"
+    )
+
+    # And a plain span created afterwards must NOT be parented to the generator.
+    _make_child_span("after.plain")
+
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+    gen_span_id = by_name["gen_task.task"].get_span_context().span_id
+    after = by_name["after.plain"]
+    after_parent_id = after.parent.span_id if after.parent else None
+    assert after_parent_id != gen_span_id, (
+        "plain span after generator exhaustion is mis-parented to the generator span"
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_generator_early_exit_is_clean_under_aclosing(exporter):
+    """Abandoning an async-gen @agent is only deterministic under `aclosing()`.
+
+    `async_gen_wrap` closes the inner generator in a finally, so an explicit close
+    ends the span and detaches the tokens on the caller's context. A bare `break`
+    cannot get this guarantee: Python defers finalizing the wrapper to the event
+    loop, so the detach runs against the finalizer's own contextvars copy and the
+    caller's context keeps the name. `aclosing()` is the documented workaround.
+    """
+    import contextlib
+
+    @agent(name="early_exit")
+    async def streaming_agent():
+        yield 1
+        yield 2
+
+    async with contextlib.aclosing(streaming_agent()) as gen:
+        async for _ in gen:
+            break
+
+    assert context_api.get_value("agent_name") is None
+
+    _make_child_span("after.aclosing")
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+    assert GEN_AI_AGENT_NAME not in by_name["after.aclosing"].attributes

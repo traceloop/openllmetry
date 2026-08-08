@@ -51,22 +51,44 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
             response = llm.chat(user_message)
             return response
     """
-    from opentelemetry import context as context_api
-
+    from traceloop.sdk.decorators.base import _safe_detach
     from traceloop.sdk.tracing.tracing import set_conversation_id
 
     def decorator(fn: F) -> F:
-        if inspect.iscoroutinefunction(fn):
+        # Scope conversation_id to this call: detach the token once the function
+        # (or, for generators, the fully-consumed iterator) finishes, so the id
+        # does not leak onto unrelated work later on the same context/thread.
+        # Detach via _safe_detach so a cross-task/thread resume can't crash the
+        # user's function with the "created in a different Context" ValueError.
+        if inspect.isasyncgenfunction(fn):
+            @wraps(fn)
+            async def async_gen_wrapper(*args, **kwargs):
+                # Attach on first iteration, not when the generator object is
+                # created — otherwise the finally would detach before any span runs.
+                token = set_conversation_id(conversation_id)
+                try:
+                    async for item in fn(*args, **kwargs):
+                        yield item
+                finally:
+                    _safe_detach(token)
+            return async_gen_wrapper
+        elif inspect.isgeneratorfunction(fn):
+            @wraps(fn)
+            def gen_wrapper(*args, **kwargs):
+                token = set_conversation_id(conversation_id)
+                try:
+                    yield from fn(*args, **kwargs)
+                finally:
+                    _safe_detach(token)
+            return gen_wrapper
+        elif inspect.iscoroutinefunction(fn):
             @wraps(fn)
             async def async_wrapper(*args, **kwargs):
-                # Scope conversation_id to this call: detach the token when the
-                # function returns so the id does not leak onto unrelated work
-                # that runs later on the same context/thread.
                 token = set_conversation_id(conversation_id)
                 try:
                     return await fn(*args, **kwargs)
                 finally:
-                    context_api.detach(token)
+                    _safe_detach(token)
             return async_wrapper
         else:
             @wraps(fn)
@@ -75,7 +97,7 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
                 try:
                     return fn(*args, **kwargs)
                 finally:
-                    context_api.detach(token)
+                    _safe_detach(token)
             return sync_wrapper
 
     return decorator

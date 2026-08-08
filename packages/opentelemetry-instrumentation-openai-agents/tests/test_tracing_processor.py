@@ -73,7 +73,7 @@ class TestStartAgentSpan:
         tracer, exporter = tracer_and_exporter
         agent_data = AgentSpanData(name="MyAgent", handoffs=[], tools=[], output_type="")
 
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t1")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t1")
 
         assert otel_span is not None
         assert otel_span.name == "MyAgent.agent"
@@ -90,7 +90,7 @@ class TestStartAgentSpan:
 
         agent_data = AgentSpanData(name=None, handoffs=[], tools=[], output_type="")
 
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t2")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t2")
 
         assert otel_span.name == "unknown_agent.agent"
         assert otel_span.attributes[GenAIAttributes.GEN_AI_AGENT_NAME] == "unknown_agent"
@@ -105,7 +105,7 @@ class TestStartAgentSpan:
         processor._reverse_handoffs_dict["TargetAgent:t3"] = "SourceAgent"
 
         agent_data = AgentSpanData(name="TargetAgent", handoffs=[], tools=[], output_type="")
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t3")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t3")
 
         attrs = dict(otel_span.attributes)
         assert attrs.get("gen_ai.agent.handoff_parent") == "SourceAgent"
@@ -123,7 +123,7 @@ class TestStartAgentSpan:
         mock_handoff_agent.instructions = "Help the user"
 
         agent_data = AgentSpanData(name="AgentA", handoffs=[mock_handoff_agent], tools=[], output_type="")
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t4")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t4")
 
         attrs = dict(otel_span.attributes)
         handoffs = json.loads(attrs["openai.agent.handoffs"])
@@ -138,7 +138,7 @@ class TestStartAgentSpan:
         from agents import AgentSpanData
 
         agent_data = AgentSpanData(name="Agent", handoffs=[], tools=[], output_type="")
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t5")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t5")
 
         assert otel_span.kind == SpanKind.INTERNAL
 
@@ -149,7 +149,7 @@ class TestStartAgentSpan:
         from agents import AgentSpanData
 
         agent_data = AgentSpanData(name="Agent", handoffs=[], tools=[], output_type="")
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t6")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t6")
 
         attrs = dict(otel_span.attributes)
         assert attrs.get(GenAIAttributes.GEN_AI_OPERATION_NAME) == "invoke_agent"
@@ -168,7 +168,7 @@ class TestStartAgentSpan:
         mock_b.instructions = "Does B"
 
         agent_data = AgentSpanData(name="Router", handoffs=[mock_a, mock_b], tools=[], output_type="")
-        otel_span = processor._start_agent_span(agent_data, parent_context=None, trace_id="t7")
+        otel_span, _name_token = processor._start_agent_span(agent_data, parent_context=None, trace_id="t7")
 
         attrs = dict(otel_span.attributes)
         assert "openai.agent.handoff0" not in attrs
@@ -1263,3 +1263,101 @@ class TestAgentNameContextScope:
         assert get_value("agent_name") is None
 
         processor.on_trace_end(mock_trace)
+
+    def test_interleaved_agent_starts_each_detach_their_own_name(
+        self, processor, real_set_agent_name
+    ):
+        """Two agent spans may start before either ends (parallel sub-agents).
+
+        The name token is returned from _start_agent_span and keyed per SDK span,
+        so each span detaches its OWN name. Holding it on the processor instead
+        would let the second start clobber the first token, stranding it.
+        """
+        from agents import AgentSpanData
+        from opentelemetry.context import get_value
+
+        mock_trace = MagicMock()
+        mock_trace.trace_id = "par-trace"
+        processor.on_trace_start(mock_trace)
+
+        first = MockAgentSpan(
+            AgentSpanData(name="agent_one", handoffs=[], tools=[], output_type=""),
+            trace_id="par-trace",
+        )
+        second = MockAgentSpan(
+            AgentSpanData(name="agent_two", handoffs=[], tools=[], output_type=""),
+            trace_id="par-trace",
+        )
+
+        # Both start before either ends.
+        processor.on_span_start(first)
+        processor.on_span_start(second)
+
+        # Each span got its own distinct token.
+        assert processor._agent_name_tokens[first] is not processor._agent_name_tokens[second]
+
+        # Unwind in LIFO order; the context must end up clean.
+        processor.on_span_end(second)
+        processor.on_span_end(first)
+
+        assert get_value("agent_name") is None
+        assert first not in processor._agent_name_tokens
+        assert second not in processor._agent_name_tokens
+
+        processor.on_trace_end(mock_trace)
+
+    def test_token_is_returned_not_held_on_processor(
+        self, processor, real_set_agent_name
+    ):
+        """_start_agent_span must hand its token back, not park it on ``self``.
+
+        This is the structural guard for the concurrency fix. If a second agent
+        span starts while the first is still inside on_span_start (reentrancy, or
+        two threads driving the processor), processor-held state means the second
+        attach overwrites the first token and it can never be detached. Returning
+        the token makes that impossible by construction.
+        """
+        from agents import AgentSpanData
+        from opentelemetry.instrumentation.openai_agents._hooks import _safe_detach
+
+        span, token = processor._start_agent_span(
+            AgentSpanData(name="returned_agent", handoffs=[], tools=[], output_type=""),
+            parent_context=None,
+            trace_id="ret-trace",
+        )
+
+        assert span is not None
+        assert token is not None, "the agent-name detach token must be returned"
+        # Nothing about the name may be stashed on the processor before the caller
+        # keys it to an SDK span.
+        assert not hasattr(processor, "_pending_agent_name_token")
+
+        _safe_detach(token)
+
+    def test_name_detached_when_span_creation_fails(
+        self, processor, real_set_agent_name, monkeypatch
+    ):
+        """If start_span raises after the name was attached, the name must not stick.
+
+        @dont_throw swallows the error at on_span_start, so without the explicit
+        detach the agent name would be stranded on the context forever.
+        """
+        from agents import AgentSpanData
+        from opentelemetry.context import get_value
+
+        mock_trace = MagicMock()
+        mock_trace.trace_id = "fail-trace"
+        processor.on_trace_start(mock_trace)
+
+        monkeypatch.setattr(
+            processor.tracer, "start_span", MagicMock(side_effect=RuntimeError("boom"))
+        )
+
+        span = MockAgentSpan(
+            AgentSpanData(name="doomed_agent", handoffs=[], tools=[], output_type=""),
+            trace_id="fail-trace",
+        )
+        # dont_throw swallows the RuntimeError.
+        processor.on_span_start(span)
+
+        assert get_value("agent_name") is None

@@ -124,7 +124,9 @@ def _detach_tokens(ctx_tokens) -> None:
 
 def _handle_generator(span, ctx_tokens, res):
     # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
-    context_api.attach(trace.set_span_in_context(span))
+    # Capture this re-attach's token so it can be detached on cleanup; otherwise
+    # this frame is left on the context stack (unbalanced attach).
+    gen_span_token = context_api.attach(trace.set_span_in_context(span))
     try:
         for item in res:
             yield item
@@ -139,7 +141,9 @@ def _handle_generator(span, ctx_tokens, res):
         # (https://github.com/open-telemetry/opentelemetry-python/issues/2606).
         # _safe_detach swallows that, so this stops the name/path from leaking in
         # the common case and degrades quietly otherwise (context is reclaimed
-        # during garbage collection).
+        # during garbage collection). Detach the re-attached span first (LIFO:
+        # it was attached after the tokens in ctx_tokens).
+        _safe_detach(gen_span_token)
         _detach_tokens(ctx_tokens)
 
 
@@ -271,10 +275,26 @@ def entity_method(
                         entity_name, tlp_span_kind, version
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                    async for item in _ahandle_generator(
-                        span, ctx_tokens, fn(*args, **kwargs)
-                    ):
-                        yield item
+                    # Delegating with `async for` does not propagate close, so the
+                    # inner generator's finally (end span + detach tokens) would
+                    # only run whenever it happens to be finalized. Closing it
+                    # explicitly ties that cleanup to this wrapper's own close.
+                    #
+                    # KNOWN LIMITATION -- abandoning an async generator (`break`
+                    # without `aclose`) still leaks the entity name. Python defers
+                    # finalizing the wrapper to the event loop, so by the time this
+                    # finally runs we are on a different context: the detach
+                    # succeeds against the finalizer's own contextvars copy and
+                    # leaves the caller's untouched. It cannot be fixed from inside
+                    # the generator; callers who exit early should use
+                    # `contextlib.aclosing()` (or drain the generator) to get
+                    # deterministic cleanup, which this try/finally then honours.
+                    inner = _ahandle_generator(span, ctx_tokens, fn(*args, **kwargs))
+                    try:
+                        async for item in inner:
+                            yield item
+                    finally:
+                        await inner.aclose()
 
                 return cast(F, async_gen_wrap)
             else:
