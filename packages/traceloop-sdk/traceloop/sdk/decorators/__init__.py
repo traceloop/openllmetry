@@ -3,6 +3,7 @@ import asyncio
 import concurrent.futures
 import warnings
 import inspect
+import types
 from functools import wraps
 
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
@@ -54,6 +55,18 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
     from traceloop.sdk.decorators.base import _safe_detach
     from traceloop.sdk.tracing.tracing import set_conversation_id
 
+    def _consume_with_token(gen, token):
+        """Yield from ``gen``, detaching ``token`` once iteration finishes.
+
+        Keeps conversation_id attached for the whole life of a returned
+        generator, and releases it if the consumer abandons the iterator early
+        (GeneratorExit still runs the finally).
+        """
+        try:
+            yield from gen
+        finally:
+            _safe_detach(token)
+
     def decorator(fn: F) -> F:
         # Scope conversation_id to this call: detach the token once the function
         # (or, for generators, the fully-consumed iterator) finishes, so the id
@@ -94,10 +107,22 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
             @wraps(fn)
             def sync_wrapper(*args, **kwargs):
                 token = set_conversation_id(conversation_id)
+                detach = True
                 try:
-                    return fn(*args, **kwargs)
+                    res = fn(*args, **kwargs)
+                    # A plain function can still RETURN a generator — notably
+                    # base.sync_wrap, which @workflow/@task/@agent produce for a
+                    # decorated generator function. isgeneratorfunction is False
+                    # for it, so we land here rather than in gen_wrapper. Detaching
+                    # now would drop conversation_id before a single item is
+                    # produced, so hand the token to the iterator instead.
+                    if isinstance(res, types.GeneratorType):
+                        detach = False
+                        return _consume_with_token(res, token)
+                    return res
                 finally:
-                    _safe_detach(token)
+                    if detach:
+                        _safe_detach(token)
             return sync_wrapper
 
     return decorator

@@ -251,3 +251,63 @@ def test_conversation_id_does_not_leak_to_later_sibling(exporter):
     assert (
         GEN_AI_CONVERSATION_ID not in by_name["unrelated_later.workflow"].attributes
     )
+
+
+def test_conversation_id_survives_generator_returned_by_inner_decorator(exporter):
+    """@conversation above @workflow on a GENERATOR function keeps the id attached.
+
+    inspect.isgeneratorfunction is False for base.sync_wrap -- it is a plain
+    function that RETURNS a generator -- so @conversation takes its sync branch.
+    Detaching when that call returns would drop conversation_id before a single
+    item is produced, leaving every span created during iteration unlabelled.
+    The sync wrapper therefore hands the token to the returned iterator.
+    """
+
+    @task(name="first_step")
+    def first_step():
+        return "1"
+
+    @task(name="second_step")
+    def second_step():
+        return "2"
+
+    @conversation(conversation_id="conv-generator")
+    @workflow(name="streaming_chat")
+    def streaming_chat():
+        first_step()
+        yield "a"
+        second_step()
+        yield "b"
+
+    assert list(streaming_chat()) == ["a", "b"]
+
+    by_name = {span.name: span for span in exporter.get_finished_spans()}
+    # Spans created DURING iteration must carry the conversation id.
+    assert (
+        by_name["first_step.task"].attributes[GEN_AI_CONVERSATION_ID]
+        == "conv-generator"
+    )
+    assert (
+        by_name["second_step.task"].attributes[GEN_AI_CONVERSATION_ID]
+        == "conv-generator"
+    )
+
+
+def test_conversation_id_released_when_generator_abandoned(exporter):
+    """Handing the token to the iterator must not turn into a leak.
+
+    If the consumer stops early, GeneratorExit still runs the iterator's finally,
+    so the id is released rather than sticking on the context.
+    """
+    from opentelemetry import context as context_api
+
+    @conversation(conversation_id="conv-abandoned")
+    @workflow(name="abandoned_stream")
+    def abandoned_stream():
+        yield "a"
+        yield "b"
+
+    for _ in abandoned_stream():
+        break
+
+    assert context_api.get_value("conversation_id") is None
