@@ -73,6 +73,7 @@ class Traceloop:
         endpoint_is_traceloop: Optional[bool] = False,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
+        trace_content: bool = True,
     ) -> Optional[Client]:
         """Initialize Traceloop tracing, metrics, and instrumentation.
 
@@ -88,6 +89,11 @@ class Traceloop:
                 events have nowhere to go and no prompt/completion data will be recorded.
             use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
                 removed in a future release.
+            trace_content: Whether to send sensitive content (prompts,
+                completions) to the tracing backend. Defaults to ``True``.
+                When set to ``False``, overrides the ``TRACELOOP_TRACE_CONTENT``
+                environment variable and disables content capture across all
+                instrumentations.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -116,6 +122,9 @@ class Traceloop:
                 + Fore.RESET
             )
             return
+
+        if not trace_content:
+            os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
 
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
