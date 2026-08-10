@@ -35,10 +35,7 @@ class TestCompletionRoleExtraction:
     def test_chat_generation_with_ai_message_role(self, mock_span, monkeypatch):
         """Test that ChatGeneration with AIMessage correctly extracts 'assistant' role."""
         # Mock should_send_prompts to return True
-        monkeypatch.setattr(
-            "opentelemetry.instrumentation.langchain.span_utils.should_send_prompts",
-            lambda: True
-        )
+        monkeypatch.setattr("opentelemetry.instrumentation.langchain.span_utils.should_send_prompts", lambda: True)
 
         # Create ChatGeneration with AIMessage
         generation = ChatGeneration(message=AIMessage(content="Hello!"))
@@ -55,15 +52,10 @@ class TestCompletionRoleExtraction:
     def test_chat_generation_with_tool_message_role(self, mock_span, monkeypatch):
         """Test that ChatGeneration with ToolMessage correctly extracts 'tool' role."""
         # Mock should_send_prompts to return True
-        monkeypatch.setattr(
-            "opentelemetry.instrumentation.langchain.span_utils.should_send_prompts",
-            lambda: True
-        )
+        monkeypatch.setattr("opentelemetry.instrumentation.langchain.span_utils.should_send_prompts", lambda: True)
 
         # Create ChatGeneration with ToolMessage
-        generation = ChatGeneration(
-            message=ToolMessage(content="Tool result", tool_call_id="123")
-        )
+        generation = ChatGeneration(message=ToolMessage(content="Tool result", tool_call_id="123"))
         llm_result = LLMResult(generations=[[generation]])
 
         # Call the function
@@ -77,10 +69,7 @@ class TestCompletionRoleExtraction:
     def test_generation_without_message_defaults_to_assistant(self, mock_span, monkeypatch):
         """Test that Generation (non-chat) defaults to 'assistant' role."""
         # Mock should_send_prompts to return True
-        monkeypatch.setattr(
-            "opentelemetry.instrumentation.langchain.span_utils.should_send_prompts",
-            lambda: True
-        )
+        monkeypatch.setattr("opentelemetry.instrumentation.langchain.span_utils.should_send_prompts", lambda: True)
 
         # Create Generation without message (legacy completion)
         generation = Generation(text="This is a completion")
@@ -97,10 +86,7 @@ class TestCompletionRoleExtraction:
     def test_multiple_generations_with_different_roles(self, mock_span, monkeypatch):
         """Test that multiple generations with different message types are handled correctly."""
         # Mock should_send_prompts to return True
-        monkeypatch.setattr(
-            "opentelemetry.instrumentation.langchain.span_utils.should_send_prompts",
-            lambda: True
-        )
+        monkeypatch.setattr("opentelemetry.instrumentation.langchain.span_utils.should_send_prompts", lambda: True)
 
         # Create multiple generations with different message types
         gen1 = ChatGeneration(message=AIMessage(content="AI response"))
@@ -122,10 +108,7 @@ class TestCompletionRoleExtraction:
     def test_generation_type_attribute_is_not_used(self, mock_span, monkeypatch):
         """Test that generation.type (which returns class name) is not used directly."""
         # Mock should_send_prompts to return True
-        monkeypatch.setattr(
-            "opentelemetry.instrumentation.langchain.span_utils.should_send_prompts",
-            lambda: True
-        )
+        monkeypatch.setattr("opentelemetry.instrumentation.langchain.span_utils.should_send_prompts", lambda: True)
 
         # Create ChatGeneration - note that generation.type would be "ChatGeneration"
         generation = ChatGeneration(message=AIMessage(content="Test"))

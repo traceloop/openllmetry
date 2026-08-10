@@ -17,9 +17,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 
 
-def food_analysis(
-    name: str, healthy: bool, calories: int, taste_profile: List[str]
-) -> str:
+def food_analysis(name: str, healthy: bool, calories: int, taste_profile: List[str]) -> str:
     return "pass"
 
 
@@ -70,16 +68,12 @@ def test_tool_calls(instrument_legacy, span_exporter, log_exporter):
     # )
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_tool_calls_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     query_text = "Analyze the following food item: avocado"
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
@@ -123,9 +117,7 @@ def test_tool_calls_with_events_with_content(
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_tool_calls_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     query_text = "Analyze the following food item: avocado"
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
@@ -228,22 +220,16 @@ def test_tool_calls_with_history(instrument_legacy, span_exporter, log_exporter)
     assert output_messages[0]["parts"][0]["type"] == "tool_call"
     assert output_messages[0]["parts"][0]["name"] == "get_weather"
 
-    result_arguments = result.model_dump()["additional_kwargs"]["tool_calls"][0][
-        "function"
-    ]["arguments"]
+    result_arguments = result.model_dump()["additional_kwargs"]["tool_calls"][0]["function"]["arguments"]
     assert output_messages[0]["parts"][0]["arguments"] == json.loads(result_arguments)
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_with_history_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_tool_calls_with_history_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
 
@@ -277,9 +263,7 @@ def test_tool_calls_with_history_with_events_with_content(
     assert len(logs) == 6
 
     # Validate system message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.system.message", {"content": "Be crisp and friendly."}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {"content": "Be crisp and friendly."})
 
     # Validate user message Event
     assert_message_in_logs(
@@ -308,14 +292,10 @@ def test_tool_calls_with_history_with_events_with_content(
     )
 
     # Validate tool message Event
-    assert_message_in_logs(
-        logs[3], "gen_ai.tool.message", {"content": "Sunny as always!"}
-    )
+    assert_message_in_logs(logs[3], "gen_ai.tool.message", {"content": "Sunny as always!"})
 
     # Validate second user message Event
-    assert_message_in_logs(
-        logs[4], "gen_ai.user.message", {"content": "What's the weather in London?"}
-    )
+    assert_message_in_logs(logs[4], "gen_ai.user.message", {"content": "What's the weather in London?"})
 
     # Validate AI choice Event
     tool_call = result.model_dump()["additional_kwargs"]["tool_calls"][0]
@@ -339,9 +319,7 @@ def test_tool_calls_with_history_with_events_with_content(
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_with_history_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_tool_calls_with_history_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
 
@@ -420,9 +398,7 @@ def test_tool_calls_with_history_with_events_with_no_content(
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_anthropic_text_block(
-    instrument_legacy, span_exporter, log_exporter
-):
+def test_tool_calls_anthropic_text_block(instrument_legacy, span_exporter, log_exporter):
     # This test checks for cases when anthropic prepends a tool call with a text block.
 
     def get_weather(location: str) -> str:
@@ -432,9 +408,7 @@ def test_tool_calls_anthropic_text_block(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -479,16 +453,12 @@ def test_tool_calls_anthropic_text_block(
     assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_anthropic_text_block_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_tool_calls_anthropic_text_block_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     # This test checks for cases when anthropic prepends a tool call with a text block.
 
     def get_weather(location: str) -> str:
@@ -498,9 +468,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -518,9 +486,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_content(
     assert_message_in_logs(
         logs[0],
         "gen_ai.user.message",
-        {
-            "content": "Hey, what's the weather in San Francisco? Also, any news in town?"
-        },
+        {"content": "Hey, what's the weather in San Francisco? Also, any news in town?"},
     )
 
     # Validate AI choice Event
@@ -557,9 +523,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -595,9 +559,7 @@ def test_tool_calls_anthropic_text_block_with_events_with_no_content(
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_tool_calls_anthropic_text_block_and_history(
-    instrument_legacy, span_exporter, log_exporter
-):
+def test_tool_calls_anthropic_text_block_and_history(instrument_legacy, span_exporter, log_exporter):
     # This test checks for cases when anthropic prepends a tool call with a text block
     # and then the response messaged is added to the history.
     def get_weather(location: str) -> str:
@@ -607,9 +569,7 @@ def test_tool_calls_anthropic_text_block_and_history(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
         AIMessage(
             content=[
                 {
@@ -633,9 +593,7 @@ def test_tool_calls_anthropic_text_block_and_history(
                 }
             ],
         ),
-        ToolMessage(
-            content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"
-        ),
+        ToolMessage(content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -691,9 +649,7 @@ def test_tool_calls_anthropic_text_block_and_history(
     assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
@@ -710,9 +666,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
         AIMessage(
             content=[
                 {
@@ -736,9 +690,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
                 }
             ],
         ),
-        ToolMessage(
-            content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"
-        ),
+        ToolMessage(content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -754,9 +706,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
     assert len(logs) == 4
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.user.message", {"content": messages[0].content}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": messages[0].content})
 
     # Validate AI message Event
     assert_message_in_logs(
@@ -778,9 +728,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
     )
 
     # Validate tool message Event
-    assert_message_in_logs(
-        logs[2], "gen_ai.tool.message", {"content": messages[2].content}
-    )
+    assert_message_in_logs(logs[2], "gen_ai.tool.message", {"content": messages[2].content})
 
     # Validate AI choice Event
     result_dict = result.model_dump()
@@ -806,6 +754,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_content(
 @pytest.mark.vcr
 def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_exporter):
     """Test that tool_call_id is properly set in span attributes for ToolMessage."""
+
     def sample_tool(query: str) -> str:
         return "Tool response"
 
@@ -842,9 +791,7 @@ def test_tool_message_with_tool_call_id(instrument_legacy, span_exporter, log_ex
     assert input_messages[2]["parts"][0]["id"] == "call_12345"
 
     logs = log_exporter.get_finished_logs()
-    assert len(logs) == 0, (
-        "Assert that it doesn't emit logs when use_legacy_attributes is True"
-    )
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
@@ -861,9 +808,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
         AIMessage(
             content=[
                 {
@@ -887,9 +832,7 @@ def test_tool_calls_anthropic_text_block_and_history_with_events_with_no_content
                 }
             ],
         ),
-        ToolMessage(
-            content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"
-        ),
+        ToolMessage(content="Sunny as always!", tool_call_id="toolu_016q9vtSd8CY2vnZSpEp1j4o"),
     ]
     model = ChatAnthropic(model="claude-3-5-haiku-latest")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -952,9 +895,7 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatOpenAI(model="gpt-4.1-nano")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -1001,16 +942,12 @@ def test_parallel_tool_calls(instrument_legacy, span_exporter, log_exporter):
     assert output_messages[0]["parts"][1]["arguments"] == {"location": "San Francisco"}
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_parallel_tool_calls_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_parallel_tool_calls_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
 
@@ -1018,9 +955,7 @@ def test_parallel_tool_calls_with_events_with_content(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatOpenAI(model="gpt-4.1-nano")
     model_with_tools = model.bind_tools([get_weather, get_news])
@@ -1035,9 +970,7 @@ def test_parallel_tool_calls_with_events_with_content(
     assert len(logs) == 2
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.user.message", {"content": messages[0].content}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": messages[0].content})
 
     # Validate AI choice Event
     result_dict = result.model_dump()
@@ -1070,9 +1003,7 @@ def test_parallel_tool_calls_with_events_with_content(
 
 @pytest.mark.skip(reason="Direct model invocations do not create langchain spans")
 @pytest.mark.vcr
-def test_parallel_tool_calls_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_parallel_tool_calls_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     def get_weather(location: str) -> str:
         return "sunny"
 
@@ -1080,9 +1011,7 @@ def test_parallel_tool_calls_with_events_with_no_content(
         return "Not much"
 
     messages: list[BaseMessage] = [
-        HumanMessage(
-            content="Hey, what's the weather in San Francisco? Also, any news in town?"
-        ),
+        HumanMessage(content="Hey, what's the weather in San Francisco? Also, any news in town?"),
     ]
     model = ChatOpenAI(model="gpt-4.1-nano")
     model_with_tools = model.bind_tools([get_weather, get_news])

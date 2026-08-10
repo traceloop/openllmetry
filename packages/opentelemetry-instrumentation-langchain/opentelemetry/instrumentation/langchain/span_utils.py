@@ -108,12 +108,14 @@ def _content_to_parts(content) -> list[dict]:
                         parts.append({"type": "uri", "modality": "image", "uri": url})
                 elif block_type == "image":
                     # base64 image block
-                    parts.append({
-                        "type": "blob",
-                        "modality": "image",
-                        "mime_type": block.get("media_type", block.get("mime_type", "")),
-                        "content": block.get("data", ""),
-                    })
+                    parts.append(
+                        {
+                            "type": "blob",
+                            "modality": "image",
+                            "mime_type": block.get("media_type", block.get("mime_type", "")),
+                            "content": block.get("data", ""),
+                        }
+                    )
                 else:
                     # Unknown block type — preserve as text with JSON
                     parts.append({"type": "text", "content": json.dumps(block, cls=CallbackFilteredJSONEncoder)})
@@ -131,12 +133,8 @@ def _tool_calls_to_parts(tool_calls) -> list[dict]:
     for tc in tool_calls:
         tc_dict = dict(tc)
         tool_id = tc_dict.get("id", "")
-        tool_name = tc_dict.get(
-            "name", tc_dict.get("function", {}).get("name", "")
-        )
-        tool_args = tc_dict.get(
-            "args", tc_dict.get("function", {}).get("arguments")
-        )
+        tool_name = tc_dict.get("name", tc_dict.get("function", {}).get("name", ""))
+        tool_args = tc_dict.get("args", tc_dict.get("function", {}).get("arguments"))
         if isinstance(tool_args, str):
             try:
                 tool_args = json.loads(tool_args)
@@ -161,9 +159,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         if (model := kwargs.get(model_tag)) is not None:
             span_holder.request_model = model
             break
-        elif (
-            model := (kwargs.get("invocation_params") or {}).get(model_tag)
-        ) is not None:
+        elif (model := (kwargs.get("invocation_params") or {}).get(model_tag)) is not None:
             span_holder.request_model = model
             break
     else:
@@ -174,9 +170,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model)
 
     if "invocation_params" in kwargs:
-        params = (
-            kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
-        )
+        params = kwargs["invocation_params"].get("params") or kwargs["invocation_params"]
     else:
         params = kwargs
 
@@ -185,9 +179,7 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         params.get("max_tokens") or params.get("max_new_tokens"),
     )
-    _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, params.get("temperature")
-    )
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, params.get("temperature"))
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
 
     tools = kwargs.get("invocation_params", {}).get("tools", [])
@@ -221,10 +213,12 @@ def set_llm_request(
     if should_send_prompts():
         input_messages = []
         for msg in prompts:
-            input_messages.append({
-                "role": "user",
-                "parts": [{"type": "text", "content": msg}],
-            })
+            input_messages.append(
+                {
+                    "role": "user",
+                    "parts": [{"type": "text", "content": msg}],
+                }
+            )
         if input_messages:
             _set_span_attribute(
                 span,
@@ -278,19 +272,19 @@ def set_chat_request(
                         if isinstance(msg.content, str)
                         else json.dumps(msg.content, cls=CallbackFilteredJSONEncoder)
                     )
-                    parts = [{
-                        "type": "tool_call_response",
-                        "id": msg.tool_call_id,
-                        "response": content_str,
-                    }]
+                    parts = [
+                        {
+                            "type": "tool_call_response",
+                            "id": msg.tool_call_id,
+                            "response": content_str,
+                        }
+                    ]
                 else:
                     parts = _content_to_parts(msg.content)
 
                     # Tool calls (for assistant messages)
                     tool_calls = (
-                        msg.tool_calls
-                        if hasattr(msg, "tool_calls")
-                        else msg.additional_kwargs.get("tool_calls")
+                        msg.tool_calls if hasattr(msg, "tool_calls") else msg.additional_kwargs.get("tool_calls")
                     )
                     if tool_calls:
                         parts.extend(_tool_calls_to_parts(tool_calls))
@@ -354,12 +348,14 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
                             fc_args = json.loads(fc_args)
                         except (json.JSONDecodeError, TypeError):
                             pass
-                    parts.append({
-                        "type": "tool_call",
-                        "id": "",
-                        "name": fc.get("name"),
-                        "arguments": fc_args,
-                    })
+                    parts.append(
+                        {
+                            "type": "tool_call",
+                            "id": "",
+                            "name": fc.get("name"),
+                            "arguments": fc_args,
+                        }
+                    )
 
                 # Handle new tool_calls format (multiple tool calls)
                 tool_calls = (
@@ -384,11 +380,7 @@ def set_chat_response(span: Span, response: LLMResult) -> None:
 
 
 def set_chat_response_usage(
-    span: Span,
-    response: LLMResult,
-    token_histogram: Histogram,
-    record_token_usage: bool,
-    model_name: str
+    span: Span, response: LLMResult, token_histogram: Histogram, record_token_usage: bool, model_name: str
 ) -> None:
     input_tokens = 0
     output_tokens = 0
@@ -421,9 +413,7 @@ def set_chat_response_usage(
                     total_tokens = input_tokens + output_tokens
 
                     if generation.message.usage_metadata.get("input_token_details"):
-                        input_token_details = generation.message.usage_metadata.get(
-                            "input_token_details", {}
-                        )
+                        input_token_details = generation.message.usage_metadata.get("input_token_details", {})
                         raw_cache_read = input_token_details.get("cache_read")
                         if isinstance(raw_cache_read, (int, float)):
                             cache_read_tokens = (cache_read_tokens or 0) + raw_cache_read

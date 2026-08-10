@@ -27,15 +27,13 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config({"run_name": "ThisIsATestChain", "tags": ["test_tag"]})
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
+        {"run_name": "ThisIsATestChain", "tags": ["test_tag"]}
+    )
     chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
@@ -49,43 +47,29 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
         ]
     ) == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "ThisIsATestChain.workflow"
-    )
-    prompt_task_span = next(
-        span for span in spans if span.name == "execute_task ChatPromptTemplate"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task JsonOutputFunctionsParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "ThisIsATestChain.workflow")
+    prompt_task_span = next(span for span in spans if span.name == "execute_task ChatPromptTemplate")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task JsonOutputFunctionsParser")
 
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "inputs": {"input": "tell me a short joke"},
         "tags": ["test_tag"],
         "metadata": {},
         "kwargs": {"name": "ThisIsATestChain"},
     }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
         "outputs": {
             "setup": "Why couldn't the bicycle stand up by itself?",
             "punchline": "It was two tired!",
         },
         "kwargs": {"tags": ["test_tag"]},
     }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
+    assert json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "inputs": {"input": "tell me a short joke"},
         "tags": ["seq:step:1", "test_tag"],
         "metadata": {},
@@ -94,9 +78,7 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
             "name": "ChatPromptTemplate",
         },
     }
-    assert json.loads(
-        prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
+    assert json.loads(prompt_task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
         "kwargs": {"tags": ["seq:step:1", "test_tag"]},
         "outputs": {
             "id": ["langchain", "prompts", "chat", "ChatPromptValue"],
@@ -105,7 +87,7 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
                     {
                         "id": ["langchain", "schema", "messages", "SystemMessage"],
                         "kwargs": {
-                            "content": "You are helpful " "assistant",
+                            "content": "You are helpful assistant",
                             "type": "system",
                         },
                         "lc": 1,
@@ -114,7 +96,7 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
                     {
                         "id": ["langchain", "schema", "messages", "HumanMessage"],
                         "kwargs": {
-                            "content": "tell me a short " "joke",
+                            "content": "tell me a short joke",
                             "type": "human",
                         },
                         "lc": 1,
@@ -128,15 +110,11 @@ def test_simple_lcel(instrument_legacy, span_exporter, log_exporter):
     }
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_simple_lcel_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_simple_lcel_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     class Joke(BaseModel):
         """Joke to tell user."""
 
@@ -145,15 +123,13 @@ def test_simple_lcel_with_events_with_content(
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config({"run_name": "ThisIsATestChain", "tags": ["test_tag"]})
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
+        {"run_name": "ThisIsATestChain", "tags": ["test_tag"]}
+    )
     chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
@@ -167,18 +143,10 @@ def test_simple_lcel_with_events_with_content(
         ]
     ) == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "ThisIsATestChain.workflow"
-    )
-    prompt_task_span = next(
-        span for span in spans if span.name == "execute_task ChatPromptTemplate"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task JsonOutputFunctionsParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "ThisIsATestChain.workflow")
+    prompt_task_span = next(span for span in spans if span.name == "execute_task ChatPromptTemplate")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task JsonOutputFunctionsParser")
 
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
@@ -188,14 +156,10 @@ def test_simple_lcel_with_events_with_content(
     assert len(logs) == 3
 
     # Validate system message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"})
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
-    )
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {"content": "tell me a short joke"})
 
     # Validate AI choice Event
     _choice_event = {
@@ -218,9 +182,7 @@ def test_simple_lcel_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_simple_lcel_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_simple_lcel_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     class Joke(BaseModel):
         """Joke to tell user."""
 
@@ -229,15 +191,13 @@ def test_simple_lcel_with_events_with_no_content(
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config({"run_name": "ThisIsATestChain", "tags": ["test_tag"]})
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
+        {"run_name": "ThisIsATestChain", "tags": ["test_tag"]}
+    )
     chain.invoke({"input": "tell me a short joke"})
 
     spans = span_exporter.get_finished_spans()
@@ -251,18 +211,10 @@ def test_simple_lcel_with_events_with_no_content(
         ]
     ) == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "ThisIsATestChain.workflow"
-    )
-    prompt_task_span = next(
-        span for span in spans if span.name == "execute_task ChatPromptTemplate"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task JsonOutputFunctionsParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "ThisIsATestChain.workflow")
+    prompt_task_span = next(span for span in spans if span.name == "execute_task ChatPromptTemplate")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task JsonOutputFunctionsParser")
 
     assert prompt_task_span.parent.span_id == workflow_span.context.span_id
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
@@ -295,9 +247,7 @@ async def test_async_lcel(instrument_legacy, span_exporter, log_exporter):
         temperature=0,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     response = await runnable.ainvoke({"product": "colorful socks"})
 
@@ -310,45 +260,31 @@ async def test_async_lcel(instrument_legacy, span_exporter, log_exporter):
         "RunnableSequence.workflow",
     } == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task StrOutputParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "RunnableSequence.workflow")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task StrOutputParser")
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
 
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    ) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]) == {
         "inputs": {"product": "colorful socks"},
         "tags": [],
         "metadata": {},
         "kwargs": {"name": "RunnableSequence"},
     }
-    assert json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
-    ) == {
+    assert json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]) == {
         "outputs": response,
         "kwargs": {"tags": []},
     }
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_lcel_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+async def test_async_lcel_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
@@ -368,15 +304,9 @@ async def test_async_lcel_with_events_with_content(
         "RunnableSequence.workflow",
     } == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task StrOutputParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "RunnableSequence.workflow")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task StrOutputParser")
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
@@ -404,17 +334,13 @@ async def test_async_lcel_with_events_with_content(
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_lcel_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+async def test_async_lcel_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     await runnable.ainvoke({"product": "colorful socks"})
 
@@ -427,15 +353,9 @@ async def test_async_lcel_with_events_with_no_content(
         "RunnableSequence.workflow",
     } == set([span.name for span in spans])
 
-    workflow_span = next(
-        span for span in spans if span.name == "RunnableSequence.workflow"
-    )
-    chat_openai_task_span = next(
-        span for span in spans if span.name == "ChatOpenAI.chat"
-    )
-    output_parser_task_span = next(
-        span for span in spans if span.name == "execute_task StrOutputParser"
-    )
+    workflow_span = next(span for span in spans if span.name == "RunnableSequence.workflow")
+    chat_openai_task_span = next(span for span in spans if span.name == "ChatOpenAI.chat")
+    output_parser_task_span = next(span for span in spans if span.name == "execute_task StrOutputParser")
 
     assert chat_openai_task_span.parent.span_id == workflow_span.context.span_id
     assert output_parser_task_span.parent.span_id == workflow_span.context.span_id
@@ -463,9 +383,7 @@ def test_invoke(instrument_legacy, span_exporter, log_exporter):
         streaming=True,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     runnable.invoke({"product": "colorful socks"})
 
@@ -479,15 +397,11 @@ def test_invoke(instrument_legacy, span_exporter, log_exporter):
     ] == [span.name for span in spans]
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_invoke_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_invoke_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
@@ -528,18 +442,14 @@ def test_invoke_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_invoke_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_invoke_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
         streaming=True,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     runnable.invoke({"product": "colorful socks"})
 
@@ -574,9 +484,7 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
         temperature=0,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     res = runnable.stream(
         input={"product": "colorful socks"},
@@ -595,15 +503,11 @@ def test_stream(instrument_legacy, span_exporter, log_exporter):
     ] == [span.name for span in spans]
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_stream_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_stream_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
@@ -647,17 +551,13 @@ def test_stream_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_stream_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_stream_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     res = runnable.stream(
         input={"product": "colorful socks"},
@@ -699,9 +599,7 @@ async def test_async_invoke(instrument_legacy, span_exporter, log_exporter):
         streaming=True,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     await runnable.ainvoke({"product": "colorful socks"})
 
@@ -715,16 +613,12 @@ async def test_async_invoke(instrument_legacy, span_exporter, log_exporter):
     ] == [span.name for span in spans]
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_invoke_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+async def test_async_invoke_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
@@ -766,18 +660,14 @@ async def test_async_invoke_with_events_with_content(
 
 @pytest.mark.vcr
 @pytest.mark.asyncio
-async def test_async_invoke_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+async def test_async_invoke_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     chat = ChatOpenAI(
         model="gpt-4",
         temperature=0,
         streaming=True,
     )
 
-    prompt = PromptTemplate.from_template(
-        "write 10 lines of random text about ${product}"
-    )
+    prompt = PromptTemplate.from_template("write 10 lines of random text about ${product}")
     runnable = prompt | chat | StrOutputParser()
     await runnable.ainvoke({"product": "colorful socks"})
 
@@ -817,15 +707,11 @@ def test_lcel_with_datetime(instrument_legacy, span_exporter, log_exporter):
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config(
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
         {
             "run_name": "DateTimeTestChain",
             "tags": ["datetime_test"],
@@ -837,13 +723,9 @@ def test_lcel_with_datetime(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
 
-    workflow_span = next(
-        span for span in spans if span.name == "DateTimeTestChain.workflow"
-    )
+    workflow_span = next(span for span in spans if span.name == "DateTimeTestChain.workflow")
 
-    entity_input = json.loads(
-        workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT]
-    )
+    entity_input = json.loads(workflow_span.attributes[SpanAttributes.TRACELOOP_ENTITY_INPUT])
 
     assert entity_input["metadata"]["timestamp"] == "2023-05-17T12:34:56"
     assert entity_input["metadata"]["test_name"] == "datetime_test"
@@ -858,15 +740,11 @@ def test_lcel_with_datetime(instrument_legacy, span_exporter, log_exporter):
     ) == set([span.name for span in spans])
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_lcel_with_datetime_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_lcel_with_datetime_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     test_date = datetime.datetime(2023, 5, 17, 12, 34, 56)
 
     class Joke(BaseModel):
@@ -877,15 +755,11 @@ def test_lcel_with_datetime_with_events_with_content(
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config(
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
         {
             "run_name": "DateTimeTestChain",
             "tags": ["datetime_test"],
@@ -910,14 +784,10 @@ def test_lcel_with_datetime_with_events_with_content(
     assert len(logs) == 3
 
     # Validate system message Event
-    assert_message_in_logs(
-        logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"}
-    )
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {"content": "You are helpful assistant"})
 
     # Validate user message Event
-    assert_message_in_logs(
-        logs[1], "gen_ai.user.message", {"content": "tell me a short joke"}
-    )
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {"content": "tell me a short joke"})
 
     # Validate AI choice Event
     _choice_event = {
@@ -940,9 +810,7 @@ def test_lcel_with_datetime_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_lcel_with_datetime_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_lcel_with_datetime_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     test_date = datetime.datetime(2023, 5, 17, 12, 34, 56)
 
     class Joke(BaseModel):
@@ -953,15 +821,11 @@ def test_lcel_with_datetime_with_events_with_no_content(
 
     openai_functions = [convert_pydantic_to_openai_function(Joke)]
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", "You are helpful assistant"), ("user", "{input}")]
-    )
+    prompt = ChatPromptTemplate.from_messages([("system", "You are helpful assistant"), ("user", "{input}")])
     model = ChatOpenAI(model="gpt-3.5-turbo")
     output_parser = JsonOutputFunctionsParser()
 
-    chain = (
-        prompt | model.bind(functions=openai_functions) | output_parser
-    ).with_config(
+    chain = (prompt | model.bind(functions=openai_functions) | output_parser).with_config(
         {
             "run_name": "DateTimeTestChain",
             "tags": ["datetime_test"],

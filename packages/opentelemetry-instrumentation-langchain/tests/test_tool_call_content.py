@@ -57,18 +57,12 @@ def test_assistant_message_with_tool_calls_includes_content():
     # Message 0: user message
     assert input_messages[0]["role"] == "user"
     assert input_messages[0]["parts"][0]["type"] == "text"
-    assert (
-        input_messages[0]["parts"][0]["content"]
-        == "what is the current time? First greet me."
-    )
+    assert input_messages[0]["parts"][0]["content"] == "what is the current time? First greet me."
 
     # Message 1: assistant message with content and tool_calls
     assert input_messages[1]["role"] == "assistant"
     assert input_messages[1]["parts"][0]["type"] == "text"
-    assert (
-        input_messages[1]["parts"][0]["content"]
-        == "Hello! Let me check the current time for you."
-    )
+    assert input_messages[1]["parts"][0]["content"] == "Hello! Let me check the current time for you."
     assert input_messages[1]["parts"][1]["type"] == "tool_call"
     assert input_messages[1]["parts"][1]["id"] == "call_qU7pH3EdQvzwkPyKPOdpgaKA"
     assert input_messages[1]["parts"][1]["name"] == "get_current_time"
@@ -82,10 +76,7 @@ def test_assistant_message_with_tool_calls_includes_content():
     # Message 3: assistant message with only content
     assert input_messages[3]["role"] == "assistant"
     assert input_messages[3]["parts"][0]["type"] == "text"
-    assert (
-        input_messages[3]["parts"][0]["content"]
-        == "The current time is 2025-08-15 08:15:21"
-    )
+    assert input_messages[3]["parts"][0]["content"] == "The current time is 2025-08-15 08:15:21"
 
 
 def test_assistant_message_with_only_tool_calls_no_content():
@@ -102,9 +93,7 @@ def test_assistant_message_with_only_tool_calls_no_content():
         [
             AIMessage(
                 content="",
-                tool_calls=[
-                    {"id": "call_123", "name": "some_tool", "args": {"param": "value"}}
-                ],
+                tool_calls=[{"id": "call_123", "name": "some_tool", "args": {"param": "value"}}],
             )
         ]
     ]
@@ -148,10 +137,7 @@ def test_assistant_message_with_only_content_no_tool_calls():
 
     assert input_messages[0]["role"] == "assistant"
     assert input_messages[0]["parts"][0]["type"] == "text"
-    assert (
-        input_messages[0]["parts"][0]["content"]
-        == "Just a regular response with no tool calls"
-    )
+    assert input_messages[0]["parts"][0]["content"] == "Just a regular response with no tool calls"
 
     tool_call_parts = [p for p in input_messages[0]["parts"] if p["type"] == "tool_call"]
     assert len(tool_call_parts) == 0

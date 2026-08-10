@@ -57,15 +57,11 @@ def test_agents(instrument_legacy, span_exporter, log_exporter):
     }
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_agents_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_agents_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     search = TavilySearchResults(max_results=2)
     tools = [search]
 
@@ -107,9 +103,7 @@ def test_agents_with_events_with_content(
     assert_message_in_logs(logs, "gen_ai.user.message", {"content": prompt})
 
     # validate that the system message Event exists
-    assert_message_in_logs(
-        logs, "gen_ai.system.message", {"content": "You are a helpful assistant"}
-    )
+    assert_message_in_logs(logs, "gen_ai.system.message", {"content": "You are a helpful assistant"})
 
     # Validate that the assistant message Event exists
     assert_message_in_logs(
@@ -158,9 +152,7 @@ def test_agents_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_agents_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_agents_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     search = TavilySearchResults(max_results=2)
     tools = [search]
 
@@ -196,10 +188,7 @@ def test_agents_with_events_with_no_content(
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 8
-    assert all(
-        log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain"
-        for log in logs
-    )
+    assert all(log.log_record.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME) == "langchain" for log in logs)
 
     # Validate that the user message Event exists
     assert_message_in_logs(logs, "gen_ai.user.message", {})
@@ -242,11 +231,6 @@ def test_agents_with_events_with_no_content(
     assert_message_in_logs(logs, "gen_ai.choice", choice_event)
 
 
-def assert_message_in_logs(
-    logs: Tuple[ReadableLogRecord, ...], event_name: str, expected_content: dict
-):
-    assert any(
-        log.log_record.event_name == event_name
-        for log in logs
-    )
+def assert_message_in_logs(logs: Tuple[ReadableLogRecord, ...], event_name: str, expected_content: dict):
+    assert any(log.log_record.event_name == event_name for log in logs)
     assert any(dict(log.log_record.body) == expected_content for log in logs)

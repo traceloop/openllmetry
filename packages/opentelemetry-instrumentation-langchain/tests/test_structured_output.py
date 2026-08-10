@@ -37,15 +37,11 @@ def test_structured_output(instrument_legacy, span_exporter, log_exporter):
     assert input_messages[0]["parts"][0]["content"] == query_text
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_structured_output_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_structured_output_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     query_text = "Analyze the following food item: avocado"
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -75,9 +71,7 @@ def test_structured_output_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_structured_output_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_structured_output_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     query_text = "Analyze the following food item: avocado"
     query = [HumanMessage(content=query_text)]
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0)

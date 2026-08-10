@@ -42,9 +42,7 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
         ]
     )
     llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    chain = load_summarize_chain(llm, chain_type="stuff").with_config(
-        run_name="stuff_chain"
-    )
+    chain = load_summarize_chain(llm, chain_type="stuff").with_config(run_name="stuff_chain")
     chain.invoke(small_docs)
 
     spans = span_exporter.get_finished_spans()
@@ -64,24 +62,18 @@ def test_sequential_chain(instrument_legacy, span_exporter, log_exporter):
     assert data["outputs"].keys() == {"output_text"}
 
     logs = log_exporter.get_finished_logs()
-    assert (
-        len(logs) == 0
-    ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+    assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
 @pytest.mark.vcr
-def test_sequential_chain_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
-):
+def test_sequential_chain_with_events_with_content(instrument_with_content, span_exporter, log_exporter):
     small_docs = CharacterTextSplitter().create_documents(
         texts=[
             INPUT_TEXT,
         ]
     )
     llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    chain = load_summarize_chain(llm, chain_type="stuff").with_config(
-        run_name="stuff_chain"
-    )
+    chain = load_summarize_chain(llm, chain_type="stuff").with_config(run_name="stuff_chain")
     response = chain.invoke(small_docs)
 
     spans = span_exporter.get_finished_spans()
@@ -116,18 +108,14 @@ def test_sequential_chain_with_events_with_content(
 
 
 @pytest.mark.vcr
-def test_sequential_chain_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
-):
+def test_sequential_chain_with_events_with_no_content(instrument_with_no_content, span_exporter, log_exporter):
     small_docs = CharacterTextSplitter().create_documents(
         texts=[
             INPUT_TEXT,
         ]
     )
     llm = ChatCohere(model="command-r-08-2024", temperature=0.75)
-    chain = load_summarize_chain(llm, chain_type="stuff").with_config(
-        run_name="stuff_chain"
-    )
+    chain = load_summarize_chain(llm, chain_type="stuff").with_config(run_name="stuff_chain")
     chain.invoke(small_docs)
 
     spans = span_exporter.get_finished_spans()

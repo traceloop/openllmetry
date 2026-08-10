@@ -13,12 +13,15 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 # Import ContextVar for reading current node (set by callback_handler)
 # Importing at runtime to avoid circular import issues
 def _get_current_node_contextvar():
     """Lazy import to avoid circular dependency."""
     from opentelemetry.instrumentation.langchain.callback_handler import _langgraph_current_node
+
     return _langgraph_current_node
+
 
 # Context key for marking LangGraph flow
 LANGGRAPH_FLOW_KEY = "langgraph_flow"
@@ -28,13 +31,7 @@ LANGGRAPH_GRAPH_SPAN_KEY = "langgraph_graph_span"
 LANGGRAPH_FIRST_CHILD_PENDING_KEY = "langgraph_first_child_pending"
 
 
-def _set_graph_span_attributes(
-    graph_span: Span,
-    instance: Any,
-    graph_name: str,
-    kwargs: dict,
-    args: tuple
-) -> None:
+def _set_graph_span_attributes(graph_span: Span, instance: Any, graph_name: str, kwargs: dict, args: tuple) -> None:
     """
     Set common GenAI attributes on graph span.
 
@@ -52,13 +49,11 @@ def _set_graph_span_attributes(
 
     # Set GenAI semantic convention attributes
     graph_span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langgraph")
-    graph_span.set_attribute(
-        GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value
-    )
+    graph_span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value)
     graph_span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, graph_name)
 
     # Extract conversation ID from config
-    config = kwargs.get('config') or (args[1] if len(args) > 1 else None)
+    config = kwargs.get("config") or (args[1] if len(args) > 1 else None)
     if config and isinstance(config, dict):
         configurable = config.get("configurable", {})
         thread_id = configurable.get("thread_id")
@@ -91,16 +86,16 @@ def _get_graph_name(instance, args, kwargs) -> str:
     if len(args) > 1:
         config = args[1]
     if config is None:
-        config = kwargs.get('config')
+        config = kwargs.get("config")
 
     # Try run_name from config first (config could be RunnableConfig object, not dict)
     if config and isinstance(config, dict):
-        run_name = config.get('run_name')
+        run_name = config.get("run_name")
         if run_name:
             return run_name
 
     # Fallback to instance.get_name() to match LangGraph behavior
-    if hasattr(instance, 'get_name'):
+    if hasattr(instance, "get_name"):
         return instance.get_name()
 
     # Default
@@ -118,14 +113,13 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
     Returns:
         Wrapper function for sync or async graph invocation
     """
+
     def wrapper(wrapped, instance, args, kwargs):
         """Wrapper for Pregel.stream - yields from the generator while managing span lifecycle."""
         graph_name = _get_graph_name(instance, args, kwargs)
 
         # Set LangGraph flow context before creating spans
-        langgraph_ctx = context_api.attach(
-            context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
-        )
+        langgraph_ctx = context_api.attach(context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name))
 
         # Create graph span with GenAI convention naming: invoke_agent {agent_name}
         graph_span = tracer.start_span(f"invoke_agent {graph_name}")
@@ -165,9 +159,7 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         graph_name = _get_graph_name(instance, args, kwargs)
 
         # Set LangGraph flow context before creating spans
-        langgraph_ctx = context_api.attach(
-            context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
-        )
+        langgraph_ctx = context_api.attach(context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name))
 
         # Create graph span with GenAI convention naming: invoke_agent {agent_name}
         graph_span = tracer.start_span(f"invoke_agent {graph_name}")
@@ -219,6 +211,7 @@ def create_command_init_wrapper(tracer: Tracer):
     Returns:
         Wrapper function for Command.__init__
     """
+
     def wrapper(wrapped, instance, args, kwargs):
         # Call original __init__ first
         result = wrapped(*args, **kwargs)
@@ -240,25 +233,16 @@ def create_command_init_wrapper(tracer: Tracer):
                     target_str = ", ".join(goto_destinations)
                 span_name = f"goto {target_str}"
 
-                with tracer.start_as_current_span(
-                    span_name,
-                    kind=SpanKind.INTERNAL
-                ) as span:
+                with tracer.start_as_current_span(span_name, kind=SpanKind.INTERNAL) as span:
                     # Set GenAI operation name
                     span.set_attribute(GenAIAttributes.GEN_AI_OPERATION_NAME, "goto")
 
-                    span.set_attribute(
-                        SpanAttributes.LANGGRAPH_COMMAND_SOURCE_NODE, source_node
-                    )
+                    span.set_attribute(SpanAttributes.LANGGRAPH_COMMAND_SOURCE_NODE, source_node)
 
                     if len(goto_destinations) == 1:
-                        span.set_attribute(
-                            SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODE, goto_destinations[0]
-                        )
+                        span.set_attribute(SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODE, goto_destinations[0])
                     else:
-                        span.set_attribute(
-                            SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODES, json.dumps(goto_destinations)
-                        )
+                        span.set_attribute(SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODES, json.dumps(goto_destinations))
 
         return result
 
@@ -297,11 +281,7 @@ def _extract_goto_destinations(goto: Any) -> list[str]:
     return destinations
 
 
-def _set_middleware_span_attributes(
-    span: Span,
-    middleware_name: str,
-    hook_name: str
-) -> None:
+def _set_middleware_span_attributes(span: Span, middleware_name: str, hook_name: str) -> None:
     """
     Set common GenAI attributes on middleware span.
 
@@ -318,9 +298,7 @@ def _set_middleware_span_attributes(
         GenAICustomOperationName.EXECUTE_TASK.value,
     )
     span.set_attribute(SpanAttributes.GEN_AI_TASK_KIND, middleware_name)
-    span.set_attribute(
-        SpanAttributes.GEN_AI_TASK_NAME, f"{middleware_name}.{hook_name}"
-    )
+    span.set_attribute(SpanAttributes.GEN_AI_TASK_NAME, f"{middleware_name}.{hook_name}")
     span.set_attribute(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
 
 
@@ -339,6 +317,7 @@ def create_middleware_hook_wrapper(tracer: Tracer, hook_name: str):
     Returns:
         Wrapper function for the middleware hook
     """
+
     def wrapper(wrapped, instance, args, kwargs):
         middleware_name = instance.__class__.__name__
         span_name = f"execute_task {middleware_name}.{hook_name}"
@@ -369,6 +348,7 @@ def create_async_middleware_hook_wrapper(tracer: Tracer, hook_name: str):
     Returns:
         Async wrapper function for the middleware hook
     """
+
     async def async_wrapper(wrapped, instance, args, kwargs):
         middleware_name = instance.__class__.__name__
         span_name = f"execute_task {middleware_name}.{hook_name}"
@@ -397,36 +377,36 @@ def _extract_tool_definition(tool: Any) -> dict | None:
     tool_def = {"type": "function"}
 
     # Extract name
-    if hasattr(tool, 'name'):
+    if hasattr(tool, "name"):
         tool_def["name"] = tool.name
-    elif isinstance(tool, dict) and 'name' in tool:
-        tool_def["name"] = tool['name']
-    elif hasattr(tool, '__name__'):
+    elif isinstance(tool, dict) and "name" in tool:
+        tool_def["name"] = tool["name"]
+    elif hasattr(tool, "__name__"):
         tool_def["name"] = tool.__name__
     else:
         return None
 
     # Extract description
-    if hasattr(tool, 'description'):
+    if hasattr(tool, "description"):
         tool_def["description"] = tool.description
-    elif isinstance(tool, dict) and 'description' in tool:
-        tool_def["description"] = tool['description']
-    elif hasattr(tool, '__doc__') and tool.__doc__:
+    elif isinstance(tool, dict) and "description" in tool:
+        tool_def["description"] = tool["description"]
+    elif hasattr(tool, "__doc__") and tool.__doc__:
         tool_def["description"] = tool.__doc__
 
     # Extract parameters schema
     parameters = None
-    if hasattr(tool, 'args_schema') and tool.args_schema:
+    if hasattr(tool, "args_schema") and tool.args_schema:
         # LangChain tools with Pydantic schema
         try:
-            if hasattr(tool.args_schema, 'model_json_schema'):
+            if hasattr(tool.args_schema, "model_json_schema"):
                 parameters = tool.args_schema.model_json_schema()
-            elif hasattr(tool.args_schema, 'schema'):
+            elif hasattr(tool.args_schema, "schema"):
                 parameters = tool.args_schema.schema()
         except Exception:
             pass
-    elif isinstance(tool, dict) and 'parameters' in tool:
-        parameters = tool['parameters']
+    elif isinstance(tool, dict) and "parameters" in tool:
+        parameters = tool["parameters"]
 
     if parameters:
         tool_def["parameters"] = parameters
@@ -447,14 +427,15 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
     Returns:
         Wrapper function for agent factory
     """
+
     def wrapper(wrapped, _instance, args, kwargs):
         # Extract agent name from kwargs or use function name
         agent_name = kwargs.get("name")
         if not agent_name:
             # Use the wrapped function's name as fallback
-            agent_name = getattr(wrapped, '__name__', 'agent')
+            agent_name = getattr(wrapped, "__name__", "agent")
             # Clean up the name (e.g., "create_react_agent" -> "react_agent")
-            if agent_name.startswith('create_'):
+            if agent_name.startswith("create_"):
                 agent_name = agent_name[7:]
 
         span_name = f"create_agent {agent_name}"
@@ -473,11 +454,9 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
             if system_instructions:
                 if isinstance(system_instructions, str):
                     span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, system_instructions)
-                elif hasattr(system_instructions, 'content'):
+                elif hasattr(system_instructions, "content"):
                     # SystemMessage or similar object with content attribute
-                    span.set_attribute(
-                        GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, str(system_instructions.content)
-                    )
+                    span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS, str(system_instructions.content))
 
             # Extract tool definitions in OpenAI function format
             # Tools can be in args[1] (positional) or kwargs
@@ -488,20 +467,13 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                 tool_definitions = []
                 # ToolNode wraps tools but is not itself iterable;
                 # fall back to its tools_by_name dict when available.
-                tools_iter = (
-                    tools.tools_by_name.values()
-                    if hasattr(tools, "tools_by_name")
-                    else tools
-                )
+                tools_iter = tools.tools_by_name.values() if hasattr(tools, "tools_by_name") else tools
                 for tool in tools_iter:
                     tool_def = _extract_tool_definition(tool)
                     if tool_def:
                         tool_definitions.append(tool_def)
                 if tool_definitions:
-                    span.set_attribute(
-                        GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
-                        json.dumps(tool_definitions)
-                    )
+                    span.set_attribute(GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_definitions))
 
             result = wrapped(*args, **kwargs)
 

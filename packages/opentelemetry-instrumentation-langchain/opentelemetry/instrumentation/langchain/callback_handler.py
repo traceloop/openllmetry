@@ -82,8 +82,7 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 # Context variable for tracking current LangGraph node (for Command source tracking)
 # Using ContextVar instead of OTel context to avoid detach issues in async scenarios
 _langgraph_current_node: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    'langgraph_current_node',
-    default=None
+    "langgraph_current_node", default=None
 )
 
 
@@ -165,9 +164,7 @@ def _extract_tool_call_data(
 
 
 class TraceloopCallbackHandler(BaseCallbackHandler):
-    def __init__(
-        self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram
-    ) -> None:
+    def __init__(self, tracer: Tracer, duration_histogram: Histogram, token_histogram: Histogram) -> None:
         """Initialize the callback handler state used to track active LangChain spans."""
         super().__init__()
         self.tracer = tracer
@@ -293,15 +290,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         association_properties_token = None
         if metadata is not None:
-            current_association_properties = (
-                context_api.get_value("association_properties") or {}
-            )
+            current_association_properties = context_api.get_value("association_properties") or {}
             # Sanitize metadata values to ensure they're compatible with OpenTelemetry
-            sanitized_metadata = {
-                k: _sanitize_metadata_value(v)
-                for k, v in metadata.items()
-                if v is not None
-            }
+            sanitized_metadata = {k: _sanitize_metadata_value(v) for k, v in metadata.items() if v is not None}
             try:
                 association_properties_token = context_api.attach(
                     context_api.set_value(
@@ -454,9 +445,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_NAME, name)
             _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_ID, str(run_id))
             if parent_run_id:
-                _set_span_attribute(
-                    span, SpanAttributes.GEN_AI_TASK_PARENT_ID, str(parent_run_id)
-                )
+                _set_span_attribute(span, SpanAttributes.GEN_AI_TASK_PARENT_ID, str(parent_run_id))
 
         return span
 
@@ -488,9 +477,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
         )
 
-        vendor = detect_vendor_from_class(
-            _extract_class_name_from_serialized(serialized)
-        )
+        vendor = detect_vendor_from_class(_extract_class_name_from_serialized(serialized))
 
         _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, vendor)
         operation_name = (
@@ -498,9 +485,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             if request_type == LLMRequestTypeValues.CHAT
             else GenAiOperationNameValues.TEXT_COMPLETION.value
         )
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_OPERATION_NAME, operation_name
-        )
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_OPERATION_NAME, operation_name)
 
         # _create_span has already attached the span context and stored a new
         # SpanHolder(span, span_token, ...). Detach that span_token before
@@ -514,9 +499,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
         try:
-            token = context_api.attach(
-                context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
-            )
+            token = context_api.attach(context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True))
         except Exception:
             # If context setting fails, continue without suppression token
             token = None
@@ -529,9 +512,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             workflow_name,
             None,
             entity_path,
-            association_properties_token=(
-                current_holder.association_properties_token if current_holder else None
-            ),
+            association_properties_token=(current_holder.association_properties_token if current_holder else None),
         )
 
         return span
@@ -599,9 +580,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             configurable = config.get("configurable", {}) if isinstance(config, dict) else {}
             thread_id = configurable.get("thread_id")
             if thread_id:
-                _set_span_attribute(
-                    span, GenAIAttributes.GEN_AI_CONVERSATION_ID, str(thread_id)
-                )
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_CONVERSATION_ID, str(thread_id))
 
         # Set current node in context for Command source tracking.
         # Using ContextVar instead of OTel context to avoid detach issues in async scenarios.
@@ -737,33 +716,21 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         model_name = None
         if response.llm_output is not None:
-            model_name = response.llm_output.get(
-                "model_name"
-            ) or response.llm_output.get("model_id")
+            model_name = response.llm_output.get("model_name") or response.llm_output.get("model_id")
             if model_name is not None:
-                _set_span_attribute(
-                    span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name or "unknown"
-                )
+                _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, model_name or "unknown")
 
                 if self.spans[run_id].request_model is None:
-                    _set_span_attribute(
-                        span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name
-                    )
+                    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model_name)
             id = response.llm_output.get("id")
             if id is not None and id != "":
                 _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_ID, id)
         if model_name is None:
             model_name = extract_model_name_from_response_metadata(response)
         if model_name is None and hasattr(context_api, "get_value"):
-            association_properties = (
-                context_api.get_value("association_properties") or {}
-            )
-            model_name = _extract_model_name_from_association_metadata(
-                association_properties
-            )
-        token_usage = (response.llm_output or {}).get("token_usage") or (
-            response.llm_output or {}
-        ).get("usage")
+            association_properties = context_api.get_value("association_properties") or {}
+            model_name = _extract_model_name_from_association_metadata(association_properties)
+        token_usage = (response.llm_output or {}).get("token_usage") or (response.llm_output or {}).get("usage")
         if token_usage is not None:
             prompt_tokens = (
                 token_usage.get("prompt_tokens")
@@ -775,19 +742,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 or token_usage.get("generated_token_count")
                 or token_usage.get("output_tokens")
             )
-            total_tokens = token_usage.get("total_tokens") or (
-                prompt_tokens + completion_tokens
-            )
+            total_tokens = token_usage.get("total_tokens") or (prompt_tokens + completion_tokens)
 
-            _set_span_attribute(
-                span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
-            )
-            _set_span_attribute(
-                span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
-            )
-            _set_span_attribute(
-                span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens
-            )
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
+            _set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens)
+            _set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
             # Record token usage metrics
             vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
@@ -810,9 +769,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                         GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name or "unknown",
                     },
                 )
-        set_chat_response_usage(
-            span, response, self.token_histogram, token_usage is None, model_name
-        )
+        set_chat_response_usage(span, response, self.token_histogram, token_usage is None, model_name)
         if should_emit_events():
             self._emit_llm_end_events(response)
             # Also set span attributes for backward compatibility
@@ -992,11 +949,8 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # Extract document content for output
             docs_output = []
             for doc in documents:
-                if hasattr(doc, 'page_content'):
-                    docs_output.append({
-                        "page_content": doc.page_content,
-                        "metadata": getattr(doc, 'metadata', {})
-                    })
+                if hasattr(doc, "page_content"):
+                    docs_output.append({"page_content": doc.page_content, "metadata": getattr(doc, "metadata", {})})
                 else:
                     docs_output.append(str(doc))
 
@@ -1031,10 +985,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         if parent_span is None:
             return ""
-        elif (
-            parent_span.entity_path == ""
-            and parent_span.entity_name == parent_span.workflow_name
-        ):
+        elif parent_span.entity_path == "" and parent_span.entity_name == parent_span.workflow_name:
             return ""
         elif parent_span.entity_path == "":
             return f"{parent_span.entity_name}"
@@ -1145,9 +1096,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
     def _emit_generation_choice_event(
         self,
         index: int,
-        generation: Union[
-            ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk
-        ],
+        generation: Union[ChatGeneration, ChatGenerationChunk, Generation, GenerationChunk],
     ):
         """Emit the appropriate GenAI choice event for a single generation."""
         if isinstance(generation, (ChatGeneration, ChatGenerationChunk)):
@@ -1158,17 +1107,12 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             finish_reason = _map_finish_reason(raw_finish_reason) if raw_finish_reason else None
 
             # Get tool calls
-            if (
-                hasattr(generation.message, "tool_calls")
-                and generation.message.tool_calls
-            ):
+            if hasattr(generation.message, "tool_calls") and generation.message.tool_calls:
                 tool_calls = _extract_tool_call_data(generation.message.tool_calls)
-            elif hasattr(
-                generation.message, "additional_kwargs"
-            ) and generation.message.additional_kwargs.get("function_call"):
-                tool_calls = _extract_tool_call_data(
-                    [generation.message.additional_kwargs.get("function_call")]
-                )
+            elif hasattr(generation.message, "additional_kwargs") and generation.message.additional_kwargs.get(
+                "function_call"
+            ):
+                tool_calls = _extract_tool_call_data([generation.message.additional_kwargs.get("function_call")])
             else:
                 tool_calls = None
 

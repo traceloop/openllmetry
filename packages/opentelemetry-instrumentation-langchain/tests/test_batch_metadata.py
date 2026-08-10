@@ -10,15 +10,8 @@ def test_batch_metadata_in_span_attributes(instrument_legacy, span_exporter):
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 
     # Test batch with metadata
-    test_metadata = {
-        "user_id": "12345",
-        "session_id": "abc-123",
-        "priority": "high"
-    }
-    messages_list = [
-        [{"role": "user", "content": "Hello"}],
-        [{"role": "user", "content": "How are you?"}]
-    ]
+    test_metadata = {"user_id": "12345", "session_id": "abc-123", "priority": "high"}
+    messages_list = [[{"role": "user", "content": "Hello"}], [{"role": "user", "content": "How are you?"}]]
 
     # Call batch with metadata
     llm.batch(messages_list, config={"metadata": test_metadata})
@@ -38,9 +31,9 @@ def test_batch_metadata_in_span_attributes(instrument_legacy, span_exporter):
         session_id_key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.session_id"
         priority_key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.priority"
 
-        assert ("user_id" in span.attributes or user_id_key in span.attributes)
-        assert ("session_id" in span.attributes or session_id_key in span.attributes)
-        assert ("priority" in span.attributes or priority_key in span.attributes)
+        assert "user_id" in span.attributes or user_id_key in span.attributes
+        assert "session_id" in span.attributes or session_id_key in span.attributes
+        assert "priority" in span.attributes or priority_key in span.attributes
 
         # Check the values
         user_id_attr = span.attributes.get("user_id") or span.attributes.get(user_id_key)
@@ -60,14 +53,10 @@ async def test_async_batch_metadata_in_span_attributes(instrument_legacy, span_e
     llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 
     # Test abatch with metadata
-    test_metadata = {
-        "user_id": "67890",
-        "session_id": "def-456",
-        "environment": "production"
-    }
+    test_metadata = {"user_id": "67890", "session_id": "def-456", "environment": "production"}
     messages_list = [
         [{"role": "user", "content": "What is AI?"}],
-        [{"role": "user", "content": "Explain machine learning"}]
+        [{"role": "user", "content": "Explain machine learning"}],
     ]
 
     # Call abatch with metadata
@@ -88,9 +77,9 @@ async def test_async_batch_metadata_in_span_attributes(instrument_legacy, span_e
         session_id_key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.session_id"
         environment_key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.environment"
 
-        assert ("user_id" in span.attributes or user_id_key in span.attributes)
-        assert ("session_id" in span.attributes or session_id_key in span.attributes)
-        assert ("environment" in span.attributes or environment_key in span.attributes)
+        assert "user_id" in span.attributes or user_id_key in span.attributes
+        assert "session_id" in span.attributes or session_id_key in span.attributes
+        assert "environment" in span.attributes or environment_key in span.attributes
 
         # Check the values
         user_id_attr = span.attributes.get("user_id") or span.attributes.get(user_id_key)

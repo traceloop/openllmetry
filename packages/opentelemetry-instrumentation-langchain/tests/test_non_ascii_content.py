@@ -37,9 +37,7 @@ def test_chain_start_preserves_non_ascii_in_entity_input(callback_handler, span_
     text = "こんにちは世界"
     _start_chain(callback_handler, run_id, inputs={"query": text})
 
-    attr = callback_handler.spans[run_id].span.attributes.get(
-        SpanAttributes.TRACELOOP_ENTITY_INPUT
-    )
+    attr = callback_handler.spans[run_id].span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
     assert text in attr
     assert "\\u3053" not in attr
     assert json.loads(attr)["inputs"]["query"] == text
@@ -89,9 +87,7 @@ def test_tool_start_preserves_non_ascii_in_entity_input(callback_handler, span_e
         inputs={"text": text},
     )
 
-    attr = callback_handler.spans[run_id].span.attributes.get(
-        SpanAttributes.TRACELOOP_ENTITY_INPUT
-    )
+    attr = callback_handler.spans[run_id].span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
     assert text in attr
     assert "\\u00c4" not in attr
     assert json.loads(attr)["input_str"] == text
