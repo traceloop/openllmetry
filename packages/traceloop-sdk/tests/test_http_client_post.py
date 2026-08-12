@@ -72,6 +72,32 @@ def test_http_client_post_raises_transport_error_with_opt_in():
             client.post("annotations", {"k": "v"}, raise_on_error=True)
 
 
+def test_http_client_post_treats_success_non_json_or_empty_as_success():
+    client = _http_client()
+
+    empty_body_response = Mock()
+    empty_body_response.raise_for_status.return_value = None
+    empty_body_response.content = b""
+
+    with patch("traceloop.sdk.client.http.requests.post", return_value=empty_body_response):
+        empty_result = client.post("annotations", {"k": "v"}, raise_on_error=True)
+
+    assert empty_result is None
+
+    non_json_response = Mock()
+    non_json_response.raise_for_status.return_value = None
+    non_json_response.content = b"ok"
+    non_json_response.json.side_effect = requests.exceptions.JSONDecodeError(
+        "Expecting value", "ok", 0
+    )
+    non_json_response.text = "ok"
+
+    with patch("traceloop.sdk.client.http.requests.post", return_value=non_json_response):
+        non_json_result = client.post("annotations", {"k": "v"}, raise_on_error=True)
+
+    assert non_json_result == "ok"
+
+
 def test_dataset_publish_failure_handling_remains_compatible():
     mock_http = Mock(spec=HTTPClient)
     mock_http.post.return_value = None

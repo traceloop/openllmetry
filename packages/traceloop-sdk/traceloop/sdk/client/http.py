@@ -31,7 +31,14 @@ class HTTPClient:
                 headers=self._headers(),
             )
             response.raise_for_status()
-            return response.json()
+
+            if not response.content:
+                return None
+
+            try:
+                return response.json()
+            except ValueError:
+                return response.text
         except requests.exceptions.RequestException as e:
             if raise_on_error:
                 raise
