@@ -91,12 +91,19 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
+        def _wrap_streamable_http_client(module):
+            # mcp>=2.0 renamed streamablehttp_client to streamable_http_client;
+            # older releases only expose the former. Wrap whichever exists so the
+            # instrumentor keeps bootstrapping across the supported mcp range.
+            for name in ("streamablehttp_client", "streamable_http_client"):
+                if hasattr(module, name):
+                    wrap_function_wrapper(
+                        module, name, self._transport_wrapper(tracer)
+                    )
+                    return
+
         register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.streamable_http",
-                "streamablehttp_client",
-                self._transport_wrapper(tracer),
-            ),
+            _wrap_streamable_http_client,
             "mcp.client.streamable_http",
         )
         register_post_import_hook(
