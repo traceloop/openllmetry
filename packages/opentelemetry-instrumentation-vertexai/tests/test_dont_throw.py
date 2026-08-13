@@ -1,19 +1,27 @@
 import asyncio
+import logging
 
 import pytest
 from opentelemetry.instrumentation.vertexai.utils import dont_throw
 
 
-def test_dont_throw_swallows_sync_exceptions():
+def test_dont_throw_swallows_sync_exceptions(caplog):
     @dont_throw
     def boom():
         raise RuntimeError("instrumentation failed")
 
-    assert boom() is None, "sync instrumentation errors must not reach the caller"
+    with caplog.at_level(logging.DEBUG):
+        assert boom() is None, "sync instrumentation errors must not reach the caller"
+
+    # Swallowing without logging would hide the failure entirely, so assert the
+    # log as well as the suppression.
+    assert any(
+        "OpenLLMetry failed to trace" in record.message for record in caplog.records
+    ), "the swallowed exception must still be logged"
 
 
 @pytest.mark.asyncio
-async def test_dont_throw_swallows_async_exceptions():
+async def test_dont_throw_swallows_async_exceptions(caplog):
     """An async function returns a coroutine immediately, so a sync-only
     wrapper exits its try block before the body runs and the caller awaits
     outside the guard. span_utils.set_input_attributes and _handle_request are
@@ -23,7 +31,12 @@ async def test_dont_throw_swallows_async_exceptions():
     async def boom():
         raise RuntimeError("instrumentation failed")
 
-    assert await boom() is None, "async instrumentation errors must not reach the caller"
+    with caplog.at_level(logging.DEBUG):
+        assert await boom() is None, "async instrumentation errors must not reach the caller"
+
+    assert any(
+        "OpenLLMetry failed to trace" in record.message for record in caplog.records
+    ), "the swallowed exception must still be logged"
 
 
 @pytest.mark.asyncio
