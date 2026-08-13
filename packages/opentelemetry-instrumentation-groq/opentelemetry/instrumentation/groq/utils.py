@@ -54,12 +54,21 @@ def dont_throw(func):
 def shared_metrics_attributes(response):
     response_dict = model_as_dict(response)
 
+    return streaming_metrics_attributes(response_dict.get("model"))
+
+
+def streaming_metrics_attributes(model):
+    """Metric attributes for a response whose model is already known.
+
+    Streaming responses are consumed chunk by chunk, so there is no single
+    response object to read the model from.
+    """
     common_attributes = Config.get_common_metrics_attributes()
 
     return {
         **common_attributes,
         GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_dict.get("model"),
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
     }
 
 

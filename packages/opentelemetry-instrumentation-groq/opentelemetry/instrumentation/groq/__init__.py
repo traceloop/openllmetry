@@ -21,10 +21,12 @@ from opentelemetry.instrumentation.groq.span_utils import (
     set_model_streaming_response_attributes,
     set_response_attributes,
     set_streaming_response_attributes,
+    record_token_usage_metrics,
 )
 from opentelemetry.instrumentation.groq.utils import (
     error_metrics_attributes,
     shared_metrics_attributes,
+    streaming_metrics_attributes,
     should_emit_events,
 )
 from opentelemetry.instrumentation.groq.version import __version__
@@ -180,22 +182,34 @@ def _handle_streaming_response(
     finish_reasons: list[str],
     usage: Union[CompletionUsage, None],
     event_logger: Union[Logger, None],
+    token_histogram=None,
+    model=None,
 ) -> None:
     # finish_reasons is a list; use first entry for message-level finish_reason
     finish_reason = finish_reasons[0] if finish_reasons else None
     set_model_streaming_response_attributes(span, usage, finish_reasons)
+    if usage is not None:
+        record_token_usage_metrics(
+            token_histogram,
+            model,
+            getattr(usage, "prompt_tokens", None),
+            getattr(usage, "completion_tokens", None),
+        )
     if should_emit_events() and event_logger:
         emit_streaming_response_events(accumulated_content, finish_reason, event_logger, tool_calls=tool_calls)
     else:
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
-def _create_stream_processor(response, span, event_logger):
+def _create_stream_processor(
+    response, span, event_logger, token_histogram=None, duration_histogram=None, start_time=None
+):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    model = None
 
     try:
         for chunk in response:
@@ -207,6 +221,8 @@ def _create_stream_processor(response, span, event_logger):
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if model is None:
+                model = getattr(chunk, "model", None)
             yield chunk
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -216,20 +232,35 @@ def _create_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            token_histogram,
+            model,
         )
+        if duration_histogram is not None and start_time is not None:
+            duration_histogram.record(
+                time.time() - start_time,
+                attributes=streaming_metrics_attributes(model),
+            )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
         span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(
+    response, span, event_logger, token_histogram=None, duration_histogram=None, start_time=None
+):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    model = None
 
     try:
         async for chunk in response:
@@ -241,6 +272,8 @@ async def _create_async_stream_processor(response, span, event_logger):
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if model is None:
+                model = getattr(chunk, "model", None)
             yield chunk
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -250,8 +283,20 @@ async def _create_async_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            token_histogram,
+            model,
         )
+        if duration_histogram is not None and start_time is not None:
+            duration_histogram.record(
+                time.time() - start_time,
+                attributes=streaming_metrics_attributes(model),
+            )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
@@ -327,7 +372,9 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(
+                response, span, event_logger, token_histogram, duration_histogram, start_time
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -415,7 +462,9 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(
+                response, span, event_logger, token_histogram, duration_histogram, start_time
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",

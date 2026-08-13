@@ -238,29 +238,30 @@ def set_model_response_attributes(span, response, token_histogram):
                 cached_tokens,
             )
 
-    if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
-        token_histogram.record(
-            prompt_tokens,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: response.get("model"),
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
-            },
-        )
+    record_token_usage_metrics(token_histogram, response.get("model"), prompt_tokens, completion_tokens)
 
-    if isinstance(completion_tokens, int) and completion_tokens >= 0 and token_histogram is not None:
-        token_histogram.record(
-            completion_tokens,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: response.get("model"),
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: response.get("model"),
-            },
-        )
+
+def record_token_usage_metrics(token_histogram, model, prompt_tokens, completion_tokens):
+    """Record input and output token counts on the token histogram.
+
+    Shared by the streaming and non-streaming paths so both report the same
+    metric under the same attributes.
+    """
+    if token_histogram is None:
+        return
+
+    for token_type, value in (("input", prompt_tokens), ("output", completion_tokens)):
+        if isinstance(value, int) and value >= 0:
+            token_histogram.record(
+                value,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type,
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+                },
+            )
 
 
 def set_response_attributes(span, response):
