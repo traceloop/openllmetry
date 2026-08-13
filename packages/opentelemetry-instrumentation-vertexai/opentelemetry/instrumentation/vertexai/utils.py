@@ -33,7 +33,14 @@ def dont_throw(func):
             traceback.format_exc(),
         )
         if Config.exception_logger:
-            Config.exception_logger(e)
+            try:
+                Config.exception_logger(e)
+            except Exception:
+                logger.debug(
+                    "OpenLLMetry exception logger failed in %s",
+                    func.__name__,
+                    exc_info=True,
+                )
 
     async def async_wrapper(*args, **kwargs):
         try:

@@ -54,3 +54,41 @@ def test_dont_throw_picks_wrapper_by_function_kind():
 
     assert asyncio.iscoroutinefunction(coro), "async functions need the async wrapper"
     assert not asyncio.iscoroutinefunction(plain)
+
+
+def test_dont_throw_survives_a_failing_exception_logger():
+    """A user-supplied exception_logger that itself raises must not reach the caller."""
+    from opentelemetry.instrumentation.vertexai.config import Config
+
+    def angry_logger(_e):
+        raise ValueError("exception logger is broken")
+
+    previous = Config.exception_logger
+    Config.exception_logger = angry_logger
+    try:
+        @dont_throw
+        def boom():
+            raise RuntimeError("instrumentation failed")
+
+        assert boom() is None, "a failing exception_logger must not surface to the caller"
+    finally:
+        Config.exception_logger = previous
+
+
+@pytest.mark.asyncio
+async def test_dont_throw_async_survives_a_failing_exception_logger():
+    from opentelemetry.instrumentation.vertexai.config import Config
+
+    def angry_logger(_e):
+        raise ValueError("exception logger is broken")
+
+    previous = Config.exception_logger
+    Config.exception_logger = angry_logger
+    try:
+        @dont_throw
+        async def boom():
+            raise RuntimeError("instrumentation failed")
+
+        assert await boom() is None
+    finally:
+        Config.exception_logger = previous
