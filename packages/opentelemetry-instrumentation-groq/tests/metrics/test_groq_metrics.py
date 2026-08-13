@@ -4,7 +4,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv_ai import Meters
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "llama3-8b-8192"
 
 
 def _collect_metrics(reader):
