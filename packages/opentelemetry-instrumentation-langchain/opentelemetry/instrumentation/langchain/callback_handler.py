@@ -683,7 +683,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             metadata=metadata,
             serialized=serialized,
         )
-        set_request_params(span, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id], metadata)
         if should_emit_events():
             self._emit_chat_input_events(messages)
         else:
@@ -713,7 +713,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             LLMRequestTypeValues.COMPLETION,
             serialized=serialized,
         )
-        set_request_params(span, kwargs, self.spans[run_id])
+        set_request_params(span, kwargs, self.spans[run_id], metadata)
         if should_emit_events():
             for prompt in prompts:
                 emit_event(MessageEvent(content=prompt, role="user"))
