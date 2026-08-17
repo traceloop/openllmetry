@@ -9,7 +9,7 @@ This library allows tracing complete LLM applications built with [Langchain](htt
 ## Installation
 
 ```bash
-pip install opentelemetry-instrumentation-langchain
+pip install opentelemetry-instrumentation-langchain traceloop-sdk
 ```
 
 ## Example usage
