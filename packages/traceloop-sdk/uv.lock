@@ -4027,7 +4027,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-google-generativeai", editable = "../opentelemetry-instrumentation-google-generativeai" },
     { name = "opentelemetry-instrumentation-groq", editable = "../opentelemetry-instrumentation-groq" },
     { name = "opentelemetry-instrumentation-haystack", editable = "../opentelemetry-instrumentation-haystack" },
-    { name = "opentelemetry-instrumentation-httpx", specifier = ">=0.59b0" },
+    { name = "opentelemetry-instrumentation-httpx", specifier = ">=0.60b0,<0.65" },
     { name = "opentelemetry-instrumentation-lancedb", editable = "../opentelemetry-instrumentation-lancedb" },
     { name = "opentelemetry-instrumentation-langchain", editable = "../opentelemetry-instrumentation-langchain" },
     { name = "opentelemetry-instrumentation-litellm", editable = "../opentelemetry-instrumentation-litellm" },
