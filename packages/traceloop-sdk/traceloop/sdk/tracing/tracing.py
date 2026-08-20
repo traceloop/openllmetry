@@ -1,4 +1,5 @@
 import atexit
+import json
 import logging
 import os
 from urllib.parse import urlparse
@@ -1221,6 +1222,9 @@ def metrics_common_attributes():
     association_properties = get_value("association_properties")
     if association_properties is not None:
         for key, value in association_properties.items():
+            if isinstance(value, (list, dict)):
+                # OTel metric attributes must be scalar/hashable
+                value = json.dumps(value)
             common_attributes[
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
             ] = value
