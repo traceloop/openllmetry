@@ -2,6 +2,11 @@
 
 Traceloop’s Python SDK allows you to easily start monitoring and debugging your LLM execution. Tracing is done in a non-intrusive way, built on top of OpenTelemetry. You can choose to export the traces to Traceloop, or to your existing observability stack.
 
+Entity input and output attributes are bounded to 1,000,000 characters by
+default so oversized payloads remain visible to OTLP backends instead of being
+dropped as invalid attributes. Set `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` to
+use a different positive limit.
+
 ```python
 Traceloop.init(app_name="joke_generation_service")
 

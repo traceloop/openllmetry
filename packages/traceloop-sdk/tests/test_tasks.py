@@ -206,6 +206,22 @@ def test_json_no_truncation_without_otel_limit(exporter, monkeypatch):
     assert output_data == result
 
 
+def test_json_large_content_is_bounded_without_otel_limit(exporter, monkeypatch):
+    """Large entity payloads remain exportable when no OTel limit is configured."""
+    monkeypatch.delenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", raising=False)
+
+    @task(name="large_content_task")
+    def large_content_task():
+        return "x" * 1_100_000
+
+    large_content_task()
+
+    span = exporter.get_finished_spans()[0]
+    output_json = span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    assert len(output_json) == 1_000_000
+    assert output_json.startswith('"' + ("x" * 999_999))
+
+
 def test_json_truncation_with_invalid_otel_limit(exporter, monkeypatch):
     """Test that invalid OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT values are ignored"""
     # Set environment variable to invalid value

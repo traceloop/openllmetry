@@ -31,6 +31,10 @@ from traceloop.sdk.utils.json_encoder import JSONEncoder
 
 F = TypeVar("F", bound=Callable[..., Any])
 
+# Keep entity payloads below the size at which common OTLP backends reject the
+# entire attribute. Users can opt into the standard OTel limit with the env var.
+_DEFAULT_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = 1_000_000
+
 
 def _truncate_json_if_needed(json_str: str) -> str:
     """
@@ -38,13 +42,16 @@ def _truncate_json_if_needed(json_str: str) -> str:
     truncation may yield an invalid JSON string, which is expected for logging purposes.
     """
     limit_str = os.getenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT")
+    limit = _DEFAULT_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT
     if limit_str:
         try:
-            limit = int(limit_str)
-            if limit > 0 and len(json_str) > limit:
-                return json_str[:limit]
+            configured_limit = int(limit_str)
+            if configured_limit > 0:
+                limit = configured_limit
         except ValueError:
             pass
+    if len(json_str) > limit:
+        return json_str[:limit]
     return json_str
 
 
