@@ -26,6 +26,7 @@ from opentelemetry.instrumentation.groq.utils import (
     error_metrics_attributes,
     shared_metrics_attributes,
     should_emit_events,
+    streaming_metrics_attributes,
 )
 from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -190,7 +191,53 @@ def _handle_streaming_response(
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
-def _create_stream_processor(response, span, event_logger):
+def _record_streaming_metrics(
+    usage,
+    token_histogram,
+    duration_histogram,
+    start_time,
+    llm_model,
+) -> None:
+    """Record token usage and duration metrics for a consumed streaming response.
+
+    Called once the stream is fully drained; the final chunk carries usage data.
+    """
+    metric_attributes = streaming_metrics_attributes(llm_model)
+
+    if duration_histogram and start_time is not None:
+        duration_histogram.record(
+            time.time() - start_time,
+            attributes=metric_attributes,
+        )
+
+    if usage and token_histogram:
+        if usage.prompt_tokens is not None:
+            token_histogram.record(
+                usage.prompt_tokens,
+                attributes={
+                    **metric_attributes,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                },
+            )
+        if usage.completion_tokens is not None:
+            token_histogram.record(
+                usage.completion_tokens,
+                attributes={
+                    **metric_attributes,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                },
+            )
+
+
+def _create_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram=None,
+    duration_histogram=None,
+    start_time=None,
+    llm_model=None,
+):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
@@ -218,13 +265,22 @@ def _create_stream_processor(response, span, event_logger):
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
         )
+        _record_streaming_metrics(usage, token_histogram, duration_histogram, start_time, llm_model)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
         span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram=None,
+    duration_histogram=None,
+    start_time=None,
+    llm_model=None,
+):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
@@ -252,6 +308,7 @@ async def _create_async_stream_processor(response, span, event_logger):
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
         )
+        _record_streaming_metrics(usage, token_histogram, duration_histogram, start_time, llm_model)
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
@@ -327,7 +384,15 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(
+                response,
+                span,
+                event_logger,
+                token_histogram,
+                duration_histogram,
+                start_time,
+                llm_model,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -415,7 +480,15 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(
+                response,
+                span,
+                event_logger,
+                token_histogram,
+                duration_histogram,
+                start_time,
+                llm_model,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
