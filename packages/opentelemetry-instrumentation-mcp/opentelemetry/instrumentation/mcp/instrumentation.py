@@ -15,7 +15,11 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
-from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
+from opentelemetry.instrumentation.mcp.utils import (
+    dont_throw,
+    should_send_prompts,
+    Config,
+)
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
     FastMCPInstrumentor,
 )
@@ -291,7 +295,7 @@ class McpInstrumentor(BaseInstrumentor):
 
             # Add input
             clean_input = self._extract_clean_input(method, params)
-            if clean_input:
+            if clean_input and should_send_prompts():
                 try:
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
@@ -308,9 +312,10 @@ class McpInstrumentor(BaseInstrumentor):
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
         with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
+            if should_send_prompts():
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
@@ -322,23 +327,24 @@ class McpInstrumentor(BaseInstrumentor):
         try:
             result = await wrapped(*args, **kwargs)
             # Add output
-            if clean_output:
-                clean_output_data = self._extract_clean_output(method, result)
-                if clean_output_data:
-                    try:
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            json.dumps(clean_output_data),
-                        )
-                    except (TypeError, ValueError):
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            str(clean_output_data),
-                        )
-            else:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
-                )
+            if should_send_prompts():
+                if clean_output:
+                    clean_output_data = self._extract_clean_output(method, result)
+                    if clean_output_data:
+                        try:
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                json.dumps(clean_output_data),
+                            )
+                        except (TypeError, ValueError):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                str(clean_output_data),
+                            )
+                else:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+                    )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
@@ -565,9 +571,11 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
-                span.set_attribute(
-                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
-                )
+                if should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.MCP_RESPONSE_VALUE,
+                        f"{serialize(request.result)}",
+                    )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
                         span.set_status(

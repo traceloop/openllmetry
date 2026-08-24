@@ -2,11 +2,22 @@
 
 import asyncio
 import logging
+import os
 import traceback
 
 
 class Config:
     exception_logger = None
+
+
+def should_send_prompts() -> bool:
+    """Whether prompt/response content may be captured in spans.
+
+    Honors the ``TRACELOOP_TRACE_CONTENT`` environment variable (matching the
+    traceloop SDK and the FastMCP instrumentation) so operators can prevent
+    potentially sensitive tool inputs/outputs from being recorded on spans.
+    """
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
 def dont_throw(func):
