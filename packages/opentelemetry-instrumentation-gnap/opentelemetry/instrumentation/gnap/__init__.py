@@ -1,5 +1,6 @@
 """OpenTelemetry instrumentation for GNAP agent coordination."""
 
+import asyncio
 import importlib
 import inspect
 import logging
@@ -69,7 +70,10 @@ class GNAPInstrumentor(BaseInstrumentor):
         operation = method_name.removesuffix("_task")
 
         def wrapped(instance, *args, **kwargs):
-            task = _value(args[0] if args else kwargs, "id", "task_id", "name")
+            task_arg = args[0] if args else kwargs
+            task = _value(task_arg, "id", "task_id", "name")
+            if task is None and isinstance(task_arg, str):
+                task = task_arg
             span = tracer.start_span(f"gnap.task.{operation}", kind=SpanKind.INTERNAL)
             span.set_attribute("gnap.operation", operation)
             if task is not None:
@@ -93,7 +97,7 @@ class GNAPInstrumentor(BaseInstrumentor):
 
     @staticmethod
     def _finish(span, result):
-        if result is not None and hasattr(result, "__len__") and not isinstance(result, (str, bytes)):
+        if result is not None and hasattr(result, "__len__"):
             span.set_attribute("gnap.result.size", len(result))
         span.end()
         return result
@@ -104,6 +108,9 @@ class GNAPInstrumentor(BaseInstrumentor):
             value = await result
             span.set_attribute("gnap.operation.success", True)
             return GNAPInstrumentor._finish(span, value)
+        except asyncio.CancelledError:
+            span.end()
+            raise
         except Exception as error:
             span.set_status(Status(StatusCode.ERROR, str(error)))
             span.record_exception(error)
