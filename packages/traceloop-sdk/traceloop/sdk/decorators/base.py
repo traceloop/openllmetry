@@ -37,9 +37,11 @@ _DEFAULT_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT = 1_000_000
 
 
 def _truncate_json_if_needed(json_str: str) -> str:
-    """
-    Truncate JSON string if it exceeds OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT;
-    truncation may yield an invalid JSON string, which is expected for logging purposes.
+    """Truncate JSON using a positive OTel limit or the default limit.
+
+    The default applies when OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT is unset,
+    non-positive, or invalid. Truncation may yield an invalid JSON string,
+    which is expected for logging purposes.
     """
     limit_str = os.getenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT")
     limit = _DEFAULT_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT
