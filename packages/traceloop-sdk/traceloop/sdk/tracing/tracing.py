@@ -17,9 +17,6 @@ from opentelemetry.sdk.trace import TracerProvider, SpanProcessor, ReadableSpan
 from opentelemetry.sdk.trace.sampling import Sampler
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.propagate import set_global_textmap
-from opentelemetry.propagators.composite import CompositePropagator
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.baggage.propagation import W3CBaggagePropagator
 from opentelemetry.sdk.trace.export import (
     SpanExporter,
     SimpleSpanProcessor,
@@ -165,12 +162,8 @@ class TracerWrapper(object):
                 obj.__spans_processor.on_start = obj._span_processor_on_start
                 obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
-            set_global_textmap(
-                propagator
-                or CompositePropagator(
-                    [TraceContextTextMapPropagator(), W3CBaggagePropagator()]
-                )
-            )
+            if propagator is not None:
+                set_global_textmap(propagator)
 
             # this makes sure otel context is propagated so we always want it
             ThreadingInstrumentor().instrument()
