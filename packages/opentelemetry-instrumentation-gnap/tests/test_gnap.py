@@ -34,7 +34,7 @@ def test_gnap_task_lifecycle_creates_spans():
     instrumentor._instrument(tracer_provider=provider, board_class=FakeBoard)
     try:
         board = FakeBoard()
-        board.create_task({"id": "FA-1"})
+        board.create_task(task={"id": "FA-1"})
         board.claim_task("FA-1")
         board.complete_task("FA-1", "done")
     finally:

@@ -70,7 +70,7 @@ class GNAPInstrumentor(BaseInstrumentor):
         operation = method_name.removesuffix("_task")
 
         def wrapped(instance, *args, **kwargs):
-            task_arg = args[0] if args else kwargs
+            task_arg = args[0] if args else kwargs.get("task", kwargs)
             task = _value(task_arg, "id", "task_id", "name")
             if task is None and isinstance(task_arg, str):
                 task = task_arg
