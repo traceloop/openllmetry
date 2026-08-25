@@ -127,7 +127,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         self._state.session_span,
                         GenAIAttributes.GEN_AI_OUTPUT_TYPE,
-                        json.dumps(session.modalities),
+                        json.dumps(session.modalities, ensure_ascii=False),
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
                     _set_span_attribute(
@@ -515,9 +515,10 @@ class RealtimeSessionWrapper:
                             session_config["temperature"],
                         )
                     if "instructions" in session_config:
-                        instructions_parts = json.dumps([
-                            {"type": "text", "content": session_config["instructions"]}
-                        ])
+                        instructions_parts = json.dumps(
+                            [{"type": "text", "content": session_config["instructions"]}],
+                            ensure_ascii=False,
+                        )
                         _set_span_attribute(
                             self._state.session_span,
                             GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
