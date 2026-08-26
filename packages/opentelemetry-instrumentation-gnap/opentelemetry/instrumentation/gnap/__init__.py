@@ -82,11 +82,12 @@ class GNAPInstrumentor(BaseInstrumentor):
             if agent is not None:
                 span.set_attribute("gnap.agent.id", str(agent))
             try:
-                result = original(instance, *args, **kwargs)
-                if inspect.isawaitable(result):
-                    return GNAPInstrumentor._finish_async(span, result)
-                span.set_attribute("gnap.operation.success", True)
-                return GNAPInstrumentor._finish(span, result)
+                with trace.use_span(span, end_on_exit=False):
+                    result = original(instance, *args, **kwargs)
+                    if inspect.isawaitable(result):
+                        return GNAPInstrumentor._finish_async(span, result)
+                    span.set_attribute("gnap.operation.success", True)
+                    return GNAPInstrumentor._finish(span, result)
             except Exception as error:
                 span.set_status(Status(StatusCode.ERROR, str(error)))
                 span.record_exception(error)
@@ -105,9 +106,10 @@ class GNAPInstrumentor(BaseInstrumentor):
     @staticmethod
     async def _finish_async(span, result):
         try:
-            value = await result
-            span.set_attribute("gnap.operation.success", True)
-            return GNAPInstrumentor._finish(span, value)
+            with trace.use_span(span, end_on_exit=False):
+                value = await result
+                span.set_attribute("gnap.operation.success", True)
+                return GNAPInstrumentor._finish(span, value)
         except asyncio.CancelledError:
             span.end()
             raise
