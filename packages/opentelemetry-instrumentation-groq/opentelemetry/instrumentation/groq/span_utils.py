@@ -183,14 +183,27 @@ def set_streaming_response_attributes(span, accumulated_content, finish_reason=N
     set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps([message]))
 
 
-def set_model_streaming_response_attributes(span, usage, finish_reasons=None):
+def set_model_streaming_response_attributes(
+    span,
+    usage,
+    finish_reasons=None,
+    response_model=None,
+    token_histogram=None,
+):
     if not span.is_recording():
         return
 
+    if response_model:
+        set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+
     if usage:
-        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, usage.completion_tokens)
-        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.prompt_tokens)
-        set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens)
+        prompt_tokens = getattr(usage, "prompt_tokens", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        total_tokens = getattr(usage, "total_tokens", None)
+
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens)
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
+        set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
         prompt_tokens_details = getattr(usage, "prompt_tokens_details", None)
         if prompt_tokens_details is not None:
@@ -201,6 +214,30 @@ def set_model_streaming_response_attributes(span, usage, finish_reasons=None):
                     GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                     cached_tokens,
                 )
+
+        if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
+            token_histogram.record(
+                prompt_tokens,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: response_model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+                },
+            )
+
+        if isinstance(completion_tokens, int) and completion_tokens >= 0 and token_histogram is not None:
+            token_histogram.record(
+                completion_tokens,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: response_model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
+                },
+            )
 
     if finish_reasons:
         mapped = [_map_groq_finish_reason(fr) for fr in finish_reasons]
@@ -234,7 +271,7 @@ def set_model_response_attributes(span, response, token_histogram):
         if cached_tokens is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 cached_tokens,
             )
 

@@ -179,6 +179,60 @@ class TestCreateStreamProcessor:
         span.set_status.assert_not_called()
         span.end.assert_called_once()
 
+    def test_records_metrics_on_stream_completion(self):
+        span = _span()
+        duration_histogram = MagicMock()
+        token_histogram = MagicMock()
+
+        chunk1 = MagicMock()
+        chunk1.choices = [MagicMock(delta=MagicMock(content="hello", tool_calls=None), finish_reason=None)]
+        chunk1.x_groq = None
+        chunk1.model = "llama3-8b-8192"
+
+        chunk2 = MagicMock()
+        chunk2.choices = [MagicMock(delta=MagicMock(content=" world", tool_calls=None), finish_reason="stop")]
+        usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        chunk2.x_groq = MagicMock(usage=usage)
+        chunk2.model = "llama3-8b-8192"
+
+        list(
+            _create_stream_processor(
+                iter([chunk1, chunk2]),
+                span,
+                None,
+                start_time=100.0,
+                duration_histogram=duration_histogram,
+                token_histogram=token_histogram,
+                llm_model="llama3-8b-8192",
+            )
+        )
+
+        duration_histogram.record.assert_called_once()
+        assert token_histogram.record.call_count == 2
+        span.end.assert_called_once()
+
+    def test_records_duration_on_stream_error(self):
+        span = _span()
+        duration_histogram = MagicMock()
+
+        def failing_stream():
+            yield MagicMock(choices=[])
+            raise RuntimeError("Stream broken")
+
+        with pytest.raises(RuntimeError, match="Stream broken"):
+            list(
+                _create_stream_processor(
+                    failing_stream(),
+                    span,
+                    None,
+                    start_time=100.0,
+                    duration_histogram=duration_histogram,
+                )
+            )
+
+        duration_histogram.record.assert_called_once()
+        span.end.assert_called_once()
+
 
 # ---------------------------------------------------------------------------
 # _create_async_stream_processor
@@ -214,6 +268,68 @@ class TestCreateAsyncStreamProcessor:
 
         [c async for c in _create_async_stream_processor(_response(), span, None)]
         span.set_status.assert_not_called()
+        span.end.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_records_metrics_on_async_stream_completion(self):
+        span = _span()
+        duration_histogram = MagicMock()
+        token_histogram = MagicMock()
+
+        chunk1 = MagicMock()
+        chunk1.choices = [MagicMock(delta=MagicMock(content="hello", tool_calls=None), finish_reason=None)]
+        chunk1.x_groq = None
+        chunk1.model = "llama3-8b-8192"
+
+        chunk2 = MagicMock()
+        chunk2.choices = [MagicMock(delta=MagicMock(content=" world", tool_calls=None), finish_reason="stop")]
+        usage = MagicMock(prompt_tokens=15, completion_tokens=25, total_tokens=40)
+        chunk2.x_groq = MagicMock(usage=usage)
+        chunk2.model = "llama3-8b-8192"
+
+        async def _response():
+            yield chunk1
+            yield chunk2
+
+        [
+            c
+            async for c in _create_async_stream_processor(
+                _response(),
+                span,
+                None,
+                start_time=100.0,
+                duration_histogram=duration_histogram,
+                token_histogram=token_histogram,
+                llm_model="llama3-8b-8192",
+            )
+        ]
+
+        duration_histogram.record.assert_called_once()
+        assert token_histogram.record.call_count == 2
+        span.end.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_records_duration_on_async_stream_error(self):
+        span = _span()
+        duration_histogram = MagicMock()
+
+        async def _failing_response():
+            yield MagicMock(choices=[])
+            raise RuntimeError("Async stream broken")
+
+        with pytest.raises(RuntimeError, match="Async stream broken"):
+            [
+                c
+                async for c in _create_async_stream_processor(
+                    _failing_response(),
+                    span,
+                    None,
+                    start_time=100.0,
+                    duration_histogram=duration_histogram,
+                )
+            ]
+
+        duration_histogram.record.assert_called_once()
         span.end.assert_called_once()
 
 
