@@ -211,6 +211,34 @@ class TestCreateStreamProcessor:
         assert token_histogram.record.call_count == 2
         span.end.assert_called_once()
 
+    def test_records_token_metrics_when_span_not_recording(self):
+        span = _span(recording=False)
+        duration_histogram = MagicMock()
+        token_histogram = MagicMock()
+
+        chunk = MagicMock()
+        chunk.choices = [MagicMock(delta=MagicMock(content="hello", tool_calls=None), finish_reason="stop")]
+        usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        chunk.x_groq = MagicMock(usage=usage)
+        chunk.model = "llama3-8b-8192"
+
+        list(
+            _create_stream_processor(
+                iter([chunk]),
+                span,
+                None,
+                start_time=100.0,
+                duration_histogram=duration_histogram,
+                token_histogram=token_histogram,
+                llm_model="llama3-8b-8192",
+            )
+        )
+
+        duration_histogram.record.assert_called_once()
+        assert token_histogram.record.call_count == 2
+        span.set_attribute.assert_not_called()
+        span.end.assert_called_once()
+
     def test_records_duration_on_stream_error(self):
         span = _span()
         duration_histogram = MagicMock()
@@ -267,6 +295,7 @@ class TestCreateAsyncStreamProcessor:
             yield chunk
 
         [c async for c in _create_async_stream_processor(_response(), span, None)]
+
         span.set_status.assert_not_called()
         span.end.assert_called_once()
 
@@ -306,6 +335,39 @@ class TestCreateAsyncStreamProcessor:
 
         duration_histogram.record.assert_called_once()
         assert token_histogram.record.call_count == 2
+        span.end.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_records_token_metrics_when_async_span_not_recording(self):
+        span = _span(recording=False)
+        duration_histogram = MagicMock()
+        token_histogram = MagicMock()
+
+        chunk = MagicMock()
+        chunk.choices = [MagicMock(delta=MagicMock(content="world", tool_calls=None), finish_reason="stop")]
+        usage = MagicMock(prompt_tokens=15, completion_tokens=25, total_tokens=40)
+        chunk.x_groq = MagicMock(usage=usage)
+        chunk.model = "llama3-8b-8192"
+
+        async def _response():
+            yield chunk
+
+        [
+            c
+            async for c in _create_async_stream_processor(
+                _response(),
+                span,
+                None,
+                start_time=100.0,
+                duration_histogram=duration_histogram,
+                token_histogram=token_histogram,
+                llm_model="llama3-8b-8192",
+            )
+        ]
+
+        duration_histogram.record.assert_called_once()
+        assert token_histogram.record.call_count == 2
+        span.set_attribute.assert_not_called()
         span.end.assert_called_once()
 
     @pytest.mark.asyncio

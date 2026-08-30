@@ -191,32 +191,11 @@ def set_model_streaming_response_attributes(
     token_histogram=None,
     request_model=None,
 ):
-    if not span.is_recording():
-        return
-
-    if response_model:
-        set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
-
     req_model = request_model or response_model
 
     if usage:
         prompt_tokens = getattr(usage, "prompt_tokens", None)
         completion_tokens = getattr(usage, "completion_tokens", None)
-        total_tokens = getattr(usage, "total_tokens", None)
-
-        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens)
-        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
-        set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
-
-        prompt_tokens_details = getattr(usage, "prompt_tokens_details", None)
-        if prompt_tokens_details is not None:
-            cached_tokens = getattr(prompt_tokens_details, "cached_tokens", None)
-            if cached_tokens is not None:
-                set_span_attribute(
-                    span,
-                    GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
-                    cached_tokens,
-                )
 
         if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
             token_histogram.record(
@@ -241,6 +220,31 @@ def set_model_streaming_response_attributes(
                     GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
                 },
             )
+
+    if not span.is_recording():
+        return
+
+    if response_model:
+        set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+
+    if usage:
+        prompt_tokens = getattr(usage, "prompt_tokens", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        total_tokens = getattr(usage, "total_tokens", None)
+
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens)
+        set_span_attribute(span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens)
+        set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
+
+        prompt_tokens_details = getattr(usage, "prompt_tokens_details", None)
+        if prompt_tokens_details is not None:
+            cached_tokens = getattr(prompt_tokens_details, "cached_tokens", None)
+            if cached_tokens is not None:
+                set_span_attribute(
+                    span,
+                    GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                    cached_tokens,
+                )
 
     if finish_reasons:
         mapped = [_map_groq_finish_reason(fr) for fr in finish_reasons]
