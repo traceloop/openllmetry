@@ -189,12 +189,15 @@ def set_model_streaming_response_attributes(
     finish_reasons=None,
     response_model=None,
     token_histogram=None,
+    request_model=None,
 ):
     if not span.is_recording():
         return
 
     if response_model:
         set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response_model)
+
+    req_model = request_model or response_model
 
     if usage:
         prompt_tokens = getattr(usage, "prompt_tokens", None)
@@ -221,7 +224,7 @@ def set_model_streaming_response_attributes(
                 attributes={
                     GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
                     GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
-                    GenAIAttributes.GEN_AI_REQUEST_MODEL: response_model,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: req_model,
                     GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                     GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
                 },
@@ -233,7 +236,7 @@ def set_model_streaming_response_attributes(
                 attributes={
                     GenAIAttributes.GEN_AI_PROVIDER_NAME: _GROQ_PROVIDER,
                     GenAIAttributes.GEN_AI_OPERATION_NAME: _CHAT_OPERATION,
-                    GenAIAttributes.GEN_AI_REQUEST_MODEL: response_model,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: req_model,
                     GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                     GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
                 },

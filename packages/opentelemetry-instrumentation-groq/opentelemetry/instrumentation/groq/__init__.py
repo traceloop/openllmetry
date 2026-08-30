@@ -182,6 +182,7 @@ def _handle_streaming_response(
     event_logger: Union[Logger, None],
     response_model: Optional[str] = None,
     token_histogram: Optional[Histogram] = None,
+    request_model: Optional[str] = None,
 ) -> None:
     # finish_reasons is a list; use first entry for message-level finish_reason
     finish_reason = finish_reasons[0] if finish_reasons else None
@@ -191,6 +192,7 @@ def _handle_streaming_response(
         finish_reasons,
         response_model=response_model,
         token_histogram=token_histogram,
+        request_model=request_model,
     )
     if should_emit_events() and event_logger:
         emit_streaming_response_events(accumulated_content, finish_reason, event_logger, tool_calls=tool_calls)
@@ -257,6 +259,7 @@ def _create_stream_processor(
             event_logger,
             response_model=response_model,
             token_histogram=token_histogram,
+            request_model=llm_model,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -323,6 +326,7 @@ async def _create_async_stream_processor(
             event_logger,
             response_model=response_model,
             token_histogram=token_histogram,
+            request_model=llm_model,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
