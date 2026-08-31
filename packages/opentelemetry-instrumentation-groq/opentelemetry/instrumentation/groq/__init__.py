@@ -256,6 +256,11 @@ def _create_stream_processor(
                 usage = chunk_usage
             yield chunk
     except Exception as e:
+        if duration_histogram and start_time is not None:
+            duration_histogram.record(
+                time.time() - start_time,
+                attributes=error_metrics_attributes(e),
+            )
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -299,6 +304,11 @@ async def _create_async_stream_processor(
                 usage = chunk_usage
             yield chunk
     except Exception as e:
+        if duration_histogram and start_time is not None:
+            duration_histogram.record(
+                time.time() - start_time,
+                attributes=error_metrics_attributes(e),
+            )
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))

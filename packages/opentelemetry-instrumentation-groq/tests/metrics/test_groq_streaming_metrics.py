@@ -56,6 +56,14 @@ class _FakeAsyncStream:
             yield chunk
 
 
+class _FailingAsyncStream:
+    """Async stream that yields one chunk then raises."""
+
+    async def __aiter__(self):
+        yield _chunk(content="hello")
+        raise RuntimeError("async stream exploded")
+
+
 def _find_metric(metrics_data, name):
     """Return the first metric whose instrument name matches, or None."""
     if metrics_data is None:
@@ -225,3 +233,92 @@ class TestAsyncStreamProcessorMetrics:
         duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
         assert duration_metric is not None
         assert duration_metric.data.data_points[0].sum > 0
+
+
+# ---------------------------------------------------------------------------
+# _create_stream_processor failure paths (review: record duration on error)
+# ---------------------------------------------------------------------------
+
+
+class TestStreamProcessorErrorMetrics:
+    def test_sync_records_duration_metric_on_stream_failure(self, reader, tracer_provider, meter_provider):
+        """A stream that raises mid-iteration must still emit an operation-duration
+        metric (with error attributes) before re-raising."""
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        duration_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_OPERATION_DURATION)
+
+        def _failing():
+            yield _chunk(content="hello")
+            raise RuntimeError("stream exploded")
+
+        processor = _create_stream_processor(
+            _FakeStream(_failing()),
+            span,
+            None,
+            token_histogram=None,
+            duration_histogram=duration_histogram,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+        with pytest.raises(RuntimeError):
+            for _ in processor:
+                pass
+
+        metrics_data = reader.get_metrics_data()
+        duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
+        assert duration_metric is not None
+        assert duration_metric.data.data_points[0].sum > 0
+        dp = duration_metric.data.data_points[0]
+        assert dict(dp.attributes)["error.type"] == "RuntimeError"
+
+    def test_sync_skips_duration_metric_when_disabled_on_failure(self, reader, tracer_provider, meter_provider):
+        """With histograms disabled (None), a failing stream must not crash and
+        must still propagate the exception."""
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+
+        def _failing():
+            yield _chunk(content="hello")
+            raise ValueError("boom")
+
+        processor = _create_stream_processor(
+            _FakeStream(_failing()),
+            span,
+            None,
+            token_histogram=None,
+            duration_histogram=None,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+        with pytest.raises(ValueError):
+            for _ in processor:
+                pass
+
+        metrics_data = reader.get_metrics_data()
+        assert _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION) is None
+
+    @pytest.mark.asyncio
+    async def test_async_records_duration_metric_on_stream_failure(self, reader, tracer_provider, meter_provider):
+        """The async stream processor must emit the duration metric with error
+        attributes when iteration fails."""
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        duration_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_OPERATION_DURATION)
+
+        processor = _create_async_stream_processor(
+            _FailingAsyncStream(),
+            span,
+            None,
+            token_histogram=None,
+            duration_histogram=duration_histogram,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+        with pytest.raises(RuntimeError):
+            async for _ in processor:
+                pass
+
+        metrics_data = reader.get_metrics_data()
+        duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
+        assert duration_metric is not None
+        assert duration_metric.data.data_points[0].sum > 0
+        dp = duration_metric.data.data_points[0]
+        assert dict(dp.attributes)["error.type"] == "RuntimeError"
