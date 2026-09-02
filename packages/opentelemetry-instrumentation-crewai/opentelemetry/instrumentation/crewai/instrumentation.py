@@ -45,6 +45,23 @@ _MODEL_PATTERN_TO_OTEL_PROVIDER = [
     ("command",  GenAISystem.COHERE.value),
 ]
 
+# CrewAI >= 1.15 routes LLM calls to native provider SDKs: `LLM.__new__` is a
+# factory that returns instances of these provider classes (e.g. OpenAICompletion)
+# rather than of `LLM`, so wrapping `LLM.call` alone never fires on the native
+# path. Wrap each provider class's own `call` as well. `OpenAICompatibleCompletion`
+# and `SnowflakeCompletion` subclass `OpenAICompletion` without overriding `call`,
+# so they inherit the wrap and must not be listed here (double-wrapping them would
+# emit duplicate spans). Entries whose module is not importable (crewai versions
+# before the native providers existed, or a provider SDK that isn't installed)
+# are skipped at instrument time.
+CREWAI_NATIVE_LLM_PROVIDERS = [
+    ("crewai.llms.providers.anthropic.completion", "AnthropicCompletion"),
+    ("crewai.llms.providers.azure.completion", "AzureCompletion"),
+    ("crewai.llms.providers.bedrock.completion", "BedrockCompletion"),
+    ("crewai.llms.providers.gemini.completion", "GeminiCompletion"),
+    ("crewai.llms.providers.openai.completion", "OpenAICompletion"),
+]
+
 
 def _infer_llm_provider_from_model(model: object | None) -> str | None:
     """Resolve gen_ai.provider.name for the underlying LLM on a chat span.
@@ -92,12 +109,25 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
+        for module, class_name in CREWAI_NATIVE_LLM_PROVIDERS:
+            try:
+                wrap_function_wrapper(module, f"{class_name}.call",
+                                      wrap_llm_call(tracer, duration_histogram, token_histogram))
+            except (ImportError, AttributeError):
+                # crewai < native-provider release, or the provider SDK is not installed.
+                pass
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
+        for module, class_name in CREWAI_NATIVE_LLM_PROVIDERS:
+            try:
+                unwrap(f"{module}.{class_name}", "call")
+            except (ImportError, AttributeError):
+                # Mirrors _instrument: skip entries that were never wrapped.
+                pass
 
 
 def with_tracer_wrapper(func):
