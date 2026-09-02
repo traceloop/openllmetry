@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from typing import Collection
@@ -21,6 +22,22 @@ from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 from .utils import _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
+
+# crewai >= 1.x routes `LLM(...)` through `LLM.__new__`, which returns native
+# provider classes (e.g. `OpenAICompletion`) instead of an `LLM` instance —
+# those classes inherit from `BaseLLM`, not `LLM`, so wrapping only
+# `crewai.llm.LLM.call` (the LiteLLM fallback path) misses every native call.
+# Each provider class overrides `call`, so the base class cannot be wrapped
+# instead; every native class needs its own wrap. Provider modules import
+# their SDK lazily and may be absent, hence the try/except around each.
+_NATIVE_LLM_WRAPPED_METHODS = [
+    # (module, class qualname, method) — import failures are non-fatal.
+    ("crewai.llms.providers.openai.completion", "OpenAICompletion", "call"),
+    ("crewai.llms.providers.azure.completion", "AzureCompletion", "call"),
+    ("crewai.llms.providers.anthropic.completion", "AnthropicCompletion", "call"),
+    ("crewai.llms.providers.gemini.completion", "GeminiCompletion", "call"),
+    ("crewai.llms.providers.bedrock.completion", "BedrockCompletion", "call"),
+]
 
 # Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
 # Uses GenAISystem (semconv-ai) and GenAiSystemValues (OTel upstream) — no raw strings.
@@ -92,12 +109,26 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
+        for module, class_name, method in _NATIVE_LLM_WRAPPED_METHODS:
+            try:
+                wrap_function_wrapper(
+                    module, f"{class_name}.{method}",
+                    wrap_llm_call(tracer, duration_histogram, token_histogram),
+                )
+            except (ImportError, AttributeError):
+                # Provider SDK not installed — the class is never used.
+                logging.debug("crewai native LLM provider %s.%s not importable; skipping wrap", class_name, method)
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
+        for module, class_name, method in _NATIVE_LLM_WRAPPED_METHODS:
+            try:
+                unwrap(f"{module}.{class_name}", method)
+            except (ImportError, AttributeError):
+                pass
 
 
 def with_tracer_wrapper(func):

@@ -89,3 +89,25 @@ def test_trace_status(mock_crew, mock_instrumentor):
 
     mock_instrumentor.uninstrument()
     mock_instrumentor.uninstrument.assert_called_once()
+
+
+
+
+def test_native_provider_call_is_wrapped(instrument):
+    """crewai's native provider classes (BaseLLM subclasses, not LLM) must have
+    their call wrapped — previously only crewai.llm.LLM.call was patched, which
+    the LLM.__new__ factory never returns on the native path."""
+    from crewai.llms.providers.openai.completion import OpenAICompletion
+
+    assert getattr(OpenAICompletion.call, "__wrapped__", None) is not None
+
+
+def test_native_provider_uninstrument_restores_call(instrument):
+    from crewai.llms.providers.openai.completion import OpenAICompletion
+
+    instrument.uninstrument()
+    try:
+        assert getattr(OpenAICompletion.call, "__wrapped__", None) is None
+    finally:
+        # re-instrument so the autouse-style fixture teardown stays balanced
+        instrument.instrument()
