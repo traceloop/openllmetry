@@ -7,8 +7,26 @@ from collections.abc import Hashable
 from functools import singledispatch
 from typing import List, Optional, Union
 
-from opentelemetry import context as context_api
 import pydantic
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+)
+from opentelemetry.trace import SpanKind, Tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import ObjectProxy
+
+from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
@@ -42,23 +60,6 @@ from opentelemetry.instrumentation.openai.utils import (
     should_emit_events,
     should_send_prompts,
 )
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GenAiOperationNameValues,
-)
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-)
-from opentelemetry.trace import SpanKind, Tracer
-from opentelemetry import trace
-from opentelemetry.trace.status import Status, StatusCode
-from wrapt import ObjectProxy
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
