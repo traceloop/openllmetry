@@ -7,7 +7,6 @@ from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
     ChatStream,
     _sanitize_attributes_for_metrics,
 )
-from opentelemetry.instrumentation.openai.shared.config import Config
 
 
 class TestUnhashableAttributesFix:
@@ -63,10 +62,10 @@ class TestUnhashableAttributesFix:
         sanitized = _sanitize_attributes_for_metrics(hashable_attributes)
         assert sanitized == hashable_attributes
 
-    def test_config_get_common_metrics_attributes_with_unhashable_values(
+    def test_shared_attributes_with_unhashable_values(
         self, monkeypatch
     ):
-        def mock_get_common_attributes():
+        def mock_metric_shared_attributes(**kwargs):
             return {
                 "tool_definitions": [
                     {
@@ -84,7 +83,10 @@ class TestUnhashableAttributesFix:
                 "other_config": {"nested": {"data": "value"}},
             }
 
-        monkeypatch.setattr(Config, "get_common_metrics_attributes", mock_get_common_attributes)
+        monkeypatch.setattr(
+            "opentelemetry.instrumentation.openai.shared.chat_wrappers.metric_shared_attributes",
+            mock_metric_shared_attributes,
+        )
         chat_stream = ChatStream(
             span=MagicMock(),
             response=MagicMock(),
