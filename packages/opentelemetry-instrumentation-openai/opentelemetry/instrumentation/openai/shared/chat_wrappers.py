@@ -3,6 +3,7 @@ import json
 import logging
 import threading
 import time
+from collections.abc import Hashable
 from functools import singledispatch
 from typing import List, Optional, Union
 
@@ -67,6 +68,29 @@ OPERATION_NAME = GenAiOperationNameValues.CHAT
 
 logger = logging.getLogger(__name__)
 
+
+def _sanitize_attributes_for_metrics(attributes):
+    """Convert unhashable metric attribute values to strings."""
+    if not isinstance(attributes, dict):
+        return attributes
+
+    sanitized = {}
+    for key, value in attributes.items():
+        if isinstance(value, Hashable):
+            try:
+                hash(value)
+            except TypeError:
+                pass
+            else:
+                sanitized[key] = value
+                continue
+
+        try:
+            sanitized[key] = json.dumps(value, sort_keys=True)
+        except (TypeError, ValueError):
+            sanitized[key] = str(value)
+
+    return sanitized
 
 @_with_chat_telemetry_wrapper
 def chat_wrapper(
