@@ -10,7 +10,6 @@ on every graph invocation.
 from enum import StrEnum
 from typing import NamedTuple
 
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
