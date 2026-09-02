@@ -404,6 +404,7 @@ def _set_chat_metrics(
         server_address=_get_openai_base_url(instance),
         is_streaming=is_streaming,
     )
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -803,7 +804,7 @@ class ChatStream(ObjectProxy):
         _accumulate_stream_items(item, self._complete_response)
 
     def _shared_attributes(self):
-        return metric_shared_attributes(
+        attributes = metric_shared_attributes(
             response_model=self._complete_response.get("model")
             or self._request_kwargs.get("model")
             or None,
@@ -811,6 +812,7 @@ class ChatStream(ObjectProxy):
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
         )
+        return _sanitize_attributes_for_metrics(attributes)
 
     @dont_throw
     def _process_complete_response(self):
@@ -975,6 +977,7 @@ def _build_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
@@ -1046,6 +1049,7 @@ async def _abuild_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
