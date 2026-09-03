@@ -30,13 +30,17 @@ _instruments = ("crewai >= 1.0.0",)
 # Each provider class overrides `call`, so the base class cannot be wrapped
 # instead; every native class needs its own wrap. Provider modules import
 # their SDK lazily and may be absent, hence the try/except around each.
+# The third element is the authoritative OTel provider identity for that
+# class: crewai constructs native instances with an explicit `provider=`
+# kwarg (e.g. `AzureCompletion` with `provider="azure"` even for `gpt-4`
+# model names), so model-name inference would misattribute those spans.
 _NATIVE_LLM_WRAPPED_METHODS = [
-    # (module, class qualname, method) — import failures are non-fatal.
-    ("crewai.llms.providers.openai.completion", "OpenAICompletion", "call"),
-    ("crewai.llms.providers.azure.completion", "AzureCompletion", "call"),
-    ("crewai.llms.providers.anthropic.completion", "AnthropicCompletion", "call"),
-    ("crewai.llms.providers.gemini.completion", "GeminiCompletion", "call"),
-    ("crewai.llms.providers.bedrock.completion", "BedrockCompletion", "call"),
+    # (module, class qualname, method, otel provider value) — import failures are non-fatal.
+    ("crewai.llms.providers.openai.completion", "OpenAICompletion", "call", GenAISystem.OPENAI.value),
+    ("crewai.llms.providers.azure.completion", "AzureCompletion", "call", GenAiSystemValues.AZURE_AI_OPENAI.value),
+    ("crewai.llms.providers.anthropic.completion", "AnthropicCompletion", "call", GenAISystem.ANTHROPIC.value),
+    ("crewai.llms.providers.gemini.completion", "GeminiCompletion", "call", GenAiSystemValues.GCP_GEMINI.value),
+    ("crewai.llms.providers.bedrock.completion", "BedrockCompletion", "call", GenAISystem.AWS.value),
 ]
 
 # Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
@@ -109,11 +113,11 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
-        for module, class_name, method in _NATIVE_LLM_WRAPPED_METHODS:
+        for module, class_name, method, otel_provider in _NATIVE_LLM_WRAPPED_METHODS:
             try:
                 wrap_function_wrapper(
                     module, f"{class_name}.{method}",
-                    wrap_llm_call(tracer, duration_histogram, token_histogram),
+                    wrap_llm_call(tracer, duration_histogram, token_histogram, fixed_provider=otel_provider),
                 )
             except (ImportError, AttributeError):
                 # Provider SDK not installed — the class is never used.
@@ -124,7 +128,7 @@ class CrewAIInstrumentor(BaseInstrumentor):
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
-        for module, class_name, method in _NATIVE_LLM_WRAPPED_METHODS:
+        for module, class_name, method, _otel_provider in _NATIVE_LLM_WRAPPED_METHODS:
             try:
                 unwrap(f"{module}.{class_name}", method)
             except (ImportError, AttributeError):
@@ -134,9 +138,9 @@ class CrewAIInstrumentor(BaseInstrumentor):
 def with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
-    def _with_tracer(tracer, duration_histogram, token_histogram):
+    def _with_tracer(tracer, duration_histogram, token_histogram, **wrapper_kwargs):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs)
+            return func(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs, **wrapper_kwargs)
         return wrapper
     return _with_tracer
 
@@ -245,9 +249,15 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
 
 
 @with_tracer_wrapper
-def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
+def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs, fixed_provider=None):
     model = str(instance.model) if hasattr(instance, "model") else "llm"
-    provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
+    if fixed_provider:
+        # Native provider classes get their authoritative OTel identity at
+        # wrap time; model-name inference would misattribute them (e.g.
+        # AzureCompletion serving a "gpt-4" model name is azure, not openai).
+        provider = fixed_provider
+    else:
+        provider = _infer_llm_provider_from_model(getattr(instance, "model", None))
 
     span_attrs = {
         GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.CHAT.value,

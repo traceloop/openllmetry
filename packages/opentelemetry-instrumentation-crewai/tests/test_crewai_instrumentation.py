@@ -111,3 +111,13 @@ def test_native_provider_uninstrument_restores_call(instrument):
     finally:
         # re-instrument so the autouse-style fixture teardown stays balanced
         instrument.instrument()
+
+
+def test_litellm_fallback_still_infers_provider_from_model(mock_crew, mock_instrumentor):
+    """The LLM.call wrap has no fixed provider and keeps model-name inference
+    (used for the LiteLLM fallback path)."""
+    from opentelemetry.instrumentation.crewai.instrumentation import _infer_llm_provider_from_model
+
+    assert _infer_llm_provider_from_model("openai/gpt-4") == "openai"
+    assert _infer_llm_provider_from_model("claude-3") == "anthropic"
+    assert _infer_llm_provider_from_model("totally-unknown-xyz") is None
