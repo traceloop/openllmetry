@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from unittest.mock import MagicMock
 from pydantic import BaseModel
@@ -124,7 +126,7 @@ def test_native_wrapper_emits_span_and_duration_metric(span_exporter, reader, in
 
     from crewai.llms.providers.openai.completion import OpenAICompletion
 
-    llm = OpenAICompletion(model="gpt-4o-mini", api_key="sk-test")
+    llm = OpenAICompletion(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY", "test-key"))
     fake_response = MagicMock()
     fake_response.choices = [MagicMock()]
     fake_response.choices[0].message.content = "stubbed"
@@ -147,3 +149,4 @@ def test_native_wrapper_emits_span_and_duration_metric(span_exporter, reader, in
                 if metric.name == "gen_ai.client.operation.duration":
                     duration_points.extend(metric.data.data_points)
     assert duration_points, "duration histogram recorded nothing"
+    assert all(dp.attributes.get("gen_ai.provider.name") == "openai" for dp in duration_points)
