@@ -151,28 +151,31 @@ def test_native_style_llm_call_emits_span(native_style_wrap, span_env):
     provider, exporter = span_env
     instrumentor = CrewAIInstrumentor()
     instrumentor.instrument(tracer_provider=provider)
+    try:
+        llm = NativeStyleStubLLM(model="gpt-4o-mini")
+        result = llm.call([{"role": "user", "content": "hello"}])
+        assert result == "Mocked native response"
 
-    llm = NativeStyleStubLLM(model="gpt-4o-mini")
-    result = llm.call([{"role": "user", "content": "hello"}])
-    assert result == "Mocked native response"
-
-    llm_spans = [s for s in exporter.get_finished_spans() if s.name == "gpt-4o-mini.llm"]
-    assert len(llm_spans) == 1, "native-provider-style LLM.call must produce a {model}.llm span"
-    attrs = llm_spans[0].attributes
-    assert attrs["gen_ai.request.model"] == "gpt-4o-mini"
-    assert attrs["gen_ai.provider.name"] == "openai"
-    assert llm_spans[0].status.status_code == StatusCode.OK
-
-    instrumentor.uninstrument()
+        llm_spans = [s for s in exporter.get_finished_spans() if s.name == "gpt-4o-mini.llm"]
+        assert len(llm_spans) == 1, "native-provider-style LLM.call must produce a {model}.llm span"
+        attrs = llm_spans[0].attributes
+        assert attrs["gen_ai.request.model"] == "gpt-4o-mini"
+        assert attrs["gen_ai.provider.name"] == "openai"
+        assert llm_spans[0].status.status_code == StatusCode.OK
+    finally:
+        # BaseInstrumentor is a singleton — a failed assertion must not leave
+        # the wraps in place for later tests.
+        instrumentor.uninstrument()
 
 
 def test_uninstrument_restores_native_style_call(native_style_wrap, span_env):
     provider, _ = span_env
     instrumentor = CrewAIInstrumentor()
     instrumentor.instrument(tracer_provider=provider)
-    assert hasattr(NativeStyleStubLLM.call, "__wrapped__")
-
-    instrumentor.uninstrument()
+    try:
+        assert hasattr(NativeStyleStubLLM.call, "__wrapped__")
+    finally:
+        instrumentor.uninstrument()
     assert not hasattr(NativeStyleStubLLM.call, "__wrapped__")
 
     from crewai.llm import LLM
