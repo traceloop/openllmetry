@@ -63,10 +63,7 @@ def test_crewai_instrumentation(mock_crew, mock_instrumentor):
     assert len(mock_crew.agents) == 1
     assert mock_crew.agents[0].role == "Data Collector"
     assert len(mock_crew.tasks) == 1
-    assert (
-        mock_crew.tasks[0].description
-        == "Collect stock data for AAPL for the past month"
-    )
+    assert mock_crew.tasks[0].description == "Collect stock data for AAPL for the past month"
 
 
 def test_trace_status(mock_crew, mock_instrumentor):
@@ -80,17 +77,13 @@ def test_trace_status(mock_crew, mock_instrumentor):
     mock_span.set_status.assert_called_with(StatusCode.ERROR)
 
     memory_exporter = MagicMock()
-    memory_exporter.get_finished_spans.return_value = [
-        MagicMock(status=MagicMock(status_code=StatusCode.ERROR))
-    ]
+    memory_exporter.get_finished_spans.return_value = [MagicMock(status=MagicMock(status_code=StatusCode.ERROR))]
 
     spans = memory_exporter.get_finished_spans()
     assert spans[-1].status.status_code == StatusCode.ERROR
 
     mock_instrumentor.uninstrument()
     mock_instrumentor.uninstrument.assert_called_once()
-
-
 
 
 def test_native_provider_call_is_wrapped(instrument):
@@ -121,3 +114,36 @@ def test_litellm_fallback_still_infers_provider_from_model(mock_crew, mock_instr
     assert _infer_llm_provider_from_model("openai/gpt-4") == "openai"
     assert _infer_llm_provider_from_model("claude-3") == "anthropic"
     assert _infer_llm_provider_from_model("totally-unknown-xyz") is None
+
+
+def test_native_wrapper_emits_span_and_duration_metric(span_exporter, reader, instrument):
+    """Behavioral check: a native provider class (BaseLLM subclass, not LLM)
+    going through the wrapper must emit an llm span with the authoritative
+    provider attribute and record a duration histogram sample."""
+    from unittest.mock import MagicMock, patch
+
+    from crewai.llms.providers.openai.completion import OpenAICompletion
+
+    llm = OpenAICompletion(model="gpt-4o-mini", api_key="sk-test")
+    fake_response = MagicMock()
+    fake_response.choices = [MagicMock()]
+    fake_response.choices[0].message.content = "stubbed"
+    fake_response.model = "gpt-4o-mini"
+
+    with patch.object(llm._client.chat.completions, "create", return_value=fake_response):
+        llm.call([{"role": "user", "content": "hello"}])
+
+    llm_spans = [s for s in span_exporter.get_finished_spans() if s.name == "gpt-4o-mini.llm"]
+    assert len(llm_spans) == 1
+    attrs = dict(llm_spans[0].attributes)
+    assert attrs.get("gen_ai.provider.name") == "openai"
+    assert attrs.get("gen_ai.request.model") == "gpt-4o-mini"
+
+    metrics = reader.get_metrics_data()
+    duration_points = []
+    for resource_metrics in metrics.resource_metrics:
+        for scope_metrics in resource_metrics.scope_metrics:
+            for metric in scope_metrics.metrics:
+                if metric.name == "gen_ai.client.operation.duration":
+                    duration_points.extend(metric.data.data_points)
+    assert duration_points, "duration histogram recorded nothing"
