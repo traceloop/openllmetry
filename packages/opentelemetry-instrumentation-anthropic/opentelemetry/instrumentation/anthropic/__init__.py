@@ -198,6 +198,7 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token usage from an asynchronous Anthropic response."""
     import inspect
 
     # If we get a coroutine, await it
@@ -323,6 +324,7 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token usage from a synchronous Anthropic response."""
     import inspect
 
     # If we get a coroutine, we cannot process it in sync context

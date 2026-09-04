@@ -16,6 +16,7 @@ from .utils import verify_metrics
 
 
 def test_reasoning_tokens_are_recorded_for_non_streaming_response():
+    """Verify reasoning tokens are recorded for a regular response."""
     span = Mock()
     response = SimpleNamespace(
         usage=SimpleNamespace(
@@ -36,6 +37,7 @@ def test_reasoning_tokens_are_recorded_for_non_streaming_response():
 
 
 def test_reasoning_tokens_are_recorded_for_streaming_response():
+    """Verify reasoning tokens are recorded for a streaming response."""
     span = Mock()
     complete_response = {
         "usage": {

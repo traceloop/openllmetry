@@ -83,6 +83,7 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token usage collected from a completed streaming response."""
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
