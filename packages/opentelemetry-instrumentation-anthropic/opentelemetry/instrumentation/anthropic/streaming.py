@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    get_reasoning_tokens,
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
@@ -97,6 +98,12 @@ def _set_token_usage(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
+
+    set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+        get_reasoning_tokens(complete_response.get("usage")),
+    )
 
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
