@@ -178,25 +178,41 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
-        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             meta = None
             method = None
             params = None
-            if len(args) > 0 and hasattr(args[0].root, "method"):
-                method = args[0].root.method
-            if len(args) > 0 and hasattr(args[0].root, "params"):
-                params = args[0].root.params
-            if params:
-                if hasattr(args[0].root.params, "meta"):
-                    meta = args[0].root.params.meta
+            # Extract request metadata and propagate the trace context. A
+            # failure here is an instrumentation problem only: log it and let
+            # the request go through uninstrumented. BaseSession.send_request
+            # returns the RPC result, so swallowing an error and returning
+            # None (as @dont_throw did) breaks the traced call itself (#4463).
+            try:
+                if len(args) > 0 and hasattr(args[0].root, "method"):
+                    method = args[0].root.method
+                if len(args) > 0 and hasattr(args[0].root, "params"):
+                    params = args[0].root.params
+                if params:
+                    if hasattr(args[0].root.params, "meta"):
+                        meta = args[0].root.params.meta
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
-                carrier = {}
-                TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                # Handle trace context propagation. Nothing is injected when
+                # the request happens outside any span (e.g. the first call
+                # after instrumenting) or the span context is invalid, so the
+                # traceparent key may be absent.
+                if meta and len(args) > 0:
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    traceparent = carrier.get("traceparent")
+                    if traceparent is not None:
+                        meta.traceparent = traceparent
+                        args[0].root.params.meta = meta
+            except Exception as e:
+                logging.debug(
+                    "OpenLLMetry failed to extract MCP request metadata or "
+                    "propagate trace context, error: %s",
+                    e,
+                )
 
             # Create different span types based on method
             if method == "tools/call":
@@ -318,9 +334,23 @@ class McpInstrumentor(BaseInstrumentor):
     async def _execute_and_handle_result(
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
-        """Execute the wrapped function and handle the result"""
+        """Execute the wrapped function and handle the result.
+
+        Errors raised by the wrapped call are recorded on the span and
+        re-raised to the caller. Errors raised by the instrumentation around
+        the call (attribute reads, serialization) must never change the
+        outcome of the traced call: they are logged and the real result is
+        returned instead of being replaced with None (#4463).
+        """
         try:
             result = await wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, type(e).__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
+
+        try:
             # Add output
             if clean_output:
                 clean_output_data = self._extract_clean_output(method, result)
@@ -343,17 +373,24 @@ class McpInstrumentor(BaseInstrumentor):
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
                 if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                    error_content = result.content[0]
+                    # Content blocks can be text, image, audio or embedded
+                    # resources; only TextContent exposes .text.
+                    error_message = getattr(error_content, "text", None)
+                    if error_message is None:
+                        error_message = (
+                            f"{type(error_content).__name__} error response"
+                        )
+                    span.set_status(Status(StatusCode.ERROR, error_message))
             else:
                 span.set_status(Status(StatusCode.OK))
-            return result
         except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
-            raise
+            logging.debug(
+                "OpenLLMetry failed to record span output for %s, error: %s",
+                method,
+                e,
+            )
+        return result
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
         """Extract clean input parameters for different MCP method types"""
