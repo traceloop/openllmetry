@@ -4,7 +4,7 @@ tag_format = "v$version"
 version_scheme = "pep440"
 major_version_zero = true
 update_changelog_on_bump = true
-version = "0.62.1"
+version = "0.62.3"
 version_files = [
     "packages/opentelemetry-instrumentation-mcp/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-mcp/opentelemetry/instrumentation/mcp/version.py",
@@ -30,6 +30,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-haystack/opentelemetry/instrumentation/haystack/version.py",
     "packages/opentelemetry-instrumentation-langchain/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain/version.py",
+    "packages/opentelemetry-instrumentation-litellm/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-litellm/opentelemetry/instrumentation/litellm/version.py",
     "packages/opentelemetry-instrumentation-lancedb/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-lancedb/opentelemetry/instrumentation/lancedb/version.py",
     "packages/opentelemetry-instrumentation-milvus/pyproject.toml:^version",
