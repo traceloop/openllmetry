@@ -208,7 +208,7 @@ class McpInstrumentor(BaseInstrumentor):
                         meta.traceparent = traceparent
                         args[0].root.params.meta = meta
             except Exception as e:
-                logging.debug(
+                logging.warning(
                     "OpenLLMetry failed to extract MCP request metadata or "
                     "propagate trace context, error: %s",
                     e,
@@ -385,7 +385,7 @@ class McpInstrumentor(BaseInstrumentor):
             else:
                 span.set_status(Status(StatusCode.OK))
         except Exception as e:
-            logging.debug(
+            logging.warning(
                 "OpenLLMetry failed to record span output for %s, error: %s",
                 method,
                 e,
