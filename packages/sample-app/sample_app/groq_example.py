@@ -21,7 +21,7 @@ client = Groq(
 )
 
 # See https://console.groq.com/docs/models for models available on your account.
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-120b"
 
 
 @task(name="generate_joke")

@@ -65,10 +65,10 @@ You should see:
 
 Example trace hierarchy:
 
-```
+```text
 joke_generator.workflow          ← top-level workflow
 └── generate_joke.task           ← your task function
-    └── chat llama-3.3-70b-versatile   ← automatic Groq instrumentation
+    └── chat openai/gpt-oss-120b   ← automatic Groq instrumentation
 ```
 
 Each span includes metadata such as the model name, token usage, and the prompt/response (when content tracing is enabled).
