@@ -222,7 +222,10 @@ class McpInstrumentor(BaseInstrumentor):
                     "OpenLLMetry failed to trace MCP client request: %s", e
                 )
                 if Config.exception_logger:
-                    Config.exception_logger(e)
+                    try:
+                        Config.exception_logger(e)
+                    except Exception:
+                        pass
                 return await wrapped(*args, **kwargs)
 
         return traced_method
@@ -378,7 +381,10 @@ class McpInstrumentor(BaseInstrumentor):
                 "OpenLLMetry failed to record MCP span attributes: %s", e
             )
             if Config.exception_logger:
-                Config.exception_logger(e)
+                try:
+                    Config.exception_logger(e)
+                except Exception:
+                    pass
         return result
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
