@@ -14,6 +14,7 @@ By the end of this guide you will:
 2. Run a Groq LLM call with OpenLLMetry tracing enabled
 3. Read the trace output in your terminal
 4. Understand how **workflow**, **task**, and **LLM** spans relate to each other
+5. Confirm the LLM response (joke) printed in your terminal
 
 ---
 
@@ -125,17 +126,25 @@ OpenLLMetry automatically instruments the Groq API call. Look for a span named `
 
 ---
 
-## Step 6 — Read the task span and joke output
+## Step 6 — Read the task span
 
 The `@task` decorator wraps `generate_joke()`. Its span captures the function input/output:
 
-![Task span and printed joke](./docs/groq-trace-task-and-joke.png)
-
-The plain-text joke printed between spans is the actual Groq response.
+![Task span with joke captured in traceloop.entity.output](./docs/groq-trace-task-and-joke.png)
 
 ---
 
-## Step 7 — Read the workflow span
+## Step 7 — See the joke printed in your terminal
+
+Between the JSON trace blocks, the script prints the Groq response as plain text — this is the actual LLM output:
+
+![Joke printed between trace spans](./docs/groq-joke-output.png)
+
+If you see a joke like this, your Groq API key and tracing setup are working correctly.
+
+---
+
+## Step 8 — Read the workflow span
 
 The `@workflow` decorator wraps `joke_generator()` — the top-level entry point:
 
