@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-litellm"
-version = "0.1.0"
+version = "0.62.3"
 description = "OpenTelemetry LiteLLM instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
