@@ -45,6 +45,7 @@ dependencies = [
   "opentelemetry-instrumentation-bedrock",
   "opentelemetry-instrumentation-sagemaker",
   "opentelemetry-instrumentation-replicate",
+  "opentelemetry-instrumentation-runpod",
   "opentelemetry-instrumentation-vertexai",
   "opentelemetry-instrumentation-voyageai",
   "opentelemetry-instrumentation-watsonx",
@@ -180,6 +181,7 @@ opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrum
 opentelemetry-instrumentation-pinecone = { path = "../opentelemetry-instrumentation-pinecone", editable = true }
 opentelemetry-instrumentation-qdrant = { path = "../opentelemetry-instrumentation-qdrant", editable = true }
 opentelemetry-instrumentation-replicate = { path = "../opentelemetry-instrumentation-replicate", editable = true }
+opentelemetry-instrumentation-runpod = { path = "../opentelemetry-instrumentation-runpod", editable = true }
 opentelemetry-instrumentation-sagemaker = { path = "../opentelemetry-instrumentation-sagemaker", editable = true }
 opentelemetry-instrumentation-together = { path = "../opentelemetry-instrumentation-together", editable = true }
 opentelemetry-instrumentation-transformers = { path = "../opentelemetry-instrumentation-transformers", editable = true }
