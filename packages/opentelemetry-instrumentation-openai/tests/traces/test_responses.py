@@ -944,3 +944,210 @@ def test_parse_response_passes_through_plain_response():
     result = parse_response(plain)
 
     assert result is plain
+
+
+def _build_response(response_id: str, status: str):
+    """Build a minimal Responses API object, no network involved."""
+    from openai.types.responses import Response
+
+    return Response(
+        id=response_id,
+        created_at=0.0,
+        model="gpt-4.1-nano",
+        object="response",
+        output=[],
+        parallel_tool_calls=False,
+        tool_choice="auto",
+        tools=[],
+        status=status,
+    )
+
+
+def _unit_tracer():
+    """Tracer writing into a local exporter, isolated from the global provider."""
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    return provider.get_tracer(__name__), exporter
+
+
+@pytest.fixture
+def clean_responses_registry():
+    """Reset the module-level registries so unit tests don't leak into each other."""
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers
+
+    def reset():
+        responses_wrappers.responses.clear()
+        getattr(responses_wrappers, "emitted_responses", {}).clear()
+
+    reset()
+    yield responses_wrappers
+    reset()
+
+
+def test_completed_responses_do_not_leak_in_registry(clean_responses_registry):
+    """Every completed response must be evicted, otherwise the registry grows forever."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = responses_get_or_create_wrapper(tracer)
+
+    for i in range(50):
+        response = _build_response(f"resp_leak_{i}", "completed")
+        wrapper(lambda *args, **kwargs: response, None, (), {"model": "gpt-4.1-nano", "input": "hi"})
+
+    assert len(exporter.get_finished_spans()) == 50
+    assert clean_responses_registry.responses == {}
+
+
+@pytest.mark.parametrize("status", ["queued", "in_progress"])
+def test_non_terminal_responses_are_retained(clean_responses_registry, status):
+    """Background responses must stay in the registry so retrieve can merge into them."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = responses_get_or_create_wrapper(tracer)
+
+    response = _build_response("resp_background", status)
+    wrapper(lambda *args, **kwargs: response, None, (), {"model": "gpt-4.1-nano", "input": "hi"})
+
+    assert "resp_background" in clean_responses_registry.responses
+    assert exporter.get_finished_spans() == ()
+
+
+def test_background_create_then_retrieve_flow(clean_responses_registry):
+    """create() returns queued, a later retrieve() completes it using the original start_time."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = responses_get_or_create_wrapper(tracer)
+
+    queued = _build_response("resp_bg_flow", "queued")
+    wrapper(
+        lambda *args, **kwargs: queued,
+        None,
+        (),
+        {"model": "gpt-4.1-nano", "input": "What is the capital of France?"},
+    )
+
+    create_start_time = clean_responses_registry.responses["resp_bg_flow"].start_time
+    assert exporter.get_finished_spans() == ()
+
+    # retrieve() binds to the same wrapper and carries no input kwargs
+    completed = _build_response("resp_bg_flow", "completed")
+    wrapper(lambda *args, **kwargs: completed, None, (), {})
+
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    # The span must be anchored to the create() call, not the retrieve() call
+    assert spans[0].start_time == int(create_start_time)
+    assert "resp_bg_flow" not in clean_responses_registry.responses
+
+
+def test_reprocessing_completed_response_does_not_emit_second_span(clean_responses_registry):
+    """Re-retrieving an already traced response must not duplicate its span."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = responses_get_or_create_wrapper(tracer)
+
+    response = _build_response("resp_duplicate", "completed")
+    for _ in range(3):
+        wrapper(lambda *args, **kwargs: response, None, (), {"model": "gpt-4.1-nano", "input": "hi"})
+
+    assert len(exporter.get_finished_spans()) == 1
+    assert clean_responses_registry.responses == {}
+
+
+async def test_async_completed_responses_do_not_leak_in_registry(clean_responses_registry):
+    """The async wrapper must evict completed responses too."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        async_responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = async_responses_get_or_create_wrapper(tracer)
+
+    for i in range(50):
+        response = _build_response(f"resp_async_leak_{i}", "completed")
+
+        async def wrapped(*args, _response=response, **kwargs):
+            return _response
+
+        await wrapper(wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"})
+
+    assert len(exporter.get_finished_spans()) == 50
+    assert clean_responses_registry.responses == {}
+
+
+async def test_async_reprocessing_completed_response_does_not_emit_second_span(clean_responses_registry):
+    """The async wrapper must not duplicate the span for an already traced response."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        async_responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+    wrapper = async_responses_get_or_create_wrapper(tracer)
+
+    response = _build_response("resp_async_duplicate", "completed")
+
+    async def wrapped(*args, **kwargs):
+        return response
+
+    for _ in range(3):
+        await wrapper(wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"})
+
+    assert len(exporter.get_finished_spans()) == 1
+    assert clean_responses_registry.responses == {}
+
+
+def test_emitted_responses_lru_is_bounded(clean_responses_registry):
+    """The emitted-id tracker must stay bounded rather than becoming a second leak."""
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers
+
+    original_max = responses_wrappers.MAX_EMITTED_RESPONSES
+    responses_wrappers.MAX_EMITTED_RESPONSES = 10
+    try:
+        for i in range(50):
+            responses_wrappers._mark_span_emitted(f"resp_lru_{i}")
+
+        assert len(responses_wrappers.emitted_responses) == 10
+        # The oldest ids are evicted first
+        assert not responses_wrappers._was_span_emitted("resp_lru_0")
+        assert responses_wrappers._was_span_emitted("resp_lru_49")
+    finally:
+        responses_wrappers.MAX_EMITTED_RESPONSES = original_max
+
+
+def test_streaming_emission_blocks_later_retrieve_duplicate(clean_responses_registry):
+    """A streamed response emits its span in the stream, so a later retrieve must stay silent."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        _mark_span_emitted,
+        responses_get_or_create_wrapper,
+    )
+
+    tracer, exporter = _unit_tracer()
+
+    # The stream ends its own span and records the id as emitted.
+    _mark_span_emitted("resp_streamed")
+
+    wrapper = responses_get_or_create_wrapper(tracer)
+    completed = _build_response("resp_streamed", "completed")
+    wrapper(lambda *args, **kwargs: completed, None, (), {"model": "gpt-4.1-nano"})
+
+    assert exporter.get_finished_spans() == ()
+    assert clean_responses_registry.responses == {}
