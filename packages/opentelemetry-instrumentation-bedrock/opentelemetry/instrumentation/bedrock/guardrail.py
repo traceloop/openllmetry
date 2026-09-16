@@ -31,7 +31,7 @@ def is_guardrail_activated(response):
                 return True
     if response.get("stopReason") == "guardrail_intervened":
         return True
-    return response.get("amazon-bedrock-guardrailAction") != "NONE"
+    return response.get("amazon-bedrock-guardrailAction", "NONE") != "NONE"
 
 
 def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
