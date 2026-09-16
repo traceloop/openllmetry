@@ -30,6 +30,18 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def content_is_recorded(span) -> bool:
+    """
+    True when the content of a call is recorded somewhere: as a legacy attribute on
+    the span, or in a ``gen_ai`` event when the instrumentor runs with
+    ``use_legacy_attributes=False``.
+
+    Serializing a response is not free, so the response handlers below skip it when
+    neither path is active.
+    """
+    return span.is_recording() or should_emit_events()
+
+
 @dont_throw
 def set_span_request_attributes(span, to_wrap, instance):
     """
@@ -99,6 +111,9 @@ def set_span_sync_response_attributes(span, response):
     versions that hand the handle back to the caller; the instrumentation never
     issues a request of its own to fill it in.
     """
+    if not content_is_recorded(span):
+        return None
+
     if is_runpod_job(response):
         job_id = getattr(response, "job_id", None)
         _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
@@ -119,6 +134,9 @@ def set_span_job_response_attributes(span, response):
     go through the aiohttp session rather than through the ``Endpoint`` classes. See
     the README section on coverage.
     """
+    if not content_is_recorded(span):
+        return None
+
     job_id = getattr(response, "job_id", None)
     if job_id is None:
         return None

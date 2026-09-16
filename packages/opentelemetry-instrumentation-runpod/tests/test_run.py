@@ -1,14 +1,18 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 import runpod
 from opentelemetry.instrumentation.runpod.span_utils import (
     RUNPOD_ENDPOINT_ID,
     RUNPOD_JOB_ID,
+    set_span_job_response_attributes,
+    set_span_sync_response_attributes,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as gen_ai_attributes,
 )
+from opentelemetry.trace import INVALID_SPAN
 
 ENDPOINT_ID = "kkcxkugqmlv82j"
 JOB_ID = "9f4a3d54-4a1f-4d51-9d0b-7d1e8f2a6c31"
@@ -50,6 +54,23 @@ def test_run_legacy(instrument_legacy, endpoint, span_exporter):
     assert runpod_span.attributes.get(RUNPOD_JOB_ID) == JOB_ID
     completion = runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_COMPLETION}.0.content")
     assert json.loads(completion) == {"job_id": JOB_ID}
+
+
+def test_response_handlers_skip_work_when_nothing_can_be_recorded(
+    instrument_legacy, tracer_provider
+):
+    """
+    With legacy attributes on a no-op tracer there is nothing to serialize for, so
+    the handlers do not serialize the response at all.
+    """
+    job = SimpleNamespace(job_id=JOB_ID, endpoint_id=ENDPOINT_ID)
+
+    assert set_span_job_response_attributes(INVALID_SPAN, job) is None
+    assert set_span_sync_response_attributes(INVALID_SPAN, {"output": "x"}) is None
+
+    span = tracer_provider.get_tracer(__name__).start_span("runpod.run")
+    assert set_span_job_response_attributes(span, job) == json.dumps({"job_id": JOB_ID})
+    span.end()
 
 
 def test_run_with_events_instead_of_attributes(
