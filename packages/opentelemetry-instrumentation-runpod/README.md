@@ -58,7 +58,16 @@ This instrumentation follows the OpenTelemetry GenAI semantic conventions where 
 Span names are `runpod.run` and `runpod.run_sync`, both `SpanKind.CLIENT`. Failures set the span status to `ERROR` and
 record the exception; successful calls set the span status to `OK`.
 
-Prompt and completion content is only recorded when `TRACELOOP_TRACE_CONTENT` is not `false`.
+### Content recording modes
+
+By default the payload and the response are recorded as the `gen_ai.prompt.0.*` and `gen_ai.completion.0.*` attributes
+listed above - for `run` and `AsyncioEndpoint.run` the response observed on the submission span is the `Job` handle, so
+its content is the job id. `RunpodInstrumentor(use_legacy_attributes=False)` - which is what
+`Traceloop.init(use_attributes=False)` selects for the bundled instrumentations - turns those attributes off: the
+endpoint id, the job id and the status stay on the span, and the content is carried by `gen_ai.user.message` and
+`gen_ai.choice` log events instead, as in the neighbouring instrumentation packages.
+
+Content is only recorded when `TRACELOOP_TRACE_CONTENT` is not `false`, in either mode.
 
 ## Covered entry points
 

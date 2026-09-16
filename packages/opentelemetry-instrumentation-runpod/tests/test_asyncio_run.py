@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -82,14 +83,68 @@ async def test_asyncio_run_legacy(instrument_legacy, async_endpoint, span_export
     assert runpod_span.status.status_code.name == "OK"
 
 
+async def test_asyncio_run_keyword_argument(
+    instrument_legacy, async_endpoint, span_exporter
+):
+    """`AsyncioEndpoint.run` names its payload parameter `endpoint_input`."""
+    await async_endpoint.run(endpoint_input={"prompt": "tell me a joke"})
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert json.loads(
+        runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content")
+    ) == {"input": {"prompt": "tell me a joke"}}
+
+
 async def test_asyncio_run_with_no_content(
-    instrument_with_no_content, async_endpoint, span_exporter
+    instrument_with_no_content, async_endpoint, span_exporter, log_exporter
 ):
     await async_endpoint.run({"prompt": "tell me a joke"})
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == ["runpod.run"]
     assert f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content" not in spans[0].attributes
+
+    logs = log_exporter.get_finished_logs()
+    assert [record.log_record.event_name for record in logs] == [
+        "gen_ai.user.message",
+        "gen_ai.choice",
+    ]
+    assert "content" not in logs[0].log_record.body
+    assert "content" not in logs[1].log_record.body["message"]
+
+
+class _CancellingRequest:
+    """A request context manager that cancels the awaiting task on entry."""
+
+    async def __aenter__(self):
+        raise asyncio.CancelledError()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _CancellingSession:
+    def post(self, url, headers=None, json=None):  # pylint: disable=redefined-outer-name
+        return _CancellingRequest()
+
+    def get(self, url, headers=None):
+        return _CancellingRequest()
+
+
+async def test_asyncio_run_cancellation_ends_the_span(instrument_legacy, span_exporter):
+    """
+    ``asyncio.CancelledError`` inherits from ``BaseException``, so it never reaches
+    the ``except Exception`` handler - the span still has to be ended.
+    """
+    endpoint = runpod.AsyncioEndpoint(
+        ENDPOINT_ID, session=_CancellingSession(), api_key="test_api_key"
+    )
+
+    with pytest.raises(asyncio.CancelledError):
+        await endpoint.run({"prompt": "tell me a joke"})
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["runpod.run"]
 
 
 async def test_asyncio_run_error_is_recorded(instrument_legacy, span_exporter):

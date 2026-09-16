@@ -3,6 +3,11 @@
 import pytest
 import runpod
 from opentelemetry.instrumentation.runpod import RunpodInstrumentor
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import (
+    InMemoryLogExporter,
+    SimpleLogRecordProcessor,
+)
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -54,6 +59,19 @@ def fixture_tracer_provider(span_exporter):
     return provider
 
 
+@pytest.fixture(scope="function", name="log_exporter")
+def fixture_log_exporter():
+    exporter = InMemoryLogExporter()
+    yield exporter
+
+
+@pytest.fixture(scope="function", name="logger_provider")
+def fixture_logger_provider(log_exporter):
+    provider = LoggerProvider()
+    provider.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
+    return provider
+
+
 @pytest.fixture(autouse=True)
 def environment(monkeypatch):
     """The SDK refuses to build a client without an API key."""
@@ -73,12 +91,27 @@ def instrument_legacy(tracer_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(tracer_provider, monkeypatch):
+def instrument_with_content(tracer_provider, logger_provider):
+    """Legacy attributes are disabled, so the content is carried by log events."""
+    instrumentor = RunpodInstrumentor(use_legacy_attributes=False)
+    instrumentor.instrument(
+        tracer_provider=tracer_provider,
+        logger_provider=logger_provider,
+    )
+
+    yield instrumentor
+
+    instrumentor.uninstrument()
+
+
+@pytest.fixture(scope="function")
+def instrument_with_no_content(tracer_provider, logger_provider, monkeypatch):
     monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "False")
 
     instrumentor = RunpodInstrumentor(use_legacy_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
+        logger_provider=logger_provider,
     )
 
     yield instrumentor

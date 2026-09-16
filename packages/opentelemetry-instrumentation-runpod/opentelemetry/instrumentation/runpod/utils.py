@@ -65,12 +65,15 @@ def dump_object(obj):
 
 def get_request_input(args, kwargs):
     """
-    Returns the payload passed to ``Endpoint.run`` / ``Endpoint.run_sync``.
+    Returns the payload passed to the instrumented method.
 
-    The RunPod SDK accepts it positionally or as the ``request_input`` keyword.
+    ``Endpoint.run`` and ``Endpoint.run_sync`` name the parameter ``request_input``,
+    ``AsyncioEndpoint.run`` names it ``endpoint_input``, and all three accept it
+    positionally.
     """
-    if "request_input" in kwargs:
-        return kwargs.get("request_input")
+    for parameter in ("request_input", "endpoint_input"):
+        if parameter in kwargs:
+            return kwargs.get(parameter)
     if args:
         return args[0]
     return None
@@ -84,6 +87,16 @@ def unwrap_input(request_input):
     if isinstance(request_input, dict) and not request_input.get("input"):
         return {"input": request_input}
     return request_input
+
+
+def get_request_content(args, kwargs):
+    """
+    Serializes the payload submitted by the caller, as the SDK normalizes it.
+
+    Shared by the legacy attribute path and the events path so that both record the
+    same content. Never raises; returns None when nothing can be serialized.
+    """
+    return dump_object(unwrap_input(get_request_input(args, kwargs)))
 
 
 def is_runpod_job(obj) -> bool:

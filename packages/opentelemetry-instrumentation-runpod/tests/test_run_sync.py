@@ -71,6 +71,50 @@ def test_run_sync_with_no_content(
     assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in runpod_span.attributes
 
 
+def test_run_sync_with_events_instead_of_attributes(
+    instrument_with_content, endpoint, span_exporter, log_exporter
+):
+    """
+    With ``use_legacy_attributes=False`` the payload and the response are carried by
+    ``gen_ai.user.message`` and ``gen_ai.choice`` events rather than by attributes.
+    """
+    endpoint.run_sync({"prompt": "say hello"})
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert runpod_span.attributes.get(RUNPOD_ENDPOINT_ID) == ENDPOINT_ID
+    assert runpod_span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME) == "run_sync"
+    assert f"{GenAIAttributes.GEN_AI_PROMPT}.0.content" not in runpod_span.attributes
+    assert f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content" not in runpod_span.attributes
+
+    logs = log_exporter.get_finished_logs()
+    assert [record.log_record.event_name for record in logs] == [
+        "gen_ai.user.message",
+        "gen_ai.choice",
+    ]
+    assert logs[0].log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "runpod"
+    assert "role" not in logs[0].log_record.body
+    assert json.loads(logs[0].log_record.body["content"]) == {"input": {"prompt": "say hello"}}
+    assert logs[1].log_record.body["message"] == {
+        "content": json.dumps({"result": "hello from runpod"})
+    }
+
+
+def test_run_sync_events_withhold_content(
+    instrument_with_no_content, endpoint, log_exporter
+):
+    """TRACELOOP_TRACE_CONTENT also withholds the content of the events."""
+    endpoint.run_sync({"prompt": "say hello"})
+
+    logs = log_exporter.get_finished_logs()
+    # The events are still emitted, so the shape of the call remains visible.
+    assert [record.log_record.event_name for record in logs] == [
+        "gen_ai.user.message",
+        "gen_ai.choice",
+    ]
+    assert "content" not in logs[0].log_record.body
+    assert "content" not in logs[1].log_record.body["message"]
+
+
 def test_run_sync_error_is_recorded(instrument_legacy, fake_client, span_exporter):
     fake_client({})  # every request raises AssertionError
     endpoint = runpod.Endpoint(ENDPOINT_ID)

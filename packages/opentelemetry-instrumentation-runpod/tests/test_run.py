@@ -44,9 +44,38 @@ def test_run_legacy(instrument_legacy, endpoint, span_exporter):
     content = runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content")
     assert json.loads(content) == {"input": {"prompt": "tell me a joke"}}
     assert runpod_span.status.status_code.name == "OK"
-    # `run` does not wait for the job, so no output can be recorded on the
-    # submission span - the caller collects it through the returned Job handle.
+
+    # `run` does not wait for the job, so the handle is the only response available
+    # on the submission span - the caller collects the output through it.
+    assert runpod_span.attributes.get(RUNPOD_JOB_ID) == JOB_ID
+    completion = runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_COMPLETION}.0.content")
+    assert json.loads(completion) == {"job_id": JOB_ID}
+
+
+def test_run_with_events_instead_of_attributes(
+    instrument_with_content, endpoint, span_exporter, log_exporter
+):
+    """
+    With ``use_legacy_attributes=False`` the metadata stays on the span while the
+    payload and the response are carried by log events.
+    """
+    endpoint.run({"prompt": "tell me a joke"})
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert runpod_span.attributes.get(RUNPOD_JOB_ID) == JOB_ID
+    assert f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content" not in runpod_span.attributes
     assert f"{gen_ai_attributes.GEN_AI_COMPLETION}.0.content" not in runpod_span.attributes
+
+    logs = log_exporter.get_finished_logs()
+    assert [record.log_record.event_name for record in logs] == [
+        "gen_ai.user.message",
+        "gen_ai.choice",
+    ]
+    assert logs[0].log_record.attributes.get(gen_ai_attributes.GEN_AI_SYSTEM) == "runpod"
+    assert logs[0].log_record.body.get("content") == json.dumps(
+        {"input": {"prompt": "tell me a joke"}}
+    )
+    assert logs[1].log_record.body.get("message") == {"content": json.dumps({"job_id": JOB_ID})}
 
 
 def test_run_sync_falls_back_to_job_when_not_completed(

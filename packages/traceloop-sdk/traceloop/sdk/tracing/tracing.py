@@ -612,7 +612,7 @@ def init_instrumentations(
             if init_requests_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.RUNPOD:
-            if init_runpod_instrumentor():
+            if init_runpod_instrumentor(use_attributes):
                 instrument_set = True
         elif instrument == Instruments.SAGEMAKER:
             if init_sagemaker_instrumentor(should_enrich_metrics, use_attributes):
@@ -1211,12 +1211,12 @@ def init_openai_agents_instrumentor():
     return False
 
 
-def init_runpod_instrumentor():
+def init_runpod_instrumentor(use_attributes: bool = True):
     try:
         if is_package_installed("runpod"):
             from opentelemetry.instrumentation.runpod import RunpodInstrumentor
 
-            instrumentor = RunpodInstrumentor()
+            instrumentor = RunpodInstrumentor(use_legacy_attributes=use_attributes)
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True

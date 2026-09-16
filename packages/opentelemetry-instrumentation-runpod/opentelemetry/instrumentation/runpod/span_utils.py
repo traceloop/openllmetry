@@ -1,10 +1,9 @@
 from opentelemetry.instrumentation.runpod.utils import (
     dont_throw,
     dump_object,
-    get_request_input,
     is_runpod_job,
+    should_emit_events,
     should_send_prompts,
-    unwrap_input,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -45,13 +44,20 @@ def set_span_request_attributes(span, to_wrap, instance):
 
 
 @dont_throw
-def set_input_content_attributes(span, args, kwargs):
-    """Records the request payload, honoring the TRACELOOP_TRACE_CONTENT flag."""
-    if not span.is_recording() or not should_send_prompts():
+def set_input_content_attributes(span, content):
+    """
+    Records the request payload as legacy attributes, honoring the
+    TRACELOOP_TRACE_CONTENT flag.
+
+    ``content`` is the serialized payload, as returned by
+    ``opentelemetry.instrumentation.runpod.utils.get_request_content``. Legacy
+    attributes are not written when the instrumentor runs with
+    ``use_legacy_attributes=False``; that mode carries the same content in a
+    ``gen_ai.user.message`` event instead - see the ``event_emitter`` module.
+    """
+    if not span.is_recording() or should_emit_events() or not should_send_prompts():
         return
 
-    request_input = unwrap_input(get_request_input(args, kwargs))
-    content = dump_object(request_input)
     if content is None:
         return
 
@@ -60,12 +66,19 @@ def set_input_content_attributes(span, args, kwargs):
 
 
 @dont_throw
-def set_response_content_attributes(span, response):
-    """Records the serverless response, honoring the TRACELOOP_TRACE_CONTENT flag."""
-    if not span.is_recording() or not should_send_prompts():
+def set_response_content_attributes(span, content):
+    """
+    Records the response content as legacy attributes, honoring the
+    TRACELOOP_TRACE_CONTENT flag.
+
+    ``content`` is the serialized response, as returned by the response handlers
+    below. As with the request side, nothing is written when the instrumentor runs
+    with ``use_legacy_attributes=False``: a ``gen_ai.choice`` event carries the
+    content instead.
+    """
+    if not span.is_recording() or should_emit_events() or not should_send_prompts():
         return
 
-    content = dump_object(response)
     if content is None:
         return
 
@@ -76,7 +89,8 @@ def set_response_content_attributes(span, response):
 @dont_throw
 def set_span_sync_response_attributes(span, response):
     """
-    Records response metadata for ``Endpoint.run_sync``.
+    Records response metadata for ``Endpoint.run_sync``, and returns the content that
+    the caller records on the span or in the response event.
 
     ``run_sync`` returns the job output - never the job envelope - whenever the job
     reaches a final state within the timeout, and the output of
@@ -85,35 +99,32 @@ def set_span_sync_response_attributes(span, response):
     versions that hand the handle back to the caller; the instrumentation never
     issues a request of its own to fill it in.
     """
-    if not span.is_recording():
-        return
-
     if is_runpod_job(response):
         job_id = getattr(response, "job_id", None)
         _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
-        set_response_content_attributes(span, {"job_id": job_id})
-        return
+        return dump_object({"job_id": job_id})
 
-    set_response_content_attributes(span, response)
+    return dump_object(response)
 
 
 @dont_throw
-def set_span_async_response_attributes(span, response):
+def set_span_job_response_attributes(span, response):
     """
-    Records metadata for the ``Job`` handle returned by ``AsyncioEndpoint.run``.
+    Records response metadata for the ``Job`` handle returned by ``Endpoint.run`` and
+    ``AsyncioEndpoint.run``, and returns the content that the caller records on the
+    span or in the response event.
 
     Only the handle is available here: the SDK issues a second, separate request
     when the caller awaits ``Job.output()`` or consumes ``Job.stream()``, and those
-    go through the aiohttp session rather than through ``AsyncioEndpoint``. See the
-    README section on coverage.
+    go through the aiohttp session rather than through the ``Endpoint`` classes. See
+    the README section on coverage.
     """
-    if not span.is_recording():
-        return
-
     job_id = getattr(response, "job_id", None)
-    if job_id is not None:
-        _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
-        set_response_content_attributes(span, {"job_id": job_id})
+    if job_id is None:
+        return None
+
+    _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
+    return dump_object({"job_id": job_id})
 
 
 @dont_throw
