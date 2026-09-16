@@ -83,6 +83,32 @@ async def test_asyncio_run_legacy(instrument_legacy, async_endpoint, span_export
     assert runpod_span.status.status_code.name == "OK"
 
 
+async def test_asyncio_run_records_the_request_body_the_sdk_sends(
+    instrument_legacy, span_exporter
+):
+    """
+    `AsyncioEndpoint.run` wraps the payload in `input` unconditionally, so a payload
+    that already carries one is wrapped again - and that is what is recorded, not the
+    payload the caller passed.
+    """
+    session = FakeAiohttpSession(
+        post_responses={
+            f"https://api.runpod.ai/v2/{ENDPOINT_ID}/run": {"id": JOB_ID, "status": "IN_QUEUE"}
+        }
+    )
+    endpoint = runpod.AsyncioEndpoint(ENDPOINT_ID, session=session, api_key="test_api_key")
+
+    await endpoint.run({"input": {"prompt": "hi"}})
+
+    sent = session.calls[0][2]
+    assert sent == {"input": {"input": {"prompt": "hi"}}}
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert json.loads(
+        runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content")
+    ) == sent
+
+
 async def test_asyncio_run_keyword_argument(
     instrument_legacy, async_endpoint, span_exporter
 ):

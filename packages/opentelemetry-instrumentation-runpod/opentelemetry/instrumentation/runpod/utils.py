@@ -79,24 +79,38 @@ def get_request_input(args, kwargs):
     return None
 
 
-def unwrap_input(request_input):
+def normalize_request_input(request_input):
     """
-    Mirrors the normalization the RunPod SDK performs before POSTing a job: the
-    payload is sent inside an ``input`` key unless it already contains one.
+    Mirrors the normalization ``Endpoint.run`` and ``Endpoint.run_sync`` perform before
+    POSTing a job: the payload is sent inside an ``input`` key unless it already
+    carries a truthy one.
+
+    The truthiness test is the SDK's, so a falsy value such as ``{"input": ""}`` is
+    wrapped a second time - and that is what this returns, because the point is to
+    record the request body the SDK actually sends.
     """
     if isinstance(request_input, dict) and not request_input.get("input"):
         return {"input": request_input}
     return request_input
 
 
-def get_request_content(args, kwargs):
+def wrap_request_input(request_input):
     """
-    Serializes the payload submitted by the caller, as the SDK normalizes it.
+    Mirrors ``AsyncioEndpoint.run``, which wraps the payload in ``input``
+    unconditionally.
+    """
+    return {"input": request_input}
+
+
+def get_request_content(args, kwargs, normalize):
+    """
+    Serializes the payload submitted by the caller, normalized the way the
+    instrumented method normalizes it before POSTing.
 
     Shared by the legacy attribute path and the events path so that both record the
     same content. Never raises; returns None when nothing can be serialized.
     """
-    return dump_object(unwrap_input(get_request_input(args, kwargs)))
+    return dump_object(normalize(get_request_input(args, kwargs)))
 
 
 def is_runpod_job(obj) -> bool:

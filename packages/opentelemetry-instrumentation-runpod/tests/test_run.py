@@ -56,6 +56,30 @@ def test_run_legacy(instrument_legacy, endpoint, span_exporter):
     assert json.loads(completion) == {"job_id": JOB_ID}
 
 
+def test_run_records_the_request_body_the_sdk_sends(
+    instrument_legacy, fake_client, span_exporter
+):
+    """
+    The recorded payload is the body the SDK puts on the wire. `Endpoint.run` wraps a
+    payload unless it already carries a truthy `input`, so a falsy one is wrapped a
+    second time - and that is what ends up in the span.
+    """
+    client = fake_client(
+        {("POST", f"{ENDPOINT_ID}/run"): {"id": JOB_ID, "status": "IN_QUEUE"}}
+    )
+    endpoint = runpod.Endpoint(ENDPOINT_ID)
+
+    endpoint.run({"input": ""})
+
+    sent = client.calls[0][2]
+    assert sent == {"input": {"input": ""}}
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert json.loads(
+        runpod_span.attributes.get(f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content")
+    ) == sent
+
+
 def test_response_handlers_skip_work_when_nothing_can_be_recorded(
     instrument_legacy, tracer_provider
 ):

@@ -24,7 +24,12 @@ from opentelemetry.instrumentation.runpod.span_utils import (
     set_span_status_ok,
     set_span_sync_response_attributes,
 )
-from opentelemetry.instrumentation.runpod.utils import dont_throw, get_request_content
+from opentelemetry.instrumentation.runpod.utils import (
+    dont_throw,
+    get_request_content,
+    normalize_request_input,
+    wrap_request_input,
+)
 from opentelemetry.instrumentation.runpod.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -46,6 +51,9 @@ _instruments = ("runpod >= 1.0.0",)
 # waits for its output. `runpod.AsyncioEndpoint.run` is the asyncio equivalent of
 # `run`. The remaining SDK entry points that reach the Serverless API are handled
 # by other code paths and are intentionally out of scope here - see README.
+#
+# Each entry names the normalizer that mirrors how that method wraps the payload
+# before POSTing it, so that the recorded content is the request body the SDK sends.
 WRAPPED_METHODS = [
     {
         "module": "runpod",
@@ -53,6 +61,7 @@ WRAPPED_METHODS = [
         "method": "run",
         "span_name": "runpod.run",
         "operation_name": OPERATION_RUN,
+        "request_normalizer": normalize_request_input,
         "response_handler": set_span_job_response_attributes,
     },
     {
@@ -61,6 +70,7 @@ WRAPPED_METHODS = [
         "method": "run_sync",
         "span_name": "runpod.run_sync",
         "operation_name": OPERATION_RUN_SYNC,
+        "request_normalizer": normalize_request_input,
         "response_handler": set_span_sync_response_attributes,
     },
     {
@@ -69,6 +79,7 @@ WRAPPED_METHODS = [
         "method": "run",
         "span_name": "runpod.run",
         "operation_name": OPERATION_RUN,
+        "request_normalizer": wrap_request_input,
         "response_handler": set_span_job_response_attributes,
     },
 ]
@@ -100,12 +111,14 @@ def _start_span(tracer, to_wrap, instance):
 
 
 @dont_throw
-def _handle_request(span, event_logger, args, kwargs):
+def _handle_request(span, event_logger, to_wrap, args, kwargs):
     """
     Records the submitted payload, as a legacy attribute or - when the instrumentor
     runs with ``use_legacy_attributes=False`` - as a ``gen_ai.user.message`` event.
     """
-    request_content = get_request_content(args, kwargs)
+    request_content = get_request_content(
+        args, kwargs, to_wrap.get("request_normalizer", normalize_request_input)
+    )
 
     set_input_content_attributes(span, request_content)
     emit_request_event(event_logger, request_content)
@@ -136,7 +149,7 @@ def _wrap(tracer: Tracer, event_logger, to_wrap, wrapped, instance, args, kwargs
 
     try:
         set_span_request_attributes(span, to_wrap, instance)
-        _handle_request(span, event_logger, args, kwargs)
+        _handle_request(span, event_logger, to_wrap, args, kwargs)
 
         response = wrapped(*args, **kwargs)
 
@@ -164,7 +177,7 @@ async def _awrap(tracer: Tracer, event_logger, to_wrap, wrapped, instance, args,
 
     try:
         set_span_request_attributes(span, to_wrap, instance)
-        _handle_request(span, event_logger, args, kwargs)
+        _handle_request(span, event_logger, to_wrap, args, kwargs)
 
         response = await wrapped(*args, **kwargs)
 
