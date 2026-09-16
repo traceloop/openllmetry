@@ -11,6 +11,8 @@ content capture off did not suppress it.
 These are unit tests over the sanitizer: they need no network and no cassette.
 """
 
+from opentelemetry.semconv_ai import SpanAttributes
+
 from opentelemetry.instrumentation.langchain.callback_handler import (
     _sanitize_metadata_value,
 )
@@ -71,7 +73,14 @@ def test_dict_holding_an_object_is_dropped():
 
 
 def test_object_never_reaches_association_properties(instrument_legacy, span_exporter):
-    """End to end through the callback handler: the object key is absent."""
+    """End to end through the callback handler: the object key never appears.
+
+    Only association properties are checked. The caller's metadata is also
+    dumped onto ``traceloop.entity.input``, marker and all, but that path is
+    gated by TRACELOOP_TRACE_CONTENT and dumps the whole input wholesale --
+    content capture working as documented, not the ungated trace-wide leak
+    this fix is about.
+    """
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnableLambda
 
@@ -92,13 +101,18 @@ def test_object_never_reaches_association_properties(instrument_legacy, span_exp
     spans = span_exporter.get_finished_spans()
     assert spans, "expected the chain invocation to be traced"
 
-    for span in spans:
-        for key, value in (span.attributes or {}).items():
-            assert MARKER not in str(value), f"marker leaked into {key}"
-
-    # The legitimate label survives on at least one span.
-    assert any(
-        "12345" in str(value)
+    prefix = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}."
+    properties = {
+        key: value
         for span in spans
-        for value in (span.attributes or {}).values()
-    ), "the primitive metadata label should still be recorded"
+        for key, value in (span.attributes or {}).items()
+        if key.startswith(prefix)
+    }
+
+    # The legitimate label still propagates to every span...
+    assert properties.get(f"{prefix}user_id") == "12345"
+
+    # ...while the object is dropped rather than recorded as its repr.
+    assert f"{prefix}client" not in properties
+    for key, value in properties.items():
+        assert MARKER not in str(value), f"marker leaked into {key}"
