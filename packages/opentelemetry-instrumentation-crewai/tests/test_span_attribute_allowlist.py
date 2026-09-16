@@ -6,6 +6,8 @@ credentials through its repr.
 Objects are constructed only -- no kickoff, no network.
 """
 
+import json
+
 import pytest
 from crewai import LLM, Agent, Crew, Task
 from crewai.tools import BaseTool
@@ -54,7 +56,8 @@ def build_crew():
     agent = build_agent()
     return Crew(
         agents=[agent],
-        tasks=[Task(description="a fixed description", expected_output="a fixed output", agent=agent)],
+        tasks=[Task(description="a fixed description", expected_output="a fixed output",
+                    agent=agent, tools=[EchoTool()])],
         name="fixed-crew",
         manager_llm=LLM(model="test-model", api_key=SENTINEL),
         embedder={"provider": "openai", "config": {"api_key": SENTINEL}},
@@ -86,3 +89,19 @@ def test_configured_credentials_never_reach_the_span(kind):
 
     # ...while the allowlisted fields are still emitted.
     assert attrs[f"crewai.{kind.lower()}.id"]
+
+
+@pytest.mark.parametrize("key", ["crewai.crew.agents", "crewai.crew.tasks"])
+def test_nested_tools_are_an_array_not_a_re_encoded_string(key):
+    """Tools nested in the crew JSON decode in one pass, like every sibling field."""
+    tools = json.loads(span_attributes(build_crew())[key])[0]["tools"]
+
+    assert [tool["name"] for tool in tools] == ["echo"]
+
+
+@pytest.mark.parametrize("kind", ["Agent", "Task"])
+def test_standalone_tools_are_a_json_array_string(kind):
+    """A standalone span still carries tools as a JSON array, not a Python repr."""
+    tools = json.loads(span_attributes(BUILDERS[kind]())[f"crewai.{kind.lower()}.tools"])
+
+    assert [tool["name"] for tool in tools] == ["echo"]

@@ -121,7 +121,11 @@ class CrewAISpanAttributes:
     @staticmethod
     def _stringify(data):
         """Render a field dict as span-attribute values, dropping the unset ones."""
-        return {key: str(value) for key, value in data.items() if value is not None}
+        return {
+            key: json.dumps(value) if isinstance(value, (list, dict)) else str(value)
+            for key, value in data.items()
+            if value is not None
+        }
 
     def _parse_agents(self, agents):
         self.crew["agents"] = [
@@ -141,7 +145,7 @@ class CrewAISpanAttributes:
             "async_execution": task.async_execution,
             "expected_output": task.expected_output,
             "human_input": task.human_input,
-            "tools": self._serialize_tools(task.tools or []),
+            "tools": self._tool_dicts(task.tools or []),
             "output_file": task.output_file,
         }
 
@@ -161,17 +165,16 @@ class CrewAISpanAttributes:
             "cache": agent.cache,
             "verbose": agent.verbose,
             "allow_delegation": agent.allow_delegation,
-            "tools": self._serialize_tools(agent.tools or []),
+            "tools": self._tool_dicts(agent.tools or []),
             "max_iter": agent.max_iter,
             "llm": str(model), }
 
-    def _serialize_tools(self, tools):
-        return json.dumps(
-            [
-                {k: v for k, v in vars(tool).items() if v is not None and k in ["name", "description"]}
-                for tool in tools
-            ]
-        )
+    def _tool_dicts(self, tools):
+        """Return the allowlisted fields of each tool, as plain dicts."""
+        return [
+            {k: v for k, v in vars(tool).items() if v is not None and k in ["name", "description"]}
+            for tool in tools
+        ]
 
     def _set_attribute(self, key, value):
         if value is not None:
