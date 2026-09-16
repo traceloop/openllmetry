@@ -944,3 +944,84 @@ def test_parse_response_passes_through_plain_response():
     result = parse_response(plain)
 
     assert result is plain
+
+
+_RESPONSES_SSE_BODY = (
+    b'event: response.created\n'
+    b'data: {"type":"response.created","response":{"id":"resp_123","object":"response",'
+    b'"created_at":0,"status":"in_progress","model":"gpt-4.1-nano","output":[]}}\n\n'
+    b'event: response.completed\n'
+    b'data: {"type":"response.completed","response":{"id":"resp_123","object":"response",'
+    b'"created_at":0,"status":"completed","model":"gpt-4.1-nano","output":[],'
+    b'"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}\n\n'
+)
+
+
+@pytest.mark.asyncio
+async def test_async_responses_with_raw_response_streaming_does_not_crash(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4476:
+    client.responses.with_raw_response.create(stream=True, ...) (what
+    agent-framework-openai>=1.6 uses to read response headers before streaming) must
+    not crash. `.with_raw_response.create()` returns a LegacyAPIResponse whose
+    `.parse()` yields the `AsyncStream` itself rather than a parsed `Response`, so
+    `async_parse_response()` can't recover an `.id` to build a trace from."""
+    import httpx
+    from openai import AsyncOpenAI
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=_RESPONSES_SSE_BODY,
+        )
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    raw = await client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        stream=True,
+    )
+    stream = raw.parse()
+    events = [event async for event in stream]
+
+    assert len(events) == 2
+    # Untraced: there's no `.id` available to key a trace off of at the point the
+    # stream is handed back, so this call is skipped rather than crashing.
+    assert span_exporter.get_finished_spans() == ()
+
+
+def test_responses_with_raw_response_streaming_does_not_crash(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Sync counterpart of test_async_responses_with_raw_response_streaming_does_not_crash."""
+    import httpx
+    from openai import OpenAI
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=_RESPONSES_SSE_BODY,
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    raw = client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        stream=True,
+    )
+    stream = raw.parse()
+    events = list(stream)
+
+    assert len(events) == 2
+    assert span_exporter.get_finished_spans() == ()
