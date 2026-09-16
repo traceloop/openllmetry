@@ -92,10 +92,13 @@ def test_run_sync_with_events_instead_of_attributes(
         "gen_ai.choice",
     ]
     assert logs[0].log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "runpod"
-    assert "role" not in logs[0].log_record.body
-    assert json.loads(logs[0].log_record.body["content"]) == {"input": {"prompt": "say hello"}}
-    assert logs[1].log_record.body["message"] == {
-        "content": json.dumps({"result": "hello from runpod"})
+    assert logs[0].log_record.body == {
+        "content": json.dumps({"input": {"prompt": "say hello"}})
+    }
+    assert logs[1].log_record.body == {
+        "index": 0,
+        "finish_reason": "unknown",
+        "message": {"content": json.dumps({"result": "hello from runpod"})},
     }
 
 
