@@ -60,7 +60,7 @@ def async_endpoint():
             f"https://api.runpod.ai/v2/{ENDPOINT_ID}/run": {"id": JOB_ID, "status": "IN_QUEUE"}
         }
     )
-    return runpod.AsyncioEndpoint(ENDPOINT_ID, session=session, api_key="test_api_key")
+    return runpod.AsyncioEndpoint(ENDPOINT_ID, session=session)
 
 
 async def test_asyncio_run_legacy(instrument_legacy, async_endpoint, span_exporter):
@@ -96,7 +96,7 @@ async def test_asyncio_run_records_the_request_body_the_sdk_sends(
             f"https://api.runpod.ai/v2/{ENDPOINT_ID}/run": {"id": JOB_ID, "status": "IN_QUEUE"}
         }
     )
-    endpoint = runpod.AsyncioEndpoint(ENDPOINT_ID, session=session, api_key="test_api_key")
+    endpoint = runpod.AsyncioEndpoint(ENDPOINT_ID, session=session)
 
     await endpoint.run({"input": {"prompt": "hi"}})
 
@@ -163,7 +163,7 @@ async def test_asyncio_run_cancellation_ends_the_span(instrument_legacy, span_ex
     the ``except Exception`` handler - the span still has to be ended.
     """
     endpoint = runpod.AsyncioEndpoint(
-        ENDPOINT_ID, session=_CancellingSession(), api_key="test_api_key"
+        ENDPOINT_ID, session=_CancellingSession()
     )
 
     with pytest.raises(asyncio.CancelledError):
@@ -175,7 +175,7 @@ async def test_asyncio_run_cancellation_ends_the_span(instrument_legacy, span_ex
 
 async def test_asyncio_run_error_is_recorded(instrument_legacy, span_exporter):
     session = FakeAiohttpSession()
-    endpoint = runpod.AsyncioEndpoint(ENDPOINT_ID, session=session, api_key="test_api_key")
+    endpoint = runpod.AsyncioEndpoint(ENDPOINT_ID, session=session)
 
     with pytest.raises(KeyError):
         await endpoint.run({"prompt": "boom"})

@@ -32,14 +32,30 @@ def _set_span_attribute(span, name, value):
 
 def content_is_recorded(span) -> bool:
     """
-    True when the content of a call is recorded somewhere: as a legacy attribute on
-    the span, or in a ``gen_ai`` event when the instrumentor runs with
-    ``use_legacy_attributes=False``.
+    True when the content of a call can reach the telemetry at all: as a legacy
+    attribute on a recording span, or in a ``gen_ai`` event when the instrumentor
+    runs with ``use_legacy_attributes=False``.
 
-    Serializing a response is not free, so the response handlers below skip it when
-    neither path is active.
+    Serializing a payload or a response is not free, so the callers skip it when
+    neither path is active - the content would be dropped either way. Metadata such
+    as ``runpod.job_id`` is not content and is recorded regardless.
     """
+    if not should_send_prompts():
+        return False
+
     return span.is_recording() or should_emit_events()
+
+
+def _serialize_response(span, response):
+    """
+    Serializes a response for the caller to record, unless the content would be
+    dropped anyway. ``run_sync`` outputs can be large, and serializing them to
+    discard the result is wasted work.
+    """
+    if not content_is_recorded(span):
+        return None
+
+    return dump_object(response)
 
 
 @dont_throw
@@ -111,15 +127,12 @@ def set_span_sync_response_attributes(span, response):
     versions that hand the handle back to the caller; the instrumentation never
     issues a request of its own to fill it in.
     """
-    if not content_is_recorded(span):
-        return None
-
     if is_runpod_job(response):
         job_id = getattr(response, "job_id", None)
         _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
-        return dump_object({"job_id": job_id})
+        return _serialize_response(span, {"job_id": job_id})
 
-    return dump_object(response)
+    return _serialize_response(span, response)
 
 
 @dont_throw
@@ -134,15 +147,12 @@ def set_span_job_response_attributes(span, response):
     go through the aiohttp session rather than through the ``Endpoint`` classes. See
     the README section on coverage.
     """
-    if not content_is_recorded(span):
-        return None
-
     job_id = getattr(response, "job_id", None)
     if job_id is None:
         return None
 
     _set_span_attribute(span, RUNPOD_JOB_ID, job_id)
-    return dump_object({"job_id": job_id})
+    return _serialize_response(span, {"job_id": job_id})
 
 
 @dont_throw

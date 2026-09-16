@@ -16,6 +16,7 @@ from opentelemetry.instrumentation.runpod.span_utils import (
     OPERATION_RUN,
     OPERATION_RUN_SYNC,
     RUNPOD_ENDPOINT_ID,
+    content_is_recorded,
     set_input_content_attributes,
     set_response_content_attributes,
     set_span_job_response_attributes,
@@ -116,9 +117,11 @@ def _handle_request(span, event_logger, to_wrap, args, kwargs):
     Records the submitted payload, as a legacy attribute or - when the instrumentor
     runs with ``use_legacy_attributes=False`` - as a ``gen_ai.user.message`` event.
     """
-    request_content = get_request_content(
-        args, kwargs, to_wrap.get("request_normalizer", normalize_request_input)
-    )
+    request_content = None
+    if content_is_recorded(span):
+        request_content = get_request_content(
+            args, kwargs, to_wrap.get("request_normalizer", normalize_request_input)
+        )
 
     set_input_content_attributes(span, request_content)
     emit_request_event(event_logger, request_content)

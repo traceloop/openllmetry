@@ -24,15 +24,17 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "runpod"}
 
 @dont_throw
 def emit_request_event(event_logger: Optional[Logger], content) -> None:
-    """Emits ``gen_ai.user.message`` carrying the payload submitted to the endpoint."""
-    if content is None:
-        return
+    """
+    Emits ``gen_ai.user.message`` for the payload submitted to the endpoint.
 
+    The event is emitted even when the content is unavailable or withheld, so that
+    the shape of the call stays visible; only the ``content`` key is left out.
+    """
     body = asdict(MessageEvent(content=content))
     # The event name already carries the role, so drop the duplicate - the
     # semantic conventions make it conditionally required only when it differs.
     body.pop("role", None)
-    if not should_send_prompts():
+    if content is None or not should_send_prompts():
         body.pop("content", None)
 
     _emit(event_logger, "gen_ai.user.message", body)
@@ -40,10 +42,8 @@ def emit_request_event(event_logger: Optional[Logger], content) -> None:
 
 @dont_throw
 def emit_response_event(event_logger: Optional[Logger], content) -> None:
-    """Emits ``gen_ai.choice`` carrying the response recorded on the span."""
-    if content is None:
-        return
-
+    """Emits ``gen_ai.choice`` for the response of the call, with the same rule for
+    its ``content`` key."""
     body = asdict(
         ChoiceEvent(
             index=0,
@@ -51,7 +51,7 @@ def emit_response_event(event_logger: Optional[Logger], content) -> None:
         )
     )
     body["message"].pop("role", None)
-    if not should_send_prompts():
+    if content is None or not should_send_prompts():
         body["message"].pop("content", None)
 
     _emit(event_logger, "gen_ai.choice", body)

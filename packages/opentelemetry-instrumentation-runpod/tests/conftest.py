@@ -72,10 +72,15 @@ def fixture_logger_provider(log_exporter):
     return provider
 
 
+PLACEHOLDER_API_KEY = "placeholder-api-key"
+"""A placeholder, not a credential. The SDK refuses to build a client without one."""
+
+
 @pytest.fixture(autouse=True)
 def environment(monkeypatch):
-    """The SDK refuses to build a client without an API key."""
-    monkeypatch.setattr(runpod, "api_key", "test_api_key", raising=False)
+    """The SDK refuses to build a client without an API key in the environment."""
+    monkeypatch.setenv("RUNPOD_API_KEY", PLACEHOLDER_API_KEY)
+    monkeypatch.setattr(runpod, "api_key", PLACEHOLDER_API_KEY, raising=False)
 
 
 @pytest.fixture(scope="function")
@@ -132,7 +137,7 @@ def fake_client(monkeypatch):
         clients.append(client)
 
         def _fake_init(self, api_key=None):  # pylint: disable=unused-argument
-            self.api_key = api_key or "test_api_key"
+            self.api_key = api_key or PLACEHOLDER_API_KEY
             self.rp_session = None
             self.headers = {}
             self.endpoint_url_base = "https://api.runpod.ai/v2"

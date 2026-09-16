@@ -80,6 +80,40 @@ def test_run_records_the_request_body_the_sdk_sends(
     ) == sent
 
 
+def test_response_and_payload_are_not_serialized_when_content_is_off(
+    instrument_legacy, fake_client, span_exporter, monkeypatch
+):
+    """
+    With TRACELOOP_TRACE_CONTENT=false the content is dropped whatever happens, so
+    the serializer is not run at all - while metadata, which is not content, is
+    recorded as usual.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "False")
+
+    serialized = []
+
+    def _record(value):
+        serialized.append(value)
+        return "{}"
+
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.runpod.span_utils.dump_object", _record
+    )
+    monkeypatch.setattr("opentelemetry.instrumentation.runpod.utils.dump_object", _record)
+
+    fake_client({("POST", f"{ENDPOINT_ID}/run"): {"id": JOB_ID, "status": "IN_QUEUE"}})
+    endpoint = runpod.Endpoint(ENDPOINT_ID)
+
+    endpoint.run({"prompt": "tell me a joke"})
+
+    assert serialized == []
+
+    runpod_span = span_exporter.get_finished_spans()[0]
+    assert runpod_span.attributes.get(RUNPOD_JOB_ID) == JOB_ID
+    assert f"{gen_ai_attributes.GEN_AI_PROMPT}.0.content" not in runpod_span.attributes
+    assert f"{gen_ai_attributes.GEN_AI_COMPLETION}.0.content" not in runpod_span.attributes
+
+
 def test_response_handlers_skip_work_when_nothing_can_be_recorded(
     instrument_legacy, tracer_provider
 ):
