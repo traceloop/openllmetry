@@ -103,6 +103,12 @@ def test_dict_loses_only_its_object_keys():
     assert value == {"tenant": "acme", "sid": str(session_id)}
 
 
+def test_dict_loses_only_its_unserializable_keys():
+    """bytes is a metadata primitive but not JSON: it must not take siblings down."""
+    value = json.loads(_sanitize_metadata_value({"tenant": "acme", "payload": b"x"}))
+    assert value == {"tenant": "acme"}
+
+
 def test_dict_of_only_objects_is_dropped():
     """Nothing left to record means no attribute, not an empty one."""
     assert _sanitize_metadata_value({"client": _ClientLikeObject(MARKER)}) is None

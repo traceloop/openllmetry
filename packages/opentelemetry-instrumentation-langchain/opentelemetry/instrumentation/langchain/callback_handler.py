@@ -149,17 +149,14 @@ def _sanitize_metadata_value(value: Any) -> Any:
         return [str(v) for v in value if _metadata_scalar(v) is not None]
     if isinstance(value, dict):
         # A mapping of plain data is legitimate metadata, so keep it as JSON.
-        # Drop only the object-valued keys, the way the list branch does.
+        # Drop only the keys JSON cannot carry, the way the list branch does --
+        # bytes is a metadata primitive but is not JSON-serializable.
         kept = {
             key: scalar
             for key, item in value.items()
-            if (scalar := _metadata_scalar(item)) is not None
+            if isinstance(scalar := _metadata_scalar(item), (bool, str, int, float))
         }
-        try:
-            return json.dumps(kept) if kept else None
-        except (TypeError, ValueError):
-            # bytes is a metadata primitive but not JSON-serializable.
-            return None
+        return json.dumps(kept) if kept else None
     return None
 
 
