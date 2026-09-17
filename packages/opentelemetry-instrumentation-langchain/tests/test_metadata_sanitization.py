@@ -109,6 +109,13 @@ def test_dict_loses_only_its_unserializable_keys():
     assert value == {"tenant": "acme"}
 
 
+def test_dict_with_an_unserializable_key_does_not_raise():
+    """This runs before the span starts: a raise here loses the whole trace."""
+    value = json.loads(_sanitize_metadata_value({("tenant",): "acme", "ok": 1}))
+    assert value == {"ok": 1}
+    assert _sanitize_metadata_value({("tenant",): "acme"}) is None
+
+
 def test_dict_of_only_objects_is_dropped():
     """Nothing left to record means no attribute, not an empty one."""
     assert _sanitize_metadata_value({"client": _ClientLikeObject(MARKER)}) is None
