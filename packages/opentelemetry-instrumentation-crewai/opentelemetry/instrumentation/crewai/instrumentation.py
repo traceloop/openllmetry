@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from typing import Collection
@@ -92,12 +93,15 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
+        wrap_function_wrapper("crewai.tools.base_tool", "BaseTool.run",
+                              wrap_tool_run(tracer, duration_histogram, token_histogram))
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
+        unwrap("crewai.tools.base_tool.BaseTool", "run")
 
 
 def with_tracer_wrapper(func):
@@ -243,6 +247,46 @@ def wrap_llm_call(tracer, duration_histogram, token_histogram, wrapped, instance
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
+
+
+@with_tracer_wrapper
+def wrap_tool_run(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
+    tool_name = getattr(instance, "name", None) or instance.__class__.__name__
+
+    with tracer.start_as_current_span(
+        f"{tool_name}.tool",
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAiOperationNameValues.EXECUTE_TOOL.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
+            GenAIAttributes.GEN_AI_TOOL_NAME: tool_name,
+            GenAIAttributes.GEN_AI_TOOL_TYPE: "function",
+        },
+    ) as span:
+        try:
+            set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_DESCRIPTION,
+                               getattr(instance, "description", None))
+            set_span_attribute(span, "gen_ai.tool.call.arguments", _tool_arguments(args, kwargs))
+            result = wrapped(*args, **kwargs)
+            set_span_attribute(span, "gen_ai.tool.call.result", str(result) if result is not None else None)
+            span.set_status(Status(StatusCode.OK))
+            return result
+        except Exception as ex:
+            span.set_status(Status(StatusCode.ERROR, str(ex)))
+            raise
+
+
+def _tool_arguments(args, kwargs) -> str | None:
+    """Serialize tool-call arguments to JSON, falling back to str for non-JSON values."""
+    payload = dict(kwargs)
+    if args:
+        payload["args"] = list(args)
+    if not payload:
+        return None
+    try:
+        return json.dumps(payload, default=str)
+    except (TypeError, ValueError):
+        return str(payload)
 
 
 def _set_messages_attributes(span, messages_arg, result):
