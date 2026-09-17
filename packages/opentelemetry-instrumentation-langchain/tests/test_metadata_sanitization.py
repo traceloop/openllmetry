@@ -11,6 +11,13 @@ content capture off did not suppress it.
 These are unit tests over the sanitizer: they need no network and no cassette.
 """
 
+import datetime
+import json
+import uuid
+from decimal import Decimal
+from enum import Enum
+from pathlib import PurePosixPath
+
 from opentelemetry.semconv_ai import SpanAttributes
 
 from opentelemetry.instrumentation.langchain.callback_handler import (
@@ -48,15 +55,34 @@ def test_falsy_primitives_are_preserved_not_dropped():
     assert _sanitize_metadata_value("") == ""
 
 
+class _Tier(Enum):
+    """A caller-defined enum, the kind that shows up as a metadata label."""
+
+    GOLD = "gold"
+
+
+def test_stdlib_scalars_are_stringified_not_dropped():
+    """A UUID session_id, a timestamp, a Decimal, an Enum carry no credential."""
+    session_id = uuid.uuid4()
+    assert _sanitize_metadata_value(session_id) == str(session_id)
+    assert _sanitize_metadata_value(datetime.datetime(2026, 9, 16, 12, 0)) == (
+        "2026-09-16 12:00:00"
+    )
+    assert _sanitize_metadata_value(Decimal("3.14")) == "3.14"
+    assert _sanitize_metadata_value(_Tier.GOLD) == str(_Tier.GOLD)
+    assert _sanitize_metadata_value(PurePosixPath("/tmp/x")) == "/tmp/x"
+
+
 def test_object_is_dropped_not_stringified():
     """The leak: an object's repr must never become the attribute value."""
     assert _sanitize_metadata_value(_ClientLikeObject(MARKER)) is None
 
 
 def test_object_inside_a_list_is_dropped():
-    """A sequence keeps its primitive elements and loses its object elements."""
-    value = _sanitize_metadata_value(["ok", _ClientLikeObject(MARKER)])
-    assert value == ["ok"]
+    """A sequence keeps its scalar elements and loses its object elements."""
+    session_id = uuid.uuid4()
+    value = _sanitize_metadata_value(["ok", session_id, _ClientLikeObject(MARKER)])
+    assert value == ["ok", str(session_id)]
     assert MARKER not in str(value)
 
 
@@ -66,10 +92,20 @@ def test_plain_dict_is_kept_as_json():
     assert value == '{"tenant": "acme", "retries": 2}'
 
 
-def test_dict_holding_an_object_is_dropped():
-    """A mapping is only kept when every value in it is plain data."""
-    value = _sanitize_metadata_value({"client": _ClientLikeObject(MARKER)})
-    assert value is None
+def test_dict_loses_only_its_object_keys():
+    """One bad key must not discard its siblings, as the list branch doesn't."""
+    session_id = uuid.uuid4()
+    value = json.loads(
+        _sanitize_metadata_value(
+            {"tenant": "acme", "sid": session_id, "client": _ClientLikeObject(MARKER)}
+        )
+    )
+    assert value == {"tenant": "acme", "sid": str(session_id)}
+
+
+def test_dict_of_only_objects_is_dropped():
+    """Nothing left to record means no attribute, not an empty one."""
+    assert _sanitize_metadata_value({"client": _ClientLikeObject(MARKER)}) is None
 
 
 def test_object_never_reaches_association_properties(instrument_legacy, span_exporter):

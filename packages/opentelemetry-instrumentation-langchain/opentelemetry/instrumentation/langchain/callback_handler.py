@@ -1,6 +1,10 @@
 import contextvars
+import datetime
 import json
 import time
+from decimal import Decimal
+from enum import Enum
+from pathlib import PurePath
 from typing import Any, Dict, List, Optional, Type, Union
 from uuid import UUID
 
@@ -108,6 +112,19 @@ def _extract_class_name_from_serialized(serialized: Optional[dict[str, Any]]) ->
 
 _METADATA_PRIMITIVES = (bool, str, bytes, int, float)
 
+# Stdlib scalars whose str() is the value itself rather than constructor state,
+# so they carry no credential risk. session_id as a UUID is the common case.
+_METADATA_SCALARS = (UUID, datetime.date, datetime.time, Decimal, PurePath, Enum)
+
+
+def _metadata_scalar(value: Any) -> Any:
+    """Return `value` as a span-attribute scalar, or None if it is not one."""
+    if isinstance(value, _METADATA_PRIMITIVES):
+        return value
+    if isinstance(value, _METADATA_SCALARS):
+        return str(value)
+    return None
+
 
 def _sanitize_metadata_value(value: Any) -> Any:
     """Convert metadata values to OpenTelemetry-compatible types.
@@ -123,19 +140,25 @@ def _sanitize_metadata_value(value: Any) -> Any:
     """
     if value is None:
         return None
-    if isinstance(value, _METADATA_PRIMITIVES):
-        return value
+    scalar = _metadata_scalar(value)
+    if scalar is not None:
+        return scalar
     if isinstance(value, (list, tuple)):
-        # Keep primitive elements, drop object elements, preserving the
+        # Keep the scalar elements, drop the object ones, preserving the
         # existing "sequence of strings" attribute shape.
-        return [str(v) for v in value if isinstance(v, _METADATA_PRIMITIVES)]
+        return [str(v) for v in value if _metadata_scalar(v) is not None]
     if isinstance(value, dict):
         # A mapping of plain data is legitimate metadata, so keep it as JSON.
-        # json.dumps has no ``default``, so a mapping holding a non-serializable
-        # object raises and the key is dropped instead of being stringified.
+        # Drop only the object-valued keys, the way the list branch does.
+        kept = {
+            key: scalar
+            for key, item in value.items()
+            if (scalar := _metadata_scalar(item)) is not None
+        }
         try:
-            return json.dumps(value)
+            return json.dumps(kept) if kept else None
         except (TypeError, ValueError):
+            # bytes is a metadata primitive but not JSON-serializable.
             return None
     return None
 
