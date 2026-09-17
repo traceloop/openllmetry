@@ -133,6 +133,21 @@ def _set_model_input_attributes(span, to_wrap, kwargs):
     )
 
 
+def _content_as_str(content):
+    # Reasoning models answer with a list of content chunks, which are SDK models
+    # rather than plain dicts, so they are dumped before being serialised.
+    if content is None or isinstance(content, str):
+        return content
+    return json.dumps(
+        [
+            chunk.model_dump(mode="json", exclude_none=True)
+            if hasattr(chunk, "model_dump")
+            else chunk
+            for chunk in content
+        ]
+    )
+
+
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
@@ -149,11 +164,7 @@ def _set_response_attributes(span, llm_request_type, response):
             _set_span_attribute(
                 span,
                 f"{prefix}.content",
-                (
-                    choice.message.content
-                    if isinstance(choice.message.content, str)
-                    else json.dumps(choice.message.content)
-                ),
+                _content_as_str(choice.message.content),
             )
             _set_span_attribute(
                 span,
