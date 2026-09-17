@@ -9,14 +9,13 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw, should_send_prompts
+from .utils import dont_throw, error_status, should_send_prompts
 
 
 class FastMCPInstrumentor:
     """Handles FastMCP-specific instrumentation logic."""
 
     def __init__(self):
-        """Create the instrumentor with no tracer or server name bound yet."""
         self._tracer = None
         self._server_name = None
 
@@ -51,7 +50,6 @@ class FastMCPInstrumentor:
         @dont_throw
         def traced_method(wrapped, instance, args, kwargs):
             # Call the original __init__ first
-            """Record the server name from FastMCP's constructor arguments."""
             result = wrapped(*args, **kwargs)
 
             if args and len(args) > 0:
@@ -65,7 +63,6 @@ class FastMCPInstrumentor:
     def _fastmcp_tool_wrapper(self):
         """Create wrapper for FastMCP tool execution."""
         async def traced_method(wrapped, instance, args, kwargs):
-            """Wrap a FastMCP tool call in server and tool spans."""
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
 
@@ -85,7 +82,12 @@ class FastMCPInstrumentor:
             entity_name = tool_key if tool_key else "unknown_tool"
 
             # Create parent server.mcp span
-            with self._tracer.start_as_current_span("mcp.server") as mcp_span:
+            # The error paths below record the failure themselves, with the
+            # message gated on content capture. OTel's own exception recording
+            # would re-add that text ungated on the way out.
+            with self._tracer.start_as_current_span(
+                "mcp.server", record_exception=False, set_status_on_exception=False
+            ) as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
                 if self._server_name:
@@ -93,7 +95,9 @@ class FastMCPInstrumentor:
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
-                with self._tracer.start_as_current_span(span_name) as tool_span:
+                with self._tracer.start_as_current_span(
+                    span_name, record_exception=False, set_status_on_exception=False
+                ) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                     if self._server_name:
@@ -115,12 +119,15 @@ class FastMCPInstrumentor:
                         result = await wrapped(*args, **kwargs)
                     except Exception as e:
                         tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        tool_span.record_exception(e)
-                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
-
                         mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        mcp_span.record_exception(e)
-                        mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
+                        # record_exception writes the message and the full
+                        # stacktrace as event attributes, both of which carry
+                        # the tool's own text.
+                        if should_send_prompts():
+                            tool_span.record_exception(e)
+                            mcp_span.record_exception(e)
+                        tool_span.set_status(error_status(str(e)))
+                        mcp_span.set_status(error_status(str(e)))
                         raise
 
                     try:

@@ -5,9 +5,10 @@ import logging
 import os
 import traceback
 
+from opentelemetry.trace import Status, StatusCode
+
 
 class Config:
-    """Module-level configuration for the MCP instrumentation."""
     exception_logger = None
 
 
@@ -22,6 +23,18 @@ def should_send_prompts() -> bool:
     return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
+def error_status(description: str) -> Status:
+    """An ERROR status, carrying `description` only when content capture is on.
+
+    The status code is not content, but its description is: on the client path
+    it is the server's own error text. Callers record the exception type
+    separately, so the failure stays visible either way.
+    """
+    if should_send_prompts():
+        return Status(StatusCode.ERROR, description)
+    return Status(StatusCode.ERROR)
+
+
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
@@ -30,21 +43,18 @@ def dont_throw(func):
     logger = logging.getLogger(func.__module__)
 
     async def async_wrapper(*args, **kwargs):
-        """Await the wrapped coroutine, logging instead of raising on failure."""
         try:
             return await func(*args, **kwargs)
         except Exception as e:
             _handle_exception(e, func, logger)
 
     def sync_wrapper(*args, **kwargs):
-        """Call the wrapped function, logging instead of raising on failure."""
         try:
             return func(*args, **kwargs)
         except Exception as e:
             _handle_exception(e, func, logger)
 
     def _handle_exception(e, func, logger):
-        """Log a tracing failure and hand it to the configured exception logger."""
         logger.debug(
             "OpenLLMetry failed to trace in %s, error: %s",
             func.__name__,
