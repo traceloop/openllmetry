@@ -228,6 +228,26 @@ def _set_model_response_attributes(span, llm_request_type, response):
             )
 
 
+def _merge_delta_content(current, delta):
+    # Text deltas are joined as before. Reasoning models stream lists of chunks,
+    # which are collected as plain data so the whole answer can be serialised.
+    if not delta:
+        return current
+    if isinstance(delta, str):
+        if isinstance(current, list):
+            return current + [{"type": "text", "text": delta}]
+        return (current or "") + delta
+    chunks = [
+        chunk.model_dump(mode="json", exclude_none=True)
+        if hasattr(chunk, "model_dump")
+        else chunk
+        for chunk in delta
+    ]
+    if isinstance(current, str) and current:
+        return [{"type": "text", "text": current}] + chunks
+    return (current if isinstance(current, list) else []) + chunks
+
+
 def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
     accumulated_response = ChatCompletionResponse(
         id="",
@@ -262,7 +282,9 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
                 )
 
             accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
+            accumulated_response.choices[idx].message.content = _merge_delta_content(
+                accumulated_response.choices[idx].message.content, choice.delta.content
+            )
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)
@@ -306,7 +328,9 @@ async def _aaccumulate_streaming_response(
                 )
 
             accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
+            accumulated_response.choices[idx].message.content = _merge_delta_content(
+                accumulated_response.choices[idx].message.content, choice.delta.content
+            )
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)

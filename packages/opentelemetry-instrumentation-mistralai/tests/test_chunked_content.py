@@ -75,3 +75,77 @@ def test_string_content_is_unchanged(tracer_provider, span_exporter, trace_conte
 
     attributes = span_exporter.get_finished_spans()[0].attributes
     assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content") == ANSWER
+
+
+def _magistral_stream():
+    from mistralai.models import (
+        CompletionChunk,
+        CompletionEvent,
+        CompletionResponseStreamChoice,
+        DeltaMessage,
+    )
+
+    def event(content, finish_reason=None):
+        return CompletionEvent(
+            data=CompletionChunk(
+                id="b3f1d1f0e8d94f8f9d4b8d7e5a1c2b3d",
+                model="magistral-medium-latest",
+                choices=[
+                    CompletionResponseStreamChoice(
+                        index=0,
+                        delta=DeltaMessage(role="assistant", content=content),
+                        finish_reason=finish_reason,
+                    )
+                ],
+            )
+        )
+
+    # A streamed reasoning answer: the thinking arrives in pieces, then the text.
+    return [
+        event([{"type": "thinking", "thinking": [{"type": "text", "text": "The user asks "}]}]),
+        event([{"type": "thinking", "thinking": [{"type": "text", "text": "for Paris."}]}]),
+        event([{"type": "text", "text": ANSWER}]),
+        event(None, finish_reason="stop"),
+    ]
+
+
+def _assert_streamed_completion(span_exporter):
+    attributes = span_exporter.get_finished_spans()[0].attributes
+    content = attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+    assert content is not None, "the streamed completion was dropped"
+    chunks = json.loads(content)
+    assert [c["type"] for c in chunks] == ["thinking", "thinking", "text"]
+    assert chunks[2]["text"] == ANSWER
+    assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason") == "stop"
+
+
+def test_streamed_chunked_content_is_accumulated(tracer_provider, span_exporter, trace_content):
+    from opentelemetry.instrumentation.mistralai import _accumulate_streaming_response
+
+    span = tracer_provider.get_tracer("test").start_span("mistralai.chat")
+    events = list(
+        _accumulate_streaming_response(span, None, LLMRequestTypeValues.CHAT, iter(_magistral_stream()))
+    )
+    assert len(events) == 4, "every event must still reach the caller"
+    _assert_streamed_completion(span_exporter)
+
+
+@pytest.mark.asyncio
+async def test_async_streamed_chunked_content_is_accumulated(
+    tracer_provider, span_exporter, trace_content
+):
+    from opentelemetry.instrumentation.mistralai import _aaccumulate_streaming_response
+
+    async def stream():
+        for event in _magistral_stream():
+            yield event
+
+    span = tracer_provider.get_tracer("test").start_span("mistralai.chat")
+    events = [
+        e
+        async for e in _aaccumulate_streaming_response(
+            span, None, LLMRequestTypeValues.CHAT, stream()
+        )
+    ]
+    assert len(events) == 4
+    _assert_streamed_completion(span_exporter)
