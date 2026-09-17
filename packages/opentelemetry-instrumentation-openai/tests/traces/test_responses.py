@@ -973,7 +973,7 @@ async def test_async_responses_with_raw_response_streaming_does_not_crash(
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
-            headers={"content-type": "text/event-stream"},
+            headers={"content-type": "text/event-stream", "x-ms-served-model": "gpt-4.1-nano"},
             content=_RESPONSES_SSE_BODY,
         )
 
@@ -987,6 +987,10 @@ async def test_async_responses_with_raw_response_streaming_does_not_crash(
         input="What is the capital of France?",
         stream=True,
     )
+    # The raw-response contract (what agent-framework-openai relies on: reading a
+    # response header before consuming the stream) must survive instrumentation.
+    assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
+
     stream = raw.parse()
     events = [event async for event in stream]
 
@@ -1006,7 +1010,7 @@ def test_responses_with_raw_response_streaming_does_not_crash(
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
-            headers={"content-type": "text/event-stream"},
+            headers={"content-type": "text/event-stream", "x-ms-served-model": "gpt-4.1-nano"},
             content=_RESPONSES_SSE_BODY,
         )
 
@@ -1020,6 +1024,10 @@ def test_responses_with_raw_response_streaming_does_not_crash(
         input="What is the capital of France?",
         stream=True,
     )
+    # The raw-response contract (what agent-framework-openai relies on: reading a
+    # response header before consuming the stream) must survive instrumentation.
+    assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
+
     stream = raw.parse()
     events = list(stream)
 
