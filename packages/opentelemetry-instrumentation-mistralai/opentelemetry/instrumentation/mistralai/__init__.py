@@ -228,6 +228,31 @@ def _set_model_response_attributes(span, llm_request_type, response):
             )
 
 
+def _append_chunk(chunks, chunk):
+    # A delta that continues the trailing chunk of the same type extends it, so a
+    # streamed answer ends up with the same chunks as the non-streamed one.
+    last = chunks[-1] if chunks else None
+    if last is not None and last.get("type") == chunk.get("type"):
+        if chunk.get("type") == "text":
+            last["text"] = last.get("text", "") + chunk.get("text", "")
+            return
+        if chunk.get("type") == "thinking":
+            thoughts = last.setdefault("thinking", [])
+            for thought in chunk.get("thinking") or []:
+                if (
+                    thoughts
+                    and thoughts[-1].get("type") == "text"
+                    and thought.get("type") == "text"
+                ):
+                    thoughts[-1]["text"] = thoughts[-1].get("text", "") + thought.get(
+                        "text", ""
+                    )
+                else:
+                    thoughts.append(dict(thought))
+            return
+    chunks.append(dict(chunk))
+
+
 def _merge_delta_content(current, delta):
     # Text deltas are joined as before. Reasoning models stream lists of chunks,
     # which are collected as plain data so the whole answer can be serialised.
@@ -235,17 +260,20 @@ def _merge_delta_content(current, delta):
         return current
     if isinstance(delta, str):
         if isinstance(current, list):
-            return current + [{"type": "text", "text": delta}]
+            _append_chunk(current, {"type": "text", "text": delta})
+            return current
         return (current or "") + delta
-    chunks = [
-        chunk.model_dump(mode="json", exclude_none=True)
-        if hasattr(chunk, "model_dump")
-        else chunk
-        for chunk in delta
-    ]
+    chunks = current if isinstance(current, list) else []
     if isinstance(current, str) and current:
-        return [{"type": "text", "text": current}] + chunks
-    return (current if isinstance(current, list) else []) + chunks
+        chunks = [{"type": "text", "text": current}]
+    for chunk in delta:
+        _append_chunk(
+            chunks,
+            chunk.model_dump(mode="json", exclude_none=True)
+            if hasattr(chunk, "model_dump")
+            else chunk,
+        )
+    return chunks
 
 
 def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
@@ -395,7 +423,7 @@ def _emit_choice_events(
                 ChoiceEvent(
                     index=choice.index,
                     message={
-                        "content": choice.message.content,
+                        "content": _content_as_str(choice.message.content),
                         "role": choice.message.role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",

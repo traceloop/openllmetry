@@ -104,7 +104,8 @@ def _magistral_stream():
     return [
         event([{"type": "thinking", "thinking": [{"type": "text", "text": "The user asks "}]}]),
         event([{"type": "thinking", "thinking": [{"type": "text", "text": "for Paris."}]}]),
-        event([{"type": "text", "text": ANSWER}]),
+        event([{"type": "text", "text": "Par"}]),
+        event([{"type": "text", "text": "is."}]),
         event(None, finish_reason="stop"),
     ]
 
@@ -114,8 +115,10 @@ def _assert_streamed_completion(span_exporter):
     content = attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
     assert content is not None, "the streamed completion was dropped"
     chunks = json.loads(content)
-    assert [c["type"] for c in chunks] == ["thinking", "thinking", "text"]
-    assert chunks[2]["text"] == ANSWER
+    # Token-by-token deltas are folded into one chunk per block, as in the non-streamed response.
+    assert [c["type"] for c in chunks] == ["thinking", "text"]
+    assert chunks[0]["thinking"] == [{"type": "text", "text": "The user asks for Paris."}]
+    assert chunks[1]["text"] == ANSWER
     assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason") == "stop"
 
 
@@ -126,7 +129,7 @@ def test_streamed_chunked_content_is_accumulated(tracer_provider, span_exporter,
     events = list(
         _accumulate_streaming_response(span, None, LLMRequestTypeValues.CHAT, iter(_magistral_stream()))
     )
-    assert len(events) == 4, "every event must still reach the caller"
+    assert len(events) == 5, "every event must still reach the caller"
     _assert_streamed_completion(span_exporter)
 
 
@@ -147,5 +150,23 @@ async def test_async_streamed_chunked_content_is_accumulated(
             span, None, LLMRequestTypeValues.CHAT, stream()
         )
     ]
-    assert len(events) == 4
+    assert len(events) == 5
     _assert_streamed_completion(span_exporter)
+
+
+def test_chunked_content_is_serialised_on_the_events_path(
+    log_exporter, logger_provider, trace_content, monkeypatch
+):
+    from opentelemetry.instrumentation.mistralai import _emit_choice_events
+    from opentelemetry.instrumentation.mistralai.config import Config
+
+    monkeypatch.setattr(Config, "use_legacy_attributes", False)
+    response = ChatCompletionResponse.model_validate(MAGISTRAL_RESPONSE)
+    _emit_choice_events(response, logger_provider.get_logger("test"))
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 1, "the choice event was dropped"
+    body = logs[0].log_record.body
+    chunks = json.loads(body["message"]["content"])
+    assert chunks[0]["type"] == "thinking"
+    assert chunks[1] == {"type": "text", "text": ANSWER}
