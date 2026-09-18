@@ -3,6 +3,7 @@ import pydantic
 import re
 import threading
 import time
+from collections import OrderedDict
 from typing import Any, Optional, Union
 
 from openai import AsyncStream, Stream
@@ -197,6 +198,28 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+# Response ids whose span was already emitted, kept as a bounded LRU so a re-fetch
+# of a completed response (retrieve/parse) doesn't emit a duplicate span.
+MAX_EMITTED_RESPONSES = 10_000
+emitted_responses: "OrderedDict[str, None]" = OrderedDict()
+_emitted_responses_lock = threading.Lock()
+
+
+def _was_span_emitted(response_id: str) -> bool:
+    with _emitted_responses_lock:
+        if response_id not in emitted_responses:
+            return False
+        emitted_responses.move_to_end(response_id)
+        return True
+
+
+def _mark_span_emitted(response_id: str) -> None:
+    with _emitted_responses_lock:
+        emitted_responses[response_id] = None
+        emitted_responses.move_to_end(response_id)
+        while len(emitted_responses) > MAX_EMITTED_RESPONSES:
+            emitted_responses.popitem(last=False)
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -634,6 +657,10 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return response
 
     if parsed_response.status == "completed":
+        if _was_span_emitted(parsed_response.id):
+            # Already traced on a previous call, don't emit a duplicate span
+            responses.pop(parsed_response.id, None)
+            return response
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -645,6 +672,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _mark_span_emitted(parsed_response.id)
+        # The response is terminal, drop it so the registry doesn't grow unbounded
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -802,6 +832,10 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     if parsed_response.status == "completed":
+        if _was_span_emitted(parsed_response.id):
+            # Already traced on a previous call, don't emit a duplicate span
+            responses.pop(parsed_response.id, None)
+            return response
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -813,6 +847,9 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _mark_span_emitted(parsed_response.id)
+        # The response is terminal, drop it so the registry doesn't grow unbounded
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -1064,11 +1101,13 @@ class ResponseStream(ObjectProxy):
                             block.id: block for block in parsed_response.output
                         }
 
-                    responses[parsed_response.id] = self._traced_data
-
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)
                 self._span.end()
+                if self._traced_data.response_id:
+                    # Streaming emits its span here, so a later retrieve of the
+                    # same id must not emit a second one
+                    _mark_span_emitted(self._traced_data.response_id)
                 self._cleanup_completed = True
 
             except Exception as e:
