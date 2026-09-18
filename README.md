@@ -126,6 +126,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [HuggingFace](https://huggingface.co/)
 - ✅ [IBM Watsonx AI](https://www.ibm.com/watsonx)
 - ✅ [Mistral AI](https://mistral.ai/)
+- ✅ [OCI Generative AI (Oracle Cloud)](https://www.oracle.com/artificial-intelligence/generative-ai/)
 - ✅ [Ollama](https://ollama.com/)
 - ✅ [OpenAI / Azure OpenAI](https://openai.com/)
 - ✅ [Replicate](https://replicate.com/)

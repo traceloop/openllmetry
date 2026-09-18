@@ -1,0 +1,174 @@
+interactions:
+- request:
+    body: '{"compartmentId": "ocid1.compartment.oc1..redacted", "servingMode": {"servingType":
+      "ON_DEMAND", "modelId": "meta.llama-3.3-70b-instruct"}, "chatRequest": {"apiFormat":
+      "GENERIC", "messages": [{"role": "USER", "content": [{"type": "TEXT", "text":
+      "Tell me a joke about opentelemetry"}]}], "isStream": true, "maxTokens": 100}}'
+    headers:
+      Content-Length:
+      - '377'
+      accept:
+      - application/json, text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/chat
+  response:
+    body:
+      string: 'data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":""}]},"pad":"aaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"Why"}]},"pad":"aaaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        did"}]},"pad":"aaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        the"}]},"pad":"aaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        Open"}]},"pad":"aaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"Te"}]},"pad":"aaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"lemetry"}]},"pad":"aaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        span"}]},"pad":"aaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        go"}]},"pad":"a"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        to"}]},"pad":"aaaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        therapy"}]},"pad":"aaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"?\n\n"}]},"pad":"aaaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"Because"}]},"pad":"aaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        it"}]},"pad":"aaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        was"}]},"pad":"aaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        struggling"}]},"pad":"aaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        to"}]},"pad":"aaaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        \""}]},"pad":"aa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"trace"}]},"pad":"aaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"\""}]},"pad":"aaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        its"}]},"pad":"aaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        roots"}]},"pad":"aaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        and"}]},"pad":"aaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        was"}]},"pad":"aaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        feeling"}]},"pad":"aaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        a"}]},"pad":"aaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        little"}]},"pad":"aaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        \""}]},"pad":"aaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"distributed"}]},"pad":"aaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"\""}]},"pad":"aaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"!"}]},"pad":"a"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        ("}]},"pad":"a"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"get"}]},"pad":"aaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"
+        it"}]},"pad":"aaaaaaaaaaa"}
+
+
+        data: {"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"?)"}]},"pad":"aaaaaaaaaaa"}
+
+
+        data: {"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":""}]},"finishReason":"stop","pad":"aaaa"}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Fri, 18 Sep 2026 19:47:03 GMT
+      Transfer-Encoding:
+      - chunked
+      cache-control:
+      - no-cache
+      content-length:
+      - '3909'
+    status:
+      code: 200
+      message: OK
+version: 1

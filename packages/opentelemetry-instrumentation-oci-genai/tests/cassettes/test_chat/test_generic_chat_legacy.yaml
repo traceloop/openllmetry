@@ -1,0 +1,40 @@
+interactions:
+- request:
+    body: '{"compartmentId": "ocid1.compartment.oc1..redacted", "servingMode": {"servingType":
+      "ON_DEMAND", "modelId": "meta.llama-3.3-70b-instruct"}, "chatRequest": {"apiFormat":
+      "GENERIC", "messages": [{"role": "USER", "content": [{"type": "TEXT", "text":
+      "Tell me a joke about opentelemetry"}]}], "topK": 40, "topP": 0.9, "temperature":
+      0.2, "frequencyPenalty": 0.1, "maxTokens": 100}}'
+    headers:
+      Content-Length:
+      - '429'
+      accept:
+      - application/json, text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/chat
+  response:
+    body:
+      string: '{"modelId":"meta.llama-3.3-70b-instruct","modelVersion":"1.0.0","chatResponse":{"apiFormat":"GENERIC","timeCreated":"2026-09-18T19:46:59.025Z","choices":[{"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"Why
+        did the OpenTelemetry span go to therapy?\n\nBecause it was struggling to
+        \"trace\" its roots and was feeling a little \"distributed\"! (get it?)"}],"toolCalls":[]},"finishReason":"stop","logprobs":{}}],"usage":{"completionTokens":35,"promptTokens":43,"totalTokens":78}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 18 Sep 2026 19:46:59 GMT
+      content-length:
+      - '504'
+    status:
+      code: 200
+      message: OK
+version: 1
