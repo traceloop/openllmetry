@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
@@ -944,3 +945,63 @@ def test_parse_response_passes_through_plain_response():
     result = parse_response(plain)
 
     assert result is plain
+
+
+def test_completed_responses_are_removed_from_global_dict():
+    """Regression for #4473: completed Responses API entries must not remain
+    in the module-global `responses` dict after a successful span is emitted."""
+    import threading
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers as rw
+
+    rid = "resp_completed_cleanup_unit"
+    traced = rw.TracedData(
+        start_time=1.0,
+        response_id=rid,
+        input="hello",
+        response_status="completed",
+        output_text="world",
+    )
+    rw.responses[rid] = traced
+    assert rid in rw.responses
+
+    complete = MagicMock()
+    complete.id = rid
+    complete.model = "gpt-4.1"
+    complete.status = "completed"
+    complete.incomplete_details = None
+    complete.usage = None
+    complete.output = []
+
+    stream = SimpleNamespace(
+        _cleanup_lock=threading.Lock(),
+        _cleanup_completed=False,
+        _complete_response_data=complete,
+        _output_text="world",
+        _traced_data=traced,
+        _span=MagicMock(),
+        _tracer=MagicMock(),
+        _request_kwargs={},
+        _start_time=1.0,
+    )
+    rw.ResponseStream._process_complete_response(stream)
+    assert rid not in rw.responses, "completed streaming entry must be popped"
+    stream._span.end.assert_called()
+
+    # Source contract: sync/async completed paths also pop after span.end().
+    src = Path(rw.__file__).read_text(encoding="utf-8")
+    assert src.count("responses.pop(parsed_response.id, None)") >= 2
+    assert "responses.pop(self._traced_data.response_id, None)" in src
+
+
+def test_cancel_paths_still_pop_responses_dict():
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers as rw
+
+    rid = "resp_cancel_unit"
+    traced = rw.TracedData(start_time=1.0, response_id=rid, input="x")
+    rw.responses[rid] = traced
+    existing = rw.responses.pop(rid, None)
+    assert existing is traced
+    assert rid not in rw.responses

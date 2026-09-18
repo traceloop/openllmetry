@@ -645,6 +645,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        # Completed responses are terminal; drop the module-global entry so
+        # successful runs do not retain TracedData for the process lifetime.
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -813,6 +816,9 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        # Completed responses are terminal; drop the module-global entry so
+        # successful runs do not retain TracedData for the process lifetime.
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -1069,6 +1075,9 @@ class ResponseStream(ObjectProxy):
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)
                 self._span.end()
+                # Terminal success path: do not keep completed entries alive.
+                if getattr(self._traced_data, "response_id", None):
+                    responses.pop(self._traced_data.response_id, None)
                 self._cleanup_completed = True
 
             except Exception as e:
