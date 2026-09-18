@@ -1,7 +1,7 @@
 # OpenTelemetry OCI Generative AI Instrumentation
 
 <a href="https://pypi.org/project/opentelemetry-instrumentation-oci-genai/">
-    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-oci-genai.svg">
+    <img src="https://badge.fury.io/py/opentelemetry-instrumentation-oci-genai.svg" alt="PyPI package version">
 </a>
 
 This library allows tracing calls to the [OCI Generative AI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm) inference service made with the official [OCI Python SDK](https://github.com/oracle/oci-python-sdk) (`oci.generative_ai_inference.GenerativeAiInferenceClient`).

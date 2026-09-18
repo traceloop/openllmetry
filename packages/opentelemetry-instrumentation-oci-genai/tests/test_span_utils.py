@@ -263,7 +263,9 @@ def test_dedicated_serving_mode_attributes():
 
 def test_get_server_address_strips_endpoint_templates():
     instance = MagicMock()
-    instance.base_client.endpoint = "https://inference.generativeai.us-chicago-1.{dualStack?ds.:}oci.oraclecloud.com/20231130"
+    instance.base_client.endpoint = (
+        "https://inference.generativeai.us-chicago-1.{dualStack?ds.:}oci.oraclecloud.com/20231130"
+    )
     assert get_server_address(instance) == "inference.generativeai.us-chicago-1.oci.oraclecloud.com"
     assert get_server_address(object()) is None
 
@@ -373,7 +375,9 @@ def test_stream_accumulator_cohere_terminal_event_carries_full_text():
 def test_stream_accumulator_tool_call_deltas_and_garbage():
     accumulator = StreamAccumulator()
     accumulator.process("not json")
-    accumulator.process('{"message":{"role":"ASSISTANT","toolCalls":[{"id":"c1","name":"get_weather","arguments":"{\\"ci"}]}}')
+    accumulator.process(
+        '{"message":{"role":"ASSISTANT","toolCalls":[{"id":"c1","name":"get_weather","arguments":"{\\"ci"}]}}'
+    )
     accumulator.process('{"message":{"role":"ASSISTANT","toolCalls":[{"id":"c1","arguments":"ty\\": \\"Paris\\"}"}]}}')
     accumulator.process('{"message":{"role":"ASSISTANT","content":[]},"finishReason":"tool_calls"}')
     messages = stream_choices_to_messages(accumulator.choices_list())
@@ -383,37 +387,77 @@ def test_stream_accumulator_tool_call_deltas_and_garbage():
     ]
 
 
-def test_stream_wrapper_invokes_callback_once_and_on_error():
-    class FakeEvent:
-        def __init__(self, data):
-            self.data = data
+class FakeEvent:
+    def __init__(self, data):
+        self.data = data
 
-    class FakeSSEClient:
-        def __init__(self, events, fail=False):
-            self._events = events
-            self._fail = fail
 
-        def events(self):
-            for event in self._events:
-                yield FakeEvent(event)
-            if self._fail:
-                raise RuntimeError("boom")
+class FakeSSEClient:
+    def __init__(self, events, fail=False):
+        self._events = events
+        self._fail = fail
+        self.closed = False
 
-    calls = []
-    wrapper = OCIGenAIStreamWrapper(
-        FakeSSEClient(GENERIC_EVENTS), StreamAccumulator(), lambda acc, err: calls.append((acc, err))
+    def events(self):
+        for event in self._events:
+            yield FakeEvent(event)
+        if self._fail:
+            raise RuntimeError("boom")
+
+    def close(self):
+        self.closed = True
+
+
+def _wrap_stream(sse_client, calls):
+    return OCIGenAIStreamWrapper(
+        sse_client, StreamAccumulator(), lambda acc, err, complete: calls.append((acc, err, complete))
     )
+
+
+def test_stream_wrapper_invokes_callback_once_and_on_error():
+    calls = []
+    wrapper = _wrap_stream(FakeSSEClient(GENERIC_EVENTS), calls)
     events = list(wrapper.events())
     assert len(events) == len(GENERIC_EVENTS)
     assert len(calls) == 1
     assert calls[0][1] is None
+    assert calls[0][2] is True
     assert calls[0][0].choices_list()[0]["text"] == "Hello, world"
 
     calls.clear()
-    wrapper = OCIGenAIStreamWrapper(
-        FakeSSEClient(GENERIC_EVENTS[:2], fail=True), StreamAccumulator(), lambda acc, err: calls.append((acc, err))
-    )
+    wrapper = _wrap_stream(FakeSSEClient(GENERIC_EVENTS[:2], fail=True), calls)
     with pytest.raises(RuntimeError, match="boom"):
         list(wrapper.events())
     assert len(calls) == 1
     assert isinstance(calls[0][1], RuntimeError)
+    assert calls[0][2] is False
+
+
+def test_stream_wrapper_early_exit_is_incomplete():
+    calls = []
+    wrapper = _wrap_stream(FakeSSEClient(GENERIC_EVENTS), calls)
+    events = wrapper.events()
+    next(events)
+    next(events)
+    events.close()  # what leaving a ``for`` loop early triggers once the generator is collected
+    assert len(calls) == 1
+    assert calls[0][1] is None
+    assert calls[0][2] is False
+    assert calls[0][0].choices_list()[0]["text"] == "Hello"
+
+
+def test_stream_wrapper_close_finishes_once_and_closes_stream():
+    calls = []
+    sse_client = FakeSSEClient(GENERIC_EVENTS)
+    wrapper = _wrap_stream(sse_client, calls)
+    wrapper.close()
+    assert sse_client.closed is True
+    assert calls == [(wrapper._self_accumulator, None, False)]
+
+    # close() after normal exhaustion must not report the stream a second time
+    calls.clear()
+    wrapper = _wrap_stream(FakeSSEClient(GENERIC_EVENTS), calls)
+    list(wrapper.events())
+    wrapper.close()
+    assert len(calls) == 1
+    assert calls[0][2] is True

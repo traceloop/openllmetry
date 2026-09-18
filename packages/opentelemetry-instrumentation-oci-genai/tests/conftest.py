@@ -168,8 +168,8 @@ def instrument_legacy(reader, tracer_provider, meter_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(reader, tracer_provider, logger_provider, meter_provider):
-    os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
+def instrument_with_content(reader, tracer_provider, logger_provider, meter_provider, monkeypatch):
+    monkeypatch.setenv(TRACELOOP_TRACE_CONTENT, "True")
 
     instrumentor = OCIGenAIInstrumentor(use_attributes=False)
     instrumentor.instrument(
@@ -180,13 +180,12 @@ def instrument_with_content(reader, tracer_provider, logger_provider, meter_prov
 
     yield instrumentor
 
-    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(reader, tracer_provider, logger_provider, meter_provider):
-    os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
+def instrument_with_no_content(reader, tracer_provider, logger_provider, meter_provider, monkeypatch):
+    monkeypatch.setenv(TRACELOOP_TRACE_CONTENT, "False")
 
     instrumentor = OCIGenAIInstrumentor(use_attributes=False)
     instrumentor.instrument(
@@ -197,7 +196,6 @@ def instrument_with_no_content(reader, tracer_provider, logger_provider, meter_p
 
     yield instrumentor
 
-    os.environ.pop(TRACELOOP_TRACE_CONTENT, None)
     instrumentor.uninstrument()
 
 
