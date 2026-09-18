@@ -106,9 +106,7 @@ def _build_tool_def_dict(function_dict, tool_type=None):
 def _set_tool_definitions_json(span, tool_defs):
     """Set gen_ai.tool.definitions as a single JSON string attribute."""
     if tool_defs:
-        _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
-        )
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs, ensure_ascii=False))
 
 
 def _set_functions_attributes(span, functions):

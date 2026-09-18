@@ -377,7 +377,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     }],
                 })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages, ensure_ascii=False))
 
     # Build output messages
     output_messages = []
@@ -399,7 +399,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 summary = block_dict.get("summary")
                 if summary is not None and summary != []:
                     if isinstance(summary, (dict, list)):
-                        parts.append({"type": "reasoning", "content": json.dumps(summary)})
+                        parts.append({"type": "reasoning", "content": json.dumps(summary, ensure_ascii=False)})
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
@@ -409,7 +409,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 "finish_reason": _derive_finish_reason(traced_response),
             })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages, ensure_ascii=False))
 
     # Tool definitions as JSON
     if traced_response.tools:

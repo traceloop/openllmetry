@@ -127,7 +127,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         self._state.session_span,
                         GenAIAttributes.GEN_AI_OUTPUT_TYPE,
-                        json.dumps(session.modalities),
+                        json.dumps(session.modalities, ensure_ascii=False),
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
                     _set_span_attribute(
@@ -237,7 +237,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         span,
                         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps(output_messages),
+                        json.dumps(output_messages, ensure_ascii=False),
                     )
 
             span.set_status(Status(StatusCode.OK))
@@ -304,7 +304,7 @@ class RealtimeEventProcessor:
                 _set_span_attribute(
                     self._state.response_span,
                     GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                    json.dumps(input_messages),
+                    json.dumps(input_messages, ensure_ascii=False),
                 )
 
     def reset_response_state(self):
@@ -515,9 +515,10 @@ class RealtimeSessionWrapper:
                             session_config["temperature"],
                         )
                     if "instructions" in session_config:
-                        instructions_parts = json.dumps([
-                            {"type": "text", "content": session_config["instructions"]}
-                        ])
+                        instructions_parts = json.dumps(
+                            [{"type": "text", "content": session_config["instructions"]}],
+                            ensure_ascii=False,
+                        )
                         _set_span_attribute(
                             self._state.session_span,
                             GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS,
