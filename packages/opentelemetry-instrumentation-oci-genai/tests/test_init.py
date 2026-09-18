@@ -1,5 +1,6 @@
 """Instrumentor lifecycle, suppression and error handling tests (no network, no cassettes)."""
 
+import json
 import os
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +8,7 @@ import oci
 import pytest
 from oci.generative_ai_inference import GenerativeAiInferenceClient, models
 from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.oci_genai import OCIGenAIInstrumentor, _wrap
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
@@ -18,6 +20,14 @@ from wrapt import FunctionWrapper
 
 CHAT_SPEC = {"method": "chat", "details_kwarg": "chat_details", "operation": "chat"}
 
+STREAM_PAYLOADS = [
+    '{"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":"Hello"}]}}',
+    '{"index":0,"message":{"role":"ASSISTANT","content":[{"type":"TEXT","text":", world"}]}}',
+    '{"message":{"role":"ASSISTANT","content":[]},"finishReason":"stop"}',
+    '{"usage":{"completionTokens":8,"promptTokens":41,"totalTokens":49}}',
+    "[DONE]",
+]
+
 
 def _chat_details(compartment_id, model="meta.llama-3.3-70b-instruct"):
     return models.ChatDetails(
@@ -28,6 +38,58 @@ def _chat_details(compartment_id, model="meta.llama-3.3-70b-instruct"):
             messages=[models.UserMessage(content=[models.TextContent(text="Tell me a joke")])],
         ),
     )
+
+
+def _chat_result(model="meta.llama-3.3-70b-instruct"):
+    return models.ChatResult(
+        model_id=model,
+        chat_response=models.GenericChatResponse(
+            choices=[
+                models.ChatChoice(
+                    index=0,
+                    message=models.AssistantMessage(content=[models.TextContent(text="Hi there")]),
+                    finish_reason="stop",
+                )
+            ],
+            usage=models.Usage(prompt_tokens=4, completion_tokens=2, total_tokens=6),
+        ),
+    )
+
+
+def _current_span_id():
+    return trace.get_current_span().get_span_context().span_id
+
+
+class RecordingSSEClient:
+    """Stand-in for the SDK's ``SSEClient``: records the span current at each pull and whether it was closed."""
+
+    def __init__(self, payloads):
+        self._payloads = payloads
+        self.pull_span_ids = []
+        self.closed = False
+
+    def events(self):
+        for payload in self._payloads:
+            self.pull_span_ids.append(_current_span_id())
+            yield MagicMock(data=payload)
+
+    def close(self):
+        self.closed = True
+
+
+def _streaming_chat(oci_client, compartment_id, sse_client):
+    details = _chat_details(compartment_id)
+    details.chat_request.is_stream = True
+    response = oci.response.Response(200, {}, sse_client, None)
+    with patch.object(oci_client.base_client, "call_api", return_value=response):
+        return oci_client.chat(details)
+
+
+def _assert_logs_correlated_with(logs, span):
+    assert logs, "expected emitted events"
+    for log in logs:
+        assert log.log_record.trace_id == span.context.trace_id
+        assert log.log_record.span_id == span.context.span_id
 
 
 class TestInstrumentor:
@@ -115,6 +177,94 @@ def test_service_error_sets_span_status(instrument_legacy, oci_client, compartme
     metrics = reader.get_metrics_data().resource_metrics[0].scope_metrics[0].metrics
     duration = next(metric for metric in metrics if metric.name == Meters.LLM_OPERATION_DURATION)
     assert duration.data.data_points[0].attributes["error.type"] == "ServiceError"
+
+
+def test_client_span_is_current_during_call_and_event_emission(
+    instrument_with_content, oci_client, compartment_id, span_exporter, log_exporter
+):
+    seen = {}
+
+    def fake_call_api(*args, **kwargs):
+        seen["span_id"] = _current_span_id()
+        return oci.response.Response(200, {}, _chat_result(), None)
+
+    with patch.object(oci_client.base_client, "call_api", side_effect=fake_call_api):
+        oci_client.chat(_chat_details(compartment_id))
+
+    # The client span was current while the SDK call ran, and is no longer current once ``chat`` returned.
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert seen["span_id"] == span.context.span_id
+    assert _current_span_id() == trace.INVALID_SPAN_ID
+
+    logs = log_exporter.get_finished_logs()
+    assert [log.log_record.event_name for log in logs] == ["gen_ai.user.message", "gen_ai.choice"]
+    _assert_logs_correlated_with(logs, span)
+
+
+def test_streaming_span_is_current_while_pulling_events_and_finishing(
+    instrument_with_content, oci_client, compartment_id, span_exporter, log_exporter
+):
+    sse_client = RecordingSSEClient(STREAM_PAYLOADS)
+    result = _streaming_chat(oci_client, compartment_id, sse_client)
+    assert span_exporter.get_finished_spans() == ()
+
+    caller_span_ids = {_current_span_id() for _ in result.data.events()}
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.status.status_code == StatusCode.OK
+    # The client span is current while the SDK stream is read, but never leaks into the caller's loop body.
+    assert sse_client.pull_span_ids == [span.context.span_id] * len(STREAM_PAYLOADS)
+    assert caller_span_ids == {trace.INVALID_SPAN_ID}
+
+    logs = log_exporter.get_finished_logs()
+    assert [log.log_record.event_name for log in logs] == ["gen_ai.user.message", "gen_ai.choice"]
+    _assert_logs_correlated_with(logs, span)
+
+
+def test_streaming_early_exit_finishes_span_as_incomplete(
+    instrument_legacy, oci_client, compartment_id, span_exporter, reader
+):
+    sse_client = RecordingSSEClient(STREAM_PAYLOADS)
+    result = _streaming_chat(oci_client, compartment_id, sse_client)
+
+    events = result.data.events()
+    next(events)
+    events.close()  # what ``for event in events: ... break`` triggers once the generator is collected
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    # Stopped by the caller: the partial output is kept, but the span is neither OK nor an error.
+    assert span.status.status_code == StatusCode.UNSET
+    assert "error.type" not in span.attributes
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes
+    output_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["parts"] == [{"type": "text", "content": "Hello"}]
+
+    metrics = reader.get_metrics_data().resource_metrics[0].scope_metrics[0].metrics
+    assert Meters.LLM_OPERATION_DURATION in [metric.name for metric in metrics]
+
+
+def test_streaming_close_without_iteration_finishes_span(instrument_legacy, oci_client, compartment_id, span_exporter):
+    sse_client = RecordingSSEClient(STREAM_PAYLOADS)
+    result = _streaming_chat(oci_client, compartment_id, sse_client)
+
+    result.data.close()
+
+    assert sse_client.closed is True
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].status.status_code == StatusCode.UNSET
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in spans[0].attributes
+
+    # Neither closing again nor iterating afterwards may finish the span a second time.
+    result.data.close()
+    list(result.data.events())
+    assert len(span_exporter.get_finished_spans()) == 1
 
 
 def test_streaming_iteration_error_finishes_span(instrument_legacy, oci_client, compartment_id, span_exporter):

@@ -20,7 +20,9 @@ COHERE api format::
 
 import json
 import logging
+from contextlib import nullcontext
 
+from opentelemetry.trace import use_span
 from wrapt import ObjectProxy
 
 logger = logging.getLogger(__name__)
@@ -38,9 +40,7 @@ class StreamAccumulator:
         self._choices = {}
 
     def _choice(self, index):
-        return self._choices.setdefault(
-            index, {"text": "", "reasoning": "", "tool_calls": {}, "finish_reason": None}
-        )
+        return self._choices.setdefault(index, {"text": "", "reasoning": "", "tool_calls": {}, "finish_reason": None})
 
     def process(self, raw):
         if raw is None:
@@ -147,27 +147,57 @@ class StreamAccumulator:
 
 
 class OCIGenAIStreamWrapper(ObjectProxy):
-    """Proxy around the SDK's ``SSEClient`` that feeds events to the accumulator and finishes the span."""
+    """Proxy around the SDK's ``SSEClient`` that feeds events to the accumulator and finishes the span.
 
-    def __init__(self, wrapped, accumulator, on_done):
+    ``on_done(accumulator, error, complete)`` is invoked exactly once: with ``complete=True`` when the stream was
+    consumed to the end, with the exception when iteration failed, and with ``complete=False`` when the caller
+    stopped early (``close()`` or leaving the ``events()`` loop before exhaustion).
+    """
+
+    def __init__(self, wrapped, accumulator, on_done, span=None):
         super().__init__(wrapped)
         self._self_accumulator = accumulator
         self._self_on_done = on_done
+        self._self_span = span
         self._self_done = False
+
+    def _span_scope(self):
+        """Make the client span current while the SDK stream is read; never held across a ``yield``."""
+        if self._self_span is None:
+            return nullcontext()
+        # Stream errors are recorded once by ``on_done``; keep ``use_span`` from recording them a second time.
+        return use_span(self._self_span, end_on_exit=False, record_exception=False, set_status_on_exception=False)
 
     def events(self):
         try:
-            for event in self.__wrapped__.events():
-                self._self_accumulator.process(getattr(event, "data", None))
+            iterator = self.__wrapped__.events()
+            while True:
+                with self._span_scope():
+                    try:
+                        event = next(iterator)
+                    except StopIteration:
+                        break
+                    self._self_accumulator.process(getattr(event, "data", None))
                 yield event
         except Exception as error:
-            self._finish(error)
+            self._finish(error, complete=False)
             raise
-        finally:
-            self._finish(None)
+        except BaseException:
+            # ``GeneratorExit`` (the caller left the loop), ``KeyboardInterrupt``...: partial, not successful.
+            self._finish(None, complete=False)
+            raise
+        else:
+            self._finish(None, complete=True)
 
-    def _finish(self, error):
+    def close(self):
+        """Close the underlying SSE stream; finishes the span as incomplete unless it was already consumed."""
+        try:
+            return self.__wrapped__.close()
+        finally:
+            self._finish(None, complete=False)
+
+    def _finish(self, error, complete=True):
         if self._self_done:
             return
         self._self_done = True
-        self._self_on_done(self._self_accumulator, error)
+        self._self_on_done(self._self_accumulator, error, complete)

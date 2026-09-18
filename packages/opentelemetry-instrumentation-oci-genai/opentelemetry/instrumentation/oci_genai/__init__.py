@@ -48,7 +48,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
 )
-from opentelemetry.trace import SpanKind, get_tracer
+from opentelemetry.trace import SpanKind, get_tracer, use_span
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
@@ -157,25 +157,30 @@ def _finish_streaming_span(
     start_time,
     accumulator,
     error,
+    complete,
 ):
-    """Callback invoked by ``OCIGenAIStreamWrapper`` once the SSE stream is exhausted (or fails)."""
+    """Callback invoked once by ``OCIGenAIStreamWrapper`` when the SSE stream is exhausted, fails or is closed early."""
     try:
-        if error is not None:
-            _record_exception(span, error)
-        else:
-            usage = set_streaming_response_attributes(span, accumulator)
-            if should_emit_events() and event_logger:
-                emit_streaming_response_events(accumulator, event_logger)
+        # The stream is consumed in the caller's context long after ``_wrap`` returned: reactivate the client span so
+        # the response events and metrics recorded here are correlated with it.
+        with use_span(span, end_on_exit=False):
+            if error is not None:
+                _record_exception(span, error)
             else:
-                set_streaming_output_attributes(span, accumulator)
+                usage = set_streaming_response_attributes(span, accumulator)
+                if should_emit_events() and event_logger:
+                    emit_streaming_response_events(accumulator, event_logger)
+                else:
+                    set_streaming_output_attributes(span, accumulator)
 
-            attributes = _metric_attributes(operation, request_model)
-            if duration_histogram:
-                duration_histogram.record(time.time() - start_time, attributes=attributes)
-            record_usage_metrics(token_histogram, usage, attributes)
+                attributes = _metric_attributes(operation, request_model)
+                if duration_histogram:
+                    duration_histogram.record(time.time() - start_time, attributes=attributes)
+                record_usage_metrics(token_histogram, usage, attributes)
 
-            if span.is_recording():
-                span.set_status(Status(StatusCode.OK))
+                # A stream the caller closed or abandoned before the end is neither an error nor a success.
+                if complete and span.is_recording():
+                    span.set_status(Status(StatusCode.OK))
     except Exception as e:
         logger.debug("OpenLLMetry failed to finish OCI GenAI streaming span, error: %s", e)
         if Config.exception_logger:
@@ -238,46 +243,50 @@ def _wrap(
         },
     )
 
-    _handle_request(span, operation, details, instance, event_logger)
+    # ``start_span`` does not make the span current: activate it so the events emitted here carry its trace
+    # context and spans created inside the SDK call become children rather than siblings.
+    with use_span(span, end_on_exit=False):
+        _handle_request(span, operation, details, instance, event_logger)
 
-    start_time = time.time()
-    try:
-        response = wrapped(*args, **kwargs)
-    except Exception as e:
-        _record_exception(span, e)
-        if duration_histogram:
-            duration_histogram.record(
-                time.time() - start_time,
-                attributes={**_metric_attributes(operation, request_model), ERROR_TYPE: e.__class__.__name__},
+        start_time = time.time()
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            _record_exception(span, e)
+            if duration_histogram:
+                duration_histogram.record(
+                    time.time() - start_time,
+                    attributes={**_metric_attributes(operation, request_model), ERROR_TYPE: e.__class__.__name__},
+                )
+            span.end()
+            raise
+
+        if is_streaming_response(operation, details, response):
+            # The span is completed once the caller has consumed, or closed, ``response.data.events()``.
+            response.data = OCIGenAIStreamWrapper(
+                response.data,
+                StreamAccumulator(),
+                partial(
+                    _finish_streaming_span,
+                    span,
+                    operation,
+                    request_model,
+                    token_histogram,
+                    duration_histogram,
+                    event_logger,
+                    start_time,
+                ),
+                span=span,
             )
-        span.end()
-        raise
+            return response
 
-    if is_streaming_response(operation, details, response):
-        # The span is completed once the caller has consumed ``response.data.events()``.
-        response.data = OCIGenAIStreamWrapper(
-            response.data,
-            StreamAccumulator(),
-            partial(
-                _finish_streaming_span,
-                span,
-                operation,
-                request_model,
-                token_histogram,
-                duration_histogram,
-                event_logger,
-                start_time,
-            ),
+        _handle_response(
+            span, operation, response, request_model, token_histogram, duration_histogram, start_time, event_logger
         )
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+        span.end()
         return response
-
-    _handle_response(
-        span, operation, response, request_model, token_histogram, duration_histogram, start_time, event_logger
-    )
-    if span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-    span.end()
-    return response
 
 
 class OCIGenAIInstrumentor(BaseInstrumentor):
