@@ -19,7 +19,7 @@ from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
 )
 from opentelemetry.semconv_ai import GenAISystem, SpanAttributes, TraceloopSpanKindValues, Meters
 from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
-from .utils import _messages_to_otel_input, _response_to_otel_output
+from .utils import _messages_to_otel_input, _response_to_otel_output, should_send_prompts
 
 _instruments = ("crewai >= 1.0.0",)
 
@@ -266,9 +266,11 @@ def wrap_tool_run(tracer, duration_histogram, token_histogram, wrapped, instance
         try:
             set_span_attribute(span, GenAIAttributes.GEN_AI_TOOL_DESCRIPTION,
                                getattr(instance, "description", None))
-            set_span_attribute(span, "gen_ai.tool.call.arguments", _tool_arguments(args, kwargs))
+            if should_send_prompts():
+                set_span_attribute(span, "gen_ai.tool.call.arguments", _tool_arguments(args, kwargs))
             result = wrapped(*args, **kwargs)
-            set_span_attribute(span, "gen_ai.tool.call.result", str(result) if result is not None else None)
+            if should_send_prompts():
+                set_span_attribute(span, "gen_ai.tool.call.result", _tool_result(result))
             span.set_status(Status(StatusCode.OK))
             return result
         except Exception as ex:
@@ -287,6 +289,18 @@ def _tool_arguments(args, kwargs) -> str | None:
         return json.dumps(payload, default=str)
     except (TypeError, ValueError):
         return str(payload)
+
+
+def _tool_result(result) -> str | None:
+    """Serialize a tool result, encoding structured values as JSON."""
+    if result is None:
+        return None
+    if isinstance(result, (dict, list, tuple)):
+        try:
+            return json.dumps(result, default=str)
+        except (TypeError, ValueError):
+            pass
+    return str(result)
 
 
 def _set_messages_attributes(span, messages_arg, result):

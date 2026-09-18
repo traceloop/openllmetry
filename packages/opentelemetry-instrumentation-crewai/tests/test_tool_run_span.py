@@ -38,6 +38,14 @@ class BoomTool(BaseTool):
         raise ValueError("kaboom")
 
 
+class StructuredTool(BaseTool):
+    name: str = "structured"
+    description: str = "Returns a dict."
+
+    def _run(self, **kwargs) -> dict:
+        return {"ok": True, "items": [1, 2]}
+
+
 @pytest.fixture
 def exporter():
     return InMemorySpanExporter()
@@ -95,3 +103,25 @@ def test_tool_run_records_error_status_and_reraises(tracer, exporter):
     span = _first_span(exporter)
     assert span.name == "boom.tool"
     assert span.status.status_code == StatusCode.ERROR
+
+
+def test_tool_run_serializes_structured_result_as_json(tracer, exporter):
+    tool = StructuredTool()
+
+    wrap_tool_run(tracer, None, None)(tool.run, tool, [], {})
+
+    attrs = dict(_first_span(exporter).attributes or {})
+    assert json.loads(attrs["gen_ai.tool.call.result"]) == {"ok": True, "items": [1, 2]}
+
+
+def test_tool_run_omits_content_when_tracing_disabled(tracer, exporter, monkeypatch):
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+    tool = EchoTool()
+
+    wrap_tool_run(tracer, None, None)(tool.run, tool, [], {"text": "secret"})
+
+    attrs = dict(_first_span(exporter).attributes or {})
+    # metadata still present, content omitted
+    assert attrs[GenAIAttributes.GEN_AI_TOOL_NAME] == "echo"
+    assert "gen_ai.tool.call.arguments" not in attrs
+    assert "gen_ai.tool.call.result" not in attrs
