@@ -1223,8 +1223,7 @@ def metrics_common_attributes():
     if association_properties is not None:
         for key, value in association_properties.items():
             if isinstance(value, (list, dict)):
-                # OTel metric attributes must be scalar/hashable
-                value = json.dumps(value)
+                value = json.dumps(value, sort_keys=True)
             common_attributes[
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
             ] = value

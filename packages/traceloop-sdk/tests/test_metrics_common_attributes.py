@@ -50,5 +50,30 @@ def test_dict_valued_association_property_is_json_encoded():
     attributes = metrics_common_attributes()
 
     key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.metadata"
-    assert attributes[key] == json.dumps({"nested": "value"})
+    assert attributes[key] == json.dumps({"nested": "value"}, sort_keys=True)
     hash(attributes[key])
+
+
+def test_dict_valued_association_property_is_order_independent():
+    """Equal dicts with different key insertion order must serialize to the same
+    string, otherwise the metrics SDK treats them as distinct attribute values and
+    splits what should be one aggregated series into several."""
+    attach(
+        set_value(
+            "association_properties",
+            {"metadata": {"a": 1, "b": 2}},
+        )
+    )
+    attributes_a = metrics_common_attributes()
+
+    attach(
+        set_value(
+            "association_properties",
+            {"metadata": {"b": 2, "a": 1}},
+        )
+    )
+    attributes_b = metrics_common_attributes()
+
+    key = f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.metadata"
+    assert attributes_a[key] == attributes_b[key]
+
