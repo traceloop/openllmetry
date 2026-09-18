@@ -19,6 +19,7 @@ from opentelemetry.instrumentation.mcp.utils import (
     Config,
     dont_throw,
     error_status,
+    record_error,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
@@ -232,18 +233,18 @@ class McpInstrumentor(BaseInstrumentor):
                 SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
             )
 
-            # Store the span context manager on the instance to properly exit it later
+            # Store the span context manager on the instance to properly exit it
+            # later, and the span itself so the exit wrapper can report a
+            # teardown failure on it.
             setattr(instance, "_tracing_session_context_manager", span_context_manager)
+            setattr(instance, "_tracing_session_span", span)
 
             try:
                 # Call the original method
                 result = await wrapped(*args, **kwargs)
                 return result
             except Exception as e:
-                span.set_attribute(ERROR_TYPE, type(e).__name__)
-                if should_send_prompts():
-                    span.record_exception(e)
-                span.set_status(error_status(str(e)))
+                record_error(span, e)
                 raise
 
         return traced_method
@@ -266,7 +267,12 @@ class McpInstrumentor(BaseInstrumentor):
 
                 return result
             except Exception as e:
-                # End the session span context manager with exception info
+                # Record the teardown failure before __exit__ ends the span --
+                # the span's own exception recording is off, so nothing else
+                # would report it.
+                span = getattr(instance, "_tracing_session_span", None)
+                if span is not None:
+                    record_error(span, e)
                 context_manager = getattr(
                     instance, "_tracing_session_context_manager", None
                 )
@@ -376,13 +382,7 @@ class McpInstrumentor(BaseInstrumentor):
                 span.set_status(Status(StatusCode.OK))
             return result
         except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            # record_exception writes the message and the full stacktrace as
-            # event attributes, and on the client path that text comes from the
-            # server, so it is content.
-            if should_send_prompts():
-                span.record_exception(e)
-            span.set_status(error_status(str(e)))
+            record_error(span, e)
             raise
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
@@ -593,32 +593,44 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
         else:
             return await self.__wrapped__.send(item)
 
-        with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
-            if hasattr(request, "result"):
-                # The response body is content, and so is the error text
-                # below -- it is the same payload.
-                if should_send_prompts():
-                    span.set_attribute(
-                        SpanAttributes.MCP_RESPONSE_VALUE,
-                        f"{serialize(request.result)}",
-                    )
-                if "isError" in request.result:
-                    if request.result["isError"] is True:
-                        span.set_status(
-                            error_status(f"{request.result['content'][0]['text']}")
+        # The wrapped send runs inside this span, so a transport failure would
+        # be recorded by OTel with its message and stacktrace ungated. The
+        # except below reports it instead, with the message gated.
+        with self._tracer.start_as_current_span(
+            "ResponseStreamWriter",
+            record_exception=False,
+            set_status_on_exception=False,
+        ) as span:
+            try:
+                if hasattr(request, "result"):
+                    # The response body is content, and so is the error text
+                    # below -- it is the same payload.
+                    if should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.MCP_RESPONSE_VALUE,
+                            f"{serialize(request.result)}",
                         )
-            if hasattr(request, "id"):
-                span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
+                    if "isError" in request.result:
+                        if request.result["isError"] is True:
+                            span.set_status(
+                                error_status(f"{request.result['content'][0]['text']}")
+                            )
+                if hasattr(request, "id"):
+                    span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
-            if not isinstance(request, JSONRPCRequest):
+                if not isinstance(request, JSONRPCRequest):
+                    return await self.__wrapped__.send(item)
+                meta = None
+                if not request.params:
+                    request.params = {}
+                meta = request.params.setdefault("_meta", {})
+
+                propagate.get_global_textmap().inject(meta)
                 return await self.__wrapped__.send(item)
-            meta = None
-            if not request.params:
-                request.params = {}
-            meta = request.params.setdefault("_meta", {})
 
-            propagate.get_global_textmap().inject(meta)
-            return await self.__wrapped__.send(item)
+            except Exception as e:
+                record_error(span, e)
+                raise
 
 
 @dataclass(slots=True, frozen=True)

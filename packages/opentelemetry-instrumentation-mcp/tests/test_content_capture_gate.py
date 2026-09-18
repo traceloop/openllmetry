@@ -19,7 +19,9 @@ import json
 
 import pytest
 from fastmcp import Client, FastMCP
+from fastmcp.exceptions import ToolError
 from mcp.types import JSONRPCMessage, JSONRPCResponse
+from opentelemetry.instrumentation.mcp import McpInstrumentor
 from opentelemetry.instrumentation.mcp.instrumentation import InstrumentedStreamWriter
 from opentelemetry.trace import StatusCode
 
@@ -207,12 +209,15 @@ async def test_non_tool_response_body_captured_when_content_capture_on(
 class _Sink:
     """Stands in for the wrapped stream, recording what was forwarded to it."""
 
-    def __init__(self):
-        """Start with nothing sent."""
+    def __init__(self, failure=None):
+        """Start with nothing sent, optionally failing every send."""
         self.sent = []
+        self.failure = failure
 
     async def send(self, item):
-        """Record the forwarded item."""
+        """Record the forwarded item, or fail the way a dead transport would."""
+        if self.failure is not None:
+            raise self.failure
         self.sent.append(item)
 
 
@@ -251,3 +256,135 @@ async def test_stream_writer_error_status_honors_the_switch(
     assert spans, "expected the response to be traced"
     assert any(s.status.status_code is StatusCode.ERROR for s in spans)
     assert (MARKER in _all_recorded_text(span_exporter)) is expected
+
+
+def _exception_events(span_exporter) -> list:
+    """Every exception event recorded across the exported spans."""
+    return [
+        event
+        for span in span_exporter.get_finished_spans()
+        for event in span.events
+        if event.name == "exception"
+    ]
+
+
+@pytest.mark.parametrize(("switch", "expected"), [("false", False), ("true", True)])
+async def test_transport_failure_text_honors_the_switch(
+    span_exporter, tracer_provider, monkeypatch, switch, expected
+) -> None:
+    """A failing wrapped send must not put its message on the span ungated.
+
+    The send runs inside the ResponseStreamWriter span, so OTel would have
+    recorded the message and stacktrace on the way out.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", switch)
+    sink = _Sink(failure=RuntimeError(f"transport died: {MARKER}"))
+
+    # send() is @dont_throw, so the failure is logged rather than raised.
+    await InstrumentedStreamWriter(sink, tracer_provider.get_tracer(__name__)).send(
+        _error_response()
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert spans, "expected the failed write to be traced"
+    assert any(s.status.status_code is StatusCode.ERROR for s in spans)
+    assert any("error.type" in (s.attributes or {}) for s in spans)
+    assert (MARKER in _all_recorded_text(span_exporter)) is expected
+
+
+@pytest.mark.parametrize(("switch", "expected"), [("false", False), ("true", True)])
+async def test_session_teardown_failure_is_recorded(
+    span_exporter, tracer_provider, monkeypatch, switch, expected
+) -> None:
+    """A teardown failure must stay visible on mcp.client.session.
+
+    The exit wrapper hands the exception to the span's context manager, whose
+    own recording is off, so nothing would report the failure unless the
+    wrapper does it itself. Driven directly: Client.__aexit__ is already
+    wrapped, so patching it would replace the wrapper under test.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", switch)
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+
+    class _Client:
+        """Stands in for a FastMCP client carrying the wrapper's own state."""
+
+    client = _Client()
+
+    async def _ok(*args, **kwargs):
+        """Enter successfully, the way a healthy client would."""
+        return None
+
+    async def _explode(*args, **kwargs):
+        """Fail on teardown, the way a dead stdio transport does."""
+        raise RuntimeError(f"teardown exploded: {MARKER}")
+
+    await instrumentor._fastmcp_client_enter_wrapper(tracer)(_ok, client, (), {})
+    await instrumentor._fastmcp_client_exit_wrapper(tracer)(_explode, client, (), {})
+
+    session_spans = [
+        s for s in span_exporter.get_finished_spans() if s.name == "mcp.client.session"
+    ]
+    assert session_spans, "expected the session span to be exported"
+    assert all(s.status.status_code is StatusCode.ERROR for s in session_spans)
+    assert (MARKER in _all_recorded_text(span_exporter)) is expected
+
+
+async def test_stack_frames_survive_content_capture_off(
+    span_exporter, monkeypatch
+) -> None:
+    """Withholding the message must not cost the stacktrace, which is not content.
+
+    A fully formatted traceback would not do: its last line repeats the
+    message, so only the frames can be recorded.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+    async with Client(_failing_server()) as client:
+        with pytest.raises(Exception):
+            await client.call_tool("boom", {"token": MARKER})
+
+    events = _exception_events(span_exporter)
+    assert events, "the failure must still be recorded as an exception event"
+
+    for event in events:
+        attributes = event.attributes or {}
+        assert attributes.get("exception.type"), "the type is not content"
+        assert attributes.get("exception.stacktrace"), "the frames are not content"
+        assert MARKER not in str(attributes.get("exception.stacktrace"))
+        assert MARKER not in str(attributes.get("exception.message", ""))
+
+
+def _literal_failing_server() -> FastMCP:
+    """A tool whose failure message is written literally at the raise site."""
+    server = FastMCP("content-gate-server")
+
+    @server.tool()
+    async def boom_literal() -> str:
+        """Fail the way a FastMCP tool usually does: ToolError, hardcoded.
+
+        ToolError is not re-wrapped by fastmcp's tool manager, so this frame
+        stays in the traceback -- source line and all.
+        """
+        raise ToolError("content-capture-marker-9f3a from a source literal")
+
+    return server
+
+
+async def test_source_literals_do_not_leak_through_the_stacktrace(
+    span_exporter, monkeypatch
+) -> None:
+    """A raise site's message also lives in its frame's source line.
+
+    The interpolated marker the other tests use never appears in source, so
+    only a literal one exercises this.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+    async with Client(_literal_failing_server()) as client:
+        with pytest.raises(Exception):
+            await client.call_tool("boom_literal", {})
+
+    assert _exception_events(span_exporter), "the failure must still be recorded"
+    assert MARKER not in _all_recorded_text(span_exporter)

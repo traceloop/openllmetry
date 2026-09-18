@@ -6,10 +6,9 @@ import os
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw, error_status, should_send_prompts
+from .utils import dont_throw, record_error, should_send_prompts
 
 
 class FastMCPInstrumentor:
@@ -118,16 +117,8 @@ class FastMCPInstrumentor:
                     try:
                         result = await wrapped(*args, **kwargs)
                     except Exception as e:
-                        tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        # record_exception writes the message and the full
-                        # stacktrace as event attributes, both of which carry
-                        # the tool's own text.
-                        if should_send_prompts():
-                            tool_span.record_exception(e)
-                            mcp_span.record_exception(e)
-                        tool_span.set_status(error_status(str(e)))
-                        mcp_span.set_status(error_status(str(e)))
+                        record_error(tool_span, e)
+                        record_error(mcp_span, e)
                         raise
 
                     try:
