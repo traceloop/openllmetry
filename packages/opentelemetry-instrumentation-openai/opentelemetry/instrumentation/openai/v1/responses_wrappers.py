@@ -3,6 +3,7 @@ import pydantic
 import re
 import threading
 import time
+from collections import OrderedDict
 from typing import Any, Optional, Union
 
 from openai import AsyncStream, Stream
@@ -197,6 +198,30 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+# Bounded set of response ids that already emitted a completion span.
+# Holding only the id keeps memory tiny; evicting an id only reintroduces
+# today's duplicate-span behavior (#4473).
+_emitted_response_ids: OrderedDict[str, None] = OrderedDict()
+_EMITTED_RESPONSE_IDS_MAX = 2048
+
+
+def _mark_response_emitted(response_id: Optional[str]) -> bool:
+    """Return True on first completion emission for response_id.
+
+    Later create/retrieve/parse calls on the same completed response skip
+    span emission so start_time/input/tools/trace_context from the original
+    create are not replaced by a degraded duplicate span.
+    """
+    if not response_id:
+        return False
+    if response_id in _emitted_response_ids:
+        _emitted_response_ids.move_to_end(response_id)
+        return False
+    _emitted_response_ids[response_id] = None
+    while len(_emitted_response_ids) > _EMITTED_RESPONSE_IDS_MAX:
+        _emitted_response_ids.popitem(last=False)
+    return True
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -634,17 +659,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return response
 
     if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if _mark_response_emitted(parsed_response.id):
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
         # Completed responses are terminal; drop the module-global entry so
         # successful runs do not retain TracedData for the process lifetime.
         responses.pop(parsed_response.id, None)
@@ -805,17 +831,18 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if _mark_response_emitted(parsed_response.id):
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
         # Completed responses are terminal; drop the module-global entry so
         # successful runs do not retain TracedData for the process lifetime.
         responses.pop(parsed_response.id, None)
@@ -1075,9 +1102,13 @@ class ResponseStream(ObjectProxy):
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)
                 self._span.end()
-                # Terminal success path: do not keep completed entries alive.
-                if getattr(self._traced_data, "response_id", None):
-                    responses.pop(self._traced_data.response_id, None)
+                # Only completed responses are terminal. In-progress entries must
+                # stay available for Responses.retrieve polling (CodeRabbit #4482).
+                status = getattr(self._traced_data, "response_status", None)
+                response_id = getattr(self._traced_data, "response_id", None)
+                if status == "completed" and response_id:
+                    _mark_response_emitted(response_id)
+                    responses.pop(response_id, None)
                 self._cleanup_completed = True
 
             except Exception as e:

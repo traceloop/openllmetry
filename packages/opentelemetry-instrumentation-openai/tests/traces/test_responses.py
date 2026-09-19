@@ -993,7 +993,68 @@ def test_completed_responses_are_removed_from_global_dict():
     # Source contract: sync/async completed paths also pop after span.end().
     src = Path(rw.__file__).read_text(encoding="utf-8")
     assert src.count("responses.pop(parsed_response.id, None)") >= 2
-    assert "responses.pop(self._traced_data.response_id, None)" in src
+    assert "responses.pop(response_id, None)" in src
+
+
+def test_incomplete_stream_exit_preserves_response_entry():
+    """CodeRabbit #4482: stream cleanup must not drop in-progress entries that
+    Responses.retrieve still needs for polling."""
+    import threading
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers as rw
+
+    rid = "resp_in_progress_stream_unit"
+    traced = rw.TracedData(
+        start_time=1.0,
+        response_id=rid,
+        input="hello",
+        response_status="in_progress",
+    )
+    rw.responses[rid] = traced
+
+    incomplete = MagicMock()
+    incomplete.id = rid
+    incomplete.model = "gpt-4.1"
+    incomplete.status = "in_progress"
+    incomplete.incomplete_details = None
+    incomplete.usage = None
+    incomplete.output = []
+
+    stream = SimpleNamespace(
+        _cleanup_lock=threading.Lock(),
+        _cleanup_completed=False,
+        _complete_response_data=incomplete,
+        _output_text="",
+        _traced_data=traced,
+        _span=MagicMock(),
+        _tracer=MagicMock(),
+        _request_kwargs={},
+        _start_time=1.0,
+    )
+    rw.ResponseStream._process_complete_response(stream)
+    assert rid in rw.responses, "in-progress streaming entry must be retained"
+    stream._span.end.assert_called()
+    rw.responses.pop(rid, None)
+
+
+def test_duplicate_completed_emission_is_skipped():
+    """#4473 second bug: a later retrieve/parse on an already completed response
+    must not emit a second degraded span."""
+    from unittest.mock import MagicMock, patch
+
+    from opentelemetry.instrumentation.openai.v1 import responses_wrappers as rw
+
+    rid = "resp_dup_emit_unit"
+    rw._emitted_response_ids.clear()
+    assert rw._mark_response_emitted(rid) is True
+    assert rw._mark_response_emitted(rid) is False
+    assert rw._mark_response_emitted(rid) is False
+    # empty id never marks
+    assert rw._mark_response_emitted("") is False
+    assert rw._mark_response_emitted(None) is False
+    rw._emitted_response_ids.clear()
 
 
 def test_cancel_paths_still_pop_responses_dict():
@@ -1005,3 +1066,4 @@ def test_cancel_paths_still_pop_responses_dict():
     existing = rw.responses.pop(rid, None)
     assert existing is traced
     assert rid not in rw.responses
+
