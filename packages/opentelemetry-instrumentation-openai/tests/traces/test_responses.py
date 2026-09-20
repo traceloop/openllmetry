@@ -1042,7 +1042,8 @@ def test_incomplete_stream_exit_preserves_response_entry():
 def test_duplicate_completed_emission_is_skipped():
     """#4473 second bug: a later retrieve/parse on an already completed response
     must not emit a second degraded span."""
-    from unittest.mock import MagicMock, patch
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
 
     from opentelemetry.instrumentation.openai.v1 import responses_wrappers as rw
 
@@ -1054,6 +1055,39 @@ def test_duplicate_completed_emission_is_skipped():
     # empty id never marks
     assert rw._mark_response_emitted("") is False
     assert rw._mark_response_emitted(None) is False
+
+    # Stream path: already-emitted completed response still closes the span
+    # and pops the dict entry, but does not re-export completion attributes.
+    traced = rw.TracedData(
+        start_time=1.0,
+        response_id=rid,
+        input="hello",
+        response_status="completed",
+        output_text="world",
+    )
+    rw.responses[rid] = traced
+    complete = MagicMock()
+    complete.id = rid
+    complete.model = "gpt-4.1"
+    complete.status = "completed"
+    complete.incomplete_details = None
+    complete.usage = None
+    complete.output = []
+    span = MagicMock()
+    stream = SimpleNamespace(
+        _cleanup_lock=threading.Lock(),
+        _cleanup_completed=False,
+        _complete_response_data=complete,
+        _output_text="world",
+        _traced_data=traced,
+        _span=span,
+        _tracer=MagicMock(),
+        _request_kwargs={},
+        _start_time=1.0,
+    )
+    rw.ResponseStream._process_complete_response(stream)
+    span.end.assert_called()
+    assert rid not in rw.responses
     rw._emitted_response_ids.clear()
 
 

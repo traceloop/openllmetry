@@ -203,6 +203,7 @@ responses: dict[str, TracedData] = {}
 # Holding only the id keeps memory tiny; evicting an id only reintroduces
 # today's duplicate-span behavior (#4473).
 _emitted_response_ids: OrderedDict[str, None] = OrderedDict()
+_emitted_response_ids_lock = threading.Lock()
 _EMITTED_RESPONSE_IDS_MAX = 2048
 
 
@@ -211,17 +212,20 @@ def _mark_response_emitted(response_id: Optional[str]) -> bool:
 
     Later create/retrieve/parse calls on the same completed response skip
     span emission so start_time/input/tools/trace_context from the original
-    create are not replaced by a degraded duplicate span.
+    create are not replaced by a degraded duplicate span. Lookup, LRU
+    update, insert, and eviction run under one lock so concurrent
+    completed wrappers cannot both observe "first emission".
     """
     if not response_id:
         return False
-    if response_id in _emitted_response_ids:
-        _emitted_response_ids.move_to_end(response_id)
-        return False
-    _emitted_response_ids[response_id] = None
-    while len(_emitted_response_ids) > _EMITTED_RESPONSE_IDS_MAX:
-        _emitted_response_ids.popitem(last=False)
-    return True
+    with _emitted_response_ids_lock:
+        if response_id in _emitted_response_ids:
+            _emitted_response_ids.move_to_end(response_id)
+            return False
+        _emitted_response_ids[response_id] = None
+        while len(_emitted_response_ids) > _EMITTED_RESPONSE_IDS_MAX:
+            _emitted_response_ids.popitem(last=False)
+        return True
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -1099,15 +1103,25 @@ class ResponseStream(ObjectProxy):
 
                     responses[parsed_response.id] = self._traced_data
 
-                set_data_attributes(self._traced_data, self._span)
-                self._span.set_status(StatusCode.OK)
-                self._span.end()
                 # Only completed responses are terminal. In-progress entries must
                 # stay available for Responses.retrieve polling (CodeRabbit #4482).
+                # Check first-emission BEFORE ending the long-lived stream span so a
+                # retrieve/parse that already marked this response_id cannot race
+                # into a second completion export.
                 status = getattr(self._traced_data, "response_status", None)
                 response_id = getattr(self._traced_data, "response_id", None)
-                if status == "completed" and response_id:
-                    _mark_response_emitted(response_id)
+                is_terminal_completed = status == "completed" and bool(response_id)
+                should_emit = True
+                if is_terminal_completed:
+                    should_emit = _mark_response_emitted(response_id)
+
+                if should_emit:
+                    set_data_attributes(self._traced_data, self._span)
+                    self._span.set_status(StatusCode.OK)
+                # Always close the stream span; discard attributes on duplicates.
+                if self._span:
+                    self._span.end()
+                if is_terminal_completed:
                     responses.pop(response_id, None)
                 self._cleanup_completed = True
 
