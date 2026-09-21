@@ -1042,6 +1042,7 @@ def test_incomplete_stream_exit_preserves_response_entry():
 def test_duplicate_completed_emission_is_skipped():
     """#4473 second bug: a later retrieve/parse on an already completed response
     must not emit a second degraded span."""
+    import threading
     from types import SimpleNamespace
     from unittest.mock import MagicMock
 
