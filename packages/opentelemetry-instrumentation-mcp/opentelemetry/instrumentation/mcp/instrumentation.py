@@ -298,81 +298,102 @@ class McpInstrumentor(BaseInstrumentor):
                 pass
 
         with tracer.start_as_current_span(span_name) as span:
-            # Set tool-specific attributes
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
-            )
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
-
-            # Add input
-            clean_input = self._extract_clean_input(method, params)
-            if clean_input:
-                try:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
-                    )
-                except (TypeError, ValueError):
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
-                    )
-
+            self._decorate_tool_input_span(span, method, params, entity_name)
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=True
             )
 
+    @dont_throw
+    def _decorate_tool_input_span(self, span, method, params, entity_name):
+        # Set tool-specific attributes
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
+        )
+        span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+
+        # Add input
+        clean_input = self._extract_clean_input(method, params)
+        if clean_input:
+            try:
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
+                )
+            except (TypeError, ValueError):
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
+                )
+
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
         with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
+            self._decorate_mcp_input_span(span, args)
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
 
+    @dont_throw
+    def _decorate_mcp_input_span(self, span, args):
+        span.set_attribute(
+            SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+        )
+
     async def _execute_and_handle_result(
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
-        """Execute the wrapped function and handle the result"""
+        """Execute the wrapped function and handle the result.
+
+        The RPC call and its result/exception are the source of truth for what
+        this wrapper returns. All span decoration is a side effect and is
+        isolated so that a tracing failure can neither replace a valid result
+        nor mask (or fabricate) the RPC exception.
+        """
         try:
             result = await wrapped(*args, **kwargs)
-            # Add output
-            if clean_output:
-                clean_output_data = self._extract_clean_output(method, result)
-                if clean_output_data:
-                    try:
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            json.dumps(clean_output_data),
-                        )
-                    except (TypeError, ValueError):
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            str(clean_output_data),
-                        )
-            else:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
-                )
-            # Handle errors
-            if hasattr(result, "isError") and result.isError:
-                span.set_attribute(ERROR_TYPE, "tool_error")
-                if len(result.content) > 0:
-                    # content[0] may be a non-text block (image, resource,
-                    # audio); fall back to its repr rather than raising.
-                    first = result.content[0]
-                    message = getattr(first, "text", None)
-                    if message is None:
-                        message = str(first)
-                    span.set_status(Status(StatusCode.ERROR, f"{message}"))
-            else:
-                span.set_status(Status(StatusCode.OK))
-            return result
         except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            self._decorate_error_span(span, e)
             raise
+        self._decorate_result_span(span, method, result, clean_output)
+        return result
+
+    @dont_throw
+    def _decorate_error_span(self, span, exception):
+        span.set_attribute(ERROR_TYPE, type(exception).__name__)
+        span.record_exception(exception)
+        span.set_status(Status(StatusCode.ERROR, str(exception)))
+
+    @dont_throw
+    def _decorate_result_span(self, span, method, result, clean_output):
+        # Add output
+        if clean_output:
+            clean_output_data = self._extract_clean_output(method, result)
+            if clean_output_data:
+                try:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                        json.dumps(clean_output_data),
+                    )
+                except (TypeError, ValueError):
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                        str(clean_output_data),
+                    )
+        else:
+            span.set_attribute(
+                SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+            )
+        # Handle errors
+        if hasattr(result, "isError") and result.isError:
+            span.set_attribute(ERROR_TYPE, "tool_error")
+            if len(result.content) > 0:
+                # content[0] may be a non-text block (image, resource,
+                # audio); fall back to its repr rather than raising.
+                first = result.content[0]
+                message = getattr(first, "text", None)
+                if message is None:
+                    message = str(first)
+                span.set_status(Status(StatusCode.ERROR, f"{message}"))
+        else:
+            span.set_status(Status(StatusCode.OK))
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
         """Extract clean input parameters for different MCP method types"""

@@ -100,3 +100,43 @@ async def test_iserror_with_non_text_content_does_not_raise():
     req = _Req("tools/call", types.SimpleNamespace(name="my_tool"))
     result = await traced(wrapped, None, (req,), {})
     assert result is result_obj
+
+
+@pytest.mark.asyncio
+async def test_post_call_span_decoration_failure_does_not_break_result(monkeypatch):
+    # A tracing failure AFTER the RPC completes (e.g. span.set_attribute raising)
+    # must not replace the valid result. Force _decorate_result_span's span ops
+    # to raise and assert the real result still comes back.
+    sentinel = _CallToolResult(is_error=False, content=[_TextBlock("ok")])
+
+    async def wrapped(*args, **kwargs):
+        return sentinel
+
+
+    class _ExplodingSpan:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def set_attribute(self, *a, **k):
+            raise RuntimeError("span backend down")
+
+        def set_status(self, *a, **k):
+            raise RuntimeError("span backend down")
+
+        def record_exception(self, *a, **k):
+            raise RuntimeError("span backend down")
+
+    class _Tracer:
+        def start_as_current_span(self, *a, **k):
+            return _ExplodingSpan()
+
+    # Patch the tracer this traced_method closed over is hard; instead patch the
+    # decoration helpers' target span via a fresh traced_method using a tracer
+    # that yields an exploding span.
+    tm = McpInstrumentor().patch_mcp_client(_Tracer())
+    req = _Req("tools/call", types.SimpleNamespace(name="my_tool"))
+    result = await tm(wrapped, None, (req,), {})
+    assert result is sentinel  # decoration failure must not touch the result
