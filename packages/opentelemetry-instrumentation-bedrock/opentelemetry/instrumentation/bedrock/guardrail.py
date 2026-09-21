@@ -31,7 +31,7 @@ def is_guardrail_activated(response):
                 return True
     if response.get("stopReason") == "guardrail_intervened":
         return True
-    return response.get("amazon-bedrock-guardrailAction") != "NONE"
+    return response.get("amazon-bedrock-guardrailAction", "NONE") != "NONE"
 
 
 def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
@@ -176,7 +176,8 @@ def guardrail_converse(span, response, vendor, model, metric_params):
             for guardrail_info in guardrail_infos:
                 output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
     if is_guardrail_activated(response):
-        metric_params.guardrail_activation.add(1, attrs)
+        if metric_params.guardrail_activation is not None:
+            metric_params.guardrail_activation.add(1, attrs)
         set_guardrail_attributes(span, input_filters, output_filters)
 
 
@@ -205,7 +206,8 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
                     output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
 
         if is_guardrail_activated(response_body):
-            metric_params.guardrail_activation.add(1, attrs)
+            if metric_params.guardrail_activation is not None:
+                metric_params.guardrail_activation.add(1, attrs)
             set_guardrail_attributes(span, input_filters, output_filters)
 
 
