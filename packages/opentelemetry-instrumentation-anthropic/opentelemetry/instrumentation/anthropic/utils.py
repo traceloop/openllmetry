@@ -20,10 +20,42 @@ _PYDANTIC_VERSION = version("pydantic")
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
+def _get_anthropic_sentinel_types() -> tuple:
+    """Dynamically discover Anthropic sentinel types available in this SDK version.
+
+    The Anthropic SDK uses sentinel objects (NotGiven / NOT_GIVEN, Omit) for unset
+    optional parameters. These are neither None nor "", so they slip past the plain
+    filter in set_span_attribute and reach span.set_attribute, which rejects them
+    with an "Invalid type" warning. They may not exist in older SDK versions, so we
+    discover them at runtime.
+    """
+    sentinel_types = []
+    try:
+        from anthropic import NotGiven
+
+        sentinel_types.append(NotGiven)
+    except ImportError:
+        pass
+    try:
+        from anthropic import Omit
+
+        sentinel_types.append(Omit)
+    except ImportError:
+        pass
+    return tuple(sentinel_types)
+
+
+# Tuple of Anthropic sentinel types for isinstance() checks (empty if none available)
+_ANTHROPIC_SENTINEL_TYPES: tuple = _get_anthropic_sentinel_types()
+
+
 def set_span_attribute(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
+    if value is None:
+        return
+    if _ANTHROPIC_SENTINEL_TYPES and isinstance(value, _ANTHROPIC_SENTINEL_TYPES):
+        return
+    if value != "":
+        span.set_attribute(name, value)
     return
 
 
