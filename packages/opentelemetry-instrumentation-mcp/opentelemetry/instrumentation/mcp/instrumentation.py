@@ -22,6 +22,8 @@ from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
 
 _instruments = ("mcp >= 1.6.0",)
 
+logger = logging.getLogger(__name__)
+
 
 class McpInstrumentor(BaseInstrumentor):
     def __init__(self, exception_logger=None):
@@ -178,25 +180,38 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
-        @dont_throw
+        # NOTE: this wrapper is applied to BaseSession.send_request, whose return
+        # value IS the RPC result the MCP SDK dereferences. It must therefore
+        # never swallow an error into None (that turns a tracing failure into a
+        # broken tool call), so it is deliberately NOT decorated with
+        # @dont_throw. Tracing side effects are guarded individually below; the
+        # underlying call is always awaited and its result/exception passed
+        # through unchanged.
         async def traced_method(wrapped, instance, args, kwargs):
-            meta = None
             method = None
             params = None
-            if len(args) > 0 and hasattr(args[0].root, "method"):
-                method = args[0].root.method
-            if len(args) > 0 and hasattr(args[0].root, "params"):
-                params = args[0].root.params
-            if params:
-                if hasattr(args[0].root.params, "meta"):
-                    meta = args[0].root.params.meta
+            try:
+                if len(args) > 0 and hasattr(args[0].root, "method"):
+                    method = args[0].root.method
+                if len(args) > 0 and hasattr(args[0].root, "params"):
+                    params = args[0].root.params
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
-                carrier = {}
-                TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                # Handle trace context propagation. inject() writes no
+                # traceparent when the current span context is invalid or
+                # non-recording, so read it defensively.
+                if params and len(args) > 0 and hasattr(params, "meta"):
+                    meta = params.meta
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    traceparent = carrier.get("traceparent")
+                    if traceparent is not None:
+                        meta.traceparent = traceparent
+                        args[0].root.params.meta = meta
+            except Exception:
+                logger.debug(
+                    "MCP instrumentation failed to prepare trace context",
+                    exc_info=True,
+                )
 
             # Create different span types based on method
             if method == "tools/call":
@@ -343,9 +358,13 @@ class McpInstrumentor(BaseInstrumentor):
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
                 if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                    # content[0] may be a non-text block (image, resource,
+                    # audio); fall back to its repr rather than raising.
+                    first = result.content[0]
+                    message = getattr(first, "text", None)
+                    if message is None:
+                        message = str(first)
+                    span.set_status(Status(StatusCode.ERROR, f"{message}"))
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
