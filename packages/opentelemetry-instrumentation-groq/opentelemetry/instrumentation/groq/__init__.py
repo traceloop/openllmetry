@@ -127,8 +127,15 @@ def _create_metrics(meter: Meter):
 
 def _process_streaming_chunk(chunk):
     """Extract content, tool_calls_delta, finish_reasons and usage from a streaming chunk."""
+    # Read usage before the empty-choices guard. Groq attaches x_groq.usage to a
+    # final chunk that may carry no choices at all; returning early would drop the
+    # only usage-bearing chunk and leave the token histograms empty.
+    usage = None
+    if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
+        usage = chunk.x_groq.usage
+
     if not chunk.choices:
-        return None, [], [], None
+        return None, [], [], usage
 
     content = ""
     tool_calls_delta = []
@@ -141,11 +148,6 @@ def _process_streaming_chunk(chunk):
             tool_calls_delta.extend(delta.tool_calls)
         if choice.finish_reason:
             finish_reasons.append(choice.finish_reason)
-
-    # Extract usage from x_groq if present in the final chunk
-    usage = None
-    if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
-        usage = chunk.x_groq.usage
 
     return content, tool_calls_delta, finish_reasons, usage
 
