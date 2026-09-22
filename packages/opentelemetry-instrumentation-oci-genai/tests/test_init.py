@@ -235,6 +235,7 @@ def test_streaming_early_exit_finishes_span_as_incomplete(
     next(events)
     events.close()  # what ``for event in events: ... break`` triggers once the generator is collected
 
+    assert sse_client.closed is True
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     span = spans[0]
