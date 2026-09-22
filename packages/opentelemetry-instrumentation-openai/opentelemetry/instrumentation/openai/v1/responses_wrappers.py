@@ -483,6 +483,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 @dont_throw
 @_with_tracer_wrapper
 def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+    """Trace synchronous Responses calls while preserving raw-response and stream interfaces."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -492,7 +493,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     try:
         response = wrapped(*args, **kwargs)
-        if isinstance(response, Stream):
+        parsed_response = parse_response(response)
+        if isinstance(parsed_response, Stream):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
             span = tracer.start_span(
@@ -503,13 +505,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
-            return ResponseStream(
+            stream = ResponseStream(
                 span=span,
-                response=response,
+                response=parsed_response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
+            if parsed_response is not response:
+                # SDK raw responses cache parse() results by their cast type.
+                response._parsed_by_type[response._cast_to] = stream
+                return response
+            return stream
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
@@ -574,8 +581,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             set_data_attributes(traced_data, span)
         span.end()
         raise
-    parsed_response = parse_response(response)
-
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
         existing_data = {}
@@ -654,6 +659,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 async def async_responses_get_or_create_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
 ):
+    """Trace asynchronous Responses calls while preserving raw-response and stream interfaces."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -663,7 +669,8 @@ async def async_responses_get_or_create_wrapper(
 
     try:
         response = await wrapped(*args, **kwargs)
-        if isinstance(response, (Stream, AsyncStream)):
+        parsed_response = await async_parse_response(response)
+        if isinstance(parsed_response, (Stream, AsyncStream)):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
             span = tracer.start_span(
@@ -674,13 +681,18 @@ async def async_responses_get_or_create_wrapper(
             )
             _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
 
-            return ResponseStream(
+            stream = ResponseStream(
                 span=span,
-                response=response,
+                response=parsed_response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
+            if parsed_response is not response:
+                # SDK raw responses cache parse() results by their cast type.
+                response._parsed_by_type[response._cast_to] = stream
+                return response
+            return stream
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
@@ -741,8 +753,6 @@ async def async_responses_get_or_create_wrapper(
             set_data_attributes(traced_data, span)
         span.end()
         raise
-    parsed_response = await async_parse_response(response)
-
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
         existing_data = {}

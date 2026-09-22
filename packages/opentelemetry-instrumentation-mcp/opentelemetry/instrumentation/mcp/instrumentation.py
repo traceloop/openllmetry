@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
 import json
 import logging
 
-from opentelemetry import context, propagate
+from opentelemetry import context, propagate, trace
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.trace import get_tracer, Tracer
@@ -178,35 +178,59 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
-        @dont_throw
+        """Build a request wrapper that isolates telemetry failures from MCP call outcomes."""
         async def traced_method(wrapped, instance, args, kwargs):
-            meta = None
+            """Execute the request once and restore tracing context without masking its outcome."""
+            span = None
+            token = None
             method = None
-            params = None
-            if len(args) > 0 and hasattr(args[0].root, "method"):
-                method = args[0].root.method
-            if len(args) > 0 and hasattr(args[0].root, "params"):
-                params = args[0].root.params
-            if params:
-                if hasattr(args[0].root.params, "meta"):
-                    meta = args[0].root.params.meta
+            try:
+                request = args[0] if args else kwargs.get("request")
+                root = getattr(request, "root", None)
+                method = getattr(root, "method", None)
+                params = getattr(root, "params", None)
+                meta = getattr(params, "meta", None)
+                if meta is not None:
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    if "traceparent" in carrier:
+                        meta.traceparent = carrier["traceparent"]
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
-                carrier = {}
-                TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                if method == "tools/call":
+                    entity_name = getattr(params, "name", method)
+                    span = tracer.start_span(f"{entity_name}.tool")
+                    token = context.attach(trace.set_span_in_context(span))
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
+                    )
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+                    clean_input = self._extract_clean_input(method, params)
+                    if clean_input:
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input, default=str)
+                        )
+                else:
+                    span = tracer.start_span(f"{method}.mcp")
+                    token = context.attach(trace.set_span_in_context(span))
+                    span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, serialize(request))
+            except Exception:
+                logging.warning("MCP telemetry pre-call failed", exc_info=True)
 
-            # Create different span types based on method
-            if method == "tools/call":
-                return await self._handle_tool_call(
-                    tracer, method, params, args, kwargs, wrapped
+            try:
+                return await self._execute_and_handle_result(
+                    span, method, args, kwargs, wrapped, clean_output=method == "tools/call"
                 )
-            else:
-                return await self._handle_mcp_method(
-                    tracer, method, args, kwargs, wrapped
-                )
+            finally:
+                try:
+                    if token is not None:
+                        context.detach(token)
+                except Exception:
+                    logging.warning("MCP telemetry context cleanup failed", exc_info=True)
+                try:
+                    if span is not None:
+                        span.end()
+                except Exception:
+                    logging.warning("MCP telemetry span cleanup failed", exc_info=True)
 
         return traced_method
 
@@ -266,61 +290,25 @@ class McpInstrumentor(BaseInstrumentor):
 
         return traced_method
 
-    async def _handle_tool_call(self, tracer, method, params, args, kwargs, wrapped):
-        """Handle tools/call with tool semantics"""
-        # Extract the actual tool name
-        entity_name = method
-        span_name = f"{method}.tool"
-        if params:
-            try:
-                if hasattr(params, "name"):
-                    entity_name = params.name
-                    span_name = f"{params.name}.tool"
-                elif hasattr(params, "__dict__") and "name" in params.__dict__:
-                    entity_name = params.__dict__["name"]
-                    span_name = f"{params.__dict__['name']}.tool"
-            except Exception:
-                pass
-
-        with tracer.start_as_current_span(span_name) as span:
-            # Set tool-specific attributes
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
-            )
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
-
-            # Add input
-            clean_input = self._extract_clean_input(method, params)
-            if clean_input:
-                try:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
-                    )
-                except (TypeError, ValueError):
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
-                    )
-
-            return await self._execute_and_handle_result(
-                span, method, args, kwargs, wrapped, clean_output=True
-            )
-
-    async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
-        """Handle non-tool MCP methods with simple serialization"""
-        with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
-            return await self._execute_and_handle_result(
-                span, method, args, kwargs, wrapped, clean_output=False
-            )
-
     async def _execute_and_handle_result(
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
-        """Execute the wrapped function and handle the result"""
+        """Preserve the wrapped call outcome while recording output and errors on an optional span."""
         try:
             result = await wrapped(*args, **kwargs)
+        except BaseException as e:
+            try:
+                if span is not None:
+                    span.set_attribute(ERROR_TYPE, type(e).__name__)
+                    span.record_exception(e)
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+            except Exception:
+                logging.warning("MCP telemetry error recording failed", exc_info=True)
+            raise
+
+        if span is None:
+            return result
+        try:
             # Add output
             if clean_output:
                 clean_output_data = self._extract_clean_output(method, result)
@@ -342,18 +330,14 @@ class McpInstrumentor(BaseInstrumentor):
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
-                if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                content = getattr(result, "content", None)
+                description = getattr(content[0], "text", None) if content else None
+                span.set_status(Status(StatusCode.ERROR, description))
             else:
                 span.set_status(Status(StatusCode.OK))
-            return result
-        except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
-            raise
+        except Exception:
+            logging.warning("MCP telemetry post-call failed", exc_info=True)
+        return result
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
         """Extract clean input parameters for different MCP method types"""
