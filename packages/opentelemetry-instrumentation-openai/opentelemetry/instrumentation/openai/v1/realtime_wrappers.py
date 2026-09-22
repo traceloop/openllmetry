@@ -237,7 +237,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         span,
                         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps(output_messages),
+                        json.dumps(output_messages, ensure_ascii=False),
                     )
 
             span.set_status(Status(StatusCode.OK))
@@ -304,7 +304,7 @@ class RealtimeEventProcessor:
                 _set_span_attribute(
                     self._state.response_span,
                     GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                    json.dumps(input_messages),
+                    json.dumps(input_messages, ensure_ascii=False),
                 )
 
     def reset_response_state(self):
