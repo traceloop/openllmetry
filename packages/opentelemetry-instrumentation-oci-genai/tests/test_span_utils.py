@@ -435,7 +435,8 @@ def test_stream_wrapper_invokes_callback_once_and_on_error():
 
 def test_stream_wrapper_early_exit_is_incomplete():
     calls = []
-    wrapper = _wrap_stream(FakeSSEClient(GENERIC_EVENTS), calls)
+    sse_client = FakeSSEClient(GENERIC_EVENTS)
+    wrapper = _wrap_stream(sse_client, calls)
     events = wrapper.events()
     next(events)
     next(events)
@@ -444,6 +445,21 @@ def test_stream_wrapper_early_exit_is_incomplete():
     assert calls[0][1] is None
     assert calls[0][2] is False
     assert calls[0][0].choices_list()[0]["text"] == "Hello"
+    assert sse_client.closed is True  # the SDK's event source is released, not left to GC
+
+
+def test_stream_wrapper_early_exit_survives_close_failure():
+    class UnclosableSSEClient(FakeSSEClient):
+        def close(self):
+            raise OSError("socket already gone")
+
+    calls = []
+    wrapper = _wrap_stream(UnclosableSSEClient(GENERIC_EVENTS), calls)
+    events = wrapper.events()
+    next(events)
+    events.close()  # must not raise: the close failure is logged, the cancellation is still reported once
+    assert len(calls) == 1
+    assert calls[0][2] is False
 
 
 def test_stream_wrapper_close_finishes_once_and_closes_stream():

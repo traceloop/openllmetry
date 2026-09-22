@@ -183,8 +183,10 @@ class OCIGenAIStreamWrapper(ObjectProxy):
             self._finish(error, complete=False)
             raise
         except BaseException:
-            # ``GeneratorExit`` (the caller left the loop), ``KeyboardInterrupt``...: partial, not successful.
+            # ``GeneratorExit`` (the caller left the loop), ``KeyboardInterrupt``...: partial, not successful. The
+            # caller is done with the stream, so release the SDK's event source instead of waiting for GC.
             self._finish(None, complete=False)
+            self._close_wrapped()
             raise
         else:
             self._finish(None, complete=True)
@@ -195,6 +197,13 @@ class OCIGenAIStreamWrapper(ObjectProxy):
             return self.__wrapped__.close()
         finally:
             self._finish(None, complete=False)
+
+    def _close_wrapped(self):
+        """Best-effort close of the SDK's ``SSEClient``; never masks the exception being propagated."""
+        try:
+            self.__wrapped__.close()
+        except Exception as error:
+            logger.debug("Failed to close the OCI GenAI SSE stream after cancellation: %s", error)
 
     def _finish(self, error, complete=True):
         if self._self_done:
