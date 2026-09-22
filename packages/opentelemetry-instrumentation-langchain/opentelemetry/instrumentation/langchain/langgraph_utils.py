@@ -30,7 +30,8 @@ def extract_graph_structure(graph_instance: Any) -> tuple[list[str], list[str]]:
     if hasattr(graph, "nodes"):
         for node_id in graph.nodes:
             if node_id not in ("__start__", "__end__"):
-                nodes.append(node_id)
+                # OpenTelemetry requires homogeneous primitive attribute values.
+                nodes.append(str(node_id) if isinstance(node_id, str) else node_id)
 
     # Extract edges as "source -> target" strings
     edges = []
