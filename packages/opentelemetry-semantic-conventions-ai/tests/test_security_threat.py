@@ -11,6 +11,8 @@ from opentelemetry.semconv_ai import (
 
 
 def test_security_threat_event_value():
+    """Verify the standardized security threat event name."""
+
     assert Events.GEN_AI_SECURITY_THREAT_DETECTED.value == (
         "gen_ai.security.threat.detected"
     )
@@ -46,10 +48,14 @@ def test_security_threat_event_value():
     ],
 )
 def test_security_threat_attribute_values(attribute, expected):
+    """Verify each security threat attribute uses its exact semantic key."""
+
     assert attribute.value == expected
 
 
 def test_security_threat_names_use_dot_notation():
+    """Verify threat event and attribute keys follow OTel dot notation."""
+
     values = [
         Events.GEN_AI_SECURITY_THREAT_DETECTED.value,
         *(attribute.value for attribute in EventAttributes if attribute.name.startswith("GEN_AI_SECURITY_THREAT_")),
@@ -59,6 +65,8 @@ def test_security_threat_names_use_dot_notation():
 
 
 def test_security_threat_severity_values():
+    """Verify the supported security threat severity values."""
+
     assert {value.value for value in GenAISecurityThreatSeverityValues} == {
         "low",
         "medium",
@@ -68,6 +76,8 @@ def test_security_threat_severity_values():
 
 
 def test_security_threat_action_values():
+    """Verify the supported security threat response action values."""
+
     assert {value.value for value in GenAISecurityThreatActionValues} == {
         "blocked",
         "warned",
