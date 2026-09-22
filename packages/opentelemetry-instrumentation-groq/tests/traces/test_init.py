@@ -81,8 +81,21 @@ def _make_async_wrapper(
 class TestProcessStreamingChunk:
     def test_empty_choices_returns_none_quad(self):
         chunk = MagicMock()
+        chunk.x_groq = None
         chunk.choices = []
         assert _process_streaming_chunk(chunk) == (None, [], [], None)
+
+    def test_empty_choices_preserves_usage(self):
+        # Groq attaches usage to a final chunk that may have no choices; the
+        # usage must survive the empty-choices guard.
+        chunk = MagicMock()
+        chunk.choices = []
+        chunk.x_groq.usage.prompt_tokens = 9
+        chunk.x_groq.usage.completion_tokens = 4
+        content, tool_calls_delta, finish_reasons, usage = _process_streaming_chunk(chunk)
+        assert (content, tool_calls_delta, finish_reasons) == (None, [], [])
+        assert usage.prompt_tokens == 9
+        assert usage.completion_tokens == 4
 
     def test_multiple_choices_accumulates_content(self):
         chunk = MagicMock()
@@ -147,19 +160,21 @@ class TestAccumulateToolCalls:
     def test_fragments_are_concatenated(self):
         acc = {}
         _accumulate_tool_calls(acc, [self._make_delta(0, tc_id="call_1", name="fn", arguments='{"a"')])
-        _accumulate_tool_calls(acc, [self._make_delta(0, arguments=': 1}')])
+        _accumulate_tool_calls(acc, [self._make_delta(0, arguments=": 1}")])
         assert acc[0]["function"]["arguments"] == '{"a": 1}'
 
     def test_multiple_tool_calls_tracked_by_index(self):
         acc = {}
-        _accumulate_tool_calls(acc, [
-            self._make_delta(0, tc_id="c0", name="fn0", arguments=""),
-            self._make_delta(1, tc_id="c1", name="fn1", arguments=""),
-        ])
+        _accumulate_tool_calls(
+            acc,
+            [
+                self._make_delta(0, tc_id="c0", name="fn0", arguments=""),
+                self._make_delta(1, tc_id="c1", name="fn1", arguments=""),
+            ],
+        )
         assert 0 in acc and 1 in acc
         assert acc[0]["id"] == "c0"
         assert acc[1]["id"] == "c1"
-
 
 
 # ---------------------------------------------------------------------------
