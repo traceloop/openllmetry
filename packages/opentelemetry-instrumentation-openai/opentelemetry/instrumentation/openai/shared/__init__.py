@@ -107,7 +107,7 @@ def _set_tool_definitions_json(span, tool_defs):
     """Set gen_ai.tool.definitions as a single JSON string attribute."""
     if tool_defs:
         _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs, ensure_ascii=False)
         )
 
 

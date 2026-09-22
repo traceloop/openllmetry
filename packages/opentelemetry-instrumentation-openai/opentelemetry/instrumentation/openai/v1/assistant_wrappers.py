@@ -218,11 +218,11 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
         if not should_emit_events():
             if input_msgs:
                 _set_span_attribute(
-                    span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs)
+                    span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs, ensure_ascii=False)
                 )
             if output_msgs:
                 _set_span_attribute(
-                    span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_msgs)
+                    span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_msgs, ensure_ascii=False)
                 )
 
         if run.get("usage"):
@@ -302,7 +302,7 @@ def runs_create_and_stream_wrapper(tracer, wrapped, instance, args, kwargs):
             })
         if not should_emit_events() and input_msgs:
             _set_span_attribute(
-                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs)
+                span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_msgs, ensure_ascii=False)
             )
 
         from opentelemetry.instrumentation.openai.v1.event_handler_wrapper import (
