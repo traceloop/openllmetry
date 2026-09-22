@@ -178,7 +178,9 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
+        """Build a request wrapper that isolates telemetry failures from MCP call outcomes."""
         async def traced_method(wrapped, instance, args, kwargs):
+            """Execute the request once and restore tracing context without masking its outcome."""
             span = None
             token = None
             method = None
@@ -291,7 +293,7 @@ class McpInstrumentor(BaseInstrumentor):
     async def _execute_and_handle_result(
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
-        """Execute the wrapped function and handle the result"""
+        """Preserve the wrapped call outcome while recording output and errors on an optional span."""
         try:
             result = await wrapped(*args, **kwargs)
         except BaseException as e:

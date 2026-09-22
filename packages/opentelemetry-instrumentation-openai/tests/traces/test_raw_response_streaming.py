@@ -6,6 +6,7 @@ from openai import AsyncOpenAI, OpenAI
 
 
 def streaming_response(request):
+    """Return a deterministic SSE completion with distinct request and response IDs."""
     response = {
         "id": "resp_stream", "object": "response", "created_at": 1,
         "status": "completed", "model": "gpt-4o-mini", "output": [],
@@ -21,6 +22,7 @@ def streaming_response(request):
 @pytest.mark.parametrize("raw", [False, True])
 @pytest.mark.asyncio
 async def test_async_response_stream(raw, instrument_legacy, span_exporter):
+    """Verify async stream iteration, raw-response parse caching, and exported response IDs."""
     async with AsyncOpenAI(http_client=httpx.AsyncClient(transport=httpx.MockTransport(streaming_response))) as client:
         resource = client.responses.with_raw_response if raw else client.responses
         result = await resource.create(model="gpt-4o-mini", input="hello", stream=True)
@@ -38,6 +40,7 @@ async def test_async_response_stream(raw, instrument_legacy, span_exporter):
 
 @pytest.mark.parametrize("raw", [False, True])
 def test_sync_response_stream(raw, instrument_legacy, span_exporter):
+    """Verify sync stream iteration, raw-response parse caching, and exported response IDs."""
     with OpenAI(http_client=httpx.Client(transport=httpx.MockTransport(streaming_response))) as client:
         resource = client.responses.with_raw_response if raw else client.responses
         result = resource.create(model="gpt-4o-mini", input="hello", stream=True)

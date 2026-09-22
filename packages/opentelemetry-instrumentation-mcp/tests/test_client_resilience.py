@@ -10,6 +10,7 @@ from opentelemetry.trace import StatusCode
 
 
 def request(method="tools/call"):
+    """Build a minimal MCP request with parameters and propagation metadata."""
     return SimpleNamespace(root=SimpleNamespace(
         method=method, params=SimpleNamespace(name="test", arguments={}, meta=SimpleNamespace())
     ))
@@ -23,6 +24,7 @@ def request(method="tools/call"):
 ])
 @pytest.mark.asyncio
 async def test_error_content_preserves_result(content, tracer_provider, span_exporter):
+    """Preserve tool error results and status for text, image, resource, or empty content."""
     result = CallToolResult(content=content, isError=True)
     wrapped = AsyncMock(return_value=result)
     wrapper = McpInstrumentor().patch_mcp_client(tracer_provider.get_tracer(__name__))
@@ -37,6 +39,7 @@ async def test_error_content_preserves_result(content, tracer_provider, span_exp
 @pytest.mark.parametrize("method", ["tools/call", "tools/list"])
 @pytest.mark.asyncio
 async def test_telemetry_failure_preserves_result(failure, method, monkeypatch):
+    """Keep the result, call count, and caller context intact when telemetry fails."""
     tracer = Mock()
     if failure == "inject":
         monkeypatch.setattr(
@@ -59,6 +62,7 @@ async def test_telemetry_failure_preserves_result(failure, method, monkeypatch):
 @pytest.mark.parametrize("error", [ValueError("tool failed"), asyncio.CancelledError()])
 @pytest.mark.asyncio
 async def test_application_exception_is_preserved(error):
+    """Propagate the original exception or cancellation despite telemetry cleanup failures."""
     tracer = Mock()
     tracer.start_span.return_value.record_exception.side_effect = RuntimeError("telemetry")
     tracer.start_span.return_value.end.side_effect = RuntimeError("cleanup")

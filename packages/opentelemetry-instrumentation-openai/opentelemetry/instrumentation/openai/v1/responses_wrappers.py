@@ -483,6 +483,7 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 @dont_throw
 @_with_tracer_wrapper
 def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+    """Trace synchronous Responses calls while preserving raw-response and stream interfaces."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -658,6 +659,7 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 async def async_responses_get_or_create_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
 ):
+    """Trace asynchronous Responses calls while preserving raw-response and stream interfaces."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
     start_time = time.time_ns()
