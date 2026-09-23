@@ -44,6 +44,8 @@ BEDROCK_FINISH_REASON_MAP = {
     "endoftext": "stop",
     # Converse API
     "guardrail_intervened": "content_filter",
+    # OpenAI via Bedrock (chat completions body)
+    "tool_calls": "tool_call",
 }
 
 
@@ -193,6 +195,8 @@ def set_model_message_span_attributes(model_vendor, span, request_body):
         _set_amazon_input_span_attributes(span, request_body)
     elif model_vendor == "imported_model":
         _set_imported_model_prompt_span_attributes(span, request_body)
+    elif model_vendor == "openai":
+        _set_openai_prompt_span_attributes(span, request_body)
 
 
 def set_model_choice_span_attributes(model_vendor, span, response_body):
@@ -211,6 +215,8 @@ def set_model_choice_span_attributes(model_vendor, span, response_body):
         _set_amazon_response_span_attributes(span, response_body)
     elif model_vendor == "imported_model":
         _set_imported_model_response_span_attributes(span, response_body)
+    elif model_vendor == "openai":
+        _set_openai_response_span_attributes(span, response_body)
 
 
 def _set_finish_reasons_unconditionally(model_vendor, span, response_body):
@@ -254,6 +260,11 @@ def _set_finish_reasons_unconditionally(model_vendor, span, response_body):
         fr = _map_finish_reason(response_body.get("stop_reason"))
         if fr:
             finish_reasons.append(fr)
+    elif model_vendor == "openai":
+        for choice in response_body.get("choices", []):
+            fr = _map_finish_reason(choice.get("finish_reason"))
+            if fr:
+                finish_reasons.append(fr)
     if finish_reasons:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, tuple(finish_reasons))
 
@@ -302,6 +313,8 @@ def set_model_span_attributes(
         _set_imported_model_span_attributes(
             span, request_body, response_body, metric_params
         )
+    elif model_vendor == "openai":
+        _set_openai_span_attributes(span, request_body, response_body, metric_params)
 
 
 def _guardrail_value(request_body):
@@ -776,6 +789,87 @@ def _set_imported_model_prompt_span_attributes(span, request_body):
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
         json.dumps([{"role": "user", "parts": [_text_part(request_body.get("prompt"))]}]),
+    )
+
+
+def _set_openai_span_attributes(span, request_body, response_body, metric_params):
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, request_body.get("top_p")
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, request_body.get("temperature")
+    )
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        request_body.get("max_completion_tokens") or request_body.get("max_tokens"),
+    )
+
+    # Streams without usage (gpt-oss) still carry amazon-bedrock-invocationMetrics
+    usage = response_body.get("usage") or {}
+    invocation_metrics = response_body.get("invocation_metrics") or {}
+    prompt_tokens = usage.get("prompt_tokens", invocation_metrics.get("inputTokenCount"))
+    completion_tokens = usage.get(
+        "completion_tokens", invocation_metrics.get("outputTokenCount")
+    )
+    if prompt_tokens is not None and completion_tokens is not None:
+        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
+
+
+def _openai_message_to_parts(message):
+    """Convert an OpenAI chat-completions message to OTel parts format."""
+    content = message.get("content")
+    if message.get("role") == "tool":
+        return [{
+            "type": "tool_call_response",
+            "id": message.get("tool_call_id"),
+            "response": content,
+        }]
+    if isinstance(content, list):
+        # OpenAI text blocks ({"type": "text", "text": ...}) match Anthropic's
+        parts = _anthropic_content_to_parts(content)
+    else:
+        parts = [_text_part(content)] if content else []
+    for tool_call in message.get("tool_calls") or []:
+        function = tool_call.get("function", {})
+        arguments = function.get("arguments")
+        try:
+            arguments = json.loads(arguments)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        parts.append({
+            "type": "tool_call",
+            "name": function.get("name"),
+            "id": tool_call.get("id"),
+            "arguments": arguments,
+        })
+    return parts
+
+
+def _set_openai_prompt_span_attributes(span, request_body):
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_INPUT_MESSAGES,
+        json.dumps([
+            {"role": message.get("role"), "parts": _openai_message_to_parts(message)}
+            for message in request_body.get("messages", [])
+        ]),
+    )
+
+
+def _set_openai_response_span_attributes(span, response_body):
+    output_messages = []
+    for choice in response_body.get("choices", []):
+        message = choice.get("message", {})
+        output_messages.append(_output_message(
+            message.get("role", "assistant"),
+            _openai_message_to_parts(message),
+            _map_finish_reason(choice.get("finish_reason")),
+        ))
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+        json.dumps(output_messages),
     )
 
 
