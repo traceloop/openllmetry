@@ -1009,7 +1009,7 @@ def _get_vendor_model(modelId):
 def _cross_region_check(value):
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
-        parts = value.split(".")
+        parts = value.split(".", 2)
         if len(parts) > 2:
             parts.pop(0)
         return parts[0], parts[1]
