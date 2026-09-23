@@ -640,10 +640,18 @@ def _set_amazon_span_attributes(
                 total_completion_tokens += int(
                     result.get("totalOutputTextTokenCount", 0)
                 )
-    elif "usage" in response_body:
-        total_prompt_tokens += int(response_body.get("inputTokens", 0))
+    elif "usage" in response_body or "metadata" in response_body:
+        # Nova non-streaming nests usage at `usage`; the streaming wrapper
+        # accumulates the converse-style metadata event under `metadata.usage`.
+        # Headers carry the same values and are used as a fallback.
+        usage = response_body.get("usage") or response_body.get("metadata", {}).get("usage", {}) or {}
+        total_prompt_tokens += int(
+            usage.get("inputTokens")
+            or headers.get("x-amzn-bedrock-input-token-count", 0)
+        )
         total_completion_tokens += int(
-            headers.get("x-amzn-bedrock-output-token-count", 0)
+            usage.get("outputTokens")
+            or headers.get("x-amzn-bedrock-output-token-count", 0)
         )
     # checks for Titan models
     if "inputTextTokenCount" in response_body:
@@ -1064,8 +1072,11 @@ def converse_usage_record(span, response, metric_params):
     if "usage" not in response:
         return
 
-    prompt_tokens = response["usage"].get("inputTokens", 0)
-    completion_tokens = response["usage"].get("outputTokens", 0)
+    usage = response["usage"]
+    prompt_tokens = usage.get("inputTokens", 0)
+    completion_tokens = usage.get("outputTokens", 0)
+    cache_read_tokens = usage.get("cacheReadInputTokens")
+    cache_write_tokens = usage.get("cacheWriteInputTokens")
 
     _record_usage_to_span(
         span,
@@ -1073,3 +1084,16 @@ def converse_usage_record(span, response, metric_params):
         completion_tokens,
         metric_params,
     )
+
+    if cache_read_tokens is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+            cache_read_tokens,
+        )
+    if cache_write_tokens is not None:
+        _set_span_attribute(
+            span,
+            SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            cache_write_tokens,
+        )

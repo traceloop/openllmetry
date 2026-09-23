@@ -1118,7 +1118,7 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-instrumentation-chromadb"
-version = "0.53.3"
+version = "0.60.0"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },

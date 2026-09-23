@@ -1,4 +1,16 @@
 import json
+import os
+
+from opentelemetry import context as context_api
+
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+
+def should_send_prompts() -> bool:
+    return (os.getenv(TRACELOOP_TRACE_CONTENT) or "true").lower() == "true" or bool(
+        context_api.get_value("override_enable_content_tracing")
+    )
 
 
 def set_span_attribute(span, name, value):
@@ -21,8 +33,16 @@ def messages_to_otel_input(messages) -> str | None:
 
 
 def response_to_otel_output(result) -> str | None:
-    """Convert litellm ModelResponse to OTel gen_ai.output.messages JSON."""
+    """Convert LiteLLM responses and legacy DSPy output lists to OTel JSON."""
     try:
+        if isinstance(result, list):
+            messages = [
+                {"role": "assistant", "parts": [{"type": "text", "content": str(output)}]}
+                for output in result
+                if output is not None and str(output) != ""
+            ]
+            return json.dumps(messages) if messages else None
+
         choices = _get(result, "choices")
         if not choices:
             return None
@@ -37,11 +57,13 @@ def response_to_otel_output(result) -> str | None:
             parts += _extract_tool_call_parts(_get(msg, "tool_calls"))
             if not parts:
                 continue
-            out.append({
-                "role": _get(msg, "role") or "assistant",
-                "parts": parts,
-                "finish_reason": getattr(choice, "finish_reason", None) or _get(choice, "finish_reason"),
-            })
+            out.append(
+                {
+                    "role": _get(msg, "role") or "assistant",
+                    "parts": parts,
+                    "finish_reason": getattr(choice, "finish_reason", None) or _get(choice, "finish_reason"),
+                }
+            )
         return json.dumps(out) if out else None
     except Exception:
         return None
@@ -90,11 +112,13 @@ def _convert_tool_result(msg) -> dict:
     content = msg.get("content")
     return {
         "role": "tool",
-        "parts": [{
-            "type": "tool_call_response",
-            "id": msg.get("tool_call_id", ""),
-            "response": str(content) if content is not None else "",
-        }],
+        "parts": [
+            {
+                "type": "tool_call_response",
+                "id": msg.get("tool_call_id", ""),
+                "response": str(content) if content is not None else "",
+            }
+        ],
     }
 
 

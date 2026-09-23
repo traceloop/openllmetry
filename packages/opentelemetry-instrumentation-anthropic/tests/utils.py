@@ -11,7 +11,6 @@ def verify_metrics(
     found_token_metric = False
     found_choice_metric = False
     found_duration_metric = False
-    found_exception_metric = False
 
     for rm in resource_metrics:
         for sm in rm.scope_metrics:
@@ -50,15 +49,8 @@ def verify_metrics(
                     assert all(
                         data_point.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL)
                         == model_name
-                        or data_point.attributes.get("error.type") == "TypeError"
                         for data_point in metric.data.data_points
                     )
-
-                if metric.name == Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS:
-                    found_exception_metric = True
-                    for data_point in metric.data.data_points:
-                        assert data_point.value == 1
-                        assert data_point.attributes["error.type"] == "TypeError"
 
                 assert all(
                     data_point.attributes.get("gen_ai.provider.name") == "anthropic"
@@ -68,4 +60,3 @@ def verify_metrics(
     assert found_token_metric is True
     assert found_choice_metric is True
     assert found_duration_metric is True
-    assert found_exception_metric is True

@@ -9,8 +9,12 @@ class CachingHeaders:
     WRITE = "x-amzn-bedrock-cache-write-input-token-count"
 
 
-class CacheSpanAttrs:  # TODO: move it under SemConv pkg
+class CacheSpanAttrs:
     TYPE = "gen_ai.cache.type"
+    # CACHED is a lossy "read"/"write" marker (the two branches overwrite each other
+    # when a single call both reads and writes cache). Superseded by
+    # SpanAttributes.GEN_AI_USAGE_CACHE_{READ,CREATION}_INPUT_TOKENS, which carries
+    # full numeric counts without collision. Slated for removal in a future major version.
     CACHED = "gen_ai.prompt_caching"
 
 
@@ -22,6 +26,8 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
     span = trace.get_current_span()
     if not isinstance(span, trace.Span):
         return
+    read_cached_tokens = None
+    write_cached_tokens = None
     if CachingHeaders.READ in headers:
         read_cached_tokens = int(headers[CachingHeaders.READ])
         metric_params.prompt_caching.add(
@@ -31,8 +37,9 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
                 CacheSpanAttrs.TYPE: "read",
             },
         )
-        if read_cached_tokens > 0:
-            span.set_attribute(CacheSpanAttrs.CACHED, "read")
+        span.set_attribute(
+            GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, read_cached_tokens
+        )
     if CachingHeaders.WRITE in headers:
         write_cached_tokens = int(headers[CachingHeaders.WRITE])
         metric_params.prompt_caching.add(
@@ -42,5 +49,16 @@ def prompt_caching_handling(headers, vendor, model, metric_params):
                 CacheSpanAttrs.TYPE: "write",
             },
         )
-        if write_cached_tokens > 0:
-            span.set_attribute(CacheSpanAttrs.CACHED, "write")
+        span.set_attribute(
+            GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS,
+            write_cached_tokens,
+        )
+    if write_cached_tokens is not None and read_cached_tokens is not None:
+        span.set_attribute(
+            CacheSpanAttrs.CACHED,
+            "write" if write_cached_tokens >= read_cached_tokens else "read",
+        )
+    elif write_cached_tokens is not None:
+        span.set_attribute(CacheSpanAttrs.CACHED, "write")
+    elif read_cached_tokens is not None:
+        span.set_attribute(CacheSpanAttrs.CACHED, "read")

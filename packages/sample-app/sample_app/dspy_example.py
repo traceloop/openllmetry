@@ -1,14 +1,16 @@
 import dspy
+from opentelemetry.instrumentation.dspy import DSPyInstrumentor
 from traceloop.sdk import Traceloop
 
 
 class BasicQA(dspy.Signature):
     """Answer questions with short factual responses."""
+
     question: str = dspy.InputField()
     answer: str = dspy.OutputField()
 
 
-class RAGPipeline(dspy.Module):
+class QAPipeline(dspy.Module):
     def __init__(self):
         self.generate_answer = dspy.ChainOfThought(BasicQA)
 
@@ -18,11 +20,12 @@ class RAGPipeline(dspy.Module):
 
 def main():
     Traceloop.init(app_name="dspy-example")
+    DSPyInstrumentor().instrument()
     lm = dspy.LM("openai/gpt-4o-mini")
     dspy.configure(lm=lm)
 
-    rag = RAGPipeline()
-    result = rag(question="What is the capital of France?")
+    pipeline = QAPipeline()
+    result = pipeline(question="What is the capital of France?")
     print("Answer:", result.answer)
 
 

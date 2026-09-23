@@ -742,6 +742,14 @@ def set_model_response_attributes(
             um.prompt_token_count,
         )
 
+        cached_content_token_count = getattr(um, "cached_content_token_count", None)
+        if cached_content_token_count is not None:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_content_token_count,
+            )
+
     if token_histogram and um is not None:
         token_histogram.record(
             um.prompt_token_count,

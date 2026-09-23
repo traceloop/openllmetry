@@ -48,12 +48,15 @@ def _process_response_item(item, complete_response):
                 complete_response["events"][index]["input"] = """"""
     elif item.type == "content_block_delta":
         index = item.index
-        if item.delta.type == "thinking_delta":
-            complete_response["events"][index]["text"] += item.delta.thinking
-        elif item.delta.type == "text_delta":
-            complete_response["events"][index]["text"] += item.delta.text
-        elif item.delta.type == "input_json_delta":
-            complete_response["events"][index]["input"] += item.delta.partial_json
+        if index < len(complete_response.get("events", [])):
+            event = complete_response["events"][index]
+            if item.delta.type == "thinking_delta":
+                event["text"] = event.get("text", "") + item.delta.thinking
+            elif item.delta.type == "text_delta":
+                event["text"] = event.get("text", "") + item.delta.text
+            elif item.delta.type == "input_json_delta":
+                if event.get("type") == "tool_use":
+                    event["input"] = event.get("input", "") + item.delta.partial_json
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
@@ -96,10 +99,10 @@ def _set_token_usage(
     set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
     )
     set_span_attribute(
-        span, SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+        span, GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
     )
 
     set_span_attribute(
@@ -256,7 +259,7 @@ class AnthropicStream(ObjectProxy):
             attributes = error_metrics_attributes(e)
             if self._exception_counter:
                 self._exception_counter.add(1, attributes=attributes)
-            raise e
+            raise
         _process_response_item(item, self._complete_response)
         return item
 

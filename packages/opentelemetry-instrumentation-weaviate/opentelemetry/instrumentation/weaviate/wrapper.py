@@ -6,6 +6,8 @@ from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.instrumentation.weaviate.utils import dont_throw
 from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.trace.status import Status, StatusCode
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,9 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     name = to_wrap.get("span_name")
-    with tracer.start_as_current_span(name) as span:
+    with tracer.start_as_current_span(
+        name, record_exception=False, set_status_on_exception=False
+    ) as span:
         span.set_attribute(SpanAttributes.DB_SYSTEM, "weaviate")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
@@ -46,7 +50,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         if instrumentor:
             instrumentor.instrument(to_wrap.get("method"), span, args, kwargs)
 
-        return_value = wrapped(*args, **kwargs)
+        try:
+            return_value = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
     return return_value
 
