@@ -1,7 +1,8 @@
 """OpenTelemetry Langchain instrumentation"""
 
 import logging
-from typing import Collection
+import warnings
+from typing import Collection, Optional
 
 from opentelemetry import context as context_api
 
@@ -43,8 +44,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         self,
         exception_logger=None,
         disable_trace_context_propagation=False,
-        use_legacy_attributes: bool = True,
-        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES
+        use_attributes: Optional[bool] = None,
+        metadata_key_prefix: str = SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES,
+        use_legacy_attributes: Optional[bool] = None,
     ):
         """Create a Langchain instrumentor instance.
 
@@ -52,14 +54,33 @@ class LangchainInstrumentor(BaseInstrumentor):
             exception_logger: A callable that takes an Exception as input. This will be
                 used to log exceptions that occur during instrumentation. If None, exceptions will not be logged.
             disable_trace_context_propagation: If True, disables trace context propagation to LLM providers.
-            use_legacy_attributes: If True, uses span attributes for Inputs/Outputs instead of events.
+            use_attributes: If True (default), emits prompts/completions as span attributes
+                (`gen_ai.input.messages` / `gen_ai.output.messages`), per the current OTel GenAI spec.
+                If False, emits them as OTel log events instead (requires an EventLoggerProvider).
             metadata_key_prefix: Prefix for metadata keys added to spans. Defaults to
                 `SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES`.
                 Useful for using with other backends.
+            use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be removed in a
+                future release.
         """
         super().__init__()
+        if use_attributes is not None and use_legacy_attributes is not None:
+            raise TypeError(
+                "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
+                "`use_legacy_attributes` is deprecated, use `use_attributes` instead."
+            )
+        if use_legacy_attributes is not None:
+            warnings.warn(
+                "`use_legacy_attributes` is deprecated and will be removed in a "
+                "future release; use `use_attributes` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            use_attributes = use_legacy_attributes
+        if use_attributes is None:
+            use_attributes = True
         Config.exception_logger = exception_logger
-        Config.use_legacy_attributes = use_legacy_attributes
+        Config.use_legacy_attributes = use_attributes
         Config.metadata_key_prefix = metadata_key_prefix
         self.disable_trace_context_propagation = disable_trace_context_propagation
 
@@ -98,9 +119,10 @@ class LangchainInstrumentor(BaseInstrumentor):
             tracer, duration_histogram, token_histogram
         )
         wrap_function_wrapper(
-            module="langchain_core.callbacks",
-            name="BaseCallbackManager.__init__",
-            wrapper=_BaseCallbackManagerInitWrapper(traceloopCallbackHandler),
+            "langchain_core.callbacks",
+            "BaseCallbackManager.__init__",
+            _BaseCallbackManagerInitWrapper(traceloopCallbackHandler,
+        ),
         )
 
         # Wrap LangGraph components if available
@@ -115,67 +137,67 @@ class LangchainInstrumentor(BaseInstrumentor):
         if is_package_available("langchain_community"):
             # Wrap langchain_community.llms.openai.BaseOpenAI
             wrap_function_wrapper(
-                module="langchain_community.llms.openai",
-                name="BaseOpenAI._generate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_community.llms.openai",
+            "BaseOpenAI._generate",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_community.llms.openai",
-                name="BaseOpenAI._agenerate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_community.llms.openai",
+            "BaseOpenAI._agenerate",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_community.llms.openai",
-                name="BaseOpenAI._stream",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_community.llms.openai",
+            "BaseOpenAI._stream",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_community.llms.openai",
-                name="BaseOpenAI._astream",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_community.llms.openai",
+            "BaseOpenAI._astream",
+            openai_tracing_wrapper,
+        )
 
         if is_package_available("langchain_openai"):
             # Wrap langchain_openai.llms.base.BaseOpenAI
             wrap_function_wrapper(
-                module="langchain_openai.llms.base",
-                name="BaseOpenAI._generate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.llms.base",
+            "BaseOpenAI._generate",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_openai.llms.base",
-                name="BaseOpenAI._agenerate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.llms.base",
+            "BaseOpenAI._agenerate",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_openai.llms.base",
-                name="BaseOpenAI._stream",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.llms.base",
+            "BaseOpenAI._stream",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_openai.llms.base",
-                name="BaseOpenAI._astream",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.llms.base",
+            "BaseOpenAI._astream",
+            openai_tracing_wrapper,
+        )
 
             # langchain_openai.chat_models.base.BaseOpenAI
             wrap_function_wrapper(
-                module="langchain_openai.chat_models.base",
-                name="BaseChatOpenAI._generate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.chat_models.base",
+            "BaseChatOpenAI._generate",
+            openai_tracing_wrapper,
+        )
 
             wrap_function_wrapper(
-                module="langchain_openai.chat_models.base",
-                name="BaseChatOpenAI._agenerate",
-                wrapper=openai_tracing_wrapper,
-            )
+            "langchain_openai.chat_models.base",
+            "BaseChatOpenAI._agenerate",
+            openai_tracing_wrapper,
+        )
 
             # Doesn't work :(
             # wrap_function_wrapper(
@@ -195,14 +217,16 @@ class LangchainInstrumentor(BaseInstrumentor):
         if is_package_available("langgraph"):
             try:
                 wrap_function_wrapper(
-                    module="langgraph.pregel",
-                    name="Pregel.stream",
-                    wrapper=create_graph_invocation_wrapper(tracer, is_async=False),
+            "langgraph.pregel",
+            "Pregel.stream",
+            create_graph_invocation_wrapper(tracer, is_async=False,
+        ),
                 )
                 wrap_function_wrapper(
-                    module="langgraph.pregel",
-                    name="Pregel.astream",
-                    wrapper=create_graph_invocation_wrapper(tracer, is_async=True),
+            "langgraph.pregel",
+            "Pregel.astream",
+            create_graph_invocation_wrapper(tracer, is_async=True,
+        ),
                 )
             except Exception as e:
                 logger.debug("Failed to wrap Pregel methods: %s", e)
@@ -210,9 +234,10 @@ class LangchainInstrumentor(BaseInstrumentor):
             # Wrap Command.__init__ to capture routing commands
             try:
                 wrap_function_wrapper(
-                    module="langgraph.types",
-                    name="Command.__init__",
-                    wrapper=create_command_init_wrapper(tracer),
+            "langgraph.types",
+            "Command.__init__",
+            create_command_init_wrapper(tracer,
+        ),
                 )
             except Exception as e:
                 logger.debug("Failed to wrap Command.__init__: %s", e)
@@ -232,19 +257,19 @@ class LangchainInstrumentor(BaseInstrumentor):
             # Patch the actual module where the function is defined
             try:
                 wrap_function_wrapper(
-                    module="langgraph.prebuilt.chat_agent_executor",
-                    name="create_react_agent",
-                    wrapper=langgraph_agent_wrapper,
-                )
+            "langgraph.prebuilt.chat_agent_executor",
+            "create_react_agent",
+            langgraph_agent_wrapper,
+        )
             except Exception as e:
                 logger.debug("Failed to wrap langgraph.prebuilt.chat_agent_executor.create_react_agent: %s", e)
             # Also patch the re-export location for imports from langgraph.prebuilt
             try:
                 wrap_function_wrapper(
-                    module="langgraph.prebuilt",
-                    name="create_react_agent",
-                    wrapper=langgraph_agent_wrapper,
-                )
+            "langgraph.prebuilt",
+            "create_react_agent",
+            langgraph_agent_wrapper,
+        )
             except Exception as e:
                 logger.debug("Failed to wrap langgraph.prebuilt.create_react_agent: %s", e)
 
@@ -254,19 +279,19 @@ class LangchainInstrumentor(BaseInstrumentor):
             # Patch the actual module where the function is defined
             try:
                 wrap_function_wrapper(
-                    module="langchain.agents.factory",
-                    name="create_agent",
-                    wrapper=agent_wrapper,
-                )
+            "langchain.agents.factory",
+            "create_agent",
+            agent_wrapper,
+        )
             except Exception as e:
                 logger.debug("Failed to wrap langchain.agents.factory.create_agent: %s", e)
             # Also patch the re-export location for imports from langchain.agents
             try:
                 wrap_function_wrapper(
-                    module="langchain.agents",
-                    name="create_agent",
-                    wrapper=agent_wrapper,
-                )
+            "langchain.agents",
+            "create_agent",
+            agent_wrapper,
+        )
             except Exception as e:
                 logger.debug("Failed to wrap langchain.agents.create_agent: %s", e)
 
@@ -277,9 +302,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         for hook_name in sync_hooks:
             try:
                 wrap_function_wrapper(
-                    module="langchain.agents.middleware.types",
-                    name=f"AgentMiddleware.{hook_name}",
-                    wrapper=create_middleware_hook_wrapper(tracer, hook_name),
+                    "langchain.agents.middleware.types",
+                    f"AgentMiddleware.{hook_name}",
+                    create_middleware_hook_wrapper(tracer, hook_name),
                 )
             except Exception as e:
                 logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
@@ -289,9 +314,9 @@ class LangchainInstrumentor(BaseInstrumentor):
         for hook_name in async_hooks:
             try:
                 wrap_function_wrapper(
-                    module="langchain.agents.middleware.types",
-                    name=f"AgentMiddleware.{hook_name}",
-                    wrapper=create_async_middleware_hook_wrapper(tracer, hook_name),
+                    "langchain.agents.middleware.types",
+                    f"AgentMiddleware.{hook_name}",
+                    create_async_middleware_hook_wrapper(tracer, hook_name),
                 )
             except Exception as e:
                 logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
@@ -354,8 +379,8 @@ class LangchainInstrumentor(BaseInstrumentor):
                 unwrap("langchain_openai.llms.base", "BaseOpenAI._agenerate")
                 unwrap("langchain_openai.llms.base", "BaseOpenAI._stream")
                 unwrap("langchain_openai.llms.base", "BaseOpenAI._astream")
-                unwrap("langchain_openai.chat_models.base", "BaseOpenAI._generate")
-                unwrap("langchain_openai.chat_models.base", "BaseOpenAI._agenerate")
+                unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._generate")
+                unwrap("langchain_openai.chat_models.base", "BaseChatOpenAI._agenerate")
                 # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._stream")
                 # unwrap("langchain_openai.chat_models.base", "BaseOpenAI._astream")
 

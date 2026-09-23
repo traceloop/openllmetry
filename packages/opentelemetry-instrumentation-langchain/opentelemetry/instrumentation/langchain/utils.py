@@ -29,20 +29,24 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             try:
                 return dataclasses.asdict(o)
-            except TypeError:
-                # asdict() deep-copies every field, which fails when an
-                # attribute holds a non-copyable object such as a threading
-                # lock (seen with langchain HTTP-client wrappers). Fall back
-                # to a shallow field map and let the encoder recurse / stringify.
-                return {
-                    f.name: getattr(o, f.name) for f in dataclasses.fields(o)
-                }
+            except Exception:
+                values = {}
+                for field in dataclasses.fields(o):
+                    try:
+                        values[field.name] = getattr(o, field.name)
+                    except Exception:
+                        logging.getLogger(__name__).debug(
+                            "Failed to read dataclass field %s from %s",
+                            field.name,
+                            type(o).__name__,
+                        )
+                return values
 
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        if isinstance(o, BaseModel) and hasattr(o, "model_dump_json"):
-            return o.model_dump_json()
+        if isinstance(o, BaseModel) and hasattr(o, "model_dump"):
+            return o.model_dump()
 
         if isinstance(o, datetime.datetime):
             return o.isoformat()
@@ -56,9 +60,9 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
 
 
 def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+    return (os.getenv(TRACELOOP_TRACE_CONTENT) or "true").lower() == "true" or context_api.get_value(
+        "override_enable_content_tracing"
+    )
 
 
 def dont_throw(func):
@@ -91,9 +95,7 @@ def should_emit_events() -> bool:
     Checks if the instrumentation isn't using the legacy attributes
     and if the event logger is not None.
     """
-    return not Config.use_legacy_attributes and isinstance(
-        Config.event_logger, Logger
-    )
+    return not Config.use_legacy_attributes and isinstance(Config.event_logger, Logger)
 
 
 def is_package_available(package_name):

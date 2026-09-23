@@ -1,5 +1,6 @@
 import json
 import pytest
+from pydantic import BaseModel
 
 from openai import AsyncOpenAI, OpenAI
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
@@ -9,6 +10,11 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from .utils import get_input_messages, get_output_messages
+
+
+class Person(BaseModel):
+    name: str
+    age: int
 
 
 @pytest.mark.vcr
@@ -406,6 +412,77 @@ async def test_responses_streaming_async_with_context_manager(
     assert output_messages[0]["parts"][0]["content"] == full_text
 
 
+@pytest.mark.vcr
+def test_responses_parse(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+):
+    """Structured-output via responses.parse() must produce an LLM span with usage
+    and capture the prompt + structured response on the span."""
+    input_text = "Extract: Alice is 30 years old."
+    response = openai_client.responses.parse(
+        model="gpt-4.1-nano",
+        input=input_text,
+        text_format=Person,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"expected one openai.response span, got {len(spans)}"
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] > 0
+    assert span.attributes["gen_ai.usage.output_tokens"] > 0
+
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    output_text = output_messages[0]["parts"][0]["content"]
+    parsed = Person.model_validate_json(output_text)
+    assert parsed == response.output_parsed
+    assert parsed.name == "Alice"
+    assert parsed.age == 30
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+async def test_responses_parse_async(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+):
+    """Async structured-output via responses.parse() must produce an LLM span with usage
+    and capture the prompt + structured response on the span."""
+    input_text = "Extract: Bob is 42 years old."
+    response = await async_openai_client.responses.parse(
+        model="gpt-4.1-nano",
+        input=input_text,
+        text_format=Person,
+    )
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, f"expected one openai.response span, got {len(spans)}"
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] > 0
+    assert span.attributes["gen_ai.usage.output_tokens"] > 0
+
+    input_messages = get_input_messages(span)
+    assert input_messages[0]["role"] == "user"
+    assert input_messages[0]["parts"][0]["content"] == input_text
+
+    output_messages = get_output_messages(span)
+    assert output_messages[0]["role"] == "assistant"
+    output_text = output_messages[0]["parts"][0]["content"]
+    parsed = Person.model_validate_json(output_text)
+    assert parsed == response.output_parsed
+    assert parsed.name == "Bob"
+    assert parsed.age == 42
+
+
 def test_get_tools_from_kwargs_with_none():
     """Test that get_tools_from_kwargs handles None tools value correctly.
 
@@ -793,3 +870,77 @@ def test_response_stream_init_with_omit_reasoning():
     assert stream is not None
     assert stream._traced_data is not None
     assert stream._traced_data.request_reasoning_summary is None
+
+
+def test_parse_response_unwraps_legacy_api_response():
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4058:
+    parse_response must unwrap LegacyAPIResponse (what with_raw_response currently
+    returns for the Responses API) so downstream code can access .id without crashing."""
+    from unittest.mock import MagicMock
+    from openai._legacy_response import LegacyAPIResponse
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    inner = MagicMock()
+    inner.id = "resp_123"
+
+    wrapper = MagicMock(spec=LegacyAPIResponse)
+    wrapper.parse.return_value = inner
+
+    result = parse_response(wrapper)
+
+    wrapper.parse.assert_called_once()
+    assert result is inner
+    assert result.id == "resp_123"
+
+
+def test_parse_response_unwraps_api_response():
+    """parse_response must also unwrap APIResponse/AsyncAPIResponse in case
+    the OpenAI SDK changes with_raw_response to return the non-legacy variants."""
+    from unittest.mock import MagicMock
+    from openai._response import APIResponse
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    inner = MagicMock()
+    inner.id = "resp_456"
+
+    wrapper = MagicMock(spec=APIResponse)
+    wrapper.parse.return_value = inner
+
+    result = parse_response(wrapper)
+
+    wrapper.parse.assert_called_once()
+    assert result is inner
+    assert result.id == "resp_456"
+
+
+@pytest.mark.asyncio
+async def test_async_parse_response_unwraps_async_api_response():
+    """async_parse_response must unwrap AsyncAPIResponse using await."""
+    from unittest.mock import AsyncMock, MagicMock
+    from openai._response import AsyncAPIResponse
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import async_parse_response
+
+    inner = MagicMock()
+    inner.id = "resp_789"
+
+    wrapper = MagicMock(spec=AsyncAPIResponse)
+    wrapper.parse = AsyncMock(return_value=inner)
+
+    result = await async_parse_response(wrapper)
+
+    wrapper.parse.assert_awaited_once()
+    assert result is inner
+    assert result.id == "resp_789"
+
+
+def test_parse_response_passes_through_plain_response():
+    """parse_response should return a plain Response object unchanged."""
+    from unittest.mock import MagicMock
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import parse_response
+
+    plain = MagicMock()
+    plain.id = "resp_456"
+
+    result = parse_response(plain)
+
+    assert result is plain

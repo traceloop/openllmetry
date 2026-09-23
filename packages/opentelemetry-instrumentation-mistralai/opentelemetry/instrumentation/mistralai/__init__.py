@@ -33,6 +33,7 @@ from opentelemetry.semconv_ai import (
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
 from mistralai.models import (
@@ -195,6 +196,25 @@ def _set_model_response_attributes(span, llm_request_type, response):
         GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
         input_tokens,
     )
+
+    prompt_tokens_details = (
+        getattr(response.usage, "prompt_tokens_details", None)
+        or getattr(response.usage, "additional_properties", {}).get(
+            "prompt_tokens_details"
+        )
+    )
+    if prompt_tokens_details:
+        cached_tokens = (
+            prompt_tokens_details.get("cached_tokens")
+            if isinstance(prompt_tokens_details, dict)
+            else getattr(prompt_tokens_details, "cached_tokens", None)
+        )
+        if cached_tokens is not None:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_tokens,
+            )
 
 
 def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
@@ -414,7 +434,14 @@ def _wrap(
 
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if to_wrap.get("streaming"):
@@ -460,10 +487,14 @@ async def _awrap(
 
     _handle_input(span, event_logger, args, kwargs, to_wrap)
 
-    if to_wrap.get("streaming"):
+    try:
         response = await wrapped(*args, **kwargs)
-    else:
-        response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.end()
+        raise
 
     if response:
         if to_wrap.get("streaming"):
