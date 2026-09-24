@@ -195,7 +195,10 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
         tool_defs = []
         for tool in tools:
             tool_function = tool.get("function", tool)
-            tool_def = {"name": tool_function.get("name")}
+            tool_def = {
+                "type": tool.get("type") or "function",
+                "name": tool_function.get("name"),
+            }
             if tool_function.get("description"):
                 tool_def["description"] = tool_function.get("description")
             params_val = tool_function.get("parameters", tool.get("input_schema"))
@@ -248,7 +251,10 @@ def set_chat_request(
         if functions:
             tool_defs = []
             for function in functions:
-                tool_def = {"name": function.get("name")}
+                tool_def = {
+                    "type": "function",
+                    "name": function.get("name"),
+                }
                 if function.get("description"):
                     tool_def["description"] = function.get("description")
                 if function.get("parameters"):
