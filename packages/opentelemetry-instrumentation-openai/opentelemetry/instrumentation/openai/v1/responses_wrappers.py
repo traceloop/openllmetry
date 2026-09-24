@@ -575,6 +575,14 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         span.end()
         raise
     parsed_response = parse_response(response)
+    if isinstance(parsed_response, Stream):
+        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+        # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
+        # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
+        # trace from here. The pre-parse `isinstance(response, Stream)` check above only
+        # catches the direct `.create(stream=True)` case; this call goes untraced instead
+        # of crashing.
+        return response
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
@@ -742,6 +750,15 @@ async def async_responses_get_or_create_wrapper(
         span.end()
         raise
     parsed_response = await async_parse_response(response)
+    if isinstance(parsed_response, (Stream, AsyncStream)):
+        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+        # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
+        # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
+        # `.id`/`.output`/etc. to build a trace from here. The pre-parse
+        # `isinstance(response, (Stream, AsyncStream))` check above only catches the
+        # direct `.create(stream=True)` case; this call goes untraced instead of
+        # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
+        return response
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None:
