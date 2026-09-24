@@ -23,7 +23,8 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 def set_span_attribute(span, name, value):
     if value is not None:
         if value != "":
-            span.set_attribute(name, value)
+            if type(value).__name__ not in ("Omit", "NotGiven"):
+                span.set_attribute(name, value)
     return
 
 
