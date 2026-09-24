@@ -1,0 +1,4 @@
+# Run from this directory with: uv run --no-project --with-requirements requirements.txt python main.py
+-e ../..
+aleph-alpha-client>=7.1.0,<8
+opentelemetry-sdk>=1.38.0,<2
