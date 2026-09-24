@@ -388,3 +388,30 @@ async def test_source_literals_do_not_leak_through_the_stacktrace(
 
     assert _exception_events(span_exporter), "the failure must still be recorded"
     assert MARKER not in _all_recorded_text(span_exporter)
+
+
+async def test_exception_event_shape_is_the_same_either_way(
+    span_exporter, monkeypatch
+) -> None:
+    """Grouping on exception.type must not split by the switch.
+
+    The SDK drops the module for builtins and writes escaped as a string; the
+    content-off event has to match it rather than build its own.
+    """
+    shapes = {}
+    for switch in ("true", "false"):
+        span_exporter.clear()
+        monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", switch)
+
+        async with Client(_failing_server()) as client:
+            with pytest.raises(Exception):
+                await client.call_tool("boom", {"token": MARKER})
+
+        events = _exception_events(span_exporter)
+        assert events, "the failure must be recorded as an exception event"
+        shapes[switch] = {
+            (e.attributes["exception.type"], e.attributes["exception.escaped"])
+            for e in events
+        }
+
+    assert shapes["true"] == shapes["false"]

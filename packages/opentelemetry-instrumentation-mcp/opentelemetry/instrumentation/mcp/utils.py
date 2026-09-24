@@ -44,15 +44,20 @@ def record_error(span, exc) -> None:
     and it reaches a traceback twice over: as the last line of a formatted
     one, and inside the source line of the raise site's own frame. Hence the
     frames are rendered by hand, without either.
+
+    Both branches go through ``record_exception`` so the event's non-content
+    fields (``exception.type``, ``exception.escaped``) are written by the SDK
+    and match whichever way the switch is set; only the content fields are
+    overridden.
     """
     span.set_attribute(ERROR_TYPE, type(exc).__name__)
     if should_send_prompts():
         span.record_exception(exc)
     else:
-        span.add_event(
-            "exception",
-            {
-                "exception.type": f"{type(exc).__module__}.{type(exc).__qualname__}",
+        span.record_exception(
+            exc,
+            attributes={
+                "exception.message": "",
                 # File, line and function, but not the frame's source line: a
                 # raise site like ToolError("...") reproduces its own message
                 # there, and that message is the thing being withheld.
@@ -61,7 +66,6 @@ def record_error(span, exc) -> None:
                     f" in {frame.name}"
                     for frame in traceback.extract_tb(exc.__traceback__)
                 ),
-                "exception.escaped": False,
             },
         )
     span.set_status(error_status(str(exc)))
