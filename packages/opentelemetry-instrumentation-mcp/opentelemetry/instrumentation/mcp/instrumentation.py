@@ -243,7 +243,7 @@ class McpInstrumentor(BaseInstrumentor):
                 # Call the original method
                 result = await wrapped(*args, **kwargs)
                 return result
-            except Exception as e:
+            except BaseException as e:
                 record_error(span, e)
                 raise
 
@@ -266,7 +266,7 @@ class McpInstrumentor(BaseInstrumentor):
                     context_manager.__exit__(None, None, None)
 
                 return result
-            except Exception as e:
+            except BaseException as e:
                 # Record the teardown failure before __exit__ ends the span --
                 # the span's own exception recording is off, so nothing else
                 # would report it.
@@ -381,7 +381,7 @@ class McpInstrumentor(BaseInstrumentor):
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
-        except Exception as e:
+        except BaseException as e:
             record_error(span, e)
             raise
 
@@ -628,7 +628,7 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 propagate.get_global_textmap().inject(meta)
                 return await self.__wrapped__.send(item)
 
-            except Exception as e:
+            except BaseException as e:
                 record_error(span, e)
                 raise
 

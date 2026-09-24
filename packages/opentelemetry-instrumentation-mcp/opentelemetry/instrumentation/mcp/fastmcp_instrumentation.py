@@ -116,7 +116,7 @@ class FastMCPInstrumentor:
 
                     try:
                         result = await wrapped(*args, **kwargs)
-                    except Exception as e:
+                    except BaseException as e:
                         record_error(tool_span, e)
                         record_error(mcp_span, e)
                         raise

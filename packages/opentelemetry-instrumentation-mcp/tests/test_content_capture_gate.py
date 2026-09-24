@@ -15,6 +15,7 @@ an attribute: a status description, and the message and stacktrace that
 ``record_exception`` writes as event attributes.
 """
 
+import asyncio
 import json
 
 import pytest
@@ -432,3 +433,40 @@ async def test_content_allow_list_override_enables_capture(
         context.detach(token)
 
     assert MARKER in _all_recorded_text(span_exporter)
+
+
+async def test_cancelled_calls_are_recorded_as_errors(
+    span_exporter, tracer_provider
+) -> None:
+    """Cancellation is a BaseException, not an Exception.
+
+    The spans turn OTel's own exception recording off, so a cancelled call is
+    marked failed only if the wrapper's own handler catches it too.
+    """
+    tracer = tracer_provider.get_tracer(__name__)
+
+    async def _cancelled(*args, **kwargs):
+        """Get cancelled mid-call, the way a task-group teardown does."""
+        raise asyncio.CancelledError()
+
+    with pytest.raises(asyncio.CancelledError):
+        with tracer.start_as_current_span(
+            "tools/call.tool", record_exception=False, set_status_on_exception=False
+        ) as span:
+            await McpInstrumentor()._execute_and_handle_result(
+                span, "tools/call", (), {}, _cancelled
+            )
+
+    # send() is @dont_throw, which catches Exception only: cancellation still
+    # propagates, as it must.
+    with pytest.raises(asyncio.CancelledError):
+        await InstrumentedStreamWriter(
+            _Sink(failure=asyncio.CancelledError()), tracer
+        ).send(_error_response())
+
+    spans = span_exporter.get_finished_spans()
+    assert {s.name for s in spans} == {"tools/call.tool", "ResponseStreamWriter"}
+    assert all(s.status.status_code is StatusCode.ERROR for s in spans)
+    assert all(
+        (s.attributes or {}).get("error.type") == "CancelledError" for s in spans
+    )
