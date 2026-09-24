@@ -5,6 +5,7 @@ import logging
 import os
 import traceback
 
+from opentelemetry import context as context_api
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.trace import Status, StatusCode
 
@@ -20,8 +21,13 @@ def should_send_prompts() -> bool:
     capture is on unless an operator explicitly turns it off. Shared by the
     FastMCP server wrapper and the MCP client path so a single environment
     variable governs both, which is what the package README documents.
+
+    Like the other instrumentations, the SDK's per-association content allow
+    list can also enable capture via ``override_enable_content_tracing``.
     """
-    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
+    return (
+        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
+    ).lower() == "true" or bool(context_api.get_value("override_enable_content_tracing"))
 
 
 def error_status(description: str) -> Status:

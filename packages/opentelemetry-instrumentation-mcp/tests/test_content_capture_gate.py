@@ -21,6 +21,7 @@ import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
 from mcp.types import JSONRPCMessage, JSONRPCResponse
+from opentelemetry import context
 from opentelemetry.instrumentation.mcp import McpInstrumentor
 from opentelemetry.instrumentation.mcp.instrumentation import InstrumentedStreamWriter
 from opentelemetry.trace import StatusCode
@@ -415,3 +416,19 @@ async def test_exception_event_shape_is_the_same_either_way(
         }
 
     assert shapes["true"] == shapes["false"]
+
+
+async def test_content_allow_list_override_enables_capture(
+    span_exporter, monkeypatch
+) -> None:
+    """The SDK's per-association allow list turns capture on despite the switch."""
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+    token = context.attach(context.set_value("override_enable_content_tracing", True))
+    try:
+        async with Client(_server()) as client:
+            await client.call_tool("echo_secret", {"token": MARKER})
+    finally:
+        context.detach(token)
+
+    assert MARKER in _all_recorded_text(span_exporter)
