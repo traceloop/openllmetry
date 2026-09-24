@@ -9,10 +9,10 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.9,<4"
+requires-python = ">=3.10,<4"
 dependencies = [
-  "opentelemetry-sdk>=1.38.0,<2",
-  "opentelemetry-semantic-conventions>=0.59b0",
+  "opentelemetry-sdk>=1.42.0,<2",
+  "opentelemetry-semantic-conventions>=0.63b1",
 ]
 
 [dependency-groups]
