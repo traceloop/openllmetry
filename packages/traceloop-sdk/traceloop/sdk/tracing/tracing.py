@@ -678,6 +678,10 @@ def init_openai_instrumentor(
                 instrumentor.instrument()
             return True
 
+    except ModuleNotFoundError as e:
+
+        logging.warning("Please install traceloop-sdk[openai] to enable tracing for OpenAI")
+
     except Exception as e:
         logging.error(f"Error initializing OpenAI instrumentor: {e}")
     return False
@@ -701,6 +705,8 @@ def init_anthropic_instrumentor(
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[anthropic] to enable tracing for Anthropic")
     except Exception as e:
         logging.error(f"Error initializing Anthropic instrumentor: {e}")
     return False
@@ -715,6 +721,8 @@ def init_cohere_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[cohere] to enable tracing for Cohere")
     except Exception as e:
         logging.error(f"Error initializing Cohere instrumentor: {e}")
     return False
@@ -729,6 +737,8 @@ def init_pinecone_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[pinecone] to enable tracing for Pinecone")
     except Exception as e:
         logging.error(f"Error initializing Pinecone instrumentor: {e}")
     return False
@@ -745,6 +755,8 @@ def init_qdrant_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[qdrant] to enable tracing for Qdrant")
     except Exception as e:
         logging.error(f"Error initializing Qdrant instrumentor: {e}")
     return False
@@ -759,6 +771,8 @@ def init_chroma_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[chromadb] to enable tracing for Chroma")
     except Exception as e:
         logging.error(f"Error initializing Chroma instrumentor: {e}")
     return False
@@ -782,6 +796,8 @@ def init_google_generativeai_instrumentor(
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[google_generativeai] to enable tracing for Gemini")
     except Exception as e:
         logging.error(f"Error initializing Gemini instrumentor: {e}")
     return False
@@ -796,6 +812,8 @@ def init_haystack_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[haystack] to enable tracing for Haystack")
     except Exception as e:
         logging.error(f"Error initializing Haystack instrumentor: {e}")
     return False
@@ -810,6 +828,8 @@ def init_langchain_instrumentor(use_attributes: bool = True):
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[langchain] to enable tracing for LangChain")
     except Exception as e:
         logging.error(f"Error initializing LangChain instrumentor: {e}")
     return False
@@ -824,6 +844,8 @@ def init_mistralai_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[mistralai] to enable tracing for MistralAI")
     except Exception as e:
         logging.error(f"Error initializing MistralAI instrumentor: {e}")
     return False
@@ -841,6 +863,8 @@ def init_litellm_instrumentor(use_attributes: bool = True):
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[litellm] to enable tracing for LiteLLM")
     except Exception as e:
         logging.error(f"Error initializing LiteLLM instrumentor: {e}")
     return False
@@ -855,6 +879,8 @@ def init_ollama_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[ollama] to enable tracing for Ollama")
     except Exception as e:
         logging.error(f"Error initializing Ollama instrumentor: {e}")
     return False
@@ -871,6 +897,8 @@ def init_transformers_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[transformers] to enable tracing for Transformers")
     except Exception as e:
         logging.error(f"Error initializing Transformers instrumentor: {e}")
     return False
@@ -885,6 +913,8 @@ def init_together_instrumentor(use_attributes: bool = True):
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[together] to enable tracing for TogetherAI")
     except Exception as e:
         logging.error(f"Error initializing TogetherAI instrumentor: {e}")
     return False
@@ -899,6 +929,8 @@ def init_llama_index_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[llamaindex] to enable tracing for LlamaIndex")
     except Exception as e:
         logging.error(f"Error initializing LlamaIndex instrumentor: {e}")
     return False
@@ -913,6 +945,8 @@ def init_milvus_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[milvus] to enable tracing for Milvus")
     except Exception as e:
         logging.error(f"Error initializing Milvus instrumentor: {e}")
     return False
@@ -927,6 +961,8 @@ def init_requests_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[requests] to enable tracing for Requests")
     except Exception as e:
         logging.error(f"Error initializing Requests instrumentor: {e}")
     return False
@@ -941,6 +977,8 @@ def init_urllib3_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[urllib3] to enable tracing for urllib3")
     except Exception as e:
         logging.error(f"Error initializing urllib3 instrumentor: {e}")
     return False
@@ -955,6 +993,8 @@ def init_pymysql_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[pymysql] to enable tracing for SQLAlchemy")
     except Exception as e:
         logging.error(f"Error initializing SQLAlchemy instrumentor: {e}")
     return False
@@ -983,6 +1023,8 @@ def init_sagemaker_instrumentor(should_enrich_metrics: bool, use_attributes: boo
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[bedrock] to enable tracing for SageMaker")
     except Exception as e:
         logging.error(f"Error initializing SageMaker instrumentor: {e}")
     return False
@@ -997,6 +1039,8 @@ def init_replicate_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[replicate] to enable tracing for Replicate")
     except Exception as e:
         logging.error(f"Error initializing Replicate instrumentor: {e}")
     return False
@@ -1016,6 +1060,8 @@ def init_vertexai_instrumentor(
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[vertexai] to enable tracing for Vertex AI")
     except Exception as e:
         logging.warning(f"Error initializing Vertex AI instrumentor: {e}")
     return False
@@ -1030,6 +1076,8 @@ def init_voyageai_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[voyageai] to enable tracing for Voyage AI")
     except Exception as e:
         logging.warning(f"Error initializing Voyage AI instrumentor: {e}")
     return False
@@ -1046,6 +1094,8 @@ def init_watsonx_instrumentor(use_attributes: bool = True):
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[watsonx] to enable tracing for Watsonx")
     except Exception as e:
         logging.warning(f"Error initializing Watsonx instrumentor: {e}")
     return False
@@ -1060,6 +1110,8 @@ def init_weaviate_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[weaviate] to enable tracing for Weaviate")
     except Exception as e:
         logging.warning(f"Error initializing Weaviate instrumentor: {e}")
     return False
@@ -1074,6 +1126,8 @@ def init_writer_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[writer] to enable tracing for Writer")
     except Exception as e:
         logging.error(f"Error initializing Writer instrumentor: {e}")
     return False
@@ -1088,6 +1142,8 @@ def init_agno_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[agno] to enable tracing for Agno")
     except Exception as e:
         logging.error(f"Error initializing Agno instrumentor: {e}")
     return False
@@ -1102,6 +1158,8 @@ def init_alephalpha_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[alephalpha] to enable tracing for Aleph Alpha")
     except Exception as e:
         logging.error(f"Error initializing Aleph Alpha instrumentor: {e}")
     return False
@@ -1116,6 +1174,8 @@ def init_marqo_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[marqo] to enable tracing for marqo")
     except Exception as e:
         logging.error(f"Error initializing marqo instrumentor: {e}")
     return False
@@ -1130,6 +1190,8 @@ def init_lancedb_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[lancedb] to enable tracing for LanceDB")
     except Exception as e:
         logging.error(f"Error initializing LanceDB instrumentor: {e}")
     return False
@@ -1144,6 +1206,8 @@ def init_redis_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[redis] to enable tracing for redis")
     except Exception as e:
         logging.error(f"Error initializing redis instrumentor: {e}")
     return False
@@ -1158,6 +1222,8 @@ def init_groq_instrumentor(use_attributes: bool = True):
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[groq] to enable tracing for Groq")
     except Exception as e:
         logging.error(f"Error initializing Groq instrumentor: {e}")
     return False
@@ -1173,6 +1239,8 @@ def init_crewai_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[crewai] to enable tracing for CrewAI")
     except Exception as e:
         logging.error(f"Error initializing CrewAI instrumentor: {e}")
     return False
@@ -1187,6 +1255,8 @@ def init_mcp_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[mcp] to enable tracing for MCP")
     except Exception as e:
         logging.error(f"Error initializing MCP instrumentor: {e}")
     return False
@@ -1203,6 +1273,8 @@ def init_openai_agents_instrumentor():
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True
+    except ModuleNotFoundError as e:
+        logging.warning("Please install traceloop-sdk[openai_agents] to enable tracing for OpenAI Agents")
     except Exception as e:
         logging.error(f"Error initializing OpenAI Agents instrumentor: {e}")
     return False
