@@ -91,12 +91,23 @@ class McpInstrumentor(BaseInstrumentor):
             ),
             "mcp.server.session",
         )
+
+        def _wrap_streamable_http_client(module):
+            # mcp 1.24 introduced streamable_http_client as the canonical entry
+            # point and kept streamablehttp_client as a deprecated shim that
+            # delegates to it; mcp>=2.0 dropped the shim and mcp<1.24 only had
+            # it. Prefer the canonical name so both call paths are traced on the
+            # releases that expose both, and fall back to the legacy name on the
+            # older releases that only expose that one.
+            for name in ("streamable_http_client", "streamablehttp_client"):
+                if hasattr(module, name):
+                    wrap_function_wrapper(
+                        module, name, self._transport_wrapper(tracer)
+                    )
+                    return
+
         register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.streamable_http",
-                "streamablehttp_client",
-                self._transport_wrapper(tracer),
-            ),
+            _wrap_streamable_http_client,
             "mcp.client.streamable_http",
         )
         register_post_import_hook(
