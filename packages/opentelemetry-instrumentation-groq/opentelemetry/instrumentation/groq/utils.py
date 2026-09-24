@@ -64,6 +64,16 @@ def shared_metrics_attributes(response):
 
 
 @dont_throw
+def streaming_metrics_attributes(model):
+    """Metrics attributes for streaming responses, where no full response object exists yet."""
+    return {
+        **Config.get_common_metrics_attributes(),
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL: model,
+    }
+
+
+@dont_throw
 def error_metrics_attributes(exception):
     return {
         GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
