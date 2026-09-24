@@ -37,8 +37,9 @@ def _accumulate_openai_chunk(body, chunk):
                     "id": tool_call["id"],
                     "function": {"name": function.get("name"), "arguments": ""},
                 })
-            if tool_calls:
-                tool_calls[-1]["function"]["arguments"] += function.get("arguments") or ""
+            position = tool_call.get("index", len(tool_calls) - 1)
+            if 0 <= position < len(tool_calls):
+                tool_calls[position]["function"]["arguments"] += function.get("arguments") or ""
         if choice.get("finish_reason"):
             choices[index]["finish_reason"] = choice["finish_reason"]
 

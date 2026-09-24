@@ -258,6 +258,29 @@ class TestOpenAIStreamingAccumulation:
             "arguments": {"city": "Paris"},
         }]
 
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_interleaved_tool_call_stream_is_routed_by_index(self, _mock):
+        body = _collect([
+            _stream_chunk({"tool_calls": [{
+                "function": {"arguments": "", "name": "get_weather"},
+                "id": "call_0", "index": 0, "type": "function",
+            }]}),
+            _stream_chunk({"tool_calls": [{
+                "function": {"arguments": "", "name": "get_weather"},
+                "id": "call_1", "index": 1, "type": "function",
+            }]}),
+            _stream_chunk({"tool_calls": [{"function": {"arguments": '{"city":"Paris"}'}, "index": 0}]}),
+            _stream_chunk({"tool_calls": [{"function": {"arguments": '{"city":"Tokyo"}'}, "index": 1}]}),
+            _stream_chunk({}, "tool_calls"),
+        ])
+        span = _mock_span()
+        set_model_choice_span_attributes("openai", span, body)
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert [(p["id"], p["arguments"]) for p in output[0]["parts"]] == [
+            ("call_0", {"city": "Paris"}),
+            ("call_1", {"city": "Tokyo"}),
+        ]
+
     def test_usage_falls_back_to_invocation_metrics(self):
         """gpt-oss streams send no usage object, only amazon-bedrock-invocationMetrics."""
         body = _collect([
