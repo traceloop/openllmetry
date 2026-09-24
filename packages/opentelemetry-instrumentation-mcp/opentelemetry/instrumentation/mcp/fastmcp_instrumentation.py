@@ -6,10 +6,9 @@ import os
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw
+from .utils import dont_throw, record_error, should_send_prompts
 
 
 class FastMCPInstrumentor:
@@ -82,7 +81,12 @@ class FastMCPInstrumentor:
             entity_name = tool_key if tool_key else "unknown_tool"
 
             # Create parent server.mcp span
-            with self._tracer.start_as_current_span("mcp.server") as mcp_span:
+            # The error paths below record the failure themselves, with the
+            # message gated on content capture. OTel's own exception recording
+            # would re-add that text ungated on the way out.
+            with self._tracer.start_as_current_span(
+                "mcp.server", record_exception=False, set_status_on_exception=False
+            ) as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
                 if self._server_name:
@@ -90,7 +94,9 @@ class FastMCPInstrumentor:
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
-                with self._tracer.start_as_current_span(span_name) as tool_span:
+                with self._tracer.start_as_current_span(
+                    span_name, record_exception=False, set_status_on_exception=False
+                ) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                     if self._server_name:
@@ -110,14 +116,9 @@ class FastMCPInstrumentor:
 
                     try:
                         result = await wrapped(*args, **kwargs)
-                    except Exception as e:
-                        tool_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        tool_span.record_exception(e)
-                        tool_span.set_status(Status(StatusCode.ERROR, str(e)))
-
-                        mcp_span.set_attribute(ERROR_TYPE, type(e).__name__)
-                        mcp_span.record_exception(e)
-                        mcp_span.set_status(Status(StatusCode.ERROR, str(e)))
+                    except BaseException as e:
+                        record_error(tool_span, e)
+                        record_error(mcp_span, e)
                         raise
 
                     try:
@@ -155,9 +156,7 @@ class FastMCPInstrumentor:
 
     def _should_send_prompts(self):
         """Check if content tracing is enabled (matches traceloop SDK)"""
-        return (
-            os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-        ).lower() == "true"
+        return should_send_prompts()
 
     def _get_json_encoder(self):
         """Get JSON encoder class (simplified - traceloop SDK uses custom JSONEncoder)"""
