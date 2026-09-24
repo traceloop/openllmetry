@@ -830,6 +830,8 @@ def _openai_message_to_parts(message):
         parts = _anthropic_content_to_parts(content)
     else:
         parts = [_text_part(content)] if content else []
+    if message.get("refusal"):  # comes with content None, as the OpenAI instrumentation records it
+        parts.append({"type": "refusal", "content": message["refusal"]})
     for tool_call in message.get("tool_calls") or []:
         function = tool_call.get("function", {})
         arguments = function.get("arguments")

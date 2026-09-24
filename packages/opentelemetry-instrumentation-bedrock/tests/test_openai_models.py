@@ -186,6 +186,19 @@ class TestOpenAIInvokeModelSpanAttributes:
         assert output[0]["finish_reason"] == "tool_call"
 
     @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
+    def test_refusal_output(self, _mock):
+        """content is None on a refusal; it is recorded as a refusal part, like the OpenAI instrumentation."""
+        span = _mock_span()
+        set_model_choice_span_attributes("openai", span, {"choices": [{
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {"content": None, "refusal": "I can't help with that.", "role": "assistant"},
+        }]})
+        output = json.loads(span._attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+        assert output[0]["parts"] == [{"type": "refusal", "content": "I can't help with that."}]
+        assert output[0]["finish_reason"] == "stop"
+
+    @patch("opentelemetry.instrumentation.bedrock.span_utils.should_send_prompts", return_value=True)
     def test_input_messages(self, _mock):
         span = _mock_span()
         request_body = {"messages": [
