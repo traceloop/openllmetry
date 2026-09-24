@@ -55,9 +55,8 @@ class SSEClient:
     async def _handle_sse_response(self, response: httpx.Response) -> ExecutionResponse:
         """Handle SSE response: check status and parse result"""
         if response.status_code != 200:
-            error_text = await response.aread()
-            # TODO: Fix bytes formatting - should decode error_text or use !r
-            error_msg = f"Failed to stream results: {response.status_code}, body: {error_text}"  # type: ignore[str-bytes-safe]  # noqa: E501
+            error_text = (await response.aread()).decode(errors="replace")
+            error_msg = f"Failed to stream results: {response.status_code}, body: {error_text}"
             raise Exception(error_msg)
 
         response_text = await response.aread()
