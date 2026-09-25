@@ -1,3 +1,4 @@
+from collections.abc import Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
@@ -490,6 +491,24 @@ def serialize(request, depth=0, max_depth=4):
         return json.dumps(result)
 
 
+def _read_field(payload: Any, name: str) -> Any:
+    """Read a field from an MCP payload that may be dict- or object-shaped."""
+    if isinstance(payload, Mapping):
+        return payload.get(name)
+    return getattr(payload, name, None)
+
+
+def _error_description(result: Any) -> str:
+    """Best-effort text of an isError result, for both dict- and object-shaped content."""
+    content = _read_field(result, "content")
+    if isinstance(content, Sequence) and not isinstance(content, (str, bytes)):
+        for block in content:
+            text = _read_field(block, "text")
+            if text:
+                return f"{text}"
+    return ""
+
+
 class InstrumentedStreamReader(ObjectProxy):  # type: ignore
     # ObjectProxy missing context manager - https://github.com/GrahamDumpleton/wrapt/issues/73
     def __init__(self, wrapped, tracer):
@@ -568,14 +587,13 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 span.set_attribute(
                     SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
                 )
-                if "isError" in request.result:
-                    if request.result["isError"] is True:
-                        span.set_status(
-                            Status(
-                                StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
-                            )
+                if _read_field(request.result, "isError") is True:
+                    span.set_status(
+                        Status(
+                            StatusCode.ERROR,
+                            _error_description(request.result),
                         )
+                    )
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
