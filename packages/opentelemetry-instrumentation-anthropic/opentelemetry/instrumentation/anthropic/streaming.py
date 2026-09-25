@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    get_reasoning_tokens,
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
@@ -82,6 +83,7 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token usage collected from a completed streaming response."""
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
@@ -97,6 +99,12 @@ def _set_token_usage(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
+
+    set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+        get_reasoning_tokens(complete_response.get("usage")),
+    )
 
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
