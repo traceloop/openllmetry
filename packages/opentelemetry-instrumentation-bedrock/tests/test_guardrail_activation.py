@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.bedrock import (
 )
 from opentelemetry.instrumentation.bedrock.guardrail import (
     guardrail_converse,
+    guardrail_handling,
     is_guardrail_activated,
 )
 
@@ -91,6 +92,33 @@ def test_converse_activation_is_recorded():
     metric_params.guardrail_activation.add.assert_called_once()
 
 
+def test_activation_with_metrics_disabled_still_sets_span_attributes():
+    converse_span = MagicMock()
+    guardrail_converse(
+        converse_span,
+        {"stopReason": "guardrail_intervened", "trace": GUARDRAIL_TRACE},
+        "aws",
+        "m",
+        _metric_params(enabled=False),
+    )
+    assert converse_span.set_attribute.called
+
+    invoke_span = MagicMock()
+    guardrail_handling(
+        invoke_span,
+        {
+            "amazon-bedrock-guardrailAction": "INTERVENED",
+            "amazon-bedrock-trace": {
+                "guardrail": {"input": GUARDRAIL_TRACE["guardrail"]["inputAssessment"]}
+            },
+        },
+        "aws",
+        "m",
+        _metric_params(enabled=False),
+    )
+    assert invoke_span.set_attribute.called
+
+
 @pytest.mark.parametrize(
     "stop_reason,activations", [("guardrail_intervened", 1), ("end_turn", 0)]
 )
@@ -123,3 +151,16 @@ async def test_async_converse_stream_reads_stop_reason_from_message_stop(
         await response["stream"]._parse_event()
 
     assert metric_params.guardrail_activation.add.call_count == activations
+
+
+def test_converse_stream_activation_with_metrics_disabled_ends_span():
+    span = MagicMock()
+    stream = _FakeStream(_stream_events("guardrail_intervened"))
+    _handle_converse_stream(
+        span, {"modelId": MODEL_ID}, {"stream": stream}, _metric_params(enabled=False), None
+    )
+
+    for _ in range(3):
+        stream._parse_event()
+
+    span.end.assert_called_once()
