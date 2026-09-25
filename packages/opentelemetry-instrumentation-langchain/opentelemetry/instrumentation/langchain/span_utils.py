@@ -153,7 +153,7 @@ def _tool_calls_to_parts(tool_calls) -> list[dict]:
     return parts
 
 
-def set_request_params(span, kwargs, span_holder: SpanHolder):
+def set_request_params(span, kwargs, span_holder: SpanHolder, metadata=None):
     if not span.is_recording():
         return
 
@@ -167,7 +167,13 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
             span_holder.request_model = model
             break
     else:
-        model = "unknown"
+        # LangGraph/tool-orchestrated chat models (e.g. init_chat_model with
+        # model_provider="bedrock_converse") don't expose the model through the
+        # serialized kwargs or invocation_params. LangChain still reports it via
+        # the callback metadata, so fall back to that before giving up.
+        model = (metadata or {}).get("ls_model_name") or "unknown"
+        if model != "unknown":
+            span_holder.request_model = model
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
@@ -215,8 +221,9 @@ def set_llm_request(
     prompts: list[str],
     kwargs: Any,
     span_holder: SpanHolder,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> None:
-    set_request_params(span, kwargs, span_holder)
+    set_request_params(span, kwargs, span_holder, metadata)
 
     if should_send_prompts():
         input_messages = []
@@ -239,8 +246,9 @@ def set_chat_request(
     messages: list[list[BaseMessage]],
     kwargs: Any,
     span_holder: SpanHolder,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> None:
-    set_request_params(span, serialized.get("kwargs", {}), span_holder)
+    set_request_params(span, serialized.get("kwargs", {}), span_holder, metadata)
 
     if should_send_prompts():
         # Tool definitions from functions
