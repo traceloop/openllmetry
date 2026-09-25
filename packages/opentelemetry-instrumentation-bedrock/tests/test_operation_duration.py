@@ -28,6 +28,7 @@ CONVERSE_RESPONSE = {
 
 
 def _metric_params(meter) -> MetricParams:
+    """Build MetricParams backed by the given meter's real instruments."""
     return MetricParams(
         token_histogram=meter.create_histogram(Meters.LLM_TOKEN_USAGE),
         choice_counter=meter.create_counter(Meters.LLM_GENERATION_CHOICES),
@@ -45,6 +46,7 @@ def _metric_params(meter) -> MetricParams:
 
 
 def _duration_sum(reader: InMemoryMetricReader) -> float:
+    """Return the summed gen_ai.client.operation.duration recorded so far."""
     for resource_metrics in reader.get_metrics_data().resource_metrics:
         for scope_metrics in resource_metrics.scope_metrics:
             for metric in scope_metrics.metrics:
@@ -54,6 +56,7 @@ def _duration_sum(reader: InMemoryMetricReader) -> float:
 
 
 def test_operation_duration_measures_the_call_not_the_client_age():
+    """A call on an old client records its own latency, not the client's age."""
     reader = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[reader])
     meter = provider.get_meter(__name__)
