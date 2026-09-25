@@ -1,4 +1,57 @@
-from opentelemetry.instrumentation.bedrock.guardrail import is_guardrail_activated
+from unittest.mock import MagicMock
+
+import pytest
+from opentelemetry.instrumentation.bedrock import (
+    MetricParams,
+    _handle_async_converse_stream,
+    _handle_converse_stream,
+)
+from opentelemetry.instrumentation.bedrock.guardrail import (
+    guardrail_converse,
+    is_guardrail_activated,
+)
+
+MODEL_ID = "amazon.titan-text-express-v1"
+
+GUARDRAIL_TRACE = {
+    "guardrail": {
+        "inputAssessment": {
+            "gr-1:DRAFT": {
+                "invocationMetrics": {
+                    "guardrailProcessingLatency": 120,
+                    "guardrailCoverage": {"textCharacters": {"guarded": 30, "total": 30}},
+                },
+                "sensitiveInformationPolicy": {"piiEntities": [{"type": "ADDRESS"}]},
+            }
+        }
+    }
+}
+
+
+def _metric_params(enabled=True):
+    return MetricParams(*[MagicMock() if enabled else None for _ in range(12)])
+
+
+def _stream_events(stop_reason):
+    # Bedrock sends stopReason on messageStop; the trailing metadata frame omits it.
+    return [
+        {"messageStart": {"role": "assistant"}},
+        {"messageStop": {"stopReason": stop_reason}},
+        {"metadata": {"trace": GUARDRAIL_TRACE}},
+    ]
+
+
+class _FakeStream:
+    def __init__(self, events):
+        self._events = list(events)
+
+    def _parse_event(self):
+        return self._events.pop(0)
+
+
+class _FakeAsyncStream(_FakeStream):
+    async def _parse_event(self):
+        return self._events.pop(0)
 
 
 def test_response_without_guardrail_key_is_not_an_activation():
@@ -18,3 +71,55 @@ def test_activations_are_detected():
         is_guardrail_activated({"results": [{"completionReason": "CONTENT_FILTERED"}]})
         is True
     )
+
+
+def test_converse_without_guardrail_does_not_record_activation():
+    metric_params = _metric_params()
+    guardrail_converse(MagicMock(), {"stopReason": "end_turn"}, "aws", "m", metric_params)
+    metric_params.guardrail_activation.add.assert_not_called()
+
+
+def test_converse_activation_is_recorded():
+    metric_params = _metric_params()
+    guardrail_converse(
+        MagicMock(),
+        {"stopReason": "guardrail_intervened", "trace": GUARDRAIL_TRACE},
+        "aws",
+        "m",
+        metric_params,
+    )
+    metric_params.guardrail_activation.add.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stop_reason,activations", [("guardrail_intervened", 1), ("end_turn", 0)]
+)
+def test_converse_stream_reads_stop_reason_from_message_stop(stop_reason, activations):
+    metric_params = _metric_params()
+    stream = _FakeStream(_stream_events(stop_reason))
+    _handle_converse_stream(
+        MagicMock(), {"modelId": MODEL_ID}, {"stream": stream}, metric_params, None
+    )
+
+    for _ in range(3):
+        stream._parse_event()
+
+    assert metric_params.guardrail_activation.add.call_count == activations
+
+
+@pytest.mark.parametrize(
+    "stop_reason,activations", [("guardrail_intervened", 1), ("end_turn", 0)]
+)
+async def test_async_converse_stream_reads_stop_reason_from_message_stop(
+    stop_reason, activations
+):
+    metric_params = _metric_params()
+    response = {"stream": _FakeAsyncStream(_stream_events(stop_reason))}
+    _handle_async_converse_stream(
+        MagicMock(), {"modelId": MODEL_ID}, response, metric_params, None
+    )
+
+    for _ in range(3):
+        await response["stream"]._parse_event()
+
+    assert metric_params.guardrail_activation.add.call_count == activations
