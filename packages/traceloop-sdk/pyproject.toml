@@ -61,6 +61,7 @@ dependencies = [
   "deprecated>=1.2.14,<2",
   "aiohttp>=3.11.11,<4",
   "httpx>=0.23.0,<1",
+  "requests>=2.31.0,<3",
   "cuid>=0.4,<0.5",
 ]
 
