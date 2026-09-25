@@ -12,6 +12,7 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+from opentelemetry.semconv_ai import SpanAttributes
 from .utils import verify_metrics
 
 
@@ -32,7 +33,7 @@ def test_reasoning_tokens_are_recorded_for_non_streaming_response():
     _set_token_usage(span, None, {}, response)
 
     span.set_attribute.assert_any_call(
-        GenAIAttributes.GEN_AI_USAGE_REASONING_TOKENS, 7
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, 7
     )
 
 
@@ -51,7 +52,7 @@ def test_reasoning_tokens_are_recorded_for_streaming_response():
     _set_stream_token_usage(span, complete_response, 10, 20)
 
     span.set_attribute.assert_any_call(
-        GenAIAttributes.GEN_AI_USAGE_REASONING_TOKENS, 7
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, 7
     )
 
 
