@@ -727,3 +727,46 @@ async def test_mistralai_async_streaming_chat_as_context_manager(
         == response
     )
     assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 11
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_mistralai_streaming_chat_legacy.yaml")
+def test_mistralai_streaming_chat_context_manager_early_exit_ends_span(
+    instrument_legacy, mistralai_client, span_exporter
+):
+    res = mistralai_client.chat.stream(
+        model="mistral-tiny",
+        messages=[
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
+        ],
+    )
+
+    with res as event_stream:
+        for _ in event_stream:
+            break
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "mistralai.chat"
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+@pytest.mark.default_cassette("test_mistralai_async_streaming_chat_legacy.yaml")
+async def test_mistralai_async_streaming_chat_context_manager_early_exit_ends_span(
+    instrument_legacy, mistralai_async_client, span_exporter
+):
+    res = await mistralai_async_client.chat.stream_async(
+        model="mistral-tiny",
+        messages=[
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
+        ],
+    )
+
+    async with res as event_stream:
+        async for _ in event_stream:
+            break
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "mistralai.chat"

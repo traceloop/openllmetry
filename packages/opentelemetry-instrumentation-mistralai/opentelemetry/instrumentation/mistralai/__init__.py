@@ -369,9 +369,10 @@ async def _aaccumulate_streaming_response(
 class _StreamWrapper(ObjectProxy):
     """Keeps the SDK stream's context manager while iteration records the span."""
 
-    def __init__(self, stream, generator):
+    def __init__(self, stream, generator, span):
         super().__init__(stream)
         self._self_generator = generator
+        self._self_span = span
 
     def __iter__(self):
         return self
@@ -384,15 +385,19 @@ class _StreamWrapper(ObjectProxy):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._self_generator.close()
+        # Leaving the block before the stream is exhausted must still end the span.
+        if self._self_span.is_recording():
+            self._self_span.end()
         return self.__wrapped__.__exit__(exc_type, exc_value, traceback)
 
 
 class _AsyncStreamWrapper(ObjectProxy):
     """Async counterpart of _StreamWrapper, for `async with` on the SDK stream."""
 
-    def __init__(self, stream, generator):
+    def __init__(self, stream, generator, span):
         super().__init__(stream)
         self._self_generator = generator
+        self._self_span = span
 
     def __aiter__(self):
         return self
@@ -405,6 +410,8 @@ class _AsyncStreamWrapper(ObjectProxy):
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self._self_generator.aclose()
+        if self._self_span.is_recording():
+            self._self_span.end()
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
 
@@ -555,6 +562,7 @@ def _wrap(
                 _accumulate_streaming_response(
                     span, event_logger, llm_request_type, response
                 ),
+                span,
             )
 
         _handle_response(span, event_logger, llm_request_type, response)
@@ -611,6 +619,7 @@ async def _awrap(
                 _aaccumulate_streaming_response(
                     span, event_logger, llm_request_type, response
                 ),
+                span,
             )
 
         _handle_response(span, event_logger, llm_request_type, response)
