@@ -34,7 +34,7 @@ from opentelemetry.semconv_ai import (
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from wrapt import wrap_function_wrapper
+from wrapt import ObjectProxy, wrap_function_wrapper
 
 from mistralai.models import (
     ChatCompletionResponse,
@@ -366,6 +366,48 @@ async def _aaccumulate_streaming_response(
     span.end()
 
 
+class _StreamWrapper(ObjectProxy):
+    """Keeps the SDK stream's context manager while iteration records the span."""
+
+    def __init__(self, stream, generator):
+        super().__init__(stream)
+        self._self_generator = generator
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._self_generator)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._self_generator.close()
+        return self.__wrapped__.__exit__(exc_type, exc_value, traceback)
+
+
+class _AsyncStreamWrapper(ObjectProxy):
+    """Async counterpart of _StreamWrapper, for `async with` on the SDK stream."""
+
+    def __init__(self, stream, generator):
+        super().__init__(stream)
+        self._self_generator = generator
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        return await self._self_generator.__anext__()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self._self_generator.aclose()
+        return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
+
+
 def _with_tracer_wrapper(func):
     """Helper for providing tracer for wrapper functions."""
 
@@ -508,8 +550,11 @@ def _wrap(
 
     if response:
         if to_wrap.get("streaming"):
-            return _accumulate_streaming_response(
-                span, event_logger, llm_request_type, response
+            return _StreamWrapper(
+                response,
+                _accumulate_streaming_response(
+                    span, event_logger, llm_request_type, response
+                ),
             )
 
         _handle_response(span, event_logger, llm_request_type, response)
@@ -561,8 +606,11 @@ async def _awrap(
 
     if response:
         if to_wrap.get("streaming"):
-            return _aaccumulate_streaming_response(
-                span, event_logger, llm_request_type, response
+            return _AsyncStreamWrapper(
+                response,
+                _aaccumulate_streaming_response(
+                    span, event_logger, llm_request_type, response
+                ),
             )
 
         _handle_response(span, event_logger, llm_request_type, response)

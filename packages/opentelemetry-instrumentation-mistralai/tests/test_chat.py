@@ -669,3 +669,61 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_mistralai_streaming_chat_legacy.yaml")
+def test_mistralai_streaming_chat_as_context_manager(
+    instrument_legacy, mistralai_client, span_exporter
+):
+    # The Mistral SDK documents `with client.chat.stream(...) as event_stream:`.
+    res = mistralai_client.chat.stream(
+        model="mistral-tiny",
+        messages=[
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
+        ],
+    )
+
+    response = ""
+    with res as event_stream:
+        for event in event_stream:
+            response += event.data.choices[0].delta.content
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    mistral_span = spans[0]
+    assert mistral_span.name == "mistralai.chat"
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+        == response
+    )
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 11
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+@pytest.mark.default_cassette("test_mistralai_async_streaming_chat_legacy.yaml")
+async def test_mistralai_async_streaming_chat_as_context_manager(
+    instrument_legacy, mistralai_async_client, span_exporter
+):
+    res = await mistralai_async_client.chat.stream_async(
+        model="mistral-tiny",
+        messages=[
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
+        ],
+    )
+
+    response = ""
+    async with res as event_stream:
+        async for event in event_stream:
+            response += event.data.choices[0].delta.content
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    mistral_span = spans[0]
+    assert mistral_span.name == "mistralai.chat"
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content")
+        == response
+    )
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 11
