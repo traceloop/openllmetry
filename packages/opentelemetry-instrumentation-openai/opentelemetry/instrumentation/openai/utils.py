@@ -83,6 +83,29 @@ def _with_embeddings_telemetry_wrapper(func):
     return _with_embeddings_telemetry
 
 
+def _with_audio_telemetry_wrapper(func):
+    """Wrapper to convert the audio wrapper function into the expected format for wrapt."""
+    def _with_audio_telemetry(
+        tracer,
+        duration_histogram,
+        exception_counter,
+    ):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                duration_histogram,
+                exception_counter,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_audio_telemetry
+
+
 def _with_chat_telemetry_wrapper(func):
     def _with_chat_telemetry(
         tracer,
