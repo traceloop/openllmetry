@@ -399,7 +399,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 summary = block_dict.get("summary")
                 if summary is not None and summary != []:
                     if isinstance(summary, (dict, list)):
-                        parts.append({"type": "reasoning", "content": json.dumps(summary)})
+                        parts.append({"type": "reasoning", "content": json.dumps(summary, ensure_ascii=False)})
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
