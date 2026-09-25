@@ -736,6 +736,13 @@ class _SyncBodyView:
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    # Usage recording reads vendor/model/is_stream off the shared `metric_params`, so they
+    # have to be set here the way the invoke_model handlers set them. Otherwise the
+    # converse metric points are labelled with "" on a fresh instrumentor, or with
+    # whatever model the last invoke_model call used.
+    metric_params.vendor = provider
+    metric_params.model = model
+    metric_params.is_stream = False
     guardrail_converse(span, response, provider, model, metric_params)
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
@@ -754,6 +761,10 @@ def _handle_converse(span, kwargs, response, metric_params, event_logger):
 @dont_throw
 def _handle_converse_stream(span, kwargs, response, metric_params, event_logger):
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    # Keep the shared metric labels in sync, as in `_handle_converse`.
+    metric_params.vendor = provider
+    metric_params.model = model
+    metric_params.is_stream = True
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
 
@@ -830,6 +841,10 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
     """Async variant of _handle_converse_stream — `_parse_event` is a coroutine
     in aiobotocore, so the wrapper must await it before inspecting the event."""
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    # Keep the shared metric labels in sync, as in `_handle_converse`.
+    metric_params.vendor = provider
+    metric_params.model = model
+    metric_params.is_stream = True
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
 
