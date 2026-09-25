@@ -127,8 +127,15 @@ def _create_metrics(meter: Meter):
 
 def _process_streaming_chunk(chunk):
     """Extract content, tool_calls_delta, finish_reasons and usage from a streaming chunk."""
+    # Read usage before the empty-choices guard. Groq attaches x_groq.usage to a
+    # final chunk that may carry no choices at all; returning early would drop the
+    # only usage-bearing chunk and leave the token histograms empty.
+    usage = None
+    if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
+        usage = chunk.x_groq.usage
+
     if not chunk.choices:
-        return None, [], [], None
+        return None, [], [], usage
 
     content = ""
     tool_calls_delta = []
@@ -141,11 +148,6 @@ def _process_streaming_chunk(chunk):
             tool_calls_delta.extend(delta.tool_calls)
         if choice.finish_reason:
             finish_reasons.append(choice.finish_reason)
-
-    # Extract usage from x_groq if present in the final chunk
-    usage = None
-    if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
-        usage = chunk.x_groq.usage
 
     return content, tool_calls_delta, finish_reasons, usage
 
@@ -180,6 +182,9 @@ def _handle_streaming_response(
     finish_reasons: list[str],
     usage: Union[CompletionUsage, None],
     event_logger: Union[Logger, None],
+    token_histogram: Histogram,
+    duration_histogram: Histogram,
+    duration: float,
 ) -> None:
     # finish_reasons is a list; use first entry for message-level finish_reason
     finish_reason = finish_reasons[0] if finish_reasons else None
@@ -189,8 +194,45 @@ def _handle_streaming_response(
     else:
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
+    # Streaming responses never recorded metrics: the usage and duration are
+    # collected here but were only ever set on the span. Emit the same token and
+    # duration histograms as the non-streaming path so streaming calls show up
+    # on dashboards. Attribute shape mirrors span_utils.set_model_response_attributes.
+    if duration_histogram:
+        duration_histogram.record(
+            duration,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+            },
+        )
+    if usage and token_histogram:
+        token_histogram.record(
+            usage.prompt_tokens,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+            },
+        )
+        token_histogram.record(
+            usage.completion_tokens,
+            attributes={
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAIAttributes.GenAiProviderNameValues.GROQ.value,
+                GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+            },
+        )
 
-def _create_stream_processor(response, span, event_logger):
+
+def _create_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram: Histogram = None,
+    duration_histogram: Histogram = None,
+    start_time: float = None,
+):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
@@ -216,7 +258,15 @@ def _create_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            token_histogram,
+            duration_histogram,
+            time.time() - start_time if start_time is not None else None,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -224,7 +274,14 @@ def _create_stream_processor(response, span, event_logger):
         span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram: Histogram = None,
+    duration_histogram: Histogram = None,
+    start_time: float = None,
+):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
@@ -250,7 +307,15 @@ async def _create_async_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            token_histogram,
+            duration_histogram,
+            time.time() - start_time if start_time is not None else None,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -327,7 +392,9 @@ def _wrap(
 
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(
+                response, span, event_logger, token_histogram, duration_histogram, start_time
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -415,7 +482,9 @@ async def _awrap(
 
     if is_streaming_response(response):
         try:
-            return _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(
+                response, span, event_logger, token_histogram, duration_histogram, start_time
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
