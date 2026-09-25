@@ -30,6 +30,7 @@ class Instruments(Enum):
     REDIS = "redis"
     REPLICATE = "replicate"
     REQUESTS = "requests"
+    RUNPOD = "runpod"
     SAGEMAKER = "sagemaker"
     TOGETHER = "together"
     TRANSFORMERS = "transformers"
