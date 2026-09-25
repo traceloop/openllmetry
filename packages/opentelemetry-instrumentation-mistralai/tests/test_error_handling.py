@@ -86,9 +86,11 @@ def test_mistralai_stream_error_sets_span_status(instrument_legacy, mistralai_cl
             model="mistral-tiny",
             messages=[{"role": "user", "content": "Tell me a joke"}],
         )
+        received = 0
         with pytest.raises(httpx.ReadError):
             for _ in stream:
-                pass
+                received += 1
+        assert received == 1
 
     _assert_stream_error_span(span_exporter)
 
@@ -110,8 +112,10 @@ async def test_async_mistralai_stream_error_sets_span_status(
             model="mistral-tiny",
             messages=[{"role": "user", "content": "Tell me a joke"}],
         )
+        received = 0
         with pytest.raises(httpx.ReadError):
             async for _ in stream:
-                pass
+                received += 1
+        assert received == 1
 
     _assert_stream_error_span(span_exporter)
