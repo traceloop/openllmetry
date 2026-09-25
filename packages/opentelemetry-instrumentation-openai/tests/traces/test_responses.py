@@ -960,13 +960,11 @@ _RESPONSES_SSE_BODY = (
 @pytest.mark.asyncio
 async def test_async_responses_with_raw_response_streaming_does_not_crash(
     instrument_legacy, span_exporter: InMemorySpanExporter
-):
+) -> None:
     """Regression test for https://github.com/traceloop/openllmetry/issues/4476:
     client.responses.with_raw_response.create(stream=True, ...) (what
     agent-framework-openai>=1.6 uses to read response headers before streaming) must
-    not crash. `.with_raw_response.create()` returns a LegacyAPIResponse whose
-    `.parse()` yields the `AsyncStream` itself rather than a parsed `Response`, so
-    `async_parse_response()` can't recover an `.id` to build a trace from."""
+    not crash and must emit a span after the returned stream is consumed."""
     import httpx
     from openai import AsyncOpenAI
 
@@ -992,17 +990,25 @@ async def test_async_responses_with_raw_response_streaming_does_not_crash(
     assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
 
     stream = raw.parse()
+    assert raw.parse() is stream
     events = [event async for event in stream]
 
     assert len(events) == 2
-    # Untraced: there's no `.id` available to key a trace off of at the point the
-    # stream is handed back, so this call is skipped rather than crashing.
-    assert span_exporter.get_finished_spans() == ()
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.id"] == "resp_123"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] == 1
+    assert span.attributes["gen_ai.usage.output_tokens"] == 1
 
 
 def test_responses_with_raw_response_streaming_does_not_crash(
     instrument_legacy, span_exporter: InMemorySpanExporter
-):
+) -> None:
     """Sync counterpart of test_async_responses_with_raw_response_streaming_does_not_crash."""
     import httpx
     from openai import OpenAI
@@ -1029,7 +1035,17 @@ def test_responses_with_raw_response_streaming_does_not_crash(
     assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
 
     stream = raw.parse()
+    assert raw.parse() is stream
     events = list(stream)
 
     assert len(events) == 2
-    assert span_exporter.get_finished_spans() == ()
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.id"] == "resp_123"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] == 1
+    assert span.attributes["gen_ai.usage.output_tokens"] == 1
