@@ -110,6 +110,33 @@ def test_anthropic_message_create_legacy(
         "Assert that it doesn't emit logs when use_legacy_attributes is True"
     )
 
+@pytest.mark.vcr
+def test_anthropic_message_create_without_tools_no_sentinel_leak(
+    instrument_with_content, anthropic_client, span_exporter, log_exporter, reader
+):
+    """Regression test: omitting tools= must not emit NOT_GIVEN into log body.
+    See https://github.com/traceloop/openllmetry/issues/4230"""
+    anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-opus-20240229",
+    )
+    logs = log_exporter.get_finished_logs()
+
+    # Should only have user message + assistant response — no tools event
+    assert len(logs) == 2
+
+    # Verify no log body contains NOT_GIVEN
+    for log in logs:
+        if log.log_record.body:
+            assert "NOT_GIVEN" not in str(log.log_record.body)
+
+
 
 @pytest.mark.vcr
 def test_anthropic_message_create_with_events_with_content(
