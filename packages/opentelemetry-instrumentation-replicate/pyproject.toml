@@ -27,16 +27,16 @@ replicate = "opentelemetry.instrumentation.replicate:ReplicateInstrumentor"
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
+  "pytest>=8.2.2,<10",
   "ruff>=0.4.0",
 ]
 test = [
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
-  "replicate>=0.23.1,<0.27.0",
+  "pytest-sugar==1.1.1",
+  "pytest>=8.2.2,<10",
+  "replicate>=0.23.1,<1.1.0",
   "vcrpy>=8.0.0,<9",
 ]
 
