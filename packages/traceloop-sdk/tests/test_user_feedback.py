@@ -37,10 +37,11 @@ def test_user_feedback_initialization(mock_http):
 
 def test_create_basic_feedback(user_feedback: UserFeedback, mock_http: Mock):
     """Test creating basic user feedback"""
-    user_feedback.create(
+    result = user_feedback.create(
         annotation_task="task_123", entity_id="instance_456", tags={"sentiment": "positive"}
     )
 
+    assert result == {"status": "success"}
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
         {
@@ -60,8 +61,9 @@ def test_create_feedback_complex_tags(user_feedback: UserFeedback, mock_http: Mo
     """Test creating user feedback with complex tags"""
     tags = {"sentiment": "positive", "relevance": 0.95, "tones": ["happy", "nice"]}
 
-    user_feedback.create(annotation_task="task_123", entity_id="instance_456", tags=tags)
+    result = user_feedback.create(annotation_task="task_123", entity_id="instance_456", tags=tags)
 
+    assert result == {"status": "success"}
     mock_http.post.assert_called_once_with(
         "annotation-tasks/task_123/annotations",
         {
@@ -87,3 +89,14 @@ def test_create_feedback_parameter_validation(user_feedback: UserFeedback):
 
     with pytest.raises(ValueError, match="tags cannot be empty"):
         user_feedback.create(annotation_task="task_123", entity_id="instance_456", tags={})
+
+
+def test_create_feedback_returns_none_when_write_fails(user_feedback: UserFeedback, mock_http: Mock):
+    """Test feedback submission returns the HTTP client's failure signal."""
+    mock_http.post.return_value = None
+
+    result = user_feedback.create(
+        annotation_task="task_123", entity_id="instance_456", tags={"sentiment": "positive"}
+    )
+
+    assert result is None
