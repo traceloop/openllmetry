@@ -1,9 +1,11 @@
 import json
+import os
 import warnings
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
 from traceloop.sdk import Traceloop
+from traceloop.sdk.config import is_content_tracing_enabled
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
@@ -358,3 +360,87 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
+
+
+@pytest.fixture
+def isolated_trace_content_env():
+    """Save/restore TRACELOOP_TRACE_CONTENT so trace_content tests don't leak.
+
+    Also clears the var before yielding so tests start from a known-unset state —
+    otherwise a CI env that pre-sets TRACELOOP_TRACE_CONTENT could mask bugs in
+    tests that exercise the "env not set" default path."""
+    saved = os.environ.pop("TRACELOOP_TRACE_CONTENT", None)
+    yield
+    if saved is None:
+        os.environ.pop("TRACELOOP_TRACE_CONTENT", None)
+    else:
+        os.environ["TRACELOOP_TRACE_CONTENT"] = saved
+
+
+def test_trace_content_false_disables_content_tracing(
+    isolated_tracer_wrapper, isolated_trace_content_env
+):
+    """trace_content=False must disable content capture regardless of how the env was set."""
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "true"
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        trace_content=False,
+    )
+
+    assert is_content_tracing_enabled() is False
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "false"
+
+
+def test_trace_content_true_overrides_env(
+    isolated_tracer_wrapper, isolated_trace_content_env
+):
+    """An explicit trace_content=True must win over an env that disabled it —
+    otherwise the new arg would be weaker than the env var it is meant to expose."""
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        trace_content=True,
+    )
+
+    assert is_content_tracing_enabled() is True
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+
+
+def test_trace_content_none_honors_env(
+    isolated_tracer_wrapper, isolated_trace_content_env
+):
+    """When trace_content is omitted, the env var stays authoritative — existing
+    deployments that rely on TRACELOOP_TRACE_CONTENT must not change behavior."""
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert is_content_tracing_enabled() is False
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "false"
+
+
+def test_trace_content_override_is_sticky_across_inits(
+    isolated_tracer_wrapper, isolated_trace_content_env
+):
+    """An explicit trace_content setting must persist across subsequent init()
+    calls that omit the arg. Once the env has been overwritten, trace_content=None
+    cannot restore the pre-init env value — the most recent explicit setting wins
+    until something external resets the env. This pins the documented behavior so
+    a future "save/restore env on init exit" refactor would force a docs update."""
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        trace_content=True,
+    )
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert is_content_tracing_enabled() is True
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
