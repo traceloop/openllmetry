@@ -178,35 +178,55 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
-        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
-            meta = None
-            method = None
-            params = None
-            if len(args) > 0 and hasattr(args[0].root, "method"):
-                method = args[0].root.method
-            if len(args) > 0 and hasattr(args[0].root, "params"):
-                params = args[0].root.params
-            if params:
-                if hasattr(args[0].root.params, "meta"):
-                    meta = args[0].root.params.meta
+            try:
+                meta = None
+                method = None
+                params = None
+                if len(args) > 0 and hasattr(args[0], "root"):
+                    if hasattr(args[0].root, "method"):
+                        method = args[0].root.method
+                    if hasattr(args[0].root, "params"):
+                        params = args[0].root.params
+                elif len(args) > 0:
+                    if hasattr(args[0], "method"):
+                        method = args[0].method
+                    if hasattr(args[0], "params"):
+                        params = args[0].params
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
-                carrier = {}
-                TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                if params and hasattr(params, "meta"):
+                    meta = params.meta
 
-            # Create different span types based on method
-            if method == "tools/call":
-                return await self._handle_tool_call(
-                    tracer, method, params, args, kwargs, wrapped
+                # Handle trace context propagation
+                if meta:
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    if "traceparent" in carrier:
+                        meta.traceparent = carrier["traceparent"]
+                        if len(args) > 0 and hasattr(args[0], "root") and hasattr(args[0].root, "params"):
+                            args[0].root.params.meta = meta
+                        elif len(args) > 0 and hasattr(args[0], "params"):
+                            args[0].params.meta = meta
+
+                # Create different span types based on method
+                if method == "tools/call":
+                    return await self._handle_tool_call(
+                        tracer, method, params, args, kwargs, wrapped
+                    )
+                else:
+                    return await self._handle_mcp_method(
+                        tracer, method, args, kwargs, wrapped
+                    )
+            except Exception as e:
+                logging.getLogger(__name__).debug(
+                    "OpenLLMetry failed to trace MCP client request: %s", e
                 )
-            else:
-                return await self._handle_mcp_method(
-                    tracer, method, args, kwargs, wrapped
-                )
+                if Config.exception_logger:
+                    try:
+                        Config.exception_logger(e)
+                    except Exception:
+                        pass
+                return await wrapped(*args, **kwargs)
 
         return traced_method
 
@@ -319,8 +339,8 @@ class McpInstrumentor(BaseInstrumentor):
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
         """Execute the wrapped function and handle the result"""
+        result = await wrapped(*args, **kwargs)
         try:
-            result = await wrapped(*args, **kwargs)
             # Add output
             if clean_output:
                 clean_output_data = self._extract_clean_output(method, result)
@@ -342,18 +362,30 @@ class McpInstrumentor(BaseInstrumentor):
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
-                if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                error_msg = "tool_error"
+                if hasattr(result, "content") and result.content and len(result.content) > 0:
+                    first_content = result.content[0]
+                    if hasattr(first_content, "text"):
+                        error_msg = str(first_content.text)
+                    elif hasattr(first_content, "__dict__"):
+                        error_msg = str(first_content.__dict__)
+                    else:
+                        error_msg = str(first_content)
+                span.set_status(
+                    Status(StatusCode.ERROR, error_msg)
+                )
             else:
                 span.set_status(Status(StatusCode.OK))
-            return result
         except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
-            raise
+            logging.getLogger(__name__).debug(
+                "OpenLLMetry failed to record MCP span attributes: %s", e
+            )
+            if Config.exception_logger:
+                try:
+                    Config.exception_logger(e)
+                except Exception:
+                    pass
+        return result
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
         """Extract clean input parameters for different MCP method types"""
