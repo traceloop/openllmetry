@@ -91,11 +91,13 @@ class TestSetInputAttributesAsync:
             span, (), {"contents": ["first", "second"]}, "gemini-pro"
         )
 
+        # A bare list of strings is a single user turn with multiple parts
+        # (matches google.genai._transformers.t_contents).
         messages = _recorded_input_messages(span)
         assert messages is not None
-        assert len(messages) == 2
-        assert messages[0]["parts"][0]["content"] == "first"
-        assert messages[1]["parts"][0]["content"] == "second"
+        assert len(messages) == 1
+        assert messages[0]["role"] == "user"
+        assert [p["content"] for p in messages[0]["parts"]] == ["first", "second"]
 
     @pytest.mark.asyncio
     async def test_prompt_kwarg(self, monkeypatch):
