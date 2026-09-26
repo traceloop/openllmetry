@@ -145,7 +145,7 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
 
 
 def _parse_response_event(index: int, llm_request_type: str, response) -> ChoiceEvent:
-    event_params = {"index": index, "finish_reason": "unknown"}
+    event_params = {"index": index, "message": {}, "finish_reason": "unknown"}
 
     if llm_request_type == LLMRequestTypeValues.RERANK:
         event_params["message"] = {
@@ -159,8 +159,9 @@ def _parse_response_event(index: int, llm_request_type: str, response) -> Choice
             ],
             "role": "assistant",
         }
-    elif (
-        llm_request_type == LLMRequestTypeValues.CHAT or LLMRequestTypeValues.COMPLETION
+    elif llm_request_type in (
+        LLMRequestTypeValues.CHAT,
+        LLMRequestTypeValues.COMPLETION,
     ):
         event_params["message"] = {"content": response.text, "role": "assistant"}
         event_params["finish_reason"] = response.finish_reason
