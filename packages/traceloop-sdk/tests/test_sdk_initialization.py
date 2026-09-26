@@ -358,3 +358,51 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
+
+
+def test_trace_content_default_true(isolated_tracer_wrapper):
+    """trace_content defaults to True when not passed, equivalent to the
+    default env var behaviour."""
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert TracerWrapper.enable_content_tracing is True
+
+
+def test_trace_content_false_disables_content(isolated_tracer_wrapper):
+    """Explicit trace_content=False must disable content tracing."""
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        trace_content=False,
+    )
+
+    assert TracerWrapper.enable_content_tracing is False
+
+
+def test_trace_content_env_var_still_works(isolated_tracer_wrapper):
+    """When trace_content is not passed, the TRACELOOP_TRACE_CONTENT env var
+    must still be honoured."""
+    import os
+
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "false"
+    try:
+        Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+        assert TracerWrapper.enable_content_tracing is False
+    finally:
+        os.environ.pop("TRACELOOP_TRACE_CONTENT", None)
+
+
+def test_trace_content_overrides_env_var(isolated_tracer_wrapper):
+    """Explicit trace_content=False must override TRACELOOP_TRACE_CONTENT=true."""
+    import os
+
+    os.environ["TRACELOOP_TRACE_CONTENT"] = "true"
+    try:
+        Traceloop.init(
+            exporter=InMemorySpanExporter(),
+            disable_batch=True,
+            trace_content=False,
+        )
+        assert TracerWrapper.enable_content_tracing is False
+    finally:
+        os.environ.pop("TRACELOOP_TRACE_CONTENT", None)
