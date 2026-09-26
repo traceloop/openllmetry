@@ -388,7 +388,7 @@ class TestSetModelStreamingResponseAttributes:
         prompt_tokens_details.cached_tokens = 30
         usage.prompt_tokens_details = prompt_tokens_details
         set_model_streaming_response_attributes(span, usage)
-        assert _attr(span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 30
+        assert _attr(span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 30
 
     def test_without_prompt_tokens_details_skips_cache_read_attribute(self):
         span = _span()
@@ -398,7 +398,7 @@ class TestSetModelStreamingResponseAttributes:
         usage.total_tokens = 60
         set_model_streaming_response_attributes(span, usage)
         set_keys = [c[0][0] for c in span.set_attribute.call_args_list]
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
 
     def test_with_none_cached_tokens_skips_cache_read_attribute(self):
         span = _span()
@@ -411,7 +411,32 @@ class TestSetModelStreamingResponseAttributes:
         usage.prompt_tokens_details = prompt_tokens_details
         set_model_streaming_response_attributes(span, usage)
         set_keys = [c[0][0] for c in span.set_attribute.call_args_list]
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
+
+    def test_records_token_histogram_on_streaming_usage(self):
+        span = _span()
+        usage = MagicMock()
+        usage.completion_tokens = 25
+        usage.prompt_tokens = 15
+        usage.total_tokens = 40
+        usage.prompt_tokens_details = None
+        token_histogram = MagicMock()
+
+        set_model_streaming_response_attributes(
+            span,
+            usage,
+            response_model="llama3-8b-8192",
+            token_histogram=token_histogram,
+        )
+
+        assert token_histogram.record.call_count == 2
+        calls = token_histogram.record.call_args_list
+        assert calls[0][0][0] == 15
+        assert calls[0][1]["attributes"]["gen_ai.token.type"] == "input"
+        assert calls[0][1]["attributes"][GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "llama3-8b-8192"
+        assert calls[1][0][0] == 25
+        assert calls[1][1]["attributes"]["gen_ai.token.type"] == "output"
+        assert calls[1][1]["attributes"][GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "llama3-8b-8192"
 
 
 # ---------------------------------------------------------------------------
@@ -477,19 +502,19 @@ class TestSetModelResponseAttributes:
     def test_with_cached_tokens_sets_cache_read_attribute(self):
         span = _span()
         set_model_response_attributes(span, self._response_with_cached_tokens(cached_tokens=20), None)
-        assert _attr(span, SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 20
+        assert _attr(span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS) == 20
 
     def test_without_prompt_tokens_details_skips_cache_read_attribute(self):
         span = _span()
         set_model_response_attributes(span, self._response(), None)
         set_keys = [c[0][0] for c in span.set_attribute.call_args_list]
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
 
     def test_with_none_cached_tokens_skips_cache_read_attribute(self):
         span = _span()
         set_model_response_attributes(span, self._response_with_cached_tokens(cached_tokens=None), None)
         set_keys = [c[0][0] for c in span.set_attribute.call_args_list]
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_keys
 
 
 # ---------------------------------------------------------------------------
