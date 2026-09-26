@@ -176,7 +176,7 @@ def _set_input_messages(span, prompt):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps(messages),
+        json.dumps(messages, ensure_ascii=False),
     )
 
 @dont_throw
@@ -201,7 +201,7 @@ def _set_output_messages(span, choices):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-        json.dumps(messages),
+        json.dumps(messages, ensure_ascii=False),
     )
 
 
