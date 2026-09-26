@@ -197,11 +197,15 @@ def clear_exporter(span_exporter):
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": [
-        "authorization",
-        "api-key",
-        "openai-organization",
-        "openai-project",
-        "set-cookie",
-        "x-request-id",
-    ]}
+    return {
+        "filter_headers": [
+            "authorization",
+            "api-key",
+            "x-api-key",
+            "openai-organization",
+            "openai-project",
+            "set-cookie",
+            "x-request-id",
+        ],
+        "filter_query_parameters": ["api_key"],
+    }

@@ -116,4 +116,4 @@ def environment():
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"]}
+    return {"filter_headers": ["authorization","x-api-key","api-key"], "filter_query_parameters": ["api_key"]}

@@ -109,7 +109,8 @@ def metrics_test_context_with_no_content(logger_provider):
 @pytest.fixture(scope="module")
 def vcr_config():
     return {
-        "filter_headers": ["authorization"],
+        "filter_headers": ["authorization", "api-key", "x-api-key"],
+        "filter_query_parameters": ["api_key"],
         "allow_playback_repeats": True,
         "decode_compressed_response": True,
     }
