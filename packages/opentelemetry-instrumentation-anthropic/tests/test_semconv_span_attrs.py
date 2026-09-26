@@ -375,6 +375,58 @@ def test_streaming_finish_reasons_set_when_content_tracing_disabled():
     assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in span.attributes
 
 
+def _accumulate_synthetic_stream(items):
+    """Drive stream accumulation with synthetic items (no network / API key)."""
+    from opentelemetry.instrumentation.anthropic.streaming import (
+        _handle_streaming_response,
+        _process_response_item,
+    )
+
+    complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
+    for item in items:
+        _process_response_item(item, complete_response)
+    span = make_span()
+    span.is_recording = lambda: True
+    _handle_streaming_response(span, None, complete_response)
+    return span, complete_response
+
+
+def test_streaming_empty_content_records_finish_reasons_and_output_messages():
+    """Empty-content stream still records finish_reasons and output.messages.
+
+    message_delta carries stop_reason but no content_block_* items, so events stays
+    empty. Both gen_ai.response.finish_reasons and gen_ai.output.messages must still
+    be set from the message-level stop_reason.
+    """
+    message_delta = SimpleNamespace(
+        type="message_delta",
+        delta=SimpleNamespace(stop_reason="end_turn"),
+        usage=None,
+    )
+    span, complete_response = _accumulate_synthetic_stream([message_delta])
+
+    assert complete_response.get("stop_reason") == "end_turn"
+    assert complete_response["events"] == []
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
+    output = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output == [{"role": "assistant", "parts": [], "finish_reason": "stop"}]
+
+
+def test_streaming_empty_content_omits_output_messages_when_content_tracing_disabled():
+    """Empty-content stream still records finish_reasons when TRACELOOP_TRACE_CONTENT=false."""
+    os.environ[TRACELOOP_TRACE_CONTENT] = "false"
+
+    message_delta = SimpleNamespace(
+        type="message_delta",
+        delta=SimpleNamespace(stop_reason="end_turn"),
+        usage=None,
+    )
+    span, _ = _accumulate_synthetic_stream([message_delta])
+
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in span.attributes
+
+
 def test_finish_reason_empty_string_when_none():
     """finish_reason must be '' (not omitted) when stop_reason is None (Bedrock convention)."""
     span = make_span()
