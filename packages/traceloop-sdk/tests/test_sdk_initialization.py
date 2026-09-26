@@ -8,6 +8,8 @@ from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.propagate import get_global_textmap, set_global_textmap
+from opentelemetry.propagators.composite import CompositePropagator
 
 
 @pytest.fixture
@@ -319,6 +321,20 @@ def test_use_attributes_defaults_to_true(isolated_tracer_wrapper):
 
     assert OpenAIConfig.use_legacy_attributes is True
     assert AnthropicConfig.use_legacy_attributes is True
+
+
+def test_init_without_propagator_preserves_global_configuration(isolated_tracer_wrapper):
+    original_propagator = get_global_textmap()
+    configured_propagator = CompositePropagator([])
+    set_global_textmap(configured_propagator)
+
+    try:
+        Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+        assert get_global_textmap() is configured_propagator
+    finally:
+        set_global_textmap(original_propagator)
+
 
 def test_both_exporter_and_processor_warns():
     """Passing both exporter and processor is a mistake — the processor already wraps
