@@ -187,6 +187,16 @@ def is_stream_manager(response):
         )
 
 
+def _get_reasoning_tokens_from_usage(usage):
+    """Extract thinking/reasoning tokens from an Anthropic SDK usage object."""
+    if usage is None:
+        return None
+    output_tokens_details = getattr(usage, "output_tokens_details", None)
+    if output_tokens_details is None:
+        return None
+    return getattr(output_tokens_details, "reasoning_tokens", None)
+
+
 @dont_throw
 async def _aset_token_usage(
     span,
@@ -197,6 +207,14 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token-usage and choice metrics on *span* from an async Anthropic response.
+
+    Handles coroutine responses, ``with_raw_response`` wrappers, and falls back
+    to client-side counting when the SDK does not supply usage data.
+    Sets input, output, total, cache-read, cache-creation, and reasoning-token
+    span attributes, and emits token histograms and choice counters when
+    configured.
+    """
     import inspect
 
     # If we get a coroutine, await it
@@ -305,6 +323,11 @@ async def _aset_token_usage(
         cache_creation_tokens,
     )
 
+    reasoning_tokens = _get_reasoning_tokens_from_usage(usage)
+    set_span_attribute(
+        span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens
+    )
+
 
 @dont_throw
 def _set_token_usage(
@@ -316,6 +339,13 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token-usage and choice metrics on *span* from a synchronous Anthropic response.
+
+    Handles ``with_raw_response`` wrappers and falls back to client-side
+    counting when the SDK does not supply usage data. Sets input, output,
+    total, cache-read, cache-creation, and reasoning-token span attributes,
+    and emits token histograms and choice counters when configured.
+    """
     import inspect
 
     # If we get a coroutine, we cannot process it in sync context
@@ -421,6 +451,11 @@ def _set_token_usage(
         cache_creation_tokens,
     )
 
+    reasoning_tokens = _get_reasoning_tokens_from_usage(usage)
+    set_span_attribute(
+        span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens
+    )
+
 
 def _with_chat_telemetry_wrapper(func):
     """Helper for providing tracer for wrapper functions. Includes metric collectors."""
@@ -455,6 +490,7 @@ def _with_chat_telemetry_wrapper(func):
 
 
 def _create_metrics(meter: Meter):
+    """Create token, choice, duration, and exception metrics on *meter*."""
     token_histogram = meter.create_histogram(
         name=Meters.LLM_TOKEN_USAGE,
         unit="token",
@@ -484,6 +520,7 @@ def _create_metrics(meter: Meter):
 
 @dont_throw
 def _handle_input(span: Span, event_logger: Optional[Logger], kwargs):
+    """Populate *span* input attributes from *kwargs*, or emit input events if enabled."""
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
@@ -494,6 +531,7 @@ def _handle_input(span: Span, event_logger: Optional[Logger], kwargs):
 
 @dont_throw
 async def _ahandle_input(span: Span, event_logger: Optional[Logger], kwargs):
+    """Populate *span* input attributes from *kwargs*, or emit input events if enabled."""
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
@@ -504,6 +542,7 @@ async def _ahandle_input(span: Span, event_logger: Optional[Logger], kwargs):
 
 @dont_throw
 async def _ahandle_response(span: Span, event_logger: Optional[Logger], response):
+    """Populate *span* response attributes from *response*, or emit response events if enabled."""
     if should_emit_events():
         emit_response_events(event_logger, response)
     else:
@@ -518,6 +557,7 @@ async def _ahandle_response(span: Span, event_logger: Optional[Logger], response
 
 @dont_throw
 def _handle_response(span: Span, event_logger: Optional[Logger], response):
+    """Populate *span* response attributes from *response*, or emit response events if enabled."""
     if should_emit_events():
         emit_response_events(event_logger, response)
     else:
