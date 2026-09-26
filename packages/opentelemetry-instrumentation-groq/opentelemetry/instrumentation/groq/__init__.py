@@ -126,17 +126,20 @@ def _create_metrics(meter: Meter):
 
 
 def _process_streaming_chunk(chunk):
-    """Extract content, tool_calls_delta, finish_reasons and usage from a streaming chunk."""
+    """Extract content, reasoning, tool_calls_delta, finish_reasons and usage from a streaming chunk."""
     if not chunk.choices:
-        return None, [], [], None
+        return None, None, [], [], None
 
     content = ""
+    reasoning = ""
     tool_calls_delta = []
     finish_reasons = []
     for choice in chunk.choices:
         delta = choice.delta
         if delta.content:
             content += delta.content
+        if isinstance(getattr(delta, "reasoning", None), str):
+            reasoning += delta.reasoning
         if delta.tool_calls:
             tool_calls_delta.extend(delta.tool_calls)
         if choice.finish_reason:
@@ -147,7 +150,7 @@ def _process_streaming_chunk(chunk):
     if hasattr(chunk, "x_groq") and chunk.x_groq and chunk.x_groq.usage:
         usage = chunk.x_groq.usage
 
-    return content, tool_calls_delta, finish_reasons, usage
+    return content, reasoning, tool_calls_delta, finish_reasons, usage
 
 
 def _accumulate_tool_calls(accumulated: dict, tool_calls_delta: list) -> None:
@@ -180,6 +183,7 @@ def _handle_streaming_response(
     finish_reasons: list[str],
     usage: Union[CompletionUsage, None],
     event_logger: Union[Logger, None],
+    accumulated_reasoning: str = "",
 ) -> None:
     # finish_reasons is a list; use first entry for message-level finish_reason
     finish_reason = finish_reasons[0] if finish_reasons else None
@@ -187,21 +191,26 @@ def _handle_streaming_response(
     if should_emit_events() and event_logger:
         emit_streaming_response_events(accumulated_content, finish_reason, event_logger, tool_calls=tool_calls)
     else:
-        set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
+        set_streaming_response_attributes(
+            span, accumulated_content, finish_reason, tool_calls=tool_calls, accumulated_reasoning=accumulated_reasoning
+        )
 
 
 def _create_stream_processor(response, span, event_logger):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
+    accumulated_reasoning = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
 
     try:
         for chunk in response:
-            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            content, reasoning, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
             if content:
                 accumulated_content += content
+            if reasoning:
+                accumulated_reasoning += reasoning
             if tool_calls_delta:
                 _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
             accumulated_finish_reasons.extend(chunk_finish_reasons)
@@ -216,7 +225,13 @@ def _create_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            accumulated_reasoning=accumulated_reasoning,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -227,15 +242,18 @@ def _create_stream_processor(response, span, event_logger):
 async def _create_async_stream_processor(response, span, event_logger):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
+    accumulated_reasoning = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
 
     try:
         async for chunk in response:
-            content, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
+            content, reasoning, tool_calls_delta, chunk_finish_reasons, chunk_usage = _process_streaming_chunk(chunk)
             if content:
                 accumulated_content += content
+            if reasoning:
+                accumulated_reasoning += reasoning
             if tool_calls_delta:
                 _accumulate_tool_calls(accumulated_tool_calls, tool_calls_delta)
             accumulated_finish_reasons.extend(chunk_finish_reasons)
@@ -250,7 +268,13 @@ async def _create_async_stream_processor(response, span, event_logger):
     else:
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
-            span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+            span,
+            accumulated_content,
+            tool_calls,
+            accumulated_finish_reasons,
+            usage,
+            event_logger,
+            accumulated_reasoning=accumulated_reasoning,
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
