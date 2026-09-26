@@ -2,11 +2,22 @@
 
 import asyncio
 import logging
+import os
 import traceback
 
 
 class Config:
     exception_logger = None
+
+
+# Generic, content-free status description used when TRACELOOP_TRACE_CONTENT is
+# disabled, so error spans still convey that a call failed without leaking the
+# tool's error message or arguments.
+SUPPRESSED_ERROR_DESCRIPTION = "error (content suppressed by TRACELOOP_TRACE_CONTENT)"
+
+
+def should_send_prompts() -> bool:
+    return (os.getenv("TRACELOOP_TRACE_CONTENT") or "true").lower() == "true"
 
 
 def dont_throw(func):

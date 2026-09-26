@@ -15,7 +15,12 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
-from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
+from opentelemetry.instrumentation.mcp.utils import (
+    dont_throw,
+    Config,
+    should_send_prompts,
+    SUPPRESSED_ERROR_DESCRIPTION,
+)
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
     FastMCPInstrumentor,
 )
@@ -117,6 +122,9 @@ class McpInstrumentor(BaseInstrumentor):
         unwrap("mcp.client.stdio", "stdio_client")
         unwrap("mcp.server.stdio", "stdio_server")
         self._fastmcp_instrumentor.uninstrument()
+
+    def _should_send_prompts(self) -> bool:
+        return should_send_prompts()
 
     def _transport_wrapper(self, tracer):
         @asynccontextmanager
@@ -282,7 +290,15 @@ class McpInstrumentor(BaseInstrumentor):
             except Exception:
                 pass
 
-        with tracer.start_as_current_span(span_name) as span:
+        # Disable the SDK's automatic exception recording/status so that, when
+        # content tracing is off, the exception message and stacktrace (which can
+        # echo tool content) are not leaked onto the span on re-raise - we set
+        # status/record explicitly in _execute_and_handle_result.
+        with tracer.start_as_current_span(
+            span_name,
+            record_exception=False,
+            set_status_on_exception=False,
+        ) as span:
             # Set tool-specific attributes
             span.set_attribute(
                 SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
@@ -290,16 +306,17 @@ class McpInstrumentor(BaseInstrumentor):
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
             # Add input
-            clean_input = self._extract_clean_input(method, params)
-            if clean_input:
-                try:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
-                    )
-                except (TypeError, ValueError):
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
-                    )
+            if self._should_send_prompts():
+                clean_input = self._extract_clean_input(method, params)
+                if clean_input:
+                    try:
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
+                        )
+                    except (TypeError, ValueError):
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
+                        )
 
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=True
@@ -307,10 +324,17 @@ class McpInstrumentor(BaseInstrumentor):
 
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
-        with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
+        # See _handle_tool_call: disable the SDK's automatic exception
+        # recording/status so suppressed error content is not re-leaked on re-raise.
+        with tracer.start_as_current_span(
+            f"{method}.mcp",
+            record_exception=False,
+            set_status_on_exception=False,
+        ) as span:
+            if self._should_send_prompts():
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
@@ -322,37 +346,51 @@ class McpInstrumentor(BaseInstrumentor):
         try:
             result = await wrapped(*args, **kwargs)
             # Add output
-            if clean_output:
-                clean_output_data = self._extract_clean_output(method, result)
-                if clean_output_data:
-                    try:
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            json.dumps(clean_output_data),
-                        )
-                    except (TypeError, ValueError):
-                        span.set_attribute(
-                            SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
-                            str(clean_output_data),
-                        )
-            else:
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
-                )
+            if self._should_send_prompts():
+                if clean_output:
+                    clean_output_data = self._extract_clean_output(method, result)
+                    if clean_output_data:
+                        try:
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                json.dumps(clean_output_data),
+                            )
+                        except (TypeError, ValueError):
+                            span.set_attribute(
+                                SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
+                                str(clean_output_data),
+                            )
+                else:
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+                    )
             # Handle errors
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
-                if len(result.content) > 0:
+                if self._should_send_prompts() and len(result.content) > 0:
                     span.set_status(
                         Status(StatusCode.ERROR, f"{result.content[0].text}")
+                    )
+                else:
+                    span.set_status(
+                        Status(StatusCode.ERROR, SUPPRESSED_ERROR_DESCRIPTION)
                     )
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
         except Exception as e:
             span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            # The exception message/stacktrace can echo tool content (e.g. the
+            # tool's error text or arguments), so only record it when content
+            # tracing is enabled. The ERROR status and error type are kept either
+            # way so failures remain visible.
+            if self._should_send_prompts():
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+            else:
+                span.set_status(
+                    Status(StatusCode.ERROR, f"{type(e).__name__} {SUPPRESSED_ERROR_DESCRIPTION}")
+                )
             raise
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
@@ -565,17 +603,23 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
 
         with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
             if hasattr(request, "result"):
-                span.set_attribute(
-                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
-                )
+                if should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
+                    )
                 if "isError" in request.result:
                     if request.result["isError"] is True:
-                        span.set_status(
-                            Status(
-                                StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
+                        if should_send_prompts():
+                            span.set_status(
+                                Status(
+                                    StatusCode.ERROR,
+                                    f"{request.result['content'][0]['text']}",
+                                )
                             )
-                        )
+                        else:
+                            span.set_status(
+                                Status(StatusCode.ERROR, SUPPRESSED_ERROR_DESCRIPTION)
+                            )
             if hasattr(request, "id"):
                 span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
