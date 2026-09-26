@@ -360,14 +360,28 @@ def _emit_input_events(args, kwargs, event_logger):
         emit_event(MessageEvent(content=prompt, role="user"), event_logger)
 
 
-def _emit_response_events(response: dict):
-    for i, message in enumerate(response.get("results", [])):
+def _emit_response_events(response, event_logger):
+    messages = []
+    responses = response if isinstance(response, list) else [response]
+    for item in responses:
+        if not isinstance(item, dict):
+            continue
+        results = item.get("results")
+        if isinstance(results, list):
+            messages.extend(results)
+        else:
+            messages.append(item)
+
+    for i, message in enumerate(messages):
+        if not isinstance(message, dict):
+            continue
         emit_event(
             ChoiceEvent(
                 index=i,
                 message={"content": message.get("generated_text"), "role": "assistant"},
                 finish_reason=message.get("stop_reason", "unknown"),
-            )
+            ),
+            event_logger,
         )
 
 
@@ -543,6 +557,7 @@ def _handle_stream_response(
                     }
                 ]
             },
+            event_logger,
         )
     else:
         _set_stream_response_attributes(span, stream_response)
