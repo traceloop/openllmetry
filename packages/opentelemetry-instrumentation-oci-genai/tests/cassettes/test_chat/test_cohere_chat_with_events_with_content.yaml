@@ -1,0 +1,41 @@
+interactions:
+- request:
+    body: '{"compartmentId": "ocid1.compartment.oc1..redacted", "servingMode": {"servingType":
+      "ON_DEMAND", "modelId": "cohere.command-a-03-2025"}, "chatRequest": {"apiFormat":
+      "COHERE", "message": "Tell me a joke about opentelemetry", "chatHistory": [{"role":
+      "USER", "message": "Hello"}, {"role": "CHATBOT", "message": "Hi! How can I help?"}],
+      "preambleOverride": "You are a terse assistant.", "maxTokens": 100}}'
+    headers:
+      Content-Length:
+      - '455'
+      accept:
+      - application/json, text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/chat
+  response:
+    body:
+      string: '{"modelId":"cohere.command-a-03-2025","modelVersion":"1.0","chatResponse":{"apiFormat":"COHERE","text":"Why
+        did the OpenTelemetry span cross the road?\n\nTo trace the other side.","chatHistory":[{"role":"USER","message":"Hello"},{"role":"CHATBOT","message":"Hi!
+        How can I help?"},{"role":"USER","message":"Tell me a joke about opentelemetry"},{"role":"CHATBOT","message":"Why
+        did the OpenTelemetry span cross the road?\n\nTo trace the other side."}],"finishReason":"COMPLETE","usage":{"completionTokens":18,"promptTokens":22,"totalTokens":40}}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 18 Sep 2026 19:47:12 GMT
+      content-length:
+      - '544'
+    status:
+      code: 200
+      message: OK
+version: 1

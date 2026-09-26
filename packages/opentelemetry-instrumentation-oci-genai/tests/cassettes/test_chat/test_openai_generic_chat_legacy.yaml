@@ -1,0 +1,41 @@
+interactions:
+- request:
+    body: '{"compartmentId": "ocid1.compartment.oc1..redacted", "servingMode": {"servingType":
+      "ON_DEMAND", "modelId": "openai.gpt-5.4"}, "chatRequest": {"apiFormat": "GENERIC",
+      "messages": [{"role": "SYSTEM", "content": [{"type": "TEXT", "text": "You are
+      a terse assistant."}]}, {"role": "USER", "content": [{"type": "TEXT", "text":
+      "Tell me a joke about opentelemetry"}]}], "maxCompletionTokens": 120}}'
+    headers:
+      Content-Length:
+      - '445'
+      accept:
+      - application/json, text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/chat
+  response:
+    body:
+      string: "{\"modelId\":\"openai.gpt-5.4\",\"modelVersion\":\"1.0.0\",\"chatResponse\":{\"apiFormat\":\"GENERIC\",\"timeCreated\":\"2026-09-18T19:47:07.230Z\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"ASSISTANT\",\"content\":[{\"type\":\"TEXT\",\"text\":\"Why
+        did the OpenTelemetry engineer break up with their partner?\\n\\nBecause every
+        time they asked, \u201CHow are we doing?\u201D the answer was, \u201CIt depends
+        on your sampling rate.\u201D\"}],\"annotations\":[]},\"finishReason\":\"stop\",\"logprobs\":{}}],\"usage\":{\"completionTokens\":39,\"promptTokens\":25,\"totalTokens\":64,\"completionTokensDetails\":{\"acceptedPredictionTokens\":0,\"reasoningTokens\":0},\"promptTokensDetails\":{\"cachedTokens\":0}},\"serviceTier\":\"DEFAULT\"}}"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 18 Sep 2026 19:47:07 GMT
+      content-length:
+      - '663'
+    status:
+      code: 200
+      message: OK
+version: 1
