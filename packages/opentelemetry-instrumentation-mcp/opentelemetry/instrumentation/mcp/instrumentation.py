@@ -239,13 +239,22 @@ class McpInstrumentor(BaseInstrumentor):
             setattr(instance, "_tracing_session_context_manager", span_context_manager)
             setattr(instance, "_tracing_session_span", span)
 
+            entered = False
             try:
                 # Call the original method
                 result = await wrapped(*args, **kwargs)
+                entered = True
                 return result
             except Exception as e:
                 record_error(span, e)
                 raise
+            finally:
+                # A failed __aenter__ means `async with` never calls __aexit__,
+                # so end the span here, detaching it from the current context.
+                # A finally rather than the except, so a cancellation (a
+                # BaseException, not an error) ends it too, UNSET.
+                if not entered:
+                    span_context_manager.__exit__(None, None, None)
 
         return traced_method
 
@@ -256,16 +265,7 @@ class McpInstrumentor(BaseInstrumentor):
         async def traced_method(wrapped, instance, args, kwargs):
             try:
                 # Call the original method first
-                result = await wrapped(*args, **kwargs)
-
-                # End the session span context manager
-                context_manager = getattr(
-                    instance, "_tracing_session_context_manager", None
-                )
-                if context_manager:
-                    context_manager.__exit__(None, None, None)
-
-                return result
+                return await wrapped(*args, **kwargs)
             except Exception as e:
                 # Record the teardown failure before __exit__ ends the span --
                 # the span's own exception recording is off, so nothing else
@@ -273,12 +273,15 @@ class McpInstrumentor(BaseInstrumentor):
                 span = getattr(instance, "_tracing_session_span", None)
                 if span is not None:
                     record_error(span, e)
+                raise
+            finally:
+                # End the span in a finally so a cancelled __aexit__ (a
+                # BaseException, not an error) still ends it, UNSET.
                 context_manager = getattr(
                     instance, "_tracing_session_context_manager", None
                 )
                 if context_manager:
-                    context_manager.__exit__(type(e), e, e.__traceback__)
-                raise
+                    context_manager.__exit__(None, None, None)
 
         return traced_method
 
