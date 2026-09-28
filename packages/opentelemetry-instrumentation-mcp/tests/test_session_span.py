@@ -163,3 +163,52 @@ async def test_failed_nested_exit_does_not_end_outer_session(
     await exit_(_ok, client, (), {})
     assert len(_session_spans(span_exporter)) == 1
     assert not trace.get_current_span().is_recording()
+
+
+async def test_overlapping_entries_share_session_without_leaking_context(
+    span_exporter, tracer_provider
+) -> None:
+    """Two tasks entering one FastMCP client concurrently share one session."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+    first_entered = asyncio.Event()
+    second_entered = asyncio.Event()
+    allow_first = asyncio.Event()
+    allow_second = asyncio.Event()
+    observed = []
+
+    async def first():
+        async def wait_first():
+            first_entered.set()
+            await allow_first.wait()
+        await enter(wait_first, client, (), {})
+        observed.append(("first", trace.get_current_span().name))
+        await second_entered.wait()
+        await exit_(_ok, client, (), {})
+        observed.append(("first after", trace.get_current_span().is_recording()))
+
+    async def second():
+        async def wait_second():
+            second_entered.set()
+            await allow_second.wait()
+        await enter(wait_second, client, (), {})
+        observed.append(("second", trace.get_current_span().name))
+        await exit_(_ok, client, (), {})
+        observed.append(("second after", trace.get_current_span().is_recording()))
+
+    one = asyncio.create_task(first())
+    await first_entered.wait()
+    two = asyncio.create_task(second())
+    await second_entered.wait()
+    allow_second.set()
+    allow_first.set()
+    await asyncio.gather(one, two)
+    assert len([item for item in observed if item[1] == "mcp.client.session"]) == 2
+    assert all(not active for label, active in observed if label.endswith("after"))
+    # Each concurrent task owns its own OTel context token; neither may detach
+    # the other's span, even though FastMCP shares one underlying connection.
+    assert len(_session_spans(span_exporter)) == 2
+    assert not trace.get_current_span().is_recording()
