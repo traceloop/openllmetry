@@ -217,71 +217,78 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def _fastmcp_client_enter_wrapper(self, tracer):
-        """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
+        """Start a session span on the outermost FastMCP Client.__aenter__."""
 
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
-            # Start a root span for the MCP client session and make it current
-            span_context_manager = tracer.start_as_current_span(
-                "mcp.client.session",
-                record_exception=False,
-                set_status_on_exception=False,
-            )
-            span = span_context_manager.__enter__()
-            span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
-            )
-
-            # Store the span context manager on the instance to properly exit it
-            # later, and the span itself so the exit wrapper can report a
-            # teardown failure on it.
-            setattr(instance, "_tracing_session_context_manager", span_context_manager)
-            setattr(instance, "_tracing_session_span", span)
+            # FastMCP reuses one underlying session across nested enters. Keep
+            # the span current until the matching outermost exit, not one per
+            # syntactic async-with block.
+            depth = getattr(instance, "_tracing_session_depth", 0)
+            context_manager = None
+            span = getattr(instance, "_tracing_session_span", None)
+            if depth == 0:
+                context_manager = tracer.start_as_current_span(
+                    "mcp.client.session",
+                    record_exception=False,
+                    set_status_on_exception=False,
+                )
+                span = context_manager.__enter__()
+                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
+                )
+                instance._tracing_session_context_manager = context_manager
+                instance._tracing_session_span = span
 
             entered = False
             try:
-                # Call the original method
                 result = await wrapped(*args, **kwargs)
                 entered = True
+                instance._tracing_session_depth = depth + 1
                 return result
             except Exception as e:
-                record_error(span, e)
+                if span is not None:
+                    record_error(span, e)
                 raise
             finally:
-                # A failed __aenter__ means `async with` never calls __aexit__,
-                # so end the span here, detaching it from the current context.
-                # A finally rather than the except, so a cancellation (a
-                # BaseException, not an error) ends it too, UNSET.
-                if not entered:
-                    span_context_manager.__exit__(None, None, None)
+                # A failed nested enter leaves the outer session active; a
+                # failed outer enter gets no __aexit__, so end its span here.
+                if not entered and context_manager is not None:
+                    context_manager.__exit__(None, None, None)
+                    instance._tracing_session_context_manager = None
+                    instance._tracing_session_span = None
 
         return traced_method
 
     def _fastmcp_client_exit_wrapper(self, tracer):
-        """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
+        """End the session span only when the outermost FastMCP block exits."""
 
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             try:
-                # Call the original method first
                 return await wrapped(*args, **kwargs)
             except Exception as e:
-                # Record the teardown failure before __exit__ ends the span --
-                # the span's own exception recording is off, so nothing else
-                # would report it.
                 span = getattr(instance, "_tracing_session_span", None)
                 if span is not None:
                     record_error(span, e)
                 raise
             finally:
-                # End the span in a finally so a cancelled __aexit__ (a
-                # BaseException, not an error) still ends it, UNSET.
-                context_manager = getattr(
-                    instance, "_tracing_session_context_manager", None
-                )
-                if context_manager:
-                    context_manager.__exit__(None, None, None)
+                # Also balance a cancelled __aexit__ (BaseException). Never
+                # detach the outer span while a nested block is still active.
+                depth = getattr(instance, "_tracing_session_depth", 0)
+                if depth > 0:
+                    instance._tracing_session_depth = depth - 1
+                    if depth == 1:
+                        context_manager = getattr(
+                            instance, "_tracing_session_context_manager", None
+                        )
+                        try:
+                            if context_manager is not None:
+                                context_manager.__exit__(None, None, None)
+                        finally:
+                            instance._tracing_session_context_manager = None
+                            instance._tracing_session_span = None
 
         return traced_method
 
