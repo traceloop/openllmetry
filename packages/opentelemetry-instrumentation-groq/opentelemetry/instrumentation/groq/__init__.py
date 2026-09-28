@@ -192,6 +192,7 @@ def _handle_streaming_response(
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
+@dont_throw
 def _record_error_duration(
     duration_histogram: Optional[Histogram],
     start_time: Optional[float],
@@ -201,6 +202,10 @@ def _record_error_duration(
 
     Shared by the stream processors and ``_wrap``/``_awrap`` so the four copies
     of this block can't drift apart.
+
+    Guarded because it runs inside an ``except`` block: if ``record()`` raised,
+    that new exception would replace the one the caller actually hit and they
+    would see a telemetry failure instead of their own error.
     """
     if not duration_histogram or start_time is None:
         return

@@ -422,3 +422,57 @@ class TestStreamProcessorErrorMetrics:
         assert duration_metric.data.data_points[0].sum > 0
         dp = duration_metric.data.data_points[0]
         assert dict(dp.attributes)["error.type"] == "RuntimeError"
+
+
+class _RaisingHistogram:
+    """A histogram whose record() blows up, as the SDK's can under a broken exporter."""
+
+    def record(self, *args, **kwargs):
+        raise RuntimeError("histogram exploded")
+
+
+class TestTelemetryFailureDoesNotMaskCallerError:
+    """Recording a metric must never change which exception the caller sees."""
+
+    def test_sync_stream_error_survives_a_broken_histogram(self, tracer_provider):
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+
+        def _failing():
+            yield _chunk(content="hello")
+            raise RuntimeError("stream exploded")
+
+        processor = _create_stream_processor(
+            _FakeStream(_failing()),
+            span,
+            None,
+            token_histogram=None,
+            duration_histogram=_RaisingHistogram(),
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+
+        with pytest.raises(RuntimeError, match="stream exploded"):
+            for _ in processor:
+                pass
+
+    @pytest.mark.asyncio
+    async def test_async_stream_error_survives_a_broken_histogram(self, tracer_provider):
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+
+        async def _failing():
+            yield _chunk(content="hello")
+            raise RuntimeError("async stream exploded")
+
+        processor = _create_async_stream_processor(
+            _failing(),
+            span,
+            None,
+            token_histogram=None,
+            duration_histogram=_RaisingHistogram(),
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+
+        with pytest.raises(RuntimeError, match="async stream exploded"):
+            async for _ in processor:
+                pass
