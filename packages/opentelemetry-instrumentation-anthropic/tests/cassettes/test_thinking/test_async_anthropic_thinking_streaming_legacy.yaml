@@ -200,7 +200,7 @@ interactions:
 
         event: message_delta
 
-        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":238}      }
+        data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":238,"output_tokens_details":{"thinking_tokens":1024}}      }
 
 
         event: message_stop

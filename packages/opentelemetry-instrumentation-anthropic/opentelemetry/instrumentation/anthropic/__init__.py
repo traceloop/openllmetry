@@ -29,7 +29,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
-    get_reasoning_tokens,
+    get_thinking_tokens,
     run_async,
     set_span_attribute,
     shared_metrics_attributes,
@@ -198,7 +198,6 @@ async def _aset_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    """Record token usage from an asynchronous Anthropic response."""
     import inspect
 
     # If we get a coroutine, await it
@@ -301,7 +300,7 @@ async def _aset_token_usage(
     set_span_attribute(
         span,
         SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
-        get_reasoning_tokens(usage),
+        get_thinking_tokens(usage),
     )
 
     set_span_attribute(
@@ -324,7 +323,6 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
-    """Record token usage from a synchronous Anthropic response."""
     import inspect
 
     # If we get a coroutine, we cannot process it in sync context
@@ -423,7 +421,7 @@ def _set_token_usage(
     set_span_attribute(
         span,
         SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
-        get_reasoning_tokens(usage),
+        get_thinking_tokens(usage),
     )
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
