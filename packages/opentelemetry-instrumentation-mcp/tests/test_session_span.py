@@ -99,3 +99,67 @@ async def test_session_span_ends_when_enter_fails(
     assert len(spans) == 1, "the session span must be ended exactly once"
     assert spans[0].status.status_code is expected_status
     assert not trace.get_current_span().is_recording(), "span left current"
+
+
+async def test_nested_session_reuses_one_span_and_restores_parent(
+    span_exporter, tracer_provider
+) -> None:
+    """A reentrant FastMCP client shares its session until the outer exit."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+
+    with tracer.start_as_current_span("parent") as parent:
+        await enter(_ok, client, (), {})
+        outer = trace.get_current_span()
+        await enter(_ok, client, (), {})
+        assert trace.get_current_span() is outer
+        await exit_(_ok, client, (), {})
+        assert trace.get_current_span() is outer
+        assert _session_spans(span_exporter) == []
+        await exit_(_ok, client, (), {})
+        assert trace.get_current_span() is parent
+        spans = _session_spans(span_exporter)
+        assert len(spans) == 1
+        assert spans[0].parent.span_id == parent.get_span_context().span_id
+    assert not trace.get_current_span().is_recording()
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("nested enter failed"), asyncio.CancelledError()])
+async def test_failed_nested_enter_leaves_outer_session_active(
+    span_exporter, tracer_provider, failure
+) -> None:
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+    await enter(_ok, client, (), {})
+    outer = trace.get_current_span()
+    await _call(enter, _failing_with(failure), client, failure)
+    assert trace.get_current_span() is outer
+    await exit_(_ok, client, (), {})
+    assert len(_session_spans(span_exporter)) == 1
+    assert not trace.get_current_span().is_recording()
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("nested exit failed"), asyncio.CancelledError()])
+async def test_failed_nested_exit_does_not_end_outer_session(
+    span_exporter, tracer_provider, failure
+) -> None:
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+    await enter(_ok, client, (), {})
+    await enter(_ok, client, (), {})
+    outer = trace.get_current_span()
+    await _call(exit_, _failing_with(failure), client, failure)
+    assert trace.get_current_span() is outer
+    assert _session_spans(span_exporter) == []
+    await exit_(_ok, client, (), {})
+    assert len(_session_spans(span_exporter)) == 1
+    assert not trace.get_current_span().is_recording()
