@@ -12,6 +12,7 @@ import pytest
 from opentelemetry.instrumentation.groq import (
     _create_async_stream_processor,
     _create_stream_processor,
+    _record_streaming_metrics,
 )
 from opentelemetry.instrumentation.groq.utils import streaming_metrics_attributes
 from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
@@ -19,8 +20,9 @@ from opentelemetry.semconv_ai import Meters
 from opentelemetry.trace import get_tracer
 
 
-def _chunk(content="", finish_reason=None, usage=None):
+def _chunk(content="", finish_reason=None, usage=None, model=None):
     return SimpleNamespace(
+        model=model,
         choices=[
             SimpleNamespace(
                 delta=SimpleNamespace(content=content, tool_calls=None),
@@ -140,6 +142,104 @@ class TestStreamProcessorMetrics:
         duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
         assert duration_metric is not None
         assert duration_metric.data.data_points[0].sum > 0
+
+    def test_token_points_carry_non_streaming_attribute_set(self, reader, tracer_provider, meter_provider):
+        """Token points must match the non-streaming attribute keys (semconv requires operation.name)."""
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        token_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_TOKEN_USAGE)
+
+        stream = _FakeStream([_chunk(content="hello", finish_reason="stop", usage=_usage())])
+        for _ in _create_stream_processor(
+            stream,
+            span,
+            None,
+            token_histogram,
+            None,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        ):
+            pass
+
+        metrics_data = reader.get_metrics_data()
+        token_metric = _find_metric(metrics_data, Meters.LLM_TOKEN_USAGE)
+        assert token_metric is not None
+        assert {frozenset(dict(dp.attributes)) for dp in token_metric.data.data_points} == {
+            frozenset(
+                {
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL,
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE,
+                }
+            )
+        }
+
+    def test_uses_last_chunk_model_as_response_model(self, reader, tracer_provider, meter_provider):
+        """gen_ai.response.model comes from the server's chunks, not the request kwargs."""
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        token_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_TOKEN_USAGE)
+        duration_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_OPERATION_DURATION)
+
+        stream = _FakeStream(
+            [
+                _chunk(content="hello", model="server-reported-model"),
+                _chunk(content=" world", finish_reason="stop", usage=_usage(), model="server-reported-model"),
+            ]
+        )
+        for _ in _create_stream_processor(
+            stream,
+            span,
+            None,
+            token_histogram,
+            duration_histogram,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        ):
+            pass
+
+        metrics_data = reader.get_metrics_data()
+        token_dp = _find_metric(metrics_data, Meters.LLM_TOKEN_USAGE).data.data_points[0]
+        duration_dp = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION).data.data_points[0]
+        # Duration points keep the non-streaming attribute set (provider + response
+        # model only); the request model is added to token points alone.
+        assert dict(duration_dp.attributes)[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "server-reported-model"
+        assert GenAIAttributes.GEN_AI_REQUEST_MODEL not in dict(duration_dp.attributes)
+
+        token_attrs = dict(token_dp.attributes)
+        assert token_attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "server-reported-model"
+        assert token_attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "llama-3.3-70b-versatile"
+
+    def test_falls_back_to_request_model_when_chunks_carry_none(
+        self, reader, tracer_provider, meter_provider
+    ):
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        token_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_TOKEN_USAGE)
+
+        stream = _FakeStream([_chunk(content="hello", finish_reason="stop", usage=_usage())])
+        for _ in _create_stream_processor(
+            stream,
+            span,
+            None,
+            token_histogram,
+            None,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        ):
+            pass
+
+        metrics_data = reader.get_metrics_data()
+        token_dp = _find_metric(metrics_data, Meters.LLM_TOKEN_USAGE).data.data_points[0]
+        assert dict(token_dp.attributes)[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "llama-3.3-70b-versatile"
+
+    def test_recording_failure_never_reaches_the_caller(self):
+        """_record_streaming_metrics runs in the generator's else block — it must not raise."""
+
+        class _Boom:
+            def record(self, *args, **kwargs):
+                raise RuntimeError("histogram exploded")
+
+        _record_streaming_metrics(_usage(), _Boom(), _Boom(), 0, "llama-3.3-70b-versatile")
 
     def test_records_duration_even_without_usage(self, reader, tracer_provider, meter_provider):
         span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")

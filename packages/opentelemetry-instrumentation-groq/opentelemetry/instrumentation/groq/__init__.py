@@ -23,6 +23,7 @@ from opentelemetry.instrumentation.groq.span_utils import (
     set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.groq.utils import (
+    dont_throw,
     error_metrics_attributes,
     shared_metrics_attributes,
     should_emit_events,
@@ -191,18 +192,42 @@ def _handle_streaming_response(
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
+def _record_error_duration(
+    duration_histogram: Optional[Histogram],
+    start_time: Optional[float],
+    exception: Exception,
+) -> None:
+    """Record how long a failed call took on the duration histogram.
+
+    Shared by the stream processors and ``_wrap``/``_awrap`` so the four copies
+    of this block can't drift apart.
+    """
+    if not duration_histogram or start_time is None:
+        return
+    duration_histogram.record(
+        time.time() - start_time,
+        attributes=error_metrics_attributes(exception),
+    )
+
+
+@dont_throw
 def _record_streaming_metrics(
     usage,
     token_histogram,
     duration_histogram,
     start_time,
     llm_model,
+    response_model=None,
 ) -> None:
     """Record token usage and duration metrics for a consumed streaming response.
 
     Called once the stream is fully drained; the final chunk carries usage data.
+
+    Runs in the generator's ``else:`` block, so an exception here would surface
+    in the caller's ``for`` loop *after* they consumed the whole stream - hence
+    the guard, like every other telemetry helper in this package.
     """
-    metric_attributes = streaming_metrics_attributes(llm_model)
+    metric_attributes = streaming_metrics_attributes(response_model or llm_model)
 
     if duration_histogram and start_time is not None:
         duration_histogram.record(
@@ -211,11 +236,18 @@ def _record_streaming_metrics(
         )
 
     if usage and token_histogram:
+        # Token points carry the same attribute set as the non-streaming path so
+        # dashboards grouping by operation/request model don't drop streaming calls.
+        token_attributes = {
+            **metric_attributes,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+        }
         if usage.prompt_tokens is not None:
             token_histogram.record(
                 usage.prompt_tokens,
                 attributes={
-                    **metric_attributes,
+                    **token_attributes,
                     GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
                 },
             )
@@ -223,7 +255,7 @@ def _record_streaming_metrics(
             token_histogram.record(
                 usage.completion_tokens,
                 attributes={
-                    **metric_attributes,
+                    **token_attributes,
                     GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
                 },
             )
@@ -243,6 +275,8 @@ def _create_stream_processor(
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    # Last model reported by the server; falls back to the requested model.
+    response_model = llm_model
 
     try:
         for chunk in response:
@@ -254,13 +288,11 @@ def _create_stream_processor(
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if getattr(chunk, "model", None):
+                response_model = chunk.model
             yield chunk
     except Exception as e:
-        if duration_histogram and start_time is not None:
-            duration_histogram.record(
-                time.time() - start_time,
-                attributes=error_metrics_attributes(e),
-            )
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -270,7 +302,9 @@ def _create_stream_processor(
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
         )
-        _record_streaming_metrics(usage, token_histogram, duration_histogram, start_time, llm_model)
+        _record_streaming_metrics(
+            usage, token_histogram, duration_histogram, start_time, llm_model, response_model
+        )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
@@ -291,6 +325,8 @@ async def _create_async_stream_processor(
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    # Last model reported by the server; falls back to the requested model.
+    response_model = llm_model
 
     try:
         async for chunk in response:
@@ -302,13 +338,11 @@ async def _create_async_stream_processor(
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if getattr(chunk, "model", None):
+                response_model = chunk.model
             yield chunk
     except Exception as e:
-        if duration_histogram and start_time is not None:
-            duration_histogram.record(
-                time.time() - start_time,
-                attributes=error_metrics_attributes(e),
-            )
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -318,7 +352,9 @@ async def _create_async_stream_processor(
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
         )
-        _record_streaming_metrics(usage, token_histogram, duration_histogram, start_time, llm_model)
+        _record_streaming_metrics(
+            usage, token_histogram, duration_histogram, start_time, llm_model, response_model
+        )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
@@ -377,20 +413,12 @@ def _wrap(
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
-
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
-
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
-
-    end_time = time.time()
 
     if is_streaming_response(response):
         try:
@@ -473,20 +501,12 @@ async def _awrap(
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
-
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
-
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
-
-    end_time = time.time()
 
     if is_streaming_response(response):
         try:
