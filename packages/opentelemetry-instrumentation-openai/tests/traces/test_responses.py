@@ -1204,14 +1204,22 @@ def test_responses_real_openai_exception_propagates(
 
     # Even if error-telemetry recording fails, the real RateLimitError must still propagate
     from unittest.mock import MagicMock
-    monkeypatch.setattr(
-        rw, "set_data_attributes", MagicMock(side_effect=RuntimeError("error in error telemetry"))
-    )
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    mock_set_data = MagicMock(side_effect=RuntimeError("error in error telemetry"))
+    monkeypatch.setattr(rw, "set_data_attributes", mock_set_data)
+
     with pytest.raises(openai.RateLimitError):
         client.responses.create(
             model="gpt-4.1-nano",
             input="Hello",
         )
+
+    mock_set_data.assert_called_once()
+    assert mock_logger.call_count == 1
+    assert isinstance(mock_logger.call_args[0][0], RuntimeError)
 
 
 @pytest.mark.asyncio
@@ -1223,6 +1231,7 @@ async def test_async_responses_real_openai_exception_propagates(
     import openai
     from openai import AsyncOpenAI
     from unittest.mock import MagicMock
+    from opentelemetry.instrumentation.openai.shared.config import Config
     import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -1249,14 +1258,20 @@ async def test_async_responses_real_openai_exception_propagates(
             input="Hello",
         )
 
-    monkeypatch.setattr(
-        rw, "set_data_attributes", MagicMock(side_effect=RuntimeError("error in error telemetry"))
-    )
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    mock_set_data = MagicMock(side_effect=RuntimeError("error in error telemetry"))
+    monkeypatch.setattr(rw, "set_data_attributes", mock_set_data)
+
     with pytest.raises(openai.RateLimitError):
         await client.responses.create(
             model="gpt-4.1-nano",
             input="Hello",
         )
+
+    mock_set_data.assert_called_once()
+    assert mock_logger.call_count == 1
+    assert isinstance(mock_logger.call_args[0][0], RuntimeError)
 
 
 def test_responses_cancel_telemetry_failure_does_not_crash(
