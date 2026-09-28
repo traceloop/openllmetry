@@ -1,8 +1,10 @@
+import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
 import json
 import logging
+from weakref import WeakKeyDictionary
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -217,17 +219,21 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def _fastmcp_client_enter_wrapper(self, tracer):
-        """Start a session span on the outermost FastMCP Client.__aenter__."""
+        """Start a session span on the outermost enter in this async task."""
 
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
-            # FastMCP reuses one underlying session across nested enters. Keep
-            # the span current until the matching outermost exit, not one per
-            # syntactic async-with block.
-            depth = getattr(instance, "_tracing_session_depth", 0)
+            # FastMCP permits both nested enters and overlapping tasks. Context
+            # managers hold task-local OTel tokens: ending one from a different
+            # task corrupts the context, so keep each task's session separately.
+            sessions = getattr(instance, "_tracing_sessions", None)
+            if sessions is None:
+                sessions = WeakKeyDictionary()
+                instance._tracing_sessions = sessions
+            task = asyncio.current_task()
+            state = sessions.get(task)
             context_manager = None
-            span = getattr(instance, "_tracing_session_span", None)
-            if depth == 0:
+            if state is None:
                 context_manager = tracer.start_as_current_span(
                     "mcp.client.session",
                     record_exception=False,
@@ -238,57 +244,50 @@ class McpInstrumentor(BaseInstrumentor):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
                 )
-                instance._tracing_session_context_manager = context_manager
-                instance._tracing_session_span = span
-
+                state = (context_manager, span, 0)
+            manager, span, depth = state
             entered = False
             try:
                 result = await wrapped(*args, **kwargs)
                 entered = True
-                instance._tracing_session_depth = depth + 1
+                sessions[task] = (manager, span, depth + 1)
                 return result
             except Exception as e:
-                if span is not None:
-                    record_error(span, e)
+                record_error(span, e)
                 raise
             finally:
-                # A failed nested enter leaves the outer session active; a
-                # failed outer enter gets no __aexit__, so end its span here.
+                # No __aexit__ follows an unsuccessful enter. Nested failure
+                # preserves the enclosing task's session; outer failure ends it.
                 if not entered and context_manager is not None:
                     context_manager.__exit__(None, None, None)
-                    instance._tracing_session_context_manager = None
-                    instance._tracing_session_span = None
 
         return traced_method
 
     def _fastmcp_client_exit_wrapper(self, tracer):
-        """End the session span only when the outermost FastMCP block exits."""
+        """End this task's session span at its matching outermost exit."""
 
         @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
+            sessions = getattr(instance, "_tracing_sessions", None)
+            task = asyncio.current_task()
+            state = sessions.get(task) if sessions is not None else None
             try:
                 return await wrapped(*args, **kwargs)
             except Exception as e:
-                span = getattr(instance, "_tracing_session_span", None)
-                if span is not None:
-                    record_error(span, e)
+                if state is not None:
+                    record_error(state[1], e)
                 raise
             finally:
-                # Also balance a cancelled __aexit__ (BaseException). Never
-                # detach the outer span while a nested block is still active.
-                depth = getattr(instance, "_tracing_session_depth", 0)
-                if depth > 0:
-                    instance._tracing_session_depth = depth - 1
-                    if depth == 1:
-                        context_manager = getattr(
-                            instance, "_tracing_session_context_manager", None
-                        )
+                # Cancellation is BaseException, but still balances this task.
+                if state is not None:
+                    manager, span, depth = state
+                    if depth <= 1:
                         try:
-                            if context_manager is not None:
-                                context_manager.__exit__(None, None, None)
+                            manager.__exit__(None, None, None)
                         finally:
-                            instance._tracing_session_context_manager = None
-                            instance._tracing_session_span = None
+                            del sessions[task]
+                    else:
+                        sessions[task] = (manager, span, depth - 1)
 
         return traced_method
 
