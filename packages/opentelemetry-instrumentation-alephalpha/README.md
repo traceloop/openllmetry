@@ -80,11 +80,11 @@ Run it with:
 python trace_completion.py
 ```
 
-The terminal prints an OpenTelemetry span for the completed request and the
-model response. The span contains information such as the model name, request
-type, duration, and token usage. Prompt and completion content are also
-recorded by default; see the [Privacy](#privacy) section if your application
-handles sensitive data.
+The terminal prints the OpenTelemetry span before the model response because
+the span is exported when `client.complete()` finishes. The span contains
+information such as the model name, request type, duration, and token usage.
+Prompt and completion content are also recorded by default; see the
+[Privacy](#privacy) section if your application handles sensitive data.
 
 The example demonstrates the four steps involved in tracing an LLM call:
 
