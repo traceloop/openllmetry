@@ -77,10 +77,31 @@ def record_error(span, exc) -> None:
     span.set_status(error_status(str(exc)))
 
 
+def log_trace_failure(logger: logging.Logger, origin: str, exc: BaseException) -> None:
+    """Record a failure in the instrumentation's own code, then return.
+
+    Shared by ``dont_throw`` and the wrappers that guard only their own spans: an
+    instrumentation failure is logged at debug and never reaches the caller, so
+    tracing can break without the traced program breaking.
+    """
+    logger.debug(
+        "OpenLLMetry failed to trace in %s, error: %s",
+        origin,
+        traceback.format_exc(),
+    )
+    if Config.exception_logger:
+        Config.exception_logger(exc)
+
+
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
     Works for both synchronous and asynchronous functions.
+
+    Only guards the decorated function's own code: a wrapper that calls into the
+    traced library must not decorate the call itself — that would turn a library
+    failure into a silent ``None`` (see the MCP client wrappers, which guard their
+    spans explicitly instead).
     """
     logger = logging.getLogger(func.__module__)
 
@@ -88,21 +109,12 @@ def dont_throw(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            _handle_exception(e, func, logger)
+            log_trace_failure(logger, func.__name__, e)
 
     def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            _handle_exception(e, func, logger)
-
-    def _handle_exception(e, func, logger):
-        logger.debug(
-            "OpenLLMetry failed to trace in %s, error: %s",
-            func.__name__,
-            traceback.format_exc(),
-        )
-        if Config.exception_logger:
-            Config.exception_logger(e)
+            log_trace_failure(logger, func.__name__, e)
 
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
