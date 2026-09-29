@@ -515,7 +515,7 @@ def _handle_response(
     )
 
     if should_emit_events() and event_logger:
-        _emit_response_events(responses, event_logger)
+        _emit_response_events(responses)
     else:
         _set_response_attributes(
             span,
