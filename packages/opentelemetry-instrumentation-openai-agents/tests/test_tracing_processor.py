@@ -1132,6 +1132,12 @@ class TestTraceConversationId:
         span = self._workflow_span(processor, exporter, "conv-123")
         assert span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-123"
 
+    def test_empty_group_id_mapped(self, tracer_and_exporter, processor):
+        """group_id="" is a present value the SDK accepts → mapped verbatim, not dropped."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, "")
+        assert span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == ""
+
     def test_none_group_id_omitted(self, tracer_and_exporter, processor):
         """group_id None → attribute must not be set."""
         _, exporter = tracer_and_exporter

@@ -684,8 +684,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         # The SDK's Trace.group_id carries the conversation/thread grouping
         # (e.g. set via trace(group_id=...)). Map it to the standard
         # gen_ai.conversation.id so multiple traces in one conversation correlate.
+        # Any present value is preserved (incl. ""); only None/missing is omitted.
         group_id = getattr(trace, "group_id", None)
-        if group_id:
+        if group_id is not None:
             attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = group_id
         workflow_span = self.tracer.start_span(
             "Agent Workflow",
