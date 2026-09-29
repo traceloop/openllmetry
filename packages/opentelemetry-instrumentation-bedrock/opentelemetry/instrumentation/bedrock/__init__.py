@@ -7,7 +7,7 @@ import time
 import traceback
 import warnings
 from functools import partial, wraps
-from typing import Collection, Optional
+from typing import Callable, Collection, Mapping, Optional
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import get_logger
@@ -68,7 +68,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
 )
-from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace import Span, SpanKind, get_tracer, use_span
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
@@ -109,6 +109,39 @@ class MetricParams:
 
 logger = logging.getLogger(__name__)
 
+BedrockHook = Callable[[Span, str, str, Mapping[str, object]], None]
+
+
+class _Hooks:
+    """Capture hooks per instrumentation setup, rather than in global Config."""
+
+    def __init__(
+        self,
+        request_hook: Optional[BedrockHook] = None,
+        response_hook: Optional[BedrockHook] = None,
+    ):
+        self.request_hook = request_hook
+        self.response_hook = response_hook
+
+    def request(self, span: Span, operation: str, params: Mapping[str, object]) -> None:
+        self._call(self.request_hook, "request", span, operation, params)
+
+    def response(self, span: Span, operation: str, response: Mapping[str, object]) -> None:
+        self._call(self.response_hook, "response", span, operation, response)
+
+    @staticmethod
+    def _call(
+        hook: Optional[BedrockHook], kind: str, span: Span,
+        operation: str, data: Mapping[str, object],
+    ) -> None:
+        if not callable(hook) or not span.is_recording():
+            return
+        try:
+            with use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False):
+                hook(span, "bedrock-runtime", operation, data)
+        except Exception:
+            logger.warning("Error in Bedrock %s hook", kind, exc_info=True)
+
 
 _instruments = ("boto3 >= 1.28.57",)
 
@@ -144,6 +177,7 @@ def _with_tracer_wrapper(func):
         metric_params,
         event_logger,
         to_wrap,
+        hooks=None,
     ):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
@@ -155,6 +189,7 @@ def _with_tracer_wrapper(func):
                 instance,
                 args,
                 kwargs,
+                hooks=hooks,
             )
 
         return wrapper
@@ -172,18 +207,20 @@ def _wrap(
     instance,
     args,
     kwargs,
+    hooks=None,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
     if kwargs.get("service_name") == "bedrock-runtime":
+        hooks = hooks or _Hooks()
         try:
             start_time = time.time()
             metric_params.start_time = time.time()
             client = wrapped(*args, **kwargs)
             client.invoke_model = _instrumented_model_invoke(
-                client.invoke_model, tracer, metric_params, event_logger
+                client.invoke_model, tracer, metric_params, event_logger, hooks
             )
             client.invoke_model_with_response_stream = (
                 _instrumented_model_invoke_with_response_stream(
@@ -191,13 +228,14 @@ def _wrap(
                     tracer,
                     metric_params,
                     event_logger,
+                    hooks,
                 )
             )
             client.converse = _instrumented_converse(
-                client.converse, tracer, metric_params, event_logger
+                client.converse, tracer, metric_params, event_logger, hooks
             )
             client.converse_stream = _instrumented_converse_stream(
-                client.converse_stream, tracer, metric_params, event_logger
+                client.converse_stream, tracer, metric_params, event_logger, hooks
             )
             return client
         except Exception as e:
@@ -218,7 +256,9 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
-def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
+def _instrumented_model_invoke(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -235,6 +275,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes,
             record_exception=False, set_status_on_exception=False,
         ) as span:
+            hooks.request(span, "InvokeModel", kwargs)
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
@@ -243,14 +284,17 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
+            hooks.response(span, "InvokeModel", response)
             return response
 
     return with_instrumentation
 
 
 def _instrumented_model_invoke_with_response_stream(
-    fn, tracer, metric_params, event_logger
+    fn, tracer, metric_params, event_logger, hooks=None
 ):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -269,6 +313,7 @@ def _instrumented_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
+        hooks.request(span, "InvokeModelWithResponseStream", kwargs)
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
@@ -277,14 +322,15 @@ def _instrumented_model_invoke_with_response_stream(
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
             raise
-        _handle_stream_call(span, kwargs, response, metric_params, event_logger)
+        _handle_stream_call(span, kwargs, response, metric_params, event_logger, hooks)
 
         return response
 
     return with_instrumentation
 
 
-def _instrumented_converse(fn, tracer, metric_params, event_logger):
+def _instrumented_converse(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
     # see
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse.html
     # for the request/response format
@@ -305,6 +351,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             attributes=span_attributes,
             record_exception=False, set_status_on_exception=False,
         ) as span:
+            hooks.request(span, "Converse", kwargs)
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
@@ -313,13 +360,16 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
+            hooks.response(span, "Converse", response)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
+def _instrumented_converse_stream(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -336,6 +386,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        hooks.request(span, "ConverseStream", kwargs)
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
@@ -345,14 +396,16 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             span.end()
             raise
         if span.is_recording():
-            _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
+            _handle_converse_stream(span, kwargs, response, metric_params, event_logger, hooks)
 
         return response
 
     return with_instrumentation
 
 
-def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
+def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -368,16 +421,19 @@ def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
+            hooks.request(span, "InvokeModel", kwargs)
             response = await fn(*args, **kwargs)
             await _handle_async_call(span, kwargs, response, metric_params, event_logger)
+            hooks.response(span, "InvokeModel", response)
             return response
 
     return with_instrumentation
 
 
 def _instrumented_async_model_invoke_with_response_stream(
-    fn, tracer, metric_params, event_logger
+    fn, tracer, metric_params, event_logger, hooks=None
 ):
+    hooks = hooks or _Hooks()
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -396,15 +452,18 @@ def _instrumented_async_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
+        hooks.request(span, "InvokeModelWithResponseStream", kwargs)
         response = await fn(*args, **kwargs)
-        _handle_async_stream_call(span, kwargs, response, metric_params, event_logger)
+        _handle_async_stream_call(span, kwargs, response, metric_params, event_logger, hooks)
 
         return response
 
     return with_instrumentation
 
 
-def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
+def _instrumented_async_converse(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -421,15 +480,19 @@ def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         ) as span:
+            hooks.request(span, "Converse", kwargs)
             response = await fn(*args, **kwargs)
             _handle_converse(span, kwargs, response, metric_params, event_logger)
+            hooks.response(span, "Converse", response)
 
             return response
 
     return with_instrumentation
 
 
-def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger):
+def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
+
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
@@ -446,9 +509,10 @@ def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger)
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        hooks.request(span, "ConverseStream", kwargs)
         response = await fn(*args, **kwargs)
         if span.is_recording():
-            _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger)
+            _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger, hooks)
 
         return response
 
@@ -459,17 +523,18 @@ class _InstrumentedClientContext:
     """Wraps aiobotocore's ClientCreatorContext to monkey-patch Bedrock methods
     on the live async client after it's created."""
 
-    def __init__(self, inner_ctx, tracer, metric_params, event_logger):
+    def __init__(self, inner_ctx, tracer, metric_params, event_logger, hooks=None):
         self._inner_ctx = inner_ctx
         self._tracer = tracer
         self._metric_params = metric_params
         self._event_logger = event_logger
+        self._hooks = hooks or _Hooks()
 
     async def __aenter__(self):
         client = await self._inner_ctx.__aenter__()
         try:
             client.invoke_model = _instrumented_async_model_invoke(
-                client.invoke_model, self._tracer, self._metric_params, self._event_logger
+                client.invoke_model, self._tracer, self._metric_params, self._event_logger, self._hooks
             )
             client.invoke_model_with_response_stream = (
                 _instrumented_async_model_invoke_with_response_stream(
@@ -477,13 +542,14 @@ class _InstrumentedClientContext:
                     self._tracer,
                     self._metric_params,
                     self._event_logger,
+                    self._hooks,
                 )
             )
             client.converse = _instrumented_async_converse(
-                client.converse, self._tracer, self._metric_params, self._event_logger
+                client.converse, self._tracer, self._metric_params, self._event_logger, self._hooks
             )
             client.converse_stream = _instrumented_async_converse_stream(
-                client.converse_stream, self._tracer, self._metric_params, self._event_logger
+                client.converse_stream, self._tracer, self._metric_params, self._event_logger, self._hooks
             )
         except Exception:
             # If monkey-patching fails (e.g., aiobotocore exposes a method as a
@@ -500,7 +566,7 @@ class _InstrumentedClientContext:
         return await self._inner_ctx.__aexit__(exc_type, exc_val, exc_tb)
 
 
-def _wrap_async_factory(tracer, metric_params, event_logger, to_wrap):
+def _wrap_async_factory(tracer, metric_params, event_logger, to_wrap, hooks=None):
     """Wrapper for aiobotocore's AioSession.create_client (sync, returns async ctx mgr)."""
 
     def wrapper(wrapped, instance, args, kwargs):
@@ -513,13 +579,14 @@ def _wrap_async_factory(tracer, metric_params, event_logger, to_wrap):
         if service_name != "bedrock-runtime":
             return ctx
 
-        return _InstrumentedClientContext(ctx, tracer, metric_params, event_logger)
+        return _InstrumentedClientContext(ctx, tracer, metric_params, event_logger, hooks)
 
     return wrapper
 
 
 @dont_throw
-def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
+def _handle_stream_call(span, kwargs, response, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
 
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
@@ -558,17 +625,20 @@ def _handle_stream_call(span, kwargs, response, metric_params, event_logger):
             set_model_message_span_attributes(model_vendor, span, request_body)
             set_model_choice_span_attributes(model_vendor, span, response_body)
 
+        hooks.response(span, "InvokeModelWithResponseStream", response)
         span.end()
 
     response["body"] = StreamingWrapper(
-        response["body"], stream_done_callback=stream_done
+        response["body"], stream_done_callback=stream_done,
+        finalize_on_exit=callable(hooks.response_hook),
     )
 
 
 @dont_throw
-def _handle_async_stream_call(span, kwargs, response, metric_params, event_logger):
+def _handle_async_stream_call(span, kwargs, response, metric_params, event_logger, hooks=None):
     """Async counterpart of _handle_stream_call — wraps the response body
     with AsyncStreamingWrapper so the user can `async for` over it."""
+    hooks = hooks or _Hooks()
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
     request_body = json.loads(kwargs.get("body"))
 
@@ -605,6 +675,7 @@ def _handle_async_stream_call(span, kwargs, response, metric_params, event_logge
             set_model_message_span_attributes(model_vendor, span, request_body)
             set_model_choice_span_attributes(model_vendor, span, response_body)
 
+        hooks.response(span, "InvokeModelWithResponseStream", response)
         span.end()
 
     response["body"] = AsyncStreamingWrapper(
@@ -752,7 +823,8 @@ def _handle_converse(span, kwargs, response, metric_params, event_logger):
 
 
 @dont_throw
-def _handle_converse_stream(span, kwargs, response, metric_params, event_logger):
+def _handle_converse_stream(span, kwargs, response, metric_params, event_logger, hooks=None):
+    hooks = hooks or _Hooks()
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
@@ -765,6 +837,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
     stream = response.get("stream")
     role = "unknown"
     if stream:
+        span_state = {"ended": False}
 
         def handler(func):
             def wrap(*args, **kwargs):
@@ -797,6 +870,8 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     # last message sent
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
+                    span_state["ended"] = True
+                    hooks.response(span, "ConverseStream", response)
                     span.end()
                 elif "messageStop" in event:
                     stop_reason = event.get("messageStop", {}).get("stopReason")
@@ -823,12 +898,18 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
             return partial(wrap, response_msg=[], tool_blocks=[], reasoning_blocks=[], span=span)
 
         stream._parse_event = handler(stream._parse_event)
+        if callable(hooks.response_hook):
+            response["stream"] = _ConverseStreamCloser(
+                stream, span, span_state, lambda: None,
+                on_end=lambda: hooks.response(span, "ConverseStream", response),
+            )
 
 
 @dont_throw
-def _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger):
+def _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger, hooks=None):
     """Async variant of _handle_converse_stream — `_parse_event` is a coroutine
     in aiobotocore, so the wrapper must await it before inspecting the event."""
+    hooks = hooks or _Hooks()
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
@@ -886,6 +967,7 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span_state["ended"] = True
+                    hooks.response(span, "ConverseStream", response)
                     span.end()
                 elif "messageStop" in event:
                     span_state["saw_message_stop"] = True
@@ -949,11 +1031,14 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
 
         # Wrap the stream's __aiter__ to guarantee span.end() fires even when
         # the caller breaks early or the underlying iterator raises.
-        response["stream"] = _ConverseStreamCloser(stream, span, span_state, _flush_partial)
+        response["stream"] = _ConverseStreamCloser(
+            stream, span, span_state, _flush_partial,
+            on_end=lambda: hooks.response(span, "ConverseStream", response),
+        )
 
 
 class _ConverseStreamCloser:
-    """Wraps a converse_stream `stream` so that `span.end()` is guaranteed to
+    """Wraps a sync or async converse_stream so that `span.end()` is guaranteed to
     fire exactly once: normally via the patched `_parse_event` when metadata
     arrives, or as a fallback when iteration completes without metadata (early
     `break`, exception, or empty stream).
@@ -963,11 +1048,12 @@ class _ConverseStreamCloser:
     still shows what the caller consumed. The span is ended with default
     (Unset) status — per OTel guidance, early termination is not an error."""
 
-    def __init__(self, inner, span, span_state, flush_partial):
+    def __init__(self, inner, span, span_state, flush_partial, on_end=None):
         self._inner = inner
         self._span = span
         self._span_state = span_state
         self._flush_partial = flush_partial
+        self._on_end = on_end
 
     def __getattr__(self, name):
         return getattr(self._inner, name)
@@ -975,15 +1061,26 @@ class _ConverseStreamCloser:
     def __aiter__(self):
         return self._aiter()
 
+    def __iter__(self):
+        try:
+            yield from self._inner
+        finally:
+            self._finish()
+
+    def _finish(self):
+        if not self._span_state["ended"]:
+            self._span_state["ended"] = True
+            self._flush_partial()
+            if self._on_end:
+                self._on_end()
+            self._span.end()
+
     async def _aiter(self):
         try:
             async for event in self._inner:
                 yield event
         finally:
-            if not self._span_state["ended"]:
-                self._span_state["ended"] = True
-                self._flush_partial()
-                self._span.end()
+            self._finish()
 
 
 def _get_vendor_model(modelId):
@@ -1175,6 +1272,7 @@ class BedrockInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        hooks = _Hooks(kwargs.get("request_hook"), kwargs.get("response_hook"))
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -1241,11 +1339,11 @@ class BedrockInstrumentor(BaseInstrumentor):
             wrap_method = wrapped_method.get("method")
             if wrapped_method.get("async"):
                 wrapper_factory = _wrap_async_factory(
-                    tracer, metric_params, event_logger, wrapped_method
+                    tracer, metric_params, event_logger, wrapped_method, hooks
                 )
             else:
                 wrapper_factory = _wrap(
-                    tracer, metric_params, event_logger, wrapped_method
+                    tracer, metric_params, event_logger, wrapped_method, hooks
                 )
             try:
                 wrap_function_wrapper(
