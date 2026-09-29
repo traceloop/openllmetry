@@ -480,6 +480,34 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
+def _cache_raw_stream_response(
+    *,
+    tracer: Tracer,
+    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
+    parsed_response: Union[Stream, AsyncStream],
+    start_time: int,
+    request_kwargs: dict[str, Any],
+    instance: Any,
+) -> None:
+    span = tracer.start_span(
+        SPAN_NAME,
+        kind=SpanKind.CLIENT,
+        start_time=start_time,
+        context=context_api.get_current(),
+    )
+    _set_request_attributes(span, prepare_kwargs_for_shared_attributes(request_kwargs), instance)
+    wrapped_stream = ResponseStream(
+        span=span,
+        response=parsed_response,
+        start_time=start_time,
+        request_kwargs=request_kwargs,
+        tracer=tracer,
+    )
+    parsed_by_type = getattr(response, "_parsed_by_type", None)
+    if isinstance(parsed_by_type, dict):
+        parsed_by_type[getattr(response, "_cast_to", None)] = wrapped_stream
+
+
 @dont_throw
 @_with_tracer_wrapper
 def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
@@ -576,12 +604,14 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
-        # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
-        # trace from here. The pre-parse `isinstance(response, Stream)` check above only
-        # catches the direct `.create(stream=True)` case; this call goes untraced instead
-        # of crashing.
+        _cache_raw_stream_response(
+            tracer=tracer,
+            response=response,
+            parsed_response=parsed_response,
+            start_time=start_time,
+            request_kwargs=non_sentinel_kwargs,
+            instance=instance,
+        )
         return response
 
     existing_data = responses.get(parsed_response.id)
@@ -751,13 +781,14 @@ async def async_responses_get_or_create_wrapper(
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
-        # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
-        # `.id`/`.output`/etc. to build a trace from here. The pre-parse
-        # `isinstance(response, (Stream, AsyncStream))` check above only catches the
-        # direct `.create(stream=True)` case; this call goes untraced instead of
-        # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
+        _cache_raw_stream_response(
+            tracer=tracer,
+            response=response,
+            parsed_response=parsed_response,
+            start_time=start_time,
+            request_kwargs=non_sentinel_kwargs,
+            instance=instance,
+        )
         return response
 
     existing_data = responses.get(parsed_response.id)
