@@ -1033,3 +1033,336 @@ def test_responses_with_raw_response_streaming_does_not_crash(
 
     assert len(events) == 2
     assert span_exporter.get_finished_spans() == ()
+
+
+_MINIMAL_RESPONSE_DATA = {
+    "id": "resp_test_123",
+    "object": "response",
+    "created_at": 1710000000,
+    "status": "completed",
+    "model": "gpt-4.1-nano",
+    "output": [],
+    "usage": {
+        "input_tokens": 1,
+        "output_tokens": 1,
+        "total_tokens": 2,
+    },
+}
+
+_MINIMAL_CANCEL_DATA = {
+    "id": "resp_test_123",
+    "object": "response",
+    "created_at": 1710000000,
+    "status": "cancelled",
+    "model": "gpt-4.1-nano",
+    "output": [],
+}
+
+
+def test_responses_telemetry_failure_returns_response(
+    monkeypatch, instrument_legacy
+):
+    """When telemetry fails after a successful Responses API call, the real response
+
+    must still be returned to the caller and the error must be logged.
+    """
+    import httpx
+    from unittest.mock import MagicMock
+    from openai import OpenAI
+    from opentelemetry.instrumentation.openai.shared.config import Config
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json=_MINIMAL_RESPONSE_DATA,
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+
+    # 1. Telemetry failure in parse_response
+    monkeypatch.setattr(
+        rw, "parse_response", MagicMock(side_effect=RuntimeError("telemetry failure in parse_response"))
+    )
+    response = client.responses.create(
+        model="gpt-4.1-nano",
+        input="Hello",
+    )
+    assert response.id == "resp_test_123"
+    assert mock_logger.call_count == 1
+    assert isinstance(mock_logger.call_args[0][0], RuntimeError)
+
+    # 2. Telemetry failure in set_data_attributes
+    mock_logger.reset_mock()
+    monkeypatch.undo()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    monkeypatch.setattr(
+        rw, "set_data_attributes", MagicMock(side_effect=RuntimeError("telemetry failure in set_data_attributes"))
+    )
+    response = client.responses.create(
+        model="gpt-4.1-nano",
+        input="Hello",
+    )
+    assert response.id == "resp_test_123"
+    assert mock_logger.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_async_responses_telemetry_failure_returns_response(
+    monkeypatch, instrument_legacy
+):
+    """Async counterpart: telemetry failure must not break successful response."""
+    import httpx
+    from unittest.mock import MagicMock
+    from openai import AsyncOpenAI
+    from opentelemetry.instrumentation.openai.shared.config import Config
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json=_MINIMAL_RESPONSE_DATA,
+        )
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+
+    # 1. Telemetry failure in async_parse_response
+    monkeypatch.setattr(
+        rw, "async_parse_response", MagicMock(side_effect=RuntimeError("telemetry failure in async_parse_response"))
+    )
+    response = await client.responses.create(
+        model="gpt-4.1-nano",
+        input="Hello",
+    )
+    assert response.id == "resp_test_123"
+    assert mock_logger.call_count == 1
+
+    # 2. Telemetry failure in set_data_attributes
+    mock_logger.reset_mock()
+    monkeypatch.undo()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    monkeypatch.setattr(
+        rw, "set_data_attributes", MagicMock(side_effect=RuntimeError("telemetry failure in set_data_attributes"))
+    )
+    response = await client.responses.create(
+        model="gpt-4.1-nano",
+        input="Hello",
+    )
+    assert response.id == "resp_test_123"
+    assert mock_logger.call_count == 1
+
+
+def test_responses_real_openai_exception_propagates(
+    monkeypatch, instrument_legacy
+):
+    """Real OpenAI errors raised by wrapped() must propagate to caller,
+
+    even if error-telemetry recording encounters a failure.
+    """
+    import httpx
+    import openai
+    from openai import OpenAI
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            429,
+            headers={"content-type": "application/json"},
+            json={
+                "error": {
+                    "message": "Rate limit exceeded",
+                    "type": "requests",
+                    "code": "rate_limit_exceeded",
+                }
+            },
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(openai.RateLimitError):
+        client.responses.create(
+            model="gpt-4.1-nano",
+            input="Hello",
+        )
+
+    # Even if error-telemetry recording fails, the real RateLimitError must still propagate
+    from unittest.mock import MagicMock
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    mock_set_data = MagicMock(side_effect=RuntimeError("error in error telemetry"))
+    monkeypatch.setattr(rw, "set_data_attributes", mock_set_data)
+
+    with pytest.raises(openai.RateLimitError):
+        client.responses.create(
+            model="gpt-4.1-nano",
+            input="Hello",
+        )
+
+    mock_set_data.assert_called_once()
+    assert mock_logger.call_count == 1
+    assert isinstance(mock_logger.call_args[0][0], RuntimeError)
+
+
+@pytest.mark.asyncio
+async def test_async_responses_real_openai_exception_propagates(
+    monkeypatch, instrument_legacy
+):
+    """Async counterpart: real OpenAI errors must propagate to caller."""
+    import httpx
+    import openai
+    from openai import AsyncOpenAI
+    from unittest.mock import MagicMock
+    from opentelemetry.instrumentation.openai.shared.config import Config
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            429,
+            headers={"content-type": "application/json"},
+            json={
+                "error": {
+                    "message": "Rate limit exceeded",
+                    "type": "requests",
+                    "code": "rate_limit_exceeded",
+                }
+            },
+        )
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(openai.RateLimitError):
+        await client.responses.create(
+            model="gpt-4.1-nano",
+            input="Hello",
+        )
+
+    mock_logger = MagicMock()
+    monkeypatch.setattr(Config, "exception_logger", mock_logger)
+    mock_set_data = MagicMock(side_effect=RuntimeError("error in error telemetry"))
+    monkeypatch.setattr(rw, "set_data_attributes", mock_set_data)
+
+    with pytest.raises(openai.RateLimitError):
+        await client.responses.create(
+            model="gpt-4.1-nano",
+            input="Hello",
+        )
+
+    mock_set_data.assert_called_once()
+    assert mock_logger.call_count == 1
+    assert isinstance(mock_logger.call_args[0][0], RuntimeError)
+
+
+def test_responses_cancel_telemetry_failure_does_not_crash(
+    monkeypatch, instrument_legacy
+):
+    """Cancellation wrapper must not break when telemetry fails."""
+    import httpx
+    from unittest.mock import MagicMock
+    from openai import OpenAI
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json=_MINIMAL_CANCEL_DATA,
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    monkeypatch.setattr(
+        rw, "parse_response", MagicMock(side_effect=RuntimeError("telemetry failure in cancel"))
+    )
+    response = client.responses.cancel("resp_test_123")
+    assert response.id == "resp_test_123"
+
+
+@pytest.mark.asyncio
+async def test_async_responses_cancel_telemetry_failure_does_not_crash(
+    monkeypatch, instrument_legacy
+):
+    """Async cancellation wrapper must not break when telemetry fails."""
+    import httpx
+    from unittest.mock import MagicMock
+    from openai import AsyncOpenAI
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json=_MINIMAL_CANCEL_DATA,
+        )
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    monkeypatch.setattr(
+        rw, "async_parse_response", MagicMock(side_effect=RuntimeError("telemetry failure in async cancel"))
+    )
+    response = await client.responses.cancel("resp_test_123")
+    assert response.id == "resp_test_123"
+
+
+def test_responses_exception_logger_failure_does_not_crash(
+    monkeypatch, instrument_legacy
+):
+    """If Config.exception_logger itself raises, the successful response must still return."""
+    import httpx
+    from unittest.mock import MagicMock
+    from openai import OpenAI
+    from opentelemetry.instrumentation.openai.shared.config import Config
+    import opentelemetry.instrumentation.openai.v1.responses_wrappers as rw
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            json=_MINIMAL_RESPONSE_DATA,
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    def crashing_logger(e):
+        raise RuntimeError("exception_logger crashed!")
+
+    monkeypatch.setattr(Config, "exception_logger", crashing_logger)
+    monkeypatch.setattr(
+        rw, "parse_response", MagicMock(side_effect=RuntimeError("telemetry failure"))
+    )
+
+    response = client.responses.create(
+        model="gpt-4.1-nano",
+        input="Hello",
+    )
+    assert response.id == "resp_test_123"

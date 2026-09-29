@@ -1,8 +1,10 @@
 import json
+import logging
 import pydantic
 import re
 import threading
 import time
+import traceback
 from typing import Any, Optional, Union
 
 from openai import AsyncStream, Stream
@@ -29,12 +31,28 @@ from opentelemetry.instrumentation.openai.shared import (
     _set_tool_definitions_json,
     model_as_dict,
 )
+from opentelemetry.instrumentation.openai.shared.config import Config
 
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     should_send_prompts,
 )
+
+_logger = logging.getLogger(__name__)
+
+
+def _handle_telemetry_exception(e: Exception, func_name: str):
+    try:
+        _logger.debug(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            func_name,
+            traceback.format_exc(),
+        )
+        if Config.exception_logger:
+            Config.exception_logger(e)
+    except Exception:
+        pass
 
 
 def _get_openai_sentinel_types() -> tuple:
@@ -492,6 +510,75 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 
     try:
         response = wrapped(*args, **kwargs)
+    except Exception as e:
+        try:
+            response_id = non_sentinel_kwargs.get("response_id")
+            existing_data = {}
+            if response_id and response_id in responses:
+                existing_data = responses[response_id].model_dump()
+            try:
+                traced_data = TracedData(
+                    start_time=existing_data.get("start_time", start_time),
+                    response_id=response_id or "",
+                    input=process_input(
+                        non_sentinel_kwargs.get("input", existing_data.get("input", []))
+                    ),
+                    instructions=non_sentinel_kwargs.get(
+                        "instructions", existing_data.get("instructions")
+                    ),
+                    tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
+                    output_blocks=existing_data.get("output_blocks", {}),
+                    usage=existing_data.get("usage"),
+                    output_text=non_sentinel_kwargs.get(
+                        "output_text", existing_data.get("output_text", "")
+                    ),
+                    request_model=non_sentinel_kwargs.get(
+                        "model", existing_data.get("request_model", "")
+                    ),
+                    response_model=existing_data.get("response_model", ""),
+                    # Reasoning attributes
+                    request_reasoning_summary=(
+                        non_sentinel_kwargs.get("reasoning", {}).get(
+                            "summary", existing_data.get("request_reasoning_summary")
+                        )
+                    ),
+                    request_reasoning_effort=(
+                        non_sentinel_kwargs.get("reasoning", {}).get(
+                            "effort", existing_data.get("request_reasoning_effort")
+                        )
+                    ),
+                    response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+                    request_service_tier=non_sentinel_kwargs.get("service_tier"),
+                    response_service_tier=existing_data.get("response_service_tier"),
+                    # Capture trace context to maintain continuity
+                    trace_context=existing_data.get("trace_context", context_api.get_current()),
+                )
+            except Exception:
+                traced_data = None
+
+            # Restore the original trace context to maintain trace continuity
+            ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
+                   else context_api.get_current())
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=(
+                    start_time if traced_data is None else int(traced_data.start_time)
+                ),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(StatusCode.ERROR, str(e))
+            if traced_data:
+                set_data_attributes(traced_data, span)
+            span.end()
+        except Exception as telemetry_err:
+            _handle_telemetry_exception(telemetry_err, "responses_get_or_create_wrapper")
+        raise
+
+    try:
         if isinstance(response, Stream):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
@@ -510,91 +597,27 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
-    except Exception as e:
-        response_id = non_sentinel_kwargs.get("response_id")
-        existing_data = {}
-        if response_id and response_id in responses:
-            existing_data = responses[response_id].model_dump()
-        try:
-            traced_data = TracedData(
-                start_time=existing_data.get("start_time", start_time),
-                response_id=response_id or "",
-                input=process_input(
-                    non_sentinel_kwargs.get("input", existing_data.get("input", []))
-                ),
-                instructions=non_sentinel_kwargs.get(
-                    "instructions", existing_data.get("instructions")
-                ),
-                tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
-                output_blocks=existing_data.get("output_blocks", {}),
-                usage=existing_data.get("usage"),
-                output_text=non_sentinel_kwargs.get(
-                    "output_text", existing_data.get("output_text", "")
-                ),
-                request_model=non_sentinel_kwargs.get(
-                    "model", existing_data.get("request_model", "")
-                ),
-                response_model=existing_data.get("response_model", ""),
-                # Reasoning attributes
-                request_reasoning_summary=(
-                    non_sentinel_kwargs.get("reasoning", {}).get(
-                        "summary", existing_data.get("request_reasoning_summary")
-                    )
-                ),
-                request_reasoning_effort=(
-                    non_sentinel_kwargs.get("reasoning", {}).get(
-                        "effort", existing_data.get("request_reasoning_effort")
-                    )
-                ),
-                response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
-                request_service_tier=non_sentinel_kwargs.get("service_tier"),
-                response_service_tier=existing_data.get("response_service_tier"),
-                # Capture trace context to maintain continuity
-                trace_context=existing_data.get("trace_context", context_api.get_current()),
-            )
-        except Exception:
-            traced_data = None
 
-        # Restore the original trace context to maintain trace continuity
-        ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
-               else context_api.get_current())
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=(
-                start_time if traced_data is None else int(traced_data.start_time)
-            ),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR, str(e))
-        if traced_data:
-            set_data_attributes(traced_data, span)
-        span.end()
-        raise
-    parsed_response = parse_response(response)
-    if isinstance(parsed_response, Stream):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
-        # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
-        # trace from here. The pre-parse `isinstance(response, Stream)` check above only
-        # catches the direct `.create(stream=True)` case; this call goes untraced instead
-        # of crashing.
-        return response
+        parsed_response = parse_response(response)
+        if isinstance(parsed_response, Stream):
+            # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+            # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
+            # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
+            # trace from here. The pre-parse `isinstance(response, Stream)` check above only
+            # catches the direct `.create(stream=True)` case; this call goes untraced instead
+            # of crashing.
+            return response
 
-    existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+        existing_data = responses.get(parsed_response.id)
+        if existing_data is None:
+            existing_data = {}
+        else:
+            existing_data = existing_data.model_dump()
 
-    request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
+        request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
-    merged_tools = (existing_data.get("tools") or []) + request_tools
+        merged_tools = (existing_data.get("tools") or []) + request_tools
 
-    try:
         parsed_response_output_text = None
         if hasattr(parsed_response, "output_text"):
             parsed_response_output_text = parsed_response.output_text
@@ -638,21 +661,22 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
         responses[parsed_response.id] = traced_data
-    except Exception:
-        return response
 
-    if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if parsed_response.status == "completed":
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
+    except Exception as e:
+        _handle_telemetry_exception(e, "responses_get_or_create_wrapper")
+        return response
 
     return response
 
@@ -671,6 +695,71 @@ async def async_responses_get_or_create_wrapper(
 
     try:
         response = await wrapped(*args, **kwargs)
+    except Exception as e:
+        try:
+            response_id = non_sentinel_kwargs.get("response_id")
+            existing_data = {}
+            if response_id and response_id in responses:
+                existing_data = responses[response_id].model_dump()
+            try:
+                traced_data = TracedData(
+                    start_time=existing_data.get("start_time", start_time),
+                    response_id=response_id or "",
+                    input=process_input(
+                        non_sentinel_kwargs.get("input", existing_data.get("input", []))
+                    ),
+                    instructions=non_sentinel_kwargs.get(
+                        "instructions", existing_data.get("instructions", "")
+                    ),
+                    tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
+                    output_blocks=existing_data.get("output_blocks", {}),
+                    usage=existing_data.get("usage"),
+                    output_text=non_sentinel_kwargs.get("output_text", existing_data.get("output_text")),
+                    request_model=non_sentinel_kwargs.get("model", existing_data.get("request_model")),
+                    response_model=existing_data.get("response_model"),
+                    # Reasoning attributes
+                    request_reasoning_summary=(
+                        non_sentinel_kwargs.get("reasoning", {}).get(
+                            "summary", existing_data.get("request_reasoning_summary")
+                        )
+                    ),
+                    request_reasoning_effort=(
+                        non_sentinel_kwargs.get("reasoning", {}).get(
+                            "effort", existing_data.get("request_reasoning_effort")
+                        )
+                    ),
+                    response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
+                    request_service_tier=non_sentinel_kwargs.get("service_tier"),
+                    response_service_tier=existing_data.get("response_service_tier"),
+                    # Capture trace context to maintain continuity
+                    trace_context=existing_data.get("trace_context", context_api.get_current()),
+                )
+            except Exception:
+                traced_data = None
+
+            # Restore the original trace context to maintain trace continuity
+            ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
+                   else context_api.get_current())
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=(
+                    start_time if traced_data is None else int(traced_data.start_time)
+                ),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(StatusCode.ERROR, str(e))
+            if traced_data:
+                set_data_attributes(traced_data, span)
+            span.end()
+        except Exception as telemetry_err:
+            _handle_telemetry_exception(telemetry_err, "async_responses_get_or_create_wrapper")
+        raise
+
+    try:
         if isinstance(response, (Stream, AsyncStream)):
             # Capture current trace context to maintain trace continuity
             ctx = context_api.get_current()
@@ -689,88 +778,28 @@ async def async_responses_get_or_create_wrapper(
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
             )
-    except Exception as e:
-        response_id = non_sentinel_kwargs.get("response_id")
-        existing_data = {}
-        if response_id and response_id in responses:
-            existing_data = responses[response_id].model_dump()
-        try:
-            traced_data = TracedData(
-                start_time=existing_data.get("start_time", start_time),
-                response_id=response_id or "",
-                input=process_input(
-                    non_sentinel_kwargs.get("input", existing_data.get("input", []))
-                ),
-                instructions=non_sentinel_kwargs.get(
-                    "instructions", existing_data.get("instructions", "")
-                ),
-                tools=get_tools_from_kwargs(non_sentinel_kwargs) or existing_data.get("tools", []),
-                output_blocks=existing_data.get("output_blocks", {}),
-                usage=existing_data.get("usage"),
-                output_text=non_sentinel_kwargs.get("output_text", existing_data.get("output_text")),
-                request_model=non_sentinel_kwargs.get("model", existing_data.get("request_model")),
-                response_model=existing_data.get("response_model"),
-                # Reasoning attributes
-                request_reasoning_summary=(
-                    non_sentinel_kwargs.get("reasoning", {}).get(
-                        "summary", existing_data.get("request_reasoning_summary")
-                    )
-                ),
-                request_reasoning_effort=(
-                    non_sentinel_kwargs.get("reasoning", {}).get(
-                        "effort", existing_data.get("request_reasoning_effort")
-                    )
-                ),
-                response_reasoning_effort=non_sentinel_kwargs.get("reasoning", {}).get("effort"),
-                request_service_tier=non_sentinel_kwargs.get("service_tier"),
-                response_service_tier=existing_data.get("response_service_tier"),
-                # Capture trace context to maintain continuity
-                trace_context=existing_data.get("trace_context", context_api.get_current()),
-            )
-        except Exception:
-            traced_data = None
 
-        # Restore the original trace context to maintain trace continuity
-        ctx = (traced_data.trace_context if traced_data and traced_data.trace_context
-               else context_api.get_current())
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=(
-                start_time if traced_data is None else int(traced_data.start_time)
-            ),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR, str(e))
-        if traced_data:
-            set_data_attributes(traced_data, span)
-        span.end()
-        raise
-    parsed_response = await async_parse_response(response)
-    if isinstance(parsed_response, (Stream, AsyncStream)):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
-        # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
-        # `.id`/`.output`/etc. to build a trace from here. The pre-parse
-        # `isinstance(response, (Stream, AsyncStream))` check above only catches the
-        # direct `.create(stream=True)` case; this call goes untraced instead of
-        # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
-        return response
+        parsed_response = await async_parse_response(response)
+        if isinstance(parsed_response, (Stream, AsyncStream)):
+            # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+            # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
+            # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
+            # `.id`/`.output`/etc. to build a trace from here. The pre-parse
+            # `isinstance(response, (Stream, AsyncStream))` check above only catches the
+            # direct `.create(stream=True)` case; this call goes untraced instead of
+            # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
+            return response
 
-    existing_data = responses.get(parsed_response.id)
-    if existing_data is None:
-        existing_data = {}
-    else:
-        existing_data = existing_data.model_dump()
+        existing_data = responses.get(parsed_response.id)
+        if existing_data is None:
+            existing_data = {}
+        else:
+            existing_data = existing_data.model_dump()
 
-    request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
+        request_tools = get_tools_from_kwargs(non_sentinel_kwargs)
 
-    merged_tools = (existing_data.get("tools") or []) + request_tools
+        merged_tools = (existing_data.get("tools") or []) + request_tools
 
-    try:
         parsed_response_output_text = None
         if hasattr(parsed_response, "output_text"):
             parsed_response_output_text = parsed_response.output_text
@@ -815,21 +844,22 @@ async def async_responses_get_or_create_wrapper(
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
         responses[parsed_response.id] = traced_data
-    except Exception:
-        return response
 
-    if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if parsed_response.status == "completed":
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
+    except Exception as e:
+        _handle_telemetry_exception(e, "async_responses_get_or_create_wrapper")
+        return response
 
     return response
 
@@ -843,24 +873,29 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     response = wrapped(*args, **kwargs)
-    if isinstance(response, Stream):
+    try:
+        if isinstance(response, Stream):
+            return response
+        parsed_response = parse_response(response)
+        existing_data = responses.pop(parsed_response.id, None)
+        if existing_data is not None:
+            # Restore the original trace context to maintain trace continuity
+            ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=existing_data.start_time,
+                record_exception=True,
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            span.record_exception(Exception("Response cancelled"))
+            set_data_attributes(existing_data, span)
+            span.end()
+    except Exception as e:
+        _handle_telemetry_exception(e, "responses_cancel_wrapper")
         return response
-    parsed_response = parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
-    if existing_data is not None:
-        # Restore the original trace context to maintain trace continuity
-        ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=existing_data.start_time,
-            record_exception=True,
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        span.record_exception(Exception("Response cancelled"))
-        set_data_attributes(existing_data, span)
-        span.end()
+
     return response
 
 
@@ -875,24 +910,29 @@ async def async_responses_cancel_wrapper(
     non_sentinel_kwargs = _sanitize_sentinel_values(kwargs)
 
     response = await wrapped(*args, **kwargs)
-    if isinstance(response, (Stream, AsyncStream)):
+    try:
+        if isinstance(response, (Stream, AsyncStream)):
+            return response
+        parsed_response = await async_parse_response(response)
+        existing_data = responses.pop(parsed_response.id, None)
+        if existing_data is not None:
+            # Restore the original trace context to maintain trace continuity
+            ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=existing_data.start_time,
+                record_exception=True,
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            span.record_exception(Exception("Response cancelled"))
+            set_data_attributes(existing_data, span)
+            span.end()
+    except Exception as e:
+        _handle_telemetry_exception(e, "async_responses_cancel_wrapper")
         return response
-    parsed_response = await async_parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
-    if existing_data is not None:
-        # Restore the original trace context to maintain trace continuity
-        ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=existing_data.start_time,
-            record_exception=True,
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        span.record_exception(Exception("Response cancelled"))
-        set_data_attributes(existing_data, span)
-        span.end()
+
     return response
 
 
