@@ -676,14 +676,21 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     def on_trace_start(self, trace):
         """Called when a new trace starts - create workflow span."""
         # Create a root "Agent Workflow" span for the entire trace
+        attributes = {
+            SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+            SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Agent Workflow",
+        }
+        # The SDK's Trace.group_id carries the conversation/thread grouping
+        # (e.g. set via trace(group_id=...)). Map it to the standard
+        # gen_ai.conversation.id so multiple traces in one conversation correlate.
+        group_id = getattr(trace, "group_id", None)
+        if group_id:
+            attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = group_id
         workflow_span = self.tracer.start_span(
             "Agent Workflow",
             kind=SpanKind.INTERNAL,
-            attributes={
-                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.WORKFLOW.value,
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-                SpanAttributes.TRACELOOP_WORKFLOW_NAME: "Agent Workflow",
-            },
+            attributes=attributes,
         )
         self._root_spans[trace.trace_id] = workflow_span
 

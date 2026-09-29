@@ -1108,6 +1108,44 @@ class TestSetRealtimeIOAttributes:
 
 
 # ---------------------------------------------------------------------------
+# Tests: on_trace_start conversation id (Trace.group_id → gen_ai.conversation.id)
+# ---------------------------------------------------------------------------
+
+class TestTraceConversationId:
+    """The SDK's Trace.group_id (set via trace(group_id=...)) carries the
+    conversation/thread grouping. on_trace_start must map it onto the root
+    workflow span as gen_ai.conversation.id so multiple traces in one
+    conversation correlate."""
+
+    def _workflow_span(self, processor, exporter, group_id, has_attr=True):
+        mock_trace = MagicMock(spec=["trace_id", "group_id"] if has_attr else ["trace_id"])
+        mock_trace.trace_id = "conv-trace"
+        if has_attr:
+            mock_trace.group_id = group_id
+        processor.on_trace_start(mock_trace)
+        processor.on_trace_end(mock_trace)
+        return next(s for s in exporter.get_finished_spans() if s.name == "Agent Workflow")
+
+    def test_group_id_mapped_to_conversation_id(self, tracer_and_exporter, processor):
+        """group_id present → root span carries gen_ai.conversation.id."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, "conv-123")
+        assert span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-123"
+
+    def test_none_group_id_omitted(self, tracer_and_exporter, processor):
+        """group_id None → attribute must not be set."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, None)
+        assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in span.attributes
+
+    def test_missing_group_id_attr_no_crash(self, tracer_and_exporter, processor):
+        """Trace without a group_id attribute (older SDK) → no crash, no attribute."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, None, has_attr=False)
+        assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in span.attributes
+
+
+# ---------------------------------------------------------------------------
 # Integration: on_span_start/on_span_end still work end-to-end
 # (These confirm refactoring doesn't break the public API)
 # ---------------------------------------------------------------------------
