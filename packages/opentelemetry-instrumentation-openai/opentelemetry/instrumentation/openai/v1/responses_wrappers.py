@@ -4,6 +4,7 @@ import re
 import threading
 import time
 from typing import Any, Optional, Union
+from collections import OrderedDict
 
 from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
@@ -197,6 +198,28 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+# IDs whose completed span was already emitted, so a later retrieve() doesn't emit a degraded duplicate.
+_MAX_TRACKED_COMPLETED_RESPONSES = 2048
+_completed_response_ids: "OrderedDict[str, None]" = OrderedDict()
+_completed_response_ids_lock = threading.Lock()
+
+
+def _claim_completed_response(response_id: str) -> bool:
+    """Record response_id as emitted; True only for the first caller, so concurrent completions emit once."""
+    with _completed_response_ids_lock:
+        if response_id in _completed_response_ids:
+            _completed_response_ids.move_to_end(response_id)
+            return False
+        _completed_response_ids[response_id] = None
+        while len(_completed_response_ids) > _MAX_TRACKED_COMPLETED_RESPONSES:
+            _completed_response_ids.popitem(last=False)
+        return True
+
+
+def _was_response_already_completed(response_id: str) -> bool:
+    with _completed_response_ids_lock:
+        return response_id in _completed_response_ids
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -585,6 +608,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -642,17 +667,19 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return response
 
     if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if _claim_completed_response(parsed_response.id):
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -761,6 +788,8 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -819,17 +848,19 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     if parsed_response.status == "completed":
-        # Restore the original trace context to maintain trace continuity
-        ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
-        span = tracer.start_span(
-            SPAN_NAME,
-            kind=SpanKind.CLIENT,
-            start_time=int(traced_data.start_time),
-            context=ctx,
-        )
-        _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-        set_data_attributes(traced_data, span)
-        span.end()
+        if _claim_completed_response(parsed_response.id):
+            # Restore the original trace context to maintain trace continuity
+            ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
+            span = tracer.start_span(
+                SPAN_NAME,
+                kind=SpanKind.CLIENT,
+                start_time=int(traced_data.start_time),
+                context=ctx,
+            )
+            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
+            set_data_attributes(traced_data, span)
+            span.end()
+        responses.pop(parsed_response.id, None)
 
     return response
 
@@ -1081,7 +1112,11 @@ class ResponseStream(ObjectProxy):
                             block.id: block for block in parsed_response.output
                         }
 
-                    responses[parsed_response.id] = self._traced_data
+                    if parsed_response.status == "completed":
+                        _claim_completed_response(parsed_response.id)
+                    else:
+                        # Kept so a later retrieve() of this background response can merge the original request.
+                        responses[parsed_response.id] = self._traced_data
 
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)

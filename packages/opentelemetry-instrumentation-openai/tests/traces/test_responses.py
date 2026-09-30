@@ -1,12 +1,20 @@
 import json
+import threading
+import types
+
 import pytest
 from pydantic import BaseModel
 
 from openai import AsyncOpenAI, OpenAI
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
+from opentelemetry.instrumentation.openai.v1 import responses_wrappers
 from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+    ResponseStream,
+    async_responses_get_or_create_wrapper,
     get_tools_from_kwargs,
+    responses_get_or_create_wrapper,
 )
+from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from .utils import get_input_messages, get_output_messages
@@ -1033,3 +1041,313 @@ def test_responses_with_raw_response_streaming_does_not_crash(
 
     assert len(events) == 2
     assert span_exporter.get_finished_spans() == ()
+
+
+@pytest.fixture
+def clean_responses_registry():
+    """Reset the module-level `responses` dict and completed-ID cache around a test."""
+    responses_wrappers.responses.clear()
+    responses_wrappers._completed_response_ids.clear()
+    yield
+    responses_wrappers.responses.clear()
+    responses_wrappers._completed_response_ids.clear()
+
+
+def _make_fake_response(
+    response_id="resp_test_1",
+    status="completed",
+    model="gpt-4.1-nano-2025-04-14",
+    output_text="A fake reply.",
+):
+    """Minimal stand-in for an OpenAI `Response`.
+
+    A SimpleNamespace rather than a MagicMock: MagicMock invents every attribute that is read
+    (e.g. usage.input_tokens_details), which fails TracedData validation; the wrapper swallows
+    that and returns early, so a test could pass without exercising anything. usage=None and
+    output=[] likewise keep the real SDK types out of TracedData.
+    """
+    return types.SimpleNamespace(
+        id=response_id,
+        status=status,
+        model=model,
+        usage=None,
+        output=[],
+        output_text=output_text,
+        service_tier=None,
+        incomplete_details=None,
+    )
+
+
+def test_completed_sync_response_is_removed_from_responses_dict(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4473:
+    a completed response must be removed from the global `responses` dict once its span is emitted.
+    """
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_sync_completed")
+
+    def wrapped(*args, **kwargs):
+        return fake_response
+
+    responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert "resp_sync_completed" not in responses_wrappers.responses
+    assert len(responses_wrappers.responses) == 0
+
+
+@pytest.mark.asyncio
+async def test_completed_async_response_is_removed_from_responses_dict(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Async counterpart of test_completed_sync_response_is_removed_from_responses_dict (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_async_completed")
+
+    async def wrapped(*args, **kwargs):
+        return fake_response
+
+    await async_responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert "resp_async_completed" not in responses_wrappers.responses
+    assert len(responses_wrappers.responses) == 0
+
+
+class _FakeSyncChunkStream:
+    """Minimal stand-in for the raw SDK stream that ResponseStream wraps."""
+    def __init__(self, chunks):
+        self._iter = iter(chunks)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._iter)
+
+
+def test_completed_streaming_response_is_removed_from_responses_dict(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """A completed stream must not leave an entry in `responses` (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_stream_completed")
+    chunks = [
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+        types.SimpleNamespace(type="response.completed", response=fake_response),
+    ]
+    span = tracer.start_span("openai.response")
+
+    stream = ResponseStream(
+        span=span,
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+
+    list(stream)
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert "resp_stream_completed" not in responses_wrappers.responses
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_duplicate_retrieve_after_completion_does_not_emit_second_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """retrieve() on an already-completed, cleaned-up response must not emit a second span
+    rebuilt without the original input, tools and trace context (#4473).
+    """
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_dup_retrieve")
+
+    def wrapped(*args, **kwargs):
+        return fake_response
+
+    responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+    responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"response_id": "resp_dup_retrieve"}
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, "a duplicate retrieve on a completed response must not emit a second span"
+    assert len(responses_wrappers.responses) == 0
+
+
+@pytest.mark.asyncio
+async def test_async_duplicate_retrieve_after_completion_does_not_emit_second_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Async counterpart of test_duplicate_retrieve_after_completion_does_not_emit_second_span (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_async_dup_retrieve")
+
+    async def wrapped(*args, **kwargs):
+        return fake_response
+
+    await async_responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+    await async_responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"response_id": "resp_async_dup_retrieve"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_completed_response_cache_is_bounded(clean_responses_registry, monkeypatch):
+    """The completed-ID cache evicts its oldest IDs instead of growing without bound (#4473)."""
+    monkeypatch.setattr(responses_wrappers, "_MAX_TRACKED_COMPLETED_RESPONSES", 3)
+    responses_wrappers._completed_response_ids.clear()
+
+    for i in range(5):
+        responses_wrappers._claim_completed_response(f"resp_{i}")
+
+    assert len(responses_wrappers._completed_response_ids) == 3
+    assert not responses_wrappers._was_response_already_completed("resp_0")
+    assert not responses_wrappers._was_response_already_completed("resp_1")
+    assert responses_wrappers._was_response_already_completed("resp_4")
+
+
+def test_retrieve_after_completed_stream_does_not_emit_second_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """retrieve() after a completed stream must not emit a duplicate span (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_stream_then_retrieve")
+    chunks = [types.SimpleNamespace(type="response.completed", response=fake_response)]
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+    list(stream)
+
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: fake_response, None, (), {"response_id": "resp_stream_then_retrieve"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_polled_response_emits_one_span_with_original_input_then_is_removed(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Polling in_progress -> completed emits one span with the create() input, then drops the entry (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    in_progress = _make_fake_response(response_id="resp_polled", status="in_progress")
+    completed = _make_fake_response(response_id="resp_polled", status="completed")
+
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "original question"}
+    )
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: completed, None, (), {"response_id": "resp_polled"}
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert "original question" in spans[0].attributes["gen_ai.input.messages"]
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_many_completed_turns_leave_responses_dict_empty(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Repeated completed turns, as in a chat workload, must not accumulate entries in `responses` (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    turns = 100
+
+    for i in range(turns):
+        fake_response = _make_fake_response(response_id=f"resp_turn_{i}")
+        responses_get_or_create_wrapper(tracer)(
+            lambda *a, _r=fake_response, **kw: _r, None, (), {"model": "gpt-4.1-nano", "input": f"turn {i}"}
+        )
+        assert len(responses_wrappers.responses) == 0
+
+    assert len(span_exporter.get_finished_spans()) == turns
+
+
+def test_retrieve_after_interrupted_stream_keeps_original_input(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """A background stream left before completing must not block the later completed
+    retrieve() span, and keeps its entry so that span still has the original input (#4473).
+    """
+    tracer = tracer_provider.get_tracer(__name__)
+    in_progress = _make_fake_response(response_id="resp_bg_interrupted", status="in_progress")
+    completed = _make_fake_response(response_id="resp_bg_interrupted", status="completed")
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(
+            [types.SimpleNamespace(type="response.in_progress", response=in_progress)]
+        ),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "original question", "background": True},
+        tracer=tracer,
+    )
+    list(stream)
+
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: completed, None, (), {"response_id": "resp_bg_interrupted"}
+    )
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 2, "the completed retrieve() must emit its own span after the stream span"
+    assert "original question" in spans[-1].attributes["gen_ai.input.messages"]
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_concurrent_completed_retrieves_emit_one_span(
+    clean_responses_registry,
+    monkeypatch, span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Two threads completing the same response at once must emit only one span (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_concurrent")
+    both_emitting = threading.Barrier(2)
+    original_set_data_attributes = responses_wrappers.set_data_attributes
+
+    def set_data_attributes_waiting_for_other_thread(traced_data, span):
+        try:
+            both_emitting.wait(timeout=0.5)
+        except threading.BrokenBarrierError:
+            pass
+        original_set_data_attributes(traced_data, span)
+
+    monkeypatch.setattr(responses_wrappers, "set_data_attributes", set_data_attributes_waiting_for_other_thread)
+
+    def retrieve():
+        responses_get_or_create_wrapper(tracer)(
+            lambda *a, **kw: fake_response, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+        )
+
+    threads = [threading.Thread(target=retrieve) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
