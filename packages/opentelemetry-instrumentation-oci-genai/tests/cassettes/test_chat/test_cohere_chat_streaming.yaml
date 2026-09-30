@@ -1,0 +1,97 @@
+interactions:
+- request:
+    body: '{"compartmentId": "ocid1.compartment.oc1..redacted", "servingMode": {"servingType":
+      "ON_DEMAND", "modelId": "cohere.command-a-03-2025"}, "chatRequest": {"apiFormat":
+      "COHERE", "message": "Tell me a joke about opentelemetry", "chatHistory": [{"role":
+      "USER", "message": "Hello"}, {"role": "CHATBOT", "message": "Hi! How can I help?"}],
+      "preambleOverride": "You are a terse assistant.", "isStream": true, "streamOptions":
+      {"isIncludeUsage": true}, "maxTokens": 100, "temperature": 0.3}}'
+    headers:
+      Content-Length:
+      - '536'
+      accept:
+      - application/json, text/event-stream
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/chat
+  response:
+    body:
+      string: 'data: {"apiFormat":"COHERE","text":"Why","pad":"aaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" did","pad":"aaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" the","pad":"aaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" Open","pad":"aaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":"Telemetry","pad":"aaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" span","pad":"aaaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" cross","pad":"aaaaaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" the","pad":"aaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" road","pad":"aaaaaaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":"?","pad":"aaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":"\n\nTo","pad":"aaaaaaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" trace","pad":"aaaaaaaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" the","pad":"aaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" other","pad":"aaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":" side","pad":"aaaaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":".","pad":"aaaa"}
+
+
+        data: {"apiFormat":"COHERE","text":"Why did the OpenTelemetry span cross the
+        road?\n\nTo trace the other side.","chatHistory":[{"role":"USER","message":"Hello"},{"role":"CHATBOT","message":"Hi!
+        How can I help?"},{"role":"USER","message":"Tell me a joke about opentelemetry"},{"role":"CHATBOT","message":"Why
+        did the OpenTelemetry span cross the road?\n\nTo trace the other side."}],"finishReason":"COMPLETE","pad":"aaaaaaaaaaa","usage":{"completionTokens":18,"promptTokens":22,"totalTokens":40}}
+
+
+        '
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - text/event-stream
+      Date:
+      - Fri, 18 Sep 2026 19:47:09 GMT
+      Transfer-Encoding:
+      - chunked
+      cache-control:
+      - no-cache
+      content-length:
+      - '1471'
+    status:
+      code: 200
+      message: OK
+version: 1

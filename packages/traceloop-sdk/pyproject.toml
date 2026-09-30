@@ -26,6 +26,7 @@ dependencies = [
   "opentelemetry-instrumentation-mistralai",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-openai-agents",
+  "opentelemetry-instrumentation-oci-genai",
   "opentelemetry-instrumentation-ollama",
   "opentelemetry-instrumentation-anthropic",
   "opentelemetry-instrumentation-cohere",
@@ -174,6 +175,7 @@ opentelemetry-instrumentation-marqo = { path = "../opentelemetry-instrumentation
 opentelemetry-instrumentation-mcp = { path = "../opentelemetry-instrumentation-mcp", editable = true }
 opentelemetry-instrumentation-milvus = { path = "../opentelemetry-instrumentation-milvus", editable = true }
 opentelemetry-instrumentation-mistralai = { path = "../opentelemetry-instrumentation-mistralai", editable = true }
+opentelemetry-instrumentation-oci-genai = { path = "../opentelemetry-instrumentation-oci-genai", editable = true }
 opentelemetry-instrumentation-ollama = { path = "../opentelemetry-instrumentation-ollama", editable = true }
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
 opentelemetry-instrumentation-openai-agents = { path = "../opentelemetry-instrumentation-openai-agents", editable = true }
