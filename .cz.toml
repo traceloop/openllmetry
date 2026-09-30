@@ -52,6 +52,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-qdrant/opentelemetry/instrumentation/qdrant/version.py",
     "packages/opentelemetry-instrumentation-replicate/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-replicate/opentelemetry/instrumentation/replicate/version.py",
+    "packages/opentelemetry-instrumentation-runpod/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-runpod/opentelemetry/instrumentation/runpod/version.py",
     "packages/opentelemetry-instrumentation-sagemaker/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-sagemaker/opentelemetry/instrumentation/sagemaker/version.py",
     "packages/opentelemetry-instrumentation-together/pyproject.toml:^version",
