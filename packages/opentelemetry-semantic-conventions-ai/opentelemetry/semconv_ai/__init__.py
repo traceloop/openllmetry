@@ -334,13 +334,28 @@ class SpanAttributes:
 
 
 class Events(Enum):
+    """Standardized OpenTelemetry events emitted by AI instrumentation.
+
+    Security threat events provide a vendor-neutral representation for
+    detections from scanners and policy engines, improving interoperability
+    of threat telemetry across observability backends.
+    """
+
     DB_QUERY_EMBEDDINGS = "db.query.embeddings"
     DB_QUERY_RESULT = "db.query.result"
     DB_SEARCH_EMBEDDINGS = "db.search.embeddings"
     DB_SEARCH_RESULT = "db.search.result"
+    GEN_AI_SECURITY_THREAT_DETECTED = "gen_ai.security.threat.detected"
 
 
 class EventAttributes(Enum):
+    """Attributes carried by standardized OpenTelemetry span events.
+
+    The security threat attributes make detections from different AI-agent
+    scanners interoperable by using one stable ``gen_ai.security.threat``
+    namespace.
+    """
+
     # Query Embeddings
     DB_QUERY_EMBEDDINGS_VECTOR = "db.query.embeddings.vector"
 
@@ -360,6 +375,31 @@ class EventAttributes(Enum):
     DB_SEARCH_RESULT_SCORE = "db.search.result.score"
     DB_SEARCH_RESULT_DISTANCE = "db.search.result.distance"
     DB_SEARCH_RESULT_ENTITY = "db.search.result.entity"
+
+    # AI agent security threat detection
+    GEN_AI_SECURITY_THREAT_RULE_ID = "gen_ai.security.threat.rule_id"
+    GEN_AI_SECURITY_THREAT_CATEGORY = "gen_ai.security.threat.category"
+    GEN_AI_SECURITY_THREAT_SEVERITY = "gen_ai.security.threat.severity"
+    GEN_AI_SECURITY_THREAT_SCANNER_NAME = "gen_ai.security.threat.scanner_name"
+    GEN_AI_SECURITY_THREAT_SCANNER_VERSION = "gen_ai.security.threat.scanner_version"
+    GEN_AI_SECURITY_THREAT_ACTION = "gen_ai.security.threat.action"
+
+
+class GenAISecurityThreatSeverityValues(Enum):
+    """Severity values for ``gen_ai.security.threat.severity``."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class GenAISecurityThreatActionValues(Enum):
+    """Action values for ``gen_ai.security.threat.action``."""
+
+    BLOCKED = "blocked"
+    WARNED = "warned"
+    LOGGED = "logged"
 
 
 class LLMRequestTypeValues(Enum):
