@@ -162,7 +162,7 @@ class TracerWrapper(object):
                 obj.__spans_processor.on_start = obj._span_processor_on_start
                 obj.__tracer_provider.add_span_processor(obj.__spans_processor)
 
-            if propagator:
+            if propagator is not None:
                 set_global_textmap(propagator)
 
             # this makes sure otel context is propagated so we always want it
