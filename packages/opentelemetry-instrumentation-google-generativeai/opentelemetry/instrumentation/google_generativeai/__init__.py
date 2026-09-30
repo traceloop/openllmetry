@@ -100,7 +100,9 @@ def _build_from_streaming_response(
     complete_response = "".join(text_parts)
 
     if emit_events:
-        emit_choice_events(response, event_logger)
+        # last_chunk carries the candidates; response is the generator we just drained
+        if last_chunk is not None:
+            emit_choice_events(last_chunk, event_logger)
     else:
         if last_chunk is not None and getattr(last_chunk, "candidates", None):
             set_response_attributes(span, last_chunk, llm_model)
@@ -141,7 +143,9 @@ async def _abuild_from_streaming_response(
     complete_response = "".join(text_parts)
 
     if emit_events:
-        emit_choice_events(response, event_logger)
+        # last_chunk carries the candidates; response is the generator we just drained
+        if last_chunk is not None:
+            emit_choice_events(last_chunk, event_logger)
     else:
         if last_chunk is not None and getattr(last_chunk, "candidates", None):
             set_response_attributes(span, last_chunk, llm_model)
