@@ -399,6 +399,11 @@ def _emit_message_events(method_wrapped: str, args, kwargs, event_logger):
             elif isinstance(message, dict):
                 role = message.get("role", "unknown")
                 content = message.get("content")
+            else:
+                # ToolMessage and future SDK message types must use their own
+                # role and content, never the previous loop iteration's.
+                role = getattr(message, "role", "unknown")
+                content = getattr(message, "content", None)
             emit_event(
                 MessageEvent(content=content, role=role or "unknown"), event_logger
             )
