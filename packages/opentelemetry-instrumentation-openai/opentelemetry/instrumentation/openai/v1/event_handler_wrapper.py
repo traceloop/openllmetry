@@ -41,7 +41,7 @@ class EventHandleWrapper(AssistantEventHandler):
             _set_span_attribute(
                 self._span,
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                json.dumps(self._output_messages),
+                json.dumps(self._output_messages, ensure_ascii=False),
             )
         self._original_handler.on_end()
         self._span.end()

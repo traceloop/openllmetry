@@ -549,7 +549,7 @@ def _set_input_messages(span, messages):
                 "role": "assistant",
                 "parts": parts,
             })
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(attr_messages, ensure_ascii=False))
 
 def _set_completions(span, choices):
     _set_output_messages(span, choices)
@@ -609,7 +609,7 @@ def _set_output_messages(span, choices):
             entry["content_filter_results"] = content_filter_results
         messages.append(entry)
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(messages, ensure_ascii=False))
 
 @dont_throw
 def _set_streaming_token_metrics(

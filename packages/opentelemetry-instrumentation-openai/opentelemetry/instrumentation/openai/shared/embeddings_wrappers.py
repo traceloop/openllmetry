@@ -281,7 +281,7 @@ def _set_prompts(span, prompt):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps(messages),
+        json.dumps(messages, ensure_ascii=False),
     )
 
 
