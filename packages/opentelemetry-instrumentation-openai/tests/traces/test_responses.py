@@ -1215,7 +1215,9 @@ def test_completed_response_cache_is_bounded(clean_responses_registry, monkeypat
     responses_wrappers._completed_response_ids.clear()
 
     for i in range(5):
-        responses_wrappers._claim_completed_response(f"resp_{i}")
+        responses_wrappers._record_traced_data(
+            f"resp_{i}", responses_wrappers.TracedData(start_time=0, response_id=f"resp_{i}", input="hi"), True
+        )
 
     assert len(responses_wrappers._completed_response_ids) == 3
     assert not responses_wrappers._was_response_already_completed("resp_0")
@@ -1351,3 +1353,47 @@ def test_concurrent_completed_retrieves_emit_one_span(
 
     assert len(span_exporter.get_finished_spans()) == 1
     assert len(responses_wrappers.responses) == 0
+
+
+def test_delayed_in_progress_poll_does_not_restore_entry_after_completion(
+    clean_responses_registry,
+    monkeypatch, span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """A slow in_progress poll that read the entry before another poll completed and
+    removed it must not write its stale data back afterwards (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    in_progress = _make_fake_response(response_id="resp_delayed_poll", status="in_progress")
+    completed = _make_fake_response(response_id="resp_delayed_poll", status="completed")
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+
+    delayed_read_entry = threading.Event()
+    completion_done = threading.Event()
+    original_get_tools_from_kwargs = responses_wrappers.get_tools_from_kwargs
+
+    def get_tools_pausing_delayed_poll(kwargs):
+        # Runs after the wrapper has read `responses` and before it writes back.
+        if threading.current_thread().name == "delayed-poll":
+            delayed_read_entry.set()
+            completion_done.wait(timeout=2)
+        return original_get_tools_from_kwargs(kwargs)
+
+    monkeypatch.setattr(responses_wrappers, "get_tools_from_kwargs", get_tools_pausing_delayed_poll)
+
+    delayed_poll = threading.Thread(
+        name="delayed-poll",
+        target=lambda: responses_get_or_create_wrapper(tracer)(
+            lambda *a, **kw: in_progress, None, (), {"response_id": "resp_delayed_poll"}
+        ),
+    )
+    delayed_poll.start()
+    assert delayed_read_entry.wait(timeout=2)
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: completed, None, (), {"response_id": "resp_delayed_poll"}
+    )
+    completion_done.set()
+    delayed_poll.join(timeout=2)
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert "resp_delayed_poll" not in responses_wrappers.responses, "stale in_progress data was restored"
