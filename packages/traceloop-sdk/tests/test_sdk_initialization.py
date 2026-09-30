@@ -1,10 +1,12 @@
 import json
+import os
 import warnings
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow
+from traceloop.sdk.instruments import Instruments
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -308,6 +310,111 @@ def test_passing_both_kwargs_raises_type_error(isolated_tracer_wrapper):
             use_attributes=False,
             use_legacy_attributes=True,
         )
+
+
+@pytest.mark.parametrize(
+    ("metrics_enabled", "environment_value", "expected_metrics_enabled"),
+    [
+        (None, None, True),
+        (None, "true", True),
+        (None, "false", False),
+        (True, "false", True),
+        (False, "true", False),
+    ],
+)
+def test_metrics_enabled_precedence(
+    monkeypatch,
+    metrics_enabled,
+    environment_value,
+    expected_metrics_enabled,
+):
+    """An explicit init value overrides the environment; None preserves it."""
+    if environment_value is None:
+        monkeypatch.delenv("TRACELOOP_METRICS_ENABLED", raising=False)
+    else:
+        monkeypatch.setenv("TRACELOOP_METRICS_ENABLED", environment_value)
+
+    metrics_exporter = object()
+    with (
+        patch("traceloop.sdk.TracerWrapper"),
+        patch("traceloop.sdk.ImageUploader"),
+        patch("traceloop.sdk.MetricsWrapper") as metrics_wrapper,
+    ):
+        Traceloop.init(
+            exporter=InMemorySpanExporter(),
+            metrics_exporter=metrics_exporter,
+            metrics_enabled=metrics_enabled,
+        )
+
+    assert metrics_wrapper.called is expected_metrics_enabled
+    if expected_metrics_enabled:
+        metrics_wrapper.assert_called_once_with(exporter=metrics_exporter)
+
+
+@pytest.mark.parametrize(
+    ("metrics_enabled", "environment_value"),
+    [(False, "true"), (True, "false")],
+)
+def test_metrics_enabled_is_visible_during_instrumentation(
+    monkeypatch,
+    isolated_tracer_wrapper,
+    metrics_enabled,
+    environment_value,
+):
+    """Instrumentors must observe the explicit override while they initialize."""
+    from opentelemetry.instrumentation.openai.utils import is_metrics_enabled
+
+    monkeypatch.setenv("TRACELOOP_METRICS_ENABLED", environment_value)
+    observed_metrics_enabled = []
+    metrics_exporter = object()
+
+    def observe_metrics_enabled(*args, **kwargs):
+        observed_metrics_enabled.append(is_metrics_enabled())
+        return True
+
+    with (
+        patch(
+            "traceloop.sdk.tracing.tracing.init_openai_instrumentor",
+            side_effect=observe_metrics_enabled,
+        ),
+        patch("traceloop.sdk.MetricsWrapper") as metrics_wrapper,
+    ):
+        Traceloop.init(
+            exporter=InMemorySpanExporter(),
+            metrics_exporter=metrics_exporter,
+            metrics_enabled=metrics_enabled,
+            instruments={Instruments.OPENAI},
+            disable_batch=True,
+        )
+
+    assert observed_metrics_enabled == [metrics_enabled]
+    assert metrics_wrapper.called is metrics_enabled
+    if metrics_enabled:
+        metrics_wrapper.assert_called_once_with(exporter=metrics_exporter)
+    assert os.environ["TRACELOOP_METRICS_ENABLED"] == environment_value
+
+
+@pytest.mark.parametrize("environment_value", [None, "true"])
+def test_metrics_enabled_restores_environment_when_tracer_initialization_fails(
+    monkeypatch,
+    environment_value,
+):
+    """The process environment must be restored even if tracer setup fails."""
+    if environment_value is None:
+        monkeypatch.delenv("TRACELOOP_METRICS_ENABLED", raising=False)
+    else:
+        monkeypatch.setenv("TRACELOOP_METRICS_ENABLED", environment_value)
+
+    with patch("traceloop.sdk.TracerWrapper", side_effect=RuntimeError("boom")):
+        with pytest.raises(RuntimeError, match="boom"):
+            Traceloop.init(
+                exporter=InMemorySpanExporter(),
+                metrics_enabled=False,
+                disable_batch=True,
+            )
+
+    assert os.environ.get("TRACELOOP_METRICS_ENABLED") == environment_value
+
 
 def test_use_attributes_defaults_to_true(isolated_tracer_wrapper):
     """When use_attributes is not passed, instrumentors keep the default spec-compliant
