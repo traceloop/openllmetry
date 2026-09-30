@@ -358,3 +358,25 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
+
+
+def test_tracing_disabled_via_env_var_is_silent_noop(
+    isolated_tracer_wrapper, monkeypatch, capsys
+):
+    """When tracing is disabled via TRACELOOP_TRACING_ENABLED=false, init() must
+    mark the tracer disabled so @workflow becomes a silent no-op rather than
+    warning that Traceloop was never initialized (issue #4191)."""
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+    try:
+        Traceloop.init(app_name="test")
+        assert TracerWrapper.verify_initialized() is False
+
+        @workflow(name="w")
+        def f():
+            return 42
+
+        capsys.readouterr()  # discard init() output
+        assert f() == 42
+        assert "Traceloop not initialized" not in capsys.readouterr().out
+    finally:
+        TracerWrapper.set_disabled(False)
