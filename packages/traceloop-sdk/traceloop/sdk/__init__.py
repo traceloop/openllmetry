@@ -14,7 +14,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.propagators.textmap import TextMapPropagator
 from opentelemetry.util.re import parse_env_headers
 
-from traceloop.sdk.images.image_uploader import ImageUploader
+from traceloop.sdk.images import ImageUploader, TraceloopImageUploader
 from traceloop.sdk.metrics.metrics import MetricsWrapper
 from traceloop.sdk.logging.logging import LoggerWrapper
 from traceloop.sdk.instruments import Instruments
@@ -88,6 +88,9 @@ class Traceloop:
                 events have nowhere to go and no prompt/completion data will be recorded.
             use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
                 removed in a future release.
+            image_uploader: Custom image storage implementation. Subclass
+                :class:`ImageUploader` and pass an instance here to replace the
+                default Traceloop backend uploader.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -188,7 +191,11 @@ class Traceloop:
             exporter=exporter,
             sampler=sampler,
             should_enrich_metrics=should_enrich_metrics,
-            image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
+            image_uploader=(
+                image_uploader
+                if image_uploader is not None
+                else TraceloopImageUploader(api_endpoint, api_key)
+            ),
             instruments=instruments,
             block_instruments=block_instruments,
             span_postprocess_callback=span_postprocess_callback,
