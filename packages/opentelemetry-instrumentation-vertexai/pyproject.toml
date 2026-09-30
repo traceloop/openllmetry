@@ -30,8 +30,8 @@ google_cloud_aiplatform = "opentelemetry.instrumentation.vertexai:VertexAIInstru
 [dependency-groups]
 dev = [
   "autopep8>=2.2.0,<3",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=8.2.2,<10",
+  "pytest>=8.2.2,<10",
   "ruff>=0.4.0",
 ]
 test = [
@@ -39,8 +39,8 @@ test = [
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=0.23.0,<0.24.0",
   "pytest-recording>=0.13.1,<0.14.0",
-  "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest-sugar==1.1.1",
+  "pytest>=8.2.2,<10",
   "vcrpy>=8.0.0,<9",
 ]
 
