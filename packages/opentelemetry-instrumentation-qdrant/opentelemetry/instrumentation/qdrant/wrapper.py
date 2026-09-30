@@ -53,21 +53,11 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             _set_upload_attributes(span, args, kwargs, method, "documents")
         elif method == "upload_points":
             _set_upload_attributes(span, args, kwargs, method, "points")
-        elif method == "upload_records":
-            _set_upload_attributes(span, args, kwargs, method, "records")
         elif method == "upload_collection":
             _set_upload_attributes(span, args, kwargs, method, "vectors")
-        elif method in [
-            "search",
-            "search_groups",
-            "query",
-            "query_points",
-            "discover",
-            "recommend",
-            "recommend_groups",
-        ]:
+        elif method in ["query", "query_points"]:
             _set_search_attributes(span, args, kwargs)
-        elif method in ["search_batch", "query_batch_points", "recommend_batch", "discover_batch"]:
+        elif method == "query_batch_points":
             _set_batch_search_attributes(span, args, kwargs, method)
 
         response = wrapped(*args, **kwargs)
