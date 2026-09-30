@@ -519,7 +519,9 @@ def init_instrumentations(
 ):
     block_instruments = block_instruments or set()
     # explictly test for None since empty set is a False value
-    instruments = instruments if instruments is not None else set(Instruments)
+    instruments = (
+        instruments if instruments is not None else set(Instruments) - {Instruments.HTTPX}
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
@@ -559,6 +561,9 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.HAYSTACK:
             if init_haystack_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.HTTPX:
+            if init_httpx_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.LANCEDB:
             if init_lancedb_instrumentor():
@@ -943,6 +948,24 @@ def init_urllib3_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing urllib3 instrumentor: {e}")
+    return False
+
+
+def init_httpx_instrumentor():
+    try:
+        if is_package_installed("httpx"):
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+            instrumentor = HTTPXClientInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                os.environ.setdefault(
+                    "OTEL_PYTHON_HTTPX_EXCLUDED_URLS",
+                    ",".join(p.strip() for p in EXCLUDED_URLS.split(",")),
+                )
+                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing HTTPX instrumentor: {e}")
     return False
 
 
