@@ -59,15 +59,16 @@ def test_response_with_both_counters_still_records():
     assert captured.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS) == 95
 
 
-def test_embed_response_event_does_not_read_text():
-    """An EMBEDDING request must not take the chat branch of `_parse_response_event`.
+def test_embed_response_emits_a_choice_event(logger_provider, log_exporter, monkeypatch):
+    """An EMBEDDING response must reach the exporter as a `gen_ai.choice` event.
 
     The branch was written `elif a == CHAT or COMPLETION`, whose right operand is a truthy enum
-    member rather than a comparison, so it never depended on `llm_request_type` and every request
-    type reached it. An embed response carries no `.text`, so the object below raises if it is
-    touched, which is what makes this test fail on the unfixed code.
+    member rather than a comparison, so every type that is not RERANK read `response.text`. The
+    object below raises if it is touched. With the branch fixed, the event carries a message without
+    a role, and `_emit_choice_event` must still emit it rather than raise KeyError.
     """
-    from opentelemetry.instrumentation.cohere.event_emitter import _parse_response_event
+    from opentelemetry.instrumentation.cohere.config import Config
+    from opentelemetry.instrumentation.cohere.event_emitter import emit_response_events
     from opentelemetry.semconv_ai import LLMRequestTypeValues
 
     class EmbedResponseWithoutText:
@@ -78,6 +79,17 @@ def test_embed_response_event_does_not_read_text():
                 f"the embedding branch read {name!r} off an embed response"
             )
 
-    event = _parse_response_event(0, LLMRequestTypeValues.EMBEDDING, EmbedResponseWithoutText())
-    assert event.message == {}
-    assert event.finish_reason == "unknown"
+    monkeypatch.setattr(Config, "use_legacy_attributes", False)
+    emit_response_events(
+        logger_provider.get_logger(__name__),
+        LLMRequestTypeValues.EMBEDDING,
+        EmbedResponseWithoutText(),
+    )
+
+    logs = log_exporter.get_finished_logs()
+    assert [log.log_record.event_name for log in logs] == ["gen_ai.choice"]
+    assert dict(logs[0].log_record.body) == {
+        "index": 0,
+        "message": {},
+        "finish_reason": "unknown",
+    }

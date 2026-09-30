@@ -121,7 +121,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
 
 def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
     body = asdict(event)
-    if event.message["role"] == Roles.ASSISTANT.value:
+    if event.message.get("role") == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to "assistant", so remove the role from the body if it is "assistant".
         body["message"].pop("role", None)
