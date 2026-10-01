@@ -1,5 +1,6 @@
 import json
 import threading
+import time
 import types
 
 import pytest
@@ -12,6 +13,7 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     ResponseStream,
     async_responses_get_or_create_wrapper,
     get_tools_from_kwargs,
+    responses_cancel_wrapper,
     responses_get_or_create_wrapper,
 )
 from opentelemetry.sdk.trace import TracerProvider
@@ -1262,6 +1264,7 @@ def test_polled_response_emits_one_span_with_original_input_then_is_removed(
     responses_get_or_create_wrapper(tracer)(
         lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "original question"}
     )
+    between_create_and_retrieve = time.time_ns()
     responses_get_or_create_wrapper(tracer)(
         lambda *a, **kw: completed, None, (), {"response_id": "resp_polled"}
     )
@@ -1269,6 +1272,7 @@ def test_polled_response_emits_one_span_with_original_input_then_is_removed(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     assert "original question" in spans[0].attributes["gen_ai.input.messages"]
+    assert spans[0].start_time < between_create_and_retrieve, "span must start at create(), not retrieve()"
     assert len(responses_wrappers.responses) == 0
 
 
@@ -1397,3 +1401,117 @@ def test_delayed_in_progress_poll_does_not_restore_entry_after_completion(
 
     assert len(span_exporter.get_finished_spans()) == 1
     assert "resp_delayed_poll" not in responses_wrappers.responses, "stale in_progress data was restored"
+
+
+@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled"])
+def test_terminal_sync_response_is_removed_and_emits_span(
+    status, clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """incomplete, failed and cancelled are terminal too: the entry is freed and a span emitted (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id=f"resp_sync_{status}", status=status)
+
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: fake_response, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["incomplete", "failed", "cancelled"])
+async def test_terminal_async_response_is_removed_and_emits_span(
+    status, clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Async counterpart of test_terminal_sync_response_is_removed_and_emits_span (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id=f"resp_async_{status}", status=status)
+
+    async def wrapped(*args, **kwargs):
+        return fake_response
+
+    await async_responses_get_or_create_wrapper(tracer)(
+        wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_incomplete_streaming_response_is_removed_from_responses_dict(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """A stream ending in response.incomplete must not leave an entry in `responses` (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    fake_response = _make_fake_response(response_id="resp_stream_incomplete", status="incomplete")
+    chunks = [
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+        types.SimpleNamespace(type="response.incomplete", response=fake_response),
+    ]
+
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+    list(stream)
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_retrieve_after_cancel_does_not_restore_entry_or_emit_second_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """cancel() emits the span and frees the entry; a later retrieve() returning cancelled
+    must not write the entry back or emit a second span (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    in_progress = _make_fake_response(response_id="resp_cancel", status="in_progress")
+    cancelled = _make_fake_response(response_id="resp_cancel", status="cancelled")
+
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "hi", "background": True}
+    )
+    responses_cancel_wrapper(tracer)(
+        lambda *a, **kw: cancelled, None, (), {"response_id": "resp_cancel"}
+    )
+    responses_get_or_create_wrapper(tracer)(
+        lambda *a, **kw: cancelled, None, (), {"response_id": "resp_cancel"}
+    )
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
+
+
+def test_non_background_stream_left_early_is_removed_from_responses_dict(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Leaving a non-background stream early must not keep its in_progress entry: only
+    background=True responses can be retrieved later to merge the original request (#4473)."""
+    tracer = tracer_provider.get_tracer(__name__)
+    in_progress = _make_fake_response(response_id="resp_stream_left_early", status="in_progress")
+    chunks = [
+        types.SimpleNamespace(type="response.created", response=in_progress),
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+    ]
+
+    with ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    ) as stream:
+        for _ in stream:
+            break
+
+    assert len(span_exporter.get_finished_spans()) == 1
+    assert len(responses_wrappers.responses) == 0
