@@ -81,8 +81,21 @@ def _make_async_wrapper(
 class TestProcessStreamingChunk:
     def test_empty_choices_returns_none_quad(self):
         chunk = MagicMock()
+        chunk.x_groq = None
         chunk.choices = []
         assert _process_streaming_chunk(chunk) == (None, [], [], None)
+
+    def test_empty_choices_preserves_usage(self):
+        # Groq sends the usage payload on a trailing chunk that has no choices;
+        # the guard must not discard it.
+        chunk = MagicMock()
+        chunk.choices = []
+        chunk.x_groq.usage.prompt_tokens = 9
+        chunk.x_groq.usage.completion_tokens = 4
+        content, tool_calls_delta, finish_reasons, usage = _process_streaming_chunk(chunk)
+        assert (content, tool_calls_delta, finish_reasons) == (None, [], [])
+        assert usage.prompt_tokens == 9
+        assert usage.completion_tokens == 4
 
     def test_multiple_choices_accumulates_content(self):
         chunk = MagicMock()
