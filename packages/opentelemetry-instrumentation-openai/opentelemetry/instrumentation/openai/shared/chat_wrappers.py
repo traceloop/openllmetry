@@ -1,4 +1,5 @@
 import copy
+import inspect
 import json
 import logging
 import threading
@@ -723,7 +724,47 @@ class ChatStream(ObjectProxy):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        cleanup_exception = None
+        try:
+            self._ensure_cleanup()
+        except Exception as e:
+            cleanup_exception = e
+            # Don't re-raise to avoid masking original exception
+
+        result = await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
+        if cleanup_exception:
+            # Log cleanup exception but don't affect context manager behavior
+            logger.debug(
+                "Error during ChatStream cleanup in __aexit__: %s", cleanup_exception)
+
+        return result
+
+    def close(self):
+        """Close the stream and end the LLM span.
+
+        The wrapped stream's ``close`` is invoked for both sync and async
+        streams. For an async wrapped stream this returns a coroutine that the
+        caller must await (``await stream.close()``); for a sync stream the
+        close happens inline.
+        """
+        wrapped_close = getattr(self.__wrapped__, "close", None)
+        if inspect.iscoroutinefunction(wrapped_close):
+            return self._aclose()
+        try:
+            self._ensure_cleanup()
+        finally:
+            if wrapped_close is not None:
+                return wrapped_close()
+        return None
+
+    async def _aclose(self):
+        try:
+            self._ensure_cleanup()
+        finally:
+            wrapped_close = getattr(self.__wrapped__, "close", None)
+            if wrapped_close is not None:
+                await wrapped_close()
 
     def __iter__(self):
         return self
