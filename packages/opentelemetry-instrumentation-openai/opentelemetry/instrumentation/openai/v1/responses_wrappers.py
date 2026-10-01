@@ -480,7 +480,6 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
-@dont_throw
 @_with_tracer_wrapper
 def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -657,7 +656,6 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     return response
 
 
-@dont_throw
 @_with_tracer_wrapper
 async def async_responses_get_or_create_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
@@ -834,7 +832,6 @@ async def async_responses_get_or_create_wrapper(
     return response
 
 
-@dont_throw
 @_with_tracer_wrapper
 def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -864,7 +861,6 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     return response
 
 
-@dont_throw
 @_with_tracer_wrapper
 async def async_responses_cancel_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
