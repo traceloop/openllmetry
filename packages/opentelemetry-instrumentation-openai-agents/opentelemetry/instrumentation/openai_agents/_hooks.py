@@ -671,6 +671,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         # agent name does not leak onto sibling/parent agent spans.
         self._agent_name_tokens: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
+        self._conversation_ids: Dict[str, str] = {}  # trace_id -> group_id
 
     @dont_throw
     def on_trace_start(self, trace):
@@ -688,6 +689,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         group_id = getattr(trace, "group_id", None)
         if group_id is not None:
             attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = group_id
+            self._conversation_ids[trace.trace_id] = group_id
         workflow_span = self.tracer.start_span(
             "Agent Workflow",
             kind=SpanKind.INTERNAL,
@@ -703,6 +705,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             workflow_span.set_status(Status(StatusCode.OK))
             workflow_span.end()
             del self._root_spans[trace.trace_id]
+        self._conversation_ids.pop(trace.trace_id, None)
 
     @dont_throw
     def on_span_start(self, span):
@@ -725,6 +728,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         if trace_id and trace_id in self._root_spans:
             workflow_span = self._root_spans[trace_id]
             parent_context = set_span_in_context(workflow_span)
+        conversation_id = self._conversation_ids.get(trace_id) if trace_id else None
 
         otel_span = None
         # Detach token for the agent name attached by _start_agent_span, if any.
@@ -732,7 +736,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if isinstance(span_data, AgentSpanData):
             otel_span, name_token = self._start_agent_span(
-                span_data, parent_context, trace_id
+                span_data, parent_context, trace_id, conversation_id
             )
 
         elif isinstance(span_data, HandoffSpanData):
@@ -740,14 +744,14 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         elif isinstance(span_data, FunctionSpanData):
             agent_ctx = self._resolve_agent_parent(parent_context)
-            otel_span = self._start_function_span(span_data, agent_ctx)
+            otel_span = self._start_function_span(span_data, agent_ctx, conversation_id)
 
         elif (
             type(span_data).__name__ == "ResponseSpanData"
             or isinstance(span_data, GenerationSpanData)
         ):
             agent_ctx = self._resolve_agent_parent(parent_context)
-            otel_span = self._start_generation_span(agent_ctx, span_data)
+            otel_span = self._start_generation_span(agent_ctx, span_data, conversation_id)
 
         elif (
             _has_realtime_spans
@@ -851,7 +855,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             return set_span_in_context(current)
         return fallback_context
 
-    def _start_agent_span(self, span_data, parent_context, trace_id):
+    def _start_agent_span(self, span_data, parent_context, trace_id, conversation_id=None):
         """Create an OTel span for an AgentSpanData.
 
         Returns ``(span, name_token)``. ``name_token`` is the detach token from
@@ -885,6 +889,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
                 GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
             }
+            if conversation_id is not None:
+                attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = conversation_id
 
             if handoff_parent:
                 attributes[GEN_AI_HANDOFF_PARENT_AGENT] = handoff_parent
@@ -947,7 +953,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             attributes=handoff_attributes,
         )
 
-    def _start_function_span(self, span_data, parent_context):
+    def _start_function_span(self, span_data, parent_context, conversation_id=None):
         """Create an OTel span for a FunctionSpanData."""
         tool_name = getattr(span_data, "name", None) or "unknown_tool"
 
@@ -958,6 +964,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
             GenAIAttributes.GEN_AI_OPERATION_NAME: "execute_tool",
         }
+        if conversation_id is not None:
+            tool_attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = conversation_id
 
         if hasattr(span_data, "description") and span_data.description:
             # Only use description if it's not a generic class description
@@ -972,7 +980,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             attributes=tool_attributes,
         )
 
-    def _start_generation_span(self, parent_context, span_data=None):
+    def _start_generation_span(self, parent_context, span_data=None, conversation_id=None):
         """Create an OTel span for a GenerationSpanData or ResponseSpanData."""
         attributes = {
             GenAIAttributes.GEN_AI_OPERATION_NAME: "chat",
@@ -981,6 +989,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         model = getattr(span_data, "model", None) if span_data else None
         if model:
             attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
+        if conversation_id is not None:
+            attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = conversation_id
         return self.tracer.start_span(
             "openai.response",
             kind=SpanKind.CLIENT,
