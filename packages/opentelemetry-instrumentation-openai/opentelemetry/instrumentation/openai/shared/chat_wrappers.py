@@ -739,9 +739,7 @@ class ChatStream(ObjectProxy):
                 self._process_complete_response()
             else:
                 # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._ensure_cleanup(e)
             raise
         else:
             self._process_item(chunk)
@@ -755,9 +753,7 @@ class ChatStream(ObjectProxy):
                 self._process_complete_response()
             else:
                 # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._ensure_cleanup(e)
             raise
         else:
             self._process_item(chunk)
@@ -834,8 +830,12 @@ class ChatStream(ObjectProxy):
         self._cleanup_completed = True
 
     @dont_throw
-    def _ensure_cleanup(self):
-        """Thread-safe cleanup method that handles different cleanup scenarios"""
+    def _ensure_cleanup(self, error=None):
+        """Thread-safe cleanup method that handles different cleanup scenarios
+
+        Cleanup is what ends the span, so it decides the span's final status:
+        a stream that failed is an ERROR, the way a non-streaming call fails.
+        """
         with self._cleanup_lock:
             if self._cleanup_completed:
                 logger.debug("ChatStream cleanup already completed, skipping")
@@ -849,7 +849,12 @@ class ChatStream(ObjectProxy):
 
                 # Set span status and close it
                 if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.OK))
+                    if error is None:
+                        self._span.set_status(Status(StatusCode.OK))
+                    else:
+                        self._span.set_attribute(ERROR_TYPE, type(error).__name__)
+                        self._span.record_exception(error)
+                        self._span.set_status(Status(StatusCode.ERROR, str(error)))
                     self._span.end()
                     logger.debug("ChatStream span closed successfully")
 
