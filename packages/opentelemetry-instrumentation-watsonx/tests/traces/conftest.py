@@ -117,7 +117,17 @@ def clear_exporter(exporter_legacy):
 @pytest.fixture(scope="module")
 def vcr_config():
     return {
-        "filter_headers": ["authorization"],
+        "filter_headers": [
+            "authorization",
+            "x-api-key",
+            "api-key",
+        ],
+        "filter_query_parameters": [
+            "api_key",
+        ],
+        "filter_post_data_parameters": [
+            "apikey",
+        ],
         "allow_playback_repeats": True,
         "decode_compressed_response": True,
     }
