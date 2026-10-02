@@ -86,6 +86,20 @@ def _set_span_attribute(span: Span, key: str, value: Any) -> None:
             span.set_attribute(key, "")
 
 
+def _get_span_attribute(span: Span, key: str, default: Any = None) -> Any:
+    """Read an attribute back from ``span``, or ``default`` if it can't be read.
+
+    ``attributes`` is not part of the OpenTelemetry API ``Span``: only the SDK's
+    ``ReadableSpan`` exposes it. Spans created by other TracerProvider
+    implementations (for example a vendor's OpenTelemetry shim) may not, and
+    reading it directly raises ``AttributeError``.
+    """
+    attributes = getattr(span, "attributes", None)
+    if not attributes:
+        return default
+    return attributes.get(key, default)
+
+
 def _content_to_parts(content) -> list[dict]:
     """Convert LangChain message content (str or list-of-blocks) into OTel parts."""
     if isinstance(content, str):
@@ -468,7 +482,7 @@ def set_chat_response_usage(
             cache_creation_tokens,
         )
         if record_token_usage:
-            vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
+            vendor = _get_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
 
             if input_tokens > 0:
                 token_histogram.record(
