@@ -117,6 +117,9 @@ def vcr_config():
         "filter_query_parameters": [
             "api_key",
         ],
+        "filter_post_data_parameters": [
+            "apikey",
+        ],
         "allow_playback_repeats": True,
         "decode_compressed_response": True,
     }
