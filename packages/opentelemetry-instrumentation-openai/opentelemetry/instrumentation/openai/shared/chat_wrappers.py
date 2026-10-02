@@ -766,6 +766,27 @@ class ChatStream(ObjectProxy):
             if wrapped_close is not None:
                 await wrapped_close()
 
+    async def aclose(self):
+        """Close the async stream and end the LLM span (OpenAI SDK 3.x).
+
+        SDK 3.x added ``AsyncStream.aclose()`` (2.x has no such method), and
+        callers reaching for it bypass the proxy's cleanup entirely, leaving
+        the span open until garbage collection. This runs the idempotent
+        ``_ensure_cleanup()`` first, then delegates to the wrapped stream's
+        ``aclose`` when present; the ``getattr`` guard keeps this safe for
+        SDK 2.x wrapped streams, and a non-coroutine ``aclose`` is called
+        inline just like ``close()`` does.
+        """
+        try:
+            self._ensure_cleanup()
+        finally:
+            wrapped_aclose = getattr(self.__wrapped__, "aclose", None)
+            if wrapped_aclose is not None:
+                if inspect.iscoroutinefunction(wrapped_aclose):
+                    await wrapped_aclose()
+                else:
+                    wrapped_aclose()
+
     def __iter__(self):
         return self
 

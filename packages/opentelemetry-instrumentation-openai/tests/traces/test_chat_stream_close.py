@@ -125,3 +125,44 @@ async def test_async_context_manager_exit_ends_span(tracer_and_exporter):
     assert len(spans) == 1
     assert spans[0].end_time is not None
     assert spans[0].status.status_code == StatusCode.OK
+
+
+async def test_async_aclose_ends_span(tracer_and_exporter):
+    """Regression: SDK 3.x ``aclose()`` must also end the span.
+
+    OpenAI SDK 3.x added ``AsyncStream.aclose()`` (2.x has no such method).
+    Before the fix, ``await stream.aclose()`` delegated straight through the
+    wrapt proxy to the wrapped stream, so the span stayed open until GC.
+    """
+    tracer, exporter = tracer_and_exporter
+    closed = []
+
+    async def aclose():
+        closed.append(True)
+
+    wrapped = MagicMock()
+    wrapped.aclose = aclose
+
+    stream = _make_stream(tracer, wrapped)
+    await stream.aclose()
+
+    assert closed == [True]
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].end_time is not None
+    assert spans[0].status.status_code == StatusCode.OK
+
+
+async def test_aclose_without_wrapped_aclose_still_ends_span(tracer_and_exporter):
+    """SDK 2.x async streams have no ``aclose``; span cleanup must still run."""
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    del wrapped.aclose
+
+    stream = _make_stream(tracer, wrapped)
+    await stream.aclose()
+
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].end_time is not None
+    assert spans[0].status.status_code == StatusCode.OK
