@@ -1,3 +1,4 @@
+import inspect
 import logging
 import time
 from typing import Optional
@@ -209,6 +210,40 @@ class AnthropicStream(ObjectProxy):
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
 
+    @dont_throw
+    def _ensure_cleanup(self):
+        """End the LLM span if it hasn't been ended yet (idempotent)."""
+        self._complete_instrumentation()
+
+    def __del__(self):
+        """Best-effort span cleanup when the stream is garbage collected."""
+        if hasattr(self, "_instrumentation_completed") and not self._instrumentation_completed:
+            self._ensure_cleanup()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """End the span on early exit, then close the wrapped stream."""
+        try:
+            self._ensure_cleanup()
+        finally:
+            return self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+
+    def close(self):
+        """Close the stream and end the LLM span.
+
+        Runs the idempotent span cleanup first, then delegates to the
+        wrapped stream's ``close``. Underlying ``close()`` errors propagate
+        as before; cleanup errors are swallowed by ``dont_throw``.
+        """
+        try:
+            self._ensure_cleanup()
+        finally:
+            wrapped_close = getattr(self.__wrapped__, "close", None)
+            if wrapped_close is not None:
+                wrapped_close()
+
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
         if name == 'get_final_message':
@@ -337,6 +372,52 @@ class AnthropicAsyncStream(ObjectProxy):
 
         self._complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
         self._instrumentation_completed = False
+
+    @dont_throw
+    def _ensure_cleanup(self):
+        """End the LLM span if it hasn't been ended yet (idempotent)."""
+        self._complete_instrumentation()
+
+    def __del__(self):
+        """Best-effort span cleanup when the stream is garbage collected."""
+        if hasattr(self, "_instrumentation_completed") and not self._instrumentation_completed:
+            self._ensure_cleanup()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """End the span on early exit, then close the wrapped stream."""
+        try:
+            self._ensure_cleanup()
+        finally:
+            return await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+
+    def close(self):
+        """Close the async stream and end the LLM span.
+
+        The wrapped stream's ``close`` is awaited when it is a coroutine
+        function (anthropic SDK ``AsyncStream.close``); otherwise it is
+        called inline. In the async case this returns a coroutine the
+        caller must await (``await stream.close()``).
+        """
+        wrapped_close = getattr(self.__wrapped__, "close", None)
+        if inspect.iscoroutinefunction(wrapped_close):
+            return self._aclose()
+        try:
+            self._ensure_cleanup()
+        finally:
+            if wrapped_close is not None:
+                return wrapped_close()
+        return None
+
+    async def _aclose(self):
+        try:
+            self._ensure_cleanup()
+        finally:
+            wrapped_close = getattr(self.__wrapped__, "close", None)
+            if wrapped_close is not None:
+                await wrapped_close()
 
     def __getattr__(self, name):
         """Override helper methods to ensure they go through our instrumented iteration"""
@@ -476,7 +557,7 @@ class WrappedMessageStreamManager:
         # Call the original stream manager's __enter__ to get the actual stream
         stream = self._stream_manager.__enter__()
         # Return the proxy that preserves helper methods
-        return AnthropicStream(
+        self._stream = AnthropicStream(
             self._span,
             stream,
             self._instance,
@@ -488,9 +569,17 @@ class WrappedMessageStreamManager:
             self._event_logger,
             self._kwargs,
         )
+        return self._stream
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
+        # End the span when the with-block is left early; the stream proxy
+        # may never have been fully consumed at this point.
+        try:
+            stream = getattr(self, "_stream", None)
+            if stream is not None:
+                stream._ensure_cleanup()
+        finally:
+            return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
 
     def __getattr__(self, name):
         if name == '_complete_instrumentation':
@@ -533,7 +622,7 @@ class WrappedAsyncMessageStreamManager:
         # Call the original stream manager's __aenter__ to get the actual stream
         stream = await self._stream_manager.__aenter__()
         # Return the proxy that preserves helper methods
-        return AnthropicAsyncStream(
+        self._stream = AnthropicAsyncStream(
             self._span,
             stream,
             self._instance,
@@ -545,9 +634,17 @@ class WrappedAsyncMessageStreamManager:
             self._event_logger,
             self._kwargs,
         )
+        return self._stream
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
+        # End the span when the async with-block is left early; the stream
+        # proxy may never have been fully consumed at this point.
+        try:
+            stream = getattr(self, "_stream", None)
+            if stream is not None:
+                stream._ensure_cleanup()
+        finally:
+            return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
 
     def __getattr__(self, name):
         if name == '_complete_instrumentation':
