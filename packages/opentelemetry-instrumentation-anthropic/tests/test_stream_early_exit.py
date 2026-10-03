@@ -213,3 +213,108 @@ async def test_async_message_stream_manager_aexit_ends_span(tracer_and_exporter)
 
     manager_mock.__aexit__.assert_awaited_once()
     _assert_single_finished_span(exporter)
+
+
+def _assert_single_error_span(exporter):
+    """Exactly one finished span, ERROR status, exception recorded on it."""
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "anthropic.chat"
+    assert span.end_time is not None
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.status.description == "boom"
+    exc_events = [e for e in span.events if e.name == "exception"]
+    assert len(exc_events) == 1
+    assert exc_events[0].attributes["exception.type"] == "ValueError"
+    assert exc_events[0].attributes["exception.message"] == "boom"
+
+
+def test_sync_exit_with_exception_marks_span_error(tracer_and_exporter):
+    """An exception escaping the with-block must not be recorded as OK."""
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    wrapped.__next__ = MagicMock(side_effect=[_ping_event()])
+    wrapped.__exit__ = MagicMock(return_value=False)
+
+    stream = _make_sync_stream(tracer, wrapped)
+    with pytest.raises(ValueError, match="boom"):
+        with stream:
+            next(stream)
+            raise ValueError("boom")
+
+    wrapped.__exit__.assert_called_once()
+    _assert_single_error_span(exporter)
+
+    # cleanup is idempotent: a later close() must not touch the ended span
+    stream.close()
+    assert len(exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.asyncio
+async def test_async_aexit_with_exception_marks_span_error(tracer_and_exporter):
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    wrapped.__anext__ = AsyncMock(side_effect=[_ping_event()])
+    wrapped.__aexit__ = AsyncMock(return_value=False)
+
+    stream = _make_async_stream(tracer, wrapped)
+    with pytest.raises(ValueError, match="boom"):
+        async with stream:
+            await stream.__anext__()
+            raise ValueError("boom")
+
+    wrapped.__aexit__.assert_awaited_once()
+    _assert_single_error_span(exporter)
+
+
+def test_message_stream_manager_exit_with_exception_marks_span_error(
+    tracer_and_exporter,
+):
+    """`with client.messages.stream(...)` raising inside marks the span ERROR."""
+    tracer, exporter = tracer_and_exporter
+    stream_mock = MagicMock()
+    stream_mock.__next__ = MagicMock(side_effect=[_ping_event()])
+    manager_mock = MagicMock()
+    manager_mock.__enter__ = MagicMock(return_value=stream_mock)
+    manager_mock.__exit__ = MagicMock(return_value=False)
+
+    manager = WrappedMessageStreamManager(
+        manager_mock, tracer.start_span("anthropic.chat"), instance=None,
+        start_time=time.time(), token_histogram=None, choice_counter=None,
+        duration_histogram=None, exception_counter=None, event_logger=None,
+        kwargs={},
+    )
+    with pytest.raises(ValueError, match="boom"):
+        with manager as stream:
+            next(stream)
+            raise ValueError("boom")
+
+    manager_mock.__exit__.assert_called_once()
+    _assert_single_error_span(exporter)
+
+
+@pytest.mark.asyncio
+async def test_async_message_stream_manager_aexit_with_exception_marks_span_error(
+    tracer_and_exporter,
+):
+    tracer, exporter = tracer_and_exporter
+    stream_mock = MagicMock()
+    stream_mock.__anext__ = AsyncMock(side_effect=[_ping_event()])
+    manager_mock = MagicMock()
+    manager_mock.__aenter__ = AsyncMock(return_value=stream_mock)
+    manager_mock.__aexit__ = AsyncMock(return_value=False)
+
+    manager = WrappedAsyncMessageStreamManager(
+        manager_mock, tracer.start_span("anthropic.chat"), instance=None,
+        start_time=time.time(), token_histogram=None, choice_counter=None,
+        duration_histogram=None, exception_counter=None, event_logger=None,
+        kwargs={},
+    )
+    with pytest.raises(ValueError, match="boom"):
+        async with manager as stream:
+            await stream.__anext__()
+            raise ValueError("boom")
+
+    manager_mock.__aexit__.assert_awaited_once()
+    _assert_single_error_span(exporter)

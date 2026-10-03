@@ -211,9 +211,36 @@ class AnthropicStream(ObjectProxy):
         self._instrumentation_completed = False
 
     @dont_throw
-    def _ensure_cleanup(self):
-        """End the LLM span if it hasn't been ended yet (idempotent)."""
-        self._complete_instrumentation()
+    def _ensure_cleanup(self, exc=None):
+        """End the LLM span if it hasn't been ended yet (idempotent).
+
+        When cleanup is triggered by an exceptional context-manager exit,
+        ``exc`` carries the in-flight exception: it is recorded on the span
+        and the span status is set to ERROR instead of OK, so a failed
+        stream is never reported as a successful one.
+        """
+        if exc is not None:
+            self._record_exception_and_end(exc)
+        else:
+            self._complete_instrumentation()
+
+    def _record_exception_and_end(self, exc):
+        """Record an exception on the span and end it (idempotent).
+
+        Mirrors the streaming error path in ``__next__``/``__anext__``: the
+        exception counter is bumped, the exception is recorded on the span,
+        and the span ends with ERROR status.
+        """
+        if self._instrumentation_completed:
+            return
+        attributes = error_metrics_attributes(exc)
+        if self._exception_counter:
+            self._exception_counter.add(1, attributes=attributes)
+        if self._span and self._span.is_recording():
+            self._span.record_exception(exc)
+            self._span.set_status(Status(StatusCode.ERROR, str(exc)))
+            self._span.end()
+        self._instrumentation_completed = True
 
     def __del__(self):
         """Best-effort span cleanup when the stream is garbage collected."""
@@ -226,7 +253,7 @@ class AnthropicStream(ObjectProxy):
     def __exit__(self, exc_type, exc_val, exc_tb):
         """End the span on early exit, then close the wrapped stream."""
         try:
-            self._ensure_cleanup()
+            self._ensure_cleanup(exc_val)
         finally:
             return self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
 
@@ -374,9 +401,36 @@ class AnthropicAsyncStream(ObjectProxy):
         self._instrumentation_completed = False
 
     @dont_throw
-    def _ensure_cleanup(self):
-        """End the LLM span if it hasn't been ended yet (idempotent)."""
-        self._complete_instrumentation()
+    def _ensure_cleanup(self, exc=None):
+        """End the LLM span if it hasn't been ended yet (idempotent).
+
+        When cleanup is triggered by an exceptional context-manager exit,
+        ``exc`` carries the in-flight exception: it is recorded on the span
+        and the span status is set to ERROR instead of OK, so a failed
+        stream is never reported as a successful one.
+        """
+        if exc is not None:
+            self._record_exception_and_end(exc)
+        else:
+            self._complete_instrumentation()
+
+    def _record_exception_and_end(self, exc):
+        """Record an exception on the span and end it (idempotent).
+
+        Mirrors the streaming error path in ``__next__``/``__anext__``: the
+        exception counter is bumped, the exception is recorded on the span,
+        and the span ends with ERROR status.
+        """
+        if self._instrumentation_completed:
+            return
+        attributes = error_metrics_attributes(exc)
+        if self._exception_counter:
+            self._exception_counter.add(1, attributes=attributes)
+        if self._span and self._span.is_recording():
+            self._span.record_exception(exc)
+            self._span.set_status(Status(StatusCode.ERROR, str(exc)))
+            self._span.end()
+        self._instrumentation_completed = True
 
     def __del__(self):
         """Best-effort span cleanup when the stream is garbage collected."""
@@ -389,7 +443,7 @@ class AnthropicAsyncStream(ObjectProxy):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """End the span on early exit, then close the wrapped stream."""
         try:
-            self._ensure_cleanup()
+            self._ensure_cleanup(exc_val)
         finally:
             return await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
 
@@ -577,7 +631,7 @@ class WrappedMessageStreamManager:
         try:
             stream = getattr(self, "_stream", None)
             if stream is not None:
-                stream._ensure_cleanup()
+                stream._ensure_cleanup(exc_val)
         finally:
             return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
 
@@ -642,7 +696,7 @@ class WrappedAsyncMessageStreamManager:
         try:
             stream = getattr(self, "_stream", None)
             if stream is not None:
-                stream._ensure_cleanup()
+                stream._ensure_cleanup(exc_val)
         finally:
             return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
 
