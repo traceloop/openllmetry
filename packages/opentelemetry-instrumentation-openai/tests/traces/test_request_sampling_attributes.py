@@ -10,11 +10,19 @@ Every test runs against an in-process httpx.MockTransport, so no API key and no
 recorded cassette is needed.
 """
 
+from unittest.mock import MagicMock
+
 import httpx
 import pydantic
 import pytest
 from openai import AsyncOpenAI, OpenAI
+from openai.types.responses import ResponseTextConfig as _ResponseTextConfig
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+from opentelemetry.instrumentation.openai.shared import _set_request_attributes
+from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+    prepare_kwargs_for_shared_attributes,
+)
 
 
 class _Profile(pydantic.BaseModel):
@@ -43,11 +51,20 @@ def _handler(request: httpx.Request) -> httpx.Response:
     return httpx.Response(200, json=_chat_completion_body())
 
 
-def _client():
+def _client(content="{}"):
+    """Build a client whose transport always answers with `content`.
+
+    chat.completions.parse() needs the mocked message to actually satisfy the
+    pydantic model, so the body has to be configurable per test.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=_chat_completion_body(content))
+
     return OpenAI(
         api_key="test-key",
         base_url="http://mock.invalid/v1",
-        http_client=httpx.Client(transport=httpx.MockTransport(_handler)),
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -180,11 +197,120 @@ def test_output_type_maps_response_format_variants(
 def test_output_type_for_pydantic_model(
     instrument_legacy, span_exporter: InMemorySpanExporter
 ):
-    """A pydantic model is sent as a JSON schema by the SDK, so it maps to json."""
-    _client().chat.completions.create(
+    """A pydantic model passed as response_format is the output schema itself, so
+    it maps to json.
+
+    Uses chat.completions.parse(), which is the SDK-supported way to pass a model
+    class as response_format (chat.completions.create() does not accept one).
+    Completions.parse is instrumented, so the span is still produced.
+    """
+    _client(content='{"name": "Ada", "age": 36}').chat.completions.parse(
         model="gpt-4.1-nano",
         messages=[{"role": "user", "content": "hi"}],
         response_format=_Profile,
     )
 
     assert _attrs(span_exporter)["gen_ai.output.type"] == "json"
+
+
+def _mock_span():
+    """Minimal recording-span stand-in, following tests/traces/test_semconv_compliance.py."""
+    span = MagicMock()
+    span.is_recording.return_value = True
+    attributes = {}
+    span.set_attribute = lambda name, value: attributes.__setitem__(name, value)
+    span.attributes = attributes
+    return span
+
+
+def _responses_request_attributes(**kwargs):
+    """Run the Responses API request kwargs through the shared attribute setter.
+
+    The Responses API declares the output format as text.format rather than
+    response_format, so this asserts on the attribute setter directly instead of
+    standing up a full mocked HTTP round-trip for responses.create().
+    """
+    span = _mock_span()
+    _set_request_attributes(span, prepare_kwargs_for_shared_attributes(dict(kwargs)))
+    return span.attributes
+
+
+def test_responses_api_text_format_json_schema_sets_output_type():
+    """responses.create(text={"format": {"type": "json_schema", ...}}) requests JSON
+    output, but has no response_format parameter, so it must be read from text.format.
+
+    Note the Responses API nests the schema flat rather than under a "json_schema"
+    key, which is why this is not routed through the response_format branch.
+    """
+    attributes = _responses_request_attributes(
+        model="gpt-4.1-nano",
+        input="hi",
+        text={
+            "format": {
+                "type": "json_schema",
+                "strict": True,
+                "name": "Person",
+                "schema": {"type": "object"},
+            }
+        },
+    )
+
+    assert attributes["gen_ai.output.type"] == "json"
+
+
+def test_responses_api_text_format_text_sets_output_type():
+    assert (
+        _responses_request_attributes(
+            model="gpt-4.1-nano", input="hi", text={"format": {"type": "text"}}
+        )["gen_ai.output.type"]
+        == "text"
+    )
+
+
+def test_responses_api_without_text_format_leaves_output_type_unset():
+    """A Responses call with no text.format must not gain an output.type attribute."""
+    attributes = _responses_request_attributes(model="gpt-4.1-nano", input="hi")
+
+    assert "gen_ai.output.type" not in attributes
+
+
+def test_responses_api_structured_output_schema_is_not_faked():
+    """Guard against regressing gen_ai.request.structured_output_schema.
+
+    The Responses API's flat format shape does not carry a nested "json_schema"
+    key, so the structured-output-schema branch must leave the attribute unset
+    rather than recording a placeholder schema derived from the dict itself.
+    """
+    attributes = _responses_request_attributes(
+        model="gpt-4.1-nano",
+        input="hi",
+        text={
+            "format": {
+                "type": "json_schema",
+                "strict": True,
+                "name": "Person",
+                "schema": {"type": "object"},
+            }
+        },
+    )
+
+    assert "gen_ai.request.structured_output_schema" not in attributes
+
+
+def test_responses_api_response_text_config_model_is_not_reported_as_json():
+    """ResponseTextConfig(format={"type": "text"}) must not be misreported as json.
+
+    The bare-model branch returns "json" because a model passed as
+    response_format is the schema itself, so the nested ResponseTextConfig case
+    has to be unwrapped to stay correct.
+    """
+    span = _mock_span()
+    _set_request_attributes(
+        span,
+        {
+            "model": "gpt-4.1-nano",
+            "text": _ResponseTextConfig(format={"type": "text"}),
+        },
+    )
+
+    assert span.attributes["gen_ai.output.type"] == "text"

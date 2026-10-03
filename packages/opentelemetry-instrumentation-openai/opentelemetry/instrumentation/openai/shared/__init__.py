@@ -134,10 +134,15 @@ def set_tools_attributes(span, tools):
     _set_tool_definitions_json(span, tool_defs)
 
 
-# gen_ai.request.stop_sequences is a sequence of strings. The OpenAI SDK accepts
-# either a single string or a list of strings for `stop`, so normalize both to a
-# tuple. openai.NOT_GIVEN / None / empty resolve to None (attribute not set).
 def _normalize_stop_sequences(stop):
+    """Normalize OpenAI's ``stop`` parameter to a sequence of strings.
+
+    The SDK accepts either a single string or a list of strings, while
+    ``gen_ai.request.stop_sequences`` is a sequence, so a bare string is wrapped
+    into a one-element tuple. Returns None when nothing usable was passed, so
+    the caller omits the attribute entirely rather than setting it to an empty
+    sequence.
+    """
     if stop is None:
         return None
     if isinstance(stop, str):
@@ -148,26 +153,52 @@ def _normalize_stop_sequences(stop):
     return None
 
 
-# gen_ai.output.type is an enum: text | json | image | speech. Map OpenAI's
-# response_format onto it. A JSON schema, a JSON object and a pydantic model all
-# request JSON output; a pydantic model is sent as a JSON schema by the SDK.
-def _output_type_from_response_format(response_format):
-    if (
-        isinstance(response_format, pydantic.BaseModel)
-        or (
-            hasattr(response_format, "model_json_schema")
-            and callable(response_format.model_json_schema)
-        )
-    ):
-        return "json"
-
-    format_type = (
-        response_format.get("type") if isinstance(response_format, dict) else None
+def _is_pydantic_model(value):
+    """True for openai/pydantic models, which expose model_json_schema()."""
+    return isinstance(value, pydantic.BaseModel) or (
+        hasattr(value, "model_json_schema") and callable(value.model_json_schema)
     )
-    if format_type in ("json_schema", "json_object"):
+
+
+def _output_type_from_response_format(response_format):
+    """Map an OpenAI output-format declaration onto the ``gen_ai.output.type`` enum.
+
+    Handles every shape the SDKs allow:
+
+    * Chat Completions dict, e.g. ``{"type": "json_schema", "json_schema": {...}}``
+    * Chat Completions model, e.g. ``ResponseFormatJSONSchema(...)``
+    * a bare pydantic schema model, which is what ``chat.completions.parse()``
+      takes and which is sent as a JSON schema
+    * Responses API ``text.format``, which nests the schema flat rather than
+      under a ``json_schema`` key, optionally wrapped in a
+      ``ResponseTextConfig`` model
+
+    Returns None for anything unrecognized, so the attribute is left unset
+    rather than guessed at.
+    """
+    if isinstance(response_format, dict):
+        declared = response_format.get("type")
+    else:
+        # openai models expose the same field as an attribute
+        declared = getattr(response_format, "type", None)
+
+    if isinstance(declared, str):
+        if declared in ("json_schema", "json_object"):
+            return "json"
+        if declared == "text":
+            return "text"
+        return None
+
+    # No declared type. A ResponseTextConfig-style wrapper keeps the real format
+    # one level down, so unwrap it and map that on its own terms -- otherwise
+    # format={"type": "text"} would be misreported as JSON below.
+    nested = getattr(response_format, "format", None)
+    if isinstance(nested, (dict, pydantic.BaseModel)):
+        return _output_type_from_response_format(nested)
+
+    # A bare pydantic model passed as response_format is the schema itself.
+    if _is_pydantic_model(response_format):
         return "json"
-    if format_type == "text":
-        return "text"
     return None
 
 
@@ -218,11 +249,21 @@ def _set_request_attributes(span, kwargs, instance=None):
     _set_span_attribute(
         span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, kwargs.get("service_tier")
     )
+    output_type = _output_type_from_response_format(kwargs.get("response_format"))
+    if output_type is None:
+        # The Responses API has no response_format parameter; it expresses the
+        # same thing as text.format. Mapped here rather than in
+        # prepare_kwargs_for_shared_attributes because the Responses API nests
+        # the format flat ({"type": ..., "schema": ...}) instead of under a
+        # "json_schema" key, which the structured-output-schema branch below
+        # does not understand.
+        text = kwargs.get("text")
+        if isinstance(text, dict):
+            output_type = _output_type_from_response_format(text.get("format"))
+    if output_type:
+        _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_TYPE, output_type)
+
     if response_format := kwargs.get("response_format"):
-        if output_type := _output_type_from_response_format(response_format):
-            _set_span_attribute(
-                span, GenAIAttributes.GEN_AI_OUTPUT_TYPE, output_type
-            )
         # backward-compatible check for
         # openai.types.shared_params.response_format_json_schema.ResponseFormatJSONSchema
         if (
