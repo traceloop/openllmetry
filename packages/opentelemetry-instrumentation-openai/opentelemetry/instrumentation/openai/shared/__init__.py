@@ -134,6 +134,43 @@ def set_tools_attributes(span, tools):
     _set_tool_definitions_json(span, tool_defs)
 
 
+# gen_ai.request.stop_sequences is a sequence of strings. The OpenAI SDK accepts
+# either a single string or a list of strings for `stop`, so normalize both to a
+# tuple. openai.NOT_GIVEN / None / empty resolve to None (attribute not set).
+def _normalize_stop_sequences(stop):
+    if stop is None:
+        return None
+    if isinstance(stop, str):
+        return (stop,)
+    if isinstance(stop, (list, tuple)):
+        sequences = tuple(s for s in stop if isinstance(s, str))
+        return sequences or None
+    return None
+
+
+# gen_ai.output.type is an enum: text | json | image | speech. Map OpenAI's
+# response_format onto it. A JSON schema, a JSON object and a pydantic model all
+# request JSON output; a pydantic model is sent as a JSON schema by the SDK.
+def _output_type_from_response_format(response_format):
+    if (
+        isinstance(response_format, pydantic.BaseModel)
+        or (
+            hasattr(response_format, "model_json_schema")
+            and callable(response_format.model_json_schema)
+        )
+    ):
+        return "json"
+
+    format_type = (
+        response_format.get("type") if isinstance(response_format, dict) else None
+    )
+    if format_type in ("json_schema", "json_object"):
+        return "json"
+    if format_type == "text":
+        return "text"
+    return None
+
+
 def _set_request_attributes(span, kwargs, instance=None):
     if not span.is_recording():
         return
@@ -158,6 +195,13 @@ def _set_request_attributes(span, kwargs, instance=None):
         span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("seed"))
+    if stop_sequences := _normalize_stop_sequences(kwargs.get("stop")):
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES,
+            stop_sequences,
+        )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
@@ -175,6 +219,10 @@ def _set_request_attributes(span, kwargs, instance=None):
         span, OpenAIAttributes.OPENAI_REQUEST_SERVICE_TIER, kwargs.get("service_tier")
     )
     if response_format := kwargs.get("response_format"):
+        if output_type := _output_type_from_response_format(response_format):
+            _set_span_attribute(
+                span, GenAIAttributes.GEN_AI_OUTPUT_TYPE, output_type
+            )
         # backward-compatible check for
         # openai.types.shared_params.response_format_json_schema.ResponseFormatJSONSchema
         if (
