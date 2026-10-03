@@ -931,56 +931,69 @@ def _build_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     for item in response:
-        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
-
         item_to_yield = item
 
-        if first_token and streaming_time_to_first_token:
-            time_of_first_token = time.time()
-            streaming_time_to_first_token.record(
-                time_of_first_token - start_time)
-            first_token = False
 
-        _accumulate_stream_items(item, complete_response)
+        try:
+            span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
+
+            if first_token and streaming_time_to_first_token:
+                time_of_first_token = time.time()
+                streaming_time_to_first_token.record(
+                    time_of_first_token - start_time)
+                first_token = False
+
+            _accumulate_stream_items(item, complete_response)
+        except Exception as e:
+            logging.warning(
+                "OpenLLMetry failed to trace a streaming chunk, continuing without it: %s",
+                e,
+            )
 
         yield item_to_yield
 
-    shared_attributes = {
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-        "stream": True,
-    }
+    try:
+        shared_attributes = {
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
+            "server.address": _get_openai_base_url(instance),
+            "stream": True,
+        }
 
-    _set_streaming_token_metrics(
-        request_kwargs, complete_response, span, token_counter, shared_attributes
-    )
-
-    # choice metrics
-    if choice_counter and complete_response.get("choices"):
-        _set_choice_counter_metrics(
-            choice_counter, complete_response.get("choices"), shared_attributes
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
         )
 
-    # duration metrics
-    if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
-    else:
-        duration = None
-    if duration and isinstance(duration, (float, int)) and duration_histogram:
-        duration_histogram.record(duration, attributes=shared_attributes)
-    if streaming_time_to_generate and time_of_first_token:
-        streaming_time_to_generate.record(time.time() - time_of_first_token)
+        # choice metrics
+        if choice_counter and complete_response.get("choices"):
+            _set_choice_counter_metrics(
+                choice_counter, complete_response.get("choices"), shared_attributes
+            )
 
-    _set_response_attributes(span, complete_response)
-    if should_emit_events():
-        for choice in complete_response.get("choices", []):
-            emit_event(_parse_choice_event(choice))
-    else:
-        if should_send_prompts():
-            _set_completions(span, complete_response.get("choices"))
+        # duration metrics
+        if start_time and isinstance(start_time, (float, int)):
+            duration = time.time() - start_time
+        else:
+            duration = None
+        if duration and isinstance(duration, (float, int)) and duration_histogram:
+            duration_histogram.record(duration, attributes=shared_attributes)
+        if streaming_time_to_generate and time_of_first_token:
+            streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        _set_response_attributes(span, complete_response)
+        if should_emit_events():
+            for choice in complete_response.get("choices", []):
+                emit_event(_parse_choice_event(choice))
+        else:
+            if should_send_prompts():
+                _set_completions(span, complete_response.get("choices"))
+
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        logging.warning(
+            "OpenLLMetry failed to finalize the streaming span: %s", e
+        )
+    finally:
+        span.end()
 
 
 @dont_throw
@@ -1002,56 +1015,69 @@ async def _abuild_from_streaming_response(
     time_of_first_token = start_time  # will be updated when first token is received
 
     async for item in response:
-        span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
-
         item_to_yield = item
 
-        if first_token and streaming_time_to_first_token:
-            time_of_first_token = time.time()
-            streaming_time_to_first_token.record(
-                time_of_first_token - start_time)
-            first_token = False
 
-        _accumulate_stream_items(item, complete_response)
+        try:
+            span.add_event(name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
+
+            if first_token and streaming_time_to_first_token:
+                time_of_first_token = time.time()
+                streaming_time_to_first_token.record(
+                    time_of_first_token - start_time)
+                first_token = False
+
+            _accumulate_stream_items(item, complete_response)
+        except Exception as e:
+            logging.warning(
+                "OpenLLMetry failed to trace a streaming chunk, continuing without it: %s",
+                e,
+            )
 
         yield item_to_yield
 
-    shared_attributes = {
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
-        "server.address": _get_openai_base_url(instance),
-        "stream": True,
-    }
+    try:
+        shared_attributes = {
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
+            "server.address": _get_openai_base_url(instance),
+            "stream": True,
+        }
 
-    _set_streaming_token_metrics(
-        request_kwargs, complete_response, span, token_counter, shared_attributes
-    )
-
-    # choice metrics
-    if choice_counter and complete_response.get("choices"):
-        _set_choice_counter_metrics(
-            choice_counter, complete_response.get("choices"), shared_attributes
+        _set_streaming_token_metrics(
+            request_kwargs, complete_response, span, token_counter, shared_attributes
         )
 
-    # duration metrics
-    if start_time and isinstance(start_time, (float, int)):
-        duration = time.time() - start_time
-    else:
-        duration = None
-    if duration and isinstance(duration, (float, int)) and duration_histogram:
-        duration_histogram.record(duration, attributes=shared_attributes)
-    if streaming_time_to_generate and time_of_first_token:
-        streaming_time_to_generate.record(time.time() - time_of_first_token)
+        # choice metrics
+        if choice_counter and complete_response.get("choices"):
+            _set_choice_counter_metrics(
+                choice_counter, complete_response.get("choices"), shared_attributes
+            )
 
-    _set_response_attributes(span, complete_response)
-    if should_emit_events():
-        for choice in complete_response.get("choices", []):
-            emit_event(_parse_choice_event(choice))
-    else:
-        if should_send_prompts():
-            _set_completions(span, complete_response.get("choices"))
+        # duration metrics
+        if start_time and isinstance(start_time, (float, int)):
+            duration = time.time() - start_time
+        else:
+            duration = None
+        if duration and isinstance(duration, (float, int)) and duration_histogram:
+            duration_histogram.record(duration, attributes=shared_attributes)
+        if streaming_time_to_generate and time_of_first_token:
+            streaming_time_to_generate.record(time.time() - time_of_first_token)
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        _set_response_attributes(span, complete_response)
+        if should_emit_events():
+            for choice in complete_response.get("choices", []):
+                emit_event(_parse_choice_event(choice))
+        else:
+            if should_send_prompts():
+                _set_completions(span, complete_response.get("choices"))
+
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        logging.warning(
+            "OpenLLMetry failed to finalize the streaming span: %s", e
+        )
+    finally:
+        span.end()
 
 
 # pydantic.BaseModel here is ChatCompletionMessageFunctionToolCall (as of openai 1.99.7)
