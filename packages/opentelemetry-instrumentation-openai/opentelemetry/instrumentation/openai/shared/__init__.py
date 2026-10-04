@@ -170,8 +170,12 @@ def _output_type_from_response_format(response_format):
     * a bare pydantic schema model, which is what ``chat.completions.parse()``
       takes and which is sent as a JSON schema
     * Responses API ``text.format``, which nests the schema flat rather than
-      under a ``json_schema`` key, optionally wrapped in a
-      ``ResponseTextConfig`` model
+      under a ``json_schema`` key
+
+    Note that only the declared ``type`` is consulted. A model with no ``type``
+    is treated as a bare output schema, and is never probed for a nested
+    ``format``: a user schema passed to ``parse()`` is free to have a field
+    called ``format``, and recursing into it would misreport that request.
 
     Returns None for anything unrecognized, so the attribute is left unset
     rather than guessed at.
@@ -189,14 +193,8 @@ def _output_type_from_response_format(response_format):
             return "text"
         return None
 
-    # No declared type. A ResponseTextConfig-style wrapper keeps the real format
-    # one level down, so unwrap it and map that on its own terms -- otherwise
-    # format={"type": "text"} would be misreported as JSON below.
-    nested = getattr(response_format, "format", None)
-    if isinstance(nested, (dict, pydantic.BaseModel)):
-        return _output_type_from_response_format(nested)
-
-    # A bare pydantic model passed as response_format is the schema itself.
+    # No declared type: a bare pydantic model passed as response_format is the
+    # output schema itself.
     if _is_pydantic_model(response_format):
         return "json"
     return None

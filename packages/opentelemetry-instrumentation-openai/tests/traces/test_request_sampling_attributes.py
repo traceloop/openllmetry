@@ -16,7 +16,6 @@ import httpx
 import pydantic
 import pytest
 from openai import AsyncOpenAI, OpenAI
-from openai.types.responses import ResponseTextConfig as _ResponseTextConfig
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from opentelemetry.instrumentation.openai.shared import _set_request_attributes
@@ -297,20 +296,24 @@ def test_responses_api_structured_output_schema_is_not_faked():
     assert "gen_ai.request.structured_output_schema" not in attributes
 
 
-def test_responses_api_response_text_config_model_is_not_reported_as_json():
-    """ResponseTextConfig(format={"type": "text"}) must not be misreported as json.
+def test_schema_model_with_a_format_field_is_still_reported_as_json():
+    """A user schema passed to parse() may legitimately have a field named `format`.
 
-    The bare-model branch returns "json" because a model passed as
-    response_format is the schema itself, so the nested ResponseTextConfig case
-    has to be unwrapped to stay correct.
+    Only the declared `type` is consulted, so such a model must still map to
+    json rather than being probed for a nested format declaration.
     """
+
+    class _ConfigWithFormat(pydantic.BaseModel):
+        format: str
+        strict: bool
+
     span = _mock_span()
     _set_request_attributes(
         span,
         {
             "model": "gpt-4.1-nano",
-            "text": _ResponseTextConfig(format={"type": "text"}),
+            "response_format": _ConfigWithFormat,
         },
     )
 
-    assert span.attributes["gen_ai.output.type"] == "text"
+    assert span.attributes["gen_ai.output.type"] == "json"
