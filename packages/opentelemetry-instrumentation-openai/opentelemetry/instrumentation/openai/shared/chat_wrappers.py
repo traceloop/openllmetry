@@ -754,9 +754,11 @@ class ChatStream(ObjectProxy):
         try:
             self._ensure_cleanup()
         finally:
-            if wrapped_close is not None:
-                return wrapped_close()
-        return None
+            # Assign inside `finally` and return afterwards: a `return` in the
+            # `finally` block would swallow a BaseException (e.g.
+            # KeyboardInterrupt) escaping _ensure_cleanup().
+            result = wrapped_close() if wrapped_close is not None else None
+        return result
 
     async def _aclose(self):
         try:

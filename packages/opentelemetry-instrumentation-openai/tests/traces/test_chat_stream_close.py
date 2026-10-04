@@ -166,3 +166,47 @@ async def test_aclose_without_wrapped_aclose_still_ends_span(tracer_and_exporter
     assert len(spans) == 1
     assert spans[0].end_time is not None
     assert spans[0].status.status_code == StatusCode.OK
+
+
+def test_close_does_not_swallow_base_exception_from_cleanup(tracer_and_exporter):
+    """Regression: no ``return`` inside the ``finally`` of ``close()``.
+
+    A ``return`` in ``finally`` swallows any BaseException (e.g.
+    KeyboardInterrupt) escaping ``_ensure_cleanup()``. ``close()`` must let
+    it propagate while still delegating to the wrapped stream's close.
+    """
+    from unittest.mock import patch
+
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    wrapped.close = MagicMock(return_value="closed")
+
+    stream = _make_stream(tracer, wrapped)
+    with patch.object(
+        ChatStream, "_ensure_cleanup", side_effect=KeyboardInterrupt
+    ):
+        with pytest.raises(KeyboardInterrupt):
+            stream.close()
+
+    # the wrapped close still ran in the finally block before propagating
+    wrapped.close.assert_called_once_with()
+
+
+def test_close_returns_wrapped_close_result(tracer_and_exporter):
+    """The finally restructure must preserve the delegated return value."""
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    wrapped.close = MagicMock(return_value="closed")
+
+    stream = _make_stream(tracer, wrapped)
+    assert stream.close() == "closed"
+    wrapped.close.assert_called_once_with()
+
+
+def test_close_without_wrapped_close_returns_none(tracer_and_exporter):
+    tracer, exporter = tracer_and_exporter
+    wrapped = MagicMock()
+    del wrapped.close
+
+    stream = _make_stream(tracer, wrapped)
+    assert stream.close() is None
