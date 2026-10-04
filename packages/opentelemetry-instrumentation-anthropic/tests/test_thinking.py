@@ -420,7 +420,7 @@ def test_anthropic_thinking_streaming_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
     assert input_messages[0]["parts"][0]["content"] == prompt
@@ -484,7 +484,7 @@ def test_anthropic_thinking_streaming_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -570,7 +570,7 @@ def test_anthropic_thinking_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -643,7 +643,7 @@ async def test_async_anthropic_thinking_streaming_legacy(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
     input_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
     assert input_messages[0]["role"] == "user"
     assert input_messages[0]["parts"][0]["content"] == prompt
@@ -708,7 +708,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
@@ -800,7 +800,7 @@ async def test_async_anthropic_thinking_streaming_with_events_with_no_content(
     anthropic_span = spans[0]
 
     assert anthropic_span.name == "anthropic.chat"
-    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1024
+    assert anthropic_span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 128
 
     metrics_data = reader.get_metrics_data()
     resource_metrics = metrics_data.resource_metrics
