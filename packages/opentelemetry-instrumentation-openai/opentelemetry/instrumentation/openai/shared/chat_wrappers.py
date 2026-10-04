@@ -723,7 +723,10 @@ class ChatStream(ObjectProxy):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        try:
+            return await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        finally:
+            self._ensure_cleanup()
 
     def __iter__(self):
         return self
@@ -739,9 +742,11 @@ class ChatStream(ObjectProxy):
                 self._process_complete_response()
             else:
                 # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
                 if self._span and self._span.is_recording():
+                    self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                    self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._ensure_cleanup()
             raise
         else:
             self._process_item(chunk)
@@ -755,9 +760,11 @@ class ChatStream(ObjectProxy):
                 self._process_complete_response()
             else:
                 # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
                 if self._span and self._span.is_recording():
+                    self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                    self._span.record_exception(e)
                     self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._ensure_cleanup()
             raise
         else:
             self._process_item(chunk)
@@ -848,8 +855,8 @@ class ChatStream(ObjectProxy):
                 self._record_partial_metrics()
 
                 # Set span status and close it
+                # Close span if still recording
                 if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.OK))
                     self._span.end()
                     logger.debug("ChatStream span closed successfully")
 

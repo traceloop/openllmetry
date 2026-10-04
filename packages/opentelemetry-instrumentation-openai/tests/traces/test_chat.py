@@ -1572,8 +1572,8 @@ def test_chat_streaming_not_consumed(instrument_legacy, span_exporter, log_expor
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
 
-    # Verify span was properly closed
-    assert open_ai_span.status.status_code == StatusCode.OK
+    # Verify span was properly closed but not marked as successful since it was incomplete
+    assert open_ai_span.status.status_code == StatusCode.UNSET
     assert open_ai_span.end_time is not None
     assert open_ai_span.end_time > open_ai_span.start_time
 
@@ -1663,7 +1663,7 @@ def test_chat_streaming_partial_consumption(instrument_legacy, span_exporter, lo
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
 
-    assert open_ai_span.status.status_code == StatusCode.OK
+    assert open_ai_span.status.status_code == StatusCode.UNSET
     assert open_ai_span.end_time is not None
 
     assert open_ai_span.attributes.get(
@@ -1745,13 +1745,48 @@ def test_chat_streaming_exception_during_consumption(instrument_legacy, span_exp
     open_ai_span = spans[0]
     assert open_ai_span.name == "openai.chat"
 
-    # Verify span was properly closed (status should be OK since exception was in user code, not in our iterator)
-    assert open_ai_span.status.status_code == StatusCode.OK
+    # Verify span was properly closed (status should be UNSET since exception was in user code causing incomplete stream)
+    assert open_ai_span.status.status_code == StatusCode.UNSET
     assert open_ai_span.end_time is not None
 
     # Should have events from the consumed chunks before exception
     events = open_ai_span.events
     assert len(events) >= 2  # At least 2 chunk events before exception
+
+
+@pytest.mark.vcr
+def test_chat_streaming_iterator_exception(instrument_legacy, span_exporter, log_exporter, openai_client):
+    """Test that streaming responses handle exceptions raised by the iterator properly"""
+
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Tell me a short story"}],
+        stream=True,
+    )
+
+    from unittest.mock import patch
+    
+    # Mock the underlying iterator's __next__ to raise an exception
+    with patch.object(response.__wrapped__, '__next__', side_effect=Exception("Mock iterator exception")):
+        try:
+            next(iter(response))
+        except Exception as e:
+            assert "Mock iterator exception" in str(e)
+
+    spans = span_exporter.get_finished_spans()
+
+    assert len(spans) == 1
+    open_ai_span = spans[0]
+    assert open_ai_span.name == "openai.chat"
+
+    # Verify span was properly closed with ERROR status
+    assert open_ai_span.status.status_code == StatusCode.ERROR
+    assert "Mock iterator exception" in open_ai_span.status.description
+    assert open_ai_span.end_time is not None
+
+    # Verify exception event was recorded
+    events = open_ai_span.events
+    assert any(event.name == "exception" for event in events)
 
 
 @pytest.mark.vcr
@@ -1788,5 +1823,5 @@ def test_chat_streaming_memory_leak_prevention(instrument_legacy, span_exporter,
     # Verify span is properly closed
     span = final_spans[-1]
     assert span.name == "openai.chat"
-    assert span.status.status_code == StatusCode.OK
+    assert span.status.status_code == StatusCode.UNSET
     assert span.end_time is not None
