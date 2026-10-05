@@ -3,6 +3,7 @@
 import ast
 import json
 import pathlib
+from typing import Callable
 
 import httpx
 import openai
@@ -121,7 +122,7 @@ STREAM_BODY = _sse(
 )
 
 
-def _client(handler):
+def _client(handler: Callable[[httpx.Request], httpx.Response]) -> openai.OpenAI:
     # No network and no API key: only attribute serialization is under test.
     return openai.OpenAI(
         api_key="test-key",
