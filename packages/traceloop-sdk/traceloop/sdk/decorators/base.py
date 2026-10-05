@@ -91,9 +91,42 @@ def aentity_class(
     )
 
 
-def _handle_generator(span, res):
+def _safe_detach(token) -> None:
+    """Detach a context token, ignoring the "created in a different Context" error.
+
+    OTel stores context in ``contextvars``, which are copied per asyncio-task /
+    thread (PEP 567). When a decorated generator or coroutine resumes on a
+    different task/thread than the one that attached the token, ``detach`` raises
+    a ``ValueError``. The stale token is harmless to skip, so we swallow that
+    failure while still detaching in the common case.
+    See https://github.com/open-telemetry/opentelemetry-python/issues/2606
+    """
+    if token is None:
+        return
+    try:
+        context_api.detach(token)
+    except Exception:
+        pass
+
+
+def _detach_tokens(ctx_tokens) -> None:
+    """Detach the (name, span, path) tokens in reverse (LIFO) attach order.
+
+    OTel context is a stack: the name token is attached first (bottom) and the
+    path token last (top), so we detach path -> span -> name. Detaching out of
+    order makes OTel complain the token "was created in a different Context".
+    """
+    name_token, ctx_token, path_token = ctx_tokens
+    _safe_detach(path_token)
+    _safe_detach(ctx_token)
+    _safe_detach(name_token)
+
+
+def _handle_generator(span, ctx_tokens, res):
     # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
-    context_api.attach(trace.set_span_in_context(span))
+    # Capture this re-attach's token so it can be detached on cleanup; otherwise
+    # this frame is left on the context stack (unbalanced attach).
+    gen_span_token = context_api.attach(trace.set_span_in_context(span))
     try:
         for item in res:
             yield item
@@ -103,12 +136,18 @@ def _handle_generator(span, res):
         raise
     finally:
         span.end()
-        # Note: we don't detach the context here as this fails in some situations
-        # https://github.com/open-telemetry/opentelemetry-python/issues/2606
-        # This is not a problem since the context will be detached automatically during garbage collection
+        # Best-effort detach: closing a generator on a different task/thread than
+        # the one that attached the tokens makes detach fail
+        # (https://github.com/open-telemetry/opentelemetry-python/issues/2606).
+        # _safe_detach swallows that, so this stops the name/path from leaking in
+        # the common case and degrades quietly otherwise (context is reclaimed
+        # during garbage collection). Detach the re-attached span first (LIFO:
+        # it was attached after the tokens in ctx_tokens).
+        _safe_detach(gen_span_token)
+        _detach_tokens(ctx_tokens)
 
 
-async def _ahandle_generator(span, ctx_token, res):
+async def _ahandle_generator(span, ctx_tokens, res):
     try:
         async for part in res:
             yield part
@@ -118,7 +157,7 @@ async def _ahandle_generator(span, ctx_token, res):
         raise
     finally:
         span.end()
-        context_api.detach(ctx_token)
+        _detach_tokens(ctx_tokens)
 
 
 def _should_send_prompts():
@@ -136,14 +175,24 @@ def _is_async_method(fn):
 
 
 def _setup_span(entity_name, tlp_span_kind, version):
-    """Sets up the OpenTelemetry span and context"""
+    """Sets up the OpenTelemetry span and context.
+
+    Returns the span, the span context, and a ``(name_token, ctx_token,
+    path_token)`` tuple ordered oldest-first. ``_cleanup_span`` detaches these in
+    reverse, so the entity name/path we attach here is scoped to the decorated
+    function and does not leak onto sibling or parent spans.
+    """
+    # Attached first (bottom of the stack), detached last. If we don't detach it
+    # later, the agent/workflow name sticks on the context for the rest of the trace.
+    name_token = None
     if tlp_span_kind == TraceloopSpanKindValues.WORKFLOW:
-        set_workflow_name(entity_name)
+        name_token = set_workflow_name(entity_name)
     elif tlp_span_kind == TraceloopSpanKindValues.AGENT:
-        set_agent_name(entity_name)
+        name_token = set_agent_name(entity_name)
 
     span_name = f"{entity_name}.{tlp_span_kind.value}"
 
+    path_token = None
     with get_tracer() as tracer:
         span = tracer.start_span(span_name)
         ctx = trace.set_span_in_context(span)
@@ -154,7 +203,7 @@ def _setup_span(entity_name, tlp_span_kind, version):
             TraceloopSpanKindValues.TOOL,
         ]:
             entity_path = get_chained_entity_path(entity_name)
-            set_entity_path(entity_path)
+            path_token = set_entity_path(entity_path)
 
         span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, tlp_span_kind.value)
         span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
@@ -163,7 +212,9 @@ def _setup_span(entity_name, tlp_span_kind, version):
         if version:
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_VERSION, version)
 
-    return span, ctx, ctx_token
+    # Ordered oldest-first (attach order); cleanup detaches in reverse.
+    ctx_tokens = (name_token, ctx_token, path_token)
+    return span, ctx, ctx_tokens
 
 
 def _handle_span_input(span, args, kwargs, cls=None):
@@ -196,10 +247,10 @@ def _handle_span_output(span, res, cls=None):
         pass
 
 
-def _cleanup_span(span, ctx_token):
-    """End the span process and detach the context token"""
+def _cleanup_span(span, ctx_tokens):
+    """End the span and detach all context tokens (name, span, path) in LIFO order."""
     span.end()
-    context_api.detach(ctx_token)
+    _detach_tokens(ctx_tokens)
 
 
 def entity_method(
@@ -220,14 +271,30 @@ def entity_method(
                             yield item
                         return
 
-                    span, ctx, ctx_token = _setup_span(
+                    span, ctx, ctx_tokens = _setup_span(
                         entity_name, tlp_span_kind, version
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
-                    async for item in _ahandle_generator(
-                        span, ctx_token, fn(*args, **kwargs)
-                    ):
-                        yield item
+                    # Delegating with `async for` does not propagate close, so the
+                    # inner generator's finally (end span + detach tokens) would
+                    # only run whenever it happens to be finalized. Closing it
+                    # explicitly ties that cleanup to this wrapper's own close.
+                    #
+                    # KNOWN LIMITATION -- abandoning an async generator (`break`
+                    # without `aclose`) still leaks the entity name. Python defers
+                    # finalizing the wrapper to the event loop, so by the time this
+                    # finally runs we are on a different context: the detach
+                    # succeeds against the finalizer's own contextvars copy and
+                    # leaves the caller's untouched. It cannot be fixed from inside
+                    # the generator; callers who exit early should use
+                    # `contextlib.aclosing()` (or drain the generator) to get
+                    # deterministic cleanup, which this try/finally then honours.
+                    inner = _ahandle_generator(span, ctx_tokens, fn(*args, **kwargs))
+                    try:
+                        async for item in inner:
+                            yield item
+                    finally:
+                        await inner.aclose()
 
                 return cast(F, async_gen_wrap)
             else:
@@ -237,7 +304,7 @@ def entity_method(
                     if not TracerWrapper.verify_initialized():
                         return await fn(*args, **kwargs)
 
-                    span, ctx, ctx_token = _setup_span(
+                    span, ctx, ctx_tokens = _setup_span(
                         entity_name, tlp_span_kind, version
                     )
                     _handle_span_input(span, args, kwargs, cls=JSONEncoder)
@@ -250,7 +317,7 @@ def entity_method(
                         span.record_exception(e)
                         raise
                     finally:
-                        _cleanup_span(span, ctx_token)
+                        _cleanup_span(span, ctx_tokens)
 
                 return cast(F, async_wrap)
         else:
@@ -260,22 +327,22 @@ def entity_method(
                 if not TracerWrapper.verify_initialized():
                     return fn(*args, **kwargs)
 
-                span, ctx, ctx_token = _setup_span(entity_name, tlp_span_kind, version)
+                span, ctx, ctx_tokens = _setup_span(entity_name, tlp_span_kind, version)
                 _handle_span_input(span, args, kwargs, cls=JSONEncoder)
                 try:
                     res = fn(*args, **kwargs)
                 except Exception as e:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
-                    _cleanup_span(span, ctx_token)
+                    _cleanup_span(span, ctx_tokens)
                     raise
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, res)
+                    return _handle_generator(span, ctx_tokens, res)
 
                 _handle_span_output(span, res, cls=JSONEncoder)
-                _cleanup_span(span, ctx_token)
+                _cleanup_span(span, ctx_tokens)
                 return res
 
             return cast(F, sync_wrap)
