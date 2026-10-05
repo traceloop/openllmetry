@@ -1,6 +1,6 @@
 [project]
 name = "traceloop-sdk"
-version = "0.62.1"
+version = "0.62.4"
 description = "Traceloop Software Development Kit (SDK) for Python"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -60,6 +60,8 @@ dependencies = [
   "jinja2>=3.1.5,<4",
   "deprecated>=1.2.14,<2",
   "aiohttp>=3.11.11,<4",
+  "requests>=2.31.0,<3",
+  "httpx>=0.23.0,<1",
   "cuid>=0.4,<0.5",
 ]
 

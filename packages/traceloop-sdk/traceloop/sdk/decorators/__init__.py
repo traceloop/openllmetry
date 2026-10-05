@@ -3,6 +3,7 @@ import asyncio
 import concurrent.futures
 import warnings
 import inspect
+import types
 from functools import wraps
 
 from opentelemetry.semconv_ai import TraceloopSpanKindValues
@@ -51,20 +52,77 @@ def conversation(conversation_id: str) -> Callable[[F], F]:
             response = llm.chat(user_message)
             return response
     """
+    from traceloop.sdk.decorators.base import _safe_detach
     from traceloop.sdk.tracing.tracing import set_conversation_id
 
+    def _consume_with_token(gen, token):
+        """Yield from ``gen``, detaching ``token`` once iteration finishes.
+
+        Keeps conversation_id attached for the whole life of a returned
+        generator, and releases it if the consumer abandons the iterator early
+        (GeneratorExit still runs the finally).
+        """
+        try:
+            yield from gen
+        finally:
+            _safe_detach(token)
+
     def decorator(fn: F) -> F:
-        if inspect.iscoroutinefunction(fn):
+        # Scope conversation_id to this call: detach the token once the function
+        # (or, for generators, the fully-consumed iterator) finishes, so the id
+        # does not leak onto unrelated work later on the same context/thread.
+        # Detach via _safe_detach so a cross-task/thread resume can't crash the
+        # user's function with the "created in a different Context" ValueError.
+        if inspect.isasyncgenfunction(fn):
+            @wraps(fn)
+            async def async_gen_wrapper(*args, **kwargs):
+                # Attach on first iteration, not when the generator object is
+                # created — otherwise the finally would detach before any span runs.
+                token = set_conversation_id(conversation_id)
+                try:
+                    async for item in fn(*args, **kwargs):
+                        yield item
+                finally:
+                    _safe_detach(token)
+            return async_gen_wrapper
+        elif inspect.isgeneratorfunction(fn):
+            @wraps(fn)
+            def gen_wrapper(*args, **kwargs):
+                token = set_conversation_id(conversation_id)
+                try:
+                    yield from fn(*args, **kwargs)
+                finally:
+                    _safe_detach(token)
+            return gen_wrapper
+        elif inspect.iscoroutinefunction(fn):
             @wraps(fn)
             async def async_wrapper(*args, **kwargs):
-                set_conversation_id(conversation_id)
-                return await fn(*args, **kwargs)
+                token = set_conversation_id(conversation_id)
+                try:
+                    return await fn(*args, **kwargs)
+                finally:
+                    _safe_detach(token)
             return async_wrapper
         else:
             @wraps(fn)
             def sync_wrapper(*args, **kwargs):
-                set_conversation_id(conversation_id)
-                return fn(*args, **kwargs)
+                token = set_conversation_id(conversation_id)
+                detach = True
+                try:
+                    res = fn(*args, **kwargs)
+                    # A plain function can still RETURN a generator — notably
+                    # base.sync_wrap, which @workflow/@task/@agent produce for a
+                    # decorated generator function. isgeneratorfunction is False
+                    # for it, so we land here rather than in gen_wrapper. Detaching
+                    # now would drop conversation_id before a single item is
+                    # produced, so hand the token to the iterator instead.
+                    if isinstance(res, types.GeneratorType):
+                        detach = False
+                        return _consume_with_token(res, token)
+                    return res
+                finally:
+                    if detach:
+                        _safe_detach(token)
             return sync_wrapper
 
     return decorator

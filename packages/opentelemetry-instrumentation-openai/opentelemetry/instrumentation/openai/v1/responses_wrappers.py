@@ -4,6 +4,7 @@ import re
 import threading
 import time
 from typing import Any, Optional, Union
+from collections import OrderedDict
 
 from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
@@ -197,6 +198,59 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+# Statuses after which a response never changes again, so its entry can be freed and its span emitted.
+_TERMINAL_STATUSES = frozenset({"completed", "incomplete", "failed", "cancelled"})
+
+# IDs whose finished span was already emitted, so a later retrieve() doesn't emit a degraded duplicate.
+_MAX_TRACKED_COMPLETED_RESPONSES = 2048
+_completed_response_ids: "OrderedDict[str, None]" = OrderedDict()
+_completed_response_ids_lock = threading.Lock()
+
+
+def _mark_response_completed(response_id: str) -> None:
+    """Record response_id as finished, evicting the oldest IDs past the cap.
+
+    Caller must hold _completed_response_ids_lock.
+    """
+    _completed_response_ids[response_id] = None
+    while len(_completed_response_ids) > _MAX_TRACKED_COMPLETED_RESPONSES:
+        _completed_response_ids.popitem(last=False)
+
+
+def _record_traced_data(response_id: str, traced_data: TracedData, finished: bool) -> bool:
+    """Store an unfinished response, or mark it finished and drop its entry, in one locked step.
+
+    Returns True only for the first caller finishing response_id, which then emits its span.
+    Doing the write under the same lock stops a slower poll restoring stale data after completion.
+    """
+    with _completed_response_ids_lock:
+        if response_id in _completed_response_ids:
+            _completed_response_ids.move_to_end(response_id)
+            responses.pop(response_id, None)
+            return False
+        if not finished:
+            responses[response_id] = traced_data
+            return False
+        _mark_response_completed(response_id)
+        responses.pop(response_id, None)
+        return True
+
+
+def _claim_cancelled_response(response_id: str) -> Optional[TracedData]:
+    """Pop the entry for a cancelled response and mark it finished, so a later retrieve() can't restore it."""
+    with _completed_response_ids_lock:
+        if response_id in _completed_response_ids:
+            _completed_response_ids.move_to_end(response_id)
+        else:
+            _mark_response_completed(response_id)
+        return responses.pop(response_id, None)
+
+
+def _was_response_already_completed(response_id: str) -> bool:
+    """Return True if response_id's finished span was already emitted."""
+    with _completed_response_ids_lock:
+        return response_id in _completed_response_ids
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -575,8 +629,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         span.end()
         raise
     parsed_response = parse_response(response)
+    if isinstance(parsed_response, Stream):
+        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+        # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
+        # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
+        # trace from here. The pre-parse `isinstance(response, Stream)` check above only
+        # catches the direct `.create(stream=True)` case; this call goes untraced instead
+        # of crashing.
+        return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -629,11 +693,10 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
-        responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
-    if parsed_response.status == "completed":
+    if _record_traced_data(parsed_response.id, traced_data, parsed_response.status in _TERMINAL_STATUSES):
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -742,8 +805,19 @@ async def async_responses_get_or_create_wrapper(
         span.end()
         raise
     parsed_response = await async_parse_response(response)
+    if isinstance(parsed_response, (Stream, AsyncStream)):
+        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
+        # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
+        # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
+        # `.id`/`.output`/etc. to build a trace from here. The pre-parse
+        # `isinstance(response, (Stream, AsyncStream))` check above only catches the
+        # direct `.create(stream=True)` case; this call goes untraced instead of
+        # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
+        return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -797,11 +871,10 @@ async def async_responses_get_or_create_wrapper(
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
-        responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
-    if parsed_response.status == "completed":
+    if _record_traced_data(parsed_response.id, traced_data, parsed_response.status in _TERMINAL_STATUSES):
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -829,7 +902,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     if isinstance(response, Stream):
         return response
     parsed_response = parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
+    existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
         ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
@@ -861,7 +934,7 @@ async def async_responses_cancel_wrapper(
     if isinstance(response, (Stream, AsyncStream)):
         return response
     parsed_response = await async_parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
+    existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
         ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
@@ -1064,7 +1137,13 @@ class ResponseStream(ObjectProxy):
                             block.id: block for block in parsed_response.output
                         }
 
-                    responses[parsed_response.id] = self._traced_data
+                    # Only an unfinished background stream keeps its entry, so a later retrieve() can merge
+                    # the original request; nothing can resume any other stream.
+                    finished = (
+                        parsed_response.status in _TERMINAL_STATUSES
+                        or not self._request_kwargs.get("background")
+                    )
+                    _record_traced_data(parsed_response.id, self._traced_data, finished)
 
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)

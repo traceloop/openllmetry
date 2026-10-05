@@ -4,7 +4,7 @@ from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import Meters, SpanAttributes
 
 GEN_AI_IS_STREAMING = SpanAttributes.GEN_AI_IS_STREAMING
 GEN_AI_USAGE_TOTAL_TOKENS = SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS
@@ -31,6 +31,39 @@ def _assert_otel_v2_span_attributes(span):
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == MODEL
 
 
+# Attribute keys every gen_ai.client.token.usage data point must carry, whether
+# the call was streamed or not. semconv marks gen_ai.operation.name required, and
+# dashboards grouping by operation/request model silently drop streaming calls
+# when those two keys are missing (the bug behind #4419's follow-up review).
+EXPECTED_TOKEN_ATTRIBUTE_KEYS = frozenset(
+    {
+        GenAIAttributes.GEN_AI_PROVIDER_NAME,
+        GenAIAttributes.GEN_AI_OPERATION_NAME,
+        GenAIAttributes.GEN_AI_REQUEST_MODEL,
+        GenAIAttributes.GEN_AI_RESPONSE_MODEL,
+        GenAIAttributes.GEN_AI_TOKEN_TYPE,
+    }
+)
+
+
+def _data_points(metrics_data, name):
+    """All data points recorded so far for the named metric."""
+    if metrics_data is None:
+        return []
+    for resource_metric in metrics_data.resource_metrics:
+        for scope_metric in resource_metric.scope_metrics:
+            for metric in scope_metric.metrics:
+                if metric.name == name:
+                    return list(metric.data.data_points)
+    return []
+
+
+def _assert_token_usage_attribute_parity(token_points):
+    """Streaming and non-streaming token points must expose the same attribute keys."""
+    assert token_points, "expected token usage data points"
+    assert {frozenset(dict(p.attributes)) for p in token_points} == {EXPECTED_TOKEN_ATTRIBUTE_KEYS}
+
+
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert (
@@ -51,7 +84,7 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
 
 
 @pytest.mark.vcr
-def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter):
+def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter, reader):
     groq_client.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
@@ -80,6 +113,11 @@ def test_chat_legacy(instrument_legacy, groq_client, span_exporter, log_exporter
     assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) > 0
     assert groq_span.attributes.get(GEN_AI_USAGE_TOTAL_TOKENS) > 0
     assert groq_span.attributes.get("gen_ai.response.id") == "chatcmpl-645691ff-34af-4d0f-a1c1-fe888f8685cc"
+
+    metrics_data = reader.get_metrics_data()
+    token_points = _data_points(metrics_data, Meters.LLM_TOKEN_USAGE)
+    _assert_token_usage_attribute_parity(token_points)
+    assert all(p.sum > 0 for p in token_points)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
@@ -305,7 +343,7 @@ async def test_async_chat_with_events_with_no_content(
 
 
 @pytest.mark.vcr
-def test_chat_streaming_legacy(instrument_legacy, groq_client, span_exporter, log_exporter):
+def test_chat_streaming_legacy(instrument_legacy, groq_client, span_exporter, log_exporter, reader):
     response = groq_client.chat.completions.create(
         model=MODEL,
         messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
@@ -336,6 +374,18 @@ def test_chat_streaming_legacy(instrument_legacy, groq_client, span_exporter, lo
     assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 18
     assert groq_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 73
     assert groq_span.attributes.get(GEN_AI_USAGE_TOTAL_TOKENS) == 91
+
+    # End-to-end regression for #4419: the instrumentor must actually hand the
+    # histograms to the stream processors, so metrics come out of a real
+    # instrumented call rather than out of processors built by the test itself.
+    metrics_data = reader.get_metrics_data()
+    token_points = _data_points(metrics_data, Meters.LLM_TOKEN_USAGE)
+    _assert_token_usage_attribute_parity(token_points)
+    assert {p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in token_points} == {
+        "input": 18,
+        "output": 73,
+    }
+    assert _data_points(metrics_data, Meters.LLM_OPERATION_DURATION), "expected a duration data point"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0, "Assert that it doesn't emit logs when use_legacy_attributes is True"
