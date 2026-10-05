@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import threading
@@ -38,6 +39,20 @@ def is_azure_openai(instance):
 
 def is_metrics_enabled() -> bool:
     return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
+
+
+def json_dumps(obj) -> str:
+    """Serialize ``obj`` to JSON for span attributes, keeping non-ASCII text readable.
+
+    Falls back to ASCII escaping when the result is not UTF-8 encodable,
+    so exporters never fail to encode the attribute.
+    """
+    result = json.dumps(obj, ensure_ascii=False)
+    try:
+        result.encode("utf-8")
+    except UnicodeEncodeError:
+        return json.dumps(obj)
+    return result
 
 
 def _with_image_gen_metric_wrapper(func):
