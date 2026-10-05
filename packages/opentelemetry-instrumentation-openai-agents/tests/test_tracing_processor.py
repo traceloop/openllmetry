@@ -1183,7 +1183,9 @@ class TestConversationId:
     def test_no_group_id_child_spans_omit_attr(self, tracer_and_exporter, processor):
         from agents import AgentSpanData
         _, exporter = tracer_and_exporter
-        spans = self._run(processor, exporter, AgentSpanData(name="B", handoffs=[], tools=[], output_type=""), group_id=None)
+        spans = self._run(
+            processor, exporter, AgentSpanData(name="B", handoffs=[], tools=[], output_type=""), group_id=None
+        )
         agent_span = next(s for s in spans if s.name == "B.agent")
         assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in agent_span.attributes
 
