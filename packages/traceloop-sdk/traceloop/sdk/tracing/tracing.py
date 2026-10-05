@@ -260,15 +260,26 @@ def _set_association_properties_attributes(span, properties: dict) -> None:
         )
 
 
-def set_workflow_name(workflow_name: str) -> None:
-    attach(set_value("workflow_name", workflow_name))
+def set_workflow_name(workflow_name: str) -> object:
+    """Attach the workflow name to the context and return the detach token.
+
+    The token must be passed to ``context_api.detach`` when the decorated entity
+    finishes (see ``_cleanup_span`` in decorators/base.py), otherwise the value
+    leaks onto every span that starts later in the same trace. Callers that
+    ignore the return value still work, but their value will leak.
+    """
+    return attach(set_value("workflow_name", workflow_name))
 
 
-def set_agent_name(agent_name: str) -> None:
-    attach(set_value("agent_name", agent_name))
+def set_agent_name(agent_name: str) -> object:
+    """Attach the agent name to the context and return the detach token.
+
+    See :func:`set_workflow_name` for why the token must be detached.
+    """
+    return attach(set_value("agent_name", agent_name))
 
 
-def set_conversation_id(conversation_id: str) -> None:
+def set_conversation_id(conversation_id: str) -> object:
     """
     Set the conversation ID for the current context.
 
@@ -277,12 +288,19 @@ def set_conversation_id(conversation_id: str) -> None:
 
     Args:
         conversation_id: Unique identifier for the conversation/session
+
+    Returns:
+        The detach token for the attached context.
     """
-    attach(set_value("conversation_id", conversation_id))
+    return attach(set_value("conversation_id", conversation_id))
 
 
-def set_entity_path(entity_path: str) -> None:
-    attach(set_value("entity_path", entity_path))
+def set_entity_path(entity_path: str) -> object:
+    """Attach the entity path to the context and return the detach token.
+
+    See :func:`set_workflow_name` for why the token must be detached.
+    """
+    return attach(set_value("entity_path", entity_path))
 
 
 def get_chained_entity_path(entity_name: str) -> str:

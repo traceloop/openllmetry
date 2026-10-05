@@ -1,3 +1,27 @@
+## v0.62.4 (2026-09-29)
+
+### Fix
+
+- **groq**: record token usage and duration metrics for streaming responses (#4439)
+- **mcp**: end the session span when Client.__aexit__ is cancelled (#4517)
+- **mcp**: honor TRACELOOP_TRACE_CONTENT on the client path (#4466)
+- **openai**: don't crash tracing responses.with_raw_response.create(stream=True) (#4477)
+- **mistralai**: record chunked assistant content instead of dropping it (#4478)
+- **langchain**: keep objects out of association properties (#4467)
+- **crewai**: stop the __dict__ walk leaking credentials onto spans (#4465)
+
+## v0.62.3 (2026-08-10)
+
+### Fix
+
+- **litellm**: register instrumentation in commitizen version files (#4408)
+
+## v0.62.2 (2026-08-09)
+
+### Fix
+
+- **sdk,openai-agents**: stop entity names leaking onto sibling and parent spans (#4405)
+
 ## v0.62.1 (2026-06-28)
 
 ### Fix
