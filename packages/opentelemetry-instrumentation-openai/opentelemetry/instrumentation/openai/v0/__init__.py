@@ -168,9 +168,9 @@ class OpenAIV0Instrumentor(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
-        unwrap("openai", "Completion.create")
-        unwrap("openai", "Completion.acreate")
-        unwrap("openai", "ChatCompletion.create")
-        unwrap("openai", "ChatCompletion.acreate")
-        unwrap("openai", "Embedding.create")
-        unwrap("openai", "Embedding.acreate")
+        unwrap("openai.Completion", "create")
+        unwrap("openai.Completion", "acreate")
+        unwrap("openai.ChatCompletion", "create")
+        unwrap("openai.ChatCompletion", "acreate")
+        unwrap("openai.Embedding", "create")
+        unwrap("openai.Embedding", "acreate")
