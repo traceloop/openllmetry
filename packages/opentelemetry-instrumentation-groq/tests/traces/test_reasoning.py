@@ -10,7 +10,7 @@ import json
 
 import httpx
 import pytest
-from groq import Groq
+from groq import AsyncGroq, Groq
 from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -110,6 +110,28 @@ def test_chat_streaming_reasoning_is_accumulated(instrument_legacy, mock_groq_cl
         stream=True,
     )
     chunks = list(response)
+    assert len(chunks) == 6
+
+    (span,) = span_exporter.get_finished_spans()
+    assert _output_parts(span) == [
+        {"type": "text", "content": ANSWER},
+        {"type": "reasoning", "content": REASONING},
+    ]
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 40
+    assert span.attributes[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 25
+
+
+@pytest.mark.asyncio
+async def test_async_chat_streaming_reasoning_is_accumulated(instrument_legacy, span_exporter):
+    async with httpx.AsyncClient(transport=httpx.MockTransport(_handler)) as http_client:
+        client = AsyncGroq(api_key="api-key", http_client=http_client)
+        response = await client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": "Tell me a joke about opentelemetry"}],
+            reasoning_format="parsed",
+            stream=True,
+        )
+        chunks = [chunk async for chunk in response]
     assert len(chunks) == 6
 
     (span,) = span_exporter.get_finished_spans()
