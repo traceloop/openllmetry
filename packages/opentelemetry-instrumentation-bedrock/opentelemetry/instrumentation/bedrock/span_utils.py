@@ -461,6 +461,14 @@ def _set_anthropic_messages_span_attributes(
         GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
         request_body.get("max_tokens"),
     )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, request_body.get("top_k")
+    )
+    stop_sequences = request_body.get("stop_sequences")
+    if stop_sequences:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, stop_sequences
+        )
 
     prompt_tokens = 0
     completion_tokens = 0
@@ -863,6 +871,21 @@ def set_converse_model_span_attributes(span, provider, model, kwargs):
     )
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, config.get("maxTokens")
+    )
+    stop_sequences = config.get("stopSequences")
+    if stop_sequences:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, stop_sequences
+        )
+
+    additional_fields = kwargs.get("additionalModelRequestFields") or {}
+    if isinstance(additional_fields, str):
+        try:
+            additional_fields = json.loads(additional_fields)
+        except (json.JSONDecodeError, TypeError):
+            additional_fields = {}
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, additional_fields.get("top_k")
     )
 
     tool_config = kwargs.get("toolConfig", {})
