@@ -740,7 +740,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             )
 
         elif isinstance(span_data, HandoffSpanData):
-            otel_span = self._start_handoff_span(span_data, parent_context, trace_id)
+            otel_span = self._start_handoff_span(span_data, parent_context, trace_id, conversation_id)
 
         elif isinstance(span_data, FunctionSpanData):
             agent_ctx = self._resolve_agent_parent(parent_context)
@@ -760,7 +760,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         ):
             agent_ctx = self._resolve_agent_parent(parent_context)
             otel_span = self._start_realtime_span(
-                span_data, agent_ctx, "openai.realtime.speech", "speech",
+                span_data, agent_ctx, "openai.realtime.speech", "speech", conversation_id,
             )
 
         elif (
@@ -770,7 +770,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         ):
             agent_ctx = self._resolve_agent_parent(parent_context)
             otel_span = self._start_realtime_span(
-                span_data, agent_ctx, "openai.realtime.transcription", "transcription",
+                span_data, agent_ctx, "openai.realtime.transcription", "transcription", conversation_id,
             )
 
         elif (
@@ -780,7 +780,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         ):
             agent_ctx = self._resolve_agent_parent(parent_context)
             otel_span = self._start_realtime_span(
-                span_data, agent_ctx, "openai.realtime.speech_group", "speech_group",
+                span_data, agent_ctx, "openai.realtime.speech_group", "speech_group", conversation_id,
             )
 
         if otel_span:
@@ -918,7 +918,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             raise
         return span, name_token
 
-    def _start_handoff_span(self, span_data, parent_context, trace_id):
+    def _start_handoff_span(self, span_data, parent_context, trace_id, conversation_id=None):
         """Create an OTel span for a HandoffSpanData."""
         from_agent = getattr(span_data, "from_agent", None) or "unknown"
         to_agent = getattr(span_data, "to_agent", None) or "unknown"
@@ -945,6 +945,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
         if to_agent and to_agent != "unknown":
             handoff_attributes[GEN_AI_HANDOFF_TO_AGENT] = to_agent
+        if conversation_id is not None:
+            handoff_attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = conversation_id
 
         return self.tracer.start_span(
             f"{from_agent} → {to_agent}.handoff",
@@ -999,7 +1001,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             start_time=time.time_ns(),
         )
 
-    def _start_realtime_span(self, span_data, parent_context, span_name, operation):
+    def _start_realtime_span(self, span_data, parent_context, span_name, operation, conversation_id=None):
         """Create an OTel span for a realtime span (Speech/Transcription/SpeechGroup).
 
         NOTE: "speech", "transcription", "speech_group" are OpenAI
@@ -1014,6 +1016,8 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         model = getattr(span_data, "model", None)
         if model:
             attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
+        if conversation_id is not None:
+            attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] = conversation_id
 
         return self.tracer.start_span(
             span_name,

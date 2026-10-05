@@ -1189,6 +1189,23 @@ class TestConversationId:
         agent_span = next(s for s in spans if s.name == "B.agent")
         assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in agent_span.attributes
 
+    def test_handoff_span_has_conversation_id(self, tracer_and_exporter, processor):
+        from agents import HandoffSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(processor, exporter, HandoffSpanData(from_agent="A", to_agent="B"))
+        handoff_span = next(s for s in spans if "handoff" in s.name)
+        assert handoff_span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-42"
+
+    def test_realtime_span_has_conversation_id(self, processor):
+        """_start_realtime_span carries gen_ai.conversation.id when provided."""
+        span_data = MagicMock()
+        span_data.model = None
+        otel_span = processor._start_realtime_span(
+            span_data, None, "openai.realtime.speech", "speech", "conv-rt"
+        )
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_CONVERSATION_ID) == "conv-rt"
+        otel_span.end()
+
 
 # ---------------------------------------------------------------------------
 # Integration: on_span_start/on_span_end still work end-to-end
