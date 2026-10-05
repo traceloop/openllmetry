@@ -108,6 +108,7 @@ def metrics_test_context_with_no_content(logger_provider):
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    """VCR configuration for Watsonx metrics tests."""
     return {
         "filter_headers": [
             "authorization",

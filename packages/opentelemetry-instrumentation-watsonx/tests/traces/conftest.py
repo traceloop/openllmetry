@@ -116,6 +116,7 @@ def clear_exporter(exporter_legacy):
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    """VCR configuration for Watsonx traces tests."""
     return {
         "filter_headers": [
             "authorization",
