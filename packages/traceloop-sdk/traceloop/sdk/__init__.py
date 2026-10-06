@@ -92,9 +92,21 @@ class Traceloop:
             trace_content: Controls whether prompts/completions are captured by the
                 bundled instrumentations. If ``None`` (default), the
                 ``TRACELOOP_TRACE_CONTENT`` environment variable is honored as
-                before. If ``True``/``False``, overrides it for the process. Not
-                applied when ``enabled=False`` or when tracing is disabled via
-                ``TRACELOOP_TRACING_ENABLED``.
+                before. If ``True``/``False``, this works by setting
+                ``os.environ["TRACELOOP_TRACE_CONTENT"]`` for the process, so:
+                - it is process-wide, and any child process spawned afterwards
+                  inherits it;
+                - it persists across later ``init()`` calls — a subsequent call
+                  with ``trace_content=None`` leaves it as-is, so the last
+                  explicit value wins;
+                - the per-association content allow-list
+                  (``override_enable_content_tracing``) can still turn content
+                  back on for specific spans even when ``trace_content=False``.
+                The override is applied even if ``init()`` later returns early
+                because the Traceloop API key is missing. It is *not* applied
+                when ``enabled=False`` or when tracing is disabled via
+                ``TRACELOOP_TRACING_ENABLED`` — both checks happen before this
+                override runs.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(

@@ -7,6 +7,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import workflow, task
+from traceloop.sdk.tracing.tracing import TracerWrapper
 
 
 @pytest.fixture(autouse=True)
@@ -62,6 +63,9 @@ def test_trace_content_param_disables_content(exporter, openai_client, monkeypat
     (exporter=exporter is passed so init() takes the real init path instead
     of returning early at the missing-API-key check.)"""
     monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
+    monkeypatch.setattr(
+        TracerWrapper, "enable_content_tracing", TracerWrapper.enable_content_tracing
+    )
 
     Traceloop.init(exporter=exporter, disable_batch=True, trace_content=False)
 
