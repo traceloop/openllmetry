@@ -278,3 +278,27 @@ def test_json_truncation_preserves_short_content(exporter, monkeypatch):
     # Check that short output was preserved completely
     output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert output_data == result
+
+
+def test_task_input_with_class_argument(exporter):
+    """A class passed as an argument (e.g. a structured-output schema) must
+    not cause the whole entity input attribute to be dropped."""
+    from pydantic import BaseModel
+
+    class Answer(BaseModel):
+        text: str
+
+    @task(name="structured_task")
+    def structured_task(question, response_format):
+        return question
+
+    structured_task("hi", response_format=Answer)
+
+    spans = exporter.get_finished_spans()
+    task_span = next(span for span in spans if span.name == "structured_task.task")
+    entity_input = task_span.attributes.get(SpanAttributes.TRACELOOP_ENTITY_INPUT)
+    assert entity_input is not None
+    assert json.loads(entity_input) == {
+        "args": ["hi"],
+        "kwargs": {"response_format": "Answer"},
+    }
