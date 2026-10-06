@@ -230,3 +230,80 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
 
     set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
     assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
+
+
+def test_streaming_accumulates_all_chunks_in_output_messages(exporter, monkeypatch):
+    import asyncio
+    import httpx
+    from google import genai
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+    pieces = ["The answer ", "is ", "forty-two."]
+
+    def make_chunk(text, is_last):
+        cand = {"content": {"role": "model", "parts": [{"text": text}]}}
+        if is_last:
+            cand["finishReason"] = "STOP"
+        return {"candidates": [cand]}
+
+    def handler(request):
+        body = "".join(
+            "data: " + json.dumps(make_chunk(t, i == len(pieces) - 1)) + "\n\n"
+            for i, t in enumerate(pieces)
+        )
+        return httpx.Response(
+            200, text=body, headers={"content-type": "text/event-stream"}
+        )
+
+    transport = httpx.MockTransport(handler)
+    client = genai.Client(
+        api_key="test-key",
+        http_options=types.HttpOptions(
+            base_url="http://mock",
+            httpx_client=httpx.Client(transport=transport),
+            httpx_async_client=httpx.AsyncClient(transport=transport),
+        ),
+    )
+
+    exporter.clear()
+    sync_received = [
+        r.text
+        for r in client.models.generate_content_stream(model="gemini-2.5-flash", contents="hi")
+    ]
+    assert "".join(sync_received) == "The answer is forty-two."
+    sync_span = exporter.get_finished_spans()[-1]
+    sync_output = json.loads(sync_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert sync_output == [
+        {
+            "role": "assistant",
+            "parts": [{"type": "text", "content": "The answer is forty-two."}],
+            "finish_reason": "stop",
+        }
+    ]
+
+    async def consume_async():
+        return [
+            r.text
+            async for r in await client.aio.models.generate_content_stream(
+                model="gemini-2.5-flash", contents="hi"
+            )
+        ]
+
+    exporter.clear()
+    async_received = asyncio.run(consume_async())
+    assert "".join(async_received) == "The answer is forty-two."
+    async_span = exporter.get_finished_spans()[-1]
+    async_output = json.loads(
+        async_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
+    )
+    assert async_output == [
+        {
+            "role": "assistant",
+            "parts": [{"type": "text", "content": "The answer is forty-two."}],
+            "finish_reason": "stop",
+        }
+    ]
+
