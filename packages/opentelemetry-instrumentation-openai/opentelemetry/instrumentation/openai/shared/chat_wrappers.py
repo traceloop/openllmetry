@@ -11,6 +11,7 @@ import pydantic
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _aparse_raw_response,
     _get_openai_base_url,
     _parse_arguments,
     _set_client_attributes,
@@ -254,7 +255,7 @@ async def achat_wrapper(
         duration = end_time - start_time
 
         _handle_response(
-            response,
+            await _aparse_raw_response(response),
             span,
             instance,
             token_counter,
