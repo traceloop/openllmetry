@@ -244,10 +244,13 @@ def test_no_bare_json_dumps_in_package():
     assert offenders == []
 
 
-def test_json_dumps_falls_back_on_lone_surrogate():
-    payload = {"content": "bad \ud83d text"}
+def test_json_dumps_escapes_only_lone_surrogate():
+    payload = {"content": "Бостон \ud83d café"}
 
     result = json_dumps(payload)
 
     result.encode("utf-8")  # must not raise
-    assert result == json.dumps(payload)
+    assert "\\ud83d" in result  # the unpairable surrogate is escaped
+    assert "Бостон" in result  # other non-ASCII text stays readable
+    assert "café" in result
+    assert json.loads(result) == payload
