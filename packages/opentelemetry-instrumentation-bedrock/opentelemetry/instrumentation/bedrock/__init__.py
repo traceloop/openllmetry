@@ -765,6 +765,18 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
     stream = response.get("stream")
     role = "unknown"
     if stream:
+        # Track whether span.end() has been called inside the metadata branch.
+        # If the caller breaks out of the loop early (or closes/drops the
+        # stream), metadata never arrives and the span would otherwise leak.
+        # The _SyncConverseStreamCloser below closes it as a fallback, and
+        # flushes the partial response captured up to that point.
+        # Sync mirror of _handle_async_converse_stream.
+        span_state = {"ended": False, "saw_message_stop": False}
+        partial_state = {
+            "response_msg": [],
+            "tool_blocks": [],
+            "reasoning_blocks": [],
+        }
 
         def handler(func):
             def wrap(*args, **kwargs):
@@ -797,8 +809,10 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     # last message sent
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
+                    span_state["ended"] = True
                     span.end()
                 elif "messageStop" in event:
+                    span_state["saw_message_stop"] = True
                     stop_reason = event.get("messageStop", {}).get("stopReason")
                     if should_emit_events() and event_logger:
                         emit_streaming_converse_response_event(
@@ -820,9 +834,47 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
                 return event
 
-            return partial(wrap, response_msg=[], tool_blocks=[], reasoning_blocks=[], span=span)
+            return partial(
+                wrap,
+                response_msg=partial_state["response_msg"],
+                tool_blocks=partial_state["tool_blocks"],
+                reasoning_blocks=partial_state["reasoning_blocks"],
+                span=span,
+            )
 
         stream._parse_event = handler(stream._parse_event)
+
+        def _flush_partial():
+            """Called when iteration ends without seeing messageStop+metadata.
+            Records partial response content so the span isn't empty."""
+            if span_state["saw_message_stop"]:
+                return  # already flushed by messageStop handler
+            if not span.is_recording():
+                return
+            try:
+                if should_emit_events() and event_logger:
+                    emit_streaming_converse_response_event(
+                        event_logger,
+                        partial_state["response_msg"],
+                        role,
+                        None,  # no finish_reason — stream was cut short
+                    )
+                else:
+                    set_converse_streaming_response_span_attributes(
+                        partial_state["response_msg"],
+                        role,
+                        span,
+                        finish_reason=None,
+                        tool_blocks=partial_state["tool_blocks"],
+                        reasoning_blocks=partial_state["reasoning_blocks"],
+                    )
+            except Exception:  # noqa: BLE001 — never fail in instrumentation cleanup
+                pass
+
+        # Wrap the stream so span.end() fires even when the caller breaks
+        # early, closes the stream, or drops it. Sync mirror of the
+        # _ConverseStreamCloser used by _handle_async_converse_stream.
+        response["stream"] = _SyncConverseStreamCloser(stream, span, span_state, _flush_partial)
 
 
 @dont_throw
@@ -984,6 +1036,51 @@ class _ConverseStreamCloser:
                 self._span_state["ended"] = True
                 self._flush_partial()
                 self._span.end()
+
+
+class _SyncConverseStreamCloser:
+    """Sync counterpart of _ConverseStreamCloser: wraps a converse_stream
+    `stream` so that `span.end()` is guaranteed to fire exactly once —
+    normally via the patched `_parse_event` when metadata arrives, or as a
+    fallback when iteration ends early (`break`, `close()`, or a dropped
+    stream) or raises.
+
+    On the fallback path, partial response content captured up to that point
+    is flushed onto the span as attributes (no finish_reason) so the
+    dashboard still shows what the caller consumed. The span is ended with
+    default (Unset) status — per OTel guidance, early termination is not an
+    error."""
+
+    def __init__(self, inner, span, span_state, flush_partial):
+        self._inner = inner
+        self._span = span
+        self._span_state = span_state
+        self._flush_partial = flush_partial
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    def __iter__(self):
+        try:
+            for event in self._inner:
+                yield event
+        finally:
+            self._ensure_ended()
+
+    def close(self):
+        # End the span promptly when the caller closes the stream instead of
+        # waiting for the abandoned iterator to be garbage-collected, then
+        # delegate to the wrapped stream's own close().
+        self._ensure_ended()
+        close = getattr(self._inner, "close", None)
+        if callable(close):
+            close()
+
+    def _ensure_ended(self):
+        if not self._span_state["ended"]:
+            self._span_state["ended"] = True
+            self._flush_partial()
+            self._span.end()
 
 
 def _get_vendor_model(modelId):
