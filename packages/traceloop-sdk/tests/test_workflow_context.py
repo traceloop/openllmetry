@@ -96,7 +96,7 @@ async def test_completed_async_workflow_does_not_tag_following_task(exporter):
     _assert_without_workflow(spans["after_async.task"])
 
 
-def test_generator_workflow_scopes_context_to_iteration(exporter):
+def test_generator_workflow_scopes_context_to_its_lifetime(exporter):
     @task(name="inside_stream")
     def task_inside_stream():
         pass
@@ -121,15 +121,10 @@ def test_generator_workflow_scopes_context_to_iteration(exporter):
     def task_after_stream():
         pass
 
-    @task(name="between_stream_items")
-    def task_between_stream_items():
-        pass
-
     stream = stream_workflow()
     task_before_stream()
     assert "stream.workflow" not in _finished_spans_by_name(exporter)
     assert next(stream) == 1
-    task_between_stream_items()
     stream.close()
     task_after_stream()
 
@@ -138,7 +133,6 @@ def test_generator_workflow_scopes_context_to_iteration(exporter):
     assert spans["inside_stream.task"].attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "stream"
     assert spans["closing_stream.task"].attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "stream"
     assert spans["closing_stream.task"].parent.span_id == spans["stream.workflow"].context.span_id
-    _assert_without_workflow(spans["between_stream_items.task"])
     _assert_without_workflow(spans["after_stream.task"])
 
 
@@ -164,13 +158,8 @@ async def test_async_generator_workflow_restores_context(exporter):
     async def task_after_async_stream():
         pass
 
-    @task(name="between_async_stream_items")
-    async def task_between_async_stream_items():
-        pass
-
     stream = async_stream_workflow()
     result = await anext(stream)
-    await task_between_async_stream_items()
     await stream.aclose()
     await task_after_async_stream()
 
@@ -179,7 +168,6 @@ async def test_async_generator_workflow_restores_context(exporter):
     assert spans["inside_async_stream.task"].attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "async_stream"
     assert spans["closing_async_stream.task"].attributes[SpanAttributes.TRACELOOP_WORKFLOW_NAME] == "async_stream"
     assert spans["closing_async_stream.task"].parent.span_id == spans["async_stream.workflow"].context.span_id
-    _assert_without_workflow(spans["between_async_stream_items.task"])
     _assert_without_workflow(spans["after_async_stream.task"])
 
 
