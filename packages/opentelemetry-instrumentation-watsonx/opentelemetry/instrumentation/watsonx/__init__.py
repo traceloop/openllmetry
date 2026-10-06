@@ -5,6 +5,7 @@ import os
 import time
 import types
 import warnings
+from collections.abc import Mapping
 from typing import Collection, Optional, Union
 
 from opentelemetry import context as context_api
@@ -110,13 +111,68 @@ def _set_span_attribute(span, name, value):
     return
 
 
-def _set_api_attributes(span):
+def _safe_getattr(value, name):
+    """Read optional SDK attributes without breaking the instrumented call."""
+    try:
+        return getattr(value, name, None)
+    except Exception:
+        return None
+
+
+def _get_url_from_credentials(credentials):
+    """Return a URL from current credential objects or legacy mappings."""
+    try:
+        if isinstance(credentials, Mapping):
+            url = credentials.get("url")
+        else:
+            url = getattr(credentials, "url", None)
+    except Exception:
+        return None
+
+    return url if isinstance(url, str) and url else None
+
+
+def _get_url_from_client(client):
+    """Return the endpoint exposed by current or legacy Watsonx clients."""
+    for attribute in ("credentials", "wml_credentials"):
+        credentials = _safe_getattr(client, attribute)
+        if url := _get_url_from_credentials(credentials):
+            return url
+    return None
+
+
+def _get_api_base_url(instance=None, kwargs=None):
+    """Resolve the configured Watsonx endpoint when exposed by the SDK."""
+    kwargs = kwargs or {}
+
+    if url := _get_url_from_credentials(kwargs.get("credentials")):
+        return url
+
+    if url := _get_url_from_client(kwargs.get("api_client")):
+        return url
+
+    url = _safe_getattr(instance, "url")
+    if isinstance(url, str) and url:
+        return url
+
+    for attribute in ("credentials", "wml_credentials"):
+        credentials = _safe_getattr(instance, attribute)
+        if url := _get_url_from_credentials(credentials):
+            return url
+
+    if url := _get_url_from_client(_safe_getattr(instance, "_client")):
+        return url
+
+    return None
+
+
+def _set_api_attributes(span, instance=None, kwargs=None):
     if not span.is_recording():
         return
     _set_span_attribute(
         span,
         WatsonxSpanAttributes.WATSONX_API_BASE,
-        "https://us-south.ml.cloud.ibm.com",
+        _get_api_base_url(instance, kwargs),
     )
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_TYPE, "watsonx.ai")
     _set_span_attribute(span, WatsonxSpanAttributes.WATSONX_API_VERSION, "1.0")
@@ -488,8 +544,8 @@ def _with_tracer_wrapper(func):
 
 
 @dont_throw
-def _handle_input(span, event_logger, name, instance, response_counter, args, kwargs):
-    _set_api_attributes(span)
+def _handle_input(span, event_logger, name, instance, args, kwargs):
+    _set_api_attributes(span, instance, kwargs)
 
     if "generate" in name:
         set_model_input_attributes(span, instance)
