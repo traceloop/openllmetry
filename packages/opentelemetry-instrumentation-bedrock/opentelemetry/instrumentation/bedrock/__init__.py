@@ -736,6 +736,9 @@ class _SyncBodyView:
 @dont_throw
 def _handle_converse(span, kwargs, response, metric_params, event_logger):
     (provider, model_vendor, model) = _get_vendor_model(kwargs.get("modelId"))
+    metric_params.vendor = provider
+    metric_params.model = model
+    metric_params.is_stream = False
     guardrail_converse(span, response, provider, model, metric_params)
 
     set_converse_model_span_attributes(span, provider, model, kwargs)
@@ -795,6 +798,9 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
                     # last message sent
+                    metric_params.vendor = provider
+                    metric_params.model = model
+                    metric_params.is_stream = True
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
@@ -883,6 +889,9 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
+                    metric_params.vendor = provider
+                    metric_params.model = model
+                    metric_params.is_stream = True
                     guardrail_converse(span, event["metadata"], provider, model, metric_params)
                     converse_usage_record(span, event["metadata"], metric_params)
                     span_state["ended"] = True
