@@ -411,7 +411,10 @@ async def _aparse_raw_response(response):
     is a coroutine that the synchronous `model_as_dict` can't await.
     Any other response is returned unchanged."""
     if is_openai_v1():
-        from openai._response import AsyncAPIResponse
+        try:
+            from openai._response import AsyncAPIResponse
+        except ImportError:  # older openai 1.x releases have no AsyncAPIResponse
+            return response
 
         if isinstance(response, AsyncAPIResponse):
             return await response.parse()
