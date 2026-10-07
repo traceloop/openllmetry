@@ -84,7 +84,8 @@ def test_public_imports_remain_available() -> None:
     assert SDKTraceloopImageUploader is TraceloopImageUploader
 
 
-def test_custom_uploader_is_injected_even_when_falsey() -> None:
+def test_custom_uploader_is_injected_even_when_falsey(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TRACELOOP_TRACING_ENABLED", raising=False)
     uploader = FalseyImageUploader()
 
     with (
@@ -101,7 +102,10 @@ def test_custom_uploader_is_injected_even_when_falsey() -> None:
     assert tracer_wrapper.call_args.kwargs["image_uploader"] is uploader
 
 
-def test_traceloop_uploader_is_the_default() -> None:
+def test_traceloop_uploader_is_the_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TRACELOOP_BASE_URL", raising=False)
+    monkeypatch.delenv("TRACELOOP_API_KEY", raising=False)
+    monkeypatch.delenv("TRACELOOP_TRACING_ENABLED", raising=False)
     with (
         patch("traceloop.sdk.TracerWrapper") as tracer_wrapper,
         patch("traceloop.sdk.is_metrics_enabled", return_value=False),
