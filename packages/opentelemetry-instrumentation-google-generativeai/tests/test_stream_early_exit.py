@@ -200,3 +200,54 @@ async def test_async_aclose_ends_span(instrumented):
     gc.collect()
     assert len(open_spans.open) == 0
     _finished_stream_span(exporter)
+
+
+# ---------------------------------------------------------------------------
+# Finalization failures must be contained: they must neither mask the stream's
+# completion/close signal nor leave the span un-ended (CodeRabbit review on
+# PR #4567: emit_choice_events / set_response_attributes can raise inside the
+# finalization finally-block, skipping span.end() and replacing close()).
+# ---------------------------------------------------------------------------
+
+
+def _fail_finalization(monkeypatch):
+    """Make the legacy-attributes finalization path raise (default instrumentor
+    mode: use_legacy_attributes=True -> set_response_attributes is used)."""
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("telemetry finalization boom")
+
+    import opentelemetry.instrumentation.google_generativeai as pkg
+
+    monkeypatch.setattr(pkg, "set_response_attributes", _boom)
+
+
+def test_sync_finalization_error_does_not_break_close_or_leak_span(
+    instrumented, monkeypatch
+):
+    _fail_finalization(monkeypatch)
+    open_spans, exporter = instrumented
+    client = _sync_client()
+    stream = client.models.generate_content_stream(model="m", contents="hi")
+    next(stream)
+    # The telemetry failure must not propagate out of close() ...
+    stream.close()
+    gc.collect()
+    # ... and the span must still be ended.
+    assert len(open_spans.open) == 0
+    _finished_stream_span(exporter)
+
+
+@pytest.mark.asyncio
+async def test_async_finalization_error_does_not_break_aclose_or_leak_span(
+    instrumented, monkeypatch
+):
+    _fail_finalization(monkeypatch)
+    open_spans, exporter = instrumented
+    client = _async_client()
+    stream = await client.aio.models.generate_content_stream(model="m", contents="hi")
+    await anext(stream)
+    await stream.aclose()
+    gc.collect()
+    assert len(open_spans.open) == 0
+    _finished_stream_span(exporter)
