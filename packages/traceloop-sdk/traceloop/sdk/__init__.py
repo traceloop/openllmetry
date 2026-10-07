@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import warnings
 from pathlib import Path
 
@@ -33,6 +34,10 @@ from traceloop.sdk.tracing.tracing import (
 from typing import Dict
 from traceloop.sdk.client.client import Client
 from traceloop.sdk.associations.associations import AssociationProperty as AssociationProperty
+
+
+# Serializes the temporary TRACELOOP_METRICS_ENABLED override in Traceloop.init()
+_metrics_enabled_lock = threading.Lock()
 
 
 class Traceloop:
@@ -110,7 +115,9 @@ class Traceloop:
                 override runs.
             metrics_enabled: Enables or disables metric exporting. An explicit value
                 takes precedence over ``TRACELOOP_METRICS_ENABLED``. If ``None``, the
-                environment variable is used and metrics default to enabled.
+                environment variable is used and metrics default to enabled. Like the
+                environment variable, it only applies when metrics are first set up, so
+                a later ``init()`` call does not stop metrics that are already running.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -209,30 +216,31 @@ class Traceloop:
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )
-        metrics_enabled_by_config = is_metrics_enabled() if metrics_enabled is None else metrics_enabled
-        previous_metrics_enabled = os.environ.get("TRACELOOP_METRICS_ENABLED")
-        if metrics_enabled is not None:
-            os.environ["TRACELOOP_METRICS_ENABLED"] = str(metrics_enabled).lower()
-        try:
-            Traceloop.__tracer_wrapper = TracerWrapper(
-                disable_batch=disable_batch,
-                processor=processor,
-                propagator=propagator,
-                exporter=exporter,
-                sampler=sampler,
-                should_enrich_metrics=should_enrich_metrics,
-                image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
-                instruments=instruments,
-                block_instruments=block_instruments,
-                span_postprocess_callback=span_postprocess_callback,
-                use_attributes=use_attributes,
-            )
-        finally:
+        with _metrics_enabled_lock:
+            metrics_enabled_by_config = is_metrics_enabled() if metrics_enabled is None else metrics_enabled
+            previous_metrics_enabled = os.environ.get("TRACELOOP_METRICS_ENABLED")
             if metrics_enabled is not None:
-                if previous_metrics_enabled is None:
-                    os.environ.pop("TRACELOOP_METRICS_ENABLED", None)
-                else:
-                    os.environ["TRACELOOP_METRICS_ENABLED"] = previous_metrics_enabled
+                os.environ["TRACELOOP_METRICS_ENABLED"] = str(metrics_enabled).lower()
+            try:
+                Traceloop.__tracer_wrapper = TracerWrapper(
+                    disable_batch=disable_batch,
+                    processor=processor,
+                    propagator=propagator,
+                    exporter=exporter,
+                    sampler=sampler,
+                    should_enrich_metrics=should_enrich_metrics,
+                    image_uploader=image_uploader or ImageUploader(api_endpoint, api_key),
+                    instruments=instruments,
+                    block_instruments=block_instruments,
+                    span_postprocess_callback=span_postprocess_callback,
+                    use_attributes=use_attributes,
+                )
+            finally:
+                if metrics_enabled is not None:
+                    if previous_metrics_enabled is None:
+                        os.environ.pop("TRACELOOP_METRICS_ENABLED", None)
+                    else:
+                        os.environ["TRACELOOP_METRICS_ENABLED"] = previous_metrics_enabled
 
         metrics_disabled_by_config = not metrics_enabled_by_config
         has_custom_spans_pipeline = processor or exporter
