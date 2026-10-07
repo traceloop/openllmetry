@@ -1,5 +1,6 @@
 """OpenTelemetry Bedrock instrumentation"""
 
+import copy
 import json
 import logging
 import os
@@ -105,6 +106,18 @@ class MetricParams:
         self.guardrail_words = guardrail_words
         self.prompt_caching = prompt_caching
         self.start_time = time.time()
+
+    def for_call(self) -> "MetricParams":
+        """Return a copy of this state for one client call.
+
+        ``start_time`` on this instance is the client creation timestamp, so
+        every call takes its own copy with its own start time; a copied
+        instance also keeps concurrent calls on the same client from
+        overwriting each other's call state.
+        """
+        call_params = copy.copy(self)
+        call_params.start_time = time.time()
+        return call_params
 
 
 logger = logging.getLogger(__name__)
@@ -235,6 +248,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes,
             record_exception=False, set_status_on_exception=False,
         ) as span:
+            call_metric_params = metric_params.for_call()
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
@@ -242,7 +256,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
-            _handle_call(span, kwargs, response, metric_params, event_logger)
+            _handle_call(span, kwargs, response, call_metric_params, event_logger)
             return response
 
     return with_instrumentation
@@ -268,6 +282,7 @@ def _instrumented_model_invoke_with_response_stream(
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        call_metric_params = metric_params.for_call()
 
         try:
             response = fn(*args, **kwargs)
@@ -277,7 +292,7 @@ def _instrumented_model_invoke_with_response_stream(
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
             raise
-        _handle_stream_call(span, kwargs, response, metric_params, event_logger)
+        _handle_stream_call(span, kwargs, response, call_metric_params, event_logger)
 
         return response
 
@@ -305,6 +320,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
             attributes=span_attributes,
             record_exception=False, set_status_on_exception=False,
         ) as span:
+            call_metric_params = metric_params.for_call()
             try:
                 response = fn(*args, **kwargs)
             except Exception as e:
@@ -312,7 +328,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 raise
-            _handle_converse(span, kwargs, response, metric_params, event_logger)
+            _handle_converse(span, kwargs, response, call_metric_params, event_logger)
 
             return response
 
@@ -336,6 +352,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        call_metric_params = metric_params.for_call()
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
@@ -345,7 +362,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             span.end()
             raise
         if span.is_recording():
-            _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
+            _handle_converse_stream(span, kwargs, response, call_metric_params, event_logger)
 
         return response
 
@@ -368,8 +385,11 @@ def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
+            call_metric_params = metric_params.for_call()
             response = await fn(*args, **kwargs)
-            await _handle_async_call(span, kwargs, response, metric_params, event_logger)
+            await _handle_async_call(
+                span, kwargs, response, call_metric_params, event_logger
+            )
             return response
 
     return with_instrumentation
@@ -395,9 +415,12 @@ def _instrumented_async_model_invoke_with_response_stream(
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        call_metric_params = metric_params.for_call()
 
         response = await fn(*args, **kwargs)
-        _handle_async_stream_call(span, kwargs, response, metric_params, event_logger)
+        _handle_async_stream_call(
+            span, kwargs, response, call_metric_params, event_logger
+        )
 
         return response
 
@@ -421,8 +444,9 @@ def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         ) as span:
+            call_metric_params = metric_params.for_call()
             response = await fn(*args, **kwargs)
-            _handle_converse(span, kwargs, response, metric_params, event_logger)
+            _handle_converse(span, kwargs, response, call_metric_params, event_logger)
 
             return response
 
@@ -446,9 +470,12 @@ def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger)
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        call_metric_params = metric_params.for_call()
         response = await fn(*args, **kwargs)
         if span.is_recording():
-            _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger)
+            _handle_async_converse_stream(
+                span, kwargs, response, call_metric_params, event_logger
+            )
 
         return response
 
