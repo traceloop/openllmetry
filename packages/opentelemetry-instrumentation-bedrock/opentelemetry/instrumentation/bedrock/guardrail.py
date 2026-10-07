@@ -31,30 +31,32 @@ def is_guardrail_activated(response):
                 return True
     if response.get("stopReason") == "guardrail_intervened":
         return True
-    return response.get("amazon-bedrock-guardrailAction") != "NONE"
+    return response.get("amazon-bedrock-guardrailAction", "NONE") != "NONE"
 
 
 def handle_invoke_metrics(t: Type, guardrail, attrs, metric_params):
     if "invocationMetrics" in guardrail:
         if "guardrailProcessingLatency" in guardrail["invocationMetrics"]:
             input_latency = guardrail["invocationMetrics"]["guardrailProcessingLatency"]
-            metric_params.guardrail_latency_histogram.record(
-                input_latency,
-                attributes={
-                    **attrs,
-                    GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
-                },
-            )
+            if metric_params.guardrail_latency_histogram:
+                metric_params.guardrail_latency_histogram.record(
+                    input_latency,
+                    attributes={
+                        **attrs,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
+                    },
+                )
         if "guardrailCoverage" in guardrail["invocationMetrics"]:
             coverage = guardrail["invocationMetrics"]["guardrailCoverage"]
             char_guarded = coverage["textCharacters"]["guarded"]
-            metric_params.guardrail_coverage.add(
-                char_guarded,
-                attributes={
-                    **attrs,
-                    GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
-                },
-            )
+            if metric_params.guardrail_coverage:
+                metric_params.guardrail_coverage.add(
+                    char_guarded,
+                    attributes={
+                        **attrs,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: t.value,
+                    },
+                )
 
 
 def handle_sensitive(t: Type, guardrail, attrs, metric_params):
@@ -65,26 +67,28 @@ def handle_sensitive(t: Type, guardrail, attrs, metric_params):
         if "piiEntities" in sensitive_info:
             for entry in sensitive_info["piiEntities"]:
                 pii.add(entry["type"])
-                metric_params.guardrail_sensitive_info.add(
-                    1,
-                    attributes={
-                        **attrs,
-                        GuardrailAttributes.TYPE: t.value,
-                        GuardrailAttributes.PII: entry["type"],
-                    },
-                )
+                if metric_params.guardrail_sensitive_info:
+                    metric_params.guardrail_sensitive_info.add(
+                        1,
+                        attributes={
+                            **attrs,
+                            GuardrailAttributes.TYPE: t.value,
+                            GuardrailAttributes.PII: entry["type"],
+                        },
+                    )
 
         if "regexes" in sensitive_info:
             for entry in sensitive_info["regexes"]:
                 regex.add(entry["name"])
-                metric_params.guardrail_sensitive_info.add(
-                    1,
-                    attributes={
-                        **attrs,
-                        GuardrailAttributes.TYPE: t.value,
-                        GuardrailAttributes.PATTERN: entry["name"],
-                    },
-                )
+                if metric_params.guardrail_sensitive_info:
+                    metric_params.guardrail_sensitive_info.add(
+                        1,
+                        attributes={
+                            **attrs,
+                            GuardrailAttributes.TYPE: t.value,
+                            GuardrailAttributes.PATTERN: entry["name"],
+                        },
+                    )
     return {
         "pii": [*pii],
         "regex": [*regex],
@@ -97,14 +101,15 @@ def handle_topic(t: Type, guardrail, attrs, metric_params):
         topics = guardrail["topicPolicy"]["topics"]
         for topic in topics:
             blocked_topics.add(topic["name"])
-            metric_params.guardrail_topic.add(
-                1,
-                attributes={
-                    **attrs,
-                    GuardrailAttributes.TYPE: t.value,
-                    GuardrailAttributes.TOPIC: topic["name"],
-                },
-            )
+            if metric_params.guardrail_topic:
+                metric_params.guardrail_topic.add(
+                    1,
+                    attributes={
+                        **attrs,
+                        GuardrailAttributes.TYPE: t.value,
+                        GuardrailAttributes.TOPIC: topic["name"],
+                    },
+                )
     return [*blocked_topics]
 
 
@@ -114,15 +119,16 @@ def handle_content(t: Type, guardrail, attrs, metric_params):
         filters = guardrail["contentPolicy"]["filters"]
         for filter in filters:
             content.add(filter["type"])
-            metric_params.guardrail_content.add(
-                1,
-                attributes={
-                    **attrs,
-                    GuardrailAttributes.TYPE: t.value,
-                    GuardrailAttributes.CONTENT: filter["type"],
-                    GuardrailAttributes.CONFIDENCE: filter["confidence"],
-                },
-            )
+            if metric_params.guardrail_content:
+                metric_params.guardrail_content.add(
+                    1,
+                    attributes={
+                        **attrs,
+                        GuardrailAttributes.TYPE: t.value,
+                        GuardrailAttributes.CONTENT: filter["type"],
+                        GuardrailAttributes.CONFIDENCE: filter["confidence"],
+                    },
+                )
     return [*content]
 
 
@@ -133,25 +139,27 @@ def handle_words(t: Type, guardrail, attrs, metric_params):
         if "customWords" in filters:
             for filter in filters["customWords"]:
                 words.add(filter["match"])
-                metric_params.guardrail_words.add(
-                    1,
-                    attributes={
-                        **attrs,
-                        GuardrailAttributes.TYPE: t.value,
-                        GuardrailAttributes.MATCH: filter["match"],
-                    },
-                )
+                if metric_params.guardrail_words:
+                    metric_params.guardrail_words.add(
+                        1,
+                        attributes={
+                            **attrs,
+                            GuardrailAttributes.TYPE: t.value,
+                            GuardrailAttributes.MATCH: filter["match"],
+                        },
+                    )
         if "managedWordLists" in filters:
             for filter in filters["managedWordLists"]:
                 words.add(filter["match"])
-                metric_params.guardrail_words.add(
-                    1,
-                    attributes={
-                        **attrs,
-                        GuardrailAttributes.TYPE: t.value,
-                        GuardrailAttributes.MATCH: filter["match"],
-                    },
-                )
+                if metric_params.guardrail_words:
+                    metric_params.guardrail_words.add(
+                        1,
+                        attributes={
+                            **attrs,
+                            GuardrailAttributes.TYPE: t.value,
+                            GuardrailAttributes.MATCH: filter["match"],
+                        },
+                    )
     return [*words]
 
 
@@ -176,7 +184,8 @@ def guardrail_converse(span, response, vendor, model, metric_params):
             for guardrail_info in guardrail_infos:
                 output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
     if is_guardrail_activated(response):
-        metric_params.guardrail_activation.add(1, attrs)
+        if metric_params.guardrail_activation:
+            metric_params.guardrail_activation.add(1, attrs)
         set_guardrail_attributes(span, input_filters, output_filters)
 
 
@@ -205,7 +214,8 @@ def guardrail_handling(span, response_body, vendor, model, metric_params):
                     output_filters.append(_handle(Type.OUTPUT, guardrail_info, attrs, metric_params))
 
         if is_guardrail_activated(response_body):
-            metric_params.guardrail_activation.add(1, attrs)
+            if metric_params.guardrail_activation:
+                metric_params.guardrail_activation.add(1, attrs)
             set_guardrail_attributes(span, input_filters, output_filters)
 
 
