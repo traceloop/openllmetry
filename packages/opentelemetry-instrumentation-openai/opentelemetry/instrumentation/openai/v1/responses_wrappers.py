@@ -10,6 +10,7 @@ from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
 from openai._response import APIResponse, AsyncAPIResponse
 from opentelemetry import context as context_api
+from opentelemetry.context import Context
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -94,7 +95,7 @@ except ImportError:
 SPAN_NAME = "openai.response"
 
 
-def _sanitize_sentinel_values(kwargs: dict) -> dict:
+def _sanitize_sentinel_values(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Remove OpenAI sentinel values (NOT_GIVEN, Omit) from kwargs.
 
     OpenAI SDK uses sentinel objects for unset optional parameters.
@@ -104,12 +105,17 @@ def _sanitize_sentinel_values(kwargs: dict) -> dict:
     This removes sentinel values so the default (e.g., {}) is used instead
     when calling .get() on the sanitized dict.
 
-    If no sentinel types are available (older SDK), returns kwargs unchanged.
+    Explicit reasoning=None is normalized for the same chained access.
     """
-    if not _OPENAI_SENTINEL_TYPES:
-        return kwargs
-    return {k: v for k, v in kwargs.items()
-            if not isinstance(v, _OPENAI_SENTINEL_TYPES)}
+    sanitized = {
+        key: value
+        for key, value in kwargs.items()
+        if not _OPENAI_SENTINEL_TYPES
+        or not isinstance(value, _OPENAI_SENTINEL_TYPES)
+    }
+    if sanitized.get("reasoning") is None and "reasoning" in sanitized:
+        sanitized["reasoning"] = {}
+    return sanitized
 
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
@@ -534,32 +540,75 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
-def _cache_raw_stream_response(
+def _create_response_stream(
     *,
     tracer: Tracer,
-    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
-    parsed_response: Union[Stream, AsyncStream],
+    response: Union[Stream, AsyncStream],
     start_time: int,
     request_kwargs: dict[str, Any],
     instance: Any,
-) -> None:
+    context: Context,
+) -> "ResponseStream":
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
         start_time=start_time,
-        context=context_api.get_current(),
+        context=context,
     )
-    _set_request_attributes(span, prepare_kwargs_for_shared_attributes(request_kwargs), instance)
-    wrapped_stream = ResponseStream(
-        span=span,
-        response=parsed_response,
-        start_time=start_time,
-        request_kwargs=request_kwargs,
-        tracer=tracer,
+    try:
+        _set_request_attributes(
+            span,
+            prepare_kwargs_for_shared_attributes(request_kwargs),
+            instance,
+        )
+        return ResponseStream(
+            span=span,
+            response=response,
+            start_time=start_time,
+            request_kwargs=request_kwargs,
+            tracer=tracer,
+        )
+    except Exception:
+        span.end()
+        raise
+
+
+def _instrument_raw_response_stream_parser(
+    *,
+    tracer: Tracer,
+    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
+    start_time: int,
+    request_kwargs: dict[str, Any],
+    instance: Any,
+) -> None:
+    options = response._options
+    existing_post_parser = options.post_parser
+    context = context_api.get_current()
+
+    def trace_stream(parsed_response: Any) -> Any:
+        if callable(existing_post_parser):
+            parsed_response = existing_post_parser(parsed_response)
+        if not isinstance(parsed_response, (Stream, AsyncStream)):
+            return parsed_response
+        return _create_response_stream(
+            tracer=tracer,
+            response=parsed_response,
+            start_time=start_time,
+            request_kwargs=request_kwargs,
+            instance=instance,
+            context=context,
+        )
+
+    options.post_parser = trace_stream
+
+
+def _is_raw_stream_response(
+    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
+) -> bool:
+    return bool(
+        getattr(response, "_stream", False)
+        or getattr(response, "_is_sse_stream", False)
     )
-    parsed_by_type = getattr(response, "_parsed_by_type", None)
-    if isinstance(parsed_by_type, dict):
-        parsed_by_type[getattr(response, "_cast_to", None)] = wrapped_stream
 
 
 @dont_throw
@@ -575,22 +624,13 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
-            # Capture current trace context to maintain trace continuity
-            ctx = context_api.get_current()
-            span = tracer.start_span(
-                SPAN_NAME,
-                kind=SpanKind.CLIENT,
-                start_time=start_time,
-                context=ctx,
-            )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-
-            return ResponseStream(
-                span=span,
+            return _create_response_stream(
+                tracer=tracer,
                 response=response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
-                tracer=tracer,
+                instance=instance,
+                context=context_api.get_current(),
             )
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
@@ -656,17 +696,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             set_data_attributes(traced_data, span)
         span.end()
         raise
-    parsed_response = parse_response(response)
-    if isinstance(parsed_response, Stream):
-        _cache_raw_stream_response(
+    if isinstance(
+        response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)
+    ) and _is_raw_stream_response(response):
+        _instrument_raw_response_stream_parser(
             tracer=tracer,
             response=response,
-            parsed_response=parsed_response,
             start_time=start_time,
             request_kwargs=non_sentinel_kwargs,
             instance=instance,
         )
         return response
+    parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None and _was_response_already_completed(parsed_response.id):
@@ -757,22 +798,13 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
-            # Capture current trace context to maintain trace continuity
-            ctx = context_api.get_current()
-            span = tracer.start_span(
-                SPAN_NAME,
-                kind=SpanKind.CLIENT,
-                start_time=start_time,
-                context=ctx,
-            )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-
-            return ResponseStream(
-                span=span,
+            return _create_response_stream(
+                tracer=tracer,
                 response=response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
-                tracer=tracer,
+                instance=instance,
+                context=context_api.get_current(),
             )
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
@@ -834,17 +866,18 @@ async def async_responses_get_or_create_wrapper(
             set_data_attributes(traced_data, span)
         span.end()
         raise
-    parsed_response = await async_parse_response(response)
-    if isinstance(parsed_response, (Stream, AsyncStream)):
-        _cache_raw_stream_response(
+    if isinstance(
+        response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)
+    ) and _is_raw_stream_response(response):
+        _instrument_raw_response_stream_parser(
             tracer=tracer,
             response=response,
-            parsed_response=parsed_response,
             start_time=start_time,
             request_kwargs=non_sentinel_kwargs,
             instance=instance,
         )
         return response
+    parsed_response = await async_parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None and _was_response_already_completed(parsed_response.id):
