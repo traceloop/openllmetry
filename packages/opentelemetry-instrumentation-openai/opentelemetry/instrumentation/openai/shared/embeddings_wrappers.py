@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_LLM_USAGE_TOKEN_TYPES,
+    _aparse_raw_response,
     _get_openai_base_url,
     _set_client_attributes,
     _set_request_attributes,
@@ -170,7 +171,7 @@ async def aembeddings_wrapper(
         duration = end_time - start_time
 
         _handle_response(
-            response,
+            await _aparse_raw_response(response),
             span,
             instance,
             token_counter,

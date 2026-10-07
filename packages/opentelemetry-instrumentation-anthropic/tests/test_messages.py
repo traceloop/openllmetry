@@ -2669,3 +2669,48 @@ def test_process_response_item_no_crash_on_missing_input_key():
     _process_response_item(item, complete_response)
 
     assert complete_response["events"][0]["input"] == '{"key": "value"}'
+
+
+@pytest.mark.asyncio
+async def test_async_anthropic_with_streaming_response(instrument_legacy, span_exporter):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4551:
+    for async `with_streaming_response`, the raw response is an AsyncAPIResponse whose
+    `parse()` is a coroutine; it must be awaited so the response is recorded on the span."""
+    import anthropic
+    import httpx
+
+    body = {
+        "id": "msg_1",
+        "type": "message",
+        "role": "assistant",
+        "model": "claude-haiku-4-5",
+        "content": [{"type": "text", "text": "Hello!"}],
+        "stop_reason": "end_turn",
+        "stop_sequence": None,
+        "usage": {"input_tokens": 11, "output_tokens": 5},
+    }
+    client = anthropic.AsyncAnthropic(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=body))
+        ),
+    )
+
+    async with client.messages.with_streaming_response.create(
+        model="claude-haiku-4-5",
+        max_tokens=10,
+        messages=[{"role": "user", "content": "hi"}],
+    ) as response:
+        message = await response.parse()
+
+    assert message.content[0].text == "Hello!"
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["anthropic.chat"]
+    anthropic_span = spans[0]
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_ID] == "msg_1"
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 5
+    output_messages = json.loads(anthropic_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == "Hello!"

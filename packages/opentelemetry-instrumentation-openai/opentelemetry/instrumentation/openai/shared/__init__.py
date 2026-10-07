@@ -405,6 +405,22 @@ def model_as_dict(model):
         return model
 
 
+@dont_throw
+async def _aparse_raw_response(response):
+    """Parse an AsyncAPIResponse (e.g. from `.with_streaming_response`), whose `parse()`
+    is a coroutine that the synchronous `model_as_dict` can't await.
+    Any other response is returned unchanged."""
+    if is_openai_v1():
+        try:
+            from openai._response import AsyncAPIResponse
+        except ImportError:  # older openai 1.x releases have no AsyncAPIResponse
+            return response
+
+        if isinstance(response, AsyncAPIResponse):
+            return await response.parse()
+    return response
+
+
 def _token_type(token_type: str):
     if token_type == "prompt_tokens":
         return "input"

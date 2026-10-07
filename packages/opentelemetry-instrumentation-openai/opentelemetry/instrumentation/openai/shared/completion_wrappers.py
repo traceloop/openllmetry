@@ -4,6 +4,7 @@ import logging
 from opentelemetry import context as context_api
 from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
+    _aparse_raw_response,
     _set_client_attributes,
     _set_functions_attributes,
     _set_request_attributes,
@@ -115,7 +116,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
             # span will be closed after the generator is done
             return _abuild_from_streaming_response(span, kwargs, response)
         else:
-            _handle_response(response, span, instance)
+            _handle_response(await _aparse_raw_response(response), span, instance)
 
         span.end()
         return response

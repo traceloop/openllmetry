@@ -959,3 +959,43 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.asyncio
+async def test_async_completion_with_streaming_response(instrument_legacy, span_exporter):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4551:
+    the AsyncAPIResponse returned by async `with_streaming_response` must be parsed
+    (awaited) so the completion is recorded on the span."""
+    from openai import AsyncOpenAI
+
+    body = {
+        "id": "cmpl-1",
+        "object": "text_completion",
+        "created": 0,
+        "model": "davinci-002",
+        "choices": [{"index": 0, "finish_reason": "stop", "text": "Hello!", "logprobs": None}],
+        "usage": {"prompt_tokens": 11, "completion_tokens": 5, "total_tokens": 16},
+    }
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=body))
+        ),
+    )
+
+    async with client.completions.with_streaming_response.create(
+        model="davinci-002",
+        prompt="hi",
+    ) as response:
+        completion = await response.parse()
+
+    assert completion.choices[0].text == "Hello!"
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["openai.completion"]
+    open_ai_span = spans[0]
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "cmpl-1"
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 11
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 5
+    output_messages = get_output_messages(open_ai_span)
+    assert output_messages[0]["parts"][0]["content"] == "Hello!"
