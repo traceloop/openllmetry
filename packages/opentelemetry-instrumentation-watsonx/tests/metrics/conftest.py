@@ -108,8 +108,19 @@ def metrics_test_context_with_no_content(logger_provider):
 
 @pytest.fixture(scope="module")
 def vcr_config():
+    """VCR configuration for Watsonx metrics tests."""
     return {
-        "filter_headers": ["authorization"],
+        "filter_headers": [
+            "authorization",
+            "x-api-key",
+            "api-key",
+        ],
+        "filter_query_parameters": [
+            "api_key",
+        ],
+        "filter_post_data_parameters": [
+            "apikey",
+        ],
         "allow_playback_repeats": True,
         "decode_compressed_response": True,
     }
