@@ -147,7 +147,7 @@ def _set_request_attributes(span, kwargs, instance=None):
     model = kwargs.get("model")
     if vendor == "aws.bedrock" and model and "." in model:
         model = _cross_region_check(model)
-    elif vendor == "openrouter":
+    elif vendor in ("openrouter", "blockrun"):
         model = _extract_model_name_from_provider_format(model)
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
@@ -346,6 +346,8 @@ def _get_vendor_from_url(base_url):
         return "gcp.vertex_ai"
     elif "openrouter.ai" in base_url:
         return "openrouter"
+    elif "blockrun.ai" in base_url:
+        return "blockrun"
 
     return "openai"
 
