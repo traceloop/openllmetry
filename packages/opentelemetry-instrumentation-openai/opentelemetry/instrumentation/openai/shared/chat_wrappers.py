@@ -3,11 +3,30 @@ import json
 import logging
 import threading
 import time
+from collections.abc import Hashable
 from functools import singledispatch
 from typing import List, Optional, Union
 
-from opentelemetry import context as context_api
 import pydantic
+from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.metrics import Counter, Histogram
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
+    GenAiOperationNameValues,
+)
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai import (
+    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
+    SpanAttributes,
+)
+from opentelemetry.trace import SpanKind, Tracer
+from opentelemetry.trace.status import Status, StatusCode
+from wrapt import ObjectProxy
+
+from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry.instrumentation.openai.shared import (
     OPENAI_FINISH_REASON_MAP,
     OPENAI_LLM_USAGE_TOKEN_TYPES,
@@ -41,23 +60,6 @@ from opentelemetry.instrumentation.openai.utils import (
     should_emit_events,
     should_send_prompts,
 )
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
-from opentelemetry.metrics import Counter, Histogram
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
-from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import (
-    GenAiOperationNameValues,
-)
-from opentelemetry.semconv_ai import (
-    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
-    SpanAttributes,
-)
-from opentelemetry.trace import SpanKind, Tracer
-from opentelemetry import trace
-from opentelemetry.trace.status import Status, StatusCode
-from wrapt import ObjectProxy
 
 SPAN_NAME = "openai.chat"
 PROMPT_FILTER_KEY = "prompt_filter_results"
@@ -67,6 +69,29 @@ OPERATION_NAME = GenAiOperationNameValues.CHAT
 
 logger = logging.getLogger(__name__)
 
+
+def _sanitize_attributes_for_metrics(attributes):
+    """Convert unhashable metric attribute values to strings."""
+    if not isinstance(attributes, dict):
+        return attributes
+
+    sanitized = {}
+    for key, value in attributes.items():
+        if isinstance(value, Hashable):
+            try:
+                hash(value)
+            except TypeError:
+                pass
+            else:
+                sanitized[key] = value
+                continue
+
+        try:
+            sanitized[key] = json.dumps(value, sort_keys=True)
+        except (TypeError, ValueError):
+            sanitized[key] = str(value)
+
+    return sanitized
 
 @_with_chat_telemetry_wrapper
 def chat_wrapper(
@@ -379,6 +404,7 @@ def _set_chat_metrics(
         server_address=_get_openai_base_url(instance),
         is_streaming=is_streaming,
     )
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     # token metrics
     usage = response_dict.get("usage")  # type: dict
@@ -778,7 +804,7 @@ class ChatStream(ObjectProxy):
         _accumulate_stream_items(item, self._complete_response)
 
     def _shared_attributes(self):
-        return metric_shared_attributes(
+        attributes = metric_shared_attributes(
             response_model=self._complete_response.get("model")
             or self._request_kwargs.get("model")
             or None,
@@ -786,6 +812,7 @@ class ChatStream(ObjectProxy):
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
         )
+        return _sanitize_attributes_for_metrics(attributes)
 
     @dont_throw
     def _process_complete_response(self):
@@ -950,6 +977,7 @@ def _build_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
@@ -1021,6 +1049,7 @@ async def _abuild_from_streaming_response(
         "server.address": _get_openai_base_url(instance),
         "stream": True,
     }
+    shared_attributes = _sanitize_attributes_for_metrics(shared_attributes)
 
     _set_streaming_token_metrics(
         request_kwargs, complete_response, span, token_counter, shared_attributes
