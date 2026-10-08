@@ -3,7 +3,7 @@ import pydantic
 import re
 import threading
 import time
-from typing import Any, Optional, Union
+from typing import Any, AsyncIterator, Iterator, Optional, Union
 from collections import OrderedDict
 
 from openai import AsyncStream, Stream
@@ -1121,9 +1121,17 @@ class ResponseStream(ObjectProxy):
         if hasattr(self.__wrapped__, "aclose"):
             return await self.__wrapped__.aclose()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Synchronous iterator"""
-        return self
+        try:
+            for chunk in self.__wrapped__:
+                self._process_chunk(chunk)
+                yield chunk
+        except Exception as e:
+            self._handle_exception(e)
+            raise
+        else:
+            self._process_complete_response()
 
     def __next__(self):
         """Synchronous iteration"""
@@ -1139,9 +1147,17 @@ class ResponseStream(ObjectProxy):
             self._process_chunk(chunk)
             return chunk
 
-    def __aiter__(self):
+    async def __aiter__(self) -> AsyncIterator[Any]:
         """Async iterator"""
-        return self
+        try:
+            async for chunk in self.__wrapped__:
+                self._process_chunk(chunk)
+                yield chunk
+        except Exception as e:
+            self._handle_exception(e)
+            raise
+        else:
+            self._process_complete_response()
 
     async def __anext__(self):
         """Async iteration"""

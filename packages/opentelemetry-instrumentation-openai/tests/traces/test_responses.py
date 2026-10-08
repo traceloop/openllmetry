@@ -2,6 +2,7 @@ import json
 import threading
 import time
 import types
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from pydantic import BaseModel
@@ -969,11 +970,19 @@ _RESPONSES_SSE_BODY = (
 
 
 class CustomResponseStream(Stream[ResponseStreamEvent]):
-    pass
+    def __iter__(self) -> Iterator[ResponseStreamEvent]:
+        return (
+            event
+            for event in super().__iter__()
+            if event.type == "response.completed"
+        )
 
 
 class CustomAsyncResponseStream(AsyncStream[ResponseStreamEvent]):
-    pass
+    async def __aiter__(self) -> AsyncIterator[ResponseStreamEvent]:
+        async for event in super().__aiter__():
+            if event.type == "response.completed":
+                yield event
 
 
 @pytest.mark.asyncio
@@ -1018,7 +1027,12 @@ async def test_async_responses_with_raw_response_streaming_does_not_crash(
         assert isinstance(stream, stream_type)
     events = [event async for event in stream]
 
-    assert len(events) == 2
+    expected_event_types = (
+        ["response.created", "response.completed"]
+        if stream_type is None
+        else ["response.completed"]
+    )
+    assert [event.type for event in events] == expected_event_types
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     span = spans[0]
@@ -1069,7 +1083,12 @@ def test_responses_with_raw_response_streaming_does_not_crash(
         assert isinstance(stream, stream_type)
     events = list(stream)
 
-    assert len(events) == 2
+    expected_event_types = (
+        ["response.created", "response.completed"]
+        if stream_type is None
+        else ["response.completed"]
+    )
+    assert [event.type for event in events] == expected_event_types
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     span = spans[0]
