@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 from ..client.http import HTTPClient
 
@@ -23,7 +23,7 @@ class BaseAnnotation:
         annotation_task: str,
         entity_id: str,
         tags: Dict[str, Any],
-    ) -> None:
+    ) -> Any:
         """Create an user feedback annotation for a specific task.
 
         Args:
@@ -33,6 +33,10 @@ class BaseAnnotation:
                 in the association properties
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
+
+        Returns:
+            The API response returned by the annotation write request, or None
+            when the underlying HTTP client could not complete the write.
 
         Example:
             ```python
@@ -56,7 +60,7 @@ class BaseAnnotation:
         if not tags:
             raise ValueError("tags cannot be empty")
 
-        self._http.post(
+        return self._http.post(
             f"annotation-tasks/{annotation_task}/annotations",
             {
                 "entity_instance_id": entity_id,
