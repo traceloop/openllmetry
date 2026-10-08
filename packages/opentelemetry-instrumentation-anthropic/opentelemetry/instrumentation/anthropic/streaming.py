@@ -58,6 +58,9 @@ def _process_response_item(item, complete_response):
                 if event.get("type") == "tool_use":
                     event["input"] = event.get("input", "") + item.delta.partial_json
     elif item.type == "message_delta":
+        # Keep message-level stop_reason even when no content blocks exist
+        # (events stays empty and the per-event loop below is a no-op).
+        complete_response["stop_reason"] = item.delta.stop_reason
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
         if item.usage:
@@ -175,7 +178,11 @@ def _handle_streaming_response(span, event_logger, complete_response):
     else:
         if not span.is_recording():
             return
-        set_streaming_response_attributes(span, complete_response.get("events"))
+        set_streaming_response_attributes(
+            span,
+            complete_response.get("events"),
+            complete_response.get("stop_reason"),
+        )
 
 
 class AnthropicStream(ObjectProxy):
