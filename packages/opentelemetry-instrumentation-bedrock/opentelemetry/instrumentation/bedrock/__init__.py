@@ -68,7 +68,7 @@ from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     Meters,
 )
-from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace import Span, SpanKind, get_tracer, set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import wrap_function_wrapper
 
@@ -336,6 +336,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
+        ctx_token = context_api.attach(set_span_in_context(span))
         try:
             response = fn(*args, **kwargs)
         except Exception as e:
@@ -344,6 +345,8 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
             raise
+        finally:
+            context_api.detach(ctx_token)
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
