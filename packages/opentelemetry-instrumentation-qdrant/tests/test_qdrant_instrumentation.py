@@ -1,6 +1,9 @@
+from unittest.mock import Mock
+
 import pytest
 from qdrant_client import QdrantClient, models
 from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.instrumentation import qdrant as qdrant_instrumentation
 
 
 # This fixture returns an empty in-memroy QdrantClient instance for each test
@@ -122,3 +125,25 @@ def test_qdrant_search(exporter, qdrant):
         == COLLECTION_NAME
     )
     assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 4
+
+
+def test_instrumentation_skips_methods_missing_from_qdrant_client(monkeypatch):
+    wrapped_methods = [
+        {
+            "object": "QdrantClient",
+            "method": "upload_records",
+            "span_name": "qdrant.upload_records",
+        }
+    ]
+    monkeypatch.setattr(qdrant_instrumentation, "WRAPPED_METHODS", wrapped_methods)
+    monkeypatch.setattr(
+        qdrant_instrumentation.qdrant_client, "QdrantClient", type("QdrantClient", (), {})
+    )
+    wrap_function_wrapper = Mock()
+    monkeypatch.setattr(
+        qdrant_instrumentation, "wrap_function_wrapper", wrap_function_wrapper
+    )
+
+    qdrant_instrumentation.QdrantInstrumentor()._instrument()
+
+    wrap_function_wrapper.assert_not_called()
