@@ -83,6 +83,15 @@ If you're running this locally, you may want to disable batch sending, so you ca
 ```python
 Traceloop.init(disable_batch=True)
 ```
+### Beginner note
+
+`Traceloop.init()` starts OpenLLMetry instrumentation for your application.
+For local development, you can use `disable_batch=True` to export traces immediately:
+
+```python
+from traceloop.sdk import Traceloop
+
+Traceloop.init(disable_batch=True)
 
 ## ⏫ Supported (and tested) destinations
 
