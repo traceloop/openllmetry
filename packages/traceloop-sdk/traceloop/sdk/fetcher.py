@@ -68,7 +68,7 @@ class Fetcher:
         try:
             post_url(f"{self._base_url}/v2/{api}", self._api_key, body)
         except Exception as e:
-            print(e)
+            logging.error("Failed to post to %s: %s", api, e)
 
 
 class RetryIfServerError(retry_if_exception):
