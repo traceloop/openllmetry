@@ -21,6 +21,22 @@ def fixture_tracer_provider(span_exporter):
     provider.shutdown()
 
 
+@pytest.fixture(name="broken_tracer")
+def fixture_broken_tracer():
+    """A tracer that cannot open spans, the way a misconfigured SDK would.
+
+    Instrumentation failures have to stay inside the instrumentation: with this
+    tracer the traced call still runs, and its own result or failure is what the
+    caller sees.
+    """
+
+    class _BrokenTracer:
+        def start_as_current_span(self, *args, **kwargs):
+            raise RuntimeError("tracer exploded")
+
+    return _BrokenTracer()
+
+
 # Session-scoped: McpInstrumentor wraps process-level imports (BaseSession.send_request,
 # post-import hooks on fastmcp.client, etc.). Re-instrumenting per test stacks wrappers
 # because _uninstrument doesn't fully tear them down — that breaks tests whose assertions
