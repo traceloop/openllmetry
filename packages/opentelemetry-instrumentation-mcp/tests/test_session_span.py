@@ -9,6 +9,7 @@ import asyncio
 import pytest
 from opentelemetry import trace
 from opentelemetry.instrumentation.mcp import McpInstrumentor
+from opentelemetry.instrumentation.mcp.utils import Config
 from opentelemetry.trace import StatusCode
 
 # Cancellation is not an error (open-telemetry/opentelemetry-python#4484), but
@@ -39,12 +40,17 @@ def _failing_with(failure):
 
 
 async def _call(wrapper, wrapped, client, failure):
-    """Run a wrapper; @dont_throw swallows Exception, cancellation propagates."""
-    if isinstance(failure, asyncio.CancelledError):
-        with pytest.raises(asyncio.CancelledError):
-            await wrapper(wrapped, client, (), {})
-    else:
+    """Run a wrapper; the traced call's own failure reaches the caller.
+
+    Instrumentation used to swallow Exception, because @dont_throw decorated the
+    whole wrapper and only cancellation got past it. That turned a dead
+    transport into `async with` running with `c = None` (issue #4518).
+    """
+    if failure is None:
         await wrapper(wrapped, client, (), {})
+    else:
+        with pytest.raises(type(failure)):
+            await wrapper(wrapped, client, (), {})
 
 
 def _session_spans(span_exporter):
@@ -99,3 +105,34 @@ async def test_session_span_ends_when_enter_fails(
     assert len(spans) == 1, "the session span must be ended exactly once"
     assert spans[0].status.status_code is expected_status
     assert not trace.get_current_span().is_recording(), "span left current"
+
+
+async def test_instrumentation_failure_never_reaches_the_caller(broken_tracer) -> None:
+    """Spans are the instrumentation's own code: their failures stay logged.
+
+    Only the span work is guarded, not the wrapper as a whole, so a tracer
+    outage neither blocks entering the client nor masks a failure of the traced
+    call itself -- and the operator's exception logger still hears about it.
+    """
+    reported = []
+    instrumentor = McpInstrumentor(exception_logger=reported.append)
+    try:
+        client = _Client()
+
+        async def _returns(*args, **kwargs):
+            return "entered"
+
+        result = await instrumentor._fastmcp_client_enter_wrapper(broken_tracer)(
+            _returns, client, (), {}
+        )
+        assert result == "entered", "a broken tracer must not block the traced call"
+        assert reported, "the instrumentation failure must reach Config.exception_logger"
+
+        with pytest.raises(RuntimeError, match="call failed"):
+            await instrumentor._fastmcp_client_enter_wrapper(broken_tracer)(
+                _failing_with(RuntimeError("call failed")), client, (), {}
+            )
+    finally:
+        # McpInstrumentor.__init__ writes Config.exception_logger globally, and
+        # conftest's session-scoped instrumentor set it to None.
+        Config.exception_logger = None

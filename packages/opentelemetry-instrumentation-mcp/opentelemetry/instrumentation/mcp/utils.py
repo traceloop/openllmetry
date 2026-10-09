@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 import traceback
+from contextlib import contextmanager
 
 from opentelemetry import context as context_api
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
@@ -77,10 +78,50 @@ def record_error(span, exc) -> None:
     span.set_status(error_status(str(exc)))
 
 
+def log_trace_failure(logger: logging.Logger, origin: str, exc: BaseException) -> None:
+    """Record a failure in the instrumentation's own code, then return.
+
+    Shared by ``dont_throw`` and ``guard_trace`` so an instrumentation failure
+    is reported the same way wherever it is caught: a debug line, and the
+    exception logger an operator configured.
+    """
+    logger.debug(
+        "OpenLLMetry failed to trace in %s, error: %s",
+        origin,
+        traceback.format_exc(),
+    )
+    if Config.exception_logger:
+        Config.exception_logger(exc)
+
+
+@contextmanager
+def guard_trace(logger: logging.Logger, origin: str):
+    """Run instrumentation-only code, logging rather than raising its failures.
+
+    The counterpart to ``dont_throw`` for a wrapper that must not guard the
+    traced call itself: everything inside the block is this instrumentation's
+    own work -- opening a span, setting attributes, ending it -- so a failure
+    there is logged and the traced program carries on untouched. ``origin``
+    names the site for the log line.
+
+    Only ``Exception`` is swallowed: a cancellation has to keep unwinding.
+    """
+    try:
+        yield
+    except Exception as e:
+        log_trace_failure(logger, origin, e)
+
+
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
     Works for both synchronous and asynchronous functions.
+
+    Only sound when the decorated function is instrumentation code throughout: a
+    wrapper that calls into the traced library must not decorate the call itself
+    -- that would turn a library failure into a silent ``None``. Such wrappers
+    use ``guard_trace`` around their span work instead (see the MCP client
+    wrappers in ``instrumentation.py``).
     """
     logger = logging.getLogger(func.__module__)
 
@@ -88,21 +129,12 @@ def dont_throw(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            _handle_exception(e, func, logger)
+            log_trace_failure(logger, func.__name__, e)
 
     def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            _handle_exception(e, func, logger)
-
-    def _handle_exception(e, func, logger):
-        logger.debug(
-            "OpenLLMetry failed to trace in %s, error: %s",
-            func.__name__,
-            traceback.format_exc(),
-        )
-        if Config.exception_logger:
-            Config.exception_logger(e)
+            log_trace_failure(logger, func.__name__, e)
 
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
