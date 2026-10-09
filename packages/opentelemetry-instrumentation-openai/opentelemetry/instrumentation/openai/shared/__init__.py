@@ -282,7 +282,9 @@ def _set_response_attributes(span, response):
     _set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, usage.get("prompt_tokens")
     )
-    prompt_tokens_details = dict(usage.get("prompt_tokens_details", {}))
+    # prompt_tokens_details is optional: the SDK carries the key with a None
+    # value when the response omits it, and dict(None) would raise.
+    prompt_tokens_details = dict(usage.get("prompt_tokens_details") or {})
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
