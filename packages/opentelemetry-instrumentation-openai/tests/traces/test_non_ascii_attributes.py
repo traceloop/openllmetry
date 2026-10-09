@@ -89,6 +89,54 @@ EMBEDDINGS_RESPONSE = {
 }
 
 
+REASONING_SUMMARY = "Пользователь спрашивает о погоде"
+
+RESPONSES_TOOLS = [
+    {
+        "type": "function",
+        "name": "get_current_weather",
+        "description": TOOL_DESCRIPTION,
+        "parameters": {
+            "type": "object",
+            "required": ["location"],
+            "properties": {"location": {"type": "string", "description": "Город"}},
+        },
+    }
+]
+
+RESPONSES_RESPONSE = {
+    "id": "resp-non-ascii",
+    "object": "response",
+    "created_at": 1,
+    "status": "completed",
+    "model": "gpt-4o-mini",
+    "parallel_tool_calls": True,
+    "tool_choice": "auto",
+    "tools": RESPONSES_TOOLS,
+    "output": [
+        {
+            "id": "rs_1",
+            "type": "reasoning",
+            "summary": [{"type": "summary_text", "text": REASONING_SUMMARY}],
+        },
+        {
+            "id": "msg_1",
+            "type": "message",
+            "role": "assistant",
+            "status": "completed",
+            "content": [{"type": "output_text", "text": COMPLETION, "annotations": []}],
+        },
+    ],
+    "usage": {
+        "input_tokens": 10,
+        "output_tokens": 5,
+        "total_tokens": 15,
+        "input_tokens_details": {"cached_tokens": 0},
+        "output_tokens_details": {"reasoning_tokens": 0},
+    },
+}
+
+
 def _sse(chunks):
     body = "".join(
         f"data: {json.dumps(c, ensure_ascii=False)}\n\n" for c in chunks
@@ -221,6 +269,22 @@ def test_embeddings_preserve_non_ascii(instrument_legacy, span_exporter):
     attrs = span_exporter.get_finished_spans()[-1].attributes
 
     _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+
+
+def test_responses_preserve_non_ascii(instrument_legacy, span_exporter):
+    client = _client(lambda request: httpx.Response(200, json=RESPONSES_RESPONSE))
+
+    client.responses.create(
+        model="gpt-4o-mini",
+        input=[{"role": "user", "content": PROMPT}],
+        tools=RESPONSES_TOOLS,
+    )
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+    _assert_readable(attrs["gen_ai.tool.definitions"], TOOL_DESCRIPTION)
+    _assert_readable(attrs["gen_ai.output.messages"], COMPLETION, REASONING_SUMMARY)
 
 
 def test_no_bare_json_dumps_in_package():
