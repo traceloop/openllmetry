@@ -71,6 +71,43 @@ jobs:
       - run: npx nx affected -t lint --parallel=3
       - run: npx nx affected -t type-check --parallel=3
 
+  tdd-gate:
+    name: TDD Gate
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'tdd-gate')
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci --cache ~/.npm --prefer-offline
+      - name: Clean npm cache
+        run: npm cache clean --force || true
+
+      # Opt-in only: forcing the test-first shape on every outside contributor
+      # would be hostile, but AI-authored PRs will carry the `tdd-gate` label.
+      # Runs against the PR base so the gate sees exactly the commits the PR adds.
+      - name: Enforce test-driven bug fixing
+        run: python3 tools/tdd_gate/tdd_gate.py --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
+
   build-packages:
     name: Build Packages
     runs-on: ubuntu-latest
