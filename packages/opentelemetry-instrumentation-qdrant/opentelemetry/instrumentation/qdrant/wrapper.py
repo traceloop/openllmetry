@@ -1,6 +1,7 @@
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.qdrant.utils import dont_throw
 from opentelemetry.trace.status import Status, StatusCode
+import inspect
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
@@ -67,7 +68,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             "recommend",
             "recommend_groups",
         ]:
-            _set_search_attributes(span, args, kwargs)
+            _set_search_attributes(span, wrapped, args, kwargs)
         elif method in ["search_batch", "query_batch_points", "recommend_batch", "discover_batch"]:
             _set_batch_search_attributes(span, args, kwargs, method)
 
@@ -113,9 +114,17 @@ def _set_upload_attributes(span, args, kwargs, method_name, param_name):
 
 
 @dont_throw
-def _set_search_attributes(span, args, kwargs):
-    limit = kwargs.get("limit") or 10
-    _set_span_attribute(span, SpanAttributes.VECTOR_DB_QUERY_TOP_K, limit)
+def _set_search_attributes(span, wrapped, args, kwargs):
+    limit = kwargs.get("limit")
+    if limit is None:
+        # limit sits at a different positional index per method, so bind the
+        # call arguments against the wrapped method's signature to find it
+        try:
+            bound = inspect.signature(wrapped).bind_partial(*args, **kwargs)
+            limit = bound.arguments.get("limit", 10)
+        except (TypeError, ValueError):
+            limit = 10
+    _set_span_attribute(span, SpanAttributes.VECTOR_DB_QUERY_TOP_K, limit or 10)
 
 
 @dont_throw
