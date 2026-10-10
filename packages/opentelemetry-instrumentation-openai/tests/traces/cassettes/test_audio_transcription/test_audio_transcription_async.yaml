@@ -1,0 +1,42 @@
+interactions:
+- request:
+    body: null
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - multipart/form-data; boundary=----WebKitFormBoundary
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python
+    method: POST
+    uri: https://api.openai.com/v1/audio/transcriptions
+  response:
+    body:
+      string: '{"text":"This is a test transcription response from the audio file."}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - test-ray-id
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Jan 2024 00:00:00 GMT
+      Server:
+      - cloudflare
+      openai-model:
+      - whisper-1
+      openai-organization:
+      - test-org
+      openai-processing-ms:
+      - '1000'
+    status:
+      code: 200
+      message: OK
+version: 1
