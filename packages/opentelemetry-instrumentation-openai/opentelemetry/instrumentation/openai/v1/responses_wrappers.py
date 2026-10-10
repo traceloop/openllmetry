@@ -24,12 +24,15 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _build_tool_def_dict,
     _extract_model_name_from_provider_format,
+    _get_openai_base_url,
     _parse_arguments,
     _set_request_attributes,
     _set_span_attribute,
     _set_tool_definitions_json,
+    metric_shared_attributes,
     model_as_dict,
 )
+from opentelemetry.instrumentation.openai.shared.config import Config
 
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
@@ -534,9 +537,72 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
+def _with_responses_telemetry_wrapper(func):
+    """Bind tracer plus the token/duration histograms, mirroring
+    `_with_chat_telemetry_wrapper` in opentelemetry/instrumentation/openai/utils.py."""
+
+    def _with_responses_telemetry(tracer, tokens_histogram, duration_histogram):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                tokens_histogram,
+                duration_histogram,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_responses_telemetry
+
+
+def _record_responses_metrics(
+    traced_data, instance, tokens_histogram, duration_histogram
+):
+    """Record gen_ai.client.token.usage and gen_ai.client.operation.duration
+    for a completed Responses API call, with the same attributes as Chat
+    Completions (metric_shared_attributes + gen_ai.token.type)."""
+    if not (tokens_histogram or duration_histogram):
+        return
+    shared_attributes = metric_shared_attributes(
+        response_model=(
+            _extract_model_name_from_provider_format(traced_data.response_model)
+            or None
+        ),
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+    )
+    if duration_histogram and traced_data.start_time:
+        duration = (time.time_ns() - traced_data.start_time) / 1e9
+        if duration > 0:
+            duration_histogram.record(duration, attributes=shared_attributes)
+    usage = model_as_dict(traced_data.usage) if traced_data.usage else None
+    if usage and tokens_histogram:
+        for key, token_type in (("input_tokens", "input"), ("output_tokens", "output")):
+            value = usage.get(key)
+            if isinstance(value, int) and value >= 0:
+                tokens_histogram.record(
+                    value,
+                    attributes={
+                        **shared_attributes,
+                        GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type,
+                    },
+                )
+
+
 @dont_throw
-@_with_tracer_wrapper
-def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+@_with_responses_telemetry_wrapper
+def responses_get_or_create_wrapper(
+    tracer: Tracer,
+    tokens_histogram,
+    duration_histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -627,6 +693,19 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        if duration_histogram:
+            duration = (
+                time.time_ns()
+                - (traced_data.start_time if traced_data else start_time)
+            ) / 1e9
+            if duration > 0:
+                duration_histogram.record(
+                    duration,
+                    attributes={
+                        **Config.get_common_metrics_attributes(),
+                        ERROR_TYPE: e.__class__.__name__,
+                    },
+                )
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
@@ -707,15 +786,24 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
+        _record_responses_metrics(
+            traced_data, instance, tokens_histogram, duration_histogram
+        )
         span.end()
 
     return response
 
 
 @dont_throw
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer,
+    tokens_histogram,
+    duration_histogram,
+    wrapped,
+    instance,
+    args,
+    kwargs,
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -803,6 +891,19 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        if duration_histogram:
+            duration = (
+                time.time_ns()
+                - (traced_data.start_time if traced_data else start_time)
+            ) / 1e9
+            if duration > 0:
+                duration_histogram.record(
+                    duration,
+                    attributes={
+                        **Config.get_common_metrics_attributes(),
+                        ERROR_TYPE: e.__class__.__name__,
+                    },
+                )
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
@@ -885,6 +986,9 @@ async def async_responses_get_or_create_wrapper(
         )
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
+        _record_responses_metrics(
+            traced_data, instance, tokens_histogram, duration_histogram
+        )
         span.end()
 
     return response
