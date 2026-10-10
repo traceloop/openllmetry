@@ -18,6 +18,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.instrumentation.google_generativeai.span_utils import (
     _map_gemini_finish_reason,
+    _normalize_contents,
 )
 
 _GCP_GEN_AI = GenAIAttributes.GenAiProviderNameValues.GCP_GEN_AI.value
@@ -42,6 +43,7 @@ def emit_message_events(args, kwargs, event_logger: Logger):
 
     # Get all prompts (Gemini accepts multiple prompts at once)
     for arg in args:
+        arg = _normalize_contents(arg)
         if isinstance(arg, str):
             contents.append(arg)
         elif isinstance(arg, list):
@@ -49,7 +51,7 @@ def emit_message_events(args, kwargs, event_logger: Logger):
 
     # Process kwargs["contents"] if it exists
     if "contents" in kwargs:
-        kwarg_contents = kwargs["contents"]
+        kwarg_contents = _normalize_contents(kwargs["contents"])
         if isinstance(kwarg_contents, str):
             contents.append(kwarg_contents)
         elif isinstance(kwarg_contents, list):

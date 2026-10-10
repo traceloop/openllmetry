@@ -229,6 +229,76 @@ class TestAsyncSyncParity:
 
 
 # ===========================================================================
+# 3b. contents given as a tuple, or as a single Content / dict
+# ===========================================================================
+
+
+def _single_content():
+    from google.genai import types
+
+    return types.Content(role="user", parts=[types.Part(text="Hi")])
+
+
+_SINGLE_DICT = {"role": "user", "parts": [{"text": "Hi"}]}
+
+
+@pytest.mark.parametrize(
+    "contents, as_list",
+    [
+        (("first", "second"), ["first", "second"]),
+        (_single_content(), [_single_content()]),
+        (_SINGLE_DICT, [_SINGLE_DICT]),
+    ],
+    ids=["tuple", "content-object", "dict"],
+)
+class TestNonListContents:
+    def _record_sync(self, contents):
+        span = MagicMock()
+        span.is_recording.return_value = True
+        su.set_input_attributes_sync(span, (), {"contents": contents}, "gemini-pro")
+        return _recorded_input_messages(span)
+
+    async def _record_async(self, contents):
+        span = MagicMock()
+        span.is_recording.return_value = True
+        await su.set_input_attributes(span, (), {"contents": contents}, "gemini-pro")
+        return _recorded_input_messages(span)
+
+    def test_sync_recorded_like_list(self, monkeypatch, contents, as_list):
+        monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+        messages = self._record_sync(contents)
+
+        assert messages is not None
+        assert messages == self._record_sync(as_list)
+
+    @pytest.mark.asyncio
+    async def test_async_recorded_like_list(self, monkeypatch, contents, as_list):
+        monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+        messages = await self._record_async(contents)
+
+        assert messages is not None
+        assert messages == await self._record_async(as_list)
+
+    def test_message_events_emitted_like_list(self, monkeypatch, contents, as_list):
+        from opentelemetry.instrumentation.google_generativeai import event_emitter
+
+        emitted = []
+        monkeypatch.setattr(
+            event_emitter, "emit_event", lambda event, _logger: emitted.append(event)
+        )
+
+        event_emitter.emit_message_events((), {"contents": contents}, MagicMock())
+        events = emitted[:]
+        emitted.clear()
+        event_emitter.emit_message_events((), {"contents": as_list}, MagicMock())
+
+        assert events
+        assert events == emitted
+
+
+# ===========================================================================
 # 4. _handle_request_async wiring
 # ===========================================================================
 
