@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 _instruments = ("qdrant-client >= 1.7",)
 
 p = Path(__file__).with_name("qdrant_client_methods.json")
-with open(p, "r") as f:
+with open(p, "r" , encoding="utf-8") as f:
     QDRANT_CLIENT_METHODS = json.loads(f.read())
 
 p = Path(__file__).with_name("async_qdrant_client_methods.json")
-with open(p, "r") as f:
+with open(p, "r", encoding="utf-8") as f:
     ASYNC_QDRANT_CLIENT_METHODS = json.loads(f.read())
 
 WRAPPED_METHODS = QDRANT_CLIENT_METHODS + ASYNC_QDRANT_CLIENT_METHODS
