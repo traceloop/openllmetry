@@ -58,6 +58,10 @@ WRAPPED_METHODS = [
         "span_name": "ollama.chat",
     },
     {
+        "method": "embed",
+        "span_name": "ollama.embeddings",
+    },
+    {
         "method": "embeddings",
         "span_name": "ollama.embeddings",
     },
@@ -266,7 +270,7 @@ def _llm_request_type_by_method(method_name):
         return LLMRequestTypeValues.CHAT
     elif method_name == "generate":
         return LLMRequestTypeValues.COMPLETION
-    elif method_name == "embeddings":
+    elif method_name in ("embed", "embeddings"):
         return LLMRequestTypeValues.EMBEDDING
     else:
         return LLMRequestTypeValues.UNKNOWN
@@ -541,7 +545,7 @@ class OllamaInstrumentor(BaseInstrumentor):
         except (ImportError, AttributeError):
             # _copy_messages not available in older versions, skip it
             pass
-        # instrument all llm methods (generate/chat/embeddings) via _request dispatch wrapper
+        # instrument all llm methods (generate/chat/embed/embeddings) via _request dispatch wrapper
         wrap_function_wrapper(
             "ollama._client",
             "Client._request",
