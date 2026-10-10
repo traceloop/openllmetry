@@ -33,6 +33,7 @@ dev = [
 ]
 test = [
   "openai[datalib]==1.99.7",
+  "opentelemetry-instrumentation-httpx>=0.63b1",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=0.23.7,<0.24.0",
   "pytest-recording>=0.13.1,<0.14.0",
