@@ -281,6 +281,22 @@ class TestNonListContents:
         assert messages is not None
         assert messages == await self._record_async(as_list)
 
+    def test_message_events_emitted_like_list(self, monkeypatch, contents, as_list):
+        from opentelemetry.instrumentation.google_generativeai import event_emitter
+
+        emitted = []
+        monkeypatch.setattr(
+            event_emitter, "emit_event", lambda event, _logger: emitted.append(event)
+        )
+
+        event_emitter.emit_message_events((), {"contents": contents}, MagicMock())
+        events = emitted[:]
+        emitted.clear()
+        event_emitter.emit_message_events((), {"contents": as_list}, MagicMock())
+
+        assert events
+        assert events == emitted
+
 
 # ===========================================================================
 # 4. _handle_request_async wiring
