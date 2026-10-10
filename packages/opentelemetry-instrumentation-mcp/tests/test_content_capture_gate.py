@@ -322,7 +322,10 @@ async def test_session_teardown_failure_is_recorded(
         raise RuntimeError(f"teardown exploded: {MARKER}")
 
     await instrumentor._fastmcp_client_enter_wrapper(tracer)(_ok, client, (), {})
-    await instrumentor._fastmcp_client_exit_wrapper(tracer)(_explode, client, (), {})
+    with pytest.raises(RuntimeError, match="teardown exploded"):
+        await instrumentor._fastmcp_client_exit_wrapper(tracer)(
+            _explode, client, (), {}
+        )
 
     session_spans = [
         s for s in span_exporter.get_finished_spans() if s.name == "mcp.client.session"
