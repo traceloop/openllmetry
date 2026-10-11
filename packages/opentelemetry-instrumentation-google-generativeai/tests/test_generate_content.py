@@ -230,3 +230,49 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
 
     set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
     assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
+
+
+@pytest.mark.parametrize("as_dict", [True, False])
+def test_set_model_request_attributes_reads_parameters_and_system_instruction_from_config(
+    monkeypatch, as_dict
+):
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    settings = dict(
+        temperature=0.3,
+        top_p=0.9,
+        top_k=40,
+        max_output_tokens=50,
+        presence_penalty=0.1,
+        frequency_penalty=0.2,
+        seed=7,
+        stop_sequences=["END"],
+        system_instruction="be brief",
+        tools=[{"function_declarations": [{"name": "get_weather"}]}],
+    )
+    config = dict(settings) if as_dict else types.GenerateContentConfig(**settings)
+
+    su.set_model_request_attributes(span, {"config": config}, "gemini-2.5-flash")
+
+    attrs = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.9
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 50
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY] == 0.1
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY] == 0.2
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_SEED] == 7
+    assert list(attrs[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END"]
+
+    sys_parts = json.loads(attrs[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS])
+    assert sys_parts == [{"type": "text", "content": "be brief"}]
+
+    tool_defs = json.loads(attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert len(tool_defs) == 1
+

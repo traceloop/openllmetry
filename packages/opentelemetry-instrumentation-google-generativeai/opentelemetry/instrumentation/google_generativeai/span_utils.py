@@ -540,45 +540,72 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
         )
 
 
+def _get_config_value(kwargs, key):
+    value = kwargs.get(key)
+    if value is not None:
+        return value
+    for cfg_key in ("config", "generation_config"):
+        config = kwargs.get(cfg_key)
+        if config is not None:
+            value = (
+                config.get(key)
+                if isinstance(config, dict)
+                else getattr(config, key, None)
+            )
+            if value is not None:
+                return value
+    return None
+
+
 def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
+        _get_config_value(kwargs, "temperature"),
     )
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        _get_config_value(kwargs, "max_output_tokens"),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, _get_config_value(kwargs, "top_p")
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, _get_config_value(kwargs, "top_k")
+    )
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
-        kwargs.get("presence_penalty"),
+        _get_config_value(kwargs, "presence_penalty"),
     )
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
-        kwargs.get("frequency_penalty"),
+        _get_config_value(kwargs, "frequency_penalty"),
     )
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_SEED,
+        _get_config_value(kwargs, "seed"),
+    )
+    stop_sequences = _get_config_value(kwargs, "stop_sequences")
+    if stop_sequences:
+        _set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES,
+            list(stop_sequences),
+        )
 
-    generation_config = kwargs.get("generation_config")
-    if generation_config and hasattr(generation_config, "response_schema"):
+    response_schema = _get_config_value(kwargs, "response_schema")
+    if response_schema is not None:
         try:
             _set_span_attribute(
                 span,
                 SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
-                json.dumps(generation_config.response_schema),
-            )
-        except Exception:
-            pass
-
-    if "response_schema" in kwargs:
-        try:
-            _set_span_attribute(
-                span,
-                SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
-                json.dumps(kwargs.get("response_schema")),
+                json.dumps(response_schema),
             )
         except Exception:
             pass
@@ -611,21 +638,15 @@ def set_model_request_attributes(span, kwargs, llm_model):
 
 def _system_instruction_from_kwargs(kwargs):
     """Top-level kwarg or unified-client ``config.system_instruction``."""
-    si = kwargs.get("system_instruction")
-    if si is not None:
-        return si
-    config = kwargs.get("config")
-    if config is not None:
-        si = getattr(config, "system_instruction", None)
-        if si is not None:
-            return si
-    return None
+    return _get_config_value(kwargs, "system_instruction")
 
 
 def _system_instruction_to_parts(si, span):
     """OTel: flat array of parts for gen_ai.system_instructions."""
     if isinstance(si, str):
         return [{"type": "text", "content": si}]
+    if isinstance(si, dict) and "parts" in si:
+        return _process_content_item_sync(si, span)
     if hasattr(si, "parts") and si.parts:
         out = []
         for idx, p in enumerate(si.parts):
@@ -636,11 +657,7 @@ def _system_instruction_to_parts(si, span):
 
 def _tool_definitions_from_kwargs(kwargs):
     """Extract tool definitions from kwargs — source system representation per OTel spec."""
-    tools = kwargs.get("tools")
-    if tools is None:
-        config = kwargs.get("config")
-        if config is not None:
-            tools = getattr(config, "tools", None)
+    tools = _get_config_value(kwargs, "tools")
     if not tools:
         return None
     defs = []
