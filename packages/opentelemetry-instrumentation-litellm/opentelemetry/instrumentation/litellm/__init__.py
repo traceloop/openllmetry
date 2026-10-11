@@ -678,7 +678,10 @@ def _wrap_factory(tracer, metrics, event_logger, to_wrap):
         )
         try:
             response = wrapped(*args, **kwargs)
-        except Exception as error:
+        except BaseException as error:
+            # KeyboardInterrupt and asyncio.CancelledError derive from
+            # BaseException, not Exception: without this the span is never
+            # ended and the interrupted call disappears from the traces.
             _handle_exception(span, metrics, error, model, kwargs)
             raise
         finally:
@@ -714,7 +717,10 @@ def _awrap_factory(tracer, metrics, event_logger, to_wrap):
         )
         try:
             response = await wrapped(*args, **kwargs)
-        except Exception as error:
+        except BaseException as error:
+            # KeyboardInterrupt and asyncio.CancelledError derive from
+            # BaseException, not Exception: without this the span is never
+            # ended and the interrupted call disappears from the traces.
             _handle_exception(span, metrics, error, model, kwargs)
             raise
         finally:
