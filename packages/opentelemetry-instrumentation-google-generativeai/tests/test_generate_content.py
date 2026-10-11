@@ -33,11 +33,10 @@ def test_client_spans(exporter, genai_client):
 
     assert len(spans) > 0, "No spans were recorded"
 
-    span = next(
-        (s for s in spans if s.name.startswith("generate_content ")),
-        None,
-    )
-    assert span is not None, "generate_content span not found"
+    # The exporter is session-scoped, so take the span this test produced.
+    gen_spans = [s for s in spans if s.name.startswith("generate_content ")]
+    assert gen_spans, "generate_content span not found"
+    span = gen_spans[-1]
 
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.OK
@@ -78,9 +77,14 @@ def test_client_spans(exporter, genai_client):
     assert isinstance(finish_reasons, (list, tuple))
     assert len(finish_reasons) > 0
 
-    assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
-    assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
-    assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
+    # The cassette reports 877 candidate tokens and 1058 thinking tokens.
+    assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 877 + 1058
+    assert attrs[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1058
+    assert (
+        attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
 
 
 @pytest.mark.vcr
@@ -152,6 +156,18 @@ def test_generate_metrics(metrics_test_context, genai_client, exporter):
 
     # Both input & output tokens must exist
     assert {"input", "output"}.issubset(token_points_by_type.keys())
+
+    # The cassette reports 711 candidate tokens and 1096 thinking tokens.
+    # The meter provider is shared by the session, so the output data point
+    # sums every generate_content span recorded so far.
+    gen_spans = [
+        s for s in exporter.get_finished_spans()
+        if s.name.startswith("generate_content ")
+    ]
+    assert gen_spans[-1].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 711 + 1096
+    assert token_points_by_type["output"].sum == sum(
+        s.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] for s in gen_spans
+    )
 
     for token_type, dp in token_points_by_type.items():
         assert dp.count >= 1
@@ -232,7 +248,13 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
     assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
 
 
-def test_set_model_response_attributes_counts_thinking_tokens_as_output():
+@pytest.mark.parametrize(
+    "candidates, thoughts, expected_output",
+    [(2, None, 2), (None, 300, 300)],
+)
+def test_set_model_response_attributes_missing_token_counts(
+    candidates, thoughts, expected_output
+):
     from google.genai import types
     from opentelemetry.instrumentation.google_generativeai import span_utils as su
 
@@ -242,9 +264,8 @@ def test_set_model_response_attributes_counts_thinking_tokens_as_output():
     response = types.GenerateContentResponse(
         usage_metadata=types.GenerateContentResponseUsageMetadata(
             prompt_token_count=10,
-            candidates_token_count=2,
-            thoughts_token_count=300,
-            total_token_count=312,
+            candidates_token_count=candidates,
+            thoughts_token_count=thoughts,
         )
     )
 
@@ -253,15 +274,13 @@ def test_set_model_response_attributes_counts_thinking_tokens_as_output():
     )
 
     set_attr_calls = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
-    assert set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 302
-    assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 300
-    assert (
-        set_attr_calls[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
-        + set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
-        == set_attr_calls[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
-    )
+    assert set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == expected_output
+    if thoughts is None:
+        assert SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS not in set_attr_calls
+    else:
+        assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == thoughts
     recorded = {
         c.kwargs["attributes"][GenAIAttributes.GEN_AI_TOKEN_TYPE]: c.args[0]
         for c in token_histogram.record.call_args_list
     }
-    assert recorded == {"input": 10, "output": 302}
+    assert recorded["output"] == expected_output
