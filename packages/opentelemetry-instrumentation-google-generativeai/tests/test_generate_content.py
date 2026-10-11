@@ -230,3 +230,38 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
 
     set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
     assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
+
+
+def test_set_model_response_attributes_counts_thinking_tokens_as_output():
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+    token_histogram = MagicMock()
+    response = types.GenerateContentResponse(
+        usage_metadata=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=10,
+            candidates_token_count=2,
+            thoughts_token_count=300,
+            total_token_count=312,
+        )
+    )
+
+    su.set_model_response_attributes(
+        span, response, "gemini-2.5-flash", token_histogram=token_histogram
+    )
+
+    set_attr_calls = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
+    assert set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 302
+    assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 300
+    assert (
+        set_attr_calls[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == set_attr_calls[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
+    recorded = {
+        c.kwargs["attributes"][GenAIAttributes.GEN_AI_TOKEN_TYPE]: c.args[0]
+        for c in token_histogram.record.call_args_list
+    }
+    assert recorded == {"input": 10, "output": 302}
