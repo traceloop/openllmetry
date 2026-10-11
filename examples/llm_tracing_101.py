@@ -8,7 +8,7 @@ This example shows how to:
 3. See the trace output in your console (no backend needed!)
 
 Setup:
-    pip install openai opentelemetry-sdk opentelemetry-api traceloop-sdk
+    uv run pip install openai opentelemetry-sdk opentelemetry-api traceloop-sdk
     export OPENAI_API_KEY="sk-..."
 
 Run:

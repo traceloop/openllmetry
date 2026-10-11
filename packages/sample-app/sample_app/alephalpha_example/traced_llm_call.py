@@ -66,7 +66,7 @@ def generate_response(question: str) -> dict:
     The @task decorator automatically wraps this function in a span
     named 'generate_response'. You'll see it in the trace output.
     """
-    messages = [LLMMessage(role="user", content=question)]
+    messages = [{"role": "user", "content": question}]
     response = simulate_llm_call(model="gpt-4o", messages=messages)
     return response
 

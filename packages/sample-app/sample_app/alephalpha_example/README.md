@@ -38,7 +38,7 @@ The script prints three sections:
 
 ### Console output
 
-You'll see JSON blobs printed before each print statement. Each JSON object is an OpenTelemetry **span**. Look for:
+You'll see JSON blobs printed before each print statement. Each JSON object is an OpenTelemetry **span**. Note: the `beginner_tracing_example` workflow span appears *after* the explanation text printed inside that function (the workflow span closes when the function returns). Look for:
 
 | Field | What it shows |
 |-------|--------------|
