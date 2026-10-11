@@ -36,6 +36,7 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_chat_telemetry_wrapper,
     dont_throw,
+    ensure_stream_usage,
     is_openai_v1,
     run_async,
     should_emit_events,
@@ -99,6 +100,7 @@ def chat_wrapper(
         run_async(_handle_request(span, kwargs, instance))
         try:
             start_time = time.time()
+            ensure_stream_usage(kwargs, instance)
             response = wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
@@ -198,6 +200,7 @@ async def achat_wrapper(
 
         try:
             start_time = time.time()
+            ensure_stream_usage(kwargs, instance)
             response = await wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
