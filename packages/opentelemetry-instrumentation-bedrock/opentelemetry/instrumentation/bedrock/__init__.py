@@ -1027,11 +1027,21 @@ def _buffer_request_body(kwargs):
     readers that run after the call (when the stream is already consumed) see
     the same bytes, as ReusableStreamingBody does for the response."""
     body = kwargs.get("body")
-    if hasattr(body, "read"):
-        try:
-            kwargs["body"] = body.read()
-        except Exception:
-            pass
+    if not hasattr(body, "read"):
+        return
+    try:
+        start = body.tell()
+    except Exception:
+        start = None
+    try:
+        kwargs["body"] = body.read()
+    except Exception:
+        # Never hand botocore a body whose cursor moved: rewind it, or if that
+        # is impossible let the read error surface rather than send a
+        # truncated request.
+        if start is None:
+            raise
+        body.seek(start)
 
 
 def _derive_operation_name(kwargs):

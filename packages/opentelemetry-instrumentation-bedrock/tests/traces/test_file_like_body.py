@@ -108,3 +108,33 @@ def test_invoke_model_with_response_stream_file_like_body(
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
     assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
     assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
+
+
+class _FailingBody(io.BytesIO):
+    """Advances its cursor, then fails."""
+
+    def read(self, *args):
+        super().read(5)
+        raise OSError("read failed")
+
+
+def test_failed_read_restores_body_position():
+    from opentelemetry.instrumentation.bedrock import _buffer_request_body
+
+    body = _FailingBody(b"0123456789")
+    kwargs = {"body": body}
+    _buffer_request_body(kwargs)
+
+    assert kwargs["body"] is body
+    assert body.tell() == 0
+
+
+def test_failed_read_on_unseekable_body_raises():
+    from opentelemetry.instrumentation.bedrock import _buffer_request_body
+
+    class Unseekable:
+        def read(self):
+            raise OSError("read failed")
+
+    with pytest.raises(OSError):
+        _buffer_request_body({"body": Unseekable()})
