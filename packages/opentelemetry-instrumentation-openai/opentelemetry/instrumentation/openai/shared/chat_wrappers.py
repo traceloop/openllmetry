@@ -773,6 +773,10 @@ class ChatStream(ObjectProxy):
         self._span.add_event(
             name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
+        # Accumulate first so gen_ai.response.model reflects the model reported
+        # by the stream itself, without falling back to the requested model
+        _accumulate_stream_items(item, self._complete_response)
+
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
@@ -781,16 +785,12 @@ class ChatStream(ObjectProxy):
             )
             self._first_token = False
 
-        _accumulate_stream_items(item, self._complete_response)
-
     def _shared_attributes(self):
         request_model = (
             self._request_kwargs.get("model") if self._request_kwargs else None
         )
         return metric_shared_attributes(
-            response_model=self._complete_response.get("model")
-            or request_model
-            or None,
+            response_model=self._complete_response.get("model") or None,
             operation="chat",
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
