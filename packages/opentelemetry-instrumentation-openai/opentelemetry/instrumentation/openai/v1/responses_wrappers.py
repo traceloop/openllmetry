@@ -10,6 +10,7 @@ from openai._legacy_response import LegacyAPIResponse
 from openai._response import APIResponse, AsyncAPIResponse
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
     openai_attributes as OpenAIAttributes,
@@ -537,7 +538,9 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 @dont_throw
 @_with_tracer_wrapper
 def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
 
@@ -717,7 +720,9 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
 async def async_responses_get_or_create_wrapper(
     tracer: Tracer, wrapped, instance, args, kwargs
 ):
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
         return await wrapped(*args, **kwargs)
     start_time = time.time_ns()
 
