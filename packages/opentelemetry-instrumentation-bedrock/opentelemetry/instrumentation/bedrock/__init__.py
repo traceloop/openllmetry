@@ -1036,12 +1036,15 @@ def _buffer_request_body(kwargs):
     try:
         kwargs["body"] = body.read()
     except Exception:
-        # Never hand botocore a body whose cursor moved: rewind it, or if that
-        # is impossible let the read error surface rather than send a
-        # truncated request.
-        if start is None:
-            raise
-        body.seek(start)
+        # A failed read may have moved the cursor: rewind so the caller's
+        # object is left as it was, then surface the error (botocore would
+        # hit the same one) instead of tracing or sending a partial body.
+        if start is not None:
+            try:
+                body.seek(start)
+            except Exception:
+                pass
+        raise
 
 
 def _derive_operation_name(kwargs):
