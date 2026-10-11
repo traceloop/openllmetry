@@ -86,11 +86,13 @@ def _build_from_streaming_response(
 ):
     emit_events = should_emit_events() and event_logger
     text_parts = []
+    chunks = []
     last_chunk = None
     for item in response:
         item_to_yield = item
         last_chunk = item
         if not emit_events:
+            chunks.append(item)
             t = getattr(item, "text", None)
             if isinstance(t, str):
                 text_parts.append(t)
@@ -102,12 +104,13 @@ def _build_from_streaming_response(
     if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        if last_chunk is not None and getattr(last_chunk, "candidates", None):
-            set_response_attributes(span, last_chunk, llm_model)
-        else:
-            set_response_attributes(
-                span, complete_response, llm_model, stream_last_chunk=last_chunk
-            )
+        set_response_attributes(
+            span,
+            complete_response,
+            llm_model,
+            stream_last_chunk=last_chunk,
+            stream_chunks=chunks,
+        )
 
     # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
     # so the last chunk reflects all candidates without deduplication artifacts.
@@ -127,11 +130,13 @@ async def _abuild_from_streaming_response(
 ):
     emit_events = should_emit_events() and event_logger
     text_parts = []
+    chunks = []
     last_chunk = None
     async for item in response:
         item_to_yield = item
         last_chunk = item
         if not emit_events:
+            chunks.append(item)
             t = getattr(item, "text", None)
             if isinstance(t, str):
                 text_parts.append(t)
@@ -143,12 +148,13 @@ async def _abuild_from_streaming_response(
     if emit_events:
         emit_choice_events(response, event_logger)
     else:
-        if last_chunk is not None and getattr(last_chunk, "candidates", None):
-            set_response_attributes(span, last_chunk, llm_model)
-        else:
-            set_response_attributes(
-                span, complete_response, llm_model, stream_last_chunk=last_chunk
-            )
+        set_response_attributes(
+            span,
+            complete_response,
+            llm_model,
+            stream_last_chunk=last_chunk,
+            stream_chunks=chunks,
+        )
 
     stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
     set_model_response_attributes(

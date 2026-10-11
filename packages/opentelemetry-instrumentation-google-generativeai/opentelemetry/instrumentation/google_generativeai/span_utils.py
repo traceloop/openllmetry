@@ -654,11 +654,59 @@ def _tool_definitions_from_kwargs(kwargs):
     return defs or None
 
 
+def _output_messages_from_streaming_chunks(span, chunks):
+    candidates_by_index = {}
+    candidate_order = []
+    for chunk in chunks:
+        candidates = getattr(chunk, "candidates", None) or []
+        for idx, cand in enumerate(candidates):
+            if idx not in candidates_by_index:
+                candidates_by_index[idx] = {
+                    "role": "assistant",
+                    "parts": [],
+                    "finish_reason": "",
+                }
+                candidate_order.append(idx)
+            entry = candidates_by_index[idx]
+            content = getattr(cand, "content", None)
+            if content and getattr(content, "role", None):
+                entry["role"] = _normalize_message_role(content.role)
+            if content and getattr(content, "parts", None):
+                for part_idx, p in enumerate(content.parts):
+                    for extracted in _parts_from_genai_part_sync(p, span, part_idx):
+                        if (
+                            extracted.get("type") in ("text", "reasoning")
+                            and entry["parts"]
+                            and entry["parts"][-1].get("type") == extracted.get("type")
+                        ):
+                            entry["parts"][-1]["content"] += extracted.get(
+                                "content", ""
+                            )
+                        else:
+                            entry["parts"].append(dict(extracted))
+            fr = _map_gemini_finish_reason(getattr(cand, "finish_reason", None))
+            if fr:
+                entry["finish_reason"] = fr
+    return [candidates_by_index[idx] for idx in candidate_order]
+
+
 @dont_throw
-def set_response_attributes(span, response, llm_model, stream_last_chunk=None):
+def set_response_attributes(
+    span, response, llm_model, stream_last_chunk=None, stream_chunks=None
+):
     if not span.is_recording():
         return
     if not should_send_prompts():
+        return
+
+    if stream_chunks and any(getattr(c, "candidates", None) for c in stream_chunks):
+        messages = _output_messages_from_streaming_chunks(span, stream_chunks)
+        if messages:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+                json.dumps(messages),
+            )
         return
 
     if isinstance(response, str):
