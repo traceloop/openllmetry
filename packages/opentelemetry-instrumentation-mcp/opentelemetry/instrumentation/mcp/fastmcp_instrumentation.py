@@ -32,7 +32,7 @@ class FastMCPInstrumentor:
         """Apply FastMCP-specific instrumentation."""
         self._tracer = tracer
 
-        # Instrument FastMCP server-side tool execution (fastmcp 2)
+        # 第一步：注册 FastMCP 2 的工具执行钩子，保留旧版本的服务端埋点。
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
                 "fastmcp.tools.tool_manager", "ToolManager.call_tool", self._fastmcp_tool_wrapper()
@@ -40,15 +40,15 @@ class FastMCPInstrumentor:
             "fastmcp.tools.tool_manager",
         )
 
-        # fastmcp 3 removed ToolManager; every tool runs through Tool._run.
+        # 第二步：注册 FastMCP 3 的 Tool._run 钩子，保留上游新增的工具执行埋点。
         register_post_import_hook(self._wrap_fastmcp3_tool_run, "fastmcp.tools.base")
 
-        # Instrument FastMCP __init__ to capture server name
+        # 第三步：等待服务端模块导入后再捕获服务名称，避免客户端安装加载可选服务端依赖。
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
+                "fastmcp.server.server", "FastMCP.__init__", self._fastmcp_init_wrapper()
             ),
-            "fastmcp",
+            "fastmcp.server.server",
         )
 
     def uninstrument(self):
