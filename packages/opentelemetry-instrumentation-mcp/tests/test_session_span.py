@@ -194,11 +194,14 @@ async def test_client_raises_when_server_fails_to_start() -> None:
     from fastmcp import Client
     from fastmcp.client.transports import ClientTransport
 
+    async def _fail_to_connect():
+        raise ConnectionError("server failed to start")
+
     class _FailingTransport(ClientTransport):
         @contextlib.asynccontextmanager
         async def connect_session(self, **session_kwargs):
-            raise ConnectionError("server failed to start")
-            yield  # pragma: no cover
+            await _fail_to_connect()
+            yield
 
     body_ran = False
     with pytest.raises(RuntimeError, match="server failed to start"):
