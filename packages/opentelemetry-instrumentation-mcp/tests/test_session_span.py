@@ -39,12 +39,16 @@ def _failing_with(failure):
 
 
 async def _call(wrapper, wrapped, client, failure):
-    """Run a wrapper; @dont_throw swallows Exception, cancellation propagates."""
-    if isinstance(failure, asyncio.CancelledError):
-        with pytest.raises(asyncio.CancelledError):
-            await wrapper(wrapped, client, (), {})
-    else:
+    """Run a wrapper; the wrapped call's own failure reaches the caller.
+
+    Instrumentation used to swallow Exception (and only cancellation propagated),
+    which turned a dead transport into `async with` running with `None`.
+    """
+    if failure is None:
         await wrapper(wrapped, client, (), {})
+    else:
+        with pytest.raises(type(failure)):
+            await wrapper(wrapped, client, (), {})
 
 
 def _session_spans(span_exporter):
@@ -99,3 +103,34 @@ async def test_session_span_ends_when_enter_fails(
     assert len(spans) == 1, "the session span must be ended exactly once"
     assert spans[0].status.status_code is expected_status
     assert not trace.get_current_span().is_recording(), "span left current"
+
+
+class _BrokenTracer:
+    """A tracer that cannot create spans, the way a broken exporter would."""
+
+    def start_as_current_span(self, *args, **kwargs):
+        raise RuntimeError("tracer exploded")
+
+
+async def test_instrumentation_failure_never_reaches_the_caller() -> None:
+    """Spans are the instrumentation's own code: their failures stay logged.
+
+    Only the span plumbing is guarded, not the wrapper as a whole, so a tracer
+    outage neither blocks entering the client nor masks a failure of the
+    wrapped call itself.
+    """
+    instrumentor = McpInstrumentor()
+    client = _Client()
+
+    async def _returns(*args, **kwargs):
+        return "entered"
+
+    result = await instrumentor._fastmcp_client_enter_wrapper(_BrokenTracer())(
+        _returns, client, (), {}
+    )
+    assert result == "entered", "a broken tracer must not block the wrapped call"
+
+    with pytest.raises(RuntimeError, match="call failed"):
+        await instrumentor._fastmcp_client_enter_wrapper(_BrokenTracer())(
+            _failing_with(RuntimeError("call failed")), client, (), {}
+        )
