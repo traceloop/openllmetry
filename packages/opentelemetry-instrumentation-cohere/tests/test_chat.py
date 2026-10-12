@@ -83,6 +83,29 @@ def test_cohere_chat_legacy(
 
 
 @pytest.mark.vcr
+@pytest.mark.default_cassette("test_cohere_chat_legacy.yaml")
+def test_cohere_chat_penalty_attributes(
+    span_exporter, instrument_legacy, cohere_client
+):
+    cohere_client.chat(
+        model="command",
+        message="Tell me a joke, pirate style",
+        frequency_penalty=0.1,
+        presence_penalty=0.2,
+    )
+
+    cohere_span = span_exporter.get_finished_spans()[0]
+    assert (
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY)
+        == 0.1
+    )
+    assert (
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY)
+        == 0.2
+    )
+
+
+@pytest.mark.vcr
 def test_cohere_v2_chat_legacy(
     span_exporter, log_exporter, instrument_legacy, cohere_client_v2
 ):
@@ -605,6 +628,30 @@ async def test_cohere_chat_legacy_async(
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_cohere_chat_legacy_async.yaml")
+@pytest.mark.asyncio
+async def test_cohere_chat_penalty_attributes_async(
+    span_exporter, instrument_legacy, async_cohere_client
+):
+    await async_cohere_client.chat(
+        model="command",
+        message="Tell me a joke, pirate style",
+        frequency_penalty=0.1,
+        presence_penalty=0.2,
+    )
+
+    cohere_span = span_exporter.get_finished_spans()[0]
+    assert (
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY)
+        == 0.1
+    )
+    assert (
+        cohere_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY)
+        == 0.2
+    )
 
 
 @pytest.mark.vcr
