@@ -5,6 +5,7 @@ patching them would replace the wrappers under test.
 """
 
 import asyncio
+import contextlib
 
 import pytest
 from opentelemetry import trace
@@ -136,3 +137,72 @@ async def test_instrumentation_failure_never_reaches_the_caller(broken_tracer) -
         # McpInstrumentor.__init__ writes Config.exception_logger globally, and
         # conftest's session-scoped instrumentor set it to None.
         Config.exception_logger = None
+
+
+async def test_session_enter_failure_survives_span_end_failure(end_raises) -> None:
+    """The traced call's failure is the one raised, not the span end's."""
+    instrumentor = McpInstrumentor()
+    with pytest.raises(ValueError, match="enter failed"):
+        await instrumentor._fastmcp_client_enter_wrapper(end_raises)(
+            _failing_with(ValueError("enter failed")), _Client(), (), {}
+        )
+
+
+async def test_session_enter_failure_survives_record_error_failure(
+    tracer_provider, record_raises
+) -> None:
+    """The traced call's failure is the one raised, not record_error's."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    with pytest.raises(ValueError, match="enter failed"):
+        await instrumentor._fastmcp_client_enter_wrapper(tracer)(
+            _failing_with(ValueError("enter failed")), _Client(), (), {}
+        )
+
+
+async def test_session_exit_failure_survives_span_end_failure(end_raises) -> None:
+    """The teardown failure is the one raised, not the span end's."""
+    instrumentor = McpInstrumentor()
+    client = _Client()
+    await instrumentor._fastmcp_client_enter_wrapper(end_raises)(_ok, client, (), {})
+    with pytest.raises(ValueError, match="exit failed"):
+        await instrumentor._fastmcp_client_exit_wrapper(end_raises)(
+            _failing_with(ValueError("exit failed")), client, (), {}
+        )
+
+
+async def test_session_exit_failure_survives_record_error_failure(
+    tracer_provider, record_raises
+) -> None:
+    """The teardown failure is the one raised, not record_error's."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    await instrumentor._fastmcp_client_enter_wrapper(tracer)(_ok, client, (), {})
+    with pytest.raises(ValueError, match="exit failed"):
+        await instrumentor._fastmcp_client_exit_wrapper(tracer)(
+            _failing_with(ValueError("exit failed")), client, (), {}
+        )
+
+
+async def test_client_raises_when_server_fails_to_start() -> None:
+    """Through the real Client: the body must not run with the client as None.
+
+    Issue #4518: the enter wrapper used to swallow the connection failure, so
+    `async with` ran its body with `c = None`.
+    """
+    from fastmcp import Client
+    from fastmcp.client.transports import ClientTransport
+
+    class _FailingTransport(ClientTransport):
+        @contextlib.asynccontextmanager
+        async def connect_session(self, **session_kwargs):
+            raise ConnectionError("server failed to start")
+            yield  # pragma: no cover
+
+    body_ran = False
+    with pytest.raises(RuntimeError, match="server failed to start"):
+        async with Client(_FailingTransport()):
+            body_ran = True
+
+    assert not body_ran, "the body must not run against a client that never connected"

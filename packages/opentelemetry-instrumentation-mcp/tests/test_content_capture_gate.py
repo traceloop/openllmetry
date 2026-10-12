@@ -23,7 +23,10 @@ from fastmcp.exceptions import ToolError
 from mcp.types import JSONRPCMessage, JSONRPCResponse
 from opentelemetry import context
 from opentelemetry.instrumentation.mcp import McpInstrumentor
-from opentelemetry.instrumentation.mcp.instrumentation import InstrumentedStreamWriter
+from opentelemetry.instrumentation.mcp.instrumentation import (
+    ContextSavingStreamWriter,
+    InstrumentedStreamWriter,
+)
 from opentelemetry.trace import StatusCode
 
 MARKER = "content-capture-marker-9f3a"
@@ -305,6 +308,37 @@ async def test_transport_failure_text_honors_the_switch(
     assert any(s.status.status_code is StatusCode.ERROR for s in spans)
     assert any("error.type" in (s.attributes or {}) for s in spans)
     assert (MARKER in _all_recorded_text(span_exporter)) is expected
+
+
+async def test_transport_failure_survives_span_end_failure(end_raises) -> None:
+    """The transport failure is the one raised, not the span end's."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await InstrumentedStreamWriter(sink, end_raises).send(_error_response())
+
+
+async def test_transport_failure_survives_record_error_failure(
+    tracer_provider, record_raises
+) -> None:
+    """The transport failure is the one raised, not record_error's."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await InstrumentedStreamWriter(
+            sink, tracer_provider.get_tracer(__name__)
+        ).send(_error_response())
+
+
+async def test_context_saving_writer_send_raises_on_dead_transport(
+    tracer_provider,
+) -> None:
+    """ContextSavingStreamWriter.send must not swallow a transport failure."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+    writer = ContextSavingStreamWriter(sink, tracer_provider.get_tracer(__name__))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await writer.send(_error_response())
 
 
 @pytest.mark.parametrize(("switch", "expected"), [("false", False), ("true", True)])

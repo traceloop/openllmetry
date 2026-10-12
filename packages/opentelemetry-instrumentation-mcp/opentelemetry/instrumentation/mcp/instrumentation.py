@@ -685,8 +685,9 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
+        # Not guarded: nothing here is tracing work that can fail, and a
+        # transport failure from the wrapped send has to reach the caller.
         # Removed RequestStreamWriter span creation - we don't need low-level protocol spans
         ctx = context.get_current()
         return await self.__wrapped__.send(ItemWithContext(item, ctx))
