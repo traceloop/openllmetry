@@ -300,6 +300,10 @@ class McpInstrumentor(BaseInstrumentor):
         except Exception:
             if token is not None:
                 context.detach(token)
+            if not created and session is not None and token is None:
+                session.context_tokens.setdefault(task, []).append(None)
+                session.active_entries += 1
+                return session, task
             if created:
                 if session is not None and getattr(
                     instance, "_tracing_session", None
@@ -323,7 +327,9 @@ class McpInstrumentor(BaseInstrumentor):
         if not tokens:
             return
 
-        context.detach(tokens.pop())
+        token = tokens.pop()
+        if token is not None:
+            context.detach(token)
         if not tokens:
             del session.context_tokens[task]
 

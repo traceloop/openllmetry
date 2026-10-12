@@ -139,6 +139,82 @@ async def test_failed_nested_enter_preserves_outer_session(
     assert not trace.get_current_span().is_recording()
 
 
+async def test_nested_attach_failure_preserves_outer_entry(
+    span_exporter, tracer_provider, monkeypatch
+) -> None:
+    """A failed nested attach still reserves the matching client exit."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+
+    await enter(_ok, client, (), {})
+    session_span = trace.get_current_span()
+
+    def fail_attach(*args, **kwargs):
+        raise RuntimeError("nested attach failed")
+
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.mcp.instrumentation.context.attach",
+        fail_attach,
+    )
+
+    await enter(_ok, client, (), {})
+    assert trace.get_current_span() is session_span
+    assert client._tracing_session.active_entries == 2
+
+    await exit_(_ok, client, (), {})
+    assert trace.get_current_span() is session_span
+    assert client._tracing_session.active_entries == 1
+    assert not _session_spans(span_exporter)
+
+    await exit_(_ok, client, (), {})
+    assert len(_session_spans(span_exporter)) == 1
+    assert not trace.get_current_span().is_recording()
+
+
+async def test_failed_nested_enter_releases_attach_failure_reservation(
+    span_exporter, tracer_provider, monkeypatch
+) -> None:
+    """A failed nested enter rolls back its failed-attach placeholder."""
+    instrumentor = McpInstrumentor()
+    tracer = tracer_provider.get_tracer(__name__)
+    client = _Client()
+    enter = instrumentor._fastmcp_client_enter_wrapper(tracer)
+    exit_ = instrumentor._fastmcp_client_exit_wrapper(tracer)
+
+    await enter(_ok, client, (), {})
+    session_span = trace.get_current_span()
+
+    def fail_attach(*args, **kwargs):
+        raise RuntimeError("nested attach failed")
+
+    monkeypatch.setattr(
+        "opentelemetry.instrumentation.mcp.instrumentation.context.attach",
+        fail_attach,
+    )
+
+    with pytest.raises(RuntimeError, match="nested enter failed"):
+        await enter(
+            _failing_with(RuntimeError("nested enter failed")),
+            client,
+            (),
+            {},
+        )
+
+    assert trace.get_current_span() is session_span
+    assert client._tracing_session.active_entries == 1
+    assert len(client._tracing_session.context_tokens[asyncio.current_task()]) == 1
+    assert not _session_spans(span_exporter)
+
+    await exit_(_ok, client, (), {})
+    spans = _session_spans(span_exporter)
+    assert len(spans) == 1
+    assert spans[0].status.status_code is StatusCode.ERROR
+    assert not trace.get_current_span().is_recording()
+
+
 async def test_failed_nested_exit_preserves_outer_session(
     span_exporter, tracer_provider
 ) -> None:
