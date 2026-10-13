@@ -1,0 +1,41 @@
+name: MCP imports
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "packages/opentelemetry-instrumentation-mcp/**"
+      - ".github/workflows/mcp-imports.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "packages/opentelemetry-instrumentation-mcp/**"
+      - ".github/workflows/mcp-imports.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-imports:
+    name: FastMCP imports (${{ matrix.python-version }}, ${{ matrix.fastmcp }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        fastmcp: ["fastmcp-slim[client]==3.4.8", "fastmcp==3.4.8"]
+    defaults:
+      run:
+        working-directory: packages/opentelemetry-instrumentation-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v4
+      - name: Install isolated FastMCP dependencies
+        run: |
+          uv venv --python "${{ matrix.python-version }}"
+          uv pip install --editable . "${{ matrix.fastmcp }}" "mcp>=1.26,<2" \
+            "opentelemetry-sdk>=1.38,<2" "pytest>=8.2,<9" "pytest-asyncio>=1.2,<2"
+      - name: Test import order and server instrumentation
+        run: .venv/bin/python -m pytest tests/test_fastmcp_imports.py -q -rs
