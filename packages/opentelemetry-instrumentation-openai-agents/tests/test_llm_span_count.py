@@ -127,3 +127,70 @@ class TestAgentsProcessorSuppressToken:
 
         processor.on_span_end(fake_sdk_span)
         workflow_span.end()
+
+
+RESPONSE = {
+    "id": "resp_1",
+    "object": "response",
+    "created_at": 0,
+    "status": "completed",
+    "model": "gpt-4.1-nano",
+    "output": [
+        {
+            "type": "message",
+            "id": "msg_1",
+            "role": "assistant",
+            "status": "completed",
+            "content": [{"type": "output_text", "text": "Paris.", "annotations": []}],
+        }
+    ],
+    "parallel_tool_calls": True,
+    "tool_choice": "auto",
+    "tools": [],
+    "usage": {
+        "input_tokens": 11,
+        "output_tokens": 7,
+        "total_tokens": 18,
+        "input_tokens_details": {"cached_tokens": 0},
+        "output_tokens_details": {"reasoning_tokens": 0},
+    },
+}
+
+
+def test_agents_and_openai_instrumentors_record_one_response_span(exporter):
+    """An Agents run with both instrumentors on must record the model call once."""
+    import httpx
+    from openai import AsyncOpenAI
+    from agents import Agent, OpenAIResponsesModel, Runner
+    from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=RESPONSE))
+        ),
+    )
+    agent = Agent(
+        name="Geo",
+        instructions="Answer briefly.",
+        model=OpenAIResponsesModel(model="gpt-4.1-nano", openai_client=client),
+    )
+
+    openai_instrumentor = OpenAIInstrumentor()
+    openai_instrumentor.instrument()
+    try:
+        result = Runner.run_sync(agent, "Capital of France?")
+    finally:
+        openai_instrumentor.uninstrument()
+
+    assert result.final_output == "Paris."
+
+    response_spans = [s for s in exporter.get_finished_spans() if s.name == "openai.response"]
+    assert len(response_spans) == 1, [s.instrumentation_scope.name for s in response_spans]
+
+    attrs = response_spans[0].attributes
+    assert "Capital of France?" in attrs["gen_ai.input.messages"]
+    assert "Paris." in attrs["gen_ai.output.messages"]
+    assert attrs["gen_ai.usage.input_tokens"] == 11
+    assert attrs["gen_ai.usage.output_tokens"] == 7
+    assert attrs["gen_ai.usage.total_tokens"] == 18
