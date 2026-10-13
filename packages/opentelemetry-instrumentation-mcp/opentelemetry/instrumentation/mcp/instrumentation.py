@@ -20,6 +20,8 @@ from opentelemetry.instrumentation.mcp.utils import (
     Config,
     dont_throw,
     error_status,
+    guard_trace,
+    log_trace_failure,
     record_error,
     should_send_prompts,
 )
@@ -28,6 +30,8 @@ from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
 )
 
 _instruments = ("mcp >= 1.6.0",)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -228,23 +232,28 @@ class McpInstrumentor(BaseInstrumentor):
         """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
 
         async def traced_method(wrapped, instance, args, kwargs):
-            entry = self._start_fastmcp_client_entry(tracer, instance)
+            entry = None
+            with guard_trace(logger, "mcp.client.session start"):
+                entry = self._start_fastmcp_client_entry(tracer, instance)
 
             entered = False
             try:
-                # Call the original method
+                # Call the original method. Nothing here catches what it raises:
+                # swallowing it would run the `async with` body with `c = None`.
                 result = await wrapped(*args, **kwargs)
                 entered = True
                 return result
             except Exception as e:
                 if entry is not None:
-                    self._record_fastmcp_client_error(entry[0], e)
+                    with guard_trace(logger, "mcp.client.session record"):
+                        self._record_fastmcp_client_error(entry[0], e)
                 raise
             finally:
                 # A failed __aenter__ gets no matching __aexit__, including
                 # cancellation, so roll back only the entry reserved above.
                 if not entered and entry is not None:
-                    self._end_fastmcp_client_entry(instance, *entry)
+                    with guard_trace(logger, "mcp.client.session end"):
+                        self._end_fastmcp_client_entry(instance, *entry)
 
         return traced_method
 
@@ -255,23 +264,26 @@ class McpInstrumentor(BaseInstrumentor):
             session = getattr(instance, "_tracing_session", None)
             task = asyncio.current_task()
             try:
-                # Call the original method first
+                # Call the original method first. Its failure reaches the caller:
+                # swallowing it would report a clean teardown for a dead transport.
                 return await wrapped(*args, **kwargs)
             except Exception as e:
                 # Record the teardown failure before __exit__ ends the span --
                 # the span's own exception recording is off, so nothing else
-                # would report it.
+                # would report it. Guarded, so recording cannot take the place
+                # of the failure being re-raised.
                 if session is not None:
-                    self._record_fastmcp_client_error(session, e)
+                    with guard_trace(logger, "mcp.client.session record"):
+                        self._record_fastmcp_client_error(session, e)
                 raise
             finally:
                 if session is not None:
-                    self._end_fastmcp_client_entry(instance, session, task)
+                    with guard_trace(logger, "mcp.client.session end"):
+                        self._end_fastmcp_client_entry(instance, session, task)
 
         return traced_method
 
     @staticmethod
-    @dont_throw
     def _start_fastmcp_client_entry(tracer, instance):
         """Reserve one entry and attach the shared session span."""
         session = getattr(instance, "_tracing_session", None)
@@ -297,10 +309,11 @@ class McpInstrumentor(BaseInstrumentor):
             session.context_tokens.setdefault(task, []).append(token)
             session.active_entries += 1
             return session, task
-        except Exception:
+        except Exception as error:
             if token is not None:
                 context.detach(token)
             if not created and session is not None and token is None:
+                log_trace_failure(logger, "mcp.client.session attach", error)
                 session.context_tokens.setdefault(task, []).append(None)
                 session.active_entries += 1
                 return session, task
@@ -314,13 +327,11 @@ class McpInstrumentor(BaseInstrumentor):
             raise
 
     @staticmethod
-    @dont_throw
     def _record_fastmcp_client_error(session, error):
         """Record a lifecycle error without replacing the client error."""
         record_error(session.span, error)
 
     @staticmethod
-    @dont_throw
     def _end_fastmcp_client_entry(instance, session, task):
         """Release one task-local entry and end an idle session span."""
         tokens = session.context_tokens.get(task)
@@ -328,16 +339,20 @@ class McpInstrumentor(BaseInstrumentor):
             return
 
         token = tokens.pop()
-        if token is not None:
-            context.detach(token)
-        if not tokens:
-            del session.context_tokens[task]
+        try:
+            if token is not None:
+                context.detach(token)
+        finally:
+            if not tokens:
+                del session.context_tokens[task]
 
-        session.active_entries -= 1
-        if session.active_entries == 0:
-            session.span.end()
-            if getattr(instance, "_tracing_session", None) is session:
-                delattr(instance, "_tracing_session")
+            session.active_entries -= 1
+            if session.active_entries == 0:
+                try:
+                    session.span.end()
+                finally:
+                    if getattr(instance, "_tracing_session", None) is session:
+                        delattr(instance, "_tracing_session")
 
     async def _handle_tool_call(self, tracer, method, params, args, kwargs, wrapped):
         """Handle tools/call with tool semantics"""
@@ -635,30 +650,42 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
 
-        # Handle different item types based on what's available
-        request = None
-        if hasattr(item, "message") and hasattr(item.message, "root"):
-            request = item.message.root
-        elif type(item) is JSONRPCMessage:
-            request = cast(JSONRPCMessage, item).root
-        elif hasattr(item, "root"):
-            request = item.root
-        else:
-            return await self.__wrapped__.send(item)
+        # All span work happens up front, inside the guard: a failure costs the
+        # span, never the message. `span is None` means this send is untraced.
+        span_context_manager = None
+        span = None
+        with guard_trace(logger, "ResponseStreamWriter"):
+            # Handle different item types based on what's available
+            request = None
+            if hasattr(item, "message") and hasattr(item.message, "root"):
+                request = item.message.root
+            elif type(item) is JSONRPCMessage:
+                request = cast(JSONRPCMessage, item).root
+            elif hasattr(item, "root"):
+                request = item.root
 
-        # The wrapped send runs inside this span, so a transport failure would
-        # be recorded by OTel with its message and stacktrace ungated. The
-        # except below reports it instead, with the message gated.
-        with self._tracer.start_as_current_span(
-            "ResponseStreamWriter",
-            record_exception=False,
-            set_status_on_exception=False,
-        ) as span:
-            try:
+            if request is not None:
+                # The wrapped send runs inside this span, so a transport failure
+                # would be recorded by OTel with its message and stacktrace
+                # ungated. The except below reports it instead, message gated.
+                span_context_manager = self._tracer.start_as_current_span(
+                    "ResponseStreamWriter",
+                    record_exception=False,
+                    set_status_on_exception=False,
+                )
+                span = span_context_manager.__enter__()
+
+                if isinstance(request, JSONRPCRequest):
+                    # Injection first: the server downstream depends on it, so it
+                    # must not be lost to a failure in the attributes below.
+                    if not request.params:
+                        request.params = {}
+                    meta = request.params.setdefault("_meta", {})
+                    propagate.get_global_textmap().inject(meta)
+
                 if hasattr(request, "result"):
                     # The response body is content, and so is the error text
                     # below -- it is the same payload.
@@ -675,19 +702,19 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                 if hasattr(request, "id"):
                     span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
-                if not isinstance(request, JSONRPCRequest):
-                    return await self.__wrapped__.send(item)
-                meta = None
-                if not request.params:
-                    request.params = {}
-                meta = request.params.setdefault("_meta", {})
-
-                propagate.get_global_textmap().inject(meta)
-                return await self.__wrapped__.send(item)
-
-            except Exception as e:
-                record_error(span, e)
-                raise
+        try:
+            # The transport call: one site, never guarded. Swallowing a failure
+            # here would tell the caller a message went out when it did not.
+            return await self.__wrapped__.send(item)
+        except Exception as e:
+            if span is not None:
+                with guard_trace(logger, "ResponseStreamWriter record"):
+                    record_error(span, e)
+            raise
+        finally:
+            if span is not None:
+                with guard_trace(logger, "ResponseStreamWriter end"):
+                    span_context_manager.__exit__(None, None, None)
 
 
 @dataclass(slots=True, frozen=True)
@@ -708,8 +735,9 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
+        # Not guarded: nothing here is tracing work that can fail, and a
+        # transport failure from the wrapped send has to reach the caller.
         # Removed RequestStreamWriter span creation - we don't need low-level protocol spans
         ctx = context.get_current()
         return await self.__wrapped__.send(ItemWithContext(item, ctx))

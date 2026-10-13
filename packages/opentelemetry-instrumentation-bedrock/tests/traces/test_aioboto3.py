@@ -20,6 +20,7 @@ instrumentation wrappers (factory hook, async method wrappers, streaming
 body wrapper, span attribute setters).
 """
 
+import io
 import json
 
 import aioboto3
@@ -415,6 +416,51 @@ async def test_aioboto3_invoke_model_with_events_with_no_content(
             assert body == {} or "content" not in body
 
 
+async def test_aioboto3_invoke_model_file_like_body(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """boto3 accepts a file-like `body`; it must be traced like a bytes body."""
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": MESSAGE_LIST,
+        "system": SYSTEM_LIST,
+        "inferenceConfig": INF_PARAMS,
+    }
+
+    received = {}
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_model_response)
+    fake_call = client._make_api_call
+
+    async def recording_call(operation_name, api_params):
+        received["body"] = api_params["body"]
+        return await fake_call(operation_name, api_params)
+
+    client._make_api_call = recording_call
+    try:
+        response = await client.invoke_model(
+            body=io.BytesIO(json.dumps(request_body).encode()),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        await response["body"].read()
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    assert json.loads(received["body"]) == request_body
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "chat nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
+    input_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
+
+
 # ────────── invoke_model_with_response_stream (mock-based) ──────────
 
 
@@ -459,6 +505,41 @@ async def test_aioboto3_invoke_stream_legacy(
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
+
+
+async def test_aioboto3_invoke_stream_file_like_body(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    """A file-like `body` must still produce a span with request attributes."""
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": MESSAGE_LIST,
+        "system": SYSTEM_LIST,
+        "inferenceConfig": INF_PARAMS,
+    }
+
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_stream_response)
+    try:
+        response = await client.invoke_model_with_response_stream(
+            body=io.BytesIO(json.dumps(request_body).encode()),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        async for _ in response["body"]:
+            pass
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "chat nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 11
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 16
+    input_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
 
 
 async def test_aioboto3_invoke_stream_with_events_with_content(

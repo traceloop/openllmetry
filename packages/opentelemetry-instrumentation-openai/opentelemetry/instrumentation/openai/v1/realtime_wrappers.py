@@ -13,7 +13,6 @@ Key concepts:
 - Token usage is captured from response.done events
 """
 
-import json
 import time
 from typing import Optional
 
@@ -37,6 +36,7 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
+    json_dumps,
     should_send_prompts,
 )
 
@@ -127,7 +127,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         self._state.session_span,
                         GenAIAttributes.GEN_AI_OUTPUT_TYPE,
-                        json.dumps(session.modalities),
+                        json_dumps(session.modalities),
                     )
                 if hasattr(session, "temperature") and session.temperature is not None:
                     _set_span_attribute(
@@ -237,7 +237,7 @@ class RealtimeEventProcessor:
                     _set_span_attribute(
                         span,
                         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-                        json.dumps(output_messages),
+                        json_dumps(output_messages),
                     )
 
             span.set_status(Status(StatusCode.OK))
@@ -304,7 +304,7 @@ class RealtimeEventProcessor:
                 _set_span_attribute(
                     self._state.response_span,
                     GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                    json.dumps(input_messages),
+                    json_dumps(input_messages),
                 )
 
     def reset_response_state(self):
@@ -515,7 +515,7 @@ class RealtimeSessionWrapper:
                             session_config["temperature"],
                         )
                     if "instructions" in session_config:
-                        instructions_parts = json.dumps([
+                        instructions_parts = json_dumps([
                             {"type": "text", "content": session_config["instructions"]}
                         ])
                         _set_span_attribute(
