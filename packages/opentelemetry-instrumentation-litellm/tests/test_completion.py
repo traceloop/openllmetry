@@ -68,6 +68,33 @@ def test_completion(instrument_legacy, span_exporter):
     assert response.choices[0].message.content == "The capital of France is Paris."
 
 
+@pytest.mark.parametrize(
+    "stop,expected_stop",
+    [
+        (["END"], ("END",)),
+        ("END", ("END",)),
+    ],
+)
+def test_completion_request_attributes(instrument_legacy, span_exporter, stop, expected_stop):
+    litellm.completion(
+        model="gpt-3.5-turbo",
+        messages=MESSAGES,
+        mock_response="Paris.",
+        seed=3,
+        stop=stop,
+        frequency_penalty=0.1,
+        presence_penalty=0.2,
+    )
+
+    span = span_exporter.get_finished_spans()[0]
+    attrs = span.attributes
+
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_SEED] == 3
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES] == expected_stop
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY] == 0.1
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY] == 0.2
+
+
 @pytest.mark.asyncio
 async def test_acompletion(instrument_legacy, span_exporter):
     await litellm.acompletion(
