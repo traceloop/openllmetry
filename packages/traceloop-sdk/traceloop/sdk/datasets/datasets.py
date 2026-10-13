@@ -214,9 +214,12 @@ class Datasets:
             else:
                 col_type = ColumnType.STRING
 
+            # Column labels can be non-strings (e.g. 0, 1, ... for a DataFrame
+            # built without a header); rows below already use str(k).
+            col_label = str(col_name)
             columns_definition.append(
                 ColumnDefinition(
-                    slug=self._slugify(col_name), name=col_name, type=col_type
+                    slug=self._slugify(col_label), name=col_label, type=col_type
                 )
             )
 
