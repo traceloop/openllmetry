@@ -170,13 +170,17 @@ def set_model_input_attributes(span, kwargs):
                 pass
 
 
-def set_streaming_response_attributes(span, accumulated_content, finish_reason=None, tool_calls=None):
+def set_streaming_response_attributes(
+    span, accumulated_content, finish_reason=None, tool_calls=None, accumulated_reasoning=None
+):
     """Set gen_ai.output.messages span attribute for accumulated streaming response."""
     if not span.is_recording() or not should_send_prompts():
         return
 
     mapped_reason = _map_groq_finish_reason(finish_reason)
     parts = [{"type": "text", "content": accumulated_content}] if accumulated_content else []
+    if accumulated_reasoning:
+        parts.append({"type": "reasoning", "content": accumulated_reasoning})
     if tool_calls:
         parts.extend(_tool_calls_to_parts(tool_calls))
     message = {"role": "assistant", "parts": parts, "finish_reason": mapped_reason}
@@ -201,6 +205,12 @@ def set_model_streaming_response_attributes(span, usage, finish_reasons=None):
                     GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                     cached_tokens,
                 )
+
+        completion_tokens_details = getattr(usage, "completion_tokens_details", None)
+        if completion_tokens_details is not None:
+            reasoning_tokens = getattr(completion_tokens_details, "reasoning_tokens", None)
+            if reasoning_tokens is not None:
+                set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens)
 
     if finish_reasons:
         mapped = [_map_groq_finish_reason(fr) for fr in finish_reasons]
@@ -237,6 +247,10 @@ def set_model_response_attributes(span, response, token_histogram):
                 SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
                 cached_tokens,
             )
+
+        reasoning_tokens = (usage.get("completion_tokens_details") or {}).get("reasoning_tokens")
+        if reasoning_tokens is not None:
+            set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens)
 
     if isinstance(prompt_tokens, int) and prompt_tokens >= 0 and token_histogram is not None:
         token_histogram.record(
@@ -276,6 +290,11 @@ def set_response_attributes(span, response):
         role = message.get("role") or "assistant"
 
         parts = _content_to_parts(message.get("content"))
+
+        # Reasoning models return their thinking beside the content when reasoning_format is "parsed".
+        reasoning = message.get("reasoning")
+        if reasoning:
+            parts.append({"type": "reasoning", "content": reasoning})
 
         # tool_calls (modern OpenAI format)
         tool_calls = message.get("tool_calls")
