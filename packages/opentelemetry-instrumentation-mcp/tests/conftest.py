@@ -34,6 +34,9 @@ def fixture_broken_tracer():
     """
 
     class _BrokenTracer:
+        def start_span(self, *args, **kwargs):
+            raise RuntimeError("tracer exploded")
+
         def start_as_current_span(self, *args, **kwargs):
             raise RuntimeError("tracer exploded")
 
@@ -49,7 +52,21 @@ def fixture_end_raises(tracer_provider):
     """
     tracer = tracer_provider.get_tracer(__name__)
 
+    class _EndRaisingSpan:
+        def __init__(self, span):
+            self._span = span
+
+        def __getattr__(self, name):
+            return getattr(self._span, name)
+
+        def end(self, end_time=None):
+            self._span.end(end_time)
+            raise RuntimeError("span end exploded")
+
     class _EndRaisingTracer:
+        def start_span(self, *args, **kwargs):
+            return _EndRaisingSpan(tracer.start_span(*args, **kwargs))
+
         @contextlib.contextmanager
         def start_as_current_span(self, *args, **kwargs):
             with tracer.start_as_current_span(*args, **kwargs) as span:

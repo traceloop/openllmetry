@@ -1,13 +1,14 @@
+import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
+from typing import Any, AsyncGenerator, Callable, Collection, Dict, List, Tuple, Union, cast
 import json
 import logging
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
-from opentelemetry.trace import get_tracer, Tracer
+from opentelemetry.trace import get_tracer, set_span_in_context, Tracer
 from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
@@ -20,6 +21,7 @@ from opentelemetry.instrumentation.mcp.utils import (
     dont_throw,
     error_status,
     guard_trace,
+    log_trace_failure,
     record_error,
     should_send_prompts,
 )
@@ -30,6 +32,13 @@ from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
 _instruments = ("mcp >= 1.6.0",)
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _FastMCPClientSession:
+    span: Any
+    context_tokens: Dict[Any, List[Any]]
+    active_entries: int = 0
 
 
 class McpInstrumentor(BaseInstrumentor):
@@ -223,32 +232,9 @@ class McpInstrumentor(BaseInstrumentor):
         """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
 
         async def traced_method(wrapped, instance, args, kwargs):
-            # Open a root span for the MCP client session and make it current.
-            # Guarded, because all of it is this instrumentation's own work: if
-            # the span cannot be opened, `span is None` below means "untraced",
-            # never "do not connect".
-            span_context_manager = None
-            span = None
+            entry = None
             with guard_trace(logger, "mcp.client.session start"):
-                span_context_manager = tracer.start_as_current_span(
-                    "mcp.client.session",
-                    record_exception=False,
-                    set_status_on_exception=False,
-                )
-                span = span_context_manager.__enter__()
-                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
-                )
-
-            # `span` is the gate throughout: it is set only once __enter__ has
-            # succeeded, so it also stands for "there is something to end".
-            if span is not None:
-                # Store the span context manager on the instance to properly exit it
-                # later, and the span itself so the exit wrapper can report a
-                # teardown failure on it.
-                setattr(instance, "_tracing_session_context_manager", span_context_manager)
-                setattr(instance, "_tracing_session_span", span)
+                entry = self._start_fastmcp_client_entry(tracer, instance)
 
             entered = False
             try:
@@ -258,18 +244,16 @@ class McpInstrumentor(BaseInstrumentor):
                 entered = True
                 return result
             except Exception as e:
-                if span is not None:
+                if entry is not None:
                     with guard_trace(logger, "mcp.client.session record"):
-                        record_error(span, e)
+                        self._record_fastmcp_client_error(entry[0], e)
                 raise
             finally:
-                # A failed __aenter__ means `async with` never calls __aexit__,
-                # so end the span here, detaching it from the current context.
-                # A finally rather than the except, so a cancellation (a
-                # BaseException, not an error) ends it too, UNSET.
-                if not entered and span is not None:
+                # A failed __aenter__ gets no matching __aexit__, including
+                # cancellation, so roll back only the entry reserved above.
+                if not entered and entry is not None:
                     with guard_trace(logger, "mcp.client.session end"):
-                        span_context_manager.__exit__(None, None, None)
+                        self._end_fastmcp_client_entry(instance, *entry)
 
         return traced_method
 
@@ -277,6 +261,8 @@ class McpInstrumentor(BaseInstrumentor):
         """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
 
         async def traced_method(wrapped, instance, args, kwargs):
+            session = getattr(instance, "_tracing_session", None)
+            task = asyncio.current_task()
             try:
                 # Call the original method first. Its failure reaches the caller:
                 # swallowing it would report a clean teardown for a dead transport.
@@ -286,23 +272,87 @@ class McpInstrumentor(BaseInstrumentor):
                 # the span's own exception recording is off, so nothing else
                 # would report it. Guarded, so recording cannot take the place
                 # of the failure being re-raised.
-                span = getattr(instance, "_tracing_session_span", None)
-                if span is not None:
+                if session is not None:
                     with guard_trace(logger, "mcp.client.session record"):
-                        record_error(span, e)
+                        self._record_fastmcp_client_error(session, e)
                 raise
             finally:
-                # End the span in a finally so a cancelled __aexit__ (a
-                # BaseException, not an error) still ends it, UNSET. Guarded, so
-                # ending cannot mask the teardown failure being re-raised.
-                context_manager = getattr(
-                    instance, "_tracing_session_context_manager", None
-                )
-                if context_manager:
+                if session is not None:
                     with guard_trace(logger, "mcp.client.session end"):
-                        context_manager.__exit__(None, None, None)
+                        self._end_fastmcp_client_entry(instance, session, task)
 
         return traced_method
+
+    @staticmethod
+    def _start_fastmcp_client_entry(tracer, instance):
+        """Reserve one entry and attach the shared session span."""
+        session = getattr(instance, "_tracing_session", None)
+        created = session is None
+        span = None
+        token = None
+        try:
+            if created:
+                span = tracer.start_span(
+                    "mcp.client.session",
+                    record_exception=False,
+                    set_status_on_exception=False,
+                )
+                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
+                )
+                session = _FastMCPClientSession(span, {})
+                setattr(instance, "_tracing_session", session)
+
+            task = asyncio.current_task()
+            token = context.attach(set_span_in_context(session.span))
+            session.context_tokens.setdefault(task, []).append(token)
+            session.active_entries += 1
+            return session, task
+        except Exception as error:
+            if token is not None:
+                context.detach(token)
+            if not created and session is not None and token is None:
+                log_trace_failure(logger, "mcp.client.session attach", error)
+                session.context_tokens.setdefault(task, []).append(None)
+                session.active_entries += 1
+                return session, task
+            if created:
+                if session is not None and getattr(
+                    instance, "_tracing_session", None
+                ) is session:
+                    delattr(instance, "_tracing_session")
+                if span is not None:
+                    span.end()
+            raise
+
+    @staticmethod
+    def _record_fastmcp_client_error(session, error):
+        """Record a lifecycle error without replacing the client error."""
+        record_error(session.span, error)
+
+    @staticmethod
+    def _end_fastmcp_client_entry(instance, session, task):
+        """Release one task-local entry and end an idle session span."""
+        tokens = session.context_tokens.get(task)
+        if not tokens:
+            return
+
+        token = tokens.pop()
+        try:
+            if token is not None:
+                context.detach(token)
+        finally:
+            if not tokens:
+                del session.context_tokens[task]
+
+            session.active_entries -= 1
+            if session.active_entries == 0:
+                try:
+                    session.span.end()
+                finally:
+                    if getattr(instance, "_tracing_session", None) is session:
+                        delattr(instance, "_tracing_session")
 
     async def _handle_tool_call(self, tracer, method, params, args, kwargs, wrapped):
         """Handle tools/call with tool semantics"""
