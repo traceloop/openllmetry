@@ -9,6 +9,7 @@ import pytest
 
 
 def _is_installed(package):
+    """Check distribution metadata without importing the optional package."""
     try:
         version(package)
     except PackageNotFoundError:
@@ -17,6 +18,7 @@ def _is_installed(package):
 
 
 def _run_in_subprocess(script):
+    """Run an import scenario in a fresh Python process and assert success."""
     # Import hooks and cached modules must not leak between import-order cases.
     result = subprocess.run(
         [sys.executable, "-c", dedent(script)],
@@ -30,6 +32,7 @@ def _run_in_subprocess(script):
 @pytest.mark.skipif(not _is_installed("fastmcp-slim"), reason="requires FastMCP's split distribution")
 @pytest.mark.parametrize("import_first", [False, True])
 def test_fastmcp_client_imports_do_not_load_server(import_first):
+    """Verify client instrumentation works without importing server support."""
     _run_in_subprocess(f"""
         import sys
 
@@ -59,6 +62,7 @@ def test_fastmcp_client_imports_do_not_load_server(import_first):
 @pytest.mark.parametrize("import_first", [False, True])
 @pytest.mark.parametrize("module", ["fastmcp", "fastmcp.server.server"])
 def test_fastmcp_server_name_is_captured_in_either_import_order(import_first, module):
+    """Capture positional and keyword server names for both import orders and paths."""
     _run_in_subprocess(f"""
         from opentelemetry.instrumentation.mcp import McpInstrumentor
 
