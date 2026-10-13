@@ -969,6 +969,12 @@ def _converse_content_to_parts(content_blocks):
                 if name:
                     part["name"] = name
                 parts.append(part)
+            elif "reasoningContent" in block:
+                # Like the streaming path: reasoningText becomes a reasoning part,
+                # redactedContent (opaque bytes) is not recorded.
+                text = block["reasoningContent"].get("reasoningText", {}).get("text")
+                if text:
+                    parts.append({"type": "reasoning", "content": text})
             elif "guardContent" in block:
                 parts.append({"type": "text", "content": json.dumps(block, default=str)})
             else:
