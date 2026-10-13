@@ -795,7 +795,7 @@ class AnthropicInstrumentor(BaseInstrumentor):
 
     def __init__(
         self,
-        enrich_token_usage: bool = False,
+        enrich_token_usage: Optional[bool] = None,
         exception_logger=None,
         use_attributes: Optional[bool] = None,
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
@@ -825,6 +825,13 @@ class AnthropicInstrumentor(BaseInstrumentor):
         if use_attributes is None:
             use_attributes = True
         Config.exception_logger = exception_logger
+        # Collect token usage by default so standalone instrumentation matches
+        # Traceloop.init() behavior (#3168). Explicit arg wins, otherwise the
+        # TRACELOOP_ENRICH_TOKEN_USAGE env var applies (default "true").
+        if enrich_token_usage is None:
+            enrich_token_usage = (
+                os.getenv("TRACELOOP_ENRICH_TOKEN_USAGE") or "true"
+            ).lower() == "true"
         Config.enrich_token_usage = enrich_token_usage
         Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.upload_base64_image = upload_base64_image

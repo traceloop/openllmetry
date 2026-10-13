@@ -17,6 +17,7 @@ import openai
 _OPENAI_VERSION = version("openai")
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+TRACELOOP_STREAM_INCLUDE_USAGE = "TRACELOOP_STREAM_INCLUDE_USAGE"
 
 
 def is_openai_v1():
@@ -202,6 +203,35 @@ def should_send_prompts() -> bool:
     env_setting = os.getenv(TRACELOOP_TRACE_CONTENT, "true")
     override = context_api.get_value("override_enable_content_tracing")
     return _is_truthy(env_setting) or _is_truthy(override)
+
+
+def should_include_stream_usage() -> bool:
+    """Whether to request token usage in streaming responses by default."""
+    return _is_truthy(os.getenv(TRACELOOP_STREAM_INCLUDE_USAGE, "true"))
+
+
+def ensure_stream_usage(kwargs, instance=None) -> None:
+    """Default ``stream_options={"include_usage": True}`` on streaming calls.
+
+    The OpenAI API only sends ``usage`` in streaming chunks when the request
+    sets ``stream_options={"include_usage": True}``, so without this a plain
+    ``create(stream=True)`` can never yield token usage on the span (#3168).
+    Never overrides an explicit caller value; opt out altogether with
+    ``TRACELOOP_STREAM_INCLUDE_USAGE=false``. Azure endpoints are left
+    untouched because api-versions older than 2024-06-01 reject the
+    ``stream_options`` field.
+    """
+    if not kwargs.get("stream"):
+        return
+    if not should_include_stream_usage():
+        return
+    if instance is not None and is_azure_openai(instance):
+        return
+    stream_options = kwargs.get("stream_options")
+    if stream_options is None:
+        kwargs["stream_options"] = {"include_usage": True}
+    elif isinstance(stream_options, dict):
+        stream_options.setdefault("include_usage", True)
 
 
 def should_emit_events() -> bool:
