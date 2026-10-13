@@ -59,6 +59,7 @@ def image_gen_metrics_wrapper(
         response_model=kwargs.get("model") or None,
         operation="image_gen",
         server_address=_get_openai_base_url(instance),
+        request_model=kwargs.get("model") or None,
     )
 
     duration = end_time - start_time
