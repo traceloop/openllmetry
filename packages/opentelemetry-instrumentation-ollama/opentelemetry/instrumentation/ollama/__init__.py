@@ -291,6 +291,27 @@ def _handle_response(span, event_logger, llm_request_type, token_histogram, resp
     set_model_response_attributes(span, token_histogram, llm_request_type, response)
 
 
+def _record_error_duration(duration_histogram, start_time, kwargs, error):
+    if duration_histogram is None:
+        return
+
+    try:
+        duration = time.perf_counter() - start_time
+        attrs = {
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+            ERROR_TYPE: error.__class__.__name__,
+        }
+        # Match the successful request's model fallback when no response is available.
+        model = (kwargs.get("json") or {}).get("model")
+        if model is not None:
+            attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
+        duration_histogram.record(duration, attributes=attrs)
+    except Exception:
+        # Do not use dont_throw here: its exception_logger callback can raise,
+        # masking the original request error and preventing span finalization.
+        pass
+
+
 @_with_tracer_wrapper
 def _wrap(
     tracer: Tracer,
@@ -327,6 +348,7 @@ def _wrap(
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        _record_error_duration(duration_histogram, start_time, kwargs, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -409,6 +431,7 @@ async def _awrap(
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        _record_error_duration(duration_histogram, start_time, kwargs, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
