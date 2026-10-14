@@ -321,6 +321,9 @@ class TestGenAISystemProjectValues:
     def test_openrouter(self):
         assert GenAISystem.OPENROUTER.value == "openrouter"
 
+    def test_blockrun(self):
+        assert GenAISystem.BLOCKRUN.value == "blockrun"
+
     def test_langchain(self):
         assert GenAISystem.LANGCHAIN.value == "langchain"
 

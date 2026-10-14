@@ -763,3 +763,37 @@ class TestMapFinishReason:
 
     def test_passes_through_unknown_reason(self):
         assert self._map_finish_reason("some_new_reason") == "some_new_reason"
+
+# ---------------------------------------------------------------------------
+# BlockRun provider detection
+# ---------------------------------------------------------------------------
+
+class TestBlockRunProvider:
+    """BlockRun should be identified separately from OpenAI."""
+
+    def test_blockrun_provider_and_model(self, mock_span):
+        from openai import OpenAI
+        from opentelemetry.instrumentation.openai.shared import (
+            _set_request_attributes,
+        )
+
+        instance = MagicMock(spec=OpenAI)
+        instance._client = OpenAI(
+            api_key="test",
+            base_url="https://blockrun.ai/v1",
+        )
+
+        _set_request_attributes(
+            mock_span,
+            {"model": "openai/gpt-5.2"},
+            instance=instance,
+        )
+
+        assert (
+            mock_span._attrs[GenAIAttributes.GEN_AI_PROVIDER_NAME]
+            == "blockrun"
+        )
+        assert (
+            mock_span._attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+            == "gpt-5.2"
+        )
