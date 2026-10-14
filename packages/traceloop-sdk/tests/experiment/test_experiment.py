@@ -1,6 +1,11 @@
+import re
+
 import pytest
 from unittest.mock import Mock, AsyncMock
-from traceloop.sdk.experiment.experiment import Experiment
+from traceloop.sdk.experiment.experiment import (
+    Experiment,
+    _EXPERIMENT_SLUG_CUID,
+)
 from traceloop.sdk.client.http import HTTPClient
 from traceloop.sdk.evaluator.config import EvaluatorDetails
 
@@ -369,3 +374,54 @@ class TestRunLocallyValidation:
         # Should succeed because string evaluators don't trigger validation
         assert len(errors) == 0
         assert len(results) == 1
+
+
+class TestGeneratedExperimentSlug:
+    """The slug the SDK generates when the caller does not pass one."""
+
+    def test_shape_is_exp_plus_eleven_lowercase_alphanumerics(self):
+        """The old code hand-truncated a cuid to 11 characters.
+
+        The backend keys experiment runs by this slug, so the generated part
+        has to keep that width and alphabet whichever generator produces it.
+        """
+        slugs = {_EXPERIMENT_SLUG_CUID.generate() for _ in range(500)}
+
+        assert len(slugs) == 500
+        for slug in slugs:
+            assert re.fullmatch(r"[a-z0-9]{11}", slug), slug
+
+    @pytest.mark.anyio(backends=["asyncio"])
+    async def test_generated_slug_reaches_the_experiment_and_the_tasks(self):
+        mock_http_client = Mock(spec=HTTPClient)
+        mock_http_client.base_url = "https://api.example.com"
+        mock_async_http_client = Mock()
+
+        mock_experiment_response = Mock()
+        mock_experiment_response.run.id = "run-123"
+        mock_experiment_response.experiment.id = "exp-456"
+
+        experiment = Experiment(mock_http_client, mock_async_http_client, None)
+        experiment._init_experiment = Mock(return_value=mock_experiment_response)
+        experiment._create_task = Mock(return_value=Mock(id="task-1"))
+        experiment._datasets.get_version_jsonl = Mock(
+            return_value='{"columns":{}}\n{"input": "test"}'
+        )
+
+        async def task(row):
+            return {"output": "ok"}
+
+        results, errors = await experiment._run_locally(
+            task=task,
+            evaluators=[],
+            dataset_slug="test-dataset",
+            dataset_version="v1",
+        )
+
+        assert errors == []
+        assert len(results) == 1
+
+        slug = experiment._last_experiment_slug
+        assert re.fullmatch(r"exp-[a-z0-9]{11}", slug), slug
+        assert experiment._init_experiment.call_args.args[0] == slug
+        assert experiment._create_task.call_args.kwargs["experiment_slug"] == slug
