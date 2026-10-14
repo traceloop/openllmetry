@@ -51,6 +51,8 @@ dependencies = [
   "fastmcp>=2.12.3,<3",
   "agno>=2.4.0,<3",
   "voyageai>=0.3.7",
+  "aleph_alpha_client>=7.1.0,<8",
+  "opentelemetry-instrumentation-alephalpha",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-haystack",
   "opentelemetry-instrumentation-pinecone",
@@ -84,6 +86,7 @@ opentelemetry-instrumentation-agno = { path = "../opentelemetry-instrumentation-
 opentelemetry-instrumentation-anthropic = { path = "../opentelemetry-instrumentation-anthropic", editable = true }
 opentelemetry-instrumentation-bedrock = { path = "../opentelemetry-instrumentation-bedrock", editable = true }
 opentelemetry-instrumentation-voyageai = { path = "../opentelemetry-instrumentation-voyageai", editable = true }
+opentelemetry-instrumentation-alephalpha = { path = "../opentelemetry-instrumentation-alephalpha", editable = true }
 traceloop-sdk = { path = "../traceloop-sdk", editable = true }
 
 [dependency-groups]
