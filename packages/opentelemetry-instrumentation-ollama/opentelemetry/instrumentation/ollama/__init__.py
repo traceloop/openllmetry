@@ -301,10 +301,10 @@ def _record_error_duration(duration_histogram, start_time, kwargs, error):
             GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
             ERROR_TYPE: error.__class__.__name__,
         }
-        # Match the successful request's model fallback when no response is available.
+        # No response is available, so only the requested model is known.
         model = (kwargs.get("json") or {}).get("model")
         if model is not None:
-            attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model
+            attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
         duration_histogram.record(duration, attributes=attrs)
     except Exception:
         # Do not use dont_throw here: its exception_logger callback can raise,

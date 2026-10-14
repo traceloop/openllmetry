@@ -58,12 +58,13 @@ def _assert_operation_duration(reader, span_exporter, failed):
     point = points[0]
     assert point.sum >= 0
     assert point.attributes[GenAIAttributes.GEN_AI_SYSTEM] == "Ollama"
-    assert point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "test-model"
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     span = spans[0]
     exceptions = [event for event in span.events if event.name == "exception"]
     if failed:
+        assert point.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "test-model"
+        assert GenAIAttributes.GEN_AI_RESPONSE_MODEL not in point.attributes
         assert point.attributes[ERROR_TYPE] == "ResponseError"
         assert span.status.status_code == StatusCode.ERROR
         assert span.attributes[ERROR_TYPE] == "ResponseError"
@@ -71,6 +72,7 @@ def _assert_operation_duration(reader, span_exporter, failed):
         assert len(exceptions) == 1
         assert "mock failure" in exceptions[0].attributes["exception.message"]
     else:
+        assert point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "test-model"
         assert ERROR_TYPE not in point.attributes
         assert span.status.status_code != StatusCode.ERROR
         assert not exceptions
