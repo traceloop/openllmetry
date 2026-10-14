@@ -1,0 +1,29 @@
+{
+  "name": "tdd-gate",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "tools/tdd_gate"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "tools/tdd_gate"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest test_tdd_gate.py -v",
+        "cwd": "tools/tdd_gate"
+      }
+    }
+  },
+  "tags": ["tooling"]
+}
