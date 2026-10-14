@@ -1,8 +1,10 @@
+import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Callable, Collection, Tuple, Union, cast
+from typing import Any, AsyncGenerator, Optional, Callable, Collection, Tuple, Union, cast
 import json
 import logging
+import weakref
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -30,6 +32,51 @@ from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
 _instruments = ("mcp >= 1.6.0",)
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _SessionEntry:
+    """One task's open `mcp.client.session` span on a FastMCP client.
+
+    FastMCP's Client is reentrant: nested `async with client` reuses one
+    session, so only the outermost entry owns the span and `depth` counts
+    the entries still open.
+    """
+
+    context_manager: Any
+    span: Any
+    depth: int = 1
+
+
+def _task_key() -> Optional["asyncio.Task"]:
+    """The running task, which owns the OTel context token the span attached.
+
+    A context token can only be reset in the contextvars Context that created
+    it, so a session span must be ended by the task that started it. None when
+    there is no asyncio task (e.g. a different async backend): one shared slot.
+    """
+    try:
+        return asyncio.current_task()
+    except RuntimeError:
+        return None
+
+
+def _finished_task_entry(sessions):
+    """The entry of a task that has already finished, or (None, None).
+
+    `async with` enters and exits in one task, but a manual __aenter__ and
+    __aexit__ need not: pytest-asyncio runs a fixture's setup and teardown in
+    separate tasks. The enter's task is then done by the time of the exit.
+    """
+    for key, entry in sessions.items():
+        if key is not None and key.done():
+            return key, entry
+    return None, None
+
+
+# Per client, but kept off the client itself: Client.new() is a copy.copy,
+# which would share an attribute's dict between the original and the copy.
+_client_sessions = weakref.WeakKeyDictionary()
 
 
 class McpInstrumentor(BaseInstrumentor):
@@ -223,6 +270,20 @@ class McpInstrumentor(BaseInstrumentor):
         """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
 
         async def traced_method(wrapped, instance, args, kwargs):
+            key = _task_key()
+            sessions = _client_sessions.get(instance)
+            entry = sessions.get(key) if sessions is not None else None
+            if entry is not None:
+                # Nested entry: FastMCP reuses its session, so reuse the span.
+                entry.depth += 1
+                try:
+                    return await wrapped(*args, **kwargs)
+                except BaseException:
+                    # A failed __aenter__ gets no __aexit__ from `async with`,
+                    # so it must not count as an open entry.
+                    entry.depth -= 1
+                    raise
+
             # Open a root span for the MCP client session and make it current.
             # Guarded, because all of it is this instrumentation's own work: if
             # the span cannot be opened, `span is None` below means "untraced",
@@ -244,11 +305,12 @@ class McpInstrumentor(BaseInstrumentor):
             # `span` is the gate throughout: it is set only once __enter__ has
             # succeeded, so it also stands for "there is something to end".
             if span is not None:
-                # Store the span context manager on the instance to properly exit it
-                # later, and the span itself so the exit wrapper can report a
-                # teardown failure on it.
-                setattr(instance, "_tracing_session_context_manager", span_context_manager)
-                setattr(instance, "_tracing_session_span", span)
+                # Kept per task, not per instance: the exit has to detach this
+                # span's context token from the task that attached it. The span
+                # is kept so the exit can report a teardown failure on it.
+                if sessions is None:
+                    sessions = _client_sessions.setdefault(instance, {})
+                sessions[key] = _SessionEntry(span_context_manager, span)
 
             entered = False
             try:
@@ -266,8 +328,10 @@ class McpInstrumentor(BaseInstrumentor):
                 # A failed __aenter__ means `async with` never calls __aexit__,
                 # so end the span here, detaching it from the current context.
                 # A finally rather than the except, so a cancellation (a
-                # BaseException, not an error) ends it too, UNSET.
+                # BaseException, not an error) ends it too, UNSET. The entry is
+                # dropped first, so a span end failure can't leave it behind.
                 if not entered and span is not None:
+                    sessions.pop(key, None)
                     with guard_trace(logger, "mcp.client.session end"):
                         span_context_manager.__exit__(None, None, None)
 
@@ -277,6 +341,15 @@ class McpInstrumentor(BaseInstrumentor):
         """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
 
         async def traced_method(wrapped, instance, args, kwargs):
+            sessions = _client_sessions.get(instance) or {}
+            key = _task_key()
+            entry = sessions.get(key)
+            # Entered in this task, so its context token can be detached here.
+            own_task = entry is not None
+            if not own_task:
+                # Entered in a task that has since finished, or not at all (the
+                # span failed to open): then there is no span of ours to end.
+                key, entry = _finished_task_entry(sessions)
             try:
                 # Call the original method first. Its failure reaches the caller:
                 # swallowing it would report a clean teardown for a dead transport.
@@ -286,21 +359,27 @@ class McpInstrumentor(BaseInstrumentor):
                 # the span's own exception recording is off, so nothing else
                 # would report it. Guarded, so recording cannot take the place
                 # of the failure being re-raised.
-                span = getattr(instance, "_tracing_session_span", None)
-                if span is not None:
+                if entry is not None:
                     with guard_trace(logger, "mcp.client.session record"):
-                        record_error(span, e)
+                        record_error(entry.span, e)
                 raise
             finally:
                 # End the span in a finally so a cancelled __aexit__ (a
-                # BaseException, not an error) still ends it, UNSET. Guarded, so
-                # ending cannot mask the teardown failure being re-raised.
-                context_manager = getattr(
-                    instance, "_tracing_session_context_manager", None
-                )
-                if context_manager:
-                    with guard_trace(logger, "mcp.client.session end"):
-                        context_manager.__exit__(None, None, None)
+                # BaseException, not an error) still ends it, UNSET. Only the
+                # outermost exit ends it; nested exits just unwind the depth.
+                # The entry is dropped before the guarded end, so a span end
+                # failure can't leave it behind for the next `async with`.
+                if entry is not None:
+                    entry.depth -= 1
+                    if entry.depth <= 0:
+                        sessions.pop(key, None)
+                        with guard_trace(logger, "mcp.client.session end"):
+                            if own_task:
+                                entry.context_manager.__exit__(None, None, None)
+                            else:
+                                # The token belongs to the finished task's
+                                # context, which is gone: end the span only.
+                                entry.span.end()
 
         return traced_method
 
