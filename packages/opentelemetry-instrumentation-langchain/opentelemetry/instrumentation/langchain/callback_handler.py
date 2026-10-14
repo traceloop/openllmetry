@@ -41,6 +41,7 @@ from opentelemetry.instrumentation.langchain.event_models import (
 )
 from opentelemetry.instrumentation.langchain.span_utils import (
     SpanHolder,
+    _get_span_attribute,
     _map_finish_reason,
     _set_span_attribute,
     extract_model_name_from_response_metadata,
@@ -265,11 +266,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 child_holder = self.spans[child_id]
                 child_span = child_holder.span
                 self._detach_holder_contexts(child_holder)
-                if child_span.end_time is None:  # avoid warning on ended spans
+                if child_span.is_recording():  # avoid warning on ended spans
                     child_span.end()
                 del self.spans[child_id]
         self._detach_holder_contexts(self.spans[run_id])
-        if span.end_time is None:  # avoid warning on ended spans
+        if span.is_recording():  # avoid warning on ended spans
             span.end()
 
         del self.spans[run_id]
@@ -839,7 +840,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
 
             # Record token usage metrics
-            vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
+            vendor = _get_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
             if prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
@@ -871,7 +872,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         # Record duration before ending span
         duration = time.time() - self.spans[run_id].start_time
-        vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
+        vendor = _get_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
         self.duration_histogram.record(
             duration,
             attributes={
