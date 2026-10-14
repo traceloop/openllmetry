@@ -142,9 +142,10 @@ def beginner_tracing_example():
     print("What just happened (the trace):")
     print("=" * 60)
     print(
-        "Look above this message — you should see JSON blobs printed by\n"
-        "ConsoleSpanExporter. Each blob is a 'span' representing one\n"
-        "operation. Key fields to notice:"
+        "Look above and below this message — you should see JSON blobs printed\n"
+        "by ConsoleSpanExporter. Each blob is a 'span' representing one\n"
+        "operation. The workflow span JSON appears below (it closes when this\n"
+        "function returns). Key fields to notice:"
     )
     print("  - name: the span name (e.g. 'openai.chat', 'generate_response')")
     print("  - attributes: gen_ai.request.model, gen_ai.usage.*, etc.")

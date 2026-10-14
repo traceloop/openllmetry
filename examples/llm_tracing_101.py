@@ -43,14 +43,18 @@ def main():
 
     print("Making LLM call...")
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "What is observability in 2 sentences?"},
-        ],
-        max_tokens=100,
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "What is observability in 2 sentences?"},
+            ],
+            max_tokens=100,
+        )
+    except Exception as e:
+        print(f"\nError: OpenAI request failed — {e}")
+        return
 
     print(f"\nResponse: {response.choices[0].message.content}")
 
