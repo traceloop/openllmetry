@@ -20,6 +20,28 @@ from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 OpenAIInstrumentor().instrument()
 ```
 
+The instrumentation also works when the official OpenAI SDK is configured for an OpenAI-compatible endpoint. For example,
+TokenLab:
+
+```python
+import os
+
+from openai import OpenAI
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+OpenAIInstrumentor().instrument()
+
+client = OpenAI(
+    api_key=os.environ["TOKENLAB_API_KEY"],
+    base_url="https://api.tokenlab.sh/v1",
+)
+
+client.chat.completions.create(
+    model="claude-sonnet-5",
+    messages=[{"role": "user", "content": "Trace this request"}],
+)
+```
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application is working, and can make it easy to debug and evaluate the quality of the outputs.
