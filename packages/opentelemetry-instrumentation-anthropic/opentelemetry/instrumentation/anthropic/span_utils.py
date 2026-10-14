@@ -138,6 +138,11 @@ async def aset_input_attributes(span, kwargs):
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
+    stop_sequences = kwargs.get("stop_sequences")
+    if stop_sequences:
+        set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, list(stop_sequences)
+        )
     set_span_attribute(span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream"))
 
     if should_send_prompts():
