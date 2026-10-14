@@ -28,6 +28,16 @@ LANGGRAPH_GRAPH_SPAN_KEY = "langgraph_graph_span"
 LANGGRAPH_FIRST_CHILD_PENDING_KEY = "langgraph_first_child_pending"
 
 
+def _safe_detach_context(token) -> None:
+    """Detach tokens that may be finalized in a copied async context."""
+    from opentelemetry.context import _RUNTIME_CONTEXT
+
+    try:
+        _RUNTIME_CONTEXT.detach(token)
+    except (RuntimeError, ValueError):
+        pass
+
+
 def _set_graph_span_attributes(
     graph_span: Span,
     instance: Any,
@@ -193,14 +203,14 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         try:
             async for item in wrapped(*args, **kwargs):
                 yield item
-        except BaseException as e:
+        except Exception as e:
             graph_span.set_status(Status(StatusCode.ERROR, str(e)))
             graph_span.record_exception(e)
             raise
         finally:
             graph_span.end()
-            context_api.detach(graph_span_ctx)
-            context_api.detach(langgraph_ctx)
+            _safe_detach_context(graph_span_ctx)
+            _safe_detach_context(langgraph_ctx)
 
     return async_wrapper if is_async else wrapper
 
