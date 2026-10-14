@@ -115,6 +115,20 @@ def test_request_stop_sequences_attribute():
     assert list(span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END", "###"]
 
 
+def test_request_stop_sequences_bare_string_is_one_item():
+    """A bare-string stop_sequences must be recorded as a single item, not split into characters."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": "END",
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert list(span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END"]
+
+
 def test_request_stop_sequences_not_set_when_absent():
     """gen_ai.request.stop_sequences must not be set when stop_sequences is not passed."""
     span = make_span()
