@@ -51,7 +51,7 @@ from opentelemetry.semconv_ai import (
     Meters,
     SpanAttributes,
 )
-from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer
+from opentelemetry.trace import Span, SpanKind, Tracer, get_tracer, set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
 from typing_extensions import Coroutine
 from wrapt import wrap_function_wrapper
@@ -564,6 +564,7 @@ def _wrap(
     _handle_input(span, event_logger, kwargs)
 
     start_time = time.time()
+    ctx_token = context_api.attach(set_span_in_context(span))
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
@@ -582,6 +583,8 @@ def _wrap(
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
+    finally:
+        context_api.detach(ctx_token)
 
     end_time = time.time()
 
@@ -696,6 +699,7 @@ async def _awrap(
     await _ahandle_input(span, event_logger, kwargs)
 
     start_time = time.time()
+    ctx_token = context_api.attach(set_span_in_context(span))
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:  # pylint: disable=broad-except
@@ -714,6 +718,8 @@ async def _awrap(
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
+    finally:
+        context_api.detach(ctx_token)
 
     if is_streaming_response(response):
         return AnthropicAsyncStream(
