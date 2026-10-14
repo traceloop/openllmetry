@@ -1,72 +1,320 @@
-"""Regression test for issue #4426.
+"""Regression tests for #4426: non-ASCII content must survive into span attributes."""
 
-Non-ASCII characters in the content written to gen_ai.* JSON span attributes
-were escaped to \\uXXXX sequences because json.dumps defaults to
-ensure_ascii=True. The instrumentation now passes ensure_ascii=False so the
-attribute preserves the original UTF-8 text.
-"""
+import ast
 import json
+import pathlib
+from typing import Callable
 
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.semconv._incubating.attributes import (
-    gen_ai_attributes as GenAIAttributes,
-)
+import httpx
+import openai
+import pytest
 
-from opentelemetry.instrumentation.openai.shared import _set_tool_definitions_json
-from opentelemetry.instrumentation.openai.shared.completion_wrappers import (
-    _set_input_messages,
-    _set_output_messages,
-)
+import opentelemetry.instrumentation.openai as openai_instrumentation
+from opentelemetry.instrumentation.openai.utils import json_dumps
+from opentelemetry.semconv_ai import SpanAttributes
 
+PROMPT = "Какая погода в Бостоне сегодня?"
+COMPLETION = "В Бостоне сегодня ясно 🌤"
+TOOL_DESCRIPTION = "Узнать погоду"
+TOOL_ARG_CITY = "Бостон"
+SCHEMA_DESCRIPTION = "Прогноз погоды"
 
-def _span():
-    return TracerProvider().get_tracer(__name__).start_span("test")
-
-
-def test_tool_definitions_preserve_non_ascii():
-    span = _span()
-    tool_defs = [
-        {
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
             "name": "get_current_weather",
-            "description": "Узнать погоду",  # Russian
-            "parameters": {"city": "Бостон"},
+            "description": TOOL_DESCRIPTION,
+            "parameters": {
+                "type": "object",
+                "required": ["location"],
+                "properties": {"location": {"type": "string", "description": "Город"}},
+            },
+        },
+    }
+]
+
+MESSAGES = [
+    {"role": "user", "content": PROMPT},
+    {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [
+            {
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "arguments": json.dumps({"location": TOOL_ARG_CITY}),
+                },
+            }
+        ],
+    },
+    {"role": "tool", "tool_call_id": "call_1", "content": "ясно"},
+]
+
+USAGE = {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+
+CHAT_RESPONSE = {
+    "id": "chatcmpl-non-ascii",
+    "object": "chat.completion",
+    "created": 1,
+    "model": "gpt-4o-mini",
+    "choices": [
+        {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {"role": "assistant", "content": COMPLETION},
         }
+    ],
+    "usage": USAGE,
+}
+
+COMPLETION_RESPONSE = {
+    "id": "cmpl-non-ascii",
+    "object": "text_completion",
+    "created": 1,
+    "model": "gpt-3.5-turbo-instruct",
+    "choices": [
+        {"index": 0, "text": COMPLETION, "finish_reason": "stop", "logprobs": None}
+    ],
+    "usage": USAGE,
+}
+
+EMBEDDINGS_RESPONSE = {
+    "object": "list",
+    "data": [{"object": "embedding", "index": 0, "embedding": [0.1, 0.2]}],
+    "model": "text-embedding-3-small",
+    "usage": {"prompt_tokens": 5, "total_tokens": 5},
+}
+
+
+REASONING_SUMMARY = "Пользователь спрашивает о погоде"
+
+RESPONSES_TOOLS = [
+    {
+        "type": "function",
+        "name": "get_current_weather",
+        "description": TOOL_DESCRIPTION,
+        "parameters": {
+            "type": "object",
+            "required": ["location"],
+            "properties": {"location": {"type": "string", "description": "Город"}},
+        },
+    }
+]
+
+RESPONSES_RESPONSE = {
+    "id": "resp-non-ascii",
+    "object": "response",
+    "created_at": 1,
+    "status": "completed",
+    "model": "gpt-4o-mini",
+    "parallel_tool_calls": True,
+    "tool_choice": "auto",
+    "tools": RESPONSES_TOOLS,
+    "output": [
+        {
+            "id": "rs_1",
+            "type": "reasoning",
+            "summary": [{"type": "summary_text", "text": REASONING_SUMMARY}],
+        },
+        {
+            "id": "msg_1",
+            "type": "message",
+            "role": "assistant",
+            "status": "completed",
+            "content": [{"type": "output_text", "text": COMPLETION, "annotations": []}],
+        },
+    ],
+    "usage": {
+        "input_tokens": 10,
+        "output_tokens": 5,
+        "total_tokens": 15,
+        "input_tokens_details": {"cached_tokens": 0},
+        "output_tokens_details": {"reasoning_tokens": 0},
+    },
+}
+
+
+def _sse(chunks):
+    body = "".join(
+        f"data: {json.dumps(c, ensure_ascii=False)}\n\n" for c in chunks
+    ) + "data: [DONE]\n\n"
+    return body.encode("utf-8")
+
+
+STREAM_BODY = _sse(
+    [
+        {
+            "id": "chatcmpl-stream",
+            "object": "chat.completion.chunk",
+            "created": 1,
+            "model": "gpt-4o-mini",
+            "choices": [
+                {
+                    "index": 0,
+                    "delta": {"role": "assistant", "content": COMPLETION},
+                    "finish_reason": None,
+                }
+            ],
+        },
+        {
+            "id": "chatcmpl-stream",
+            "object": "chat.completion.chunk",
+            "created": 1,
+            "model": "gpt-4o-mini",
+            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+        },
     ]
-    _set_tool_definitions_json(span, tool_defs)
-
-    raw = dict(span.attributes)[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS]
-    # The stored JSON must contain the original UTF-8 text, not \uXXXX escapes.
-    assert "Узнать погоду" in raw
-    assert "\\u" not in raw
-    # And it must still round-trip to the same structure.
-    assert json.loads(raw) == tool_defs
+)
 
 
-def test_tool_definitions_ascii_unchanged():
-    span = _span()
-    tool_defs = [{"name": "ping", "description": "check health"}]
-    _set_tool_definitions_json(span, tool_defs)
-    raw = dict(span.attributes)[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS]
-    assert json.loads(raw) == tool_defs
+def _client(handler: Callable[[httpx.Request], httpx.Response]) -> openai.OpenAI:
+    # No network and no API key: only attribute serialization is under test.
+    return openai.OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
 
 
-def test_input_messages_preserve_non_ascii():
-    span = _span()
-    _set_input_messages(span, "Привет")
-
-    raw = dict(span.attributes)[GenAIAttributes.GEN_AI_INPUT_MESSAGES]
-    # The stored JSON must contain the original UTF-8 text, not \uXXXX escapes.
-    assert "Привет" in raw
-    assert "\\u" not in raw
-    # And it must still round-trip to the same structure.
-    assert json.loads(raw)[0]["parts"][0]["content"] == "Привет"
+@pytest.fixture
+def chat_client():
+    return _client(lambda request: httpx.Response(200, json=CHAT_RESPONSE))
 
 
-def test_output_messages_preserve_non_ascii():
-    span = _span()
-    _set_output_messages(span, [{"text": "Привет мир", "finish_reason": "stop"}])
+def _assert_readable(attr_value, *expected):
+    for text in expected:
+        assert text in attr_value
+    assert "\\u04" not in attr_value  # no escaped Cyrillic
+    json.loads(attr_value)  # still valid JSON
 
-    raw = dict(span.attributes)[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
-    assert "Привет мир" in raw
-    assert "\\u" not in raw
-    assert json.loads(raw)[0]["parts"][0]["content"] == "Привет мир"
+
+def test_chat_preserves_non_ascii(instrument_legacy, span_exporter, chat_client):
+    chat_client.chat.completions.create(
+        model="gpt-4o-mini", messages=MESSAGES, tools=TOOLS
+    )
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT, TOOL_ARG_CITY)
+    _assert_readable(attrs["gen_ai.tool.definitions"], TOOL_DESCRIPTION)
+    _assert_readable(attrs["gen_ai.output.messages"], COMPLETION)
+
+
+def test_streaming_chat_preserves_non_ascii(instrument_legacy, span_exporter):
+    client = _client(
+        lambda request: httpx.Response(
+            200,
+            content=STREAM_BODY,
+            headers={"content-type": "text/event-stream"},
+        )
+    )
+
+    stream = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": PROMPT}],
+        stream=True,
+    )
+    for _ in stream:
+        pass
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+    _assert_readable(attrs["gen_ai.output.messages"], COMPLETION)
+
+
+def test_response_format_schema_preserves_non_ascii(
+    instrument_legacy, span_exporter, chat_client
+):
+    chat_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": PROMPT}],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "weather",
+                "schema": {"type": "object", "description": SCHEMA_DESCRIPTION},
+            },
+        },
+    )
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(
+        attrs[SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA],
+        SCHEMA_DESCRIPTION,
+    )
+
+
+def test_completions_preserve_non_ascii(instrument_legacy, span_exporter):
+    client = _client(lambda request: httpx.Response(200, json=COMPLETION_RESPONSE))
+
+    client.completions.create(model="gpt-3.5-turbo-instruct", prompt=PROMPT)
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+    _assert_readable(attrs["gen_ai.output.messages"], COMPLETION)
+
+
+def test_embeddings_preserve_non_ascii(instrument_legacy, span_exporter):
+    client = _client(lambda request: httpx.Response(200, json=EMBEDDINGS_RESPONSE))
+
+    client.embeddings.create(
+        model="text-embedding-3-small", input=PROMPT, encoding_format="float"
+    )
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+
+
+def test_responses_preserve_non_ascii(instrument_legacy, span_exporter):
+    client = _client(lambda request: httpx.Response(200, json=RESPONSES_RESPONSE))
+
+    client.responses.create(
+        model="gpt-4o-mini",
+        input=[{"role": "user", "content": PROMPT}],
+        tools=RESPONSES_TOOLS,
+    )
+
+    attrs = span_exporter.get_finished_spans()[-1].attributes
+
+    _assert_readable(attrs["gen_ai.input.messages"], PROMPT)
+    _assert_readable(attrs["gen_ai.tool.definitions"], TOOL_DESCRIPTION)
+    _assert_readable(attrs["gen_ai.output.messages"], COMPLETION, REASONING_SUMMARY)
+
+
+def test_no_bare_json_dumps_in_package():
+    """Every JSON span attribute must go through utils.json_dumps (#4426)."""
+    package_root = pathlib.Path(openai_instrumentation.__file__).parent
+    offenders = []
+    for path in package_root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "dumps"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "json"
+            ):
+                offenders.append(f"{path.relative_to(package_root)}:{node.lineno}")
+
+    # utils.json_dumps itself is the single allowed caller.
+    offenders = [o for o in offenders if not o.startswith("utils.py:")]
+    assert offenders == []
+
+
+def test_json_dumps_escapes_only_lone_surrogate():
+    payload = {"content": "Бостон \ud83d café"}
+
+    result = json_dumps(payload)
+
+    result.encode("utf-8")  # must not raise
+    assert "\\ud83d" in result  # the unpairable surrogate is escaped
+    assert "Бостон" in result  # other non-ASCII text stays readable
+    assert "café" in result
+    assert json.loads(result) == payload
