@@ -129,6 +129,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [Ollama](https://ollama.com/)
 - ✅ [OpenAI / Azure OpenAI](https://openai.com/)
 - ✅ [Replicate](https://replicate.com/)
+- ✅ [RunPod](https://www.runpod.io/)
 - ✅ [SageMaker (AWS)](https://aws.amazon.com/sagemaker/)
 - ✅ [Together AI](https://together.xyz/)
 - ✅ [Vertex AI (GCP)](https://cloud.google.com/vertex-ai)
