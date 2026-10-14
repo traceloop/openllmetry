@@ -11,6 +11,7 @@ class Instruments(Enum):
     CREWAI = "crewai"
     CREW = "crewai"  # deprecated alias; remove in future major version
     GOOGLE_GENERATIVEAI = "google_generativeai"
+    VERTEXAI = "vertexai"
     GROQ = "groq"
     HAYSTACK = "haystack"
     LANCEDB = "lancedb"

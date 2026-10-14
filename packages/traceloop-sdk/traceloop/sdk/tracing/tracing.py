@@ -554,6 +554,9 @@ def init_instrumentations(
                 should_enrich_metrics, base64_image_uploader
             ):
                 instrument_set = True
+        elif instrument == Instruments.VERTEXAI:
+            if init_vertexai_instrumentor(should_enrich_metrics, base64_image_uploader):
+                instrument_set = True
         elif instrument == Instruments.GROQ:
             if init_groq_instrumentor(use_attributes):
                 instrument_set = True
@@ -763,11 +766,25 @@ def init_chroma_instrumentor():
         logging.error(f"Error initializing Chroma instrumentor: {e}")
     return False
 
+def init_vertexai_instrumentor():
+    try:
+        if is_package_installed("google-cloud-aiplatform"):
+            from opentelemetry.instrumentation.vertexai import VertexAIInstrumentor
 
+            instrumentor = VertexAIInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+        return False
+    except Exception as e:
+        logging.error(f"Error initializing VertexAI instrumentor: {e}")
+        return False
+    
 def init_google_generativeai_instrumentor(
     should_enrich_metrics: bool,
     base64_image_uploader: Callable[[str, str, str, str], str],
 ):
+   
     try:
         if is_package_installed("google-generativeai") or is_package_installed(
             "google-genai"
