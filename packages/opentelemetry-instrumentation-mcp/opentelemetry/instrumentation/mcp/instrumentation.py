@@ -48,7 +48,7 @@ class _SessionEntry:
     depth: int = 1
 
 
-def _task_key() -> Optional["asyncio.Task"]:
+def _task_key() -> Optional[asyncio.Task]:
     """The running task, which owns the OTel context token the span attached.
 
     A context token can only be reset in the contextvars Context that created
