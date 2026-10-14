@@ -213,6 +213,9 @@ async def _aset_token_usage(
     if response and hasattr(response, "parse") and callable(response.parse):
         try:
             response = response.parse()
+            # AsyncAPIResponse (with_streaming_response) has an async parse()
+            if inspect.isawaitable(response):
+                response = await response
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
