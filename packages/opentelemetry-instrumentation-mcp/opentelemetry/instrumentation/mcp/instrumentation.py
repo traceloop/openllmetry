@@ -15,12 +15,21 @@ from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
-from opentelemetry.instrumentation.mcp.utils import dont_throw, Config
+from opentelemetry.instrumentation.mcp.utils import (
+    Config,
+    dont_throw,
+    error_status,
+    guard_trace,
+    record_error,
+    should_send_prompts,
+)
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
     FastMCPInstrumentor,
 )
 
 _instruments = ("mcp >= 1.6.0",)
+
+logger = logging.getLogger(__name__)
 
 
 class McpInstrumentor(BaseInstrumentor):
@@ -213,56 +222,85 @@ class McpInstrumentor(BaseInstrumentor):
     def _fastmcp_client_enter_wrapper(self, tracer):
         """Wrapper for FastMCP Client.__aenter__ to start a session trace"""
 
-        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
-            # Start a root span for the MCP client session and make it current
-            span_context_manager = tracer.start_as_current_span("mcp.client.session")
-            span = span_context_manager.__enter__()
-            span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
-            )
+            # Open a root span for the MCP client session and make it current.
+            # Guarded, because all of it is this instrumentation's own work: if
+            # the span cannot be opened, `span is None` below means "untraced",
+            # never "do not connect".
+            span_context_manager = None
+            span = None
+            with guard_trace(logger, "mcp.client.session start"):
+                span_context_manager = tracer.start_as_current_span(
+                    "mcp.client.session",
+                    record_exception=False,
+                    set_status_on_exception=False,
+                )
+                span = span_context_manager.__enter__()
+                span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "session")
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.client.session"
+                )
 
-            # Store the span context manager on the instance to properly exit it later
-            setattr(instance, "_tracing_session_context_manager", span_context_manager)
+            # `span` is the gate throughout: it is set only once __enter__ has
+            # succeeded, so it also stands for "there is something to end".
+            if span is not None:
+                # Store the span context manager on the instance to properly exit it
+                # later, and the span itself so the exit wrapper can report a
+                # teardown failure on it.
+                setattr(instance, "_tracing_session_context_manager", span_context_manager)
+                setattr(instance, "_tracing_session_span", span)
 
+            entered = False
             try:
-                # Call the original method
+                # Call the original method. Nothing here catches what it raises:
+                # swallowing it would run the `async with` body with `c = None`.
                 result = await wrapped(*args, **kwargs)
+                entered = True
                 return result
             except Exception as e:
-                span.set_attribute(ERROR_TYPE, type(e).__name__)
-                span.record_exception(e)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                if span is not None:
+                    with guard_trace(logger, "mcp.client.session record"):
+                        record_error(span, e)
                 raise
+            finally:
+                # A failed __aenter__ means `async with` never calls __aexit__,
+                # so end the span here, detaching it from the current context.
+                # A finally rather than the except, so a cancellation (a
+                # BaseException, not an error) ends it too, UNSET.
+                if not entered and span is not None:
+                    with guard_trace(logger, "mcp.client.session end"):
+                        span_context_manager.__exit__(None, None, None)
 
         return traced_method
 
     def _fastmcp_client_exit_wrapper(self, tracer):
         """Wrapper for FastMCP Client.__aexit__ to end the session trace"""
 
-        @dont_throw
         async def traced_method(wrapped, instance, args, kwargs):
             try:
-                # Call the original method first
-                result = await wrapped(*args, **kwargs)
-
-                # End the session span context manager
-                context_manager = getattr(
-                    instance, "_tracing_session_context_manager", None
-                )
-                if context_manager:
-                    context_manager.__exit__(None, None, None)
-
-                return result
+                # Call the original method first. Its failure reaches the caller:
+                # swallowing it would report a clean teardown for a dead transport.
+                return await wrapped(*args, **kwargs)
             except Exception as e:
-                # End the session span context manager with exception info
+                # Record the teardown failure before __exit__ ends the span --
+                # the span's own exception recording is off, so nothing else
+                # would report it. Guarded, so recording cannot take the place
+                # of the failure being re-raised.
+                span = getattr(instance, "_tracing_session_span", None)
+                if span is not None:
+                    with guard_trace(logger, "mcp.client.session record"):
+                        record_error(span, e)
+                raise
+            finally:
+                # End the span in a finally so a cancelled __aexit__ (a
+                # BaseException, not an error) still ends it, UNSET. Guarded, so
+                # ending cannot mask the teardown failure being re-raised.
                 context_manager = getattr(
                     instance, "_tracing_session_context_manager", None
                 )
                 if context_manager:
-                    context_manager.__exit__(type(e), e, e.__traceback__)
-                raise
+                    with guard_trace(logger, "mcp.client.session end"):
+                        context_manager.__exit__(None, None, None)
 
         return traced_method
 
@@ -282,15 +320,25 @@ class McpInstrumentor(BaseInstrumentor):
             except Exception:
                 pass
 
-        with tracer.start_as_current_span(span_name) as span:
+        # _execute_and_handle_result records the failure itself, with the
+        # message gated on content capture; OTel's own exception recording
+        # would re-add that text ungated on the way out.
+        with tracer.start_as_current_span(
+            span_name, record_exception=False, set_status_on_exception=False
+        ) as span:
             # Set tool-specific attributes
             span.set_attribute(
                 SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
             )
             span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
-            # Add input
-            clean_input = self._extract_clean_input(method, params)
+            # Add input. Tool arguments are request content, so they are
+            # recorded only when content capture is enabled.
+            clean_input = (
+                self._extract_clean_input(method, params)
+                if should_send_prompts()
+                else None
+            )
             if clean_input:
                 try:
                     span.set_attribute(
@@ -307,10 +355,15 @@ class McpInstrumentor(BaseInstrumentor):
 
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
-        with tracer.start_as_current_span(f"{method}.mcp") as span:
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-            )
+        with tracer.start_as_current_span(
+            f"{method}.mcp", record_exception=False, set_status_on_exception=False
+        ) as span:
+            # The serialized request is content: it carries caller-supplied
+            # params, so it is recorded only when content capture is enabled.
+            if should_send_prompts():
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
@@ -321,8 +374,11 @@ class McpInstrumentor(BaseInstrumentor):
         """Execute the wrapped function and handle the result"""
         try:
             result = await wrapped(*args, **kwargs)
-            # Add output
-            if clean_output:
+            # Add output. The response body is content, so it is recorded only
+            # when content capture is enabled.
+            if not should_send_prompts():
+                pass
+            elif clean_output:
                 clean_output_data = self._extract_clean_output(method, result)
                 if clean_output_data:
                     try:
@@ -343,16 +399,12 @@ class McpInstrumentor(BaseInstrumentor):
             if hasattr(result, "isError") and result.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
                 if len(result.content) > 0:
-                    span.set_status(
-                        Status(StatusCode.ERROR, f"{result.content[0].text}")
-                    )
+                    span.set_status(error_status(f"{result.content[0].text}"))
             else:
                 span.set_status(Status(StatusCode.OK))
             return result
         except Exception as e:
-            span.set_attribute(ERROR_TYPE, type(e).__name__)
-            span.record_exception(e)
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            record_error(span, e)
             raise
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
@@ -548,46 +600,71 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
         from mcp.types import JSONRPCMessage, JSONRPCRequest
 
-        # Handle different item types based on what's available
-        request = None
-        if hasattr(item, "message") and hasattr(item.message, "root"):
-            request = item.message.root
-        elif type(item) is JSONRPCMessage:
-            request = cast(JSONRPCMessage, item).root
-        elif hasattr(item, "root"):
-            request = item.root
-        else:
-            return await self.__wrapped__.send(item)
+        # All span work happens up front, inside the guard: a failure costs the
+        # span, never the message. `span is None` means this send is untraced.
+        span_context_manager = None
+        span = None
+        with guard_trace(logger, "ResponseStreamWriter"):
+            # Handle different item types based on what's available
+            request = None
+            if hasattr(item, "message") and hasattr(item.message, "root"):
+                request = item.message.root
+            elif type(item) is JSONRPCMessage:
+                request = cast(JSONRPCMessage, item).root
+            elif hasattr(item, "root"):
+                request = item.root
 
-        with self._tracer.start_as_current_span("ResponseStreamWriter") as span:
-            if hasattr(request, "result"):
-                span.set_attribute(
-                    SpanAttributes.MCP_RESPONSE_VALUE, f"{serialize(request.result)}"
+            if request is not None:
+                # The wrapped send runs inside this span, so a transport failure
+                # would be recorded by OTel with its message and stacktrace
+                # ungated. The except below reports it instead, message gated.
+                span_context_manager = self._tracer.start_as_current_span(
+                    "ResponseStreamWriter",
+                    record_exception=False,
+                    set_status_on_exception=False,
                 )
-                if "isError" in request.result:
-                    if request.result["isError"] is True:
-                        span.set_status(
-                            Status(
-                                StatusCode.ERROR,
-                                f"{request.result['content'][0]['text']}",
-                            )
+                span = span_context_manager.__enter__()
+
+                if isinstance(request, JSONRPCRequest):
+                    # Injection first: the server downstream depends on it, so it
+                    # must not be lost to a failure in the attributes below.
+                    if not request.params:
+                        request.params = {}
+                    meta = request.params.setdefault("_meta", {})
+                    propagate.get_global_textmap().inject(meta)
+
+                if hasattr(request, "result"):
+                    # The response body is content, and so is the error text
+                    # below -- it is the same payload.
+                    if should_send_prompts():
+                        span.set_attribute(
+                            SpanAttributes.MCP_RESPONSE_VALUE,
+                            f"{serialize(request.result)}",
                         )
-            if hasattr(request, "id"):
-                span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
+                    if "isError" in request.result:
+                        if request.result["isError"] is True:
+                            span.set_status(
+                                error_status(f"{request.result['content'][0]['text']}")
+                            )
+                if hasattr(request, "id"):
+                    span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
-            if not isinstance(request, JSONRPCRequest):
-                return await self.__wrapped__.send(item)
-            meta = None
-            if not request.params:
-                request.params = {}
-            meta = request.params.setdefault("_meta", {})
-
-            propagate.get_global_textmap().inject(meta)
+        try:
+            # The transport call: one site, never guarded. Swallowing a failure
+            # here would tell the caller a message went out when it did not.
             return await self.__wrapped__.send(item)
+        except Exception as e:
+            if span is not None:
+                with guard_trace(logger, "ResponseStreamWriter record"):
+                    record_error(span, e)
+            raise
+        finally:
+            if span is not None:
+                with guard_trace(logger, "ResponseStreamWriter end"):
+                    span_context_manager.__exit__(None, None, None)
 
 
 @dataclass(slots=True, frozen=True)
@@ -608,8 +685,9 @@ class ContextSavingStreamWriter(ObjectProxy):  # type: ignore
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> Any:
         return await self.__wrapped__.__aexit__(exc_type, exc_value, traceback)
 
-    @dont_throw
     async def send(self, item: Any) -> Any:
+        # Not guarded: nothing here is tracing work that can fail, and a
+        # transport failure from the wrapped send has to reach the caller.
         # Removed RequestStreamWriter span creation - we don't need low-level protocol spans
         ctx = context.get_current()
         return await self.__wrapped__.send(ItemWithContext(item, ctx))
