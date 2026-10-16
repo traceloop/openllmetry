@@ -131,3 +131,17 @@ def test_base_hooks_are_still_traced_when_called_directly(
     names = [span.name for span in span_exporter.get_finished_spans()]
     assert "execute_task NoOverrides.before_model" in names
     assert "execute_task NoOverrides.abefore_model" in names
+
+
+def test_missing_middleware_module_does_not_break_instrumentation(
+    instrument_legacy, monkeypatch
+):
+    import sys
+
+    from opentelemetry import trace
+    from opentelemetry.instrumentation.langchain import LangchainInstrumentor
+
+    # Older LangChain releases have no middleware module.
+    monkeypatch.setitem(sys.modules, "langchain.agents.middleware.types", None)
+
+    LangchainInstrumentor()._wrap_middleware_hooks(trace.get_tracer(__name__))

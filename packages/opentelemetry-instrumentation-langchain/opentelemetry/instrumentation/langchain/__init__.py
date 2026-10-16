@@ -299,7 +299,11 @@ class LangchainInstrumentor(BaseInstrumentor):
 
     def _wrap_middleware_hooks(self, tracer):
         """Wrap AgentMiddleware hook methods for instrumentation."""
-        from langchain.agents.middleware.types import AgentMiddleware
+        try:
+            from langchain.agents.middleware.types import AgentMiddleware
+        except ImportError:
+            logger.debug("AgentMiddleware is not available, skipping middleware hooks")
+            return
 
         sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
         async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
