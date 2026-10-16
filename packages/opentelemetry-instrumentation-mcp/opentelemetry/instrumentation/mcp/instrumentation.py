@@ -344,9 +344,7 @@ class McpInstrumentor(BaseInstrumentor):
             sessions = _client_sessions.get(instance) or {}
             key = _task_key()
             entry = sessions.get(key)
-            # Entered in this task, so its context token can be detached here.
-            own_task = entry is not None
-            if not own_task:
+            if entry is None:
                 # Entered in a task that has since finished, or not at all (the
                 # span failed to open): then there is no span of ours to end.
                 key, entry = _finished_task_entry(sessions)
@@ -373,13 +371,11 @@ class McpInstrumentor(BaseInstrumentor):
                     entry.depth -= 1
                     if entry.depth <= 0:
                         sessions.pop(key, None)
+                        # Always close the context manager, even from another
+                        # task: ending the span alone would leave its generator
+                        # to be closed by GC, ending the span a second time.
                         with guard_trace(logger, "mcp.client.session end"):
-                            if own_task:
-                                entry.context_manager.__exit__(None, None, None)
-                            else:
-                                # The token belongs to the finished task's
-                                # context, which is gone: end the span only.
-                                entry.span.end()
+                            entry.context_manager.__exit__(None, None, None)
 
         return traced_method
 

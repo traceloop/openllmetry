@@ -212,41 +212,19 @@ async def test_client_raises_when_server_fails_to_start() -> None:
     assert not body_ran, "the body must not run against a client that never connected"
 
 
+def _client_tool_spans(spans):
+    """The client's call_tool spans: the in-memory server's tool span has the
+    same name, but sits under mcp.server."""
+    server_ids = {s.context.span_id for s in spans if s.name == "mcp.server"}
+    return [s for s in spans if s.name == "fast.tool" and (s.parent is None or s.parent.span_id not in server_ids)]
+
+
 async def _enter(instrumentor, tracer, client, wrapped=_ok):
     await instrumentor._fastmcp_client_enter_wrapper(tracer)(wrapped, client, (), {})
 
 
 async def _exit(instrumentor, tracer, client, wrapped=_ok):
     await instrumentor._fastmcp_client_exit_wrapper(tracer)(wrapped, client, (), {})
-
-
-async def test_nested_entries_share_one_session_span(span_exporter, tracer_provider) -> None:
-    """Nested enter/exit on one client: one session span, ended by the outermost exit."""
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    client = _Client()
-
-    await _enter(instrumentor, tracer, client)
-    outer = trace.get_current_span()
-    await _enter(instrumentor, tracer, client)
-    assert trace.get_current_span() is outer, "a nested enter must reuse the session span"
-    with tracer.start_as_current_span("inside"):
-        pass
-
-    await _exit(instrumentor, tracer, client)
-    assert trace.get_current_span() is outer, "the inner exit must not end the span"
-    assert not _session_spans(span_exporter)
-
-    await _exit(instrumentor, tracer, client)
-    assert not trace.get_current_span().is_recording(), "session span leaked as current"
-    with tracer.start_as_current_span("after"):
-        pass
-
-    sessions = _session_spans(span_exporter)
-    assert len(sessions) == 1
-    by_name = {s.name: s for s in span_exporter.get_finished_spans()}
-    assert by_name["inside"].parent.span_id == sessions[0].context.span_id
-    assert by_name["after"].parent is None
 
 
 async def test_failed_nested_enter_keeps_depth_balanced(span_exporter, tracer_provider) -> None:
@@ -311,33 +289,7 @@ async def test_span_end_failure_still_clears_the_entry(span_exporter, end_raises
     assert len(_session_spans(span_exporter)) == 2
 
 
-async def test_concurrent_tasks_get_independent_spans(span_exporter, tracer_provider, caplog) -> None:
-    """Two tasks entering one client overlap: each ends its own span in its own context."""
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    client = _Client()
-    leaked = []
-
-    async def worker(mine, other):
-        await _enter(instrumentor, tracer, client)
-        mine.set()
-        await other.wait()
-        await _exit(instrumentor, tracer, client)
-        leaked.append(trace.get_current_span().is_recording())
-
-    # OTel logs, rather than raises, when a token is detached in the wrong
-    # context, so the span count alone can't catch a cross-task detach.
-    first, second = asyncio.Event(), asyncio.Event()
-    with caplog.at_level(logging.ERROR, logger="opentelemetry.context"):
-        await asyncio.gather(worker(first, second), worker(second, first))
-
-    assert "Failed to detach context" not in caplog.text, "a task detached another task's span"
-    assert len(_session_spans(span_exporter)) == 2
-    assert leaked == [False, False]
-    assert not trace.get_current_span().is_recording()
-
-
-async def test_real_fastmcp_nested_client_does_not_leak_session_span(span_exporter) -> None:
+async def test_real_fastmcp_nested_client_does_not_leak_session_span(span_exporter, tracer_provider) -> None:
     """The issue's repro, against the real, instrumented FastMCP client."""
     from fastmcp import Client, FastMCP
 
@@ -349,24 +301,45 @@ async def test_real_fastmcp_nested_client_does_not_leak_session_span(span_export
 
     client = Client(server)
     async with client:
+        outer = trace.get_current_span()
         async with client:
+            assert trace.get_current_span() is outer, "a nested enter must reuse the session span"
             await client.call_tool("fast", {})
-        assert trace.get_current_span().is_recording(), "outer session must still be open"
+        assert trace.get_current_span() is outer, "the inner exit must not end the span"
+        assert not _session_spans(span_exporter)
 
     assert not trace.get_current_span().is_recording(), "session span leaked as current"
-    assert len(_session_spans(span_exporter)) == 1
+    with tracer_provider.get_tracer(__name__).start_as_current_span("after"):
+        pass
+
+    sessions = _session_spans(span_exporter)
+    assert len(sessions) == 1
+    spans = span_exporter.get_finished_spans()
+    client_tools = _client_tool_spans(spans)
+    assert len(client_tools) == 1
+    assert client_tools[0].parent is not None, "call_tool lost its session parent"
+    assert client_tools[0].parent.span_id == sessions[0].context.span_id, "call_tool under the wrong parent"
+    after = next(s for s in spans if s.name == "after")
+    assert after.parent is None, "a span after the session was parented to it"
 
 
-async def test_exit_from_another_task_still_ends_the_span(span_exporter, tracer_provider) -> None:
+async def test_exit_from_another_task_still_ends_the_span(span_exporter, tracer_provider, caplog) -> None:
     """Enter and exit in different tasks, as pytest-asyncio runs a fixture's
-    setup and teardown: the span is still ended, and nothing is left behind."""
+    setup and teardown: the span is still ended once, and nothing is left behind."""
     instrumentor = McpInstrumentor()
     tracer = tracer_provider.get_tracer(__name__)
     client = _Client()
 
-    await asyncio.create_task(_enter(instrumentor, tracer, client))
-    await asyncio.create_task(_exit(instrumentor, tracer, client))
+    with caplog.at_level(logging.WARNING):
+        await asyncio.create_task(_enter(instrumentor, tracer, client))
+        await asyncio.create_task(_exit(instrumentor, tracer, client))
 
+    assert "Calling end() on an ended span" not in caplog.text, "the span was ended twice"
+    # The token belongs to the finished task's context, so OTel can't detach
+    # it: logged once, as on main. Closing the context manager directly keeps
+    # GC from closing it again later, which would log a second detach error.
+    detach_errors = [r for r in caplog.records if r.getMessage() == "Failed to detach context"]
+    assert len(detach_errors) == 1
     assert len(_session_spans(span_exporter)) == 1
     await _enter(instrumentor, tracer, client)
     assert trace.get_current_span().is_recording(), "a stale entry made the next enter look nested"
@@ -419,45 +392,27 @@ async def test_real_fastmcp_body_failure_in_nested_block_ends_the_span(span_expo
     assert len(_session_spans(span_exporter)) == 1
 
 
-async def test_failed_inner_exit_keeps_the_session_open(span_exporter, tracer_provider) -> None:
-    """A nested __aexit__ that raises is reported on the session span, but only
-    the outermost exit ends it."""
+@pytest.mark.parametrize(("failure", "expected_status"), CASES[1:])
+async def test_failed_inner_exit_keeps_the_session_open(
+    span_exporter, tracer_provider, failure, expected_status
+) -> None:
+    """A nested __aexit__ that raises or is cancelled propagates, and is reported
+    on the session span, but only the outermost exit ends it."""
     instrumentor = McpInstrumentor()
     tracer = tracer_provider.get_tracer(__name__)
     client = _Client()
 
     await _enter(instrumentor, tracer, client)
     await _enter(instrumentor, tracer, client)
-    with pytest.raises(RuntimeError, match="inner teardown failed"):
-        await _exit(instrumentor, tracer, client, _failing_with(RuntimeError("inner teardown failed")))
+    with pytest.raises(type(failure)):
+        await _exit(instrumentor, tracer, client, _failing_with(failure))
     assert trace.get_current_span().is_recording(), "the outer session must still be open"
 
     await _exit(instrumentor, tracer, client)
 
     sessions = _session_spans(span_exporter)
     assert len(sessions) == 1
-    assert sessions[0].status.status_code is StatusCode.ERROR
-    assert not trace.get_current_span().is_recording(), "session span leaked as current"
-
-
-async def test_cancelled_inner_exit_keeps_the_session_open(span_exporter, tracer_provider) -> None:
-    """A cancelled nested __aexit__ propagates, and the outermost exit still
-    ends the span, UNSET: cancellation is not an error."""
-    instrumentor = McpInstrumentor()
-    tracer = tracer_provider.get_tracer(__name__)
-    client = _Client()
-
-    await _enter(instrumentor, tracer, client)
-    await _enter(instrumentor, tracer, client)
-    with pytest.raises(asyncio.CancelledError):
-        await _exit(instrumentor, tracer, client, _failing_with(asyncio.CancelledError()))
-    assert trace.get_current_span().is_recording(), "the outer session must still be open"
-
-    await _exit(instrumentor, tracer, client)
-
-    sessions = _session_spans(span_exporter)
-    assert len(sessions) == 1
-    assert sessions[0].status.status_code is StatusCode.UNSET
+    assert sessions[0].status.status_code is expected_status
     assert not trace.get_current_span().is_recording(), "session span leaked as current"
 
 
@@ -513,5 +468,12 @@ async def test_real_fastmcp_concurrent_tasks_share_one_client(span_exporter, cap
 
     assert "Failed to detach context" not in caplog.text, "a task detached another task's span"
     assert open_inside == [True, True], "each task's own session span must stay open in its block"
-    assert len(_session_spans(span_exporter)) == 2
+    sessions = _session_spans(span_exporter)
+    assert len(sessions) == 2
+    tools = _client_tool_spans(span_exporter.get_finished_spans())
+    assert len(tools) == 2
+    assert {t.parent.span_id if t.parent else None for t in tools} == {s.context.span_id for s in sessions}, (
+        "each task's call_tool must sit under its own session span"
+    )
     assert leaked == [False, False]
+    assert not trace.get_current_span().is_recording()
