@@ -417,7 +417,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     "parts": [{
                         "type": "tool_call",
                         "name": block_dict.get("name"),
-                        "id": block_dict.get("id") or block_dict.get("call_id"),
+                        "id": block_dict.get("call_id") or block_dict.get("id"),
                         "arguments": _parse_arguments(block_dict.get("arguments")),
                     }],
                 })
@@ -446,7 +446,8 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 parts.append({
                     "type": "tool_call",
                     "name": block_dict.get("name"),
-                    "id": block_dict.get("id"),
+                    # call_id, not the item id: function_call_output refers to the call by call_id
+                    "id": block_dict.get("call_id") or block_dict.get("id"),
                     "arguments": _parse_arguments(block_dict.get("arguments")),
                 })
             elif block_type == "reasoning":
