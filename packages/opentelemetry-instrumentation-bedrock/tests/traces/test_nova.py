@@ -317,6 +317,8 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
     completion_msg = "".join(generated_text)
     output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
     assert output_messages[0]["parts"][0]["content"] == completion_msg
+    assert output_messages[0]["finish_reason"] == "stop"
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
 
     # Assert on other request parameters
     assert bedrock_span.attributes[
@@ -340,6 +342,76 @@ def test_nova_invoke_stream(instrument_legacy, brt, span_exporter, log_exporter)
     assert (
         len(logs) == 0
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
+
+
+@pytest.mark.vcr
+def test_nova_invoke_stream_tool_use(instrument_legacy, brt, span_exporter, log_exporter):
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": [
+            {"role": "user", "content": [{"text": "What's the weather in Paris? Use the tool."}]}
+        ],
+        "inferenceConfig": {"maxTokens": 300},
+        "toolConfig": {
+            "tools": [
+                {
+                    "toolSpec": {
+                        "name": "get_weather",
+                        "description": "Get weather for a city",
+                        "inputSchema": {
+                            "json": {
+                                "type": "object",
+                                "properties": {"city": {"type": "string"}},
+                                "required": ["city"],
+                            }
+                        },
+                    }
+                }
+            ]
+        },
+    }
+
+    response = brt.invoke_model_with_response_stream(
+        body=json.dumps(request_body),
+        modelId="amazon.nova-lite-v1:0",
+        accept="application/json",
+        contentType="application/json",
+    )
+
+    generated_text = []
+    tool_uses = []
+    for event in response.get("body"):
+        response_body = json.loads(event["chunk"].get("bytes").decode())
+        start = response_body.get("contentBlockStart", {}).get("start", {})
+        if "toolUse" in start:
+            tool_uses.append({**start["toolUse"], "input": ""})
+        delta = response_body.get("contentBlockDelta", {}).get("delta", {})
+        if "text" in delta:
+            generated_text.append(delta["text"])
+        if "toolUse" in delta:
+            tool_uses[-1]["input"] += delta["toolUse"]["input"]
+
+    assert len(tool_uses) == 1
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    bedrock_span = spans[0]
+
+    output_messages = json.loads(bedrock_span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["finish_reason"] == "tool_call"
+    assert output_messages[0]["parts"] == [
+        {"type": "text", "content": "".join(generated_text)},
+        {
+            "type": "tool_call",
+            "name": "get_weather",
+            "id": tool_uses[0]["toolUseId"],
+            "arguments": json.loads(tool_uses[0]["input"]),
+        },
+    ]
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("tool_call",)
+
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert bedrock_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
 
 
 @pytest.mark.vcr

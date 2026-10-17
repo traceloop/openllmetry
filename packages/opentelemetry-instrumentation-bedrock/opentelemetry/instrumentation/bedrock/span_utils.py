@@ -247,7 +247,11 @@ def _set_finish_reasons_unconditionally(model_vendor, span, response_body):
             if fr:
                 finish_reasons.append(fr)
         else:
-            fr = _map_finish_reason(response_body.get("completionReason"))
+            # Streamed Nova bodies carry `stop_reason` (from messageStop) instead of
+            # Titan's `completionReason`.
+            fr = _map_finish_reason(
+                response_body.get("completionReason") or response_body.get("stop_reason")
+            )
             if fr:
                 finish_reasons.append(fr)
     elif model_vendor == "imported_model":
@@ -712,12 +716,18 @@ def _set_amazon_response_span_attributes(span, response_body):
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages),
         )
-    elif "outputText" in response_body:
-        fr = _map_finish_reason(response_body.get("completionReason"))
+    elif "outputText" in response_body or "tool_blocks" in response_body:
+        fr = _map_finish_reason(
+            response_body.get("completionReason") or response_body.get("stop_reason")
+        )
+        parts = []
+        if "outputText" in response_body:
+            parts.append(_text_part(response_body.get("outputText")))
+        parts.extend(_streamed_tool_call_part(tool) for tool in response_body.get("tool_blocks", []))
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps([_output_message("assistant", [_text_part(response_body.get("outputText"))], fr)]),
+            json.dumps([_output_message("assistant", parts, fr)]),
         )
     elif "output" in response_body:
         fr = _map_finish_reason(response_body.get("stopReason"))
@@ -1049,23 +1059,28 @@ def set_converse_streaming_response_span_attributes(
     if text_content:
         parts.append(_text_part(text_content))
     for tool in tool_blocks or []:
-        raw_input = tool.get("input", {})
-        if isinstance(raw_input, str):
-            try:
-                raw_input = json.loads(raw_input)
-            except (json.JSONDecodeError, TypeError):
-                pass
-        parts.append({
-            "type": "tool_call",
-            "name": tool.get("name"),
-            "id": tool.get("toolUseId"),
-            "arguments": raw_input,
-        })
+        parts.append(_streamed_tool_call_part(tool))
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
         json.dumps([_output_message(role, parts, fr)]),
     )
+
+
+def _streamed_tool_call_part(tool):
+    """Convert a streamed toolUse block (input accumulated as a JSON string) to an OTel part."""
+    raw_input = tool.get("input", {})
+    if isinstance(raw_input, str):
+        try:
+            raw_input = json.loads(raw_input)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return {
+        "type": "tool_call",
+        "name": tool.get("name"),
+        "id": tool.get("toolUseId"),
+        "arguments": raw_input,
+    }
 
 
 def converse_usage_record(span, response, metric_params):
