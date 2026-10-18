@@ -1273,4 +1273,4 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     message={"content": generation.text, "role": "assistant"},
                     finish_reason=finish_reason,
                 )
-)
+            )
