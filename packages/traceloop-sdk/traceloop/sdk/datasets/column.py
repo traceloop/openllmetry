@@ -38,7 +38,7 @@ class Column(BaseDatasetEntity):
             raise ValueError("Column must be associated with a dataset to delete")
 
         result = self._http.delete(f"datasets/{self._dataset.slug}/columns/{self.slug}")
-        if result is None:
+        if not result:
             raise Exception(f"Failed to delete column {self.slug}")
 
         self._dataset.columns.remove(self)
