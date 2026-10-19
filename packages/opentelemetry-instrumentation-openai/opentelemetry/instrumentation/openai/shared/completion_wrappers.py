@@ -1,4 +1,3 @@
-import json
 import logging
 
 from opentelemetry import context as context_api
@@ -26,6 +25,7 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
     is_openai_v1,
+    json_dumps,
     should_emit_events,
     should_send_prompts,
 )
@@ -176,7 +176,7 @@ def _set_input_messages(span, prompt):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps(messages),
+        json_dumps(messages),
     )
 
 @dont_throw
@@ -201,7 +201,7 @@ def _set_output_messages(span, choices):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-        json.dumps(messages),
+        json_dumps(messages),
     )
 
 
