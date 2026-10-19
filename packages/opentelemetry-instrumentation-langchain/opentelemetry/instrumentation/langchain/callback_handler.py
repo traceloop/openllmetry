@@ -73,7 +73,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
+from opentelemetry.trace import SpanKind, Tracer, get_current_span, set_span_in_context
 from opentelemetry.instrumentation.langchain.patch import (
     LANGGRAPH_FLOW_KEY,
     LANGGRAPH_GRAPH_SPAN_KEY,
@@ -252,10 +252,24 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         if span_holder.token:
-            self._safe_detach_context(span_holder.token)
+            if span_holder.token_is_span:
+                still_current = get_current_span() is span_holder.span
+            else:
+                # Non-span tokens (the LLM suppression flag) are still on top
+                # only while their marker is the current context value.
+                still_current = bool(
+                    context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+                )
+            self._safe_detach_context(span_holder.token, still_current)
             span_holder.token = None
         if span_holder.association_properties_token:
-            self._safe_detach_context(span_holder.association_properties_token)
+            still_current = (
+                context_api.get_value("association_properties")
+                == span_holder.association_properties
+            )
+            self._safe_detach_context(
+                span_holder.association_properties_token, still_current
+            )
             span_holder.association_properties_token = None
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
@@ -288,7 +302,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # Return None to indicate no token needs to be detached later.
             return None
 
-    def _safe_detach_context(self, token):
+    def _safe_detach_context(self, token, still_current: bool = True):
         """
         Safely detach context token without causing application crashes.
 
@@ -296,9 +310,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         all known edge cases in async/concurrent scenarios where context tokens may
         become invalid or be detached in different execution contexts.
 
+        ``still_current`` tells whether the context this token attached is still
+        on top of the context stack. When it is not (for example a suspended or
+        abandoned LangGraph stream whose spans end from a later generator
+        finalization), resetting the token would resurrect a stale context and
+        adopt unrelated work into this span's trace, so the reset is skipped.
+
         We use the runtime context directly to avoid logging errors from context_api.detach()
         """
-        if not token:
+        if not token or not still_current:
             return
 
         try:
@@ -404,6 +424,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     value,
                 )
 
+        merged_association_properties = (
+            {**current_association_properties, **sanitized_metadata}
+            if metadata is not None
+            else None
+        )
         self.spans[run_id] = SpanHolder(
             span,
             token,
@@ -413,6 +438,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_name,
             entity_path,
             association_properties_token=association_properties_token,
+            association_properties=merged_association_properties,
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -558,7 +584,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # ContextVar.reset() would wipe the suppression flag.
         current_holder = self.spans.get(run_id)
         if current_holder is not None and current_holder.token is not None:
-            self._safe_detach_context(current_holder.token)
+            self._safe_detach_context(
+                current_holder.token,
+                get_current_span() is current_holder.span,
+            )
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
@@ -581,6 +610,10 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             association_properties_token=(
                 current_holder.association_properties_token if current_holder else None
             ),
+            association_properties=(
+                current_holder.association_properties if current_holder else None
+            ),
+            token_is_span=False,
         )
 
         return span
