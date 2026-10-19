@@ -519,7 +519,11 @@ def init_instrumentations(
 ):
     block_instruments = block_instruments or set()
     # explictly test for None since empty set is a False value
-    instruments = instruments if instruments is not None else set(Instruments)
+    # HTTPX is opt-in: most LLM SDKs use httpx, so enabling it by default would
+    # add an HTTP client span under every LLM span for existing users.
+    instruments = (
+        instruments if instruments is not None else set(Instruments) - {Instruments.HTTPX}
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments

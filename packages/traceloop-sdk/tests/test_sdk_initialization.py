@@ -471,3 +471,19 @@ def test_trace_content_propagates_across_instrumentation_packages(
 
     assert not openai_should_send_prompts()
     assert not anthropic_should_send_prompts()
+
+
+def test_httpx_instrumentation_is_opt_in():
+    from traceloop.sdk.instruments import Instruments
+    from traceloop.sdk.tracing import tracing
+
+    with patch.object(tracing, "init_httpx_instrumentor", return_value=True) as init_httpx:
+        tracing.init_instrumentations(should_enrich_metrics=False, base64_image_uploader=None)
+        init_httpx.assert_not_called()
+
+        tracing.init_instrumentations(
+            should_enrich_metrics=False,
+            base64_image_uploader=None,
+            instruments={Instruments.HTTPX},
+        )
+        init_httpx.assert_called_once()
