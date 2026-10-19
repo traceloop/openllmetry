@@ -916,7 +916,7 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if len(self._reverse_handoffs_dict) > 1000:
                 self._reverse_handoffs_dict.popitem(last=False)
 
-        from_agent_span = self._find_agent_span(from_agent)
+        from_agent_span = self._find_agent_span(from_agent, trace_id)
         if from_agent_span:
             parent_context = set_span_in_context(from_agent_span)
 
@@ -1083,9 +1083,18 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     # Span lookup helpers
     # ------------------------------------------------------------------
 
-    def _find_agent_span(self, agent_name: str):
-        """Find the OpenTelemetry span for a given agent."""
+    def _find_agent_span(self, agent_name: str, trace_id=None):
+        """Find the OpenTelemetry span for a given agent.
+
+        When ``trace_id`` is given, only agent spans belonging to that trace
+        are considered — otherwise the first same-named agent span across all
+        concurrently running traces would win (see #4635). A ``None``
+        ``trace_id`` keeps the previous name-only lookup for SDK spans that
+        carry no trace id.
+        """
         for agents_span, otel_span in self._otel_spans.items():
+            if trace_id is not None and getattr(agents_span, "trace_id", None) != trace_id:
+                continue
             span_data = getattr(agents_span, "span_data", None)
             if span_data and getattr(span_data, "name", None) == agent_name:
                 return otel_span
