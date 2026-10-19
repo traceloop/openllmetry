@@ -109,6 +109,9 @@ class MetricParams:
 
 logger = logging.getLogger(__name__)
 
+# Mutable flag: set to False by _uninstrument() so that per-client wrappers
+# already assigned to existing clients become no-ops after uninstrumentation.
+_bedrock_enabled = [True]
 
 _instruments = ("boto3 >= 1.28.57",)
 
@@ -221,6 +224,8 @@ def _wrap(
 def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -254,6 +259,8 @@ def _instrumented_model_invoke_with_response_stream(
 ):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -292,6 +299,8 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
     # for the request/response format
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -324,6 +333,8 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
 def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
@@ -357,6 +368,8 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
 def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return await fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
@@ -383,6 +396,8 @@ def _instrumented_async_model_invoke_with_response_stream(
 ):
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return await fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
@@ -411,6 +426,8 @@ def _instrumented_async_model_invoke_with_response_stream(
 def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return await fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
@@ -436,6 +453,8 @@ def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
 def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     async def with_instrumentation(*args, **kwargs):
+        if not _bedrock_enabled[0]:
+            return await fn(*args, **kwargs)
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
@@ -1204,6 +1223,7 @@ class BedrockInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        _bedrock_enabled[0] = True
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -1286,6 +1306,7 @@ class BedrockInstrumentor(BaseInstrumentor):
                 pass
 
     def _uninstrument(self, **kwargs):
+        _bedrock_enabled[0] = False
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
