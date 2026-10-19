@@ -24,6 +24,7 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
+    ensure_stream_usage,
     is_openai_v1,
     json_dumps,
     should_emit_events,
@@ -67,6 +68,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
+            ensure_stream_usage(kwargs, instance)
             response = wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -103,6 +105,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
+            ensure_stream_usage(kwargs, instance)
             response = await wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
