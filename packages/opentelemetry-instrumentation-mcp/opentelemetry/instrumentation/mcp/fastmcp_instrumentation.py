@@ -30,12 +30,12 @@ class FastMCPInstrumentor:
             "fastmcp.tools.tool_manager",
         )
 
-        # Instrument FastMCP __init__ to capture server name
+        # Wait for the server module so client-only installs don't load server support.
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
+                "fastmcp.server.server", "FastMCP.__init__", self._fastmcp_init_wrapper()
             ),
-            "fastmcp",
+            "fastmcp.server.server",
         )
 
     def uninstrument(self):
