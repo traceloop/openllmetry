@@ -61,6 +61,18 @@ class SpanHolder:
     association_properties_token: Any = None
     start_time: float = field(default_factory=time.time)
     request_model: Optional[str] = None
+    # False when `token` attached something other than this span's context
+    # (e.g. the LLM suppression flag); detach must not key the reset off the span.
+    token_is_span: bool = True
+    # The merged association-properties dict attached with
+    # association_properties_token, so detach can tell whether that context is
+    # still on top of the stack before resetting it.
+    association_properties: Any = None
+    # Unique marker object attached as the suppression value when `token` is
+    # the LLM suppression token (token_is_span=False). Detach compares the
+    # current context value against this marker by identity, so overlapping
+    # runs cannot reset each other's tokens.
+    suppression_marker: Any = None
 
 
 def _message_type_to_role(message_type: str) -> str:
