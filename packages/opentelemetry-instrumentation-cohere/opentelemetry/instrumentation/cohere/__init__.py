@@ -42,7 +42,7 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("cohere >=4.2.7, <6",)
+_instruments = ("cohere >=4.2.7, <8",)
 
 WRAPPED_METHODS = [
     {
