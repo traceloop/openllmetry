@@ -68,6 +68,11 @@ class SpanHolder:
     # association_properties_token, so detach can tell whether that context is
     # still on top of the stack before resetting it.
     association_properties: Any = None
+    # Unique marker object attached as the suppression value when `token` is
+    # the LLM suppression token (token_is_span=False). Detach compares the
+    # current context value against this marker by identity, so overlapping
+    # runs cannot reset each other's tokens.
+    suppression_marker: Any = None
 
 
 def _message_type_to_role(message_type: str) -> str:
