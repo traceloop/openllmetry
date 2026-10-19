@@ -1305,8 +1305,45 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-openai"
+version = "0.62.4"
+source = { editable = "../opentelemetry-instrumentation-openai" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-semantic-conventions-ai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "openai", marker = "extra == 'instruments'" },
+    { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
+    { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.63b1" },
+    { name = "opentelemetry-semantic-conventions-ai", specifier = ">=0.5.1,<0.6.0" },
+]
+provides-extras = ["instruments"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autopep8", specifier = ">=2.2.0,<3" },
+    { name = "ruff", specifier = ">=0.4.0" },
+]
+test = [
+    { name = "openai", extras = ["datalib"], specifier = "==1.99.7" },
+    { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
+    { name = "pytest", specifier = ">=8.2.2,<9" },
+    { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24.0" },
+    { name = "pytest-recording", specifier = ">=0.13.1,<0.14.0" },
+    { name = "pytest-sugar", specifier = "==1.0.0" },
+    { name = "requests", specifier = ">=2.31.0,<3" },
+    { name = "vcrpy", specifier = ">=8.0.0,<9" },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-openai-agents"
-version = "0.62.1"
+version = "0.62.4"
 source = { editable = "." }
 dependencies = [
     { name = "opentelemetry-api" },
@@ -1330,6 +1367,7 @@ dev = [
 test = [
     { name = "litellm" },
     { name = "openai-agents" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1358,6 +1396,7 @@ dev = [
 test = [
     { name = "litellm", specifier = ">=1.71.2,<2" },
     { name = "openai-agents", specifier = ">=0.14.2" },
+    { name = "opentelemetry-instrumentation-openai", editable = "../opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk", specifier = ">=1.38.0,<2" },
     { name = "pytest", specifier = ">=8.2.2,<9" },
     { name = "pytest-asyncio", specifier = ">=1.0.0,<2" },
