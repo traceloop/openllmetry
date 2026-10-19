@@ -54,3 +54,51 @@ async def test_tool_error_sets_error_type_on_client_span(span_exporter, tracer_p
     assert "tool_error" in tool_error_values, (
         f"Expected 'tool_error' in error.type values, got: {tool_error_values}"
     )
+
+
+@pytest.mark.asyncio
+async def test_tool_error_with_non_text_content_sets_error_type(
+    span_exporter, tracer_provider
+):
+    """A non-text MCP error result must produce a tool_error span without raising."""
+    from mcp.server.lowlevel import Server
+    from mcp.shared.memory import create_connected_server_and_client_session
+    from mcp.types import CallToolResult, ImageContent
+
+    server = Server("test-nontext-error")
+
+    @server.call_tool()
+    async def img_error_tool(tool_name: str, arguments: dict):
+        return CallToolResult(
+            content=[
+                ImageContent(
+                    type="image",
+                    data="aGVsbG8=",
+                    mimeType="image/png",
+                )
+            ],
+            isError=True,
+        )
+
+    async with create_connected_server_and_client_session(server) as session:
+        await session.call_tool("img_error_tool", {})
+
+    tool_spans = [
+        s for s in span_exporter.get_finished_spans() if s.name.endswith(".tool")
+    ]
+    assert tool_spans, "expected a client-side tool span"
+
+    client_error_spans = [
+        s for s in tool_spans if s.status.status_code == StatusCode.ERROR
+    ]
+    assert client_error_spans, "expected the tool span to have ERROR status"
+
+    assert len(client_error_spans) == 1, (
+        f"Expected exactly 1 client-side ERROR tool span, "
+        f"got {[s.name for s in client_error_spans]}"
+    )
+
+    assert client_error_spans[0].attributes.get("error.type") == "tool_error", (
+        f"Expected error.type='tool_error', "
+        f"got {client_error_spans[0].attributes.get('error.type')!r}"
+    )
