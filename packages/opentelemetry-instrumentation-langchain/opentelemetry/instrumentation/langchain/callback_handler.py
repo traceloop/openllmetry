@@ -255,17 +255,25 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             if span_holder.token_is_span:
                 still_current = get_current_span() is span_holder.span
             else:
-                # Non-span tokens (the LLM suppression flag) are still on top
-                # only while their marker is the current context value.
-                still_current = bool(
-                    context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+                # The suppression token is on top only while the unique marker
+                # this run attached is the current context value. Overlapping
+                # runs all make the flag truthy, so a truthiness check would
+                # reset an older run's token from under a newer one.
+                still_current = (
+                    span_holder.suppression_marker is not None
+                    and context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+                    is span_holder.suppression_marker
                 )
             self._safe_detach_context(span_holder.token, still_current)
             span_holder.token = None
         if span_holder.association_properties_token:
+            # Identity, not equality: two runs with equal metadata (including
+            # {}) attach equal-but-distinct dicts, and resetting an older
+            # run's token while a newer dict is current would pop it.
             still_current = (
-                context_api.get_value("association_properties")
-                == span_holder.association_properties
+                span_holder.association_properties is not None
+                and context_api.get_value("association_properties")
+                is span_holder.association_properties
             )
             self._safe_detach_context(
                 span_holder.association_properties_token, still_current
@@ -274,7 +282,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
         """End a span and clean up any tracked context tokens for it and its children."""
-        for child_id in list(self.spans[run_id].children):
+        # Children are recorded in start order; unwind in reverse so each
+        # token is reset while its own context is on top of the stack.
+        # Resetting a newer child's token first would otherwise resurrect an
+        # older child's already-ended span as the current context.
+        for child_id in reversed(list(self.spans[run_id].children)):
             if child_id in self.spans:
                 child_holder = self.spans[child_id]
                 child_span = child_holder.span
@@ -358,6 +370,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             self._detach_holder_contexts(old_holder)
 
         association_properties_token = None
+        merged_association_properties = None
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -371,11 +384,18 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if v is not None
                 and (sanitized := _sanitize_metadata_value(v)) is not None
             }
+            # Build the merged dict once and attach that exact object: detach
+            # later compares the current context value by identity to decide
+            # whether this run's frame is still on top of the stack.
+            merged_association_properties = {
+                **current_association_properties,
+                **sanitized_metadata,
+            }
             try:
                 association_properties_token = context_api.attach(
                     context_api.set_value(
                         "association_properties",
-                        {**current_association_properties, **sanitized_metadata},
+                        merged_association_properties,
                     )
                 )
             except Exception:
@@ -424,11 +444,6 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     value,
                 )
 
-        merged_association_properties = (
-            {**current_association_properties, **sanitized_metadata}
-            if metadata is not None
-            else None
-        )
         self.spans[run_id] = SpanHolder(
             span,
             token,
@@ -592,12 +607,20 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
         try:
+            # Attach a unique marker object rather than a bare True so detach
+            # can tell by identity whether this run's suppression is still on
+            # top of the stack. Downstream instrumentations only check the
+            # flag for truthiness, so an opaque marker stays compatible.
+            suppression_marker = object()
             token = context_api.attach(
-                context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, suppression_marker
+                )
             )
         except Exception:
             # If context setting fails, continue without suppression token
             token = None
+            suppression_marker = None
 
         self.spans[run_id] = SpanHolder(
             span,
@@ -614,6 +637,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 current_holder.association_properties if current_holder else None
             ),
             token_is_span=False,
+            suppression_marker=suppression_marker,
         )
 
         return span
