@@ -768,6 +768,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
 
     stream = response.get("stream")
     role = "unknown"
+    stop_reason = None
     if stream:
 
         def handler(func):
@@ -777,7 +778,7 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                 reasoning_blocks = kwargs.pop("reasoning_blocks")
                 span = kwargs.pop("span")
                 event = func(*args, **kwargs)
-                nonlocal role
+                nonlocal role, stop_reason
                 if "contentBlockDelta" in event:
                     delta = event["contentBlockDelta"].get("delta", {})
                     if "text" in delta:
@@ -799,7 +800,9 @@ def _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
                     # last message sent
-                    guardrail_converse(span, event["metadata"], provider, model, metric_params)
+                    guardrail_converse(
+                        span, {"stopReason": stop_reason, **event["metadata"]}, provider, model, metric_params
+                    )
                     converse_usage_record(span, event["metadata"], metric_params)
                     span.end()
                 elif "messageStop" in event:
@@ -844,6 +847,7 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
 
     stream = response.get("stream")
     role = "unknown"
+    stop_reason = None
     if stream:
         # Track whether span.end() has been called inside the metadata branch.
         # If the caller breaks out of `async for` early, metadata never arrives
@@ -867,7 +871,7 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
                 reasoning_blocks = kwargs.pop("reasoning_blocks")
                 span = kwargs.pop("span")
                 event = await func(*args, **kwargs)
-                nonlocal role
+                nonlocal role, stop_reason
                 if "contentBlockDelta" in event:
                     delta = event["contentBlockDelta"].get("delta", {})
                     if "text" in delta:
@@ -887,7 +891,9 @@ def _handle_async_converse_stream(span, kwargs, response, metric_params, event_l
                 elif "messageStart" in event:
                     role = event["messageStart"]["role"]
                 elif "metadata" in event:
-                    guardrail_converse(span, event["metadata"], provider, model, metric_params)
+                    guardrail_converse(
+                        span, {"stopReason": stop_reason, **event["metadata"]}, provider, model, metric_params
+                    )
                     converse_usage_record(span, event["metadata"], metric_params)
                     span_state["ended"] = True
                     span.end()
