@@ -19,10 +19,17 @@ _Provider = GenAIAttributes.GenAiProviderNameValues
     [
         ("azure/gpt-4o", _Provider.AZURE_AI_OPENAI.value),
         ("azure_ai/grok-3", _Provider.AZURE_AI_INFERENCE.value),
+        ("azure_text/gpt-35-turbo-instruct", _Provider.AZURE_AI_OPENAI.value),
         ("bedrock/anthropic.claude-3", _Provider.AWS_BEDROCK.value),
+        ("bedrock_mantle/openai.gpt-oss-120b", _Provider.AWS_BEDROCK.value),
+        ("cohere_chat/command-r", _Provider.COHERE.value),
         ("vertex_ai/gemini-1.5-pro", _Provider.GCP_VERTEX_AI.value),
+        ("vertex_ai_beta/gemini-1.5-pro", _Provider.GCP_VERTEX_AI.value),
         ("gemini/gemini-1.5-pro", _Provider.GCP_GEMINI.value),
         ("mistral/mistral-large", _Provider.MISTRAL_AI.value),
+        ("watsonx/ibm/granite-13b-chat-v2", _Provider.IBM_WATSONX_AI.value),
+        ("watsonx_text/ibm/granite-13b", _Provider.IBM_WATSONX_AI.value),
+        ("xai/grok-4", _Provider.X_AI.value),
         # OpenAI already matches the published value; unknown providers pass through.
         ("openai/gpt-4o", "openai"),
         ("someprovider/some-model", "someprovider"),
