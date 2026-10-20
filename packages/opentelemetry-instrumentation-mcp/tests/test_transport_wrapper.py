@@ -50,6 +50,48 @@ def test_application_exception_reaches_the_caller_unchanged(transport):
     assert caught.value is error
 
 
+_OPAQUE_RESULT = _Stream()
+_ONE_STREAM_RESULT = (_Stream(),)
+
+
+@asynccontextmanager
+async def _opaque_result():
+    yield _OPAQUE_RESULT
+
+
+@asynccontextmanager
+async def _one_stream_result():
+    yield _ONE_STREAM_RESULT
+
+
+@pytest.mark.parametrize(
+    "transport, expected",
+    [(_opaque_result, _OPAQUE_RESULT), (_one_stream_result, _ONE_STREAM_RESULT)],
+)
+def test_unknown_transport_shapes_fall_back_to_the_raw_result(transport, expected):
+    """A transport that does not unpack is passed through unchanged.
+
+    The shape fallback is also inside the ``yield``, so a failure raised by the
+    caller must still reach it rather than turning into a second yield.
+    """
+    wrapper = McpInstrumentor()._transport_wrapper(
+        TracerProvider().get_tracer(__name__)
+    )
+    seen = []
+    error = ValueError("application failure")
+
+    async def consume():
+        async with wrapper(transport, None, (), {}) as result:
+            seen.append(result)
+            raise error
+
+    with pytest.raises(ValueError) as caught:
+        asyncio.run(consume())
+
+    assert caught.value is error
+    assert seen == [expected]
+
+
 @pytest.mark.parametrize(
     "transport, expected_length",
     [(_two_streams, 2), (_streams_with_session_id, 3)],
