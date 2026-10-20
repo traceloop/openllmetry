@@ -564,99 +564,104 @@ def _wrap(
     _handle_input(span, event_logger, kwargs)
 
     start_time = time.time()
+    stream_response = False
     try:
-        response = wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
-
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
-
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
-
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
-        raise
-
-    end_time = time.time()
-
-    if is_streaming_response(response):
-        return AnthropicStream(
-            span,
-            response,
-            instance._client,
-            start_time,
-            token_histogram,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-            event_logger,
-            kwargs,
-        )
-    elif is_stream_manager(response):
-        if response.__class__.__name__ == "AsyncMessageStreamManager":
-            return WrappedAsyncMessageStreamManager(
-                response,
-                span,
-                instance._client,
-                start_time,
-                token_histogram,
-                choice_counter,
-                duration_histogram,
-                exception_counter,
-                event_logger,
-                kwargs,
-            )
-        else:
-            return WrappedMessageStreamManager(
-                response,
-                span,
-                instance._client,
-                start_time,
-                token_histogram,
-                choice_counter,
-                duration_histogram,
-                exception_counter,
-                event_logger,
-                kwargs,
-            )
-    elif response:
         try:
-            metric_attributes = shared_metrics_attributes(response)
+            response = wrapped(*args, **kwargs)
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            attributes = error_metrics_attributes(e)
 
             if duration_histogram:
-                duration = time.time() - start_time
-                duration_histogram.record(
-                    duration,
-                    attributes=metric_attributes,
-                )
+                duration = end_time - start_time
+                duration_histogram.record(duration, attributes=attributes)
 
-            _handle_response(span, event_logger, response)
-            if span.is_recording():
-                _set_token_usage(
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
+
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
+
+        end_time = time.time()
+
+        if is_streaming_response(response):
+            stream_response = True
+            return AnthropicStream(
+                span,
+                response,
+                instance._client,
+                start_time,
+                token_histogram,
+                choice_counter,
+                duration_histogram,
+                exception_counter,
+                event_logger,
+                kwargs,
+            )
+        elif is_stream_manager(response):
+            stream_response = True
+            if response.__class__.__name__ == "AsyncMessageStreamManager":
+                return WrappedAsyncMessageStreamManager(
+                    response,
                     span,
                     instance._client,
-                    kwargs,
-                    response,
-                    metric_attributes,
+                    start_time,
                     token_histogram,
                     choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                    event_logger,
+                    kwargs,
                 )
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.warning(
-                "Failed to set response attributes for anthropic span, error: %s",
-                str(ex),
-            )
+            else:
+                return WrappedMessageStreamManager(
+                    response,
+                    span,
+                    instance._client,
+                    start_time,
+                    token_histogram,
+                    choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                    event_logger,
+                    kwargs,
+                )
+        elif response:
+            try:
+                metric_attributes = shared_metrics_attributes(response)
 
-        if span.is_recording():
-            span.set_status(Status(StatusCode.OK))
-    span.end()
-    return response
+                if duration_histogram:
+                    duration = time.time() - start_time
+                    duration_histogram.record(
+                        duration,
+                        attributes=metric_attributes,
+                    )
+
+                _handle_response(span, event_logger, response)
+                if span.is_recording():
+                    _set_token_usage(
+                        span,
+                        instance._client,
+                        kwargs,
+                        response,
+                        metric_attributes,
+                        token_histogram,
+                        choice_counter,
+                    )
+            except Exception as ex:  # pylint: disable=broad-except
+                logger.warning(
+                    "Failed to set response attributes for anthropic span, error: %s",
+                    str(ex),
+                )
+
+            if span.is_recording():
+                span.set_status(Status(StatusCode.OK))
+        return response
+    finally:
+        if not stream_response:
+            span.end()
 
 
 @_with_chat_telemetry_wrapper
@@ -696,43 +701,31 @@ async def _awrap(
     await _ahandle_input(span, event_logger, kwargs)
 
     start_time = time.time()
+    stream_response = False
     try:
-        response = await wrapped(*args, **kwargs)
-    except Exception as e:  # pylint: disable=broad-except
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
+        try:
+            response = await wrapped(*args, **kwargs)
+        except Exception as e:  # pylint: disable=broad-except
+            end_time = time.time()
+            attributes = error_metrics_attributes(e)
 
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
+            if duration_histogram:
+                duration = end_time - start_time
+                duration_histogram.record(duration, attributes=attributes)
 
-        if exception_counter:
-            exception_counter.add(1, attributes=attributes)
+            if exception_counter:
+                exception_counter.add(1, attributes=attributes)
 
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
-        raise
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            raise
 
-    if is_streaming_response(response):
-        return AnthropicAsyncStream(
-            span,
-            response,
-            instance._client,
-            start_time,
-            token_histogram,
-            choice_counter,
-            duration_histogram,
-            exception_counter,
-            event_logger,
-            kwargs,
-        )
-    elif is_stream_manager(response):
-        if response.__class__.__name__ == "AsyncMessageStreamManager":
-            return WrappedAsyncMessageStreamManager(
-                response,
+        if is_streaming_response(response):
+            stream_response = True
+            return AnthropicAsyncStream(
                 span,
+                response,
                 instance._client,
                 start_time,
                 token_histogram,
@@ -742,48 +735,65 @@ async def _awrap(
                 event_logger,
                 kwargs,
             )
-        else:
-            return WrappedMessageStreamManager(
-                response,
-                span,
-                instance._client,
-                start_time,
-                token_histogram,
-                choice_counter,
-                duration_histogram,
-                exception_counter,
-                event_logger,
-                kwargs,
+        elif is_stream_manager(response):
+            stream_response = True
+            if response.__class__.__name__ == "AsyncMessageStreamManager":
+                return WrappedAsyncMessageStreamManager(
+                    response,
+                    span,
+                    instance._client,
+                    start_time,
+                    token_histogram,
+                    choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                    event_logger,
+                    kwargs,
+                )
+            else:
+                return WrappedMessageStreamManager(
+                    response,
+                    span,
+                    instance._client,
+                    start_time,
+                    token_histogram,
+                    choice_counter,
+                    duration_histogram,
+                    exception_counter,
+                    event_logger,
+                    kwargs,
+                )
+        elif response:
+            from opentelemetry.instrumentation.anthropic.utils import (
+                ashared_metrics_attributes,
             )
-    elif response:
-        from opentelemetry.instrumentation.anthropic.utils import (
-            ashared_metrics_attributes,
-        )
 
-        metric_attributes = await ashared_metrics_attributes(response)
+            metric_attributes = await ashared_metrics_attributes(response)
 
-        if duration_histogram:
-            duration = time.time() - start_time
-            duration_histogram.record(
-                duration,
-                attributes=metric_attributes,
-            )
+            if duration_histogram:
+                duration = time.time() - start_time
+                duration_histogram.record(
+                    duration,
+                    attributes=metric_attributes,
+                )
 
-        await _ahandle_response(span, event_logger, response)
+            await _ahandle_response(span, event_logger, response)
 
-        if span.is_recording():
-            await _aset_token_usage(
-                span,
-                instance._client,
-                kwargs,
-                response,
-                metric_attributes,
-                token_histogram,
-                choice_counter,
-            )
-            span.set_status(Status(StatusCode.OK))
-    span.end()
-    return response
+            if span.is_recording():
+                await _aset_token_usage(
+                    span,
+                    instance._client,
+                    kwargs,
+                    response,
+                    metric_attributes,
+                    token_histogram,
+                    choice_counter,
+                )
+                span.set_status(Status(StatusCode.OK))
+        return response
+    finally:
+        if not stream_response:
+            span.end()
 
 
 def is_metrics_enabled() -> bool:
