@@ -131,7 +131,7 @@ def exporter_with_custom_instrumentations():
         exporter=exporter,
         disable_batch=True,
         instruments={i for i in Instruments},
-        block_instruments={Instruments.ANTHROPIC},
+        block_instruments={Instruments.ANTHROPIC, Instruments.HTTPX},
     )
 
     yield exporter
