@@ -287,7 +287,6 @@ async def _awrap(
             if span.is_recording():
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
-                span.end()
             raise
 
         set_span_response_attributes(span, response)
