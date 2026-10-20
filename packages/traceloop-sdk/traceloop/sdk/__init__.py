@@ -33,6 +33,10 @@ from traceloop.sdk.tracing.tracing import (
 from typing import Dict
 from traceloop.sdk.client.client import Client
 from traceloop.sdk.associations.associations import AssociationProperty as AssociationProperty
+from traceloop.sdk.propagation import (
+    extract_trace_context as extract_trace_context,
+    inject_trace_context as inject_trace_context,
+)
 
 
 class Traceloop:
