@@ -210,20 +210,33 @@ def _build_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": "", "id": ""}
     for item in response:
         yield item
-        _accumulate_streaming_response(complete_response, item)
+       
+        try:
+            _accumulate_streaming_response(complete_response, item)
+        except Exception as e:
+            logging.warning(
+                "OpenLLMetry failed to trace a streaming chunk, continuing without it: %s",
+                e,
+            )
 
-    _set_response_attributes(span, complete_response)
+    try:
+        _set_response_attributes(span, complete_response)
 
-    _set_token_usage(span, request_kwargs, complete_response)
+        _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_emit_events():
-        _emit_streaming_response_events(complete_response)
-    else:
-        if should_send_prompts():
-            _set_completions(span, complete_response.get("choices"))
+        if should_emit_events():
+            _emit_streaming_response_events(complete_response)
+        else:
+            if should_send_prompts():
+                _set_completions(span, complete_response.get("choices"))
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        logging.warning(
+            "OpenLLMetry failed to finalize the streaming span: %s", e
+        )
+    finally:
+        span.end()
 
 
 @dont_throw
@@ -231,20 +244,32 @@ async def _abuild_from_streaming_response(span, request_kwargs, response):
     complete_response = {"choices": [], "model": "", "id": ""}
     async for item in response:
         yield item
-        _accumulate_streaming_response(complete_response, item)
+        try:
+            _accumulate_streaming_response(complete_response, item)
+        except Exception as e:
+            logging.warning(
+                "OpenLLMetry failed to trace a streaming chunk, continuing without it: %s",
+                e,
+            )
 
-    _set_response_attributes(span, complete_response)
+    try:
+        _set_response_attributes(span, complete_response)
 
-    _set_token_usage(span, request_kwargs, complete_response)
+        _set_token_usage(span, request_kwargs, complete_response)
 
-    if should_emit_events():
-        _emit_streaming_response_events(complete_response)
-    else:
-        if should_send_prompts():
-            _set_completions(span, complete_response.get("choices"))
+        if should_emit_events():
+            _emit_streaming_response_events(complete_response)
+        else:
+            if should_send_prompts():
+                _set_completions(span, complete_response.get("choices"))
 
-    span.set_status(Status(StatusCode.OK))
-    span.end()
+        span.set_status(Status(StatusCode.OK))
+    except Exception as e:
+        logging.warning(
+            "OpenLLMetry failed to finalize the streaming span: %s", e
+        )
+    finally:
+        span.end()
 
 
 def _emit_streaming_response_events(complete_response):
