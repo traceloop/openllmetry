@@ -680,6 +680,7 @@ def test_anthropic_message_streaming_legacy(
     assert text_parts[0]["content"] == response_content
     assert output_messages[-1]["role"] == "assistant"
     assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 17
+    assert anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 171
     assert (
         anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
         + anthropic_span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
