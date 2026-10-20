@@ -65,13 +65,19 @@ def extract_response_id(raw: Any) -> Optional[str]:
 
 
 def extract_token_usage(raw: Any) -> TokenUsage:
-    """Extract token usage from raw response. Handles OpenAI, Anthropic, Cohere, and dict formats."""
+    """Extract token usage from raw response. Handles OpenAI, Anthropic, Cohere, VertexAI, and dict formats."""
     usage = _get_nested(raw, "usage")
     if usage:
         result = _extract_openai_usage(usage)
         if result.input_tokens is not None:
             return result
         result = _extract_anthropic_usage(usage)
+        if result.input_tokens is not None:
+            return result
+
+    usage_metadata = _get_nested(raw, "usage_metadata") or _get_nested(raw, "usageMetadata")
+    if usage_metadata:
+        result = _extract_google_usage_metadata(usage_metadata)
         if result.input_tokens is not None:
             return result
 
@@ -146,6 +152,29 @@ def _extract_anthropic_usage(usage: Any) -> TokenUsage:
     return TokenUsage()
 
 
+def _extract_google_usage_metadata(usage_metadata: Any) -> TokenUsage:
+    """Extract tokens from Google Gemini / VertexAI usage_metadata."""
+    input_tokens = _get_int(
+        usage_metadata, "prompt_token_count", "promptTokenCount"
+    )
+    output_tokens = _get_int(
+        usage_metadata, "candidates_token_count", "candidatesTokenCount"
+    )
+    total_tokens = _get_int(
+        usage_metadata, "total_token_count", "totalTokenCount"
+    )
+
+    return TokenUsage(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=(
+            total_tokens
+            if total_tokens is not None
+            else _safe_sum(input_tokens, output_tokens)
+        ),
+    )
+
+
 def _extract_cohere_usage(meta: Any) -> TokenUsage:
     """Extract tokens from Cohere-style meta.tokens or meta.billed_units."""
     tokens = _get_nested(meta, "tokens")
@@ -165,12 +194,15 @@ def _extract_cohere_usage(meta: Any) -> TokenUsage:
     return TokenUsage()
 
 
-def _get_int(obj: Any, key: str) -> Optional[int]:
+def _get_int(obj: Any, *keys: str) -> Optional[int]:
     """Get an integer attribute or dict key from obj."""
-    val = getattr(obj, key, None)
-    if val is None and isinstance(obj, dict):
-        val = obj.get(key)
-    return int(val) if val is not None else None
+    for key in keys:
+        val = getattr(obj, key, None)
+        if val is None and isinstance(obj, dict):
+            val = obj.get(key)
+        if val is not None:
+            return int(val)
+    return None
 
 
 def _safe_sum(a: Optional[int], b: Optional[int]) -> Optional[int]:
