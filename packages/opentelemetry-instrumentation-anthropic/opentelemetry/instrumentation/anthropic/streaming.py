@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.anthropic.utils import (
     count_prompt_tokens_from_request,
     dont_throw,
     error_metrics_attributes,
+    get_thinking_tokens,
     set_span_attribute,
     shared_metrics_attributes,
     should_emit_events,
@@ -61,16 +62,21 @@ def _process_response_item(item, complete_response):
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
         if item.usage:
+            item_usage = dict(item.usage)
             if "usage" in complete_response:
-                item_output_tokens = dict(item.usage).get("output_tokens", 0)
+                item_output_tokens = item_usage.get("output_tokens", 0)
                 existing_output_tokens = complete_response["usage"].get(
                     "output_tokens", 0
                 )
                 complete_response["usage"]["output_tokens"] = (
                     item_output_tokens + existing_output_tokens
                 )
+                if item_usage.get("output_tokens_details") is not None:
+                    complete_response["usage"]["output_tokens_details"] = item_usage[
+                        "output_tokens_details"
+                    ]
             else:
-                complete_response["usage"] = dict(item.usage)
+                complete_response["usage"] = item_usage
 
 
 def _set_token_usage(
@@ -82,6 +88,7 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token usage collected from a completed streaming response."""
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
@@ -97,6 +104,12 @@ def _set_token_usage(
         span, GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS, completion_tokens
     )
     set_span_attribute(span, SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, total_tokens)
+
+    set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+        get_thinking_tokens(complete_response.get("usage")),
+    )
 
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cache_read_tokens
