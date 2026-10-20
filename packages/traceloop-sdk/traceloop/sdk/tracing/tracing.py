@@ -813,9 +813,18 @@ def init_httpx_instrumentor():
         if is_package_installed("httpx"):
             from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
+            # HTTPXClientInstrumentor ignores an excluded_urls argument and reads
+            # exclusions from the environment. Respect values the user already set.
+            if not (
+                os.environ.get("OTEL_PYTHON_HTTPX_EXCLUDED_URLS")
+                or os.environ.get("OTEL_PYTHON_EXCLUDED_URLS")
+            ):
+                os.environ["OTEL_PYTHON_HTTPX_EXCLUDED_URLS"] = ",".join(
+                    url.strip() for url in EXCLUDED_URLS.split(",")
+                )
             instrumentor = HTTPXClientInstrumentor()
             if not instrumentor.is_instrumented_by_opentelemetry:
-                instrumentor.instrument(excluded_urls=EXCLUDED_URLS)
+                instrumentor.instrument()
             return True
     except Exception as e:
         logging.error(f"Error initializing HTTPX instrumentor: {e}")

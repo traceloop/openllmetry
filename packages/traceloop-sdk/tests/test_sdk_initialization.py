@@ -477,8 +477,15 @@ def test_httpx_instrumentation_is_opt_in():
     from traceloop.sdk.instruments import Instruments
     from traceloop.sdk.tracing import tracing
 
+    # Block every other instrument so the test does not instrument installed
+    # libraries globally; only the default handling of HTTPX is exercised.
+    others = set(Instruments) - {Instruments.HTTPX}
     with patch.object(tracing, "init_httpx_instrumentor", return_value=True) as init_httpx:
-        tracing.init_instrumentations(should_enrich_metrics=False, base64_image_uploader=None)
+        tracing.init_instrumentations(
+            should_enrich_metrics=False,
+            base64_image_uploader=None,
+            block_instruments=others,
+        )
         init_httpx.assert_not_called()
 
         tracing.init_instrumentations(
@@ -487,3 +494,26 @@ def test_httpx_instrumentation_is_opt_in():
             instruments={Instruments.HTTPX},
         )
         init_httpx.assert_called_once()
+
+
+def test_httpx_excluded_urls_come_from_environment():
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    from traceloop.sdk.tracing import tracing
+
+    def init_httpx():
+        with patch.object(HTTPXClientInstrumentor, "instrument") as instrument, patch.object(
+            HTTPXClientInstrumentor, "is_instrumented_by_opentelemetry", False
+        ):
+            assert tracing.init_httpx_instrumentor()
+            instrument.assert_called_once_with()
+
+    # patch.dict restores the whole environment, including keys set by the SDK.
+    with patch.dict(os.environ):
+        os.environ.pop("OTEL_PYTHON_HTTPX_EXCLUDED_URLS", None)
+        os.environ.pop("OTEL_PYTHON_EXCLUDED_URLS", None)
+        init_httpx()
+        assert "api.openai.com" in os.environ["OTEL_PYTHON_HTTPX_EXCLUDED_URLS"].split(",")
+
+    with patch.dict(os.environ, {"OTEL_PYTHON_HTTPX_EXCLUDED_URLS": "example.com"}):
+        init_httpx()
+        assert os.environ["OTEL_PYTHON_HTTPX_EXCLUDED_URLS"] == "example.com"
