@@ -3,7 +3,13 @@
 import json
 
 import anthropic
-import httpx2 as httpx
+
+# anthropic >= 1.0 ships on httpx2, older releases on httpx - use whichever the
+# installed anthropic depends on so the mock transport matches its client.
+try:
+    import httpx2 as httpx
+except ImportError:  # anthropic < 1.0
+    import httpx
 import pytest
 from opentelemetry.trace.status import StatusCode
 
