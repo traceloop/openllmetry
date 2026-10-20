@@ -6,6 +6,7 @@ from typing import Generator, AsyncGenerator
 
 from langchain_openai import ChatOpenAI
 from traceloop.sdk.decorators import task
+from traceloop.sdk.decorators.base import _truncate_json_if_needed
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import StatusCode
 
@@ -204,6 +205,31 @@ def test_json_no_truncation_without_otel_limit(exporter, monkeypatch):
     # Check that output was not truncated
     output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert output_data == result
+
+
+def test_json_large_content_is_bounded_without_otel_limit(exporter, monkeypatch):
+    """Large entity payloads remain exportable when no OTel limit is configured."""
+    monkeypatch.delenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", raising=False)
+
+    @task(name="large_content_task")
+    def large_content_task():
+        return "x" * 1_100_000
+
+    large_content_task()
+
+    span = exporter.get_finished_spans()[0]
+    output_json = span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+    assert len(output_json) == 1_000_000
+    assert output_json.startswith('"' + ("x" * 999_999))
+
+
+@pytest.mark.parametrize("configured_limit", ["0", "-1", "not_a_number"])
+def test_json_nonpositive_or_invalid_limit_uses_default(monkeypatch, configured_limit):
+    monkeypatch.setenv("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", configured_limit)
+
+    truncated = _truncate_json_if_needed("x" * 1_000_001)
+
+    assert len(truncated) == 1_000_000
 
 
 def test_json_truncation_with_invalid_otel_limit(exporter, monkeypatch):
