@@ -58,7 +58,8 @@ class AsyncStreamingWrapper(ObjectProxy):
             elif delta.get("type") == "input_json_delta":
                 partial_json = delta.get("partial_json", "")
                 current = self._accumulating_body["content"][-1]
-                current.setdefault("input", "")
+                if not isinstance(current.get("input"), str):
+                    current["input"] = ""
                 current["input"] += partial_json
             elif delta.get("type") == "thinking_delta":
                 thinking_text = delta.get("thinking", "")
@@ -143,7 +144,8 @@ class StreamingWrapper(ObjectProxy):
             elif delta.get("type") == "input_json_delta":
                 partial_json = delta.get("partial_json", "")
                 current = self._accumulating_body["content"][-1]
-                current.setdefault("input", "")
+                if not isinstance(current.get("input"), str):
+                    current["input"] = ""
                 current["input"] += partial_json
             elif delta.get("type") == "thinking_delta":
                 thinking_text = delta.get("thinking", "")
