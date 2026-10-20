@@ -302,6 +302,25 @@ class SpanAttributes:
     QDRANT_UPSERT_COLLECTION_NAME = "qdrant.upsert.collection_name"
     QDRANT_UPSERT_POINTS_COUNT = "qdrant.upsert.points_count"
 
+    # Azure AI Search
+    AZURE_SEARCH_INDEX_NAME = "db.azure_search.index_name"
+    AZURE_SEARCH_SEARCH_TEXT = "db.azure_search.search_text"
+    AZURE_SEARCH_TOP = "db.azure_search.top"
+    AZURE_SEARCH_FILTER = "db.azure_search.filter"
+    AZURE_SEARCH_RESULT_COUNT = "db.azure_search.result_count"
+    AZURE_SEARCH_DOCUMENTS_COUNT = "db.azure_search.documents_count"
+    AZURE_SEARCH_SUCCEEDED_COUNT = "db.azure_search.succeeded_count"
+    AZURE_SEARCH_INDEXER_NAME = "db.azure_search.indexer_name"
+    AZURE_SEARCH_SKILLSET_NAME = "db.azure_search.skillset_name"
+    AZURE_SEARCH_INDEXER_STATUS = "db.azure_search.indexer_status"
+    AZURE_SEARCH_INDEX_DIMENSIONS = "db.azure_search.index_dimensions"
+    AZURE_SEARCH_INDEX_DOC_COUNT = "db.azure_search.index_document_count"
+    AZURE_SEARCH_INDEX_SIZE_BYTES = "db.azure_search.index_size_bytes"
+    AZURE_SEARCH_SERVICE_LIMIT = "db.azure_search.service_limit"
+    AZURE_SEARCH_SERVICE_USAGE = "db.azure_search.service_usage"
+    AZURE_SEARCH_AUTOCOMPLETE_TEXT = "db.azure_search.autocomplete_text"
+    AZURE_SEARCH_SUGGEST_TEXT = "db.azure_search.suggest_text"
+
     # Marqo
     MARQO_SEARCH_QUERY = "db.marqo.search.query"
     MARQO_SEARCH_PROCESSING_TIME = "db.marqo.search.processing_time"
