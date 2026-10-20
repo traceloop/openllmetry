@@ -73,6 +73,7 @@ class Traceloop:
         endpoint_is_traceloop: Optional[bool] = False,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
+        trace_content: Optional[bool] = None,
     ) -> Optional[Client]:
         """Initialize Traceloop tracing, metrics, and instrumentation.
 
@@ -88,6 +89,24 @@ class Traceloop:
                 events have nowhere to go and no prompt/completion data will be recorded.
             use_legacy_attributes: Deprecated alias for ``use_attributes``. Will be
                 removed in a future release.
+            trace_content: Controls whether prompts/completions are captured by the
+                bundled instrumentations. If ``None`` (default), the
+                ``TRACELOOP_TRACE_CONTENT`` environment variable is honored as
+                before. If ``True``/``False``, this works by setting
+                ``os.environ["TRACELOOP_TRACE_CONTENT"]`` for the process, so:
+                - it is process-wide, and any child process spawned afterwards
+                  inherits it;
+                - it persists across later ``init()`` calls — a subsequent call
+                  with ``trace_content=None`` leaves it as-is, so the last
+                  explicit value wins;
+                - the per-association content allow-list
+                  (``override_enable_content_tracing``) can still turn content
+                  back on for specific spans even when ``trace_content=False``.
+                The override is applied even if ``init()`` later returns early
+                because the Traceloop API key is missing. It is *not* applied
+                when ``enabled=False`` or when tracing is disabled via
+                ``TRACELOOP_TRACING_ENABLED`` — both checks happen before this
+                override runs.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -124,6 +143,11 @@ class Traceloop:
         if not is_tracing_enabled():
             print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
             return
+
+        if trace_content is not None:
+            os.environ["TRACELOOP_TRACE_CONTENT"] = (
+                "true" if trace_content else "false"
+            )
 
         enable_content_tracing = is_content_tracing_enabled()
 
