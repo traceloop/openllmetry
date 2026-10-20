@@ -122,25 +122,28 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
         "type": "function",
         "function": {"name": "", "arguments": "", "description": ""},
     }
-    async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-        item_to_yield = item
-        try:
-            _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
-        except Exception:
-            pass
-        yield item_to_yield
+    try:
+        async for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            item_to_yield = item
+            try:
+                _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
+            except Exception:
+                pass
+            yield item_to_yield
 
-    set_span_response_attributes(span, final_response)
-    if should_emit_events():
-        emit_response_events(event_logger, llm_request_type, final_response)
-    elif should_send_prompts():
-        _set_span_chat_response(span, final_response)
-    if final_response.get("error"):
-        span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
-        span.record_exception(final_response.get("error"))
-    else:
-        span.set_status(Status(StatusCode.OK))
+        set_span_response_attributes(span, final_response)
+        if should_emit_events():
+            emit_response_events(event_logger, llm_request_type, final_response)
+        elif should_send_prompts():
+            _set_span_chat_response(span, final_response)
+
+        if final_response.get("error"):
+            span.set_status(Status(StatusCode.ERROR, final_response.get("error")))
+            span.record_exception(final_response.get("error"))
+        else:
+            span.set_status(Status(StatusCode.OK))
+    finally:
         span.end()
 
 
