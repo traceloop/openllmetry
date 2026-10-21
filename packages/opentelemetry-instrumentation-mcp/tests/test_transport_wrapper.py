@@ -52,6 +52,7 @@ def test_application_exception_reaches_the_caller_unchanged(transport):
 
 _OPAQUE_RESULT = _Stream()
 _ONE_STREAM_RESULT = (_Stream(),)
+_FOUR_ELEMENT_RESULT = (_Stream(), _Stream(), lambda: "session-id", "extra")
 
 
 @asynccontextmanager
@@ -64,15 +65,26 @@ async def _one_stream_result():
     yield _ONE_STREAM_RESULT
 
 
+@asynccontextmanager
+async def _four_element_result():
+    yield _FOUR_ELEMENT_RESULT
+
+
 @pytest.mark.parametrize(
     "transport, expected",
-    [(_opaque_result, _OPAQUE_RESULT), (_one_stream_result, _ONE_STREAM_RESULT)],
+    [
+        (_opaque_result, _OPAQUE_RESULT),
+        (_one_stream_result, _ONE_STREAM_RESULT),
+        (_four_element_result, _FOUR_ELEMENT_RESULT),
+    ],
 )
 def test_unknown_transport_shapes_fall_back_to_the_raw_result(transport, expected):
-    """A transport that does not unpack is passed through unchanged.
+    """A transport whose shape the wrapper cannot handle is passed through unchanged.
 
-    The shape fallback is also inside the ``yield``, so a failure raised by the
-    caller must still reach it rather than turning into a second yield.
+    That covers a non-iterable, a one-element tuple, and a tuple with more than
+    the two or three elements the MCP transports define. The shape fallback is
+    also inside the ``yield``, so a failure raised by the caller must still reach
+    it rather than turning into a second yield.
     """
     wrapper = McpInstrumentor()._transport_wrapper(
         TracerProvider().get_tracer(__name__)
@@ -89,7 +101,10 @@ def test_unknown_transport_shapes_fall_back_to_the_raw_result(transport, expecte
         asyncio.run(consume())
 
     assert caught.value is error
-    assert seen == [expected]
+    # Identity, not equality: wrapt proxies compare equal to their wrapped
+    # stream, so only `is` proves the raw result was passed through untouched.
+    assert len(seen) == 1
+    assert seen[0] is expected
 
 
 @pytest.mark.parametrize(

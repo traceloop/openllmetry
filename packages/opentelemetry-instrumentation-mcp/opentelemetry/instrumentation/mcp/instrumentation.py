@@ -193,10 +193,14 @@ class McpInstrumentor(BaseInstrumentor):
                 # stop after athrow()" RuntimeError, hiding the real failure.
                 try:
                     read_stream, write_stream, *rest = result
+                    if len(rest) > 1:
+                        raise ValueError(
+                            f"unexpected transport result with {len(rest) + 2} elements"
+                        )
                     streams = (
                         InstrumentedStreamReader(read_stream, tracer),
                         InstrumentedStreamWriter(write_stream, tracer),
-                        *rest[:1],
+                        *rest,
                     )
                 except Exception as e:
                     logging.warning(
