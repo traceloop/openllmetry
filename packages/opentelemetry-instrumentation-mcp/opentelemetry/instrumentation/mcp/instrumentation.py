@@ -186,29 +186,28 @@ class McpInstrumentor(BaseInstrumentor):
             None,
         ]:
             async with wrapped(*args, **kwargs) as result:
+                # Wrap the streams before yielding. Anything the code using the
+                # transport raises is thrown back in at the yield and has to
+                # reach it unchanged: catching it here to retry another tuple
+                # shape would replace it with contextlib's "generator didn't
+                # stop after athrow()" RuntimeError, hiding the real failure.
                 try:
-                    read_stream, write_stream = result
-                    yield InstrumentedStreamReader(
-                        read_stream, tracer
-                    ), InstrumentedStreamWriter(write_stream, tracer)
-                except ValueError:
-                    try:
-                        read_stream, write_stream, get_session_id_callback = result
-                        yield InstrumentedStreamReader(
-                            read_stream, tracer
-                        ), InstrumentedStreamWriter(
-                            write_stream, tracer
-                        ), get_session_id_callback
-                    except Exception as e:
-                        logging.warning(
-                            f"mcp instrumentation _transport_wrapper exception: {e}"
+                    read_stream, write_stream, *rest = result
+                    if len(rest) > 1:
+                        raise ValueError(
+                            f"unexpected transport result with {len(rest) + 2} elements"
                         )
-                        yield result
+                    streams = (
+                        InstrumentedStreamReader(read_stream, tracer),
+                        InstrumentedStreamWriter(write_stream, tracer),
+                        *rest,
+                    )
                 except Exception as e:
                     logging.warning(
-                        f"mcp instrumentation transport_wrapper exception: {e}"
+                        f"mcp instrumentation _transport_wrapper exception: {e}"
                     )
-                    yield result
+                    streams = result
+                yield streams
 
         return traced_method
 
