@@ -193,6 +193,34 @@ def _fake_invoke_stream_response():
     }
 
 
+def _fake_invoke_stream_tool_use_response():
+    """A Nova tool call streamed by invoke_model_with_response_stream (shape of a
+    real amazon.nova-2-lite-v1:0 stream)."""
+    chunks = [
+        {"messageStart": {"role": "assistant"}},
+        {
+            "contentBlockStart": {
+                "start": {"toolUse": {"toolUseId": "tooluse_1", "name": "get_weather"}},
+                "contentBlockIndex": 0,
+            }
+        },
+        {"contentBlockDelta": {"delta": {"toolUse": {"input": '{"city":"Paris"}'}}, "contentBlockIndex": 0}},
+        {"contentBlockStop": {"contentBlockIndex": 0}},
+        {"messageStop": {"stopReason": "tool_use"}},
+        {
+            "metadata": {
+                "usage": {"inputTokens": 916, "outputTokens": 25},
+                "metrics": {},
+            }
+        },
+    ]
+    events = [{"chunk": {"bytes": json.dumps(c).encode()}} for c in chunks]
+    return {
+        "body": _AsyncEventStream(events),
+        "ResponseMetadata": {"HTTPStatusCode": 200, "HTTPHeaders": {}},
+    }
+
+
 async def _patch_make_api_call(session_fixture, response_factory):
     """Helper: opens an async bedrock client and replaces _make_api_call."""
     client_ctx = session_fixture.client("bedrock-runtime")
@@ -505,6 +533,51 @@ async def test_aioboto3_invoke_stream_legacy(
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 0
+
+
+async def test_aioboto3_invoke_stream_tool_use(
+    instrument_legacy, async_session, span_exporter, log_exporter
+):
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": [{"role": "user", "content": [{"text": "What's the weather in Paris?"}]}],
+    }
+
+    client, ctx = await _patch_make_api_call(async_session, _fake_invoke_stream_tool_use_response)
+    try:
+        response = await client.invoke_model_with_response_stream(
+            body=json.dumps(request_body),
+            modelId=MODEL_ID,
+            accept="application/json",
+            contentType="application/json",
+        )
+        async for _ in response["body"]:
+            pass
+    finally:
+        await ctx.__aexit__(None, None, None)
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+
+    output_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages == [
+        {
+            "role": "assistant",
+            "parts": [
+                {
+                    "type": "tool_call",
+                    "name": "get_weather",
+                    "id": "tooluse_1",
+                    "arguments": {"city": "Paris"},
+                }
+            ],
+            "finish_reason": "tool_call",
+        }
+    ]
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("tool_call",)
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 916
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 25
 
 
 async def test_aioboto3_invoke_stream_file_like_body(
