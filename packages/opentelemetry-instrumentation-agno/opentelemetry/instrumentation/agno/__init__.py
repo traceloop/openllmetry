@@ -1,6 +1,7 @@
 """OpenTelemetry Agno instrumentation"""
 
 import logging
+import time
 from typing import Collection
 from importlib.metadata import version as package_version, PackageNotFoundError
 
@@ -12,7 +13,7 @@ from opentelemetry.instrumentation.agno._tool_wrappers import (
 from opentelemetry.instrumentation.agno.config import Config
 from opentelemetry.instrumentation.agno.streaming import AgnoAsyncStream, AgnoStream
 from opentelemetry.instrumentation.agno.utils import (
-    dont_throw,
+    guard_trace,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.agno.version import __version__
@@ -146,7 +147,6 @@ class _AgentRunWrapper:
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
-    @dont_throw
     def __call__(self, wrapped, instance, args, kwargs):
         """Wrap the Agent.run() call with tracing instrumentation."""
         if context_api.get_value(
@@ -155,16 +155,25 @@ class _AgentRunWrapper:
             return wrapped(*args, **kwargs)
 
         is_streaming = kwargs.get("stream", False)
+        span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
 
         if is_streaming:
-            span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
+            span = None
+            with guard_trace(logger, span_name):
+                span = self._tracer.start_span(
+                    span_name,
+                    kind=SpanKind.CLIENT,
+                )
 
-            span = self._tracer.start_span(
-                span_name,
-                kind=SpanKind.CLIENT,
-            )
+            if span is None:
+                # The tracer could not open a span: run the agent untraced
+                # rather than fail the call because instrumentation is
+                # unavailable.
+                return wrapped(*args, **kwargs)
 
-            try:
+            start_time = time.time()
+
+            with guard_trace(logger, span_name):
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -186,34 +195,38 @@ class _AgentRunWrapper:
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                     )
 
-                import time
-
-                start_time = time.time()
-
+            # The wrapped call is deliberately outside the guard: its failure
+            # belongs to the agent, not to this instrumentation.
+            try:
                 response = wrapped(*args, **kwargs)
+            except Exception as e:
+                with guard_trace(logger, span_name):
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                    span.end()
+                raise
 
-                return AgnoStream(
-                    span,
-                    response,
-                    instance,
-                    start_time,
-                    self._duration_histogram,
-                    self._token_histogram,
+            return AgnoStream(
+                span,
+                response,
+                instance,
+                start_time,
+                self._duration_histogram,
+                self._token_histogram,
+            )
+        else:
+            span_context = None
+            with guard_trace(logger, span_name):
+                span_context = self._tracer.start_as_current_span(
+                    span_name,
+                    kind=SpanKind.CLIENT,
                 )
 
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                span.end()
-                raise
-        else:
-            span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
+            if span_context is None:
+                return wrapped(*args, **kwargs)
 
-            with self._tracer.start_as_current_span(
-                span_name,
-                kind=SpanKind.CLIENT,
-            ) as span:
-                try:
+            with span_context as span:
+                with guard_trace(logger, span_name):
                     span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                     span.set_attribute(
                         SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -235,12 +248,17 @@ class _AgentRunWrapper:
                             SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                         )
 
-                    import time
+                start_time = time.time()
 
-                    start_time = time.time()
-
+                try:
                     result = wrapped(*args, **kwargs)
+                except Exception as e:
+                    with guard_trace(logger, span_name):
+                        span.set_status(Status(StatusCode.ERROR, str(e)))
+                        span.record_exception(e)
+                    raise
 
+                with guard_trace(logger, span_name):
                     duration = time.time() - start_time
 
                     if hasattr(result, "content") and should_send_prompts():
@@ -278,12 +296,7 @@ class _AgentRunWrapper:
                         },
                     )
 
-                    return result
-
-                except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                    raise
+                return result
 
 
 class _AgentARunWrapper:
@@ -295,7 +308,6 @@ class _AgentARunWrapper:
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
-    @dont_throw
     def __call__(self, wrapped, instance, args, kwargs):
         """Wrap the Agent.arun() call with tracing instrumentation."""
         if context_api.get_value(
@@ -304,16 +316,25 @@ class _AgentARunWrapper:
             return wrapped(*args, **kwargs)
 
         is_streaming = kwargs.get("stream", False)
+        span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
 
         if is_streaming:
-            span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
+            span = None
+            with guard_trace(logger, span_name):
+                span = self._tracer.start_span(
+                    span_name,
+                    kind=SpanKind.CLIENT,
+                )
 
-            span = self._tracer.start_span(
-                span_name,
-                kind=SpanKind.CLIENT,
-            )
+            if span is None:
+                # The tracer could not open a span: run the agent untraced
+                # rather than fail the call because instrumentation is
+                # unavailable.
+                return wrapped(*args, **kwargs)
 
-            try:
+            start_time = time.time()
+
+            with guard_trace(logger, span_name):
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -335,35 +356,39 @@ class _AgentARunWrapper:
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                     )
 
-                import time
-
-                start_time = time.time()
-
+            # The wrapped call is deliberately outside the guard: its failure
+            # belongs to the agent, not to this instrumentation.
+            try:
                 response = wrapped(*args, **kwargs)
-
-                return AgnoAsyncStream(
-                    span,
-                    response,
-                    instance,
-                    start_time,
-                    self._duration_histogram,
-                    self._token_histogram,
-                )
-
             except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                span.end()
+                with guard_trace(logger, span_name):
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                    span.end()
                 raise
+
+            return AgnoAsyncStream(
+                span,
+                response,
+                instance,
+                start_time,
+                self._duration_histogram,
+                self._token_histogram,
+            )
         else:
             async def async_wrapper():
-                span_name = f"{getattr(instance, 'name', 'unknown')}.agent"
+                span_context = None
+                with guard_trace(logger, span_name):
+                    span_context = self._tracer.start_as_current_span(
+                        span_name,
+                        kind=SpanKind.CLIENT,
+                    )
 
-                with self._tracer.start_as_current_span(
-                    span_name,
-                    kind=SpanKind.CLIENT,
-                ) as span:
-                    try:
+                if span_context is None:
+                    return await wrapped(*args, **kwargs)
+
+                with span_context as span:
+                    with guard_trace(logger, span_name):
                         span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                         span.set_attribute(
                             SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -385,12 +410,17 @@ class _AgentARunWrapper:
                                 SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                             )
 
-                        import time
+                    start_time = time.time()
 
-                        start_time = time.time()
-
+                    try:
                         result = await wrapped(*args, **kwargs)
+                    except Exception as e:
+                        with guard_trace(logger, span_name):
+                            span.set_status(Status(StatusCode.ERROR, str(e)))
+                            span.record_exception(e)
+                        raise
 
+                    with guard_trace(logger, span_name):
                         duration = time.time() - start_time
 
                         if hasattr(result, "content") and should_send_prompts():
@@ -428,12 +458,7 @@ class _AgentARunWrapper:
                             },
                         )
 
-                        return result
-
-                    except Exception as e:
-                        span.set_status(Status(StatusCode.ERROR, str(e)))
-                        span.record_exception(e)
-                        raise
+                    return result
 
             return async_wrapper()
 
@@ -447,7 +472,6 @@ class _TeamRunWrapper:
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
-    @dont_throw
     def __call__(self, wrapped, instance, args, kwargs):
         """Wrap the Team.run() call with tracing instrumentation."""
         if context_api.get_value(
@@ -457,11 +481,20 @@ class _TeamRunWrapper:
 
         span_name = f"{getattr(instance, 'name', 'unknown')}.team"
 
-        with self._tracer.start_as_current_span(
-            span_name,
-            kind=SpanKind.CLIENT,
-        ) as span:
-            try:
+        span_context = None
+        with guard_trace(logger, span_name):
+            span_context = self._tracer.start_as_current_span(
+                span_name,
+                kind=SpanKind.CLIENT,
+            )
+
+        if span_context is None:
+            # The tracer could not open a span: run the team untraced rather
+            # than fail the call because instrumentation is unavailable.
+            return wrapped(*args, **kwargs)
+
+        with span_context as span:
+            with guard_trace(logger, span_name):
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -477,12 +510,19 @@ class _TeamRunWrapper:
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                     )
 
-                import time
+            start_time = time.time()
 
-                start_time = time.time()
-
+            # The wrapped call is deliberately outside the guard: its failure
+            # belongs to the team, not to this instrumentation.
+            try:
                 result = wrapped(*args, **kwargs)
+            except Exception as e:
+                with guard_trace(logger, span_name):
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                raise
 
+            with guard_trace(logger, span_name):
                 duration = time.time() - start_time
 
                 if hasattr(result, "content") and should_send_prompts():
@@ -503,12 +543,7 @@ class _TeamRunWrapper:
                     },
                 )
 
-                return result
-
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
+            return result
 
 
 class _TeamARunWrapper:
@@ -520,7 +555,6 @@ class _TeamARunWrapper:
         self._duration_histogram = duration_histogram
         self._token_histogram = token_histogram
 
-    @dont_throw
     async def __call__(self, wrapped, instance, args, kwargs):
         """Wrap the Team.arun() call with tracing instrumentation."""
         if context_api.get_value(
@@ -530,11 +564,20 @@ class _TeamARunWrapper:
 
         span_name = f"{getattr(instance, 'name', 'unknown')}.team"
 
-        with self._tracer.start_as_current_span(
-            span_name,
-            kind=SpanKind.CLIENT,
-        ) as span:
-            try:
+        span_context = None
+        with guard_trace(logger, span_name):
+            span_context = self._tracer.start_as_current_span(
+                span_name,
+                kind=SpanKind.CLIENT,
+            )
+
+        if span_context is None:
+            # The tracer could not open a span: run the team untraced rather
+            # than fail the call because instrumentation is unavailable.
+            return await wrapped(*args, **kwargs)
+
+        with span_context as span:
+            with guard_trace(logger, span_name):
                 span.set_attribute(GenAIAttributes.GEN_AI_SYSTEM, "agno")
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_SPAN_KIND,
@@ -550,12 +593,19 @@ class _TeamARunWrapper:
                         SpanAttributes.TRACELOOP_ENTITY_INPUT, input_message
                     )
 
-                import time
+            start_time = time.time()
 
-                start_time = time.time()
-
+            # The wrapped call is deliberately outside the guard: its failure
+            # belongs to the team, not to this instrumentation.
+            try:
                 result = await wrapped(*args, **kwargs)
+            except Exception as e:
+                with guard_trace(logger, span_name):
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                raise
 
+            with guard_trace(logger, span_name):
                 duration = time.time() - start_time
 
                 if hasattr(result, "content") and should_send_prompts():
@@ -576,9 +626,4 @@ class _TeamARunWrapper:
                     },
                 )
 
-                return result
-
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
+            return result
