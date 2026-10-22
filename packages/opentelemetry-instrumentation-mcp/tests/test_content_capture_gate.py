@@ -23,7 +23,10 @@ from fastmcp.exceptions import ToolError
 from mcp.types import JSONRPCMessage, JSONRPCResponse
 from opentelemetry import context
 from opentelemetry.instrumentation.mcp import McpInstrumentor
-from opentelemetry.instrumentation.mcp.instrumentation import InstrumentedStreamWriter
+from opentelemetry.instrumentation.mcp.instrumentation import (
+    ContextSavingStreamWriter,
+    InstrumentedStreamWriter,
+)
 from opentelemetry.trace import StatusCode
 
 MARKER = "content-capture-marker-9f3a"
@@ -259,6 +262,17 @@ async def test_stream_writer_error_status_honors_the_switch(
     assert (MARKER in _all_recorded_text(span_exporter)) is expected
 
 
+async def test_broken_tracer_does_not_drop_the_message(broken_tracer) -> None:
+    """A span that cannot be opened must not stop the item being sent."""
+    sink = _Sink()
+
+    await InstrumentedStreamWriter(sink, broken_tracer).send(_error_response())
+
+    assert sink.sent == [_error_response()], (
+        "the item must reach the transport, exactly once, even when the span cannot"
+    )
+
+
 def _exception_events(span_exporter) -> list:
     """Every exception event recorded across the exported spans."""
     return [
@@ -281,16 +295,50 @@ async def test_transport_failure_text_honors_the_switch(
     monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", switch)
     sink = _Sink(failure=RuntimeError(f"transport died: {MARKER}"))
 
-    # send() is @dont_throw, so the failure is logged rather than raised.
-    await InstrumentedStreamWriter(sink, tracer_provider.get_tracer(__name__)).send(
-        _error_response()
-    )
+    # The failure is recorded on the span and still reported to the caller: a
+    # silent success would let a caller believe the message went out
+    # (issue #4518).
+    with pytest.raises(RuntimeError, match="transport died"):
+        await InstrumentedStreamWriter(
+            sink, tracer_provider.get_tracer(__name__)
+        ).send(_error_response())
 
     spans = span_exporter.get_finished_spans()
     assert spans, "expected the failed write to be traced"
     assert any(s.status.status_code is StatusCode.ERROR for s in spans)
     assert any("error.type" in (s.attributes or {}) for s in spans)
     assert (MARKER in _all_recorded_text(span_exporter)) is expected
+
+
+async def test_transport_failure_survives_span_end_failure(end_raises) -> None:
+    """The transport failure is the one raised, not the span end's."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await InstrumentedStreamWriter(sink, end_raises).send(_error_response())
+
+
+async def test_transport_failure_survives_record_error_failure(
+    tracer_provider, record_raises
+) -> None:
+    """The transport failure is the one raised, not record_error's."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await InstrumentedStreamWriter(
+            sink, tracer_provider.get_tracer(__name__)
+        ).send(_error_response())
+
+
+async def test_context_saving_writer_send_raises_on_dead_transport(
+    tracer_provider,
+) -> None:
+    """ContextSavingStreamWriter.send must not swallow a transport failure."""
+    sink = _Sink(failure=BrokenPipeError("transport is dead"))
+    writer = ContextSavingStreamWriter(sink, tracer_provider.get_tracer(__name__))
+
+    with pytest.raises(BrokenPipeError, match="transport is dead"):
+        await writer.send(_error_response())
 
 
 @pytest.mark.parametrize(("switch", "expected"), [("false", False), ("true", True)])
@@ -322,7 +370,11 @@ async def test_session_teardown_failure_is_recorded(
         raise RuntimeError(f"teardown exploded: {MARKER}")
 
     await instrumentor._fastmcp_client_enter_wrapper(tracer)(_ok, client, (), {})
-    await instrumentor._fastmcp_client_exit_wrapper(tracer)(_explode, client, (), {})
+    # The teardown failure is recorded on the span and still raised for the
+    # caller to see: instrumentation must not report a clean teardown for a
+    # dead transport (issue #4518).
+    with pytest.raises(RuntimeError, match="teardown exploded"):
+        await instrumentor._fastmcp_client_exit_wrapper(tracer)(_explode, client, (), {})
 
     session_spans = [
         s for s in span_exporter.get_finished_spans() if s.name == "mcp.client.session"
