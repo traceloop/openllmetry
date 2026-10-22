@@ -6,8 +6,8 @@ import os
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from wrapt import register_post_import_hook, wrap_function_wrapper
 
+from ._wrapping import _InstrumentedMethods
 from .utils import dont_throw, record_error, should_send_prompts
 
 
@@ -17,32 +17,26 @@ class FastMCPInstrumentor:
     def __init__(self):
         self._tracer = None
         self._server_name = None
+        self._methods = _InstrumentedMethods()
 
     def instrument(self, tracer: Tracer):
         """Apply FastMCP-specific instrumentation."""
         self._tracer = tracer
 
         # Instrument FastMCP server-side tool execution
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "fastmcp.tools.tool_manager", "ToolManager.call_tool", self._fastmcp_tool_wrapper()
-            ),
-            "fastmcp.tools.tool_manager",
+        self._methods.wrap(
+            "fastmcp.tools.tool_manager", "ToolManager.call_tool", self._fastmcp_tool_wrapper()
         )
 
         # Instrument FastMCP __init__ to capture server name
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
-            ),
-            "fastmcp",
+        self._methods.wrap(
+            "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
         )
 
     def uninstrument(self):
         """Remove FastMCP-specific instrumentation."""
-        # Note: wrapt doesn't provide a clean way to unwrap post-import hooks
-        # This is a limitation we'll need to document
-        pass
+        self._methods.unwrap()
+        self._tracer = None
 
     def _fastmcp_init_wrapper(self):
         """Create wrapper for FastMCP initialization to capture server name."""

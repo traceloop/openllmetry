@@ -8,15 +8,15 @@ import weakref
 
 from opentelemetry import context, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.trace import get_tracer, Tracer
-from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
+from wrapt import ObjectProxy
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
+from opentelemetry.instrumentation.mcp._wrapping import _InstrumentedMethods
 from opentelemetry.instrumentation.mcp.utils import (
     Config,
     dont_throw,
@@ -83,7 +83,11 @@ class McpInstrumentor(BaseInstrumentor):
     def __init__(self, exception_logger=None):
         super().__init__()
         Config.exception_logger = exception_logger
-        self._fastmcp_instrumentor = FastMCPInstrumentor()
+        # BaseInstrumentor is a singleton, but Python calls __init__ on every
+        # construction. Keep the helper that owns the installed FastMCP patches.
+        if not hasattr(self, "_fastmcp_instrumentor"):
+            self._fastmcp_instrumentor = FastMCPInstrumentor()
+            self._methods = _InstrumentedMethods()
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return _instruments
@@ -96,82 +100,54 @@ class McpInstrumentor(BaseInstrumentor):
         self._fastmcp_instrumentor.instrument(tracer)
 
         # Instrument FastMCP Client to create a session-level span
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "fastmcp.client",
-                "Client.__aenter__",
-                self._fastmcp_client_enter_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "fastmcp.client",
+            "Client.__aenter__",
+            self._fastmcp_client_enter_wrapper(tracer),
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "fastmcp.client",
-                "Client.__aexit__",
-                self._fastmcp_client_exit_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "fastmcp.client",
+            "Client.__aexit__",
+            self._fastmcp_client_exit_wrapper(tracer),
         )
 
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.sse", "sse_client", self._transport_wrapper(tracer)
-            ),
-            "mcp.client.sse",
+        self._methods.wrap(
+            "mcp.client.sse", "sse_client", self._transport_wrapper(tracer)
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.server.sse",
-                "SseServerTransport.connect_sse",
-                self._transport_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "mcp.server.sse",
+            "SseServerTransport.connect_sse",
+            self._transport_wrapper(tracer),
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.stdio", "stdio_client", self._transport_wrapper(tracer)
-            ),
-            "mcp.client.stdio",
+        self._methods.wrap(
+            "mcp.client.stdio", "stdio_client", self._transport_wrapper(tracer)
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.server.stdio", "stdio_server", self._transport_wrapper(tracer)
-            ),
-            "mcp.server.stdio",
+        self._methods.wrap(
+            "mcp.server.stdio", "stdio_server", self._transport_wrapper(tracer)
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.server.session",
-                "ServerSession.__init__",
-                self._base_session_init_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "mcp.server.session",
+            "ServerSession.__init__",
+            self._base_session_init_wrapper(tracer),
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.streamable_http",
-                "streamablehttp_client",
-                self._transport_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "mcp.client.streamable_http",
+            "streamablehttp_client",
+            self._transport_wrapper(tracer),
         )
-        register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.server.streamable_http",
-                "StreamableHTTPServerTransport.connect",
-                self._transport_wrapper(tracer),
-            ),
+        self._methods.wrap(
             "mcp.server.streamable_http",
+            "StreamableHTTPServerTransport.connect",
+            self._transport_wrapper(tracer),
         )
-        wrap_function_wrapper(
+        self._methods.wrap(
             "mcp.shared.session",
             "BaseSession.send_request",
             self.patch_mcp_client(tracer),
         )
 
     def _uninstrument(self, **kwargs):
-        unwrap("mcp.client.stdio", "stdio_client")
-        unwrap("mcp.server.stdio", "stdio_server")
+        self._methods.unwrap()
         self._fastmcp_instrumentor.uninstrument()
 
     def _transport_wrapper(self, tracer):
