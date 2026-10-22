@@ -156,6 +156,20 @@ def test_request_stop_sequences_not_set_when_absent():
     assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in span.attributes
 
 
+def test_request_stop_sequences_not_set_when_no_string_items():
+    """gen_ai.request.stop_sequences must not be set when stop_sequences has no str items."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": [1, None],
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in span.attributes
+
+
 def test_system_instructions_attribute():
     """gen_ai.system_instructions must be a JSON array of typed parts, NOT a plain string.
 
