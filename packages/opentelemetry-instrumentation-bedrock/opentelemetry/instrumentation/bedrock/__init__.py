@@ -218,6 +218,25 @@ def _wrap(
     return wrapped(*args, **kwargs)
 
 
+def _record_failure_metrics(metric_params, exc: Exception) -> None:
+    """Record gen_ai.client.operation.duration (with error.type) and the
+    exception counter for a failed call.
+
+    The GenAI semantic conventions define operation.duration as a required
+    metric with error.type conditionally required on failure. Previously the
+    duration was only recorded on the success path (via _handle_call and the
+    stream-done callbacks), so failed calls were invisible to error-rate and
+    latency views built on that metric."""
+    attributes = {
+        "error.type": exc.__class__.__name__,
+    }
+
+    if metric_params.duration_histogram:
+        metric_params.duration_histogram.record(time.time() - metric_params.start_time, attributes=attributes)
+    if metric_params.exception_counter:
+        metric_params.exception_counter.add(1, attributes=attributes)
+
+
 def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
     @wraps(fn)
     def with_instrumentation(*args, **kwargs):
@@ -242,6 +261,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
                 span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
+                _record_failure_metrics(metric_params, e)
                 raise
             _handle_call(span, kwargs, response, metric_params, event_logger)
             return response
@@ -278,6 +298,7 @@ def _instrumented_model_invoke_with_response_stream(
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
+            _record_failure_metrics(metric_params, e)
             raise
         _handle_stream_call(span, kwargs, response, metric_params, event_logger)
 
@@ -313,6 +334,7 @@ def _instrumented_converse(fn, tracer, metric_params, event_logger):
                 span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                 span.record_exception(e)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
+                _record_failure_metrics(metric_params, e)
                 raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
@@ -345,6 +367,7 @@ def _instrumented_converse_stream(fn, tracer, metric_params, event_logger):
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.end()
+            _record_failure_metrics(metric_params, e)
             raise
         if span.is_recording():
             _handle_converse_stream(span, kwargs, response, metric_params, event_logger)
@@ -371,7 +394,14 @@ def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
         with tracer.start_as_current_span(
             _span_name(operation_name, _model), kind=SpanKind.CLIENT, attributes=span_attributes
         ) as span:
-            response = await fn(*args, **kwargs)
+            try:
+                response = await fn(*args, **kwargs)
+            except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                _record_failure_metrics(metric_params, e)
+                raise
             await _handle_async_call(span, kwargs, response, metric_params, event_logger)
             return response
 
@@ -400,7 +430,15 @@ def _instrumented_async_model_invoke_with_response_stream(
             attributes=span_attributes,
         )
 
-        response = await fn(*args, **kwargs)
+        try:
+            response = await fn(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            _record_failure_metrics(metric_params, e)
+            raise
         _handle_async_stream_call(span, kwargs, response, metric_params, event_logger)
 
         return response
@@ -425,7 +463,14 @@ def _instrumented_async_converse(fn, tracer, metric_params, event_logger):
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         ) as span:
-            response = await fn(*args, **kwargs)
+            try:
+                response = await fn(*args, **kwargs)
+            except Exception as e:
+                span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+                span.record_exception(e)
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+                _record_failure_metrics(metric_params, e)
+                raise
             _handle_converse(span, kwargs, response, metric_params, event_logger)
 
             return response
@@ -450,7 +495,15 @@ def _instrumented_async_converse_stream(fn, tracer, metric_params, event_logger)
             kind=SpanKind.CLIENT,
             attributes=span_attributes,
         )
-        response = await fn(*args, **kwargs)
+        try:
+            response = await fn(*args, **kwargs)
+        except Exception as e:
+            span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.end()
+            _record_failure_metrics(metric_params, e)
+            raise
         if span.is_recording():
             _handle_async_converse_stream(span, kwargs, response, metric_params, event_logger)
 
