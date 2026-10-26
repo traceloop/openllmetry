@@ -4,11 +4,12 @@ import json
 
 import anthropic
 
-# anthropic >= 1.0 ships on httpx2, older releases on httpx - use whichever the
-# installed anthropic depends on so the mock transport matches its client.
-try:
+# anthropic >= 1.0 ships on httpx2, older releases on httpx - pick the client
+# lib from the installed anthropic version so the mock transport matches its
+# client even when both httpx and httpx2 are installed.
+if int(anthropic.__version__.split(".", 1)[0]) >= 1:
     import httpx2 as httpx
-except ImportError:  # anthropic < 1.0
+else:
     import httpx
 import pytest
 from opentelemetry.trace.status import StatusCode
