@@ -87,6 +87,84 @@ def _sanitize_copy_messages(wrapped, instance, args, kwargs):
     return wrapped(sanitized)
 
 
+class _StreamingResponse:
+    """Wraps a streaming generator so closing it always ends the span.
+
+    Closing a generator that has not started yet never runs its body, so
+    the ``finally: span.end()`` inside the accumulation generator is not
+    reached and the span leaks. This wrapper ends the span itself on
+    ``close()`` when it is still recording, and also closes the inner
+    stream (which holds the HTTP response) so it is not left open.
+    """
+
+    def __init__(self, generator, span, inner_response):
+        self._generator = generator
+        self._span = span
+        self._inner_response = inner_response
+        self._closed = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._generator)
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            self._generator.close()
+        finally:
+            close = getattr(self._inner_response, "close", None)
+            if close is not None:
+                try:
+                    close()
+                except Exception:
+                    pass
+            if self._span.is_recording():
+                self._span.end()
+
+
+class _AsyncStreamingResponse:
+    """Async counterpart of :class:`_StreamingResponse`."""
+
+    def __init__(self, generator, span, inner_response):
+        self._generator = generator
+        self._span = span
+        self._inner_response = inner_response
+        self._closed = False
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        return await self._generator.__anext__()
+
+    async def aclose(self):
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            await self._generator.aclose()
+        finally:
+            aclose = getattr(self._inner_response, "aclose", None)
+            if aclose is not None:
+                try:
+                    await aclose()
+                except Exception:
+                    pass
+            else:
+                close = getattr(self._inner_response, "close", None)
+                if close is not None:
+                    try:
+                        close()
+                    except Exception:
+                        pass
+            if self._span.is_recording():
+                self._span.end()
+
+
 def _accumulate_streaming_response(
     span,
     event_logger,
@@ -351,15 +429,19 @@ def _wrap(
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
-            return _accumulate_streaming_response(
+            return _StreamingResponse(
+                _accumulate_streaming_response(
+                    span,
+                    event_logger,
+                    token_histogram,
+                    llm_request_type,
+                    response,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                ),
                 span,
-                event_logger,
-                token_histogram,
-                llm_request_type,
                 response,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
             )
 
         _handle_response(
@@ -432,15 +514,19 @@ async def _awrap(
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
-            return _aaccumulate_streaming_response(
+            return _AsyncStreamingResponse(
+                _aaccumulate_streaming_response(
+                    span,
+                    event_logger,
+                    token_histogram,
+                    llm_request_type,
+                    response,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                ),
                 span,
-                event_logger,
-                token_histogram,
-                llm_request_type,
                 response,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
             )
 
         _handle_response(
