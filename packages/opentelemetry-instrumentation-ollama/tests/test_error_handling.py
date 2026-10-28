@@ -153,3 +153,89 @@ async def test_async_ollama_streaming_empty_response_does_not_raise(
     spans = span_exporter.get_finished_spans()
     assert len(spans) == 1
     assert spans[0].status.status_code != StatusCode.ERROR
+
+
+def test_ollama_streaming_close_before_reading_ends_span(
+    instrument_legacy, tracer_provider, span_exporter
+):
+    """Closing a stream before reading it must still end the span.
+
+    A generator that has not started never runs its ``finally`` block, so
+    the raw accumulation generator leaks the span in this case.
+    """
+    from opentelemetry.instrumentation.ollama import (
+        _StreamingResponse,
+        _accumulate_streaming_response,
+    )
+    from opentelemetry.semconv_ai import LLMRequestTypeValues
+
+    span = tracer_provider.get_tracer(__name__).start_span("ollama.completion")
+
+    class InnerStream:
+        def __init__(self):
+            self.closed = False
+
+        def __iter__(self):
+            yield {"response": "hi"}
+
+        def close(self):
+            self.closed = True
+
+    inner = InnerStream()
+    stream = _StreamingResponse(
+        _accumulate_streaming_response(
+            span, None, None, LLMRequestTypeValues.COMPLETION, inner
+        ),
+        span,
+        inner,
+    )
+    stream.close()
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "ollama.completion"
+    assert inner.closed is True
+
+
+@pytest.mark.asyncio
+async def test_async_ollama_streaming_aclose_closes_inner_stream(
+    instrument_legacy, tracer_provider, span_exporter
+):
+    """aclose() after partial reads must end the span and close the inner stream."""
+    from opentelemetry.instrumentation.ollama import (
+        _AsyncStreamingResponse,
+        _aaccumulate_streaming_response,
+    )
+    from opentelemetry.semconv_ai import LLMRequestTypeValues
+
+    span = tracer_provider.get_tracer(__name__).start_span("ollama.chat")
+
+    class InnerStream:
+        def __init__(self):
+            self.closed = False
+
+        def __aiter__(self):
+            return self._gen()
+
+        async def _gen(self):
+            yield {"message": {"role": "assistant", "content": "hi"}}
+            yield {"message": {"role": "assistant", "content": "!"}}
+
+        async def aclose(self):
+            self.closed = True
+
+    inner = InnerStream()
+    stream = _AsyncStreamingResponse(
+        _aaccumulate_streaming_response(
+            span, None, None, LLMRequestTypeValues.CHAT, inner
+        ),
+        span,
+        inner,
+    )
+    await stream.__anext__()
+    await stream.aclose()
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].name == "ollama.chat"
+    assert inner.closed is True
