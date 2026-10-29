@@ -247,12 +247,20 @@ class McpInstrumentor(BaseInstrumentor):
                 if hasattr(args[0].root.params, "meta"):
                     meta = args[0].root.params.meta
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
+            # Handle trace context propagation. An ordinary call_tool() leaves
+            # params.meta at its None default, so create the SDK's own Meta type
+            # when it is missing; an existing meta is merged into, not replaced
+            # (#3179). Without an active span there is no traceparent to add.
+            if len(args) > 0 and hasattr(params, "meta"):
                 carrier = {}
                 TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                if "traceparent" in carrier:
+                    if meta is None:
+                        import mcp.types
+
+                        meta = mcp.types.RequestParams.Meta()
+                    meta.traceparent = carrier["traceparent"]
+                    args[0].root.params.meta = meta
 
             # Create different span types based on method
             if method == "tools/call":
