@@ -1013,7 +1013,9 @@ def _get_vendor_model(modelId):
 def _cross_region_check(value):
     prefixes = ["us", "us-gov", "eu", "apac"]
     if any(value.startswith(prefix + ".") for prefix in prefixes):
-        parts = value.split(".")
+        # Only the leading geo prefix is a separator: the model name can
+        # itself contain dots (`us.openai.gpt-5.6-sol`).
+        parts = value.split(".", 2)
         if len(parts) > 2:
             parts.pop(0)
         return parts[0], parts[1]
