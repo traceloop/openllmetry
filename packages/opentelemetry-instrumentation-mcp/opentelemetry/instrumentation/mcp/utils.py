@@ -5,10 +5,11 @@ import logging
 import os
 import traceback
 from contextlib import contextmanager
+from typing import Optional
 
 from opentelemetry import context as context_api
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import INVALID_SPAN, Status, StatusCode
 
 
 class Config:
@@ -41,6 +42,33 @@ def error_status(description: str) -> Status:
     if should_send_prompts():
         return Status(StatusCode.ERROR, description)
     return Status(StatusCode.ERROR)
+
+
+def error_detail(content) -> Optional[str]:
+    """The error text of an MCP result's first content block, or a marker for one
+    that has none.
+
+    Only ``TextContent`` carries ``text``; an image, audio or embedded resource
+    block is just as valid in an error result and has no message to quote, so
+    name the kind of block instead of reaching for text that isn't there.
+    ``content`` holds model objects on the client path and raw JSON dicts on the
+    writer path, and may be absent or empty on either -- an error result with no
+    content at all yields ``None``, meaning "an error, with nothing to say
+    about it".
+    """
+    if not content:
+        return None
+    block = content[0]
+
+    def field(name):
+        if isinstance(block, dict):
+            return block.get(name)
+        return getattr(block, name, None)
+
+    text = field("text")
+    if text is not None:
+        return f"{text}"
+    return f"non-text content: {field('type') or type(block).__name__}"
 
 
 def record_error(span, exc) -> None:
@@ -82,16 +110,37 @@ def log_trace_failure(logger: logging.Logger, origin: str, exc: BaseException) -
     """Record a failure in the instrumentation's own code, then return.
 
     Shared by ``dont_throw`` and ``guard_trace`` so an instrumentation failure
-    is reported the same way wherever it is caught: a debug line, and the
+    is reported the same way wherever it is caught: a log line, and the
     exception logger an operator configured.
+
+    Logged at WARNING, not DEBUG: a swallowed failure is invisible from the
+    traced program's point of view, so this line is the only record an operator
+    gets that tracing stopped working. At DEBUG, every deployment running at
+    INFO or above had none.
+
+    The WARNING line carries only the exception; the stack goes to DEBUG. A
+    failure on a per-message path repeats for every message, and a traceback
+    apiece turns a visible warning into a flood.
+
+    The operator's ``exception_logger`` is instrumentation too, so its own
+    failure is contained here rather than raised into the traced program --
+    this function is called from inside every guard, and anything that escapes
+    it escapes them all.
     """
-    logger.debug(
-        "OpenLLMetry failed to trace in %s, error: %s",
+    logger.warning(
+        "OpenLLMetry failed to trace in %s, error: %s: %s",
         origin,
-        traceback.format_exc(),
+        type(exc).__name__,
+        exc,
     )
+    logger.debug("OpenLLMetry trace failure in %s", origin, exc_info=exc)
     if Config.exception_logger:
-        Config.exception_logger(exc)
+        try:
+            Config.exception_logger(exc)
+        except Exception:
+            logger.debug(
+                "OpenLLMetry exception_logger raised in %s", origin, exc_info=True
+            )
 
 
 @contextmanager
@@ -110,6 +159,42 @@ def guard_trace(logger: logging.Logger, origin: str):
         yield
     except Exception as e:
         log_trace_failure(logger, origin, e)
+
+
+@contextmanager
+def guarded_span(logger: logging.Logger, origin: str, tracer, name: str, **kwargs):
+    """Open a span whose own failures cannot reach the traced call.
+
+    The span-lifecycle counterpart to ``guard_trace``, for a wrapper whose span
+    surrounds the traced call rather than sitting beside it: there, neither
+    opening nor closing the span may be allowed to reach the caller, because the
+    call's own result or failure is the thing the caller is waiting for. A
+    tracer that cannot produce a span yields ``INVALID_SPAN`` instead, so the
+    body of the block needs no ``None`` check -- every ``set_attribute``,
+    ``set_status`` and ``record_exception`` on it is a no-op.
+
+    The span is closed with ``__exit__(None, None, None)``: callers on this path
+    record failures themselves through ``record_error``, so the span must not
+    also take a status from an exception on its way out.
+
+    Only ``Exception`` is swallowed: a cancellation has to keep unwinding, and
+    the span is still ended on its way past.
+    """
+    context_manager = None
+    span = INVALID_SPAN
+    try:
+        context_manager = tracer.start_as_current_span(name, **kwargs)
+        span = context_manager.__enter__()
+    except Exception as e:
+        log_trace_failure(logger, origin, e)
+        context_manager = None
+        span = INVALID_SPAN
+    try:
+        yield span
+    finally:
+        if context_manager is not None:
+            with guard_trace(logger, f"{origin} end"):
+                context_manager.__exit__(None, None, None)
 
 
 def dont_throw(func):
