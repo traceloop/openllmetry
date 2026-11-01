@@ -36,19 +36,35 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
-from mistralai.models import (
-    ChatCompletionResponse,
-    ChatCompletionChoice,
-    AssistantMessage,
-    UserMessage,
-    SystemMessage,
-    UsageInfo,
-    EmbeddingResponse,
-)
+try:
+    from mistralai.models import (
+        ChatCompletionResponse,
+        ChatCompletionChoice,
+        AssistantMessage,
+        UserMessage,
+        SystemMessage,
+        UsageInfo,
+        EmbeddingResponse,
+    )
+
+    _MISTRAL_SDK_MODULE = "mistralai"
+except ImportError:
+    # mistralai >= 2.0 moved the SDK under the `mistralai.client` package
+    from mistralai.client.models import (
+        ChatCompletionResponse,
+        ChatCompletionChoice,
+        AssistantMessage,
+        UserMessage,
+        SystemMessage,
+        UsageInfo,
+        EmbeddingResponse,
+    )
+
+    _MISTRAL_SDK_MODULE = "mistralai.client"
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("mistralai >= 1.0.0",)
+_instruments = ("mistralai >= 1.0.0, < 4",)
 
 WRAPPED_METHODS = [
     {
@@ -601,13 +617,13 @@ class MistralAiInstrumentor(BaseInstrumentor):
             module_name = wrapped_method.get("module")
             # Wrap sync methods on the class
             wrap_function_wrapper(
-                f"mistralai.{module_name}",
+                f"{_MISTRAL_SDK_MODULE}.{module_name}",
                 f"{module_name.capitalize()}.{wrap_method}",
                 _wrap(tracer, event_logger, wrapped_method),
             )
             # Wrap async methods on the class
             wrap_function_wrapper(
-                f"mistralai.{module_name}",
+                f"{_MISTRAL_SDK_MODULE}.{module_name}",
                 f"{module_name.capitalize()}.{wrap_method}_async",
                 _awrap(tracer, event_logger, wrapped_method),
             )
@@ -616,5 +632,5 @@ class MistralAiInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             module_name = wrapped_method.get("module")
-            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", wrap_method)
-            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")
+            unwrap(f"{_MISTRAL_SDK_MODULE}.{module_name}.{module_name.capitalize()}", wrap_method)
+            unwrap(f"{_MISTRAL_SDK_MODULE}.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")

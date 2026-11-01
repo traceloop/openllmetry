@@ -1,7 +1,10 @@
 import json
 
 import pytest
-from mistralai.models import ChatCompletionResponse
+try:
+    from mistralai.models import ChatCompletionResponse
+except ImportError:  # mistralai >= 2.0
+    from mistralai.client.models import ChatCompletionResponse
 from opentelemetry.instrumentation.mistralai import _set_response_attributes
 from opentelemetry.instrumentation.mistralai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.semconv._incubating.attributes import (
@@ -78,12 +81,20 @@ def test_string_content_is_unchanged(tracer_provider, span_exporter, trace_conte
 
 
 def _magistral_stream():
-    from mistralai.models import (
-        CompletionChunk,
-        CompletionEvent,
-        CompletionResponseStreamChoice,
-        DeltaMessage,
-    )
+    try:
+        from mistralai.models import (
+            CompletionChunk,
+            CompletionEvent,
+            CompletionResponseStreamChoice,
+            DeltaMessage,
+        )
+    except ImportError:  # mistralai >= 2.0
+        from mistralai.client.models import (
+            CompletionChunk,
+            CompletionEvent,
+            CompletionResponseStreamChoice,
+            DeltaMessage,
+        )
 
     def event(content, finish_reason=None):
         return CompletionEvent(
