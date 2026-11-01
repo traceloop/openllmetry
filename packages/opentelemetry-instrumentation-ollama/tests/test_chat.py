@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from opentelemetry.instrumentation.ollama.event_emitter import emit_message_events
 from opentelemetry.instrumentation.ollama.span_utils import (
     set_model_response_attributes,
 )
@@ -815,6 +816,30 @@ def test_token_histogram_recording():
             GenAIAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
         },
     )
+
+
+def test_chat_message_events_with_images(instrument_with_content):
+    event_logger = MagicMock()
+    kwargs = {
+        "json": {
+            "model": "llava",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "What is in this image?",
+                    "images": ["aGVsbG8="],
+                },
+            ],
+        }
+    }
+    emit_message_events(LLMRequestTypeValues.CHAT, [], kwargs, event_logger)
+
+    event_logger.emit.assert_called_once()
+    log_record = event_logger.emit.call_args.args[0]
+    assert log_record.event_name == "gen_ai.user.message"
+    assert log_record.body == {
+        "content": {"content": "What is in this image?", "images": ["aGVsbG8="]}
+    }
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
