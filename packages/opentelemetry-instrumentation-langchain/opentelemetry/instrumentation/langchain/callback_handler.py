@@ -471,11 +471,20 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         _set_span_attribute(span, GenAIAttributes.GEN_AI_PROVIDER_NAME, provider_name)
 
         if is_agent:
+            # The Pregel stream wrapper already owns the invoke_agent span for
+            # LangGraph graph invocations. Inside that flow, downgrade the
+            # callback-created workflow span to execute_task so a single graph
+            # invocation has exactly one invoke_agent span.
+            operation_name = (
+                GenAICustomOperationName.EXECUTE_TASK.value
+                if langgraph_flow
+                else GenAiOperationNameValues.INVOKE_AGENT.value
+            )
             # Set agent-specific attributes
             _set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_OPERATION_NAME,
-                GenAiOperationNameValues.INVOKE_AGENT.value,
+                operation_name,
             )
             _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_NAME, name)
             _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_ID, str(run_id))

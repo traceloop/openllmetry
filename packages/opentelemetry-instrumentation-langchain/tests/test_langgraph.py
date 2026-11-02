@@ -2,7 +2,7 @@ from typing import List, TypedDict
 
 import pytest
 from langchain.agents.middleware.types import AgentMiddleware
-from langgraph.graph import StateGraph
+from langgraph.graph import END, StateGraph
 from openai import OpenAI
 from opentelemetry import trace
 from opentelemetry.semconv._incubating.attributes import (
@@ -117,6 +117,42 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
+
+
+def test_langgraph_stream_single_invoke_agent(instrument_legacy, span_exporter):
+    """A single .stream() call should emit exactly one invoke_agent span."""
+
+    class StreamState(TypedDict):
+        value: str
+
+    def my_node(state: StreamState) -> StreamState:
+        return state
+
+    workflow = StateGraph(StreamState)
+    workflow.add_node("my_node", my_node)
+    workflow.set_entry_point("my_node")
+    workflow.add_edge("my_node", END)
+    graph = workflow.compile()
+
+    for _ in graph.stream({"value": "test"}):
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    invoke_agent_spans = [
+        span
+        for span in spans
+        if span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    ]
+    assert len(invoke_agent_spans) == 1
+    assert invoke_agent_spans[0].name == "invoke_agent LangGraph"
+
+    workflow_span = next(span for span in spans if span.name == "LangGraph.workflow")
+    assert (
+        workflow_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAICustomOperationName.EXECUTE_TASK.value
+    )
+    assert workflow_span.parent.span_id == invoke_agent_spans[0].context.span_id
 
 
 @pytest.mark.vcr
