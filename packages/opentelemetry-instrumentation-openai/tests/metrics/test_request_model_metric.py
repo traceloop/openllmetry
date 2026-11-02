@@ -72,6 +72,18 @@ def test_metric_shared_attributes_includes_request_model():
     assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "chat"
 
 
+def test_metric_shared_attributes_omits_unknown_models():
+    """A missing model must not become a None-valued datapoint attribute."""
+    attrs = metric_shared_attributes(
+        response_model=None,
+        operation="image_generation",
+        server_address="https://api.openai.com/v1/",
+    )
+    assert GenAIAttributes.GEN_AI_REQUEST_MODEL not in attrs
+    assert GenAIAttributes.GEN_AI_RESPONSE_MODEL not in attrs
+    assert attrs[GenAIAttributes.GEN_AI_OPERATION_NAME] == "image_generation"
+
+
 def test_streaming_time_to_first_token_attributes():
     """Streaming TTFT datapoint must carry gen_ai.request.model and a
     response.model taken from the stream itself (never the requested model).
@@ -166,7 +178,8 @@ def test_streaming_response_model_unset_without_chunk_model():
     assert len(recorded) == 1
     attrs = recorded[0]
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
-    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] is None
+    # Unknown models are omitted rather than exported as None.
+    assert GenAIAttributes.GEN_AI_RESPONSE_MODEL not in attrs
 
 
 def test_chat_metrics_datapoint_has_request_model():
