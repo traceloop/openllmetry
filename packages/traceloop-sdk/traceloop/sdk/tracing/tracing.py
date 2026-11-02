@@ -1209,11 +1209,68 @@ def init_openai_agents_instrumentor():
     return False
 
 
+def _stable_repr(value) -> str:
+    """Return a string representation of ``value``, never raising."""
+    try:
+        return str(value)
+    except Exception:
+        return "<unserializable>"
+
+
+def _sorted_items(value) -> list:
+    """Sort the items of a set deterministically, even for mixed item types."""
+    try:
+        return sorted(value)
+    except TypeError:
+        return sorted(value, key=str)
+
+
+def _to_jsonable(value):
+    """Recursively convert ``value`` into JSON-serializable primitives."""
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+
+    if isinstance(value, dict):
+        return {str(key): _to_jsonable(item) for key, item in value.items()}
+
+    if isinstance(value, (list, tuple)):
+        return [_to_jsonable(item) for item in value]
+
+    if isinstance(value, (set, frozenset)):
+        return [_to_jsonable(item) for item in _sorted_items(value)]
+
+    return _stable_repr(value)
+
+
 def _serialize_metric_attribute(value):
-    """Serialize unhashable association property values for metric attributes."""
-    if isinstance(value, (list, dict)):
-        return json.dumps(value, sort_keys=True)
-    return value
+    """Convert an association property value into an OpenTelemetry-safe value.
+
+    Metrics are aggregated per attribute set and OpenTelemetry keys those sets
+    with ``frozenset(attributes.items())``, so any unhashable value - ``list``,
+    ``dict``, ``set`` - makes recording the metric raise ``TypeError:
+    unhashable type``. The metric attributes are built before the response span
+    attributes are recorded, so such a failure would drop the response telemetry
+    as well (see https://github.com/traceloop/openllmetry/issues/4436).
+
+    The value is therefore converted into a stable, hashable representation:
+
+    * ``str``/``bool``/``int``/``float`` are kept as they are,
+    * ``dict`` becomes a JSON string with sorted keys,
+    * ``list``/``tuple``/``set`` become a JSON string of their items,
+    * anything else falls back to its ``str()`` representation.
+
+    This function never raises.
+    """
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+
+    if isinstance(value, (dict, list, tuple, set, frozenset)):
+        try:
+            return json.dumps(_to_jsonable(value), sort_keys=True)
+        except Exception:
+            return _stable_repr(value)
+
+    return _stable_repr(value)
 
 
 def metrics_common_attributes():
@@ -1227,10 +1284,21 @@ def metrics_common_attributes():
         common_attributes[SpanAttributes.TRACELOOP_ENTITY_NAME] = entity_name
 
     association_properties = get_value("association_properties")
-    if association_properties is not None:
+    if isinstance(association_properties, dict):
         for key, value in association_properties.items():
+            try:
+                serialized_value = _serialize_metric_attribute(value)
+            except Exception as e:
+                # A single broken property must not drop the other ones, and it must
+                # not abort the span attributes that are recorded next to the metrics.
+                logging.warning(
+                    f"Skipping association property '{key}' - it could not be "
+                    f"serialized for metrics: {e}"
+                )
+                continue
+
             common_attributes[
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
-            ] = _serialize_metric_attribute(value)
+            ] = serialized_value
 
     return common_attributes

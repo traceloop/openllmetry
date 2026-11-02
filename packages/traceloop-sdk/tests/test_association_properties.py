@@ -3,12 +3,50 @@ import json
 import pytest
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from opentelemetry import trace
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
 from traceloop.sdk.tracing.tracing import metrics_common_attributes
+
+
+class _NonSerializable:
+    """A value that cannot be serialized to JSON."""
+
+    def __str__(self):
+        return "non-serializable-object"
+
+
+class _Unrepresentable:
+    """A value that cannot even be turned into a string."""
+
+    def __str__(self):
+        raise ValueError("this value cannot be represented")
+
+
+def _record_metrics(attributes):
+    """Record a counter and a histogram with the given attributes and collect them."""
+    reader = InMemoryMetricReader()
+    meter_provider = MeterProvider(metric_readers=[reader])
+    meter = meter_provider.get_meter("test-association-properties")
+    counter = meter.create_counter("test.counter")
+    histogram = meter.create_histogram("test.histogram")
+
+    counter.add(1, attributes=attributes)
+    histogram.record(0.5, attributes=attributes)
+
+    metrics_data = reader.get_metrics_data()
+    return {
+        metric.name: metric.data.data_points
+        for resource_metric in metrics_data.resource_metrics
+        for scope_metric in resource_metric.scope_metrics
+        for metric in scope_metric.metrics
+    }
 
 
 def test_association_properties(exporter):
@@ -84,23 +122,8 @@ def test_list_valued_association_properties_in_metrics():
         {"tags": ["a", "b"], "metadata": {"z": 1, "a": 2}, "user_id": 1}
     )
 
-    reader = InMemoryMetricReader()
-    meter_provider = MeterProvider(metric_readers=[reader])
-    meter = meter_provider.get_meter("test-association-properties")
-    counter = meter.create_counter("test.counter")
-    histogram = meter.create_histogram("test.histogram")
-
     attributes = metrics_common_attributes()
-    counter.add(1, attributes=attributes)
-    histogram.record(0.5, attributes=attributes)
-
-    metrics_data = reader.get_metrics_data()
-    data_points = {
-        metric.name: metric.data.data_points
-        for resource_metric in metrics_data.resource_metrics
-        for scope_metric in resource_metric.scope_metrics
-        for metric in scope_metric.metrics
-    }
+    data_points = _record_metrics(attributes)
 
     assert set(data_points) == {"test.counter", "test.histogram"}
     for points in data_points.values():
@@ -273,3 +296,150 @@ def test_langchain_and_external_association_properties(exporter):
         ]
         == "789"
     )
+
+
+def test_set_valued_association_properties_in_metrics():
+    """Sets are not hashable, so they must be serialized before they reach the metrics."""
+    Traceloop.set_association_properties({"tags": {"b", "a"}, "user_id": 1})
+
+    attributes = metrics_common_attributes()
+    data_points = _record_metrics(attributes)
+
+    assert set(data_points) == {"test.counter", "test.histogram"}
+    for points in data_points.values():
+        assert len(points) == 1
+        attributes = points[0].attributes
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.tags"
+        ] == json.dumps(["a", "b"])
+        assert (
+            attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.user_id"
+            ]
+            == 1
+        )
+
+
+def test_tuple_valued_association_properties_in_metrics():
+    """Tuples are not hashable, so they must be serialized before they reach the metrics."""
+    Traceloop.set_association_properties({"tags": ("b", "a"), "user_id": 1})
+
+    attributes = metrics_common_attributes()
+    data_points = _record_metrics(attributes)
+
+    assert set(data_points) == {"test.counter", "test.histogram"}
+    for points in data_points.values():
+        assert len(points) == 1
+        attributes = points[0].attributes
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.tags"
+        ] == json.dumps(["b", "a"])
+        assert (
+            attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.user_id"
+            ]
+            == 1
+        )
+
+
+def test_non_serializable_association_properties_in_metrics():
+    """Values that cannot be serialized are converted into a safe attribute value."""
+    Traceloop.set_association_properties(
+        {
+            "obj": _NonSerializable(),
+            "unrepresentable": _Unrepresentable(),
+            "user_id": 1,
+        }
+    )
+
+    attributes = metrics_common_attributes()
+    data_points = _record_metrics(attributes)
+
+    assert set(data_points) == {"test.counter", "test.histogram"}
+    for points in data_points.values():
+        assert len(points) == 1
+        attributes = points[0].attributes
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.obj"
+        ] == "non-serializable-object"
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.unrepresentable"
+        ] == "<unserializable>"
+        assert (
+            attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.user_id"
+            ]
+            == 1
+        )
+
+
+def test_response_span_attributes_recorded_with_problematic_metric_attributes(
+    exporter,
+):
+    """A problematic association property must not abort the response telemetry.
+
+    The OpenAI instrumentation records the chat metrics before it sets the response
+    attributes on the span, so an exception raised while recording the metrics used
+    to drop `gen_ai.output.messages`, `gen_ai.response.model` and the `gen_ai.usage.*`
+    attributes as well.
+    See https://github.com/traceloop/openllmetry/issues/4436.
+    """
+    from opentelemetry.instrumentation.openai.shared.chat_wrappers import _handle_response
+
+    reader = InMemoryMetricReader()
+    meter_provider = MeterProvider(metric_readers=[reader])
+    meter = meter_provider.get_meter("test-association-properties")
+    token_counter = meter.create_histogram("gen_ai.client.token.usage")
+    choice_counter = meter.create_counter("gen_ai.client.choice.count")
+    duration_histogram = meter.create_histogram("gen_ai.client.operation.duration")
+
+    Traceloop.set_association_properties({"tags": {"a", "b"}})
+
+    response = {
+        "id": "chatcmpl-123",
+        "model": "gpt-4o-mini",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "Hello!"},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+    }
+
+    tracer = trace.get_tracer("test-association-properties")
+    with tracer.start_as_current_span("ChatOpenAI.chat") as span:
+        _handle_response(
+            response,
+            span,
+            instance=None,
+            token_counter=token_counter,
+            choice_counter=choice_counter,
+            duration_histogram=duration_histogram,
+            duration=0.1,
+        )
+
+    spans = exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-4o-mini"
+    assert span.attributes[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] == 15
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 10
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 5
+    assert "Hello!" in span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES]
+
+    metrics_data = reader.get_metrics_data()
+    data_points = [
+        data_point
+        for resource_metric in metrics_data.resource_metrics
+        for scope_metric in resource_metric.scope_metrics
+        for metric in scope_metric.metrics
+        for data_point in metric.data.data_points
+    ]
+    assert data_points
+    for data_point in data_points:
+        assert data_point.attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.tags"
+        ] == json.dumps(["a", "b"])
