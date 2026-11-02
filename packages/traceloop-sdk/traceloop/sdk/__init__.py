@@ -51,7 +51,7 @@ class Traceloop:
         app_name: str = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
         api_key: Optional[str] = None,
-        enabled: bool = True,
+        enabled: Optional[bool] = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
         telemetry_enabled: bool = True,
@@ -78,6 +78,10 @@ class Traceloop:
         """Initialize Traceloop tracing, metrics, and instrumentation.
 
         Args:
+            enabled: Controls whether tracing is enabled. If ``None`` (default),
+                the ``TRACELOOP_TRACING_ENABLED`` environment variable is
+                honored. If ``True`` or ``False`` is passed explicitly, it takes
+                precedence over the environment variable.
             use_attributes: Controls how prompts/completions are emitted by the
                 bundled instrumentations.
                 If ``True`` (default), they are set as span attributes
@@ -104,9 +108,9 @@ class Traceloop:
                   back on for specific spans even when ``trace_content=False``.
                 The override is applied even if ``init()`` later returns early
                 because the Traceloop API key is missing. It is *not* applied
-                when ``enabled=False`` or when tracing is disabled via
-                ``TRACELOOP_TRACING_ENABLED`` — both checks happen before this
-                override runs.
+                when ``enabled=False`` or when ``enabled`` is not provided and
+                tracing is disabled via ``TRACELOOP_TRACING_ENABLED`` — both
+                checks happen before this override runs.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -127,11 +131,19 @@ class Traceloop:
             use_attributes = use_legacy_attributes
         if use_attributes is None:
             use_attributes = True
+
+        enabled_explicitly = enabled is not None
+        if enabled is None:
+            enabled = is_tracing_enabled()
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
                 Fore.YELLOW
-                + "Traceloop instrumentation is disabled via init flag"
+                + (
+                    "Traceloop instrumentation is disabled via init flag"
+                    if enabled_explicitly
+                    else "Tracing is disabled"
+                )
                 + Fore.RESET
             )
             return
@@ -139,10 +151,6 @@ class Traceloop:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
-
-        if not is_tracing_enabled():
-            print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
-            return
 
         if trace_content is not None:
             os.environ["TRACELOOP_TRACE_CONTENT"] = (
@@ -199,6 +207,11 @@ class Traceloop:
             }
 
         print(Fore.RESET)
+
+        # A previous init() may have disabled the tracer. Restore it once this
+        # init has passed the early-return checks and is ready to create the
+        # wrapper.
+        TracerWrapper.set_disabled(False)
 
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})

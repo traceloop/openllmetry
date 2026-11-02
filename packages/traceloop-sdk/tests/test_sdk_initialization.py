@@ -471,3 +471,57 @@ def test_trace_content_propagates_across_instrumentation_packages(
 
     assert not openai_should_send_prompts()
     assert not anthropic_should_send_prompts()
+
+
+def test_env_var_false_without_enabled_is_a_silent_noop(
+    isolated_tracer_wrapper, monkeypatch, capsys
+):
+    """``TRACELOOP_TRACING_ENABLED=false`` without an explicit ``enabled``
+    argument must disable tracing and make decorated functions silent no-ops
+    instead of warning that Traceloop was never initialized (issue #4191)."""
+    TracerWrapper.set_disabled(False)
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+
+    Traceloop.init(app_name="test")
+    assert TracerWrapper.verify_initialized() is False
+
+    @workflow(name="env_disabled_workflow")
+    def f():
+        return 42
+
+    capsys.readouterr()  # discard init() output
+    assert f() == 42
+    assert "Traceloop not initialized" not in capsys.readouterr().out
+
+
+def test_env_var_false_with_explicit_enabled_true_wins(
+    isolated_tracer_wrapper, monkeypatch
+):
+    """An explicit constructor argument takes precedence over the environment
+    variable when it is provided."""
+    TracerWrapper.set_disabled(False)
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+    exporter = InMemorySpanExporter()
+
+    Traceloop.init(
+        app_name="test",
+        enabled=True,
+        exporter=exporter,
+        disable_batch=True,
+    )
+
+    assert TracerWrapper.verify_initialized() is True
+    assert TracerWrapper.instance is not None
+
+
+def test_env_var_true_with_explicit_enabled_false_wins(
+    isolated_tracer_wrapper, monkeypatch
+):
+    """An explicit ``enabled=False`` still disables tracing when the
+    environment variable would otherwise enable it."""
+    TracerWrapper.set_disabled(False)
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "true")
+
+    Traceloop.init(app_name="test", enabled=False)
+
+    assert TracerWrapper.verify_initialized() is False
