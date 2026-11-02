@@ -155,9 +155,19 @@ def _normalize_stop_sequences(stop):
 
 
 def _is_pydantic_model(value):
-    """True for openai/pydantic models, which expose model_json_schema()."""
-    return isinstance(value, pydantic.BaseModel) or (
+    """True for pydantic models and model classes.
+
+    ``chat.completions.parse()`` and ``responses.parse()`` accept a model
+    *class* rather than an instance. Pydantic v2 classes expose
+    ``model_json_schema()``; Pydantic v1 classes only have ``schema()`` and
+    ``__fields__``, and the OpenAI SDK accepts those too.
+    """
+    if isinstance(value, pydantic.BaseModel) or (
         hasattr(value, "model_json_schema") and callable(value.model_json_schema)
+    ):
+        return True
+    return isinstance(value, type) and hasattr(value, "__fields__") and (
+        hasattr(value, "schema") and callable(value.schema)
     )
 
 
@@ -259,6 +269,11 @@ def _set_request_attributes(span, kwargs, instance=None):
         text = kwargs.get("text")
         if isinstance(text, dict):
             output_type = _output_type_from_response_format(text.get("format"))
+    if output_type is None:
+        # ``Responses.parse()`` takes its schema class in ``text_format``.
+        text_format = kwargs.get("text_format")
+        if _is_pydantic_model(text_format):
+            output_type = "json"
     if output_type:
         _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_TYPE, output_type)
 

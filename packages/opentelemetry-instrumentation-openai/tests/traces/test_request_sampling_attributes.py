@@ -273,6 +273,27 @@ def test_responses_api_without_text_format_leaves_output_type_unset():
     assert "gen_ai.output.type" not in attributes
 
 
+def test_output_type_for_pydantic_v1_model_class():
+    """The OpenAI SDK also accepts pydantic v1 model classes as the schema."""
+    import pydantic.v1
+
+    class ProfileV1(pydantic.v1.BaseModel):
+        name: str
+
+    span = _mock_span()
+    _set_request_attributes(span, {"model": "gpt-4.1-nano", "response_format": ProfileV1})
+    assert span.attributes["gen_ai.output.type"] == "json"
+
+
+def test_responses_parse_text_format_sets_output_type():
+    """Responses.parse() passes its schema class in text_format, not text.format."""
+    span = _mock_span()
+    _set_request_attributes(
+        span, {"model": "gpt-4.1-nano", "text_format": _Profile}
+    )
+    assert span.attributes["gen_ai.output.type"] == "json"
+
+
 def test_responses_api_structured_output_schema_is_not_faked():
     """Guard against regressing gen_ai.request.structured_output_schema.
 
