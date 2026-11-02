@@ -1,9 +1,14 @@
+import json
+
 import pytest
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry.semconv_ai import SpanAttributes
 from traceloop.sdk import Traceloop
 from traceloop.sdk.decorators import task, workflow
+from traceloop.sdk.tracing.tracing import metrics_common_attributes
 
 
 def test_association_properties(exporter):
@@ -72,6 +77,47 @@ def test_association_properties_within_workflow(exporter):
         ]
         == 15
     )
+
+
+def test_list_valued_association_properties_in_metrics():
+    Traceloop.set_association_properties(
+        {"tags": ["a", "b"], "metadata": {"z": 1, "a": 2}, "user_id": 1}
+    )
+
+    reader = InMemoryMetricReader()
+    meter_provider = MeterProvider(metric_readers=[reader])
+    meter = meter_provider.get_meter("test-association-properties")
+    counter = meter.create_counter("test.counter")
+    histogram = meter.create_histogram("test.histogram")
+
+    attributes = metrics_common_attributes()
+    counter.add(1, attributes=attributes)
+    histogram.record(0.5, attributes=attributes)
+
+    metrics_data = reader.get_metrics_data()
+    data_points = {
+        metric.name: metric.data.data_points
+        for resource_metric in metrics_data.resource_metrics
+        for scope_metric in resource_metric.scope_metrics
+        for metric in scope_metric.metrics
+    }
+
+    assert set(data_points) == {"test.counter", "test.histogram"}
+    for points in data_points.values():
+        assert len(points) == 1
+        attributes = points[0].attributes
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.tags"
+        ] == json.dumps(["a", "b"])
+        assert attributes[
+            f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.metadata"
+        ] == json.dumps({"z": 1, "a": 2}, sort_keys=True)
+        assert (
+            attributes[
+                f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.user_id"
+            ]
+            == 1
+        )
 
 
 @pytest.mark.vcr

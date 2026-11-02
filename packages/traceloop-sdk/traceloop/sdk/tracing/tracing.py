@@ -1,4 +1,5 @@
 import atexit
+import json
 import logging
 import os
 from urllib.parse import urlparse
@@ -1208,6 +1209,13 @@ def init_openai_agents_instrumentor():
     return False
 
 
+def _serialize_metric_attribute(value):
+    """Serialize unhashable association property values for metric attributes."""
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, sort_keys=True)
+    return value
+
+
 def metrics_common_attributes():
     common_attributes = {}
     workflow_name = get_value("workflow_name")
@@ -1223,6 +1231,6 @@ def metrics_common_attributes():
         for key, value in association_properties.items():
             common_attributes[
                 f"{SpanAttributes.TRACELOOP_ASSOCIATION_PROPERTIES}.{key}"
-            ] = value
+            ] = _serialize_metric_attribute(value)
 
     return common_attributes
