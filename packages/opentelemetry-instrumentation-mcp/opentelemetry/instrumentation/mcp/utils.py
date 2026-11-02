@@ -32,6 +32,19 @@ def should_send_prompts() -> bool:
     ).lower() == "true" or bool(context_api.get_value("override_enable_content_tracing"))
 
 
+def frames_without_content(exc: BaseException) -> str:
+    """`exc`'s stack as file, line and function -- without the frames' source lines.
+
+    The frames are not content and are what you debug from; the source line is,
+    because a raise site like ``ToolError("...")`` reproduces its own message
+    there, and that message is the thing being withheld.
+    """
+    return "\n".join(
+        f'  File "{frame.filename}", line {frame.lineno}, in {frame.name}'
+        for frame in traceback.extract_tb(exc.__traceback__)
+    )
+
+
 def error_status(description: str) -> Status:
     """An ERROR status, carrying `description` only when content capture is on.
 
@@ -93,14 +106,7 @@ def record_error(span, exc) -> None:
             exc,
             attributes={
                 "exception.message": "",
-                # File, line and function, but not the frame's source line: a
-                # raise site like ToolError("...") reproduces its own message
-                # there, and that message is the thing being withheld.
-                "exception.stacktrace": "\n".join(
-                    f'  File "{frame.filename}", line {frame.lineno},'
-                    f" in {frame.name}"
-                    for frame in traceback.extract_tb(exc.__traceback__)
-                ),
+                "exception.stacktrace": frames_without_content(exc),
             },
         )
     span.set_status(error_status(str(exc)))
@@ -122,18 +128,41 @@ def log_trace_failure(logger: logging.Logger, origin: str, exc: BaseException) -
     failure on a per-message path repeats for every message, and a traceback
     apiece turns a visible warning into a flood.
 
+    The exception's message is withheld when content capture is off, on the same
+    terms as ``record_error`` withholds it from a span: a guard wraps code that
+    handles caller data, and an exception raised in there can quote it back --
+    a pydantic ``ValidationError`` names the input value it rejected. The type
+    and the frames are not content, so what the line is for -- an operator
+    seeing that tracing broke, and where -- survives either way.
+
     The operator's ``exception_logger`` is instrumentation too, so its own
     failure is contained here rather than raised into the traced program --
     this function is called from inside every guard, and anything that escapes
     it escapes them all.
     """
-    logger.warning(
-        "OpenLLMetry failed to trace in %s, error: %s: %s",
-        origin,
-        type(exc).__name__,
-        exc,
-    )
-    logger.debug("OpenLLMetry trace failure in %s", origin, exc_info=exc)
+    if should_send_prompts():
+        logger.warning(
+            "OpenLLMetry failed to trace in %s, error: %s: %s",
+            origin,
+            type(exc).__name__,
+            exc,
+        )
+        logger.debug("OpenLLMetry trace failure in %s", origin, exc_info=exc)
+    else:
+        logger.warning(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            origin,
+            type(exc).__name__,
+        )
+        # Not exc_info: a formatted traceback ends with the message and quotes
+        # each frame's source line, so it would reinstate at DEBUG exactly what
+        # the WARNING above withholds.
+        logger.debug(
+            "OpenLLMetry trace failure in %s, error: %s\n%s",
+            origin,
+            type(exc).__name__,
+            frames_without_content(exc),
+        )
     if Config.exception_logger:
         try:
             Config.exception_logger(exc)
