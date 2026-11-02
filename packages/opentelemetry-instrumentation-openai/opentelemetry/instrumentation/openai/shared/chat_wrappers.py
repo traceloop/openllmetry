@@ -501,7 +501,7 @@ def _map_content_parts(content):
     """Convert content to OTel parts list. Handles str, list, and None."""
     if isinstance(content, str):
         return [{"content": content, "type": "text"}]
-    if isinstance(content, list):
+    if isinstance(content, (list, tuple)):
         return [_map_content_block(block) for block in content]
     return content or []
 
@@ -545,9 +545,35 @@ def _set_input_messages(span, messages):
                     "id": tool_call["id"],
                     "arguments": _parse_arguments(tool_call["function"].get("arguments")),
                 })
+            function_call = msg.get("function_call")
+            if function_call:
+                function_call = (
+                    function_call
+                    if isinstance(function_call, dict)
+                    else model_as_dict(function_call)
+                )
+                parts.append({
+                    "type": "tool_call",
+                    "id": function_call.get("name"),
+                    "name": function_call.get("name"),
+                    "arguments": _parse_arguments(function_call.get("arguments")),
+                })
             attr_messages.append({
                 "role": "assistant",
                 "parts": parts,
+            })
+        elif role == "function":
+            # Legacy function-calling response message; map it like a tool
+            # response so the function result is not lost from the trace.
+            attr_messages.append({
+                "role": "tool",
+                "parts": [
+                    {
+                        "type": "tool_call_response",
+                        "id": msg.get("name"),
+                        "response": msg.get("content"),
+                    }
+                ],
             })
     _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json_dumps(attr_messages))
 
