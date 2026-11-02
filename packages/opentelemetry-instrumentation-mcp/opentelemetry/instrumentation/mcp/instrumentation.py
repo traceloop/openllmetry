@@ -249,23 +249,20 @@ class McpInstrumentor(BaseInstrumentor):
                     method = args[0].root.method
                 if len(args) > 0 and hasattr(args[0].root, "params"):
                     params = args[0].root.params
-                if params:
-                    if hasattr(args[0].root.params, "meta"):
-                        meta = args[0].root.params.meta
+                if params is not None and hasattr(params, "meta"):
+                    meta = params.meta
+                    if meta is None:
+                        from mcp.types import RequestParams
 
-                # Handle trace context propagation
-                if meta and len(args) > 0:
+                        meta = RequestParams.Meta()
+
+                # Handle trace context propagation, including requests without _meta.
+                if meta is not None:
                     carrier = {}
                     TraceContextTextMapPropagator().inject(carrier)
-                    # inject() writes no traceparent when there is no span
-                    # current (an invalid span context) -- there is then no
-                    # context to propagate, so leaving meta alone is the right
-                    # outcome, not a degraded one. A sampled-out span does still
-                    # propagate, with the sampled flag clear.
-                    traceparent = carrier.get("traceparent")
-                    if traceparent is not None:
-                        meta.traceparent = traceparent
-                        args[0].root.params.meta = meta
+                    for key, value in carrier.items():
+                        setattr(meta, key, value)
+                    params.meta = meta
 
             # Call the original method. Nothing from here on catches what it
             # raises or returns: a failed extraction above just leaves method
