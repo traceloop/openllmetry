@@ -195,6 +195,97 @@ class TestEnsureStreamUsage:
         ensure_stream_usage(kwargs)
         assert isinstance(kwargs["stream_options"], object)
 
+    def test_not_given_stream_options_is_treated_as_absent(self, monkeypatch):
+        # A caller that forwards ``stream_options=openai.NOT_GIVEN`` has not
+        # asked for anything, so the default still applies.
+        monkeypatch.delenv(ENV_VAR, raising=False)
+        kwargs = {"stream": True, "stream_options": openai.NOT_GIVEN}
+        assert ensure_stream_usage(kwargs) is True
+        assert kwargs["stream_options"] == {"include_usage": True}
+
+
+def test_usage_only_chunk_hidden_when_instrumentation_added_it(
+    tracer_provider, span_exporter, monkeypatch
+):
+    """Callers that never asked for usage must not see the extra chunk.
+
+    Without this, ``for chunk in stream: chunk.choices[0]`` breaks on the
+    trailing chunk the instrumentation requested for itself.
+    """
+    monkeypatch.delenv(ENV_VAR, raising=False)
+    saved_config = {
+        key: value for key, value in vars(Config).items() if not key.startswith("__")
+    }
+    try:
+        OpenAIInstrumentor()
+
+        def fake_wrapped(*args, **kwargs):
+            fake_stream = MagicMock()
+            fake_stream.__next__.side_effect = [*_stream_chunks(), StopIteration]
+            return fake_stream
+
+        tracer = tracer_provider.get_tracer(__name__)
+        instance = SimpleNamespace(_client=object())
+        kwargs = {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "Hi"}],
+            "stream": True,
+        }
+        with patch.object(
+            chat_wrappers, "is_streaming_response", return_value=True
+        ):
+            wrapper = chat_wrapper(
+                tracer, None, None, None, None, None, None
+            )
+            response = wrapper(fake_wrapped, instance, (), kwargs)
+            chunks = list(response)
+
+        assert all(chunk["choices"] for chunk in chunks)
+        assert len(chunks) == 2
+        _assert_usage_attributes(span_exporter.get_finished_spans()[0])
+    finally:
+        for key, value in saved_config.items():
+            setattr(Config, key, value)
+
+
+def test_usage_only_chunk_preserved_when_caller_requested_usage(
+    tracer_provider, span_exporter, monkeypatch
+):
+    monkeypatch.delenv(ENV_VAR, raising=False)
+    saved_config = {
+        key: value for key, value in vars(Config).items() if not key.startswith("__")
+    }
+    try:
+        OpenAIInstrumentor()
+
+        def fake_wrapped(*args, **kwargs):
+            fake_stream = MagicMock()
+            fake_stream.__next__.side_effect = [*_stream_chunks(), StopIteration]
+            return fake_stream
+
+        tracer = tracer_provider.get_tracer(__name__)
+        instance = SimpleNamespace(_client=object())
+        kwargs = {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": "Hi"}],
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
+        with patch.object(
+            chat_wrappers, "is_streaming_response", return_value=True
+        ):
+            wrapper = chat_wrapper(
+                tracer, None, None, None, None, None, None
+            )
+            response = wrapper(fake_wrapped, instance, (), kwargs)
+            chunks = list(response)
+
+        assert chunks[-1]["choices"] == []
+        assert chunks[-1]["usage"] is not None
+    finally:
+        for key, value in saved_config.items():
+            setattr(Config, key, value)
+
 
 @pytest.mark.asyncio
 async def test_instrumented_async_streaming_request_includes_usage_by_default(

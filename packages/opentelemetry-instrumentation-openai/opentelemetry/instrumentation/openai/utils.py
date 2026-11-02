@@ -210,7 +210,7 @@ def should_include_stream_usage() -> bool:
     return _is_truthy(os.getenv(TRACELOOP_STREAM_INCLUDE_USAGE, "true"))
 
 
-def ensure_stream_usage(kwargs, instance=None) -> None:
+def ensure_stream_usage(kwargs, instance=None) -> bool:
     """Default ``stream_options={"include_usage": True}`` on streaming calls.
 
     The OpenAI API only sends ``usage`` in streaming chunks when the request
@@ -220,18 +220,53 @@ def ensure_stream_usage(kwargs, instance=None) -> None:
     ``TRACELOOP_STREAM_INCLUDE_USAGE=false``. Azure endpoints are left
     untouched because api-versions older than 2024-06-01 reject the
     ``stream_options`` field.
+
+    Returns True when the instrumentation is the one that asked for usage, so
+    the wrappers can hide the trailing usage-only chunk from callers who never
+    requested it.
     """
     if not kwargs.get("stream"):
-        return
+        return False
     if not should_include_stream_usage():
-        return
+        return False
     if instance is not None and is_azure_openai(instance):
-        return
+        return False
     stream_options = kwargs.get("stream_options")
-    if stream_options is None:
+    if stream_options is None or _is_not_given(stream_options):
         kwargs["stream_options"] = {"include_usage": True}
-    elif isinstance(stream_options, dict):
-        stream_options.setdefault("include_usage", True)
+        return True
+    if isinstance(stream_options, dict):
+        if stream_options.get("include_usage") is None:
+            stream_options["include_usage"] = True
+            return True
+    return False
+
+
+def _is_not_given(value) -> bool:
+    """True for the OpenAI SDK's ``NOT_GIVEN`` sentinel.
+
+    ``NOT_GIVEN`` means "argument omitted", so it must be treated like a
+    missing ``stream_options`` rather than as a caller-supplied value.
+    """
+    try:
+        from openai import NotGiven
+    except ImportError:
+        return False
+    return isinstance(value, NotGiven)
+
+
+def is_usage_only_chunk(chunk) -> bool:
+    """True for the trailing stream chunk that carries usage and no choices.
+
+    The OpenAI API appends this chunk when ``stream_options.include_usage`` is
+    set. Callers that did not ask for it (and therefore index
+    ``chunk.choices[0]``) would break on it.
+    """
+    if isinstance(chunk, dict):
+        choices, usage = chunk.get("choices"), chunk.get("usage")
+    else:
+        choices, usage = getattr(chunk, "choices", None), getattr(chunk, "usage", None)
+    return not choices and usage is not None
 
 
 def should_emit_events() -> bool:

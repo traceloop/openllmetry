@@ -37,6 +37,7 @@ from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     ensure_stream_usage,
     is_openai_v1,
+    is_usage_only_chunk,
     json_dumps,
     run_async,
     should_emit_events,
@@ -100,7 +101,7 @@ def chat_wrapper(
         run_async(_handle_request(span, kwargs, instance))
         try:
             start_time = time.time()
-            ensure_stream_usage(kwargs, instance)
+            hide_usage_chunk = ensure_stream_usage(kwargs, instance)
             response = wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
@@ -137,6 +138,7 @@ def chat_wrapper(
                     streaming_time_to_generate,
                     start_time,
                     kwargs,
+                    hide_usage_chunk,
                 )
             else:
                 return _build_from_streaming_response(
@@ -200,7 +202,7 @@ async def achat_wrapper(
 
         try:
             start_time = time.time()
-            ensure_stream_usage(kwargs, instance)
+            hide_usage_chunk = ensure_stream_usage(kwargs, instance)
             response = await wrapped(*args, **kwargs)
             end_time = time.time()
         except Exception as e:  # pylint: disable=broad-except
@@ -239,6 +241,7 @@ async def achat_wrapper(
                     streaming_time_to_generate,
                     start_time,
                     kwargs,
+                    hide_usage_chunk,
                 )
             else:
                 return _abuild_from_streaming_response(
@@ -675,6 +678,7 @@ class ChatStream(ObjectProxy):
         streaming_time_to_generate=None,
         start_time=None,
         request_kwargs=None,
+        hide_usage_chunk=False,
     ):
         super().__init__(response)
 
@@ -687,6 +691,7 @@ class ChatStream(ObjectProxy):
         self._streaming_time_to_generate = streaming_time_to_generate
         self._start_time = start_time
         self._request_kwargs = request_kwargs
+        self._hide_usage_chunk = hide_usage_chunk
 
         self._first_token = True
         # will be updated when first token is received
@@ -735,35 +740,39 @@ class ChatStream(ObjectProxy):
         return self
 
     def __next__(self):
-        try:
-            chunk = self.__wrapped__.__next__()
-        except Exception as e:
-            if isinstance(e, StopIteration):
-                self._process_complete_response()
-            else:
-                # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
-            raise
-        else:
+        while True:
+            try:
+                chunk = self.__wrapped__.__next__()
+            except Exception as e:
+                if isinstance(e, StopIteration):
+                    self._process_complete_response()
+                else:
+                    # Handle cleanup for other exceptions during stream iteration
+                    self._ensure_cleanup()
+                    if self._span and self._span.is_recording():
+                        self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             self._process_item(chunk)
+            if self._hide_usage_chunk and is_usage_only_chunk(chunk):
+                continue
             return chunk
 
     async def __anext__(self):
-        try:
-            chunk = await self.__wrapped__.__anext__()
-        except Exception as e:
-            if isinstance(e, StopAsyncIteration):
-                self._process_complete_response()
-            else:
-                # Handle cleanup for other exceptions during stream iteration
-                self._ensure_cleanup()
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
-            raise
-        else:
+        while True:
+            try:
+                chunk = await self.__wrapped__.__anext__()
+            except Exception as e:
+                if isinstance(e, StopAsyncIteration):
+                    self._process_complete_response()
+                else:
+                    # Handle cleanup for other exceptions during stream iteration
+                    self._ensure_cleanup()
+                    if self._span and self._span.is_recording():
+                        self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                raise
             self._process_item(chunk)
+            if self._hide_usage_chunk and is_usage_only_chunk(chunk):
+                continue
             return chunk
 
     def _process_item(self, item):
