@@ -420,6 +420,53 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         return span
 
+    def _is_graph_owned_workflow_callback(
+        self,
+        name: str,
+        parent_run_id: Optional[UUID],
+        metadata: Optional[dict[str, Any]],
+    ) -> bool:
+        """Check whether a workflow callback run belongs to the graph itself.
+
+        The Pregel stream wrapper already emits the ``invoke_agent`` span for a
+        LangGraph invocation, so the callback created workflow span of the graph
+        has to be demoted to ``execute_task`` to keep a single graph invocation
+        down to one ``invoke_agent`` span.
+
+        Only the top level workflow callback owned by the graph qualifies:
+
+        * it has to run inside a LangGraph flow,
+        * it has to be a top level run, i.e. it must not have a tracked parent,
+        * it has to be the run LangGraph reports for the graph itself, which is
+          the first child of the graph span created by the wrapper,
+        * it must not belong to a LangChain agent that merely runs inside the
+          flow, since such an agent is a compiled graph itself and owns its own
+          ``invoke_agent`` span.
+        """
+        langgraph_flow = context_api.get_value(LANGGRAPH_FLOW_KEY)
+        if langgraph_flow is None:
+            return False
+
+        if parent_run_id is not None and parent_run_id in self.spans:
+            # A nested run, its parent owns the operation name.
+            return False
+
+        first_child_pending = context_api.get_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY)
+        if not first_child_pending or not first_child_pending[0]:
+            # Not the run LangGraph reports for the graph itself.
+            return False
+
+        # LangChain agents are compiled LangGraph graphs. Their own callback run
+        # has to keep the `invoke_agent` operation name, no matter whether the
+        # agent runs standalone or inside a node of another graph.
+        agent_name = (metadata or {}).get("lc_agent_name")
+        if agent_name is not None and (
+            name == agent_name or langgraph_flow == agent_name
+        ):
+            return False
+
+        return True
+
     def _create_task_span(
         self,
         run_id: UUID,
@@ -450,6 +497,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # Use OpenTelemetry GenAI spec naming for tasks
             span_name = f"execute_task {name}"
 
+        # The demotion decision has to be made before the span is created,
+        # because creating the span consumes the first child flag of the
+        # LangGraph flow.
+        is_graph_owned_workflow = is_agent and self._is_graph_owned_workflow_callback(
+            name, parent_run_id, metadata
+        )
+
         span = self._create_span(
             run_id,
             parent_run_id,
@@ -472,12 +526,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
         if is_agent:
             # The Pregel stream wrapper already owns the invoke_agent span for
-            # LangGraph graph invocations. Inside that flow, downgrade the
-            # callback-created workflow span to execute_task so a single graph
-            # invocation has exactly one invoke_agent span.
+            # LangGraph graph invocations. The callback created workflow span of
+            # the graph itself is therefore downgraded to execute_task, so that a
+            # single graph invocation has exactly one invoke_agent span. Agents
+            # that merely run inside a graph flow keep invoke_agent.
             operation_name = (
                 GenAICustomOperationName.EXECUTE_TASK.value
-                if langgraph_flow
+                if is_graph_owned_workflow
                 else GenAiOperationNameValues.INVOKE_AGENT.value
             )
             # Set agent-specific attributes
