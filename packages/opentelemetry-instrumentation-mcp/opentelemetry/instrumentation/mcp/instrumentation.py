@@ -12,7 +12,6 @@ from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.trace import get_tracer, Tracer
 from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
 from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
@@ -206,24 +205,24 @@ class McpInstrumentor(BaseInstrumentor):
             None,
         ]:
             async with wrapped(*args, **kwargs) as result:
+                wrapped_result = result
                 try:
                     read_stream, write_stream = result
-                    yield _wrap_streams(read_stream, write_stream)
+                    wrapped_result = _wrap_streams(read_stream, write_stream)
                 except ValueError:
                     try:
                         read_stream, write_stream, get_session_id_callback = result
                         reader, writer = _wrap_streams(read_stream, write_stream)
-                        yield reader, writer, get_session_id_callback
+                        wrapped_result = (reader, writer, get_session_id_callback)
                     except Exception as e:
                         logging.warning(
                             f"mcp instrumentation _transport_wrapper exception: {e}"
                         )
-                        yield result
                 except Exception as e:
                     logging.warning(
                         f"mcp instrumentation transport_wrapper exception: {e}"
                     )
-                    yield result
+                yield wrapped_result
 
         return traced_method
 
@@ -268,13 +267,10 @@ class McpInstrumentor(BaseInstrumentor):
                     # Handle trace context propagation, including ordinary calls
                     # where params.meta defaults to None (#4374).
                     carrier = {}
-                    TraceContextTextMapPropagator().inject(carrier)
-                    # inject() writes no traceparent when there is no span
-                    # current (an invalid span context) -- there is then no
-                    # context to propagate, so leaving meta alone is the right
-                    # outcome, not a degraded one. A sampled-out span does still
-                    # propagate, with the sampled flag clear.
-                    if carrier.get("traceparent") is not None:
+                    propagate.get_global_textmap().inject(carrier)
+                    # inject() leaves carrier empty when there is no active context
+                    # to propagate, so leaving meta alone is the right outcome.
+                    if carrier:
                         if meta is None:
                             from mcp.types import RequestParams
 

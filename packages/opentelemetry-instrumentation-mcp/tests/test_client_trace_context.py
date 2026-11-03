@@ -38,7 +38,7 @@ async def test_client_trace_context_is_injected_without_replacing_metadata(
             "tracestate": "vendor=value",
         }
     )
-    monkeypatch.setattr(instrumentation, "TraceContextTextMapPropagator", lambda: propagator)
+    monkeypatch.setattr(instrumentation.propagate, "get_global_textmap", lambda: propagator)
 
     # BaseInstrumentor is a singleton. Bypass it so this unit test cannot mutate
     # the session-scoped instrumentor used by the integration tests.
@@ -138,3 +138,8 @@ async def test_streamable_http_client_wraps_both_current_and_deprecated_entrypoi
         assert not isinstance(legacy_reader.__wrapped__, InstrumentedStreamReader)
         assert isinstance(legacy_writer, InstrumentedStreamWriter)
         assert not isinstance(legacy_writer.__wrapped__, InstrumentedStreamWriter)
+
+    # Verify caller exceptions inside the context manager propagate unchanged.
+    with pytest.raises(ValueError, match="caller failure"):
+        async with fake_module.streamable_http_client("http://localhost:8000/mcp"):
+            raise ValueError("caller failure")
