@@ -150,11 +150,7 @@ class McpInstrumentor(BaseInstrumentor):
             "mcp.server.session",
         )
         register_post_import_hook(
-            lambda _: wrap_function_wrapper(
-                "mcp.client.streamable_http",
-                "streamablehttp_client",
-                self._transport_wrapper(tracer),
-            ),
+            lambda module: self._wrap_streamable_http_client(module, tracer),
             "mcp.client.streamable_http",
         )
         register_post_import_hook(
@@ -171,12 +167,34 @@ class McpInstrumentor(BaseInstrumentor):
             self.patch_mcp_client(tracer),
         )
 
+    def _wrap_streamable_http_client(self, module: Any, tracer: Tracer) -> None:
+        for func_name in ("streamable_http_client", "streamablehttp_client"):
+            if hasattr(module, func_name):
+                wrap_function_wrapper(
+                    module,
+                    func_name,
+                    self._transport_wrapper(tracer),
+                )
+
     def _uninstrument(self, **kwargs):
         unwrap("mcp.client.stdio", "stdio_client")
         unwrap("mcp.server.stdio", "stdio_server")
         self._fastmcp_instrumentor.uninstrument()
 
     def _transport_wrapper(self, tracer):
+        def _wrap_streams(read_stream, write_stream):
+            reader = (
+                read_stream
+                if isinstance(read_stream, InstrumentedStreamReader)
+                else InstrumentedStreamReader(read_stream, tracer)
+            )
+            writer = (
+                write_stream
+                if isinstance(write_stream, InstrumentedStreamWriter)
+                else InstrumentedStreamWriter(write_stream, tracer)
+            )
+            return reader, writer
+
         @asynccontextmanager
         async def traced_method(
             wrapped: Callable[..., Any], instance: Any, args: Any, kwargs: Any
@@ -190,17 +208,12 @@ class McpInstrumentor(BaseInstrumentor):
             async with wrapped(*args, **kwargs) as result:
                 try:
                     read_stream, write_stream = result
-                    yield InstrumentedStreamReader(
-                        read_stream, tracer
-                    ), InstrumentedStreamWriter(write_stream, tracer)
+                    yield _wrap_streams(read_stream, write_stream)
                 except ValueError:
                     try:
                         read_stream, write_stream, get_session_id_callback = result
-                        yield InstrumentedStreamReader(
-                            read_stream, tracer
-                        ), InstrumentedStreamWriter(
-                            write_stream, tracer
-                        ), get_session_id_callback
+                        reader, writer = _wrap_streams(read_stream, write_stream)
+                        yield reader, writer, get_session_id_callback
                     except Exception as e:
                         logging.warning(
                             f"mcp instrumentation _transport_wrapper exception: {e}"
@@ -251,18 +264,24 @@ class McpInstrumentor(BaseInstrumentor):
                     params = args[0].root.params
                 if params is not None and hasattr(params, "meta"):
                     meta = params.meta
-                    if meta is None:
-                        from mcp.types import RequestParams
 
-                        meta = RequestParams.Meta()
-
-                # Handle trace context propagation, including requests without _meta.
-                if meta is not None:
+                    # Handle trace context propagation, including ordinary calls
+                    # where params.meta defaults to None (#4374).
                     carrier = {}
                     TraceContextTextMapPropagator().inject(carrier)
-                    for key, value in carrier.items():
-                        setattr(meta, key, value)
-                    params.meta = meta
+                    # inject() writes no traceparent when there is no span
+                    # current (an invalid span context) -- there is then no
+                    # context to propagate, so leaving meta alone is the right
+                    # outcome, not a degraded one. A sampled-out span does still
+                    # propagate, with the sampled flag clear.
+                    if carrier.get("traceparent") is not None:
+                        if meta is None:
+                            from mcp.types import RequestParams
+
+                            meta = RequestParams.Meta()
+                        for key, value in carrier.items():
+                            setattr(meta, key, value)
+                        params.meta = meta
 
             # Call the original method. Nothing from here on catches what it
             # raises or returns: a failed extraction above just leaves method
