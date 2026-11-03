@@ -22,6 +22,28 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _is_content_object(item):
+    """Check if an item is a VertexAI Content object.
+
+    Content objects carry a ``role`` (str) and ``parts`` (list), while Part
+    objects and plain strings have neither, so the two checks together keep
+    this duck-typing from misfiring on other argument shapes.
+    """
+    return isinstance(getattr(item, "role", None), (str, type(None))) and isinstance(
+        getattr(item, "parts", None), (list, tuple)
+    )
+
+
+def _normalize_message_role(role):
+    """Map a VertexAI message role onto the semantic-convention role names."""
+    if role is None:
+        return "user"
+    normalized = str(role).lower()
+    if normalized == "model":
+        return "assistant"
+    return normalized
+
+
 def _is_base64_image_part(item):
     """Check if item is a VertexAI Part object containing image data"""
     try:
@@ -206,27 +228,120 @@ def _process_content_item_vertexai_sync(content_item, span, item_index):
         return {"type": "text", "text": str(content_item)}
 
 
+async def _argument_to_messages(argument, span):
+    """Expand a single generate_content argument into (role, content) messages.
+
+    A list of Content objects is a conversation history: every Content keeps
+    its own role and becomes its own message, instead of being flattened into
+    a single user prompt. Anything else (plain text, a single Part, or a list
+    of parts) is a single user message, as before.
+    """
+    items = None
+    if _is_content_object(argument):
+        items = [argument]
+    elif isinstance(argument, list) and any(
+        _is_content_object(item) for item in argument
+    ):
+        items = argument
+
+    if items is None:
+        processed_content = await _process_vertexai_argument(argument, span)
+        return [("user", processed_content)] if processed_content else []
+
+    messages = []
+    loose_parts = []
+    for item in items:
+        if _is_content_object(item):
+            if loose_parts:
+                messages.append(("user", loose_parts))
+                loose_parts = []
+            processed_parts = []
+            for part_index, part in enumerate(item.parts or []):
+                processed_part = await _process_content_item_vertexai(
+                    part, span, part_index
+                )
+                if processed_part is not None:
+                    processed_parts.append(processed_part)
+            if processed_parts:
+                messages.append(
+                    (_normalize_message_role(item.role), processed_parts)
+                )
+        else:
+            processed_part = await _process_content_item_vertexai(
+                item, span, len(loose_parts)
+            )
+            if processed_part is not None:
+                loose_parts.append(processed_part)
+    if loose_parts:
+        messages.append(("user", loose_parts))
+    return messages
+
+
+def _argument_to_messages_sync(argument, span):
+    """Synchronous version of argument-to-messages expansion"""
+    items = None
+    if _is_content_object(argument):
+        items = [argument]
+    elif isinstance(argument, list) and any(
+        _is_content_object(item) for item in argument
+    ):
+        items = argument
+
+    if items is None:
+        processed_content = _process_vertexai_argument_sync(argument, span)
+        return [("user", processed_content)] if processed_content else []
+
+    messages = []
+    loose_parts = []
+    for item in items:
+        if _is_content_object(item):
+            if loose_parts:
+                messages.append(("user", loose_parts))
+                loose_parts = []
+            processed_parts = []
+            for part_index, part in enumerate(item.parts or []):
+                processed_part = _process_content_item_vertexai_sync(
+                    part, span, part_index
+                )
+                if processed_part is not None:
+                    processed_parts.append(processed_part)
+            if processed_parts:
+                messages.append(
+                    (_normalize_message_role(item.role), processed_parts)
+                )
+        else:
+            processed_part = _process_content_item_vertexai_sync(
+                item, span, len(loose_parts)
+            )
+            if processed_part is not None:
+                loose_parts.append(processed_part)
+    if loose_parts:
+        messages.append(("user", loose_parts))
+    return messages
+
+
 @dont_throw
 async def set_input_attributes(span, args):
     """Process input arguments, handling both text and image content"""
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
-            processed_content = await _process_vertexai_argument(argument, span)
-
-            if processed_content:
+        message_index = 0
+        for argument in args:
+            for role, processed_content in await _argument_to_messages(
+                argument, span
+            ):
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{message_index}.role",
+                    role,
                 )
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{message_index}.content",
+                    json.dumps(processed_content),
                 )
+                message_index += 1
 
 
 # Sync version with image processing support
@@ -236,21 +351,22 @@ def set_input_attributes_sync(span, args):
     if not span.is_recording():
         return
     if should_send_prompts() and args is not None and len(args) > 0:
-        # Process each argument using extracted helper methods
-        for arg_index, argument in enumerate(args):
-            processed_content = _process_vertexai_argument_sync(argument, span)
-
-            if processed_content:
+        message_index = 0
+        for argument in args:
+            for role, processed_content in _argument_to_messages_sync(
+                argument, span
+            ):
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.role",
-                    "user"
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{message_index}.role",
+                    role,
                 )
                 _set_span_attribute(
                     span,
-                    f"{GenAIAttributes.GEN_AI_PROMPT}.{arg_index}.content",
-                    json.dumps(processed_content)
+                    f"{GenAIAttributes.GEN_AI_PROMPT}.{message_index}.content",
+                    json.dumps(processed_content),
                 )
+                message_index += 1
 
 
 @dont_throw

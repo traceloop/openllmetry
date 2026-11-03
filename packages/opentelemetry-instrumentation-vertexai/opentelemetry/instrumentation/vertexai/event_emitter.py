@@ -7,6 +7,10 @@ from opentelemetry.instrumentation.vertexai.event_models import (
     ChoiceEvent,
     MessageEvent,
 )
+from opentelemetry.instrumentation.vertexai.span_utils import (
+    _is_content_object,
+    _normalize_message_role,
+)
 from opentelemetry.instrumentation.vertexai.utils import (
     dont_throw,
     should_emit_events,
@@ -60,17 +64,62 @@ def _parse_vertex_finish_reason(reason):
     return finish_reason_map.get(reason_value, "unknown")
 
 
+def _part_text(item):
+    """Extract the text of a single prompt item without stringifying objects."""
+    if isinstance(item, str):
+        return item
+    text = getattr(item, "text", None)
+    return text if isinstance(text, str) else str(item)
+
+
+def _content_text(content):
+    """Join the text of a Content object's parts."""
+    return "\n".join(_part_text(part) for part in content.parts or [])
+
+
+def _argument_to_event_messages(argument):
+    """Expand a single generate_content argument into (role, text) messages.
+
+    Mirrors the span-attribute expansion: a list of Content objects is a
+    conversation history where every Content keeps its own role, while plain
+    text, a single Part, or a list of parts form a single user message.
+    """
+    if _is_content_object(argument):
+        return [(_normalize_message_role(argument.role), _content_text(argument))]
+
+    if isinstance(argument, list) and any(
+        _is_content_object(item) for item in argument
+    ):
+        messages = []
+        loose_texts = []
+        for item in argument:
+            if _is_content_object(item):
+                if loose_texts:
+                    messages.append((Roles.USER.value, "\n".join(loose_texts)))
+                    loose_texts = []
+                messages.append(
+                    (_normalize_message_role(item.role), _content_text(item))
+                )
+            else:
+                loose_texts.append(_part_text(item))
+        if loose_texts:
+            messages.append((Roles.USER.value, "\n".join(loose_texts)))
+        return messages
+
+    if isinstance(argument, list):
+        return [(Roles.USER.value, "\n".join(_part_text(item) for item in argument))]
+
+    return [(Roles.USER.value, _part_text(argument))]
+
+
 @dont_throw
 def emit_prompt_events(args, event_logger):
-    prompt = ""
     if args is not None and len(args) > 0:
         for arg in args:
-            if isinstance(arg, str):
-                prompt = f"{prompt}{arg}\n"
-            elif isinstance(arg, list):
-                for subarg in arg:
-                    prompt = f"{prompt}{subarg}\n"
-    emit_event(MessageEvent(content=prompt, role=Roles.USER.value), event_logger)
+            for role, text in _argument_to_event_messages(arg):
+                emit_event(
+                    MessageEvent(content=text, role=role), event_logger
+                )
 
 
 def emit_response_events(response, event_logger):
