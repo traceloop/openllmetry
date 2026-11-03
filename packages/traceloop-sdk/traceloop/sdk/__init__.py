@@ -27,6 +27,7 @@ from traceloop.sdk.config import (
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
+    build_pipeline_config,
     set_association_properties,
     set_external_prompt_tracing_context,
 )
@@ -132,18 +133,13 @@ class Traceloop:
         if use_attributes is None:
             use_attributes = True
 
-        enabled_explicitly = enabled is not None
         if enabled is None:
             enabled = is_tracing_enabled()
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
                 Fore.YELLOW
-                + (
-                    "Traceloop instrumentation is disabled via init flag"
-                    if enabled_explicitly
-                    else "Tracing is disabled"
-                )
+                + "Traceloop instrumentation is disabled via init flag"
                 + Fore.RESET
             )
             return
@@ -208,13 +204,31 @@ class Traceloop:
 
         print(Fore.RESET)
 
+        # Tracer init
+        resource_attributes.update({SERVICE_NAME: app_name})
+
+        pipeline_config = build_pipeline_config(
+            disable_batch=disable_batch,
+            processor=processor,
+            propagator=propagator,
+            exporter=exporter,
+            sampler=sampler,
+            span_postprocess_callback=span_postprocess_callback,
+            endpoint=api_endpoint,
+            headers=headers,
+        )
+
+        # A previous init() may have built the pipeline with other settings
+        # (a different exporter, processor, endpoint, ...). Rebuild the pipeline
+        # with the current settings, so a stale exporter is never resurrected.
+        if TracerWrapper.pipeline_needs_rebuild(pipeline_config):
+            TracerWrapper.reset_pipeline()
+
         # A previous init() may have disabled the tracer. Restore it once this
         # init has passed the early-return checks and is ready to create the
         # wrapper.
         TracerWrapper.set_disabled(False)
 
-        # Tracer init
-        resource_attributes.update({SERVICE_NAME: app_name})
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )

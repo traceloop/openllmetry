@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import warnings
 import pytest
 from unittest.mock import patch
@@ -10,6 +11,13 @@ from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    """Remove the colour codes colorama wraps around init() messages."""
+    return ANSI_ESCAPE_RE.sub("", text)
 
 
 @pytest.fixture
@@ -525,3 +533,83 @@ def test_env_var_true_with_explicit_enabled_false_wins(
     Traceloop.init(app_name="test", enabled=False)
 
     assert TracerWrapper.verify_initialized() is False
+
+
+def test_env_disabled_init_prints_the_init_flag_message(
+    isolated_tracer_wrapper, monkeypatch, capsys
+):
+    """Disabling tracing via ``TRACELOOP_TRACING_ENABLED`` must report the same
+    message as the ``enabled=False`` init flag."""
+    TracerWrapper.set_disabled(False)
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+
+    Traceloop.init(app_name="test")
+
+    out = strip_ansi(capsys.readouterr().out)
+    assert out.strip() == "Traceloop instrumentation is disabled via init flag"
+    assert "Tracing is disabled" not in out
+
+
+def test_env_disabled_then_reinit_reconfigures_the_pipeline(
+    isolated_tracer_wrapper, monkeypatch
+):
+    """A later init() must build the pipeline with the current settings
+    instead of re-enabling the exporter of an earlier init()."""
+    TracerWrapper.set_disabled(False)
+
+    stale_exporter = InMemorySpanExporter()
+    Traceloop.init(app_name="test", exporter=stale_exporter, disable_batch=True)
+    stale_wrapper = TracerWrapper.instance
+    assert stale_wrapper is not None
+
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+    Traceloop.init(app_name="test")
+    assert TracerWrapper.verify_initialized() is False
+
+    current_exporter = InMemorySpanExporter()
+    Traceloop.init(
+        app_name="test",
+        enabled=True,
+        exporter=current_exporter,
+        disable_batch=True,
+    )
+
+    assert TracerWrapper.verify_initialized() is True
+    # The pipeline was rebuilt with the settings of the latest init() ...
+    assert TracerWrapper.instance is not stale_wrapper
+    assert (
+        TracerWrapper.instance._TracerWrapper__spans_processor.span_exporter
+        is current_exporter
+    )
+
+    @workflow(name="reconfigured_workflow")
+    def f():
+        return 42
+
+    assert f() == 42
+
+    # ... and the exporter of the earlier init() is not used anymore.
+    assert stale_exporter.get_finished_spans() == ()
+    assert len(current_exporter.get_finished_spans()) > 0
+
+    # Detach this test's exporter from the (global) tracer provider again.
+    TracerWrapper.reset_pipeline()
+
+
+def test_reinit_with_identical_settings_keeps_the_singleton(
+    isolated_tracer_wrapper,
+):
+    """A second init() with the same settings keeps the existing wrapper."""
+    TracerWrapper.set_disabled(False)
+
+    exporter = InMemorySpanExporter()
+    Traceloop.init(app_name="test", exporter=exporter, disable_batch=True)
+    wrapper = TracerWrapper.instance
+
+    Traceloop.init(app_name="test", exporter=exporter, disable_batch=True)
+
+    assert TracerWrapper.instance is wrapper
+    assert (
+        TracerWrapper.instance._TracerWrapper__spans_processor.span_exporter
+        is exporter
+    )
