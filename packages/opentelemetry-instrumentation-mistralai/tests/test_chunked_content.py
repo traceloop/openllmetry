@@ -2,9 +2,9 @@ import json
 
 import pytest
 try:
-    from mistralai.models import ChatCompletionResponse
+    from mistralai.models import ChatCompletionChoice, ChatCompletionResponse
 except ImportError:  # mistralai >= 2.0
-    from mistralai.client.models import ChatCompletionResponse
+    from mistralai.client.models import ChatCompletionChoice, ChatCompletionResponse
 from opentelemetry.instrumentation.mistralai import _set_response_attributes
 from opentelemetry.instrumentation.mistralai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.semconv._incubating.attributes import (
@@ -181,3 +181,64 @@ def test_chunked_content_is_serialised_on_the_events_path(
     chunks = json.loads(body["message"]["content"])
     assert chunks[0]["type"] == "thinking"
     assert chunks[1] == {"type": "text", "text": ANSWER}
+
+
+# mistralai >= 2.10 can answer with `messages` instead of `message` on a choice,
+# e.g. the tool call, tool result and final answer of a connector turn.
+MULTI_MESSAGE_RESPONSE = {
+    **MAGISTRAL_RESPONSE,
+    "model": "mistral-medium-latest",
+    "choices": [
+        {
+            "index": 0,
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {"id": "call_1", "function": {"name": "web_search", "arguments": "{}"}}
+                    ],
+                },
+                {"role": "tool", "content": "France: capital Paris", "tool_call_id": "call_1"},
+                {"role": "assistant", "content": ANSWER},
+            ],
+            "finish_reason": "stop",
+        }
+    ],
+}
+
+requires_multi_message_choices = pytest.mark.skipif(
+    "messages" not in ChatCompletionChoice.model_fields,
+    reason="choice.messages was added in mistralai 2.10",
+)
+
+
+@requires_multi_message_choices
+def test_multi_message_choice_is_recorded(tracer_provider, span_exporter, trace_content):
+    response = ChatCompletionResponse.model_validate(MULTI_MESSAGE_RESPONSE)
+    tracer = tracer_provider.get_tracer("test")
+    with tracer.start_as_current_span("mistralai.chat") as span:
+        _set_response_attributes(span, LLMRequestTypeValues.CHAT, response)
+
+    attributes = span_exporter.get_finished_spans()[0].attributes
+    assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.content") == ANSWER
+    assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.role") == "assistant"
+    assert attributes.get(f"{GenAIAttributes.GEN_AI_COMPLETION}.0.finish_reason") == "stop"
+
+
+@requires_multi_message_choices
+def test_multi_message_choice_is_emitted_as_event(
+    log_exporter, logger_provider, trace_content, monkeypatch
+):
+    from opentelemetry.instrumentation.mistralai import _emit_choice_events
+    from opentelemetry.instrumentation.mistralai.config import Config
+
+    monkeypatch.setattr(Config, "use_legacy_attributes", False)
+    response = ChatCompletionResponse.model_validate(MULTI_MESSAGE_RESPONSE)
+    _emit_choice_events(response, logger_provider.get_logger("test"))
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 1
+    # the emitter leaves out role "assistant", per the semantic conventions
+    assert logs[0].log_record.body["message"] == {"content": ANSWER}
+    assert logs[0].log_record.body["finish_reason"] == "stop"

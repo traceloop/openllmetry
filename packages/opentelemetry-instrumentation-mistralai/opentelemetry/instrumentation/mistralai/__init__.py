@@ -164,6 +164,19 @@ def _content_as_str(content):
     )
 
 
+def _choice_role_and_content(choice):
+    # mistralai >= 2.10 can return `messages` (e.g. the tool call, tool result and
+    # answer of a connector turn) instead of `message`; the last one is the answer.
+    message = getattr(choice, "message", None)
+    if message is not None:
+        return message.role, _content_as_str(message.content)
+    messages = getattr(choice, "messages", None)
+    if not messages:
+        return None, None
+    # Unset fields on these messages are falsy sentinels, not None
+    return messages[-1].role or None, _content_as_str(messages[-1].content or None)
+
+
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
@@ -177,16 +190,9 @@ def _set_response_attributes(span, llm_request_type, response):
                 f"{prefix}.finish_reason",
                 choice.finish_reason,
             )
-            _set_span_attribute(
-                span,
-                f"{prefix}.content",
-                _content_as_str(choice.message.content),
-            )
-            _set_span_attribute(
-                span,
-                f"{prefix}.role",
-                choice.message.role,
-            )
+            role, content = _choice_role_and_content(choice)
+            _set_span_attribute(span, f"{prefix}.content", content)
+            _set_span_attribute(span, f"{prefix}.role", role)
 
 
 @dont_throw
@@ -435,12 +441,13 @@ def _emit_choice_events(
     # Handle chat events
     if isinstance(response, ChatCompletionResponse):
         for choice in response.choices:
+            role, content = _choice_role_and_content(choice)
             emit_event(
                 ChoiceEvent(
                     index=choice.index,
                     message={
-                        "content": _content_as_str(choice.message.content),
-                        "role": choice.message.role or "assistant",
+                        "content": content,
+                        "role": role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",
                 ),
