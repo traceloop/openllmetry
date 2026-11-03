@@ -534,14 +534,18 @@ class McpInstrumentor(BaseInstrumentor):
                 # For tool calls, extract the actual result content
                 output = {}
                 if hasattr(result, "content") and result.content:
-                    if len(result.content) > 0:
-                        content_item = result.content[0]
+                    content_items = []
+                    for content_item in result.content:
                         if hasattr(content_item, "text"):
-                            output["result"] = content_item.text
+                            content_items.append(content_item.text)
                         elif hasattr(content_item, "__dict__"):
-                            output["result"] = content_item.__dict__
+                            content_items.append(content_item.__dict__)
                         else:
-                            output["result"] = str(content_item)
+                            content_items.append(str(content_item))
+                    if len(content_items) == 1:
+                        output["result"] = content_items[0]
+                    elif content_items:
+                        output["result"] = content_items
 
                 # Check if this is an error response
                 if hasattr(result, "isError") and result.isError:
