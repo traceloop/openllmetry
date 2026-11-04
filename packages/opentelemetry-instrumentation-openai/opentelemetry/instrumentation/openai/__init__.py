@@ -19,7 +19,7 @@ class OpenAIInstrumentor(BaseInstrumentor):
         get_common_metrics_attributes: Callable[[], dict] = lambda: {},
         upload_base64_image: Optional[
             Callable[[str, str, str, str], Coroutine[None, None, str]]
-        ] = lambda *args: "",
+        ] = None,
         enable_trace_context_propagation: bool = True,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
