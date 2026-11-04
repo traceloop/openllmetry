@@ -65,16 +65,23 @@ def _parse_vertex_finish_reason(reason):
 
 
 def _part_text(item):
-    """Extract the text of a single prompt item without stringifying objects."""
+    """Extract the text of a single prompt item without stringifying objects.
+
+    Non-text parts (images, function calls, ...) have no prompt text, so
+    they return an empty string instead of ``str(item)``, which could leak
+    their raw payload into prompt events; callers skip empty results.
+    """
     if isinstance(item, str):
         return item
     text = getattr(item, "text", None)
-    return text if isinstance(text, str) else str(item)
+    return text if isinstance(text, str) else ""
 
 
 def _content_text(content):
-    """Join the text of a Content object's parts."""
-    return "\n".join(_part_text(part) for part in content.parts or [])
+    """Join the text of a Content object's parts, skipping non-text parts."""
+    return "\n".join(
+        text for text in (_part_text(part) for part in content.parts or []) if text
+    )
 
 
 def _argument_to_event_messages(argument):
@@ -101,13 +108,22 @@ def _argument_to_event_messages(argument):
                     (_normalize_message_role(item.role), _content_text(item))
                 )
             else:
-                loose_texts.append(_part_text(item))
+                text = _part_text(item)
+                if text:
+                    loose_texts.append(text)
         if loose_texts:
             messages.append((Roles.USER.value, "\n".join(loose_texts)))
         return messages
 
     if isinstance(argument, list):
-        return [(Roles.USER.value, "\n".join(_part_text(item) for item in argument))]
+        return [
+            (
+                Roles.USER.value,
+                "\n".join(
+                    text for text in (_part_text(item) for item in argument) if text
+                ),
+            )
+        ]
 
     return [(Roles.USER.value, _part_text(argument))]
 

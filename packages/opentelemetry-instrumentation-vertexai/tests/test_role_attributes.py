@@ -314,6 +314,67 @@ class TestContentObjectHistory:
         assert f"{prompts}.1.role" not in self.span_attributes
 
     @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    def test_sync_gapic_style_content_history_preserves_roles(
+        self, mock_should_send_prompts
+    ):
+        """Raw GAPIC Content objects keep each message separate.
+
+        Their ``parts`` attribute is a protobuf repeated field: iterable,
+        but not a list or tuple, so the Content check must accept it.
+        """
+        mock_should_send_prompts.return_value = True
+
+        class RepeatedParts:
+            def __init__(self, parts):
+                self._parts = parts
+
+            def __iter__(self):
+                return iter(self._parts)
+
+            def __len__(self):
+                return len(self._parts)
+
+        class FakePart:
+            def __init__(self, text):
+                self.text = text
+
+        class GapicStyleContent:
+            def __init__(self, role, parts):
+                self.role = role
+                self.parts = RepeatedParts(parts)
+
+        args = [
+            [
+                GapicStyleContent("user", [FakePart("What's 2+2?")]),
+                GapicStyleContent("model", [FakePart("5")]),
+            ]
+        ]
+        set_input_attributes_sync(self.mock_span, args)
+
+        prompts = SpanAttributes.LLM_PROMPTS
+        assert self.span_attributes[f"{prompts}.0.role"] == "user"
+        assert json.loads(self.span_attributes[f"{prompts}.0.content"]) == [
+            {"type": "text", "text": "What's 2+2?"}
+        ]
+        assert self.span_attributes[f"{prompts}.1.role"] == "assistant"
+        assert json.loads(self.span_attributes[f"{prompts}.1.content"]) == [
+            {"type": "text", "text": "5"}
+        ]
+        assert f"{prompts}.2.role" not in self.span_attributes
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
+    def test_sync_empty_role_content_maps_to_user(self, mock_should_send_prompts):
+        """An empty (or whitespace-only) role falls back to "user", like None."""
+        mock_should_send_prompts.return_value = True
+
+        prompts = SpanAttributes.LLM_PROMPTS
+        for role in ("", "   "):
+            self.span_attributes.clear()
+            args = [[Content(role=role, parts=[Part.from_text("hi")])]]
+            set_input_attributes_sync(self.mock_span, args)
+            assert self.span_attributes[f"{prompts}.0.role"] == "user"
+
+    @patch("opentelemetry.instrumentation.vertexai.span_utils.should_send_prompts")
     def test_sync_parts_list_stays_one_user_message(self, mock_should_send_prompts):
         """A list of parts (not Content objects) is a single user message."""
         mock_should_send_prompts.return_value = True

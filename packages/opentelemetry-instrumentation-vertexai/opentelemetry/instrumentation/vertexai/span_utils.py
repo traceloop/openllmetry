@@ -22,15 +22,34 @@ def _set_span_attribute(span, name, value):
     return
 
 
+def _is_parts_container(parts):
+    """Check whether a ``parts`` attribute can hold Content parts.
+
+    SDK Content objects use a plain list, but raw GAPIC Content objects
+    carry a protobuf repeated field, which is iterable without being a
+    list or tuple. Strings, bytes and dicts are iterable too but never
+    hold parts, so they stay excluded.
+    """
+    if isinstance(parts, (list, tuple)):
+        return True
+    if parts is None or isinstance(parts, (str, bytes, dict)):
+        return False
+    try:
+        iter(parts)
+    except TypeError:
+        return False
+    return True
+
+
 def _is_content_object(item):
     """Check if an item is a VertexAI Content object.
 
-    Content objects carry a ``role`` (str) and ``parts`` (list), while Part
+    Content objects carry a ``role`` (str) and ``parts``, while Part
     objects and plain strings have neither, so the two checks together keep
     this duck-typing from misfiring on other argument shapes.
     """
-    return isinstance(getattr(item, "role", None), (str, type(None))) and isinstance(
-        getattr(item, "parts", None), (list, tuple)
+    return isinstance(getattr(item, "role", None), (str, type(None))) and _is_parts_container(
+        getattr(item, "parts", None)
     )
 
 
@@ -38,7 +57,9 @@ def _normalize_message_role(role):
     """Map a VertexAI message role onto the semantic-convention role names."""
     if role is None:
         return "user"
-    normalized = str(role).lower()
+    normalized = str(role).strip().lower()
+    if not normalized:
+        return "user"
     if normalized == "model":
         return "assistant"
     return normalized

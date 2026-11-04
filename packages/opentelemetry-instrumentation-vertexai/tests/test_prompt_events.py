@@ -23,6 +23,9 @@ def _emit(args):
     with patch(
         "opentelemetry.instrumentation.vertexai.event_emitter.should_emit_events",
         return_value=True,
+    ), patch(
+        "opentelemetry.instrumentation.vertexai.event_emitter.should_send_prompts",
+        return_value=True,
     ):
         emit_prompt_events(args, logger)
     return logger.records
@@ -64,3 +67,28 @@ class TestEmitPromptEvents:
         assert len(records) == 1
         assert records[0].event_name == "gen_ai.user.message"
         assert records[0].body["content"] == "hello\nworld"
+
+    def test_non_text_part_is_not_stringified_into_event(self):
+        class NonTextPart:
+            text = None
+
+            def __str__(self):
+                return "NON_TEXT_PART_SENTINEL"
+
+        # A loose parts list forms a single user message.
+        records = _emit(([Part.from_text("real text"), NonTextPart()],))
+
+        assert len(records) == 1
+        assert records[0].body["content"] == "real text"
+        assert "NON_TEXT_PART_SENTINEL" not in records[0].body["content"]
+
+        # Same for the parts of a (duck-typed) Content object.
+        class FakeContent:
+            role = "user"
+            parts = [Part.from_text("real text"), NonTextPart()]
+
+        records = _emit(([FakeContent()],))
+
+        assert len(records) == 1
+        assert records[0].body["content"] == "real text"
+        assert "NON_TEXT_PART_SENTINEL" not in records[0].body["content"]
