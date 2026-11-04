@@ -10,7 +10,11 @@ import time
 
 import pytest
 from opentelemetry.instrumentation.openai.shared.chat_wrappers import ChatStream
+from opentelemetry.instrumentation.openai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.trace import StatusCode
+
+
+_ERROR_MESSAGE = "connection reset mid-stream: private prompt content"
 
 
 def _first_chunk():
@@ -26,14 +30,15 @@ def _first_chunk():
 class _BrokenStream:
     """Yields one chunk, then fails the way a dropped connection does."""
 
-    def __init__(self):
+    def __init__(self, error):
         self._delivered = False
+        self._error = error
 
     def __next__(self):
         if not self._delivered:
             self._delivered = True
             return _first_chunk()
-        raise RuntimeError("connection reset mid-stream")
+        raise self._error
 
     def __aiter__(self):
         return self
@@ -42,11 +47,11 @@ class _BrokenStream:
         return self.__next__()
 
 
-def _broken_chat_stream(tracer):
+def _broken_chat_stream(tracer, error):
     span = tracer.start_span("openai.chat")
     return ChatStream(
         span,
-        _BrokenStream(),
+        _BrokenStream(error),
         None,
         None,
         None,
@@ -58,7 +63,7 @@ def _broken_chat_stream(tracer):
     )
 
 
-def _assert_failure_recorded(span_exporter):
+def _assert_failure_recorded(span_exporter, content_enabled):
     spans = [s for s in span_exporter.get_finished_spans() if s.name == "openai.chat"]
     assert len(spans) == 1, f"expected one chat span, got {[s.name for s in spans]}"
     span = spans[0]
@@ -68,29 +73,51 @@ def _assert_failure_recorded(span_exporter):
         f"{span.status.status_code}: the failed call reads as a success"
     )
     assert span.attributes.get("error.type") == "RuntimeError"
-    assert any(event.name == "exception" for event in span.events), (
-        "the failure left no exception event"
-    )
+    exception_events = [event for event in span.events if event.name == "exception"]
+    if content_enabled:
+        assert len(exception_events) == 1, "the failure left no exception event"
+        assert exception_events[0].attributes["exception.message"] == _ERROR_MESSAGE
+        assert span.status.description == _ERROR_MESSAGE
+    else:
+        assert not exception_events, "exception details bypassed content tracing"
+        assert span.status.description is None
+        assert _ERROR_MESSAGE not in span.to_json()
+        assert "partial" not in span.to_json()
 
 
-def test_sync_stream_failure_is_recorded_as_error(span_exporter, tracer_provider):
-    stream = _broken_chat_stream(tracer_provider.get_tracer(__name__))
+@pytest.fixture(params=[None, "true", "false"], ids=["default", "enabled", "disabled"])
+def content_enabled(request, monkeypatch):
+    if request.param is None:
+        monkeypatch.delenv(TRACELOOP_TRACE_CONTENT, raising=False)
+    else:
+        monkeypatch.setenv(TRACELOOP_TRACE_CONTENT, request.param)
+    return request.param != "false"
 
-    with pytest.raises(RuntimeError):
+
+def test_sync_stream_failure_is_recorded_as_error(
+    span_exporter, tracer_provider, content_enabled
+):
+    error = RuntimeError(_ERROR_MESSAGE)
+    stream = _broken_chat_stream(tracer_provider.get_tracer(__name__), error)
+
+    with pytest.raises(RuntimeError) as exc_info:
         for _ in stream:
             pass
 
-    _assert_failure_recorded(span_exporter)
+    assert exc_info.value is error
+    _assert_failure_recorded(span_exporter, content_enabled)
 
 
 @pytest.mark.asyncio
 async def test_async_stream_failure_is_recorded_as_error(
-    span_exporter, tracer_provider
+    span_exporter, tracer_provider, content_enabled
 ):
-    stream = _broken_chat_stream(tracer_provider.get_tracer(__name__))
+    error = RuntimeError(_ERROR_MESSAGE)
+    stream = _broken_chat_stream(tracer_provider.get_tracer(__name__), error)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as exc_info:
         async for _ in stream:
             pass
 
-    _assert_failure_recorded(span_exporter)
+    assert exc_info.value is error
+    _assert_failure_recorded(span_exporter, content_enabled)

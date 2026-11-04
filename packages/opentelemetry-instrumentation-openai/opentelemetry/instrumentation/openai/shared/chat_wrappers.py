@@ -853,8 +853,11 @@ class ChatStream(ObjectProxy):
                         self._span.set_status(Status(StatusCode.OK))
                     else:
                         self._span.set_attribute(ERROR_TYPE, type(error).__name__)
-                        self._span.record_exception(error)
-                        self._span.set_status(Status(StatusCode.ERROR, str(error)))
+                        if should_send_prompts():
+                            self._span.record_exception(error)
+                            self._span.set_status(Status(StatusCode.ERROR, str(error)))
+                        else:
+                            self._span.set_status(Status(StatusCode.ERROR))
                     self._span.end()
                     logger.debug("ChatStream span closed successfully")
 
