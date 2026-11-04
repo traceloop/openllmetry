@@ -725,7 +725,19 @@ def set_model_response_attributes(
         )
 
     um = getattr(response, "usage_metadata", None)
+    output_tokens = None
     if um is not None:
+        # candidates_token_count excludes thinking tokens, which are billed as
+        # output, so output_tokens is the sum of the two.
+        output_tokens = um.candidates_token_count
+        thoughts_token_count = getattr(um, "thoughts_token_count", None)
+        if thoughts_token_count:
+            output_tokens = (output_tokens or 0) + thoughts_token_count
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+                thoughts_token_count,
+            )
         _set_span_attribute(
             span,
             SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
@@ -734,13 +746,21 @@ def set_model_response_attributes(
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-            um.candidates_token_count,
+            output_tokens,
         )
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             um.prompt_token_count,
         )
+
+        cached_content_token_count = getattr(um, "cached_content_token_count", None)
+        if cached_content_token_count is not None:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_content_token_count,
+            )
 
     if token_histogram and um is not None:
         token_histogram.record(
@@ -754,7 +774,7 @@ def set_model_response_attributes(
             },
         )
         token_histogram.record(
-            um.candidates_token_count,
+            output_tokens,
             attributes={
                 GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
                 GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,

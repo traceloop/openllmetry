@@ -111,6 +111,21 @@ def test_pinecone_retrieval(traces_exporter, metrics_reader, openai_client):
     assert span.attributes.get(SpanAttributes.PINECONE_QUERY_INCLUDE_VALUES)
     assert span.attributes.get(SpanAttributes.PINECONE_QUERY_INCLUDE_METADATA)
 
+    # New standardized + per-DB attrs (issue #1870).
+    # Cassette uses index.query(vector=xq, top_k=3) — one query embedding.
+    assert span.attributes.get(SpanAttributes.PINECONE_QUERY_EMBEDDINGS_COUNT) == 1
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_EMBEDDINGS_COUNT) == 1
+
+    n_matches = len(query_res.get("matches"))
+    assert n_matches > 0
+    assert span.attributes.get(SpanAttributes.PINECONE_QUERY_RESULT_COUNT) == n_matches
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_RESULT_COUNT) == n_matches
+
+    expected_top = max(m["score"] for m in query_res.get("matches"))
+    assert span.attributes.get(SpanAttributes.VECTOR_DB_QUERY_TOP_SCORE) == pytest.approx(
+        expected_top
+    )
+
     events = span.events
     assert len(events) > 0
 

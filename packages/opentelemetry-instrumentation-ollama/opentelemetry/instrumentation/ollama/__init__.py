@@ -33,6 +33,7 @@ from opentelemetry.semconv._incubating.attributes import (
 from opentelemetry.semconv._incubating.metrics import (
     gen_ai_metrics as GenAIMetrics,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
@@ -125,6 +126,12 @@ def _accumulate_streaming_response(
                 text = res.get("response", "")
                 accumulated_response["response"] += text
 
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
         # Record streaming time to generate after the response is complete
         if streaming_time_to_generate and first_token_time is not None:
             model_name = last_response.get("model") if last_response else None
@@ -141,6 +148,7 @@ def _accumulate_streaming_response(
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
         )
+        ) or {}
         _handle_response(
             span=span,
             event_logger=event_logger,
@@ -195,6 +203,12 @@ async def _aaccumulate_streaming_response(
                 text = res.get("response", "")
                 accumulated_response["response"] += text
 
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        raise
+    else:
         # Record streaming time to generate after the response is complete
         if streaming_time_to_generate and first_token_time is not None:
             model_name = last_response.get("model") if last_response else None
@@ -211,6 +225,7 @@ async def _aaccumulate_streaming_response(
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
         )
+        ) or {}
         _handle_response(
             span,
             event_logger,
@@ -326,6 +341,9 @@ def _wrap(
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
     end_time = time.perf_counter()
@@ -407,6 +425,9 @@ async def _awrap(
     except Exception as e:
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.record_exception(e)
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
     end_time = time.perf_counter()

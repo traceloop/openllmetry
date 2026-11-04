@@ -296,6 +296,17 @@ def set_model_response_attributes(span, llm_model, token_usage):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
 
     if token_usage:
+        # candidates_token_count excludes thinking tokens, which are billed as
+        # output, so output_tokens is the sum of the two.
+        output_tokens = token_usage.candidates_token_count
+        thoughts_token_count = getattr(token_usage, "thoughts_token_count", None)
+        if thoughts_token_count:
+            output_tokens = (output_tokens or 0) + thoughts_token_count
+            _set_span_attribute(
+                span,
+                SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+                thoughts_token_count,
+            )
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
@@ -304,10 +315,20 @@ def set_model_response_attributes(span, llm_model, token_usage):
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS,
-            token_usage.candidates_token_count,
+            output_tokens,
         )
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
             token_usage.prompt_token_count,
         )
+
+        cached_content_token_count = getattr(
+            token_usage, "cached_content_token_count", None
+        )
+        if cached_content_token_count is not None:
+            _set_span_attribute(
+                span,
+                GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS,
+                cached_content_token_count,
+            )

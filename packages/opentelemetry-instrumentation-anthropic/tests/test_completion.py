@@ -19,13 +19,6 @@ def test_anthropic_completion_legacy(
         max_tokens_to_sample=2048,
         top_p=0.1,
     )
-    try:
-        anthropic_client.completions.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.completion" for span in spans)
 
@@ -65,13 +58,6 @@ def test_anthropic_completion_with_events_with_content(
         max_tokens_to_sample=2048,
         top_p=0.1,
     )
-    try:
-        anthropic_client.completions.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.completion" for span in spans)
 
@@ -109,13 +95,6 @@ def test_anthropic_completion_with_events_with_no_content(
         max_tokens_to_sample=2048,
         top_p=0.1,
     )
-    try:
-        anthropic_client.completions.create(
-            unknown_parameter="unknown",
-        )
-    except Exception:
-        pass
-
     spans = span_exporter.get_finished_spans()
     assert all(span.name == "anthropic.completion" for span in spans)
 

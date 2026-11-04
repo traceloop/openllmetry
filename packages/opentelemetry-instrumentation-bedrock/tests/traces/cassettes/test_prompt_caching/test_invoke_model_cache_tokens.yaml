@@ -1,0 +1,112 @@
+interactions:
+- request:
+    body: '{"anthropic_version": "bedrock-2023-05-31", "system": "very very long system prompt", "messages":
+          [{"role": "user", "content": [{"type": "text", "text": "How do I write js?",
+          "cache_control": {"type": "ephemeral"}}]}], "max_tokens": 50, "temperature":
+          0.1, "top_p": 0.1, "stop_sequences": ["stop"], "top_k": 250}'
+    headers:
+      Content-Length:
+      - '67988'
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zNy4xMyBtZC9Cb3RvY29yZSMxLjM3LjEzIHVhLzIuMSBvcy9tYWNvcyMyNC4zLjAg
+        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjkuNiBtZC9weWltcGwjQ1B5dGhvbiBjZmcvcmV0
+        cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNy4xMw==
+      X-Amz-Date:
+      - !!binary |
+        MjAyNTAzMThUMDg0NTM0Wg==
+      amz-sdk-invocation-id:
+      - !!binary |
+        YzdkOTYzZDgtOTYyNi00NWZmLTk4ZGItMjkyMGFjODljODcz
+      amz-sdk-request:
+      - !!binary |
+        YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-5-haiku-20241022-v1%3A0/invoke
+  response:
+    body:
+      string: '{"id":"msg_bdrk_01FmwvNC1ksCq1T8tjvgUdDB","type":"message","role":"assistant","model":"claude-3-5-haiku-20241022","content":[{"type":"text","text":"I''ll
+        provide a comprehensive overview of writing JavaScript with some practical
+        examples and best practices.\n\n<Thinking>\nI''ll break down JavaScript fundamentals
+        into several key areas:\n1. Basic syntax and structure\n2. Variables and data
+        types"}],"stop_reason":"max_tokens","stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":18131,"cache_read_input_tokens":0,"output_tokens":50}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '557'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 18 Mar 2025 08:45:42 GMT
+      X-Amzn-Bedrock-Cache-Read-Input-Token-Count:
+      - '0'
+      X-Amzn-Bedrock-Cache-Write-Input-Token-Count:
+      - '18131'
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '4'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '7275'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '50'
+      x-amzn-RequestId:
+      - 0a3a8d2d-dfe0-499b-8bf5-5517a07e67d2
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"anthropic_version": "bedrock-2023-05-31", "system": "very very long system prompt", "messages":
+          [{"role": "user", "content": [{"type": "text", "text": "How do I write js?",
+          "cache_control": {"type": "ephemeral"}}]}], "max_tokens": 50, "temperature":
+          0.1, "top_p": 0.1, "stop_sequences": ["stop"], "top_k": 250}'
+    headers:
+      Content-Length:
+        - '67988'
+      User-Agent:
+        - !!binary |
+          Qm90bzMvMS4zNy4xMyBtZC9Cb3RvY29yZSMxLjM3LjEzIHVhLzIuMSBvcy9tYWNvcyMyNC4zLjAg
+          bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjkuNiBtZC9weWltcGwjQ1B5dGhvbiBjZmcvcmV0
+          cnktbW9kZSNsZWdhY3kgQm90b2NvcmUvMS4zNy4xMw==
+      X-Amz-Date:
+        - !!binary |
+          MjAyNTAzMThUMDg0NTM0Wg==
+      amz-sdk-invocation-id:
+        - !!binary |
+          YzdkOTYzZDgtOTYyNi00NWZmLTk4ZGItMjkyMGFjODljODcz
+      amz-sdk-request:
+        - !!binary |
+          YXR0ZW1wdD0x
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-5-haiku-20241022-v1%3A0/invoke
+  response:
+    body:
+      string: '{"id":"msg_bdrk_01FGEZnKNgjbRv5m4joDoq3D","type":"message","role":"assistant","model":"claude-3-5-haiku-20241022","content":[{"type":"text","text":"I''ll
+        provide a comprehensive overview of writing JavaScript with some practical
+        examples and best practices.\n\n<Thinking>\nI''ll break down JavaScript fundamentals
+        into several key areas:\n1. Basic syntax and structure\n2. Variables and data
+        types"}],"stop_reason":"max_tokens","stop_sequence":null,"usage":{"input_tokens":4,"cache_creation_input_tokens":0,"cache_read_input_tokens":18131,"output_tokens":50}}'
+    headers:
+      Connection:
+        - keep-alive
+      Content-Length:
+        - '557'
+      Content-Type:
+        - application/json
+      Date:
+        - Tue, 18 Mar 2025 08:45:45 GMT
+      X-Amzn-Bedrock-Cache-Read-Input-Token-Count:
+        - '18131'
+      X-Amzn-Bedrock-Cache-Write-Input-Token-Count:
+        - '0'
+      X-Amzn-Bedrock-Input-Token-Count:
+        - '4'
+      X-Amzn-Bedrock-Invocation-Latency:
+        - '1859'
+      X-Amzn-Bedrock-Output-Token-Count:
+        - '50'
+      x-amzn-RequestId:
+        - a8e15aa3-dfe6-4e45-b9f9-6d6f72394314
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from opentelemetry.instrumentation.bedrock.prompt_caching import CacheSpanAttrs
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -947,47 +946,6 @@ def test_anthropic_cross_region_with_events_with_no_content(
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
-
-
-@pytest.mark.vcr
-def test_prompt_cache(instrument_legacy, brt, span_exporter, log_exporter):
-    def prompt_caching_call(brt):
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "system": "very very long system prompt",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "How do I write js?",
-                            "cache_control": {"type": "ephemeral"},
-                        },
-                    ],
-                }
-            ],
-            "max_tokens": 50,
-            "temperature": 0.1,
-            "top_p": 0.1,
-            "stop_sequences": ["stop"],
-            "top_k": 250,
-        }
-        return brt.invoke_model(
-            modelId="anthropic.claude-3-5-haiku-20241022-v1:0",
-            body=json.dumps(body),
-        )
-
-    prompt_caching_call(brt)
-    prompt_caching_call(brt)
-
-    spans = span_exporter.get_finished_spans()
-
-    assert len(spans) == 2
-
-    # first writes, second reads
-    assert spans[0].attributes.get(CacheSpanAttrs.CACHED) == "write"
-    assert spans[1].attributes.get(CacheSpanAttrs.CACHED) == "read"
 
 
 @pytest.mark.vcr

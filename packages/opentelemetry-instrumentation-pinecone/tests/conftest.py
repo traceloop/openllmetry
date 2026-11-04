@@ -47,6 +47,11 @@ def instrument(traces_exporter, metrics_reader):
 
 
 @pytest.fixture(autouse=True)
+def clear_exporter(traces_exporter):
+    traces_exporter.clear()
+
+
+@pytest.fixture(autouse=True)
 def environment():
     if "OPENAI_API_KEY" not in os.environ:
         os.environ["OPENAI_API_KEY"] = "test_api_key"

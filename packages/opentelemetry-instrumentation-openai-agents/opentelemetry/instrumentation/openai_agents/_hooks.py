@@ -47,6 +47,22 @@ except ImportError:
     SpeechGroupSpanData = None
 
 
+def _safe_detach(token) -> None:
+    """Detach a context token, ignoring the cross-Context detach failure.
+
+    OTel context lives in contextvars, copied per asyncio-task/thread (PEP 567).
+    When a span ends on a different task/thread than the one that attached the
+    token, detach raises ValueError; the stale token is harmless to skip.
+    See https://github.com/open-telemetry/opentelemetry-python/issues/2606
+    """
+    if token is None:
+        return
+    try:
+        context.detach(token)
+    except Exception:
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Finish-reason mapping: OpenAI → OTel GenAI semconv
 # ---------------------------------------------------------------------------
@@ -586,6 +602,22 @@ def _extract_response_attributes(otel_span, response, trace_content: bool):
                 SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens
             )
 
+        input_details = getattr(usage, "input_tokens_details", None)
+        if input_details is not None:
+            cached_tokens = getattr(input_details, "cached_tokens", None)
+            if cached_tokens is not None:
+                otel_span.set_attribute(
+                    GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS, cached_tokens
+                )
+
+        output_details = getattr(usage, "output_tokens_details", None)
+        if output_details is not None:
+            reasoning_tokens = getattr(output_details, "reasoning_tokens", None)
+            if reasoning_tokens is not None:
+                otel_span.set_attribute(
+                    SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens
+                )
+
     return model_settings
 
 
@@ -635,6 +667,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         self._root_spans: Dict[str, Any] = {}  # trace_id -> root span
         self._otel_spans: Dict[str, Any] = {}  # agents span -> otel span
         self._span_contexts: Dict[str, Any] = {}  # agents span -> context token
+        # agents span -> token from set_agent_name(); detached in on_span_end so the
+        # agent name does not leak onto sibling/parent agent spans.
+        self._agent_name_tokens: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
 
     @dont_throw
@@ -684,9 +719,13 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             parent_context = set_span_in_context(workflow_span)
 
         otel_span = None
+        # Detach token for the agent name attached by _start_agent_span, if any.
+        name_token = None
 
         if isinstance(span_data, AgentSpanData):
-            otel_span = self._start_agent_span(span_data, parent_context, trace_id)
+            otel_span, name_token = self._start_agent_span(
+                span_data, parent_context, trace_id
+            )
 
         elif isinstance(span_data, HandoffSpanData):
             otel_span = self._start_handoff_span(span_data, parent_context, trace_id)
@@ -734,9 +773,16 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
         if otel_span:
             self._otel_spans[span] = otel_span
+            # Key the agent-name token to this SDK span so on_span_end detaches it.
+            if name_token is not None:
+                self._agent_name_tokens[span] = name_token
             # Set as current span
             token = context.attach(set_span_in_context(otel_span))
             self._span_contexts[span] = token
+        elif name_token is not None:
+            # No otel span was created, so on_span_end will never run for it —
+            # detach the name now to avoid stranding it on the context.
+            _safe_detach(name_token)
 
     @dont_throw
     def on_span_end(self, span):
@@ -774,9 +820,17 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
 
             otel_span.end()
             del self._otel_spans[span]
+            # Detach via _safe_detach so a failure detaching the span-context token
+            # (e.g. cross-task/thread end) can't abort before the agent-name token
+            # is detached and leave the name leaking onto later spans.
             if span in self._span_contexts:
-                context.detach(self._span_contexts[span])
+                _safe_detach(self._span_contexts[span])
                 del self._span_contexts[span]
+            # Detach the agent name attached in _start_agent_span so it does not
+            # leak onto sibling/parent agent spans later in the trace.
+            if span in self._agent_name_tokens:
+                _safe_detach(self._agent_name_tokens[span])
+                del self._agent_name_tokens[span]
 
     # ------------------------------------------------------------------
     # on_span_start handlers (extracted from the former if-elif chain)
@@ -790,48 +844,65 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         return fallback_context
 
     def _start_agent_span(self, span_data, parent_context, trace_id):
-        """Create an OTel span for an AgentSpanData."""
+        """Create an OTel span for an AgentSpanData.
+
+        Returns ``(span, name_token)``. ``name_token`` is the detach token from
+        ``set_agent_name`` (None if the SDK isn't installed); ``on_span_start``
+        keys it to the SDK span so ``on_span_end`` can detach it. Without that
+        detach the agent name sticks on the context and leaks onto later spans.
+
+        The token is returned rather than stashed on ``self`` so two agent spans
+        starting concurrently cannot clobber each other's token.
+        """
         agent_name = getattr(span_data, "name", None) or "unknown_agent"
 
-        if set_agent_name is not None:
-            set_agent_name(agent_name)
+        name_token = set_agent_name(agent_name) if set_agent_name is not None else None
 
-        handoff_parent = None
-        if trace_id:
-            handoff_key = f"{agent_name}:{trace_id}"
-            if parent_agent_name := self._reverse_handoffs_dict.pop(
-                handoff_key, None
-            ):
-                handoff_parent = parent_agent_name
+        # Everything after the attach can raise (json.dumps, should_send_prompts,
+        # start_span). If it does, detach the name we just attached before letting
+        # the error propagate — otherwise @dont_throw swallows it at on_span_start
+        # and the name is stranded on the context, leaking onto later spans.
+        try:
+            handoff_parent = None
+            if trace_id:
+                handoff_key = f"{agent_name}:{trace_id}"
+                if parent_agent_name := self._reverse_handoffs_dict.pop(
+                    handoff_key, None
+                ):
+                    handoff_parent = parent_agent_name
 
-        attributes = {
-            SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
-            GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
-            GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
-            GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
-        }
+            attributes = {
+                SpanAttributes.TRACELOOP_SPAN_KIND: TraceloopSpanKindValues.AGENT.value,
+                GenAIAttributes.GEN_AI_AGENT_NAME: agent_name,
+                GenAIAttributes.GEN_AI_PROVIDER_NAME: "openai",
+                GenAIAttributes.GEN_AI_OPERATION_NAME: "invoke_agent",
+            }
 
-        if handoff_parent:
-            attributes[GEN_AI_HANDOFF_PARENT_AGENT] = handoff_parent
+            if handoff_parent:
+                attributes[GEN_AI_HANDOFF_PARENT_AGENT] = handoff_parent
 
-        if hasattr(span_data, "handoffs") and span_data.handoffs:
-            handoffs_list = []
-            trace_content = should_send_prompts()
-            for handoff_agent in span_data.handoffs:
-                handoff = {"name": getattr(handoff_agent, "name", "unknown")}
-                if trace_content:
-                    handoff["instructions"] = getattr(
-                        handoff_agent, "instructions", "No instructions"
-                    )
-                handoffs_list.append(handoff)
-            attributes[OPENAI_AGENT_HANDOFFS] = json.dumps(handoffs_list)
+            if hasattr(span_data, "handoffs") and span_data.handoffs:
+                handoffs_list = []
+                trace_content = should_send_prompts()
+                for handoff_agent in span_data.handoffs:
+                    handoff = {"name": getattr(handoff_agent, "name", "unknown")}
+                    if trace_content:
+                        handoff["instructions"] = getattr(
+                            handoff_agent, "instructions", "No instructions"
+                        )
+                    handoffs_list.append(handoff)
+                attributes[OPENAI_AGENT_HANDOFFS] = json.dumps(handoffs_list)
 
-        return self.tracer.start_span(
-            f"{agent_name}.agent",
-            kind=SpanKind.INTERNAL,
-            context=parent_context,
-            attributes=attributes,
-        )
+            span = self.tracer.start_span(
+                f"{agent_name}.agent",
+                kind=SpanKind.INTERNAL,
+                context=parent_context,
+                attributes=attributes,
+            )
+        except Exception:
+            _safe_detach(name_token)
+            raise
+        return span, name_token
 
     def _start_handoff_span(self, span_data, parent_context, trace_id):
         """Create an OTel span for a HandoffSpanData."""
@@ -941,9 +1012,12 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
     def _end_generation_span(self, otel_span, span_data, trace_content):
         """Handle on_span_end logic for generation/response spans."""
         input_data = getattr(span_data, "input", [])
+        response = getattr(span_data, "response", None)
+        if trace_content and response and getattr(response, "instructions", None):
+            existing = input_data if isinstance(input_data, list) else []
+            input_data = [{"role": "system", "content": response.instructions}] + existing
         _extract_prompt_attributes(otel_span, input_data, trace_content)
 
-        response = getattr(span_data, "response", None)
         tools = getattr(span_data, "tools", None) or (
             getattr(response, "tools", None) if response else None
         )

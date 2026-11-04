@@ -32,8 +32,8 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
 
-        if isinstance(o, BaseModel) and hasattr(o, "model_dump_json"):
-            return o.model_dump_json()
+        if isinstance(o, BaseModel) and hasattr(o, "model_dump"):
+            return o.model_dump()
 
         if isinstance(o, datetime.datetime):
             return o.isoformat()

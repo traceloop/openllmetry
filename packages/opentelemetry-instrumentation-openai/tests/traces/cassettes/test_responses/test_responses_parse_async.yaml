@@ -1,0 +1,114 @@
+interactions:
+- request:
+    body: '{"input":"Extract: Bob is 42 years old.","model":"gpt-4.1-nano","text":{"format":{"type":"json_schema","strict":true,"name":"Person","schema":{"properties":{"name":{"title":"Name","type":"string"},"age":{"title":"Age","type":"integer"}},"required":["name","age"],"title":"Person","type":"object","additionalProperties":false}}}}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '328'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - MacOS
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.10.20
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/31VTXObMBC9+1dkdLY74OBgcmt/QCf3uMMssBAlQqKS8MST8X/vShgQjt0b2sc+
+        7cfb1dfq4YHxij0/MI2my6Nt/bit4h2WdZbEO4iiJ4j3SYERwFO5j7MyKyB5zDJIk7IosAa2dhSq
+        eMfSjjRKGhzspUawWOXgsDhNsyxNic9jxoLtjfMpVdsJpP8GpwLKj0arXrq4ahAGBzMXgsuGbF90
+        JEMHJ9TOv8IjCtXRgYDzcPFIeXX1zqOotXKeshfCG2qNf3uU5SnvUIKwJwKjH5HHuBzJ8gotcGFC
+        Ty6N1X1pOSUd2lv4zFVvu97mVn3gd9AqJfISxJKuVRUKl1PT2U3yI95IkGqzjba7TZRs4oRNf2lw
+        d4a+w3VkefX1Gao09bc1zf32xtU+S4b2Zk9JscviYp89psXe3+dZ7KlDz4PGQIMzcK+PHiyVtCjn
+        oMLAFrRjrfDTTt7+B5BSWRjr+/pnAQrVdFoVNxBPRLxfByahxQN7PrBfqjiw9YFR+HROtmc2eZwv
+        XxMJ00r4wMAYTilSDqvxR/8TyU9T91AsO0liGOTa0SSQovCGogg6ctWbfByW3LdoaiSl1HaWKMs3
+        zD/wdBfT6Io7yICUmLfYKn0aNEKTZ5RcDIxvhi/LSOdmoa6VvrKZvm1Bj/dOQ2WgRnuiYN2lNcfF
+        CBnUR07pWj4OZQ29GJpJGlEaw+pYbDsn4d6b40thLtFdwqW4WpjPgVjeKbPcUAVamKVWoSk1766m
+        wkNOAc7vBTV5BtIdKJ4DSboCU2SUhVnYZ5bQ5mLidhDKbwevr8BLwLQjXCcC8LwUefM/5p/NXWJO
+        HW2GxXct5cUdzC04rrFaTOKY1LdYpnMwVHM8V2UMp3h4BwIEqoq7loB4CQvr1/rqKkxfJv+MOJ2s
+        AowdURfKcD9GtIIq3rfzsh8G8E2R/PzE9laxCZh3Ax27PNgY0WTsQg3qXpbjbmUVN1CI8WXqTdgo
+        Kv5ive/S9Xd78GZMMvbDW82O0SLV61cjjm4Bt3inkb9HbWmTihl8SqcS9mY5zS2xV2D9bJxX539H
+        CWiCKAgAAA==
+    headers:
+      Access-Control-Expose-Headers:
+      - CF-Ray
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a02dd1db6b6e36f8-TLV
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 28 May 2026 14:06:26 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - traceloop
+      openai-processing-ms:
+      - '1424'
+      openai-project:
+      - proj_tzz1TbPPOXaf6j9tEkVUBIAa
+      openai-version:
+      - '2020-10-01'
+      set-cookie:
+      - __cf_bm=QnIHGVWXeYNMsGeR1BuZ28Ux60SAzc5t6Qpj0evXPI4-1779977184.5411139-1.0.1.1-3SZdXI.2.O6Cq6gDmmpmU5ZqHn.8Sb6eRJiQdFRJDz4wd9e_DiDNSJpY7t2aQ0pZhuOn9oh001bCMQYvpyAOKbMhYOLiNm8qF1bkr02208KkHG.SGIesp6H0yfh9..Va;
+        HttpOnly; SameSite=None; Secure; Path=/; Domain=api.openai.com; Expires=Thu,
+        28 May 2026 14:36:26 GMT
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '150000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '149999925'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - req_77a806b441db4b71803efb3c2fd7c284
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -81,7 +81,7 @@ def test_chroma_query(exporter, collection):
     assert span.attributes.get(SpanAttributes.CHROMADB_QUERY_N_RESULTS) == 2
 
     events = span.events
-    assert len(events) == 1
+    assert len(events) == 2  # n_results=2 → one event per result
     for event in events:
         assert event.name == Events.DB_QUERY_RESULT.value
         ids_ = event.attributes.get(f"{event.name}.id")

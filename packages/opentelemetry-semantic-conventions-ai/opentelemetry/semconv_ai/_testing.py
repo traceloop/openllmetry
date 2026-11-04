@@ -141,22 +141,6 @@ class TestSpanAttributesLegacyLLMNamesPresent:
         )
         assert getattr(SpanAttributes, legacy_name) == expected_value
 
-
-# ---------------------------------------------------------------------------
-# SpanAttributes — cache attributes
-# ---------------------------------------------------------------------------
-
-
-class TestSpanAttributesCacheDotSeparator:
-    """Cache token attributes use dot-separated sub-namespaces (spec update)."""
-
-    def test_gen_ai_usage_cache_read_input_tokens(self):
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
-
-    def test_gen_ai_usage_cache_creation_input_tokens(self):
-        assert SpanAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
-
-
 # ---------------------------------------------------------------------------
 # SpanAttributes — project-policy attributes use gen_ai namespace
 # ---------------------------------------------------------------------------
@@ -380,6 +364,17 @@ class TestMetersGenAiNamespace:
 # ---------------------------------------------------------------------------
 # Upstream OTel GenAI constants — message & tool attributes
 # ---------------------------------------------------------------------------
+
+class TestUpstreamGenAiCacheAttributes:
+    """Verify upstream OTel cache constants are importable and correct."""
+
+    def test_gen_ai_usage_cache_read_input_tokens(self):
+        from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS == "gen_ai.usage.cache_read.input_tokens"
+
+    def test_gen_ai_usage_cache_creation_input_tokens(self):
+        from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as GenAIAttributes
+        assert GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS == "gen_ai.usage.cache_creation.input_tokens"
 
 
 class TestUpstreamGenAIMessageAttributes:

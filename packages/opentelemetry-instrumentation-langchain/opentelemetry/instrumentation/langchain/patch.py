@@ -486,7 +486,14 @@ def create_agent_wrapper(tracer: Tracer, provider_name: str = "langchain"):
                 tools = args[1]
             if tools:
                 tool_definitions = []
-                for tool in tools:
+                # ToolNode wraps tools but is not itself iterable;
+                # fall back to its tools_by_name dict when available.
+                tools_iter = (
+                    tools.tools_by_name.values()
+                    if hasattr(tools, "tools_by_name")
+                    else tools
+                )
+                for tool in tools_iter:
                     tool_def = _extract_tool_definition(tool)
                     if tool_def:
                         tool_definitions.append(tool_def)

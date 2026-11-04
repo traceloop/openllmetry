@@ -639,6 +639,27 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
+@pytest.mark.vcr
+def test_mistralai_chat_with_cache_tokens(
+    instrument_legacy, mistralai_client, span_exporter, log_exporter
+):
+    mistralai_client.chat.complete(
+        model="mistral-tiny",
+        messages=[
+            UserMessage(content="Tell me a joke about OpenTelemetry"),
+        ],
+    )
+
+    spans = span_exporter.get_finished_spans()
+    mistral_span = spans[0]
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 20
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 18
+    assert (
+        mistral_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
+        == 10
+    )
+
+
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
     assert log.log_record.event_name == event_name
     assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "mistral_ai"

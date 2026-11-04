@@ -327,6 +327,17 @@ def _set_search_attributes(span, kwargs):
         _encode_include(vector_dims),
     )
 
+    # New standardized + per-DB attrs (issue #1870).
+    # Omit when caller supplied no `data` (matches Milvus's count_or_none house style).
+    embeddings_count = count_or_none(query_vectors)
+    if embeddings_count is not None:
+        _set_span_attribute(
+            span, AISpanAttributes.MILVUS_SEARCH_EMBEDDINGS_COUNT, embeddings_count
+        )
+        _set_span_attribute(
+            span, AISpanAttributes.VECTOR_DB_QUERY_EMBEDDINGS_COUNT, embeddings_count
+        )
+
 
 @dont_throw
 def _set_hybrid_search_attributes(span, kwargs):
@@ -466,6 +477,15 @@ def _add_search_result_events(span, kwargs):
 
     if single_query:
         set_global_stats()
+
+    # New standardized cross-DB attrs (issue #1870):
+    # always emit result_count (0 is meaningful — successful search w/ no matches),
+    # emit top_distance only when ≥1 distance is available.
+    span.set_attribute(AISpanAttributes.VECTOR_DB_QUERY_RESULT_COUNT, total_matches)
+    if all_distances:
+        span.set_attribute(
+            AISpanAttributes.VECTOR_DB_QUERY_TOP_DISTANCE, min(all_distances)
+        )
 
 
 @dont_throw
