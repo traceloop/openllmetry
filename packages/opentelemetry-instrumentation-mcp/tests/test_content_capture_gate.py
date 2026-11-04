@@ -16,6 +16,7 @@ an attribute: a status description, and the message and stacktrace that
 """
 
 import json
+import logging
 
 import pytest
 from fastmcp import Client, FastMCP
@@ -27,6 +28,7 @@ from opentelemetry.instrumentation.mcp.instrumentation import (
     ContextSavingStreamWriter,
     InstrumentedStreamWriter,
 )
+from opentelemetry.instrumentation.mcp.utils import guard_trace
 from opentelemetry.trace import StatusCode
 
 MARKER = "content-capture-marker-9f3a"
@@ -484,3 +486,25 @@ async def test_content_allow_list_override_enables_capture(
         context.detach(token)
 
     assert MARKER in _all_recorded_text(span_exporter)
+
+
+@pytest.mark.parametrize(("switch", "expected"), [("false", False), ("true", True)])
+def test_guard_log_line_honors_the_switch(monkeypatch, caplog, switch, expected) -> None:
+    """A guard's own log line is telemetry too: its message obeys the same switch.
+
+    The marker stands for caller data quoted back by a library exception -- a
+    pydantic ``ValidationError`` names the input value it rejected, and guards
+    wrap the code that hands such a library its arguments. Captured at DEBUG, so
+    this also pins that the traceback line does not reinstate what the WARNING
+    withholds: the raise site below has the marker in its own source line.
+    """
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", switch)
+    logger = logging.getLogger("opentelemetry.instrumentation.mcp.test_gate")
+
+    with caplog.at_level(logging.DEBUG):
+        with guard_trace(logger, "mcp.test.origin"):
+            raise ValueError(f"rejected {MARKER}")
+
+    assert (MARKER in caplog.text) is expected
+    assert "ValueError" in caplog.text, "the type is not content and must survive"
+    assert "mcp.test.origin" in caplog.text, "the origin is not content and must survive"
