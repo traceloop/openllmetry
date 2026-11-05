@@ -146,12 +146,11 @@ def set_span_request_attributes(span, kwargs):
     if stop_sequences := kwargs.get("stop_sequences", []):
         _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, dump_object(stop_sequences))
 
-    # TODO: Migrate to GEN_AI_REQUEST_FREQUENCY_PENALTY and GEN_AI_REQUEST_PRESENCE_PENALTY
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
     )
 
 
