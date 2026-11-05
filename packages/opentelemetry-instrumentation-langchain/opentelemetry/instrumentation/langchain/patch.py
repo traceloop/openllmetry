@@ -1,5 +1,7 @@
 """Patching utilities for LangGraph instrumentation."""
 
+import functools
+import inspect
 import json
 import logging
 from opentelemetry import context as context_api
@@ -386,6 +388,53 @@ def create_async_middleware_hook_wrapper(tracer: Tracer, hook_name: str):
                 raise
 
     return async_wrapper
+
+
+_MIDDLEWARE_HOOK_MARKER = "_traceloop_instrumented_hook"
+
+
+def wrap_middleware_hook(middleware_cls, hook_name: str, wrapper) -> None:
+    """Replace a hook on ``middleware_cls`` with a traced plain function.
+
+    ``create_agent`` decides which hooks a middleware overrides by comparing
+    ``cls.hook is not AgentMiddleware.hook``. A wrapt wrapper returns a new
+    object on every attribute access, so that identity check would always be
+    true and the agent graph would gain an empty node per middleware hook.
+    A plain function is returned as-is on class access, which keeps the
+    identity, and ``functools.wraps`` keeps the signature, the sync or async
+    kind, and any attributes LangChain reads from the hook.
+
+    Args:
+        middleware_cls: Class that owns the hook (``AgentMiddleware``).
+        hook_name: Name of the hook to wrap (e.g. "before_model").
+        wrapper: A ``(wrapped, instance, args, kwargs)`` wrapper, sync or
+            async to match the hook.
+    """
+    original = middleware_cls.__dict__[hook_name]
+    if getattr(original, _MIDDLEWARE_HOOK_MARKER, False):
+        return
+
+    if inspect.iscoroutinefunction(original):
+
+        @functools.wraps(original)
+        async def hook(self, *args, **kwargs):
+            return await wrapper(original.__get__(self, type(self)), self, args, kwargs)
+
+    else:
+
+        @functools.wraps(original)
+        def hook(self, *args, **kwargs):
+            return wrapper(original.__get__(self, type(self)), self, args, kwargs)
+
+    setattr(hook, _MIDDLEWARE_HOOK_MARKER, True)
+    setattr(middleware_cls, hook_name, hook)
+
+
+def unwrap_middleware_hook(middleware_cls, hook_name: str) -> None:
+    """Restore a hook replaced by :func:`wrap_middleware_hook`."""
+    current = middleware_cls.__dict__.get(hook_name)
+    if getattr(current, _MIDDLEWARE_HOOK_MARKER, False):
+        setattr(middleware_cls, hook_name, current.__wrapped__)
 
 
 def _extract_tool_definition(tool: Any) -> dict | None:

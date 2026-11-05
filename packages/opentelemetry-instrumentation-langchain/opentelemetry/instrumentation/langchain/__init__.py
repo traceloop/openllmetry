@@ -18,6 +18,8 @@ from opentelemetry.instrumentation.langchain.patch import (
     create_command_init_wrapper,
     create_middleware_hook_wrapper,
     create_async_middleware_hook_wrapper,
+    unwrap_middleware_hook,
+    wrap_middleware_hook,
     create_agent_wrapper,
 )
 from opentelemetry.instrumentation.langchain.utils import is_package_available
@@ -297,27 +299,19 @@ class LangchainInstrumentor(BaseInstrumentor):
 
     def _wrap_middleware_hooks(self, tracer):
         """Wrap AgentMiddleware hook methods for instrumentation."""
-        # Sync hooks
-        sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
-        for hook_name in sync_hooks:
-            try:
-                wrap_function_wrapper(
-                    "langchain.agents.middleware.types",
-                    f"AgentMiddleware.{hook_name}",
-                    create_middleware_hook_wrapper(tracer, hook_name),
-                )
-            except Exception as e:
-                logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
+        try:
+            from langchain.agents.middleware.types import AgentMiddleware
+        except ImportError:
+            logger.debug("AgentMiddleware is not available, skipping middleware hooks")
+            return
 
-        # Async hooks
+        sync_hooks = ["before_model", "after_model", "before_agent", "after_agent"]
         async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
-        for hook_name in async_hooks:
+        hooks = [(name, create_middleware_hook_wrapper(tracer, name)) for name in sync_hooks]
+        hooks += [(name, create_async_middleware_hook_wrapper(tracer, name)) for name in async_hooks]
+        for hook_name, wrapper in hooks:
             try:
-                wrap_function_wrapper(
-                    "langchain.agents.middleware.types",
-                    f"AgentMiddleware.{hook_name}",
-                    create_async_middleware_hook_wrapper(tracer, hook_name),
-                )
+                wrap_middleware_hook(AgentMiddleware, hook_name, wrapper)
             except Exception as e:
                 logger.debug("Failed to wrap AgentMiddleware.%s: %s", hook_name, e)
 
@@ -342,7 +336,9 @@ class LangchainInstrumentor(BaseInstrumentor):
             async_hooks = ["abefore_model", "aafter_model", "abefore_agent", "aafter_agent"]
             for hook_name in sync_hooks + async_hooks:
                 try:
-                    unwrap("langchain.agents.middleware.types", f"AgentMiddleware.{hook_name}")
+                    from langchain.agents.middleware.types import AgentMiddleware
+
+                    unwrap_middleware_hook(AgentMiddleware, hook_name)
                 except Exception:
                     pass
 
