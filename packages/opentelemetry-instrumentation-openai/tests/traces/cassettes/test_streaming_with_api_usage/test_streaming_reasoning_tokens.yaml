@@ -1,0 +1,42 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Count r''s in strawberry"}],"model":"deepseek-chat","stream":true}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - api.deepseek.com
+      user-agent:
+      - OpenAI/Python 1.99.7
+    method: POST
+    uri: https://api.deepseek.com/beta/chat/completions
+  response:
+    body:
+      string: 'data: {"id":"chunk-reasoning-0001","object":"chat.completion.chunk","created":1752602178,"model":"deepseek-chat","system_fingerprint":"fp_reasoning_prod","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+
+
+        data: {"id":"chunk-reasoning-0001","object":"chat.completion.chunk","created":1752602178,"model":"deepseek-chat","system_fingerprint":"fp_reasoning_prod","choices":[{"index":0,"delta":{"content":"Six"},"finish_reason":null}]}
+
+
+        data: {"id":"chunk-reasoning-0001","object":"chat.completion.chunk","created":1752602178,"model":"deepseek-chat","system_fingerprint":"fp_reasoning_prod","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":12,"completion_tokens":89,"total_tokens":101,"completion_tokens_details":{"reasoning_tokens":64},"prompt_tokens_details":{"cached_tokens":0}}}
+
+
+        data: [DONE]
+
+
+        '
+    headers:
+      content-type:
+      - text/event-stream
+      transfer-encoding:
+      - chunked
+    status:
+      code: 200
+      message: OK
+version: 1
