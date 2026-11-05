@@ -1062,6 +1062,44 @@ def test_streaming_finish_reason_none_does_not_set_span_attr():
     assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes
 
 
+@pytest.mark.parametrize(
+    "with_content, expected_output",
+    [
+        (False, None),
+        (True, [{"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "stop"}]),
+    ],
+)
+def test_streaming_finish_reason_recorded_from_message_delta(with_content, expected_output):
+    """The message_delta stop_reason must be recorded even when the streamed
+    turn has no content blocks (content == [])."""
+    from opentelemetry.instrumentation.anthropic.streaming import (
+        _handle_streaming_response,
+        _process_response_item,
+    )
+
+    items = []
+    if with_content:
+        items += [
+            SimpleNamespace(type="content_block_start", index=0, content_block=SimpleNamespace(type="text")),
+            SimpleNamespace(
+                type="content_block_delta", index=0, delta=SimpleNamespace(type="text_delta", text="hi")
+            ),
+        ]
+    items.append(
+        SimpleNamespace(type="message_delta", delta=SimpleNamespace(stop_reason="end_turn"), usage=None)
+    )
+    complete_response = {"events": [], "model": "", "usage": {}, "id": ""}
+    for item in items:
+        _process_response_item(item, complete_response)
+
+    span = make_span()
+    _handle_streaming_response(span, None, complete_response)
+
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
+    output = span.attributes.get(GenAIAttributes.GEN_AI_OUTPUT_MESSAGES)
+    assert (json.loads(output) if output else None) == expected_output
+
+
 # ---------------------------------------------------------------------------
 # P2 #1 — Streaming: unknown block types (e.g. redacted_thinking) must be skipped
 # ---------------------------------------------------------------------------
