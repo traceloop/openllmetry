@@ -1027,3 +1027,43 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("sync", [True, False], ids=["sync", "async"])
+async def test_cohere_v2_stream_ends_span_when_stream_fails(
+    span_exporter, tracer_provider, sync
+):
+    from opentelemetry.instrumentation.cohere.streaming import (
+        aprocess_chat_v2_streaming_response,
+        process_chat_v2_streaming_response,
+    )
+
+    items = [
+        {
+            "type": "message-start",
+            "id": "id-1",
+            "delta": {"message": {"role": "assistant", "content": [], "tool_plan": "", "tool_calls": []}},
+        },
+        {"type": "content-start", "delta": {"message": {"content": {"type": "text", "text": ""}}}},
+    ]
+
+    def failing_stream():
+        yield from items
+        raise ConnectionError("stream dropped")
+
+    async def afailing_stream():
+        for item in items:
+            yield item
+        raise ConnectionError("stream dropped")
+
+    span = tracer_provider.get_tracer(__name__).start_span("cohere.chat")
+    with pytest.raises(ConnectionError):
+        if sync:
+            for _ in process_chat_v2_streaming_response(span, None, None, failing_stream()):
+                pass
+        else:
+            async for _ in aprocess_chat_v2_streaming_response(span, None, None, afailing_stream()):
+                pass
+
+    assert len(span_exporter.get_finished_spans()) == 1
