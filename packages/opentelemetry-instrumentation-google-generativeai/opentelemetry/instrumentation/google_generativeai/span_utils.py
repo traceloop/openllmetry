@@ -405,6 +405,89 @@ def _process_argument_sync(argument, span):
     return [{"type": "text", "content": str(argument)}]
 
 
+def _is_content_like(item):
+    """True for a Content (or Content dict) turn, as opposed to a bare part."""
+    if isinstance(item, dict):
+        return "parts" in item or "role" in item
+    return not isinstance(item, str) and hasattr(item, "parts")
+
+
+def _is_model_part(item):
+    if isinstance(item, dict):
+        return "functionCall" in item or "function_call" in item
+    return bool(getattr(item, "function_call", None))
+
+
+def _group_contents(contents):
+    """Split ``contents`` into turns the way google.genai's ``t_contents`` does.
+
+    A single (non-list) value is one turn. In a list, every Content is its own
+    turn, while consecutive bare parts (strings, Parts, images) are grouped into
+    one turn: ``user``, or ``model`` for a run of function-call parts.
+    Returns ``(role, content_or_None, parts)`` tuples.
+    """
+    if not isinstance(contents, list):
+        contents = [contents]
+    turns = []
+    pending = []
+    pending_is_model = False
+    for item in contents:
+        if _is_content_like(item):
+            if pending:
+                turns.append(("model" if pending_is_model else "user", None, pending))
+                pending = []
+            role = item.get("role") if isinstance(item, dict) else getattr(item, "role", None)
+            turns.append((role or "user", item, None))
+            continue
+        is_model = _is_model_part(item)
+        if pending and is_model != pending_is_model:
+            turns.append(("model" if pending_is_model else "user", None, pending))
+            pending = []
+        pending_is_model = is_model
+        pending.append(item)
+    if pending:
+        turns.append(("model" if pending_is_model else "user", None, pending))
+    return turns
+
+
+async def _input_messages_from_contents(contents, span):
+    messages = []
+    for role, content, bare_parts in _group_contents(contents):
+        if content is not None:
+            parts = await _process_content_item(content, span)
+        else:
+            parts = []
+            for idx, item in enumerate(bare_parts):
+                if isinstance(item, str):
+                    parts.append({"type": "text", "content": item})
+                elif isinstance(item, dict):
+                    parts.append(_map_dict_part(item))
+                else:
+                    parts.extend(await _parts_from_genai_part_async(item, span, idx))
+        if parts:
+            messages.append({"role": _normalize_message_role(role), "parts": parts})
+    return messages
+
+
+def _input_messages_from_contents_sync(contents, span):
+    messages = []
+    for role, content, bare_parts in _group_contents(contents):
+        if content is not None:
+            parts = _process_content_item_sync(content, span)
+        else:
+            parts = []
+            for idx, item in enumerate(bare_parts):
+                if isinstance(item, str):
+                    parts.append({"type": "text", "content": item})
+                elif isinstance(item, dict):
+                    parts.append(_map_dict_part(item))
+                else:
+                    parts.extend(_parts_from_genai_part_sync(item, span, idx))
+        if parts:
+            messages.append({"role": _normalize_message_role(role), "parts": parts})
+    return messages
+
+
 def _collect_finish_reasons_from_response(response):
     reasons = []
     candidates = getattr(response, "candidates", None) or []
@@ -455,19 +538,8 @@ async def set_input_attributes(span, args, kwargs, llm_model):
                     "parts": [{"type": "text", "content": contents}],
                 }
             )
-        elif isinstance(contents, list):
-            for content_item in contents:
-                parts = await _process_content_item(content_item, span)
-                if parts:
-                    messages.append(
-                        {
-                            "role": _normalize_message_role(
-                                content_item.get("role", "user") if isinstance(content_item, dict)
-                                else getattr(content_item, "role", "user")
-                            ),
-                            "parts": parts,
-                        }
-                    )
+        elif contents is not None:
+            messages.extend(await _input_messages_from_contents(contents, span))
     elif args and len(args) > 0:
         for argument in args:
             parts = await _process_argument(argument, span)
@@ -506,19 +578,8 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
                     "parts": [{"type": "text", "content": contents}],
                 }
             )
-        elif isinstance(contents, list):
-            for content in contents:
-                parts = _process_content_item_sync(content, span)
-                if parts:
-                    messages.append(
-                        {
-                            "role": _normalize_message_role(
-                                content.get("role", "user") if isinstance(content, dict)
-                                else getattr(content, "role", "user")
-                            ),
-                            "parts": parts,
-                        }
-                    )
+        elif contents is not None:
+            messages.extend(_input_messages_from_contents_sync(contents, span))
     elif args and len(args) > 0:
         for arg in args:
             parts = _process_argument_sync(arg, span)
