@@ -659,3 +659,36 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.asyncio
+async def test_async_embeddings_with_streaming_response(instrument_legacy, span_exporter):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4551:
+    the AsyncAPIResponse returned by async `with_streaming_response` must be parsed
+    (awaited) so the embeddings response is recorded on the span."""
+    body = {
+        "object": "list",
+        "data": [{"object": "embedding", "index": 0, "embedding": [0.1, 0.2, 0.3]}],
+        "model": "text-embedding-ada-002",
+        "usage": {"prompt_tokens": 8, "total_tokens": 8},
+    }
+    client = openai.AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=body))
+        ),
+    )
+
+    async with client.embeddings.with_streaming_response.create(
+        input="Tell me a joke about opentelemetry",
+        model="text-embedding-ada-002",
+    ) as response:
+        embeddings = await response.parse()
+
+    assert embeddings.data[0].embedding == [0.1, 0.2, 0.3]
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["openai.embeddings"]
+    open_ai_span = spans[0]
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_MODEL) == "text-embedding-ada-002"
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 8
