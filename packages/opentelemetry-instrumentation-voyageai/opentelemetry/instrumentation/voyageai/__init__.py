@@ -13,7 +13,7 @@ from opentelemetry.instrumentation.voyageai.span_utils import (
     set_span_request_attributes,
     set_span_response_attributes,
 )
-from opentelemetry.instrumentation.voyageai.utils import dont_throw
+from opentelemetry.instrumentation.voyageai.utils import dont_throw, get_call_arguments
 from opentelemetry.instrumentation.voyageai.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import (
@@ -117,8 +117,9 @@ def _wrap(
     )
 
     try:
-        set_span_request_attributes(span, kwargs)
-        _handle_input_content(span, operation_name, kwargs)
+        call_args = get_call_arguments(wrapped, args, kwargs)
+        set_span_request_attributes(span, call_args)
+        _handle_input_content(span, operation_name, call_args)
 
         response = wrapped(*args, **kwargs)
 
@@ -161,8 +162,9 @@ async def _awrap(
     )
 
     try:
-        set_span_request_attributes(span, kwargs)
-        _handle_input_content(span, operation_name, kwargs)
+        call_args = get_call_arguments(wrapped, args, kwargs)
+        set_span_request_attributes(span, call_args)
+        _handle_input_content(span, operation_name, call_args)
 
         response = await wrapped(*args, **kwargs)
 

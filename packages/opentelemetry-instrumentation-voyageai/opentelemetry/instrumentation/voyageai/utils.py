@@ -1,4 +1,5 @@
 import dataclasses
+import inspect
 import json
 import logging
 import os
@@ -75,3 +76,19 @@ def to_dict(obj):
         return dict(obj)
     except Exception:
         return obj
+
+
+def get_call_arguments(wrapped, args, kwargs):
+    """
+    Returns the arguments of a wrapped call as a single name -> value dict.
+
+    Voyage AI methods such as ``embed(texts, model=...)`` and
+    ``rerank(query, documents, model)`` are commonly called with positional
+    arguments, so reading ``kwargs`` alone would silently drop them.
+    Falls back to ``kwargs`` if the signature cannot be bound.
+    """
+    try:
+        bound = inspect.signature(wrapped).bind_partial(*args, **kwargs)
+        return dict(bound.arguments)
+    except Exception:
+        return dict(kwargs)
