@@ -23,14 +23,16 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _build_tool_def_dict,
     _extract_model_name_from_provider_format,
+    _get_openai_base_url,
     _parse_arguments,
     _set_request_attributes,
     _set_span_attribute,
     _set_tool_definitions_json,
+    metric_shared_attributes,
     model_as_dict,
 )
-
 from opentelemetry.instrumentation.openai.utils import (
+    _with_responses_telemetry_wrapper,
     _with_tracer_wrapper,
     dont_throw,
     json_dumps,
@@ -534,9 +536,44 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
+def _responses_metric_attributes(instance, response_model, is_streaming=False):
+    return metric_shared_attributes(
+        response_model=_extract_model_name_from_provider_format(response_model) or None,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=is_streaming,
+    )
+
+
+def _error_metric_attributes(instance, request_model, exception, is_streaming=False):
+    attributes = _responses_metric_attributes(instance, None, is_streaming)
+    del attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
+    if request_model:
+        attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = request_model
+    attributes[ERROR_TYPE] = exception.__class__.__name__
+    return attributes
+
+
 @dont_throw
-@_with_tracer_wrapper
-def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+def _record_duration(duration_histogram, start_time, attributes):
+    if duration_histogram:
+        duration_histogram.record((time.time_ns() - start_time) / 1e9, attributes=attributes)
+
+
+@dont_throw
+def _record_token_usage(token_histogram, usage, attributes):
+    if token_histogram and usage:
+        for token_type, count in (("input", usage.input_tokens), ("output", usage.output_tokens)):
+            token_histogram.record(
+                count, attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type}
+            )
+
+
+@dont_throw
+@_with_responses_telemetry_wrapper
+def responses_get_or_create_wrapper(
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -563,8 +600,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
+                instance=instance,
+                token_histogram=token_histogram,
+                duration_histogram=duration_histogram,
             )
     except Exception as e:
+        _record_duration(
+            duration_histogram,
+            start_time,
+            _error_metric_attributes(
+                instance, non_sentinel_kwargs.get("model"), e, bool(non_sentinel_kwargs.get("stream"))
+            ),
+        )
         response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
         if response_id and response_id in responses:
@@ -708,14 +755,18 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        # One point per emitted span, so background polls and repeat retrieves don't add operations
+        metric_attributes = _responses_metric_attributes(instance, parsed_response.model)
+        _record_duration(duration_histogram, traced_data.start_time, metric_attributes)
+        _record_token_usage(token_histogram, traced_data.usage, metric_attributes)
 
     return response
 
 
 @dont_throw
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -743,8 +794,18 @@ async def async_responses_get_or_create_wrapper(
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
                 tracer=tracer,
+                instance=instance,
+                token_histogram=token_histogram,
+                duration_histogram=duration_histogram,
             )
     except Exception as e:
+        _record_duration(
+            duration_histogram,
+            start_time,
+            _error_metric_attributes(
+                instance, non_sentinel_kwargs.get("model"), e, bool(non_sentinel_kwargs.get("stream"))
+            ),
+        )
         response_id = non_sentinel_kwargs.get("response_id")
         existing_data = {}
         if response_id and response_id in responses:
@@ -886,6 +947,10 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        # One point per emitted span, so background polls and repeat retrieves don't add operations
+        metric_attributes = _responses_metric_attributes(instance, parsed_response.model)
+        _record_duration(duration_histogram, traced_data.start_time, metric_attributes)
+        _record_token_usage(token_histogram, traced_data.usage, metric_attributes)
 
     return response
 
@@ -960,6 +1025,9 @@ class ResponseStream(ObjectProxy):
     _request_kwargs = None
     _tracer = None
     _traced_data = None
+    _instance = None
+    _token_histogram = None
+    _duration_histogram = None
 
     def __init__(
         self,
@@ -969,10 +1037,16 @@ class ResponseStream(ObjectProxy):
         request_kwargs=None,
         tracer=None,
         traced_data=None,
+        instance=None,
+        token_histogram=None,
+        duration_histogram=None,
     ):
         super().__init__(response)
         self._span = span
         self._start_time = start_time
+        self._instance = instance
+        self._token_histogram = token_histogram
+        self._duration_histogram = duration_histogram
         # Filter sentinel values (defensive, in case called directly without prior filtering)
         self._request_kwargs = _sanitize_sentinel_values(request_kwargs or {})
         self._tracer = tracer
@@ -1109,6 +1183,20 @@ class ResponseStream(ObjectProxy):
         if hasattr(chunk, "response") and chunk.response:
             self._complete_response_data = chunk.response
 
+    def _metric_attributes(self):
+        return _responses_metric_attributes(
+            self._instance,
+            self._traced_data.response_model or self._request_kwargs.get("model"),
+            is_streaming=True,
+        )
+
+    def _record_error_duration(self, exception):
+        _record_duration(
+            self._duration_histogram,
+            self._start_time,
+            _error_metric_attributes(self._instance, self._request_kwargs.get("model"), exception, True),
+        )
+
     @dont_throw
     def _process_complete_response(self):
         """Process the complete response and emit span"""
@@ -1149,12 +1237,16 @@ class ResponseStream(ObjectProxy):
                 self._span.set_status(StatusCode.OK)
                 self._span.end()
                 self._cleanup_completed = True
+                metric_attributes = self._metric_attributes()
+                _record_duration(self._duration_histogram, self._start_time, metric_attributes)
+                _record_token_usage(self._token_histogram, self._traced_data.usage, metric_attributes)
 
             except Exception as e:
                 if self._span and self._span.is_recording():
                     self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
                     self._span.set_status(StatusCode.ERROR, str(e))
                     self._span.end()
+                self._record_error_duration(e)
                 self._cleanup_completed = True
 
     @dont_throw
@@ -1170,6 +1262,7 @@ class ResponseStream(ObjectProxy):
                 self._span.set_status(StatusCode.ERROR, str(exception))
                 self._span.end()
 
+            self._record_error_duration(exception)
             self._cleanup_completed = True
 
     @dont_throw
@@ -1185,6 +1278,7 @@ class ResponseStream(ObjectProxy):
                     self._span.set_status(StatusCode.OK)
                     self._span.end()
 
+                _record_duration(self._duration_histogram, self._start_time, self._metric_attributes())
                 self._cleanup_completed = True
 
             except Exception:
