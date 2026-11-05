@@ -45,7 +45,7 @@ def emit_message_events(llm_request_type, args, kwargs, event_logger):
             content = message.get("content", {})
             images = message.get("images")
             if images is not None:
-                content["images"] = images
+                content = {"content": content, "images": images}
             tool_calls = message.get("tool_calls", None)
             if tool_calls is not None:
                 tool_calls = [
