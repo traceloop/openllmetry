@@ -72,6 +72,12 @@ def test_client_spans(exporter, genai_client):
     assert output_messages[0]["parts"][0]["type"] == "text"
     assert "content" in output_messages[0]["parts"][0]
 
+    # The deprecated indexed attributes must not be emitted alongside them
+    assert not any(key.startswith("gen_ai.prompt.") for key in attrs)
+    assert not any(key.startswith("gen_ai.completion.") for key in attrs)
+
+    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_ID] == "-hk4afOSMZKkjuMPnJWGkAk"
+
     assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in attrs
     finish_reasons = attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
     assert isinstance(finish_reasons, (list, tuple))
