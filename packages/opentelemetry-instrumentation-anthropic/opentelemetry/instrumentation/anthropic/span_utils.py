@@ -392,17 +392,17 @@ def set_response_attributes(span, response):
 
 
 @dont_throw
-def set_streaming_response_attributes(span, complete_response_events):
+def set_streaming_response_attributes(span, complete_response_events, stop_reason=None):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    if not span.is_recording() or not complete_response_events:
+    if not span.is_recording() or not (complete_response_events or stop_reason):
         return
 
     # Collect all parts and determine finish_reason
     parts = []
     finish_reasons = []
 
-    for event in complete_response_events:
+    for event in complete_response_events or []:
         finish_reason = event.get("finish_reason")
         if finish_reason:
             mapped = _map_finish_reason(finish_reason)
@@ -435,6 +435,10 @@ def set_streaming_response_attributes(span, complete_response_events):
                     "type": "text",
                     "content": event.get("text"),
                 })
+
+    # A turn with no content blocks only carries the message-level stop_reason
+    if not finish_reasons and stop_reason:
+        finish_reasons.append(_map_finish_reason(stop_reason))
 
     if finish_reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
