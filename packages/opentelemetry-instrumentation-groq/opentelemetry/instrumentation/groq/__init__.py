@@ -23,9 +23,11 @@ from opentelemetry.instrumentation.groq.span_utils import (
     set_streaming_response_attributes,
 )
 from opentelemetry.instrumentation.groq.utils import (
+    dont_throw,
     error_metrics_attributes,
     shared_metrics_attributes,
     should_emit_events,
+    streaming_metrics_attributes,
 )
 from opentelemetry.instrumentation.groq.version import __version__
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -190,12 +192,96 @@ def _handle_streaming_response(
         set_streaming_response_attributes(span, accumulated_content, finish_reason, tool_calls=tool_calls)
 
 
-def _create_stream_processor(response, span, event_logger):
+@dont_throw
+def _record_error_duration(
+    duration_histogram: Optional[Histogram],
+    start_time: Optional[float],
+    exception: Exception,
+) -> None:
+    """Record how long a failed call took on the duration histogram.
+
+    Shared by the stream processors and ``_wrap``/``_awrap`` so the four copies
+    of this block can't drift apart.
+
+    Guarded because it runs inside an ``except`` block: if ``record()`` raised,
+    that new exception would replace the one the caller actually hit and they
+    would see a telemetry failure instead of their own error.
+    """
+    if not duration_histogram or start_time is None:
+        return
+    duration_histogram.record(
+        time.time() - start_time,
+        attributes=error_metrics_attributes(exception),
+    )
+
+
+@dont_throw
+def _record_streaming_metrics(
+    usage,
+    token_histogram,
+    duration_histogram,
+    start_time,
+    llm_model,
+    response_model=None,
+) -> None:
+    """Record token usage and duration metrics for a consumed streaming response.
+
+    Called once the stream is fully drained; the final chunk carries usage data.
+
+    Runs in the generator's ``else:`` block, so an exception here would surface
+    in the caller's ``for`` loop *after* they consumed the whole stream - hence
+    the guard, like every other telemetry helper in this package.
+    """
+    metric_attributes = streaming_metrics_attributes(response_model or llm_model)
+
+    if duration_histogram and start_time is not None:
+        duration_histogram.record(
+            time.time() - start_time,
+            attributes=metric_attributes,
+        )
+
+    if usage and token_histogram:
+        # Token points carry the same attribute set as the non-streaming path so
+        # dashboards grouping by operation/request model don't drop streaming calls.
+        token_attributes = {
+            **metric_attributes,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+            GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+        }
+        if usage.prompt_tokens is not None:
+            token_histogram.record(
+                usage.prompt_tokens,
+                attributes={
+                    **token_attributes,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                },
+            )
+        if usage.completion_tokens is not None:
+            token_histogram.record(
+                usage.completion_tokens,
+                attributes={
+                    **token_attributes,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                },
+            )
+
+
+def _create_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram=None,
+    duration_histogram=None,
+    start_time=None,
+    llm_model=None,
+):
     """Create a generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    # Last model reported by the server; falls back to the requested model.
+    response_model = llm_model
 
     try:
         for chunk in response:
@@ -207,8 +293,11 @@ def _create_stream_processor(response, span, event_logger):
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if getattr(chunk, "model", None):
+                response_model = chunk.model
             yield chunk
     except Exception as e:
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -218,18 +307,31 @@ def _create_stream_processor(response, span, event_logger):
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
         )
+        _record_streaming_metrics(
+            usage, token_histogram, duration_histogram, start_time, llm_model, response_model
+        )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
     finally:
         span.end()
 
 
-async def _create_async_stream_processor(response, span, event_logger):
+async def _create_async_stream_processor(
+    response,
+    span,
+    event_logger,
+    token_histogram=None,
+    duration_histogram=None,
+    start_time=None,
+    llm_model=None,
+):
     """Create an async generator that processes a stream while collecting telemetry."""
     accumulated_content = ""
     accumulated_tool_calls: dict = {}
     accumulated_finish_reasons: list = []
     usage = None
+    # Last model reported by the server; falls back to the requested model.
+    response_model = llm_model
 
     try:
         async for chunk in response:
@@ -241,8 +343,11 @@ async def _create_async_stream_processor(response, span, event_logger):
             accumulated_finish_reasons.extend(chunk_finish_reasons)
             if chunk_usage:
                 usage = chunk_usage
+            if getattr(chunk, "model", None):
+                response_model = chunk.model
             yield chunk
     except Exception as e:
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -251,6 +356,9 @@ async def _create_async_stream_processor(response, span, event_logger):
         tool_calls = [accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls)] or None
         _handle_streaming_response(
             span, accumulated_content, tool_calls, accumulated_finish_reasons, usage, event_logger
+        )
+        _record_streaming_metrics(
+            usage, token_histogram, duration_histogram, start_time, llm_model, response_model
         )
         if span.is_recording():
             span.set_status(Status(StatusCode.OK))
@@ -310,24 +418,24 @@ def _wrap(
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
-
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
-
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
 
-    end_time = time.time()
-
     if is_streaming_response(response):
         try:
-            return _create_stream_processor(response, span, event_logger)
+            return _create_stream_processor(
+                response,
+                span,
+                event_logger,
+                token_histogram,
+                duration_histogram,
+                start_time,
+                llm_model,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",
@@ -398,24 +506,24 @@ async def _awrap(
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
-        end_time = time.time()
-        attributes = error_metrics_attributes(e)
-
-        if duration_histogram:
-            duration = end_time - start_time
-            duration_histogram.record(duration, attributes=attributes)
-
+        _record_error_duration(duration_histogram, start_time, e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         span.end()
         raise
 
-    end_time = time.time()
-
     if is_streaming_response(response):
         try:
-            return _create_async_stream_processor(response, span, event_logger)
+            return _create_async_stream_processor(
+                response,
+                span,
+                event_logger,
+                token_histogram,
+                duration_histogram,
+                start_time,
+                llm_model,
+            )
         except Exception as ex:
             logger.warning(
                 "Failed to process streaming response for groq span, error: %s",

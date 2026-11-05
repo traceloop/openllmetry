@@ -133,6 +133,21 @@ def _set_model_input_attributes(span, to_wrap, kwargs):
     )
 
 
+def _content_as_str(content):
+    # Reasoning models answer with a list of content chunks, which are SDK models
+    # rather than plain dicts, so they are dumped before being serialised.
+    if content is None or isinstance(content, str):
+        return content
+    return json.dumps(
+        [
+            chunk.model_dump(mode="json", exclude_none=True)
+            if hasattr(chunk, "model_dump")
+            else chunk
+            for chunk in content
+        ]
+    )
+
+
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
@@ -149,11 +164,7 @@ def _set_response_attributes(span, llm_request_type, response):
             _set_span_attribute(
                 span,
                 f"{prefix}.content",
-                (
-                    choice.message.content
-                    if isinstance(choice.message.content, str)
-                    else json.dumps(choice.message.content)
-                ),
+                _content_as_str(choice.message.content),
             )
             _set_span_attribute(
                 span,
@@ -217,6 +228,54 @@ def _set_model_response_attributes(span, llm_request_type, response):
             )
 
 
+def _append_chunk(chunks, chunk):
+    # A delta that continues the trailing chunk of the same type extends it, so a
+    # streamed answer ends up with the same chunks as the non-streamed one.
+    last = chunks[-1] if chunks else None
+    if last is not None and last.get("type") == chunk.get("type"):
+        if chunk.get("type") == "text":
+            last["text"] = last.get("text", "") + chunk.get("text", "")
+            return
+        if chunk.get("type") == "thinking":
+            thoughts = last.setdefault("thinking", [])
+            for thought in chunk.get("thinking") or []:
+                if (
+                    thoughts
+                    and thoughts[-1].get("type") == "text"
+                    and thought.get("type") == "text"
+                ):
+                    thoughts[-1]["text"] = thoughts[-1].get("text", "") + thought.get(
+                        "text", ""
+                    )
+                else:
+                    thoughts.append(dict(thought))
+            return
+    chunks.append(dict(chunk))
+
+
+def _merge_delta_content(current, delta):
+    # Text deltas are joined as before. Reasoning models stream lists of chunks,
+    # which are collected as plain data so the whole answer can be serialised.
+    if not delta:
+        return current
+    if isinstance(delta, str):
+        if isinstance(current, list):
+            _append_chunk(current, {"type": "text", "text": delta})
+            return current
+        return (current or "") + delta
+    chunks = current if isinstance(current, list) else []
+    if isinstance(current, str) and current:
+        chunks = [{"type": "text", "text": current}]
+    for chunk in delta:
+        _append_chunk(
+            chunks,
+            chunk.model_dump(mode="json", exclude_none=True)
+            if hasattr(chunk, "model_dump")
+            else chunk,
+        )
+    return chunks
+
+
 def _accumulate_streaming_response(span, event_logger, llm_request_type, response):
     accumulated_response = ChatCompletionResponse(
         id="",
@@ -251,7 +310,9 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
                 )
 
             accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
+            accumulated_response.choices[idx].message.content = _merge_delta_content(
+                accumulated_response.choices[idx].message.content, choice.delta.content
+            )
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)
@@ -295,7 +356,9 @@ async def _aaccumulate_streaming_response(
                 )
 
             accumulated_response.choices[idx].finish_reason = choice.finish_reason
-            accumulated_response.choices[idx].message.content += choice.delta.content
+            accumulated_response.choices[idx].message.content = _merge_delta_content(
+                accumulated_response.choices[idx].message.content, choice.delta.content
+            )
             accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)
@@ -360,7 +423,7 @@ def _emit_choice_events(
                 ChoiceEvent(
                     index=choice.index,
                     message={
-                        "content": choice.message.content,
+                        "content": _content_as_str(choice.message.content),
                         "role": choice.message.role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",

@@ -1,3 +1,35 @@
+## v0.63.0 (2026-11-05)
+
+### Feat
+
+- **sdk**: add trace_content parameter to Traceloop.init() (#4565)
+
+### Fix
+
+- **mcp**: don't let a tracing failure in send_request return None (#4672)
+- **mcp**: nested async with Client leaks the session span context (#4622)
+- **mcp**: stop @dont_throw from swallowing wrapped-call exceptions (#4589)
+- **vertexai**: count thinking tokens in gen_ai.usage.output_tokens (#4613)
+- **google-generativeai**: count thinking tokens in gen_ai.usage.output_tokens (#4603)
+- **bedrock**: trace invoke_model* calls whose body is a file-like object (#4602)
+- **openai**: preserve non-ASCII characters in JSON span attributes (#4566)
+- **google-generativeai**: correct version to match released package version (#4573)
+- **crewai**: correct __version__ to match released package version (#4571)
+- **sdk**: declare requests and httpx as runtime dependencies (#4543)
+- **openai**: remove completed responses from the global responses dict (#4531)
+
+## v0.62.4 (2026-09-29)
+
+### Fix
+
+- **groq**: record token usage and duration metrics for streaming responses (#4439)
+- **mcp**: end the session span when Client.__aexit__ is cancelled (#4517)
+- **mcp**: honor TRACELOOP_TRACE_CONTENT on the client path (#4466)
+- **openai**: don't crash tracing responses.with_raw_response.create(stream=True) (#4477)
+- **mistralai**: record chunked assistant content instead of dropping it (#4478)
+- **langchain**: keep objects out of association properties (#4467)
+- **crewai**: stop the __dict__ walk leaking credentials onto spans (#4465)
+
 ## v0.62.3 (2026-08-10)
 
 ### Fix

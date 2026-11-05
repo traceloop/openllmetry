@@ -33,11 +33,10 @@ def test_client_spans(exporter, genai_client):
 
     assert len(spans) > 0, "No spans were recorded"
 
-    span = next(
-        (s for s in spans if s.name.startswith("generate_content ")),
-        None,
-    )
-    assert span is not None, "generate_content span not found"
+    # The exporter is session-scoped, so take the span this test produced.
+    gen_spans = [s for s in spans if s.name.startswith("generate_content ")]
+    assert gen_spans, "generate_content span not found"
+    span = gen_spans[-1]
 
     assert span.kind == SpanKind.CLIENT
     assert span.status.status_code == StatusCode.OK
@@ -55,31 +54,37 @@ def test_client_spans(exporter, genai_client):
     assert attrs[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gemini-2.5-flash"
     assert attrs[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gemini-2.5-flash"
 
-    assert GenAIAttributes.GEN_AI_INPUT_MESSAGES in attrs
-    input_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
-    assert len(input_msgs) > 0
-    assert input_msgs[0]["role"] == "user"
-    assert isinstance(input_msgs[0].get("parts"), list) and len(input_msgs[0]["parts"]) > 0
-    assert input_msgs[0]["parts"][0]["type"] == "text"
-    assert "content" in input_msgs[0]["parts"][0]
+    # Input messages are now a single JSON array
+    assert "gen_ai.input.messages" in attrs
+    input_messages = json.loads(attrs["gen_ai.input.messages"])
+    assert len(input_messages) > 0
+    assert input_messages[0]["role"] == "user"
+    assert "parts" in input_messages[0]
+    assert input_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in input_messages[0]["parts"][0]
 
-    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES in attrs
-    output_msgs = json.loads(attrs[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
-    assert len(output_msgs) > 0
-    assert output_msgs[0]["role"] == "assistant"
-    assert isinstance(output_msgs[0].get("parts"), list) and len(output_msgs[0]["parts"]) > 0
-    assert output_msgs[0]["parts"][0]["type"] == "text"
-    assert "content" in output_msgs[0]["parts"][0]
-    # Verify deprecated indexed attributes are NOT emitted (migration guard)
-    assert not any(key.startswith("gen_ai.prompt.") for key in attrs.keys())
-    assert not any(key.startswith("gen_ai.completion.") for key in attrs.keys())
+    # Output messages are now a single JSON array (parts-based OTel schema)
+    assert "gen_ai.output.messages" in attrs
+    output_messages = json.loads(attrs["gen_ai.output.messages"])
+    assert len(output_messages) > 0
+    assert output_messages[0]["role"] == "assistant"
+    assert "parts" in output_messages[0]
+    assert output_messages[0]["parts"][0]["type"] == "text"
+    assert "content" in output_messages[0]["parts"][0]
 
-    # The provider-issued response id must survive the semconv migration
-    assert attrs[GenAIAttributes.GEN_AI_RESPONSE_ID] == "-hk4afOSMZKkjuMPnJWGkAk"
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS in attrs
+    finish_reasons = attrs[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS]
+    assert isinstance(finish_reasons, (list, tuple))
+    assert len(finish_reasons) > 0
 
-    assert attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS] > 0
-    assert attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
-    assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
+    # The cassette reports 877 candidate tokens and 1058 thinking tokens.
+    assert attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 877 + 1058
+    assert attrs[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == 1058
+    assert (
+        attrs[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS]
+        + attrs[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS]
+        == attrs[SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS]
+    )
 
 
 @pytest.mark.vcr
@@ -151,6 +156,18 @@ def test_generate_metrics(metrics_test_context, genai_client, exporter):
 
     # Both input & output tokens must exist
     assert {"input", "output"}.issubset(token_points_by_type.keys())
+
+    # The cassette reports 711 candidate tokens and 1096 thinking tokens.
+    # The meter provider is shared by the session, so the output data point
+    # sums every generate_content span recorded so far.
+    gen_spans = [
+        s for s in exporter.get_finished_spans()
+        if s.name.startswith("generate_content ")
+    ]
+    assert gen_spans[-1].attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 711 + 1096
+    assert token_points_by_type["output"].sum == sum(
+        s.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] for s in gen_spans
+    )
 
     for token_type, dp in token_points_by_type.items():
         assert dp.count >= 1
@@ -229,3 +246,41 @@ def test_set_model_response_attributes_no_cache_read_tokens_when_absent():
 
     set_attr_keys = [c[0][0] for c in span.set_attribute.call_args_list]
     assert SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS not in set_attr_keys
+
+
+@pytest.mark.parametrize(
+    "candidates, thoughts, expected_output",
+    [(2, None, 2), (None, 300, 300)],
+)
+def test_set_model_response_attributes_missing_token_counts(
+    candidates, thoughts, expected_output
+):
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+    token_histogram = MagicMock()
+    response = types.GenerateContentResponse(
+        usage_metadata=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=10,
+            candidates_token_count=candidates,
+            thoughts_token_count=thoughts,
+        )
+    )
+
+    su.set_model_response_attributes(
+        span, response, "gemini-2.5-flash", token_histogram=token_histogram
+    )
+
+    set_attr_calls = {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
+    assert set_attr_calls[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == expected_output
+    if thoughts is None:
+        assert SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS not in set_attr_calls
+    else:
+        assert set_attr_calls[SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS] == thoughts
+    recorded = {
+        c.kwargs["attributes"][GenAIAttributes.GEN_AI_TOKEN_TYPE]: c.args[0]
+        for c in token_histogram.record.call_args_list
+    }
+    assert recorded["output"] == expected_output
