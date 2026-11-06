@@ -12,16 +12,36 @@ class StreamingWrapper(ObjectProxy):
 
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = ""
+        self._stream_done = False
 
     @property
     def accumulating_body(self):
         return self._accumulating_body
 
     def __iter__(self):
-        for event in self.__wrapped__:
-            self._process_event(event)
-            yield event
-        self._stream_done_callback(self._accumulating_body)
+        # The finally block also runs when the caller breaks out of the loop
+        # or drops the iterator, so the span ends with what was read so far.
+        try:
+            for event in self.__wrapped__:
+                self._process_event(event)
+                yield event
+        except Exception as e:
+            self._done(e)
+            raise
+        finally:
+            self._done()
+
+    def close(self):
+        try:
+            self.__wrapped__.close()
+        finally:
+            self._done()
+
+    def _done(self, error=None):
+        if self._stream_done:
+            return
+        self._stream_done = True
+        self._stream_done_callback(self._accumulating_body, error)
 
     @dont_throw
     def _process_event(self, event):
