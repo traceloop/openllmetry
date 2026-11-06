@@ -1,0 +1,77 @@
+{
+  "name": "opentelemetry-instrumentation-runpod",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-runpod/opentelemetry/instrumentation/runpod",
+  "targets": {
+    "lock": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv lock",
+        "cwd": "packages/opentelemetry-instrumentation-runpod"
+      }
+    },
+    "add": {
+      "executor": "@nxlv/python:add",
+      "options": {}
+    },
+    "update": {
+      "executor": "@nxlv/python:update",
+      "options": {}
+    },
+    "remove": {
+      "executor": "@nxlv/python:remove",
+      "options": {}
+    },
+    "build": {
+      "executor": "@nxlv/python:build",
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "options": {
+        "outputPath": "packages/opentelemetry-instrumentation-runpod/dist",
+        "publish": false,
+        "lockedVersions": true,
+        "bundleLocalDependencies": true
+      }
+    },
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync --all-groups",
+        "cwd": "packages/opentelemetry-instrumentation-runpod"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "packages/opentelemetry-instrumentation-runpod"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/reports/packages/opentelemetry-instrumentation-runpod/unittests",
+        "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-runpod"
+      ],
+      "options": {
+        "command": "uv run pytest tests/",
+        "cwd": "packages/opentelemetry-instrumentation-runpod"
+      }
+    },
+    "build-release": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ../../scripts/build-release.sh",
+          "../../scripts/build-release.sh"
+        ],
+        "cwd": "packages/opentelemetry-instrumentation-runpod"
+      }
+    }
+  },
+  "tags": [
+    "instrumentation"
+  ]
+}
