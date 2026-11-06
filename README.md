@@ -6,9 +6,7 @@
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
 </p>
-<p align="center">
-  <p align="center">Open-source observability for your LLM application</p>
-</p>
+<p align="center">Open-source observability for your LLM application</p>
 <h4 align="center">
     <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
