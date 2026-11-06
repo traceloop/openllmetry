@@ -29,7 +29,10 @@ from opentelemetry.instrumentation.openai.utils import (
     should_emit_events,
     should_send_prompts,
 )
-from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
+from opentelemetry.instrumentation.utils import (
+    _SUPPRESS_INSTRUMENTATION_KEY,
+    suppress_http_instrumentation,
+)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
@@ -67,7 +70,9 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
-            response = wrapped(*args, **kwargs)
+            # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+            with suppress_http_instrumentation():
+                response = wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
@@ -103,7 +108,9 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
-            response = await wrapped(*args, **kwargs)
+            # Suppress the HTTP-client span (e.g. httpx) so the request isn't double-traced (#2845).
+            with suppress_http_instrumentation():
+                response = await wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
             span.record_exception(e)
