@@ -101,24 +101,37 @@ class StreamingWrapper(ObjectProxy):
         self,
         response,
         stream_done_callback=None,
+        finalize_on_exit=False,
     ):
         super().__init__(response)
 
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {}
+        self._finalize_on_exit = finalize_on_exit
+        self._done = False
 
     def __iter__(self):
         it = iter(self.__wrapped__)
         done = False
-        while not done:
-            try:
-                event = next(it)
-                self._process_event(event)
-                yield event
-            except StopIteration:
-                done = True
-                if self._stream_done_callback:
-                    self._stream_done_callback(self._accumulating_body)
+        try:
+            while not done:
+                try:
+                    event = next(it)
+                    self._process_event(event)
+                    yield event
+                except StopIteration:
+                    done = True
+                    self._finish()
+        finally:
+            if self._finalize_on_exit:
+                self._finish()
+
+    def _finish(self):
+        if self._finalize_on_exit and self._done:
+            return
+        self._done = True
+        if self._stream_done_callback:
+            self._stream_done_callback(self._accumulating_body)
 
     @dont_throw
     def _process_event(self, event):
