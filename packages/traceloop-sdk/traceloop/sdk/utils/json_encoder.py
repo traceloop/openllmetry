@@ -9,6 +9,14 @@ class JSONEncoder(json.JSONEncoder):
             if "callbacks" in o:
                 del o["callbacks"]
                 return o
+
+        # Classes (e.g. a Pydantic model or dataclass passed as
+        # `response_format`) are not instances: calling `model_dump()` or
+        # `asdict()` on them raises TypeError, which drops the whole span
+        # attribute. Record the class name instead.
+        if isinstance(o, type):
+            return o.__name__
+
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
 

@@ -128,3 +128,22 @@ def test_default_strips_callbacks_from_dict():
     result = JSONEncoder().default(data)
     assert "callbacks" not in result
     assert result["key"] == "value"
+
+
+def test_class_objects_are_serialized_by_name():
+    # Passing a class (e.g. a Pydantic model or dataclass as `response_format`)
+    # must not make the encoder call instance methods on the class itself.
+    payload = {
+        "args": [],
+        "kwargs": {
+            "pydantic_like": PydanticV2Model,
+            "pydantic_v1_like": PydanticV1Model,
+            "dataclass": MyDataclass,
+        },
+    }
+    result = json.loads(json.dumps(payload, cls=JSONEncoder))
+    assert result["kwargs"] == {
+        "pydantic_like": "PydanticV2Model",
+        "pydantic_v1_like": "PydanticV1Model",
+        "dataclass": "MyDataclass",
+    }
