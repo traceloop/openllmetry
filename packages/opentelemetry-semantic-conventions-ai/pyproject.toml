@@ -20,7 +20,7 @@ dev = [
   "autopep8>=2.2.0,<3",
   "ruff>=0.4.0",
   "pytest>=8.2.2,<9",
-  "pytest-sugar==1.0.0",
+  "pytest-sugar==1.1.1",
 ]
 
 [build-system]
