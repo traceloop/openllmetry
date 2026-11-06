@@ -73,7 +73,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
+from opentelemetry.trace import Link, SpanKind, Tracer, set_span_in_context
 from opentelemetry.instrumentation.langchain.patch import (
     LANGGRAPH_FLOW_KEY,
     LANGGRAPH_GRAPH_SPAN_KEY,
@@ -222,6 +222,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.spans: dict[UUID, SpanHolder] = {}
         self.run_inline = True
         self._callback_manager: CallbackManager | AsyncCallbackManager = None
+        # Attribution tracking: maps str(llm_run_id) → SpanContext, saved just
+        # before the LLM span ends so tool-call spans can link back to it.
+        self._generation_contexts: dict[str, Any] = {}
+        # Maps structured tool_call_id → str(llm_run_id) for direct attribution.
+        self._tool_call_id_to_generation: dict[str, str] = {}
 
     @staticmethod
     def _get_name_from_callback(
@@ -331,6 +336,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_name: str = "",
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
+        links: Optional[List[Any]] = None,
     ) -> Span:
         """Create and register a span holder, replacing any existing holder for the run id."""
         old_holder = self.spans.get(run_id)
@@ -363,11 +369,13 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 # This doesn't affect the core span functionality
                 pass
 
+        span_links = links or []
         if parent_run_id is not None and parent_run_id in self.spans:
             span = self.tracer.start_span(
                 span_name,
                 context=set_span_in_context(self.spans[parent_run_id].span),
                 kind=kind,
+                links=span_links,
             )
         else:
             # Check if we're in a LangGraph flow and this is the first child
@@ -381,6 +389,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     span_name,
                     context=graph_span_holder.context,
                     kind=kind,
+                    links=span_links,
                 )
                 # Flip the flag so subsequent spans use normal parenting.
                 # Note: This mutable list pattern is intentional. LangGraph callbacks
@@ -388,7 +397,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 # The mutable list is used because OTel context values are immutable.
                 first_child_pending[0] = False
             else:
-                span = self.tracer.start_span(span_name, kind=kind)
+                span = self.tracer.start_span(span_name, kind=kind, links=span_links)
 
         token = self._safe_attach_context(span)
 
@@ -431,6 +440,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         entity_path: str = "",
         metadata: Optional[dict[str, Any]] = None,
         serialized: Optional[dict[str, Any]] = None,
+        links: Optional[List[Any]] = None,
     ) -> Span:
         """Create a workflow, task, or tool span with LangChain and GenAI attributes."""
         # Determine span type
@@ -458,6 +468,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_name=entity_name,
             entity_path=entity_path,
             metadata=metadata,
+            links=links,
         )
 
         # Set traceloop attributes for backwards compatibility
@@ -880,6 +891,18 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             },
         )
 
+        # Save span context for attribution: on_tool_start will link back here.
+        self._generation_contexts[str(run_id)] = span.get_span_context()
+        for gen_list in response.generations:
+            for gen in gen_list:
+                msg = getattr(gen, "message", None)
+                if msg is None:
+                    continue
+                for tc in getattr(msg, "tool_calls", None) or []:
+                    tc_id = tc.get("id") if isinstance(tc, dict) else getattr(tc, "id", None)
+                    if tc_id:
+                        self._tool_call_id_to_generation[tc_id] = str(run_id)
+
         self._end_span(span, run_id)
 
     @dont_throw
@@ -903,6 +926,21 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         workflow_name = self.get_workflow_name(parent_run_id)
         entity_path = self.get_entity_path(parent_run_id)
 
+        # Build CAUSED_BY_GENERATION attribution link.
+        # Prefer structured tool_call_id lookup; fall back to parent LLM run id.
+        attribution_links = []
+        tool_call_id = kwargs.get("tool_call_id")
+        gen_ctx = None
+        if tool_call_id and tool_call_id in self._tool_call_id_to_generation:
+            llm_run_key = self._tool_call_id_to_generation[tool_call_id]
+            gen_ctx = self._generation_contexts.get(llm_run_key)
+        if gen_ctx is None and parent_run_id is not None:
+            gen_ctx = self._generation_contexts.get(str(parent_run_id))
+        if gen_ctx is not None and gen_ctx.is_valid:
+            attribution_links = [
+                Link(gen_ctx, attributes={"gen_ai.attribution.link_type": "CAUSED_BY_GENERATION"})
+            ]
+
         span = self._create_task_span(
             run_id,
             parent_run_id,
@@ -913,6 +951,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_path,
             metadata=metadata,
             serialized=serialized,
+            links=attribution_links,
         )
         if not should_emit_events() and should_send_prompts():
             input_json = json.dumps(
