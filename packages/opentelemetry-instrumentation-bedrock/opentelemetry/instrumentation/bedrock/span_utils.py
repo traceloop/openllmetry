@@ -3,6 +3,7 @@ import logging
 import time
 
 from opentelemetry.instrumentation.bedrock.config import Config
+from opentelemetry.instrumentation.bedrock.prompt_caching import CachingHeaders
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -469,8 +470,14 @@ def _set_anthropic_messages_span_attributes(
         and response_body.get("usage").get("input_tokens") is not None
         and response_body.get("usage").get("output_tokens") is not None
     ):
-        prompt_tokens = response_body.get("usage").get("input_tokens")
-        completion_tokens = response_body.get("usage").get("output_tokens")
+        usage = response_body.get("usage")
+        # As with Converse, `input_tokens` excludes the prompt-cache portion.
+        prompt_tokens = _input_tokens_with_cache(
+            usage.get("input_tokens"),
+            usage.get("cache_read_input_tokens"),
+            usage.get("cache_creation_input_tokens"),
+        )
+        completion_tokens = usage.get("output_tokens")
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif response_body.get("invocation_metrics") is not None:
         prompt_tokens = response_body.get("invocation_metrics").get("inputTokenCount")
@@ -480,7 +487,11 @@ def _set_anthropic_messages_span_attributes(
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif headers and headers.get("x-amzn-bedrock-input-token-count") is not None:
         # For Anthropic V2 models (claude-v2), token counts are in HTTP headers
-        prompt_tokens = int(headers.get("x-amzn-bedrock-input-token-count", 0))
+        prompt_tokens = _input_tokens_with_cache(
+            int(headers.get("x-amzn-bedrock-input-token-count", 0)),
+            _header_int(headers, CachingHeaders.READ),
+            _header_int(headers, CachingHeaders.WRITE),
+        )
         completion_tokens = int(headers.get("x-amzn-bedrock-output-token-count", 0))
         _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
     elif Config.enrich_token_usage:
@@ -645,9 +656,13 @@ def _set_amazon_span_attributes(
         # accumulates the converse-style metadata event under `metadata.usage`.
         # Headers carry the same values and are used as a fallback.
         usage = response_body.get("usage") or response_body.get("metadata", {}).get("usage", {}) or {}
-        total_prompt_tokens += int(
-            usage.get("inputTokens")
-            or headers.get("x-amzn-bedrock-input-token-count", 0)
+        # `inputTokens` excludes the prompt-cache portion; the cache counts only
+        # ever arrive as headers for InvokeModel, which prompt_caching_handling
+        # reads for the same span.
+        total_prompt_tokens += _input_tokens_with_cache(
+            int(usage.get("inputTokens") or headers.get("x-amzn-bedrock-input-token-count", 0)),
+            usage.get("cacheReadInputTokens") or _header_int(headers, CachingHeaders.READ),
+            usage.get("cacheWriteInputTokens") or _header_int(headers, CachingHeaders.WRITE),
         )
         total_completion_tokens += int(
             usage.get("outputTokens")
@@ -777,6 +792,36 @@ def _set_imported_model_prompt_span_attributes(span, request_body):
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
         json.dumps([{"role": "user", "parts": [_text_part(request_body.get("prompt"))]}]),
     )
+
+
+def _input_tokens_with_cache(input_tokens, cache_read_tokens, cache_write_tokens):
+    """Fold provider-reported cache counts into ``gen_ai.usage.input_tokens``.
+
+    Bedrock reports the *non-cached* portion of the prompt in its native input
+    token count: Converse returns ``usage.inputTokens`` and the InvokeModel
+    Anthropic Messages body returns ``usage.input_tokens``, both excluding the
+    tokens read from / written to the prompt cache. AWS documents the total as
+    ``inputTokens + cacheReadInputTokens + cacheWriteInputTokens``.
+
+    The GenAI semantic conventions require the opposite representation:
+    ``gen_ai.usage.cache_read.input_tokens`` and
+    ``gen_ai.usage.cache_write.input_tokens`` SHOULD be included in
+    ``gen_ai.usage.input_tokens`` (semantic-conventions-genai aws-bedrock.md
+    notes 23/24, note 28 "SHOULD include all types of input tokens, including
+    cached tokens"). Folding here keeps Claude-on-Bedrock counts comparable with
+    the anthropic instrumentation, which applies the same rule.
+    """
+    if input_tokens is None:
+        return None
+    return input_tokens + (cache_read_tokens or 0) + (cache_write_tokens or 0)
+
+
+def _header_int(headers, name):
+    value = headers.get(name) if headers else None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params):
@@ -1073,10 +1118,14 @@ def converse_usage_record(span, response, metric_params):
         return
 
     usage = response["usage"]
-    prompt_tokens = usage.get("inputTokens", 0)
     completion_tokens = usage.get("outputTokens", 0)
     cache_read_tokens = usage.get("cacheReadInputTokens")
     cache_write_tokens = usage.get("cacheWriteInputTokens")
+    # `inputTokens` counts only the non-cached portion, so fold the cache counts
+    # in to satisfy the semconv requirement on gen_ai.usage.input_tokens.
+    prompt_tokens = _input_tokens_with_cache(
+        usage.get("inputTokens", 0), cache_read_tokens, cache_write_tokens
+    )
 
     _record_usage_to_span(
         span,
