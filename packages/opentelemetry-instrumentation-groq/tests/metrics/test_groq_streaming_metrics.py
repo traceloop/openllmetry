@@ -33,6 +33,13 @@ def _chunk(content="", finish_reason=None, usage=None, model=None):
     )
 
 
+def _empty_choice_usage_chunk(usage):
+    """A trailing chunk with no choices that still carries the usage payload, as Groq sends it."""
+    chunk = _chunk(usage=usage)
+    chunk.choices = []
+    return chunk
+
+
 def _usage(prompt=10, completion=5):
     return SimpleNamespace(
         prompt_tokens=prompt,
@@ -142,6 +149,42 @@ class TestStreamProcessorMetrics:
         duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
         assert duration_metric is not None
         assert duration_metric.data.data_points[0].sum > 0
+
+    def test_records_token_metrics_from_a_choice_less_final_chunk(self, reader, tracer_provider, meter_provider):
+        """Usage that arrives on a trailing chunk with no choices must still be recorded.
+
+        Groq attaches the usage payload to a final chunk that carries no choices, so the
+        empty-choices guard in `_process_streaming_chunk` must not drop it: this is the
+        difference between an empty token histogram and a populated one.
+        """
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        token_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_TOKEN_USAGE)
+
+        stream = _FakeStream(
+            [
+                _chunk(content="hello"),
+                _chunk(content=" world", finish_reason="stop"),
+                _empty_choice_usage_chunk(_usage(prompt=10, completion=5)),
+            ]
+        )
+
+        for _ in _create_stream_processor(
+            stream,
+            span,
+            None,
+            token_histogram,
+            None,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        ):
+            pass
+
+        token_metric = _find_metric(reader.get_metrics_data(), Meters.LLM_TOKEN_USAGE)
+        assert token_metric is not None
+        input_dp = _find_data_point(token_metric, {GenAIAttributes.GEN_AI_TOKEN_TYPE: "input"})
+        output_dp = _find_data_point(token_metric, {GenAIAttributes.GEN_AI_TOKEN_TYPE: "output"})
+        assert input_dp is not None and input_dp.sum == 10
+        assert output_dp is not None and output_dp.sum == 5
 
     def test_token_points_carry_non_streaming_attribute_set(self, reader, tracer_provider, meter_provider):
         """Token points must match the non-streaming attribute keys (semconv requires operation.name)."""
@@ -333,6 +376,40 @@ class TestAsyncStreamProcessorMetrics:
         duration_metric = _find_metric(metrics_data, Meters.LLM_OPERATION_DURATION)
         assert duration_metric is not None
         assert duration_metric.data.data_points[0].sum > 0
+
+    @pytest.mark.asyncio
+    async def test_async_records_token_metrics_from_a_choice_less_final_chunk(
+        self, reader, tracer_provider, meter_provider
+    ):
+        span = get_tracer("test", tracer_provider=tracer_provider).start_span("chat llama-3.3-70b-versatile")
+        token_histogram = meter_provider.get_meter("test").create_histogram(name=Meters.LLM_TOKEN_USAGE)
+
+        stream = _FakeAsyncStream(
+            [
+                _chunk(content="hello"),
+                _chunk(content=" world", finish_reason="stop"),
+                _empty_choice_usage_chunk(_usage(prompt=7, completion=3)),
+            ]
+        )
+
+        processor = _create_async_stream_processor(
+            stream,
+            span,
+            None,
+            token_histogram,
+            None,
+            start_time=0,
+            llm_model="llama-3.3-70b-versatile",
+        )
+        async for _ in processor:
+            pass
+
+        token_metric = _find_metric(reader.get_metrics_data(), Meters.LLM_TOKEN_USAGE)
+        assert token_metric is not None
+        input_dp = _find_data_point(token_metric, {GenAIAttributes.GEN_AI_TOKEN_TYPE: "input"})
+        output_dp = _find_data_point(token_metric, {GenAIAttributes.GEN_AI_TOKEN_TYPE: "output"})
+        assert input_dp is not None and input_dp.sum == 7
+        assert output_dp is not None and output_dp.sum == 3
 
 
 # ---------------------------------------------------------------------------
