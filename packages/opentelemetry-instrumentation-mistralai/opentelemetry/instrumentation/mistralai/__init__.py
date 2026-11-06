@@ -46,6 +46,11 @@ from mistralai.models import (
     EmbeddingResponse,
 )
 
+try:
+    from mistralai.models import ToolMessage
+except ImportError:
+    ToolMessage = None
+
 logger = logging.getLogger(__name__)
 
 _instruments = ("mistralai >= 1.0.0",)
@@ -393,12 +398,20 @@ def _emit_message_events(method_wrapped: str, args, kwargs, event_logger):
     if method_wrapped == "mistralai.chat":
         messages = args[0] if len(args) > 0 else kwargs.get("messages", [])
         for message in messages:
-            if isinstance(message, (UserMessage, AssistantMessage, SystemMessage)):
-                role = message.role
-                content = message.content
+            role = None
+            content = None
+            if ToolMessage is not None and isinstance(message, ToolMessage):
+                role = getattr(message, "role", "tool")
+                content = getattr(message, "content", None)
+            elif isinstance(message, (UserMessage, AssistantMessage, SystemMessage)):
+                role = getattr(message, "role", "unknown")
+                content = getattr(message, "content", None)
             elif isinstance(message, dict):
                 role = message.get("role", "unknown")
                 content = message.get("content")
+            else:
+                role = getattr(message, "role", "unknown")
+                content = getattr(message, "content", None)
             emit_event(
                 MessageEvent(content=content, role=role or "unknown"), event_logger
             )
