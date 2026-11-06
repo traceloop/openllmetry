@@ -404,3 +404,107 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+@pytest.mark.asyncio
+async def test_vision_default_uploader_config():
+    from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    original = Config.upload_base64_image
+    try:
+        OpenAIInstrumentor()
+        assert Config.upload_base64_image is None
+    finally:
+        Config.upload_base64_image = original
+
+
+@pytest.mark.asyncio
+async def test_process_image_item_uploader_handling():
+    from opentelemetry.instrumentation.openai.shared.chat_wrappers import (
+        _process_image_item,
+    )
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    original = Config.upload_base64_image
+    item = {
+        "type": "image_url",
+        "image_url": {"url": "data:image/png;base64,iVBORw0KGgo="},
+    }
+
+    try:
+        # 1. No uploader configured (None) -> returns original item
+        Config.upload_base64_image = None
+        res_none = await _process_image_item(item, "trace1", "span1", 0, 0)
+        assert res_none == item
+
+        # 2. Synchronous uploader -> returns url without TypeError
+        Config.upload_base64_image = (
+            lambda trace_id, span_id, name, b64: "https://cdn.example.com/sync.png"
+        )
+        res_sync = await _process_image_item(item, "trace1", "span1", 0, 0)
+        assert res_sync == {
+            "type": "image_url",
+            "image_url": {"url": "https://cdn.example.com/sync.png"},
+        }
+
+        # 3. Asynchronous uploader -> awaited and returns url
+        async def async_uploader(trace_id, span_id, name, b64):
+            return "https://cdn.example.com/async.png"
+
+        Config.upload_base64_image = async_uploader
+        res_async = await _process_image_item(item, "trace1", "span1", 0, 0)
+        assert res_async == {
+            "type": "image_url",
+            "image_url": {"url": "https://cdn.example.com/async.png"},
+        }
+    finally:
+        Config.upload_base64_image = original
+
+
+@pytest.mark.asyncio
+async def test_set_prompts_preserves_input_messages_without_uploader(
+    tracer_provider, span_exporter
+):
+    from opentelemetry.instrumentation.openai.shared.chat_wrappers import _set_prompts
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    original = Config.upload_base64_image
+    tracer = tracer_provider.get_tracer("test")
+    span = tracer.start_span("test_vision_no_uploader_span")
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Describe this image"},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "data:image/png;base64,iVBORw0KGgo="},
+                },
+            ],
+        }
+    ]
+
+    try:
+        Config.upload_base64_image = None
+        await _set_prompts(span, messages)
+        span.end()
+
+        spans = span_exporter.get_finished_spans()
+        target_span = [s for s in spans if s.name == "test_vision_no_uploader_span"][-1]
+        input_messages = get_input_messages(target_span)
+
+        assert len(input_messages) == 1
+        assert input_messages[0]["role"] == "user"
+        parts = input_messages[0]["parts"]
+        assert len(parts) == 2
+        assert parts[0] == {"type": "text", "content": "Describe this image"}
+        assert parts[1] == {
+            "type": "blob",
+            "modality": "image",
+            "mime_type": "image/png",
+            "content": "iVBORw0KGgo=",
+        }
+    finally:
+        Config.upload_base64_image = original
