@@ -167,6 +167,28 @@ def test_completion_emits_metrics(instrument_legacy, span_exporter, metric_reade
     assert Meters.LLM_OPERATION_DURATION in metric_names
 
 
+def test_token_usage_metric_carries_token_type(instrument_legacy, metric_reader):
+    from opentelemetry.semconv_ai import Meters
+
+    litellm.completion(
+        model="gpt-3.5-turbo",
+        messages=MESSAGES,
+        mock_response="The capital of France is Paris.",
+    )
+
+    points = [
+        point
+        for rm in metric_reader.get_metrics_data().resource_metrics
+        for sm in rm.scope_metrics
+        for metric in sm.metrics
+        if metric.name == Meters.LLM_TOKEN_USAGE
+        for point in metric.data.data_points
+    ]
+    token_types = {p.attributes.get(GenAIAttributes.GEN_AI_TOKEN_TYPE) for p in points}
+    assert token_types == {"input", "output"}
+    assert all("gen_ai.usage.token_type" not in p.attributes for p in points)
+
+
 def test_completion_no_content_when_disabled(instrument_legacy, span_exporter, monkeypatch):
     monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "False")
     litellm.completion(
