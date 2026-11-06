@@ -16,11 +16,6 @@
     },
     {
         "object": "AsyncQdrantClient",
-        "method": "upload_records",
-        "span_name": "qdrant.upload_records"
-    },
-    {
-        "object": "AsyncQdrantClient",
         "method": "upload_collection",
         "span_name": "qdrant.upload_collection"
     },
