@@ -2,7 +2,7 @@ from typing import List, TypedDict
 
 import pytest
 from langchain.agents.middleware.types import AgentMiddleware
-from langgraph.graph import StateGraph
+from langgraph.graph import END, StateGraph
 from openai import OpenAI
 from opentelemetry import trace
 from opentelemetry.semconv._incubating.attributes import (
@@ -117,6 +117,155 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
+
+
+def test_langgraph_stream_single_invoke_agent(instrument_legacy, span_exporter):
+    """A single .stream() call should emit exactly one invoke_agent span."""
+
+    class StreamState(TypedDict):
+        value: str
+
+    def my_node(state: StreamState) -> StreamState:
+        return state
+
+    workflow = StateGraph(StreamState)
+    workflow.add_node("my_node", my_node)
+    workflow.set_entry_point("my_node")
+    workflow.add_edge("my_node", END)
+    graph = workflow.compile()
+
+    for _ in graph.stream({"value": "test"}):
+        pass
+
+    spans = span_exporter.get_finished_spans()
+    invoke_agent_spans = [
+        span
+        for span in spans
+        if span.attributes.get(GenAIAttributes.GEN_AI_OPERATION_NAME)
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    ]
+    assert len(invoke_agent_spans) == 1
+    assert invoke_agent_spans[0].name == "invoke_agent LangGraph"
+
+    workflow_span = next(span for span in spans if span.name == "LangGraph.workflow")
+    assert (
+        workflow_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAICustomOperationName.EXECUTE_TASK.value
+    )
+    assert workflow_span.parent.span_id == invoke_agent_spans[0].context.span_id
+
+
+def _mock_chat_model():
+    from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import AIMessage
+    from langchain_core.outputs import ChatGeneration, ChatResult
+
+    class MockChatModel(BaseChatModel):
+        @property
+        def _llm_type(self) -> str:
+            return "mock"
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            return ChatResult(
+                generations=[ChatGeneration(message=AIMessage(content="Mock"))]
+            )
+
+    return MockChatModel()
+
+
+def test_langgraph_nested_agent_keeps_invoke_agent(instrument_legacy, span_exporter):
+    """An agent running inside a graph node keeps the invoke_agent operation.
+
+    The demotion of the callback created workflow span to ``execute_task`` is
+    limited to the workflow callback owned by the graph itself. An agent that
+    merely runs inside a graph flow keeps ``invoke_agent``, also when its run has
+    no tracked parent run, which is emulated here with a fresh callback manager.
+    """
+    from langchain.agents import create_agent
+    from langchain_core.callbacks import CallbackManager
+
+    agent = create_agent(model=_mock_chat_model(), tools=[], name="NestedAgent")
+
+    class NestedState(TypedDict):
+        value: str
+
+    def node_with_agent(state: NestedState) -> NestedState:
+        agent.invoke(
+            {"messages": [{"role": "user", "content": "hi"}]},
+            # A fresh callback manager emulates an agent run that is not
+            # tracked as a child of the node run.
+            config={"callbacks": CallbackManager(handlers=[])},
+        )
+        return state
+
+    workflow = StateGraph(NestedState)
+    workflow.add_node("node_with_agent", node_with_agent)
+    workflow.set_entry_point("node_with_agent")
+    workflow.add_edge("node_with_agent", END)
+    graph = workflow.compile()
+
+    for _ in graph.stream({"value": "test"}):
+        pass
+
+    spans = span_exporter.get_finished_spans()
+
+    # The agent keeps invoke_agent, both on its own workflow span and on the
+    # span of the graph invocation it owns.
+    agent_workflow_span = next(
+        span for span in spans if span.name == "NestedAgent.workflow"
+    )
+    assert (
+        agent_workflow_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    )
+    agent_span = next(span for span in spans if span.name == "invoke_agent NestedAgent")
+    assert (
+        agent_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    )
+
+    # The workflow callback owned by the graph itself is still demoted, so the
+    # graph invocation keeps exactly one invoke_agent span.
+    graph_workflow_span = next(
+        span for span in spans if span.name == "LangGraph.workflow"
+    )
+    assert (
+        graph_workflow_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAICustomOperationName.EXECUTE_TASK.value
+    )
+    graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
+    assert graph_workflow_span.parent.span_id == graph_span.context.span_id
+    assert len([span for span in spans if span.name == "invoke_agent LangGraph"]) == 1
+
+
+def test_standalone_langchain_agent_keeps_invoke_agent(
+    instrument_legacy, span_exporter
+):
+    """A standalone LangChain agent keeps the invoke_agent operation."""
+    from langchain.agents import create_agent
+
+    agent = create_agent(
+        model=_mock_chat_model(), tools=[], name="StandaloneAgent"
+    )
+
+    agent.invoke({"messages": [{"role": "user", "content": "hi"}]})
+
+    spans = span_exporter.get_finished_spans()
+
+    agent_workflow_span = next(
+        span for span in spans if span.name == "StandaloneAgent.workflow"
+    )
+    assert (
+        agent_workflow_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    )
+    agent_span = next(
+        span for span in spans if span.name == "invoke_agent StandaloneAgent"
+    )
+    assert (
+        agent_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+        == GenAiOperationNameValues.INVOKE_AGENT.value
+    )
 
 
 @pytest.mark.vcr
