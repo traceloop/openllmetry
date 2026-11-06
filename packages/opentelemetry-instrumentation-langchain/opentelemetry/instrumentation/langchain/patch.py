@@ -122,34 +122,43 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
         """Wrapper for Pregel.stream - yields from the generator while managing span lifecycle."""
         graph_name = _get_graph_name(instance, args, kwargs)
 
-        # Set LangGraph flow context before creating spans
-        langgraph_ctx = context_api.attach(
-            context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
-        )
-
         # Create graph span with GenAI convention naming: invoke_agent {agent_name}
         graph_span = tracer.start_span(f"invoke_agent {graph_name}")
 
         # Set all graph span attributes using helper function
         _set_graph_span_attributes(graph_span, instance, graph_name, kwargs, args)
 
-        # Attach span to context for parent-child linking, wrapped in SpanHolder
-        ctx_with_span = trace.set_span_in_context(graph_span)
+        # Wrap span in SpanHolder for parent-child linking
         graph_span_holder = SpanHolder(
             span=graph_span,
             token=None,
-            context=ctx_with_span,
+            context=trace.set_span_in_context(graph_span),
             children=[],
             workflow_name=graph_name,
             entity_name=graph_name,
             entity_path=graph_name,
         )
-        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, ctx_with_span)
-        ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
-        graph_span_ctx = context_api.attach(ctx_with_span)
+        first_child_pending = [True]
 
+        # Attach the graph context only around each pull from the wrapped
+        # generator, never across a yield. Holding it attached between items
+        # leaks the graph span into the caller's context, so sessions whose
+        # streams are read interleaved (or abandoned mid-stream) merge into
+        # one trace and the final detach fires in the wrong context.
+        gen = wrapped(*args, **kwargs)
         try:
-            for item in wrapped(*args, **kwargs):
+            while True:
+                iter_ctx = context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
+                iter_ctx = trace.set_span_in_context(graph_span, iter_ctx)
+                iter_ctx = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, iter_ctx)
+                iter_ctx = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, first_child_pending, iter_ctx)
+                graph_span_ctx = context_api.attach(iter_ctx)
+                try:
+                    item = next(gen)
+                except StopIteration:
+                    break
+                finally:
+                    context_api.detach(graph_span_ctx)
                 yield item
         except BaseException as e:
             graph_span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -157,41 +166,48 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
             raise
         finally:
             graph_span.end()
-            context_api.detach(graph_span_ctx)
-            context_api.detach(langgraph_ctx)
 
     async def async_wrapper(wrapped, instance, args, kwargs):
         """Wrapper for Pregel.astream - yields from the async generator while managing span lifecycle."""
         graph_name = _get_graph_name(instance, args, kwargs)
 
-        # Set LangGraph flow context before creating spans
-        langgraph_ctx = context_api.attach(
-            context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
-        )
-
         # Create graph span with GenAI convention naming: invoke_agent {agent_name}
         graph_span = tracer.start_span(f"invoke_agent {graph_name}")
 
         # Set all graph span attributes using helper function
         _set_graph_span_attributes(graph_span, instance, graph_name, kwargs, args)
 
-        # Attach span to context for parent-child linking, wrapped in SpanHolder
-        ctx_with_span = trace.set_span_in_context(graph_span)
+        # Wrap span in SpanHolder for parent-child linking
         graph_span_holder = SpanHolder(
             span=graph_span,
             token=None,
-            context=ctx_with_span,
+            context=trace.set_span_in_context(graph_span),
             children=[],
             workflow_name=graph_name,
             entity_name=graph_name,
             entity_path=graph_name,
         )
-        ctx_with_span = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, ctx_with_span)
-        ctx_with_span = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, [True], ctx_with_span)
-        graph_span_ctx = context_api.attach(ctx_with_span)
+        first_child_pending = [True]
 
+        # Attach the graph context only around each pull from the wrapped
+        # generator, never across a yield. Holding it attached between items
+        # leaks the graph span into the caller's context, so sessions whose
+        # streams are read interleaved (or abandoned mid-stream) merge into
+        # one trace and the final detach fires in the wrong context.
+        gen = wrapped(*args, **kwargs)
         try:
-            async for item in wrapped(*args, **kwargs):
+            while True:
+                iter_ctx = context_api.set_value(LANGGRAPH_FLOW_KEY, graph_name)
+                iter_ctx = trace.set_span_in_context(graph_span, iter_ctx)
+                iter_ctx = context_api.set_value(LANGGRAPH_GRAPH_SPAN_KEY, graph_span_holder, iter_ctx)
+                iter_ctx = context_api.set_value(LANGGRAPH_FIRST_CHILD_PENDING_KEY, first_child_pending, iter_ctx)
+                graph_span_ctx = context_api.attach(iter_ctx)
+                try:
+                    item = await gen.__anext__()
+                except StopAsyncIteration:
+                    break
+                finally:
+                    context_api.detach(graph_span_ctx)
                 yield item
         except BaseException as e:
             graph_span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -199,8 +215,6 @@ def create_graph_invocation_wrapper(tracer: Tracer, is_async: bool = False):
             raise
         finally:
             graph_span.end()
-            context_api.detach(graph_span_ctx)
-            context_api.detach(langgraph_ctx)
 
     return async_wrapper if is_async else wrapper
 
