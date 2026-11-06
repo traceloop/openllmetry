@@ -1,10 +1,9 @@
 import dataclasses
 import json
 import logging
-import os
 import traceback
 
-from opentelemetry import context as context_api
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.instrumentation.haystack.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
 
@@ -16,12 +15,6 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         if hasattr(o, "to_json"):
             return o.to_json()
         return super().default(o)
-
-
-def should_send_prompts():
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def dont_throw(func):

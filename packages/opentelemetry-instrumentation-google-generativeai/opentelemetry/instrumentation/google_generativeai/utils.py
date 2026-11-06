@@ -3,10 +3,9 @@ import functools
 import importlib
 import importlib.util
 import logging
-import os
 import traceback
 
-from opentelemetry import context as context_api
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.instrumentation.google_generativeai.config import Config
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
@@ -52,12 +51,6 @@ def dont_throw(func):
                 Config.exception_logger(e)
 
     return wrapper
-
-
-def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def should_emit_events() -> bool:
