@@ -85,11 +85,16 @@ def set_response_attributes(span, token_histogram, llm_request_type, response):
 
 
 @dont_throw
-def set_model_response_attributes(span, token_histogram, llm_request_type, response):
+def set_model_response_attributes(
+    span, token_histogram, llm_request_type, response, record_usage=True
+):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
         return
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
+
+    if not record_usage:
+        return
 
     input_tokens = response.get("prompt_eval_count") or 0
     output_tokens = response.get("eval_count") or 0

@@ -1,5 +1,6 @@
 """OpenTelemetry Ollama instrumentation"""
 
+import asyncio
 import json
 import logging
 import os
@@ -87,6 +88,52 @@ def _sanitize_copy_messages(wrapped, instance, args, kwargs):
     return wrapped(sanitized)
 
 
+@dont_throw  # runs in except arms that must re-raise what they caught
+def _record_streaming_response(
+    span,
+    event_logger,
+    llm_request_type,
+    token_histogram,
+    last_response,
+    accumulated_response,
+):
+    """Set the response attributes from what has been received so far."""
+    response_data = (
+        last_response.model_dump()
+        if last_response and hasattr(last_response, "model_dump")
+        else last_response
+    ) or {}
+    _handle_response(
+        span=span,
+        event_logger=event_logger,
+        llm_request_type=llm_request_type,
+        token_histogram=token_histogram,
+        response=response_data | accumulated_response,
+        # Ollama reports token counts only on the final ``done`` record, so a
+        # stream that stopped before it has no usage; don't record it as 0.
+        record_usage=bool(response_data.get("done")),
+    )
+
+
+def _is_done(last_response):
+    """Whether the final ``done`` record, which ends the generation, arrived."""
+    return bool(last_response and last_response.get("done"))
+
+
+def _record_time_to_generate(streaming_time_to_generate, first_token_time, last_response):
+    """Record the time from the first token to the end of the generation."""
+    if not streaming_time_to_generate or first_token_time is None:
+        return
+    model_name = last_response.get("model") if last_response else None
+    streaming_time_to_generate.record(
+        time.perf_counter() - first_token_time,
+        attributes={
+            GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
+            GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
+        },
+    )
+
+
 def _accumulate_streaming_response(
     span,
     event_logger,
@@ -117,44 +164,53 @@ def _accumulate_streaming_response(
                     attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
                 )
                 first_token = False
-            yield res
-
+            # Accumulate before yielding, so that a consumer which stops
+            # reading at this chunk still has everything it received recorded.
             if llm_request_type == LLMRequestTypeValues.CHAT:
                 accumulated_response["message"]["content"] += res["message"]["content"]
                 accumulated_response["message"]["role"] = res["message"]["role"]
             elif llm_request_type == LLMRequestTypeValues.COMPLETION:
                 text = res.get("response", "")
                 accumulated_response["response"] += text
+
+            yield res
+    except GeneratorExit:
+        # The consumer stopped reading - most often ``break`` at the final
+        # ``done`` record, where it already holds the complete answer. The
+        # code after the loop never runs in that case, so record here what
+        # was received, before ``finally`` ends the span.
+        if _is_done(last_response):
+            _record_time_to_generate(
+                streaming_time_to_generate, first_token_time, last_response
+            )
+        _record_streaming_response(
+            span,
+            event_logger,
+            llm_request_type,
+            token_histogram,
+            last_response,
+            accumulated_response,
+        )
+        raise
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         raise
     else:
-        # Record streaming time to generate after the response is complete
-        if streaming_time_to_generate and first_token_time is not None:
-            model_name = last_response.get("model") if last_response else None
-            streaming_time_to_generate.record(
-                time.perf_counter() - first_token_time,
-                attributes={
-                    GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
-                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
-                },
-            )
-
-        response_data = (
-            last_response.model_dump()
-            if last_response and hasattr(last_response, 'model_dump')
-            else last_response
-        ) or {}
-        _handle_response(
-            span=span,
-            event_logger=event_logger,
-            llm_request_type=llm_request_type,
-            token_histogram=token_histogram,
-            response=response_data | accumulated_response,
+        _record_time_to_generate(
+            streaming_time_to_generate, first_token_time, last_response
+        )
+        _record_streaming_response(
+            span,
+            event_logger,
+            llm_request_type,
+            token_histogram,
+            last_response,
+            accumulated_response,
         )
     finally:
+        _close_stream(response)
         span.end()
 
 
@@ -188,45 +244,179 @@ async def _aaccumulate_streaming_response(
                     attributes={GenAIAttributes.GEN_AI_SYSTEM: "Ollama"},
                 )
                 first_token = False
-            yield res
-
+            # Accumulate before yielding, so that a consumer which stops
+            # reading at this chunk still has everything it received recorded.
             if llm_request_type == LLMRequestTypeValues.CHAT:
                 accumulated_response["message"]["content"] += res["message"]["content"]
                 accumulated_response["message"]["role"] = res["message"]["role"]
             elif llm_request_type == LLMRequestTypeValues.COMPLETION:
                 text = res.get("response", "")
                 accumulated_response["response"] += text
+
+            yield res
+    except GeneratorExit:
+        # The consumer stopped reading - most often ``break`` at the final
+        # ``done`` record, where it already holds the complete answer. The
+        # code after the loop never runs in that case, so record here what
+        # was received, before ``finally`` ends the span.
+        if _is_done(last_response):
+            _record_time_to_generate(
+                streaming_time_to_generate, first_token_time, last_response
+            )
+        _record_streaming_response(
+            span,
+            event_logger,
+            llm_request_type,
+            token_histogram,
+            last_response,
+            accumulated_response,
+        )
+        raise
+    except asyncio.CancelledError as e:
+        # Like GeneratorExit, CancelledError is not an Exception, so it would
+        # otherwise end the span bare. The task reading the stream was
+        # cancelled (a timeout, or a client disconnecting from a streaming
+        # endpoint): record what was received and mark the span as failed.
+        _record_streaming_response(
+            span,
+            event_logger,
+            llm_request_type,
+            token_histogram,
+            last_response,
+            accumulated_response,
+        )
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.set_status(Status(StatusCode.ERROR, str(e) or "cancelled"))
+        raise
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
         raise
     else:
-        # Record streaming time to generate after the response is complete
-        if streaming_time_to_generate and first_token_time is not None:
-            model_name = last_response.get("model") if last_response else None
-            streaming_time_to_generate.record(
-                time.perf_counter() - first_token_time,
-                attributes={
-                    GenAIAttributes.GEN_AI_SYSTEM: "Ollama",
-                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: model_name,
-                },
-            )
-
-        response_data = (
-            last_response.model_dump()
-            if last_response and hasattr(last_response, 'model_dump')
-            else last_response
-        ) or {}
-        _handle_response(
+        _record_time_to_generate(
+            streaming_time_to_generate, first_token_time, last_response
+        )
+        _record_streaming_response(
             span,
             event_logger,
             llm_request_type,
             token_histogram,
-            response_data | accumulated_response,
+            last_response,
+            accumulated_response,
         )
     finally:
+        # The Ollama stream is closed by ``_AsyncStreamWrapper.aclose``, not
+        # here: this also runs when the event loop finalizes a dropped stream,
+        # and awaiting the HTTP response's close from that finalizer can be
+        # cut off by the loop shutting down. The loop finalizes the Ollama
+        # stream itself in that case.
         span.end()
+
+
+def _close_stream(response):
+    """Close the wrapped Ollama stream so its HTTP response is released."""
+    close = getattr(response, "close", None)
+    if close is None:
+        return
+    try:
+        close()
+    except Exception:  # never let cleanup mask the caller's exception
+        logger.debug("Failed to close Ollama stream", exc_info=True)
+
+
+async def _aclose_stream(response):
+    """Close the wrapped Ollama async stream so its HTTP response is released.
+
+    Closing the instrumentation's generator does not close the Ollama
+    stream it iterates, so without this the response (and its pooled
+    connection) stays open until the stream is garbage-collected.
+    """
+    aclose = getattr(response, "aclose", None)
+    if aclose is None:
+        return
+    try:
+        await aclose()
+    except Exception:  # never let cleanup mask the caller's exception
+        logger.debug("Failed to close Ollama async stream", exc_info=True)
+
+
+class _StreamWrapper:
+    """Iterator returned for ``stream=True``.
+
+    The span is started before the accumulating generator is created, and the
+    generator ends it in its ``finally``. A generator that is closed (or
+    dropped) before its first ``next()`` never runs its body, so this wrapper
+    ends the span itself in that case.
+    """
+
+    def __init__(self, span, response, generator):
+        self._span = span
+        self._response = response
+        self._generator = generator
+        self._started = False
+        self._closed = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._started = True
+        return next(self._generator)
+
+    def close(self):
+        # Runs the generator's ``finally`` if iteration has started.
+        self._generator.close()
+        if self._started or self._closed:
+            return
+        self._closed = True
+        _close_stream(self._response)
+        self._span.end()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
+
+class _AsyncStreamWrapper:
+    """Async counterpart of ``_StreamWrapper``."""
+
+    def __init__(self, span, response, generator):
+        self._span = span
+        self._response = response
+        self._generator = generator
+        self._started = False
+        self._closed = False
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        self._started = True
+        return await self._generator.__anext__()
+
+    async def aclose(self):
+        # Runs the generator's ``finally`` if iteration has started.
+        await self._generator.aclose()
+        await _aclose_stream(self._response)
+        if self._started or self._closed:
+            return
+        self._closed = True
+        self._span.end()
+
+    def __del__(self):
+        # Nothing can be awaited here. A stream that was never iterated has
+        # not opened an HTTP response yet, so ending the span is enough; a
+        # started one is finalized by the event loop's async generator hooks.
+        if self._started or self._closed:
+            return
+        self._closed = True
+        try:
+            self._span.end()
+        except Exception:
+            pass
 
 
 def _with_tracer_wrapper(func):
@@ -282,13 +472,17 @@ def _handle_input(span, event_logger, llm_request_type, args, kwargs):
 
 
 @dont_throw
-def _handle_response(span, event_logger, llm_request_type, token_histogram, response):
+def _handle_response(
+    span, event_logger, llm_request_type, token_histogram, response, record_usage=True
+):
     if should_emit_events() and event_logger:
         emit_choice_events(llm_request_type, response, event_logger)
     else:
         set_response_attributes(span, token_histogram, llm_request_type, response)
 
-    set_model_response_attributes(span, token_histogram, llm_request_type, response)
+    set_model_response_attributes(
+        span, token_histogram, llm_request_type, response, record_usage
+    )
 
 
 @_with_tracer_wrapper
@@ -351,15 +545,19 @@ def _wrap(
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
-            return _accumulate_streaming_response(
+            return _StreamWrapper(
                 span,
-                event_logger,
-                token_histogram,
-                llm_request_type,
                 response,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
+                _accumulate_streaming_response(
+                    span,
+                    event_logger,
+                    token_histogram,
+                    llm_request_type,
+                    response,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                ),
             )
 
         _handle_response(
@@ -432,15 +630,19 @@ async def _awrap(
             duration_histogram.record(duration, attributes=attrs)
 
         if kwargs.get("stream"):
-            return _aaccumulate_streaming_response(
+            return _AsyncStreamWrapper(
                 span,
-                event_logger,
-                token_histogram,
-                llm_request_type,
                 response,
-                streaming_time_to_first_token,
-                streaming_time_to_generate,
-                start_time,
+                _aaccumulate_streaming_response(
+                    span,
+                    event_logger,
+                    token_histogram,
+                    llm_request_type,
+                    response,
+                    streaming_time_to_first_token,
+                    streaming_time_to_generate,
+                    start_time,
+                ),
             )
 
         _handle_response(
