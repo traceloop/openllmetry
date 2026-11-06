@@ -223,6 +223,22 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         self.run_inline = True
         self._callback_manager: CallbackManager | AsyncCallbackManager = None
 
+    def on_interrupt(self, event: Any) -> None:
+        """Handle a LangGraph ``interrupt()`` event.
+
+        LangGraph's callback manager dispatches ``on_interrupt`` to every
+        registered handler. Without this method it logs an AttributeError for
+        each interrupt. Interrupts don't map to the span lifecycle, so this is
+        an intentional no-op.
+        """
+
+    def on_resume(self, event: Any) -> None:
+        """Handle a LangGraph ``Command(resume=...)`` event.
+
+        See :meth:`on_interrupt` - an intentional no-op that keeps LangGraph's
+        callback manager from logging AttributeError noise on every resume.
+        """
+
     @staticmethod
     def _get_name_from_callback(
         serialized: Optional[dict[str, Any]],
