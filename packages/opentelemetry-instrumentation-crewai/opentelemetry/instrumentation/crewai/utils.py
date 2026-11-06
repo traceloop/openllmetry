@@ -1,4 +1,21 @@
 import json
+import os
+
+from opentelemetry import context as context_api
+
+TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+
+def should_send_prompts() -> bool:
+    """Whether prompt/response content may be captured on spans.
+
+    Honors the TRACELOOP_TRACE_CONTENT env var (default on) and the
+    per-request `override_enable_content_tracing` context value, matching the
+    other instrumentations in this repo.
+    """
+    return (
+        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
+    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def _messages_to_otel_input(messages) -> str | None:
