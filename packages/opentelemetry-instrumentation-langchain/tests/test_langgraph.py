@@ -10,7 +10,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
-from opentelemetry.trace import INVALID_SPAN
+from opentelemetry.trace import INVALID_SPAN, StatusCode
 
 
 @pytest.mark.vcr
@@ -117,6 +117,91 @@ async def test_langgraph_ainvoke(instrument_legacy, span_exporter):
     # Verify GenAI semantic convention attributes on graph span
     assert graph_span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.INVOKE_AGENT.value
     assert graph_span.attributes[GenAIAttributes.GEN_AI_PROVIDER_NAME] == "langgraph"
+
+
+@pytest.mark.asyncio
+async def test_langgraph_astream_early_return_is_not_error(
+    instrument_legacy, span_exporter, caplog
+):
+    import asyncio
+    import gc
+
+    class State(TypedDict):
+        value: int
+
+    def first(state: State):
+        return {"value": state["value"] + 1}
+
+    def second(state: State):
+        return {"value": state["value"] + 1}
+
+    workflow = StateGraph(State)
+    workflow.add_node("first", first)
+    workflow.add_node("second", second)
+    workflow.set_entry_point("first")
+    workflow.add_edge("first", "second")
+    graph = workflow.compile()
+
+    async def consume_first_result():
+        async for event in graph.astream({"value": 0}):
+            return event
+        raise AssertionError("stream produced no events")
+
+    baseline_tasks = asyncio.all_tasks()
+    assert await consume_first_result() == {"first": {"value": 1}}
+
+    gc.collect()
+
+    async def finish_cleanup_tasks():
+        while not any(
+            span.name == "LangGraph.workflow"
+            for span in span_exporter.get_finished_spans()
+        ):
+            await asyncio.sleep(0)
+            cleanup_tasks = (
+                asyncio.all_tasks() - baseline_tasks - {asyncio.current_task()}
+            )
+            if cleanup_tasks:
+                await asyncio.gather(*cleanup_tasks)
+
+    await asyncio.wait_for(finish_cleanup_tasks(), timeout=1)
+
+    spans = span_exporter.get_finished_spans()
+    workflow_span = next(span for span in spans if span.name == "LangGraph.workflow")
+    graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
+
+    assert workflow_span.status.status_code is StatusCode.UNSET
+    assert graph_span.status.status_code is StatusCode.UNSET
+    assert all(event.name != "exception" for event in workflow_span.events)
+    assert all(event.name != "exception" for event in graph_span.events)
+    assert "Failed to detach context" not in caplog.messages
+
+
+@pytest.mark.asyncio
+async def test_langgraph_astream_error_is_recorded(instrument_legacy, span_exporter):
+    class State(TypedDict):
+        value: int
+
+    def fail(_state: State):
+        raise ValueError("expected failure")
+
+    workflow = StateGraph(State)
+    workflow.add_node("fail", fail)
+    workflow.set_entry_point("fail")
+    graph = workflow.compile()
+
+    with pytest.raises(ValueError, match="expected failure"):
+        async for _ in graph.astream({"value": 0}):
+            pass
+
+    spans = span_exporter.get_finished_spans()
+    workflow_span = next(span for span in spans if span.name == "LangGraph.workflow")
+    graph_span = next(span for span in spans if span.name == "invoke_agent LangGraph")
+
+    assert workflow_span.status.status_code is StatusCode.ERROR
+    assert graph_span.status.status_code is StatusCode.ERROR
+    assert any(event.name == "exception" for event in workflow_span.events)
+    assert any(event.name == "exception" for event in graph_span.events)
 
 
 @pytest.mark.vcr
