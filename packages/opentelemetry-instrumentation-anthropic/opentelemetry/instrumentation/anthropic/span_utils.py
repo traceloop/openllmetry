@@ -392,10 +392,14 @@ def set_response_attributes(span, response):
 
 
 @dont_throw
-def set_streaming_response_attributes(span, complete_response_events):
+def set_streaming_response_attributes(span, complete_response_events, stop_reason=None):
     from opentelemetry.instrumentation.anthropic import set_span_attribute
 
-    if not span.is_recording() or not complete_response_events:
+    if not span.is_recording():
+        return
+
+    complete_response_events = complete_response_events or []
+    if not complete_response_events and not stop_reason:
         return
 
     # Collect all parts and determine finish_reason
@@ -436,6 +440,12 @@ def set_streaming_response_attributes(span, complete_response_events):
                     "content": event.get("text"),
                 })
 
+    # Fallback when the stream had no content blocks: use message-level stop_reason.
+    if not finish_reasons and stop_reason:
+        mapped = _map_finish_reason(stop_reason)
+        if mapped:
+            finish_reasons.append(mapped)
+
     if finish_reasons:
         span.set_attribute(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons)
 
@@ -451,4 +461,15 @@ def set_streaming_response_attributes(span, complete_response_events):
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
             json.dumps(output_messages, cls=JSONEncoder),
+        )
+    elif finish_reasons and should_send_prompts():
+        msg = {
+            "role": "assistant",
+            "parts": [],
+            "finish_reason": finish_reasons[-1],
+        }
+        set_span_attribute(
+            span,
+            GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
+            json.dumps([msg], cls=JSONEncoder),
         )
