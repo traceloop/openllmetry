@@ -5,6 +5,7 @@ from opentelemetry.instrumentation.anthropic.config import Config
 from opentelemetry.instrumentation.anthropic.utils import (
     JSONEncoder,
     dont_throw,
+    json_dumps,
     model_as_dict,
     should_send_prompts,
     _extract_response_data,
@@ -145,7 +146,7 @@ async def aset_input_attributes(span, kwargs):
             set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                json.dumps([{
+                json_dumps([{
                     "role": "user",
                     "parts": [{"type": "text", "content": kwargs.get("prompt")}],
                 }]),
@@ -176,7 +177,7 @@ async def aset_input_attributes(span, kwargs):
             set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-                json.dumps(input_messages, cls=JSONEncoder),
+                json_dumps(input_messages, cls=JSONEncoder),
             )
 
         if kwargs.get("tools") is not None:
@@ -191,7 +192,7 @@ async def aset_input_attributes(span, kwargs):
             set_span_attribute(
                 span,
                 GenAIAttributes.GEN_AI_TOOL_DEFINITIONS,
-                json.dumps(tool_defs, cls=JSONEncoder),
+                json_dumps(tool_defs, cls=JSONEncoder),
             )
 
         output_format = kwargs.get("output_format")
@@ -202,7 +203,7 @@ async def aset_input_attributes(span, kwargs):
                     set_span_attribute(
                         span,
                         SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
-                        json.dumps(schema),
+                        json_dumps(schema),
                     )
 
 
@@ -214,7 +215,7 @@ async def _dump_system_content(message_index, content, span):
       - Image: {"type": "uri", ...} or {"type": "blob", ...}
     """
     if isinstance(content, str):
-        return json.dumps([{"type": "text", "content": content}])
+        return json_dumps([{"type": "text", "content": content}])
     elif isinstance(content, list):
         parts = []
         for j, item in enumerate(content):
@@ -240,7 +241,7 @@ async def _dump_system_content(message_index, content, span):
                     parts.append(item_dict)
             else:
                 parts.append(item_dict)
-        return json.dumps(parts, cls=JSONEncoder)
+        return json_dumps(parts, cls=JSONEncoder)
 
 
 def _build_output_messages_from_content(response):
@@ -316,7 +317,7 @@ async def _aset_span_completions(span, response):
         set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(output_messages, cls=JSONEncoder),
+            json_dumps(output_messages, cls=JSONEncoder),
         )
 
 
@@ -338,7 +339,7 @@ def _set_span_completions(span, response):
         set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(output_messages, cls=JSONEncoder),
+            json_dumps(output_messages, cls=JSONEncoder),
         )
 
 
@@ -450,5 +451,5 @@ def set_streaming_response_attributes(span, complete_response_events):
         set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
-            json.dumps(output_messages, cls=JSONEncoder),
+            json_dumps(output_messages, cls=JSONEncoder),
         )

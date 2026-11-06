@@ -294,6 +294,22 @@ def should_emit_events() -> bool:
     return not Config.use_legacy_attributes
 
 
+def json_dumps(obj, **kwargs) -> str:
+    """Serialize ``obj`` to JSON for span attributes, keeping non-ASCII text readable.
+
+    ``json.dumps`` escapes every non-ASCII character by default, so a prompt in
+    Russian or Japanese ends up as unreadable escape sequences. Only unpaired
+    surrogates, which can't be UTF-8 encoded, are escaped here, so exporters
+    never fail to encode the attribute.
+    """
+    result = json.dumps(obj, ensure_ascii=False, **kwargs)
+    try:
+        result.encode("utf-8")
+    except UnicodeEncodeError:
+        return result.encode("utf-8", "backslashreplace").decode("utf-8")
+    return result
+
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if hasattr(o, "to_json"):
