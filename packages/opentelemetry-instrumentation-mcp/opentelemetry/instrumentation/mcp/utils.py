@@ -2,34 +2,17 @@
 
 import asyncio
 import logging
-import os
 import traceback
 from contextlib import contextmanager
 from typing import Optional
 
-from opentelemetry import context as context_api
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.trace import INVALID_SPAN, Status, StatusCode
 
 
 class Config:
     exception_logger = None
-
-
-def should_send_prompts() -> bool:
-    """Whether request/response content may be recorded on spans.
-
-    Mirrors the traceloop SDK's ``TRACELOOP_TRACE_CONTENT`` switch: content
-    capture is on unless an operator explicitly turns it off. Shared by the
-    FastMCP server wrapper and the MCP client path so a single environment
-    variable governs both, which is what the package README documents.
-
-    Like the other instrumentations, the SDK's per-association content allow
-    list can also enable capture via ``override_enable_content_tracing``.
-    """
-    return (
-        os.getenv("TRACELOOP_TRACE_CONTENT") or "true"
-    ).lower() == "true" or bool(context_api.get_value("override_enable_content_tracing"))
 
 
 def frames_without_content(exc: BaseException) -> str:

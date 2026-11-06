@@ -1,9 +1,8 @@
 import logging
-import os
 import traceback
 from importlib.metadata import version
 
-from opentelemetry import context as context_api
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.instrumentation.groq.config import Config
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -17,12 +16,6 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 def set_span_attribute(span, name, value):
     if value is not None and value != "":
         span.set_attribute(name, value)
-
-
-def should_send_prompts():
-    return (os.getenv(TRACELOOP_TRACE_CONTENT) or "true").lower() == "true" or context_api.get_value(
-        "override_enable_content_tracing"
-    )
 
 
 def dont_throw(func):
