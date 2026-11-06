@@ -69,10 +69,8 @@ def fixture_record_raises(monkeypatch):
     monkeypatch.setattr(instrumentation_module, "record_error", _boom)
 
 
-# Session-scoped: McpInstrumentor wraps process-level imports (BaseSession.send_request,
-# post-import hooks on fastmcp.client, etc.). Re-instrumenting per test stacks wrappers
-# because _uninstrument doesn't fully tear them down — that breaks tests whose assertions
-# depend on a single wrapping layer (e.g. trace-id sharing in test_fastmcp.py).
+# Instrument once for ordinary tracing tests. Lifecycle tests use a subprocess
+# to exercise process-wide enable/disable without affecting this shared setup.
 @pytest.fixture(scope="session", autouse=True)
 def instrument_mcp(tracer_provider):
     instrumenter = McpInstrumentor()
