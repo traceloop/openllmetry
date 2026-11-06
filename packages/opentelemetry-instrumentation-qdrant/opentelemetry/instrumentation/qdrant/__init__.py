@@ -1,10 +1,11 @@
 """OpenTelemetry Qdrant instrumentation"""
 
 import json
+import inspect
 import logging
 from pathlib import Path
 from opentelemetry.instrumentation.qdrant.config import Config
-from opentelemetry.instrumentation.qdrant.wrapper import _wrap
+from opentelemetry.instrumentation.qdrant.wrapper import _awrap, _wrap
 import qdrant_client
 from typing import Collection
 from wrapt import wrap_function_wrapper
@@ -39,13 +40,16 @@ class QdrantInstrumentor(BaseInstrumentor):
     """An instrumentor for Qdrant's client library."""
 
     def __init__(self, exception_logger=None):
+        """Initialize instrumentation and configure its optional exception logger."""
         super().__init__()
         Config.exception_logger = exception_logger
 
     def instrumentation_dependencies(self) -> Collection[str]:
+        """Return the supported Qdrant client dependency specification."""
         return _instruments
 
     def _instrument(self, **kwargs):
+        """Select sync or async tracing wrappers for available client methods."""
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
         for wrapped_method in WRAPPED_METHODS:
@@ -53,13 +57,15 @@ class QdrantInstrumentor(BaseInstrumentor):
             wrap_method = wrapped_method.get("method")
             obj = getattr(qdrant_client, wrap_object, None)
             if obj and hasattr(obj, wrap_method):
+                wrapper = _awrap if inspect.iscoroutinefunction(getattr(obj, wrap_method)) else _wrap
                 wrap_function_wrapper(
                     MODULE,
                     f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
+                    wrapper(tracer, wrapped_method),
                 )
 
     def _uninstrument(self, **kwargs):
+        """Restore the original configured methods on both client classes."""
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
