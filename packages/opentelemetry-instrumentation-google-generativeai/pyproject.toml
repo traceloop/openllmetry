@@ -33,7 +33,7 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "google-genai>=1.0.0,<2",
+  "google-genai>=1.0.0,<3",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=1.2.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
