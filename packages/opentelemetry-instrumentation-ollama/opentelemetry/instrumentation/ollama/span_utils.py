@@ -1,4 +1,5 @@
 import json
+from collections.abc import Sequence
 
 from opentelemetry.instrumentation.ollama.utils import dont_throw, should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
@@ -15,6 +16,24 @@ def _set_span_attribute(span, name, value):
         if value != "":
             span.set_attribute(name, value)
     return
+
+
+def _set_prompt_attributes(span, prompt):
+    if isinstance(prompt, Sequence) and not isinstance(prompt, (str, bytes)):
+        for index, prompt_content in enumerate(prompt):
+            _set_span_attribute(
+                span,
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role",
+                "user",
+            )
+            _set_span_attribute(
+                span,
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content",
+                prompt_content,
+            )
+    else:
+        _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
+        _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", prompt)
 
 
 @dont_throw
@@ -40,11 +59,13 @@ def set_input_attributes(span, llm_request_type, kwargs):
             _set_prompts(span, json_data.get("messages"))
             if json_data.get("tools"):
                 set_tools_attributes(span, json_data.get("tools"))
+        elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+            prompt = json_data.get("input")
+            if prompt is None:
+                prompt = json_data.get("prompt")
+            _set_prompt_attributes(span, prompt)
         else:
-            _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
-            _set_span_attribute(
-                span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.content", json_data.get("prompt")
-            )
+            _set_prompt_attributes(span, json_data.get("prompt"))
 
 
 @dont_throw
