@@ -22,6 +22,7 @@ def test_set_embeddings_metrics_handles_none_values():
 
     expected_attributes = {
         'gen_ai.provider.name': 'openai',
+        'gen_ai.request.model': 'text-embedding-ada-002',
         'gen_ai.response.model': 'text-embedding-ada-002',
         'gen_ai.operation.name': 'embeddings',
         'server.address': '',
@@ -37,6 +38,7 @@ def test_set_embeddings_metrics_handles_none_values():
             duration_histogram,
             response_dict,
             duration,
+            request_model="text-embedding-ada-002",
         )
 
         # Check that logging.error was called for the None value

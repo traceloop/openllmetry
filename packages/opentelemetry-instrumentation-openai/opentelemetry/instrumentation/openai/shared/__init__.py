@@ -416,19 +416,27 @@ def _token_type(token_type: str):
 
 
 def metric_shared_attributes(
-    response_model: str, operation: str, server_address: str, is_streaming: bool = False
+    response_model: str, operation: str, server_address: str, is_streaming: bool = False,
+    request_model: str = None,
 ):
     attributes = Config.get_common_metrics_attributes()
     vendor = _get_vendor_from_url(server_address)
 
-    return {
+    shared_attributes = {
         **attributes,
         GenAIAttributes.GEN_AI_PROVIDER_NAME: vendor,
-        GenAIAttributes.GEN_AI_RESPONSE_MODEL: response_model,
         GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
         "server.address": server_address,
         "stream": is_streaming,
     }
+    # Metric attributes with a None value are dropped (or fail to encode)
+    # downstream, so only add the model when it is actually known. Image
+    # generation calls, for example, often omit ``model``.
+    if request_model is not None:
+        shared_attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = request_model
+    if response_model is not None:
+        shared_attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = response_model
+    return shared_attributes
 
 
 def propagate_trace_context(span, kwargs):
