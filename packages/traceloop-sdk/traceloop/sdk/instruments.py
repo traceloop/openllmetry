@@ -10,6 +10,7 @@ class Instruments(Enum):
     COHERE = "cohere"
     CREWAI = "crewai"
     CREW = "crewai"  # deprecated alias; remove in future major version
+    GOOGLE_ADK = "google_adk"
     GOOGLE_GENERATIVEAI = "google_generativeai"
     GROQ = "groq"
     HAYSTACK = "haystack"
