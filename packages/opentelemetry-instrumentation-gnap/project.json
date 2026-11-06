@@ -1,0 +1,12 @@
+{
+  "name": "opentelemetry-instrumentation-gnap",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/opentelemetry-instrumentation-gnap/opentelemetry/instrumentation/gnap",
+  "targets": {
+    "install": { "executor": "nx:run-commands", "options": { "command": "uv sync --all-groups", "cwd": "packages/opentelemetry-instrumentation-gnap" } },
+    "lint": { "executor": "nx:run-commands", "options": { "command": "uv run ruff check .", "cwd": "packages/opentelemetry-instrumentation-gnap" } },
+    "test": { "executor": "nx:run-commands", "options": { "command": "uv run pytest tests/", "cwd": "packages/opentelemetry-instrumentation-gnap" } }
+  },
+  "tags": ["instrumentation"]
+}
