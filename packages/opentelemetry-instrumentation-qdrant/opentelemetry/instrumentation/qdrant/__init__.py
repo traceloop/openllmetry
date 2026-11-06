@@ -2,6 +2,7 @@
 
 import json
 import logging
+from inspect import getattr_static
 from pathlib import Path
 from opentelemetry.instrumentation.qdrant.config import Config
 from opentelemetry.instrumentation.qdrant.wrapper import _wrap
@@ -33,6 +34,11 @@ with open(p, "r") as f:
 WRAPPED_METHODS = QDRANT_CLIENT_METHODS + ASYNC_QDRANT_CLIENT_METHODS
 
 MODULE = "qdrant_client"
+_MISSING = object()
+
+
+def _has_static_attribute(obj, name):
+    return getattr_static(obj, name, _MISSING) is not _MISSING
 
 
 class QdrantInstrumentor(BaseInstrumentor):
@@ -52,7 +58,7 @@ class QdrantInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             obj = getattr(qdrant_client, wrap_object, None)
-            if obj and hasattr(obj, wrap_method):
+            if obj and _has_static_attribute(obj, wrap_method):
                 wrap_function_wrapper(
                     MODULE,
                     f"{wrap_object}.{wrap_method}",
@@ -64,5 +70,5 @@ class QdrantInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
             obj = getattr(qdrant_client, wrap_object, None)
-            if obj and hasattr(obj, wrap_method):
+            if obj and _has_static_attribute(obj, wrap_method):
                 unwrap(f"{MODULE}.{wrap_object}", wrap_method)
