@@ -32,6 +32,15 @@ def _map_finish_reason(anthropic_reason):
     return _FINISH_REASON_MAP.get(anthropic_reason, anthropic_reason)
 
 
+def _normalize_stop_sequences(stop_sequences):
+    """Normalize stop_sequences to a list of strings, or None if nothing usable was passed."""
+    if isinstance(stop_sequences, str):
+        return [stop_sequences]
+    if isinstance(stop_sequences, (list, tuple)):
+        return [s for s in stop_sequences if isinstance(s, str)] or None
+    return None
+
+
 async def _process_image_item(item, trace_id, span_id, message_index, content_index):
     source = item.get("source", {})
     media_type = source.get("media_type", "image/unknown")
@@ -137,6 +146,11 @@ async def aset_input_attributes(span, kwargs):
     )
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+    )
+    set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES,
+        _normalize_stop_sequences(kwargs.get("stop_sequences")),
     )
     set_span_attribute(span, SpanAttributes.GEN_AI_IS_STREAMING, kwargs.get("stream"))
 
