@@ -1,7 +1,10 @@
 from typing import Any, Dict
 
 from traceloop.sdk.client.http import HTTPClient
-from .base_annotation import BaseAnnotation
+from .base_annotation import (
+    AnnotationCreateResult,
+    BaseAnnotation,
+)
 
 
 class UserFeedback(BaseAnnotation):
@@ -13,7 +16,7 @@ class UserFeedback(BaseAnnotation):
         annotation_task: str,
         entity_id: str,
         tags: Dict[str, Any],
-    ) -> None:
+    ) -> AnnotationCreateResult:
         """Create an annotation for a specific task.
 
         Args:
@@ -23,6 +26,12 @@ class UserFeedback(BaseAnnotation):
                 in the association properties
             tags (Dict[str, Any]): Dictionary containing the tags to be reported.
                 Should match the tags defined in the annotation task
+
+        Returns:
+            AnnotationCreateResult: Result of annotation delivery.
+                - DELIVERED: request succeeded and payload contains decoded response body.
+                - REFUSED: server responded with a non-2xx status code.
+                - UNREACHABLE: request failed before receiving an HTTP response.
 
         Example:
             ```python
