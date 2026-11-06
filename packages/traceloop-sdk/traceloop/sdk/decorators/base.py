@@ -122,11 +122,11 @@ def _detach_tokens(ctx_tokens) -> None:
     _safe_detach(name_token)
 
 
-def _handle_generator(span, ctx_tokens, res):
-    # for some reason the SPAN_KEY is not being set in the context of the generator, so we re-set it
-    # Capture this re-attach's token so it can be detached on cleanup; otherwise
-    # this frame is left on the context stack (unbalanced attach).
-    gen_span_token = context_api.attach(trace.set_span_in_context(span))
+def _handle_generator(span, generator_ctx, res):
+    # The wrapper detaches the entity context right after creating the generator,
+    # so it is only attached once iteration actually starts (code the caller runs
+    # before iterating must not be tagged with this entity).
+    ctx_token = context_api.attach(generator_ctx)
     try:
         for item in res:
             yield item
@@ -135,16 +135,18 @@ def _handle_generator(span, ctx_tokens, res):
         span.record_exception(e)
         raise
     finally:
-        span.end()
-        # Best-effort detach: closing a generator on a different task/thread than
-        # the one that attached the tokens makes detach fail
-        # (https://github.com/open-telemetry/opentelemetry-python/issues/2606).
-        # _safe_detach swallows that, so this stops the name/path from leaking in
-        # the common case and degrades quietly otherwise (context is reclaimed
-        # during garbage collection). Detach the re-attached span first (LIFO:
-        # it was attached after the tokens in ctx_tokens).
-        _safe_detach(gen_span_token)
-        _detach_tokens(ctx_tokens)
+        try:
+            # Close the wrapped generator while the entity context is still
+            # attached, so its own `finally` blocks run inside this entity.
+            res.close()
+        finally:
+            span.end()
+            # Best-effort detach: closing a generator on a different task/thread
+            # than the one that attached the token makes detach fail
+            # (https://github.com/open-telemetry/opentelemetry-python/issues/2606).
+            # _safe_detach swallows that, so this stops the name/path from leaking
+            # in the common case and degrades quietly otherwise.
+            _safe_detach(ctx_token)
 
 
 async def _ahandle_generator(span, ctx_tokens, res):
@@ -156,8 +158,14 @@ async def _ahandle_generator(span, ctx_tokens, res):
         span.record_exception(e)
         raise
     finally:
-        span.end()
-        _detach_tokens(ctx_tokens)
+        try:
+            # `async for` does not close the wrapped generator on early exit, so
+            # without this its `finally` blocks would run later, outside this
+            # entity's context (or not at all).
+            await res.aclose()
+        finally:
+            span.end()
+            _detach_tokens(ctx_tokens)
 
 
 def _should_send_prompts():
@@ -339,7 +347,12 @@ def entity_method(
 
                 # span will be ended in the generator
                 if isinstance(res, types.GeneratorType):
-                    return _handle_generator(span, ctx_tokens, res)
+                    # Generators run lazily: hand the entity context over to the
+                    # generator and detach it here, otherwise it stays attached
+                    # (and leaks onto the caller) until the generator is iterated.
+                    generator_ctx = context_api.get_current()
+                    _detach_tokens(ctx_tokens)
+                    return _handle_generator(span, generator_ctx, res)
 
                 _handle_span_output(span, res, cls=JSONEncoder)
                 _cleanup_span(span, ctx_tokens)
