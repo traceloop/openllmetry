@@ -194,8 +194,8 @@ def set_span_response_attributes(span, response):
         meta_dict = to_dict(response_dict.get("meta", {}))
         billed_units = meta_dict.get("billed_units", {})
         billed_units_dict = to_dict(billed_units)
-        input_tokens = billed_units_dict.get("input_tokens", 0)
-        output_tokens = billed_units_dict.get("output_tokens", 0)
+        input_tokens = billed_units_dict.get("input_tokens", 0) or 0
+        output_tokens = billed_units_dict.get("output_tokens", 0) or 0
 
         _set_span_attribute(
             span,
@@ -220,8 +220,8 @@ def set_span_response_attributes(span, response):
         # (possibly pre-prompted)")
         usage_dict = to_dict(response_dict.get("usage", {}))
         billed_units_dict = to_dict(usage_dict.get("billed_units", {}))
-        input_tokens = billed_units_dict.get("input_tokens", 0)
-        output_tokens = billed_units_dict.get("output_tokens", 0)
+        input_tokens = billed_units_dict.get("input_tokens", 0) or 0
+        output_tokens = billed_units_dict.get("output_tokens", 0) or 0
         _set_span_attribute(
             span,
             SpanAttributes.LLM_USAGE_TOTAL_TOKENS,

@@ -121,7 +121,7 @@ def _emit_message_event(event: MessageEvent, event_logger: Logger) -> None:
 
 def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
     body = asdict(event)
-    if event.message["role"] == Roles.ASSISTANT.value:
+    if event.message.get("role") == Roles.ASSISTANT.value:
         # According to the semantic conventions, the role is conditionally required if available
         # and not equal to "assistant", so remove the role from the body if it is "assistant".
         body["message"].pop("role", None)
@@ -145,7 +145,7 @@ def _emit_choice_event(event: ChoiceEvent, event_logger: Logger) -> None:
 
 
 def _parse_response_event(index: int, llm_request_type: str, response) -> ChoiceEvent:
-    event_params = {"index": index, "finish_reason": "unknown"}
+    event_params = {"index": index, "message": {}, "finish_reason": "unknown"}
 
     if llm_request_type == LLMRequestTypeValues.RERANK:
         event_params["message"] = {
@@ -159,8 +159,9 @@ def _parse_response_event(index: int, llm_request_type: str, response) -> Choice
             ],
             "role": "assistant",
         }
-    elif (
-        llm_request_type == LLMRequestTypeValues.CHAT or LLMRequestTypeValues.COMPLETION
+    elif llm_request_type in (
+        LLMRequestTypeValues.CHAT,
+        LLMRequestTypeValues.COMPLETION,
     ):
         event_params["message"] = {"content": response.text, "role": "assistant"}
         event_params["finish_reason"] = response.finish_reason
