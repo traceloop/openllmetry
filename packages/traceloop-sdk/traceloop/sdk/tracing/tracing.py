@@ -57,6 +57,7 @@ EXCLUDED_URLS = """
     posthog.com,
     sentry.io,
     bedrock-runtime,
+    inference.generativeai,
     sagemaker-runtime,
     googleapis.com,
     githubusercontent.com,
@@ -584,6 +585,9 @@ def init_instrumentations(
         elif instrument == Instruments.MISTRAL:
             if init_mistralai_instrumentor():
                 instrument_set = True
+        elif instrument == Instruments.OCI_GENAI:
+            if init_oci_genai_instrumentor(use_attributes):
+                instrument_set = True
         elif instrument == Instruments.OLLAMA:
             if init_ollama_instrumentor():
                 instrument_set = True
@@ -843,6 +847,20 @@ def init_litellm_instrumentor(use_attributes: bool = True):
             return True
     except Exception as e:
         logging.error(f"Error initializing LiteLLM instrumentor: {e}")
+    return False
+
+
+def init_oci_genai_instrumentor(use_attributes: bool = True):
+    try:
+        if is_package_installed("oci"):
+            from opentelemetry.instrumentation.oci_genai import OCIGenAIInstrumentor
+
+            instrumentor = OCIGenAIInstrumentor(use_attributes=use_attributes)
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing OCI Generative AI instrumentor: {e}")
     return False
 
 
