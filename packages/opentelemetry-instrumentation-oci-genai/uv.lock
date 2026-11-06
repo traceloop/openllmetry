@@ -882,7 +882,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "oci", marker = "extra == 'instruments'" },
+    { name = "oci", marker = "extra == 'instruments'", specifier = ">=2.121.1" },
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.63b1" },

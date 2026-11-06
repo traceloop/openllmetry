@@ -19,7 +19,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-oci-genai"
 
 [project.optional-dependencies]
-instruments = ["oci"]
+instruments = ["oci>=2.121.1"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 oci = "opentelemetry.instrumentation.oci_genai:OCIGenAIInstrumentor"
