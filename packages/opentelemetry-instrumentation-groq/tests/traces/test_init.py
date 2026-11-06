@@ -79,10 +79,10 @@ def _make_async_wrapper(
 
 
 class TestProcessStreamingChunk:
-    def test_empty_choices_returns_none_quad(self):
+    def test_empty_choices_returns_empty_tuple(self):
         chunk = MagicMock()
         chunk.choices = []
-        assert _process_streaming_chunk(chunk) == (None, [], [], None)
+        assert _process_streaming_chunk(chunk) == (None, None, [], [], None)
 
     def test_multiple_choices_accumulates_content(self):
         chunk = MagicMock()
@@ -96,7 +96,7 @@ class TestProcessStreamingChunk:
         choice1.delta.tool_calls = None
         choice1.finish_reason = "stop"
         chunk.choices = [choice0, choice1]
-        content, tool_calls_delta, finish_reasons, usage = _process_streaming_chunk(chunk)
+        content, reasoning, tool_calls_delta, finish_reasons, usage = _process_streaming_chunk(chunk)
         assert content == "Hello World"
         assert tool_calls_delta == []
         assert finish_reasons == ["stop"]
@@ -114,7 +114,7 @@ class TestProcessStreamingChunk:
         choice.delta.tool_calls = [tc]
         choice.finish_reason = None
         chunk.choices = [choice]
-        content, tool_calls_delta, finish_reason, usage = _process_streaming_chunk(chunk)
+        content, reasoning, tool_calls_delta, finish_reason, usage = _process_streaming_chunk(chunk)
         assert content == ""
         assert len(tool_calls_delta) == 1
         assert tool_calls_delta[0].id == "call_123"
