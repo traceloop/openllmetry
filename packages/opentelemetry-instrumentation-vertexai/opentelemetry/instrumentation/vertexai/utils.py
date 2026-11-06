@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import traceback
@@ -17,6 +18,7 @@ def should_send_prompts():
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+    Works for both synchronous and asynchronous functions.
 
     @param func: The function to wrap
     @return: The wrapper function
@@ -24,19 +26,35 @@ def dont_throw(func):
     # Obtain a logger specific to the function's module
     logger = logging.getLogger(func.__module__)
 
-    def wrapper(*args, **kwargs):
+    def _handle_exception(e):
+        logger.debug(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            func.__name__,
+            traceback.format_exc(),
+        )
+        if Config.exception_logger:
+            try:
+                Config.exception_logger(e)
+            except Exception:
+                logger.debug(
+                    "OpenLLMetry exception logger failed in %s",
+                    func.__name__,
+                    exc_info=True,
+                )
+
+    async def async_wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e)
+
+    def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s",
-                func.__name__,
-                traceback.format_exc(),
-            )
-            if Config.exception_logger:
-                Config.exception_logger(e)
+            _handle_exception(e)
 
-    return wrapper
+    return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
 
 def should_emit_events():
