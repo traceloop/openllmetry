@@ -19,6 +19,8 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from agents.tracing.processors import TracingProcessor
 
+from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+
 from .utils import (
     should_send_prompts,
     dont_throw,
@@ -671,6 +673,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
         # agent name does not leak onto sibling/parent agent spans.
         self._agent_name_tokens: Dict[str, Any] = {}
         self._reverse_handoffs_dict: OrderedDict[str, str] = OrderedDict()
+        # agents span -> suppression token; prevents openai instrumentation from
+        # creating a duplicate span for the same model call.
+        self._suppress_tokens: Dict[str, Any] = {}
 
     @dont_throw
     def on_trace_start(self, trace):
@@ -739,6 +744,10 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             or isinstance(span_data, GenerationSpanData)
         ):
             agent_ctx = self._resolve_agent_parent(parent_context)
+            suppress_token = context.attach(
+                context.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+            )
+            self._suppress_tokens[span] = suppress_token
             otel_span = self._start_generation_span(agent_ctx, span_data)
 
         elif (
@@ -831,6 +840,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if span in self._agent_name_tokens:
                 _safe_detach(self._agent_name_tokens[span])
                 del self._agent_name_tokens[span]
+            if span in self._suppress_tokens:
+                _safe_detach(self._suppress_tokens[span])
+                del self._suppress_tokens[span]
 
     # ------------------------------------------------------------------
     # on_span_start handlers (extracted from the former if-elif chain)
