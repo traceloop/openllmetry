@@ -153,7 +153,7 @@ def _tool_calls_to_parts(tool_calls) -> list[dict]:
     return parts
 
 
-def set_request_params(span, kwargs, span_holder: SpanHolder):
+def set_request_params(span, kwargs, span_holder: SpanHolder, metadata=None):
     if not span.is_recording():
         return
 
@@ -167,7 +167,13 @@ def set_request_params(span, kwargs, span_holder: SpanHolder):
             span_holder.request_model = model
             break
     else:
-        model = "unknown"
+        # Some providers (e.g. ChatBedrockConverse invoked through LangGraph) don't
+        # expose the model in kwargs/invocation_params. Fall back to LangChain's
+        # standard run metadata, which is also used on the response path.
+        if model := (metadata or {}).get("ls_model_name"):
+            span_holder.request_model = model
+        else:
+            model = "unknown"
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, model)
     # response is not available for LLM requests (as opposed to chat)
