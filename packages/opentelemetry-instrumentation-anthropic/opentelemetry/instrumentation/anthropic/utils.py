@@ -27,6 +27,21 @@ def set_span_attribute(span, name, value):
     return
 
 
+def get_thinking_tokens(usage):
+    """Return thinking tokens from an Anthropic usage object or dictionary."""
+    if not usage:
+        return None
+
+    details = (
+        usage.get("output_tokens_details")
+        if isinstance(usage, dict)
+        else getattr(usage, "output_tokens_details", None)
+    )
+    if isinstance(details, dict):
+        return details.get("thinking_tokens")
+    return getattr(details, "thinking_tokens", None)
+
+
 def should_send_prompts():
     return (
         os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
