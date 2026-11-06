@@ -814,19 +814,25 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             response.llm_output or {}
         ).get("usage")
         if token_usage is not None:
-            prompt_tokens = (
-                token_usage.get("prompt_tokens")
-                or token_usage.get("input_token_count")
-                or token_usage.get("input_tokens")
-            )
-            completion_tokens = (
-                token_usage.get("completion_tokens")
-                or token_usage.get("generated_token_count")
-                or token_usage.get("output_tokens")
-            )
-            total_tokens = token_usage.get("total_tokens") or (
-                prompt_tokens + completion_tokens
-            )
+            prompt_tokens = None
+            for key in ("prompt_tokens", "input_token_count", "input_tokens"):
+                if token_usage.get(key) is not None:
+                    prompt_tokens = token_usage.get(key)
+                    break
+
+            completion_tokens = None
+            for key in ("completion_tokens", "generated_token_count", "output_tokens"):
+                if token_usage.get(key) is not None:
+                    completion_tokens = token_usage.get(key)
+                    break
+
+            total_tokens = token_usage.get("total_tokens")
+            if (
+                total_tokens is None
+                and prompt_tokens is not None
+                and completion_tokens is not None
+            ):
+                total_tokens = prompt_tokens + completion_tokens
 
             _set_span_attribute(
                 span, GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS, prompt_tokens
@@ -840,7 +846,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
 
             # Record token usage metrics
             vendor = span.attributes.get(GenAIAttributes.GEN_AI_PROVIDER_NAME, "langchain")
-            if prompt_tokens > 0:
+            if prompt_tokens is not None and prompt_tokens > 0:
                 self.token_histogram.record(
                     prompt_tokens,
                     attributes={
@@ -850,7 +856,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                     },
                 )
 
-            if completion_tokens > 0:
+            if completion_tokens is not None and completion_tokens > 0:
                 self.token_histogram.record(
                     completion_tokens,
                     attributes={
