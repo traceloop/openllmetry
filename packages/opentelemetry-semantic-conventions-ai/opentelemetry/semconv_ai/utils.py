@@ -10,10 +10,12 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 # Values defined by the OTel GenAI conventions for the capture switch. Any
 # other value is parsed as a boolean, so ``false`` also disables capture.
+# EVENT_ONLY is off here because ``should_send_prompts`` gates span attributes;
+# event-based capture is not wired to this switch yet.
 _OTEL_CAPTURE_VALUES = {
     "no_content": False,
     "span_only": True,
-    "event_only": True,
+    "event_only": False,
     "span_and_event": True,
 }
 

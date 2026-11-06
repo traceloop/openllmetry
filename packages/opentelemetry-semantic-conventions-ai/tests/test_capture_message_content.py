@@ -33,11 +33,17 @@ def test_otel_switch_disables_capture(monkeypatch):
     assert should_send_prompts() is False
 
 
-@pytest.mark.parametrize("value", ["SPAN_ONLY", "EVENT_ONLY", "SPAN_AND_EVENT"])
+@pytest.mark.parametrize("value", ["SPAN_ONLY", "SPAN_AND_EVENT"])
 def test_otel_capture_values_enable_capture(monkeypatch, value):
-    """The OTel convention's capture values keep content on."""
+    """The OTel convention's span capture values keep content on."""
     monkeypatch.setenv(OTEL_VAR, value)
     assert should_send_prompts() is True
+
+
+def test_otel_event_only_does_not_enable_span_capture(monkeypatch):
+    """Content must not leak into spans in event-only mode."""
+    monkeypatch.setenv(OTEL_VAR, "EVENT_ONLY")
+    assert should_send_prompts() is False
 
 
 def test_otel_no_content_disables_capture(monkeypatch):
