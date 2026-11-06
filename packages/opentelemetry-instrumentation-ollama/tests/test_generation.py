@@ -37,6 +37,14 @@ def test_ollama_generation_legacy(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    assert (
+        ollama_span.attributes.get(SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON)
+        == "stop"
+    )
+    assert (
+        ollama_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        == ("stop",)
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -161,6 +169,14 @@ def test_ollama_streaming_generation_legacy(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    assert (
+        ollama_span.attributes.get(SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON)
+        == "stop"
+    )
+    assert (
+        ollama_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        == ("stop",)
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -293,6 +309,14 @@ async def test_ollama_async_generation_legacy(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    assert (
+        ollama_span.attributes.get(SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON)
+        == "stop"
+    )
+    assert (
+        ollama_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        == ("stop",)
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -425,6 +449,14 @@ async def test_ollama_async_streaming_generation_legacy(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+    assert (
+        ollama_span.attributes.get(SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON)
+        == "stop"
+    )
+    assert (
+        ollama_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+        == ("stop",)
+    )
 
     logs = log_exporter.get_finished_logs()
     assert (
