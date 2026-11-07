@@ -44,12 +44,19 @@ class CustomLLMInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        # ``llama_index.llms`` is a namespace package that only exists once a
-        # ``llama-index-llms-*`` integration is installed, so import it lazily
-        # instead of at module load time.
+        """Wrap the LLM methods of every ``CustomLLM`` subclass in ``llama_index.llms``.
+
+        ``llama_index.llms`` is a namespace package that only exists once a
+        ``llama-index-llms-*`` integration is installed, so it is imported lazily
+        here instead of at module load time, and skipped when it is absent.
+        """
         try:
             llms_package = importlib.import_module(MODULE_NAME)
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as exc:
+            # Only skip when the namespace itself is missing; a broken integration
+            # (one of its own dependencies missing) should still surface.
+            if exc.name != MODULE_NAME:
+                raise
             return
 
         packages = pkgutil.iter_modules(llms_package.__path__)
