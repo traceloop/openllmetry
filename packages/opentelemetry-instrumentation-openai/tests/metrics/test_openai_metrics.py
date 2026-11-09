@@ -348,6 +348,35 @@ def _responses_ok(request):
     return httpx.Response(200, json=body)
 
 
+def _responses_failed(error):
+    def handler(request):
+        body = {**_RESPONSES_BODY, "id": f"resp_failed_{time.time_ns()}", "status": "failed", "error": error}
+        if json.loads(request.content).get("stream"):
+            event = {"type": "response.failed", "sequence_number": 0, "response": body}
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/event-stream"},
+                content=f"event: response.failed\ndata: {json.dumps(event)}\n\n",
+            )
+        return httpx.Response(200, json=body)
+
+    return handler
+
+
+def _responses_created_then_completed(request):
+    body = {**_RESPONSES_BODY, "id": f"resp_created_{time.time_ns()}"}
+    events = [
+        # Usage is kept so that treating this snapshot as the final response would show in the metrics
+        ("response.created", {**body, "status": "in_progress", "output": []}),
+        ("response.completed", body),
+    ]
+    content = "".join(
+        f"event: {name}\ndata: {json.dumps({'type': name, 'sequence_number': i, 'response': response})}\n\n"
+        for i, (name, response) in enumerate(events)
+    )
+    return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=content)
+
+
 def _responses_server_error(request):
     return httpx.Response(500, json={"error": {"message": "boom"}})
 
@@ -460,6 +489,66 @@ async def test_responses_error_metrics(instrument_legacy, reader, is_async, hand
     assert attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "gpt-4o-mini"
     _assert_shared_attributes(attributes, _client(is_async, handler), stream)
     assert Meters.LLM_TOKEN_USAGE not in points
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error,error_type",
+    [({"code": "server_error", "message": "boom"}, "server_error"), (None, "failed")],
+)
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("is_async", [False, True])
+async def test_responses_failed_status_metrics(instrument_legacy, reader, is_async, stream, error, error_type):
+    _collect_points(reader)
+
+    client = await _call_responses(is_async, _responses_failed(error), stream=stream)
+
+    points = _collect_points(reader)
+    durations = points.get(Meters.LLM_OPERATION_DURATION, [])
+    assert [p.count for p in durations] == [1]
+    assert durations[0].attributes[ERROR_TYPE] == error_type
+    _assert_shared_attributes(durations[0].attributes, client, stream)
+    # error.type is not a token usage attribute
+    tokens = points.get(Meters.LLM_TOKEN_USAGE, [])
+    assert {p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in tokens} == {"input": 7, "output": 3}
+    for point in tokens:
+        assert ERROR_TYPE not in point.attributes
+        _assert_shared_attributes(point.attributes, client, stream)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_async", [False, True])
+async def test_responses_stream_closed_after_created_records_duration_only(instrument_legacy, reader, is_async):
+    _collect_points(reader)
+    client = _client(is_async, _responses_created_then_completed)
+
+    response = await _result(client.responses.create(model="gpt-4o-mini", input="hello", stream=True))
+    await _result(response.__anext__() if is_async else next(response))
+    await _result(response.aclose() if is_async else response.close())
+
+    points = _collect_points(reader)
+    durations = points.get(Meters.LLM_OPERATION_DURATION, [])
+    assert [p.count for p in durations] == [1]
+    assert ERROR_TYPE not in durations[0].attributes
+    assert Meters.LLM_TOKEN_USAGE not in points
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_async", [False, True])
+async def test_responses_stream_closed_after_completed_records_tokens(instrument_legacy, reader, is_async):
+    _collect_points(reader)
+    client = _client(is_async, _responses_ok)
+
+    response = await _result(client.responses.create(model="gpt-4o-mini", input="hello", stream=True))
+    await _result(response.__anext__() if is_async else next(response))
+    await _result(response.aclose() if is_async else response.close())
+
+    points = _collect_points(reader)
+    durations = points.get(Meters.LLM_OPERATION_DURATION, [])
+    assert [p.count for p in durations] == [1]
+    assert durations[0].attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "gpt-4o-mini"
+    tokens = points.get(Meters.LLM_TOKEN_USAGE, [])
+    assert {p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in tokens} == {"input": 7, "output": 3}
 
 
 @pytest.mark.asyncio

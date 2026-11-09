@@ -536,13 +536,17 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
-def _responses_metric_attributes(instance, response_model, is_streaming=False):
-    return metric_shared_attributes(
+def _responses_metric_attributes(instance, response_model, is_streaming=False, response=None):
+    attributes = metric_shared_attributes(
         response_model=_extract_model_name_from_provider_format(response_model) or None,
         operation="chat",
         server_address=_get_openai_base_url(instance),
         is_streaming=is_streaming,
     )
+    # A failed generation comes back as a terminal response rather than a raised exception
+    if getattr(response, "status", None) == "failed":
+        attributes[ERROR_TYPE] = getattr(getattr(response, "error", None), "code", None) or "failed"
+    return attributes
 
 
 def _error_metric_attributes(instance, request_model, exception, is_streaming=False):
@@ -563,6 +567,8 @@ def _record_duration(duration_histogram, start_time, attributes):
 @dont_throw
 def _record_token_usage(token_histogram, usage, attributes):
     if token_histogram and usage:
+        # error.type describes the operation, not its token usage
+        attributes = {key: value for key, value in attributes.items() if key != ERROR_TYPE}
         for token_type, count in (("input", usage.input_tokens), ("output", usage.output_tokens)):
             token_histogram.record(
                 count, attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type}
@@ -756,7 +762,7 @@ def responses_get_or_create_wrapper(
         set_data_attributes(traced_data, span)
         span.end()
         # One point per emitted span, so background polls and repeat retrieves don't add operations
-        metric_attributes = _responses_metric_attributes(instance, parsed_response.model)
+        metric_attributes = _responses_metric_attributes(instance, parsed_response.model, response=parsed_response)
         _record_duration(duration_histogram, traced_data.start_time, metric_attributes)
         _record_token_usage(token_histogram, traced_data.usage, metric_attributes)
 
@@ -948,7 +954,7 @@ async def async_responses_get_or_create_wrapper(
         set_data_attributes(traced_data, span)
         span.end()
         # One point per emitted span, so background polls and repeat retrieves don't add operations
-        metric_attributes = _responses_metric_attributes(instance, parsed_response.model)
+        metric_attributes = _responses_metric_attributes(instance, parsed_response.model, response=parsed_response)
         _record_duration(duration_histogram, traced_data.start_time, metric_attributes)
         _record_token_usage(token_histogram, traced_data.usage, metric_attributes)
 
@@ -1121,12 +1127,20 @@ class ResponseStream(ObjectProxy):
                 suppress = bool(await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb))
         return suppress
 
+    def _has_terminal_response(self):
+        return getattr(self._complete_response_data, "status", None) in _TERMINAL_STATUSES
+
     def close(self):
+        # A terminal response already seen still gets its full span and token usage
+        if self._has_terminal_response():
+            self._process_complete_response()
         self._ensure_cleanup()
         if hasattr(self.__wrapped__, "close"):
             return self.__wrapped__.close()
 
     async def aclose(self):
+        if self._has_terminal_response():
+            self._process_complete_response()
         self._ensure_cleanup()
         if hasattr(self.__wrapped__, "aclose"):
             return await self.__wrapped__.aclose()
@@ -1188,6 +1202,7 @@ class ResponseStream(ObjectProxy):
             self._instance,
             self._traced_data.response_model or self._request_kwargs.get("model"),
             is_streaming=True,
+            response=self._complete_response_data,
         )
 
     def _record_error_duration(self, exception):
