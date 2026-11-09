@@ -4,7 +4,6 @@ LanceDB documents ``table.add(data)``, ``table.search(query)`` and
 ``table.delete(where)`` as positional calls, so the instrumentation must not
 rely on ``kwargs`` alone. These tests use a local, temporary LanceDB.
 """
-
 import lancedb
 import pytest
 from opentelemetry.semconv_ai import SpanAttributes
@@ -22,6 +21,7 @@ def table(tmp_path):
 
 
 def _span(exporter, name):
+    """Return the finished span with the given name."""
     return next(s for s in exporter.get_finished_spans() if s.name == name)
 
 
