@@ -301,6 +301,33 @@ async def _handle_request(span, kwargs, instance):
     )
 
 
+def _reasoning_tokens_from_usage(usage) -> Optional[int]:
+    """Read ``completion_tokens_details.reasoning_tokens`` off a usage payload.
+
+    Usage reaches us either as a dict (streaming accumulations, dict responses) or as a
+    provider object (OpenAI v1 models), and neither the details wrapper nor its inner
+    field is guaranteed to exist. ``None`` means "the provider did not report it".
+    """
+    if not usage:
+        return None
+
+    # Support both dict-style and object-style `usage`
+    tokens_details = (
+        usage.get("completion_tokens_details")
+        if isinstance(usage, dict)
+        else getattr(usage, "completion_tokens_details", None)
+    )
+
+    if not tokens_details:
+        return None
+
+    return (
+        tokens_details.get("reasoning_tokens", None)
+        if isinstance(tokens_details, dict)
+        else getattr(tokens_details, "reasoning_tokens", None)
+    )
+
+
 @dont_throw
 def _handle_response(
     response,
@@ -332,25 +359,10 @@ def _handle_response(
     _set_response_attributes(span, response_dict)
 
     # Reasoning usage attributes
-    usage = response_dict.get("usage")
-    reasoning_tokens = None
-    if usage:
-        # Support both dict-style and object-style `usage`
-        tokens_details = (
-            usage.get("completion_tokens_details") if isinstance(usage, dict)
-            else getattr(usage, "completion_tokens_details", None)
-        )
-
-        if tokens_details:
-            reasoning_tokens = (
-                tokens_details.get("reasoning_tokens", None) if isinstance(tokens_details, dict)
-                else getattr(tokens_details, "reasoning_tokens", None)
-            )
-
     _set_span_attribute(
         span,
         SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
-        reasoning_tokens,
+        _reasoning_tokens_from_usage(response_dict.get("usage")),
     )
 
     if should_emit_events():
@@ -628,6 +640,15 @@ def _set_streaming_token_metrics(
 
     # span record
     _set_span_stream_usage(span, prompt_usage, completion_usage)
+
+    # The usage chunk carries the same completion token breakdown as a non-streaming
+    # response, so record its reasoning part too. Without this every streamed chat
+    # completion loses ``gen_ai.usage.reasoning_tokens`` even when the provider sent it.
+    _set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS,
+        _reasoning_tokens_from_usage(complete_response.get("usage")),
+    )
 
     # metrics record
     if token_counter:
