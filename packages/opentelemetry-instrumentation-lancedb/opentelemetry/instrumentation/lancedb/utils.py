@@ -25,19 +25,19 @@ def dont_throw(func):
             )
             if Config.exception_logger:
                 Config.exception_logger(e)
-
     return wrapper
 
 
 def get_call_arguments(wrapped, args, kwargs):
     """
-    Returns the arguments of a wrapped call as a single name -> value dict.
+    Bind ``args`` and ``kwargs`` to the wrapped method's signature and return
+    them as a single name -> value dict.
 
-    SDK methods are commonly called positionally (for example
-    ``table.add(data)``), so reading ``kwargs`` alone would
-    silently drop those arguments. Extra keyword arguments collected by a
-    ``**kwargs`` parameter are flattened into the result. Falls back to
-    ``kwargs`` if the signature cannot be bound.
+    Uses ``inspect.signature(wrapped).bind_partial`` so arguments passed
+    positionally (for example ``table.add(data)``) are captured by parameter
+    name instead of being silently dropped. Extra keyword arguments collected
+    by a ``**kwargs`` parameter are flattened into the result. Falls back to
+    the original ``kwargs`` if inspection or binding fails.
     """
     try:
         signature = inspect.signature(wrapped)
