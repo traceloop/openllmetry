@@ -57,6 +57,7 @@ from opentelemetry.instrumentation.langchain.vendor_detection import (
 from opentelemetry.instrumentation.langchain.utils import (
     CallbackFilteredJSONEncoder,
     dont_throw,
+    get_delegation_attributes,
     should_emit_events,
     should_send_prompts,
 )
@@ -479,6 +480,9 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             )
             _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_NAME, name)
             _set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_ID, str(run_id))
+            # Opt-in delegation / authority info supplied by the application.
+            for key, value in get_delegation_attributes().items():
+                _set_span_attribute(span, key, value)
         elif is_tool:
             # Set tool-specific attributes
             _set_span_attribute(
