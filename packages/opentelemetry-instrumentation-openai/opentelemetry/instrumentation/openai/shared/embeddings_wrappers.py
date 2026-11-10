@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from collections.abc import Iterable
@@ -26,6 +25,7 @@ from opentelemetry.instrumentation.openai.utils import (
     _with_embeddings_telemetry_wrapper,
     dont_throw,
     is_openai_v1,
+    json_dumps,
     should_emit_events,
     should_send_prompts,
     start_as_current_span_async,
@@ -281,7 +281,7 @@ def _set_prompts(span, prompt):
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_INPUT_MESSAGES,
-        json.dumps(messages),
+        json_dumps(messages),
     )
 
 
