@@ -297,22 +297,53 @@ def delegation(
         detach_delegation(token)
 
 
+_IDENTIFIER_ATTRIBUTES = frozenset(
+    {DELEGATION_ROOT_PRINCIPAL, DELEGATION_CHAIN_ID, DELEGATION_ACTOR, DELEGATION_CREDENTIAL_REF}
+)
+_DIGEST_ATTRIBUTES = frozenset(
+    {DELEGATION_SCOPE_HASH, DELEGATION_CHAIN_HASH, DELEGATION_PARENT_SCOPE_HASH}
+)
+
+
+def validate_delegation_attributes(value: Any) -> Mapping[str, Any]:
+    """Return the valid ``traceloop.delegation.*`` attributes contained in ``value``.
+
+    This applies the rules of :func:`build_delegation_attributes` to a mapping
+    that did not necessarily come from it, for example one an application stored
+    under :data:`DELEGATION_CONTEXT_KEY` directly. Unknown names, wrong types and
+    credential-shaped values are dropped rather than raised, so a reader can use
+    the result as span attributes as it is. When ``root_principal`` is missing or
+    invalid, ``{}`` is returned: the other values cannot be attributed to anyone.
+    """
+    if not isinstance(value, Mapping):
+        return {}
+    attributes: dict = {}
+    for name, item in value.items():
+        try:
+            if name in _IDENTIFIER_ATTRIBUTES:
+                attributes[name] = _validate_identifier(name, item)
+            elif name in _DIGEST_ATTRIBUTES:
+                attributes[name] = _validate_digest(name, item)
+            elif name == DELEGATION_DEPTH:
+                if isinstance(item, bool) or not isinstance(item, int) or item < 0:
+                    raise ValueError("depth must be a non-negative integer")
+                attributes[name] = item
+        except (TypeError, ValueError):
+            continue
+    if DELEGATION_ROOT_PRINCIPAL not in attributes:
+        return {}
+    return attributes
+
+
 def get_delegation_attributes(ctx: Optional[context_api.Context] = None) -> Mapping[str, Any]:
     """Return the delegation span attributes active in ``ctx`` (or the current context).
 
-    Only ``traceloop.delegation.*`` keys with ``str`` / ``int`` values are
-    returned, so a foreign or malformed value stored under the context key can
-    never leak arbitrary data onto spans. Returns ``{}`` when nothing was set.
+    The value is passed through :func:`validate_delegation_attributes`, so only
+    the approved ``traceloop.delegation.*`` names with values that satisfy the
+    builder's rules are returned, even when something other than
+    :func:`delegation` stored the mapping. Returns ``{}`` when nothing was set.
     """
-    value = context_api.get_value(DELEGATION_CONTEXT_KEY, ctx)
-    if not isinstance(value, Mapping):
-        return {}
-    return {
-        k: v
-        for k, v in value.items()
-        if isinstance(k, str) and k.startswith(DELEGATION_CONTEXT_KEY + ".")
-        and isinstance(v, (str, int)) and not isinstance(v, bool)
-    }
+    return validate_delegation_attributes(context_api.get_value(DELEGATION_CONTEXT_KEY, ctx))
 
 
 def record_authorization(

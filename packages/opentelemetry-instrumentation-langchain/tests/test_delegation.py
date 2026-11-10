@@ -111,3 +111,35 @@ def test_foreign_or_malformed_values_are_ignored(instrument_legacy, span_exporte
     agent_span = next(s for s in span_exporter.get_finished_spans() if s.name == "invoke_agent Router")
     assert _delegation_attrs(agent_span) == {"traceloop.delegation.root_principal": "user:1"}
     assert "authorization" not in agent_span.attributes
+
+
+def test_credential_shaped_values_never_reach_the_span(instrument_legacy, span_exporter):
+    """Values that break the delegation contract are dropped before recording."""
+    value = {
+        "traceloop.delegation.root_principal": "user:1",
+        "traceloop.delegation.chain_id": "Bearer secret",
+        "traceloop.delegation.actor": "has whitespace",
+        "traceloop.delegation.scope_hash": "crm:read",
+        "traceloop.delegation.depth": -1,
+        "traceloop.delegation.token": "unknown-name",
+    }
+    token = context_api.attach(context_api.set_value(DELEGATION_KEY, value))
+    try:
+        _build_router_graph().invoke({"value": "start"}, config={"run_name": "Router"})
+    finally:
+        context_api.detach(token)
+
+    agent_span = next(s for s in span_exporter.get_finished_spans() if s.name == "invoke_agent Router")
+    assert _delegation_attrs(agent_span) == {"traceloop.delegation.root_principal": "user:1"}
+
+
+def test_nothing_recorded_without_a_valid_root_principal(instrument_legacy, span_exporter):
+    """A credential-shaped root principal drops the whole mapping."""
+    value = {"traceloop.delegation.root_principal": "Bearer secret", "traceloop.delegation.depth": 1}
+    token = context_api.attach(context_api.set_value(DELEGATION_KEY, value))
+    try:
+        _build_router_graph().invoke({"value": "start"}, config={"run_name": "Router"})
+    finally:
+        context_api.detach(token)
+
+    assert all(not _delegation_attrs(s) for s in span_exporter.get_finished_spans())

@@ -32,6 +32,7 @@ from opentelemetry.semconv_ai.delegation import (
     hash_chain,
     hash_scope,
     record_authorization,
+    validate_delegation_attributes,
 )
 
 SCOPE_HASH = hash_scope(["crm:read", "email:send"])
@@ -205,6 +206,47 @@ def test_get_ignores_foreign_or_malformed_values():
         assert get_delegation_attributes() == {}
     finally:
         context_api.detach(token)
+
+
+def test_get_validates_values_stored_outside_the_helper():
+    """A mapping attached directly is held to the builder's rules."""
+    value = {
+        DELEGATION_ROOT_PRINCIPAL: "user:1",
+        DELEGATION_CHAIN_ID: "Bearer secret",
+        DELEGATION_ACTOR: JWT_LIKE,
+        DELEGATION_SCOPE_HASH: "crm:read email:send",
+        DELEGATION_DEPTH: -1,
+        "traceloop.delegation.token": "not-an-approved-name",
+    }
+    token = context_api.attach(context_api.set_value(DELEGATION_CONTEXT_KEY, value))
+    try:
+        assert get_delegation_attributes() == {DELEGATION_ROOT_PRINCIPAL: "user:1"}
+    finally:
+        context_api.detach(token)
+
+
+@pytest.mark.parametrize("root_principal", ["Bearer secret", "", 42, None])
+def test_get_returns_nothing_without_a_valid_root_principal(root_principal):
+    """Without a valid root principal the remaining values are not recorded."""
+    value = {DELEGATION_CHAIN_ID: "dlg_1", DELEGATION_DEPTH: 1}
+    if root_principal is not None:
+        value[DELEGATION_ROOT_PRINCIPAL] = root_principal
+    token = context_api.attach(context_api.set_value(DELEGATION_CONTEXT_KEY, value))
+    try:
+        assert get_delegation_attributes() == {}
+    finally:
+        context_api.detach(token)
+
+
+def test_validate_delegation_attributes_accepts_builder_output():
+    """Everything the builder produces passes validation unchanged."""
+    built = build_delegation_attributes(
+        "user:42", "dlg_1", SCOPE_HASH, 2, "agent:a", CHAIN_HASH,
+        parent_scope_hash=CHAIN_HASH, credential_ref="txn:1",
+    )
+    assert validate_delegation_attributes(built) == dict(built)
+    assert validate_delegation_attributes("not-a-mapping") == {}
+    assert validate_delegation_attributes({"traceloop.delegation.root_principal": JWT_LIKE}) == {}
 
 
 def test_actor_and_chain_hash_are_recorded():

@@ -123,6 +123,49 @@ def test_foreign_or_malformed_values_are_ignored(processor_and_exporter):
     assert "authorization" not in agent_span.attributes
 
 
+def test_credential_shaped_values_never_reach_the_span(processor_and_exporter):
+    """Values that break the delegation contract are dropped before recording."""
+    from agents import AgentSpanData
+
+    processor, exporter = processor_and_exporter
+    value = {
+        "traceloop.delegation.root_principal": "user:1",
+        "traceloop.delegation.chain_id": "Bearer secret",
+        "traceloop.delegation.actor": "has whitespace",
+        "traceloop.delegation.scope_hash": "crm:read",
+        "traceloop.delegation.depth": -1,
+        "traceloop.delegation.token": "unknown-name",
+    }
+    token = context_api.attach(context_api.set_value(DELEGATION_KEY, value))
+    try:
+        span = MockSpan(AgentSpanData(name="A", handoffs=[], tools=[], output_type=""))
+        processor.on_span_start(span)
+        processor.on_span_end(span)
+    finally:
+        context_api.detach(token)
+
+    (agent_span,) = exporter.get_finished_spans()
+    assert _delegation_attrs(agent_span) == {"traceloop.delegation.root_principal": "user:1"}
+
+
+def test_nothing_recorded_without_a_valid_root_principal(processor_and_exporter):
+    """A credential-shaped root principal drops the whole mapping."""
+    from agents import AgentSpanData
+
+    processor, exporter = processor_and_exporter
+    value = {"traceloop.delegation.root_principal": "Bearer secret", "traceloop.delegation.depth": 1}
+    token = context_api.attach(context_api.set_value(DELEGATION_KEY, value))
+    try:
+        span = MockSpan(AgentSpanData(name="A", handoffs=[], tools=[], output_type=""))
+        processor.on_span_start(span)
+        processor.on_span_end(span)
+    finally:
+        context_api.detach(token)
+
+    (agent_span,) = exporter.get_finished_spans()
+    assert not _delegation_attrs(agent_span)
+
+
 def test_non_mapping_value_is_ignored(processor_and_exporter):
     """A non-mapping value under the context key is ignored."""
     from agents import AgentSpanData
