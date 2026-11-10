@@ -14,11 +14,16 @@ DELEGATION = {
     "traceloop.delegation.chain_id": "dlg_7f3a",
     "traceloop.delegation.depth": 1,
     "traceloop.delegation.scope_hash": "sha256:" + "ab" * 32,
+    "traceloop.delegation.actor": "agent:router",
+    "traceloop.delegation.chain_hash": "sha256:" + "cd" * 32,
 }
 
 
 class MockSpan:
+    """Minimal stand-in for an Agents SDK span."""
+
     def __init__(self, span_data, trace_id="t1"):
+        """Wrap ``span_data`` the way the SDK does."""
         self.span_data = span_data
         self.trace_id = trace_id
         self.error = None
@@ -26,6 +31,7 @@ class MockSpan:
 
 @pytest.fixture
 def processor_and_exporter():
+    """Return a tracing processor wired to an in-memory exporter."""
     from opentelemetry.instrumentation.openai_agents._hooks import OpenTelemetryTracingProcessor
 
     exporter = InMemorySpanExporter()
@@ -36,16 +42,19 @@ def processor_and_exporter():
 
 @pytest.fixture
 def delegation_context():
+    """Put the sample delegation attributes in the context for one test."""
     token = context_api.attach(context_api.set_value(DELEGATION_KEY, dict(DELEGATION)))
     yield
     context_api.detach(token)
 
 
 def _delegation_attrs(span):
+    """Return only the delegation attributes recorded on ``span``."""
     return {k: v for k, v in span.attributes.items() if k.startswith("traceloop.delegation.")}
 
 
 def _run_handoff_flow(processor):
+    """Simulate Triage handing off to Billing, which then calls a tool."""
     from agents import AgentSpanData, FunctionSpanData, HandoffSpanData
 
     triage = MockSpan(AgentSpanData(name="Triage", handoffs=["Billing"], tools=[], output_type=""))
@@ -63,6 +72,7 @@ def _run_handoff_flow(processor):
 
 
 def test_agent_and_handoff_spans_record_delegation(processor_and_exporter, delegation_context):
+    """Agent and handoff spans carry the delegation attributes; tool spans don't."""
     processor, exporter = processor_and_exporter
     _run_handoff_flow(processor)
 
@@ -78,6 +88,7 @@ def test_agent_and_handoff_spans_record_delegation(processor_and_exporter, deleg
 
 
 def test_no_delegation_attributes_without_opt_in(processor_and_exporter):
+    """Without opt-in no span carries delegation attributes."""
     processor, exporter = processor_and_exporter
     _run_handoff_flow(processor)
 
@@ -87,6 +98,7 @@ def test_no_delegation_attributes_without_opt_in(processor_and_exporter):
 
 
 def test_foreign_or_malformed_values_are_ignored(processor_and_exporter):
+    """Foreign keys and non str/int values never reach the span."""
     from agents import AgentSpanData
 
     processor, exporter = processor_and_exporter
@@ -110,6 +122,7 @@ def test_foreign_or_malformed_values_are_ignored(processor_and_exporter):
 
 
 def test_non_mapping_value_is_ignored(processor_and_exporter):
+    """A non-mapping value under the context key is ignored."""
     from agents import AgentSpanData
 
     processor, exporter = processor_and_exporter

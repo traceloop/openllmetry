@@ -223,6 +223,7 @@ def create_command_init_wrapper(tracer: Tracer):
         Wrapper function for Command.__init__
     """
     def wrapper(wrapped, instance, args, kwargs):
+        """Run ``Command.__init__`` and emit a goto span (with any delegation info) for routing commands."""
         # Call original __init__ first
         result = wrapped(*args, **kwargs)
 

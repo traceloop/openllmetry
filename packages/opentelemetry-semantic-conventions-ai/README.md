@@ -15,15 +15,29 @@ spans. Nothing is recorded unless you opt in, and only identifiers and hashes ar
 values that look like tokens are rejected and the scope itself is never stored.
 
 ```python
-from opentelemetry.semconv_ai.delegation import delegation, hash_scope
+from opentelemetry.semconv_ai.delegation import delegation, hash_chain, hash_scope
 
 with delegation(
     root_principal="user:42",                # who the chain acts for (an id, never a token)
     chain_id="dlg_7f3a",                     # reference to the verified delegation chain
     scope_hash=hash_scope(["crm:read", "email:send"]),
     depth=1,                                 # optional: delegation hops so far
+    actor="agent:triage",                    # optional: the agent acting right now
+    chain_hash=hash_chain(verified_hops),    # optional: digest of the verified chain
 ):
     Runner.run_sync(triage_agent, "Refund order 1234")
+```
+
+To record a pre-tool authorization decision, call `record_authorization` from your own
+tool guard before the tool runs. It annotates the current span (or the one you pass):
+
+```python
+from opentelemetry.semconv_ai.delegation import record_authorization
+
+if not policy.allows(tool_name, scope):
+    record_authorization("deny", reason="scope_exceeded")
+    raise PermissionError(tool_name)
+record_authorization("allow")
 ```
 
 | Attribute | Type | Description |
@@ -32,6 +46,10 @@ with delegation(
 | `traceloop.delegation.chain_id` | string | Reference to the delegation chain, for out-of-band verification |
 | `traceloop.delegation.scope_hash` | string | `<algorithm>:<hex digest>` of the granted scope |
 | `traceloop.delegation.depth` | int | Number of delegation hops |
+| `traceloop.delegation.actor` | string | Agent / service acting right now |
+| `traceloop.delegation.chain_hash` | string | `<algorithm>:<hex digest>` of the verified delegation chain (order-sensitive) |
+| `traceloop.authz.decision` | string | `allow` or `deny`, recorded by the app's tool guard before the tool runs |
+| `traceloop.authz.reason` | string | Short machine-readable code for a denial, e.g. `scope_exceeded` |
 
 These live under the `traceloop.*` namespace until the OpenTelemetry GenAI semantic
 conventions define an equivalent. The value is kept in the in-process OpenTelemetry

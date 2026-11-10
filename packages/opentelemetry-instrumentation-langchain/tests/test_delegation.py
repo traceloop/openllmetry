@@ -17,21 +17,28 @@ DELEGATION = {
     "traceloop.delegation.chain_id": "dlg_7f3a",
     "traceloop.delegation.depth": 1,
     "traceloop.delegation.scope_hash": "sha256:" + "ab" * 32,
+    "traceloop.delegation.actor": "agent:router",
+    "traceloop.delegation.chain_hash": "sha256:" + "cd" * 32,
 }
 
 
 class State(TypedDict):
+    """Graph state for the router test."""
+
     value: str
 
 
 def _delegation_attrs(span):
+    """Return only the delegation attributes recorded on ``span``."""
     return {k: v for k, v in span.attributes.items() if k.startswith("traceloop.delegation.")}
 
 
 def _build_router_graph():
+    """Build a two-node graph whose router node issues a ``Command(goto=...)``."""
     from langgraph.types import Command
 
     def router_node(state: State):
+        """Route to the target node via a Command."""
         token = context_api.attach(context_api.set_value("langgraph_current_node", "router_node"))
         try:
             return Command(goto="target_node", update={"value": "routed"})
@@ -39,6 +46,7 @@ def _build_router_graph():
             context_api.detach(token)
 
     def target_node(state: State):
+        """Finish the run."""
         return {"value": "done"}
 
     workflow = StateGraph(State)
@@ -51,12 +59,14 @@ def _build_router_graph():
 
 @pytest.fixture
 def delegation_context():
+    """Put the sample delegation attributes in the context for one test."""
     token = context_api.attach(context_api.set_value(DELEGATION_KEY, dict(DELEGATION)))
     yield
     context_api.detach(token)
 
 
 def test_agent_and_goto_spans_record_delegation(instrument_legacy, span_exporter, delegation_context):
+    """Agent and goto spans carry the delegation attributes; task spans don't."""
     _build_router_graph().invoke({"value": "start"}, config={"run_name": "Router"})
 
     spans = span_exporter.get_finished_spans()
@@ -74,6 +84,7 @@ def test_agent_and_goto_spans_record_delegation(instrument_legacy, span_exporter
 
 
 def test_no_delegation_attributes_without_opt_in(instrument_legacy, span_exporter):
+    """Without opt-in no span carries delegation attributes."""
     _build_router_graph().invoke({"value": "start"})
 
     spans = span_exporter.get_finished_spans()
@@ -82,6 +93,7 @@ def test_no_delegation_attributes_without_opt_in(instrument_legacy, span_exporte
 
 
 def test_foreign_or_malformed_values_are_ignored(instrument_legacy, span_exporter):
+    """Foreign keys and non str/int values never reach the span."""
     value = {
         "traceloop.delegation.root_principal": "user:1",
         "authorization": "Bearer secret",

@@ -138,6 +138,10 @@ class SpanAttributes:
     TRACELOOP_DELEGATION_CHAIN_ID = "traceloop.delegation.chain_id"
     TRACELOOP_DELEGATION_DEPTH = "traceloop.delegation.depth"
     TRACELOOP_DELEGATION_SCOPE_HASH = "traceloop.delegation.scope_hash"
+    TRACELOOP_DELEGATION_ACTOR = "traceloop.delegation.actor"
+    TRACELOOP_DELEGATION_CHAIN_HASH = "traceloop.delegation.chain_hash"
+    TRACELOOP_AUTHZ_DECISION = "traceloop.authz.decision"
+    TRACELOOP_AUTHZ_REASON = "traceloop.authz.reason"
 
     # Deprecated
     TRACELOOP_CORRELATION_ID = "traceloop.correlation.id"

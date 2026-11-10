@@ -100,7 +100,12 @@ _DELEGATION_CONTEXT_KEY = "traceloop.delegation"
 
 
 def get_delegation_attributes() -> dict:
-    """Return the delegation attributes the application put in the current context."""
+    """Return the delegation attributes the application put in the current context.
+
+    Only ``traceloop.delegation.*`` keys with ``str`` / ``int`` values are kept, so
+    a foreign or malformed value under the context key never reaches a span.
+    Returns an empty dict when the application did not opt in.
+    """
     value = context_api.get_value(_DELEGATION_CONTEXT_KEY)
     if not isinstance(value, Mapping):
         return {}
