@@ -24,8 +24,26 @@ with delegation(
     depth=1,                                 # optional: delegation hops so far
     actor="agent:triage",                    # optional: the agent acting right now
     chain_hash=hash_chain(verified_hops),    # optional: digest of the verified chain
+    credential_ref="txn:9c1e",               # optional: id of the credential that carried it
 ):
     Runner.run_sync(triage_agent, "Refund order 1234")
+```
+
+Each hop can declare its own scope. A nested block with a `scope_hash` also records the
+enclosing block's `scope_hash` as `parent_scope_hash`, so a verifier that holds the scopes
+can check that authority only narrowed from hop to hop:
+
+```python
+with delegation("user:42", scope_hash=hash_scope(["crm:read", "email:send"])):
+    # handoff to the billing agent with a narrower grant
+    with delegation(
+        "user:42",
+        actor="agent:billing",
+        depth=2,
+        scope_hash=hash_scope(["crm:read"]),
+        credential_ref="spiffe://example.org/agent/billing",
+    ):
+        ...  # spans here carry scope_hash and parent_scope_hash
 ```
 
 To record a pre-tool authorization decision, call `record_authorization` from your own
@@ -48,6 +66,8 @@ record_authorization("allow")
 | `traceloop.delegation.depth` | int | Number of delegation hops |
 | `traceloop.delegation.actor` | string | Agent / service acting right now |
 | `traceloop.delegation.chain_hash` | string | `<algorithm>:<hex digest>` of the verified delegation chain (order-sensitive) |
+| `traceloop.delegation.parent_scope_hash` | string | `scope_hash` of the enclosing hop, recorded next to this hop's own `scope_hash` |
+| `traceloop.delegation.credential_ref` | string | Opaque reference to the credential that carried the authority (e.g. a token exchange id, VAID or SPIFFE ID); never the credential itself |
 | `traceloop.authz.decision` | string | `allow` or `deny`, recorded by the app's tool guard before the tool runs |
 | `traceloop.authz.reason` | string | Short machine-readable code for a denial, e.g. `scope_exceeded` |
 

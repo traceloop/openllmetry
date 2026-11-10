@@ -19,7 +19,9 @@ from opentelemetry.semconv_ai.delegation import (
     DELEGATION_CHAIN_HASH,
     DELEGATION_CHAIN_ID,
     DELEGATION_CONTEXT_KEY,
+    DELEGATION_CREDENTIAL_REF,
     DELEGATION_DEPTH,
+    DELEGATION_PARENT_SCOPE_HASH,
     DELEGATION_ROOT_PRINCIPAL,
     DELEGATION_SCOPE_HASH,
     attach_delegation,
@@ -64,6 +66,8 @@ def test_constants_match_span_attributes():
     assert SpanAttributes.TRACELOOP_DELEGATION_SCOPE_HASH == DELEGATION_SCOPE_HASH
     assert SpanAttributes.TRACELOOP_DELEGATION_ACTOR == DELEGATION_ACTOR
     assert SpanAttributes.TRACELOOP_DELEGATION_CHAIN_HASH == DELEGATION_CHAIN_HASH
+    assert SpanAttributes.TRACELOOP_DELEGATION_PARENT_SCOPE_HASH == DELEGATION_PARENT_SCOPE_HASH
+    assert SpanAttributes.TRACELOOP_DELEGATION_CREDENTIAL_REF == DELEGATION_CREDENTIAL_REF
     assert SpanAttributes.TRACELOOP_AUTHZ_DECISION == AUTHZ_DECISION
     assert SpanAttributes.TRACELOOP_AUTHZ_REASON == AUTHZ_REASON
     for name in (
@@ -73,6 +77,8 @@ def test_constants_match_span_attributes():
         DELEGATION_SCOPE_HASH,
         DELEGATION_ACTOR,
         DELEGATION_CHAIN_HASH,
+        DELEGATION_PARENT_SCOPE_HASH,
+        DELEGATION_CREDENTIAL_REF,
     ):
         assert name.startswith(DELEGATION_CONTEXT_KEY + ".")
 
@@ -296,3 +302,92 @@ def test_record_authorization_rejects_bad_input(tracer, decision, reason):
     with tracer.start_as_current_span("tool.call"):
         with pytest.raises(ValueError):
             record_authorization(decision, reason=reason)
+
+
+NARROW_SCOPE_HASH = hash_scope(["crm:read"])
+
+
+def test_nested_scope_records_parent_scope_hash():
+    """Each hop records its own scope and the scope of the hop it came from."""
+    with delegation("user:42", scope_hash=SCOPE_HASH):
+        assert DELEGATION_PARENT_SCOPE_HASH not in get_delegation_attributes()
+        with delegation("user:42", actor="agent:billing", depth=1, scope_hash=NARROW_SCOPE_HASH):
+            attrs = get_delegation_attributes()
+            assert attrs[DELEGATION_SCOPE_HASH] == NARROW_SCOPE_HASH
+            assert attrs[DELEGATION_PARENT_SCOPE_HASH] == SCOPE_HASH
+            third = hash_scope([])
+            with delegation("user:42", depth=2, scope_hash=third):
+                attrs = get_delegation_attributes()
+                assert attrs[DELEGATION_SCOPE_HASH] == third
+                assert attrs[DELEGATION_PARENT_SCOPE_HASH] == NARROW_SCOPE_HASH
+            assert get_delegation_attributes()[DELEGATION_PARENT_SCOPE_HASH] == SCOPE_HASH
+        assert DELEGATION_PARENT_SCOPE_HASH not in get_delegation_attributes()
+
+
+def test_parent_scope_hash_needs_own_scope_hash_to_be_inferred():
+    """No parent is inferred for a hop that declares no scope of its own."""
+    with delegation("user:42", scope_hash=SCOPE_HASH):
+        with delegation("user:42", actor="agent:billing"):
+            assert DELEGATION_PARENT_SCOPE_HASH not in get_delegation_attributes()
+
+
+def test_explicit_parent_scope_hash_wins():
+    """An explicit parent (e.g. from an incoming grant) overrides the enclosing block."""
+    with delegation("user:42", scope_hash=SCOPE_HASH):
+        with delegation("user:42", scope_hash=NARROW_SCOPE_HASH, parent_scope_hash=CHAIN_HASH):
+            assert get_delegation_attributes()[DELEGATION_PARENT_SCOPE_HASH] == CHAIN_HASH
+    token = attach_delegation("user:1", parent_scope_hash=SCOPE_HASH)
+    try:
+        assert get_delegation_attributes()[DELEGATION_PARENT_SCOPE_HASH] == SCOPE_HASH
+    finally:
+        detach_delegation(token)
+
+
+@pytest.mark.parametrize("value", ["crm:read", "sha256:xyz", "md5:" + "0" * 32])
+def test_parent_scope_hash_must_be_a_digest(value):
+    """Only digests are accepted for the parent scope hash."""
+    with pytest.raises(ValueError):
+        build_delegation_attributes("user:1", parent_scope_hash=value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "txn:9c1e",
+        "vaid:agent-billing-01",
+        "spiffe://example.org/ns/prod/sa/billing",
+        "urn:ietf:params:oauth:token-type:access_token#exchange-42",
+    ],
+)
+def test_credential_ref_is_recorded(value):
+    """Opaque credential references are recorded as-is."""
+    with delegation("user:42", credential_ref=value):
+        assert get_delegation_attributes()[DELEGATION_CREDENTIAL_REF] == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["Bearer abc.def.ghi", "basic placeholder", JWT_LIKE, "ref with space", "", "x" * 257, 7],
+)
+def test_credential_ref_rejects_credentials(value):
+    """A credential_ref must be a reference, never a token."""
+    with pytest.raises(ValueError):
+        build_delegation_attributes("user:1", credential_ref=value)
+    with pytest.raises(ValueError):
+        with delegation("user:1", credential_ref=value):
+            pass  # pragma: no cover
+    assert get_delegation_attributes() == {}
+
+
+def test_credential_ref_is_not_inherited_by_nested_hops():
+    """Each hop names the credential that carried its own authority."""
+    with delegation("user:42", credential_ref="txn:outer"):
+        with delegation("user:42", actor="agent:billing"):
+            assert DELEGATION_CREDENTIAL_REF not in get_delegation_attributes()
+        assert get_delegation_attributes()[DELEGATION_CREDENTIAL_REF] == "txn:outer"
+
+
+def test_new_arguments_are_keyword_only():
+    """parent_scope_hash and credential_ref can't be passed positionally."""
+    with pytest.raises(TypeError):
+        build_delegation_attributes("user:1", None, None, None, None, None, SCOPE_HASH)

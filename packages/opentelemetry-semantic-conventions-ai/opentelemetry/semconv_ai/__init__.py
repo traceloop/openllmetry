@@ -140,6 +140,8 @@ class SpanAttributes:
     TRACELOOP_DELEGATION_SCOPE_HASH = "traceloop.delegation.scope_hash"
     TRACELOOP_DELEGATION_ACTOR = "traceloop.delegation.actor"
     TRACELOOP_DELEGATION_CHAIN_HASH = "traceloop.delegation.chain_hash"
+    TRACELOOP_DELEGATION_PARENT_SCOPE_HASH = "traceloop.delegation.parent_scope_hash"
+    TRACELOOP_DELEGATION_CREDENTIAL_REF = "traceloop.delegation.credential_ref"
     TRACELOOP_AUTHZ_DECISION = "traceloop.authz.decision"
     TRACELOOP_AUTHZ_REASON = "traceloop.authz.reason"
 

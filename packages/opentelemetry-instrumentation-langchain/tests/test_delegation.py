@@ -19,6 +19,8 @@ DELEGATION = {
     "traceloop.delegation.scope_hash": "sha256:" + "ab" * 32,
     "traceloop.delegation.actor": "agent:router",
     "traceloop.delegation.chain_hash": "sha256:" + "cd" * 32,
+    "traceloop.delegation.parent_scope_hash": "sha256:" + "ef" * 32,
+    "traceloop.delegation.credential_ref": "spiffe://example.org/agent/router",
 }
 
 
