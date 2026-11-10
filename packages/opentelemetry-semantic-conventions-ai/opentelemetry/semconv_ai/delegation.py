@@ -79,12 +79,12 @@ AUTHZ_DENY = "deny"
 _HASH_ALGORITHMS = ("sha256", "sha384", "sha512", "blake2b")
 
 _MAX_ID_LENGTH = 256
-_SCOPE_HASH_RE = re.compile(r"^(sha256|sha384|sha512|blake2b):[0-9a-f]{32,128}$")
+_SCOPE_HASH_RE = re.compile(r"(sha256|sha384|sha512|blake2b):[0-9a-f]{32,128}")
 # Three base64url segments separated by dots: the shape of a JWT / JWS.
 _JWT_RE = re.compile(r"^[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*$")
 _AUTH_SCHEME_RE = re.compile(r"^(bearer|basic|token|apikey)\s", re.IGNORECASE)
 # Denial reasons are short machine-readable codes such as "scope_exceeded".
-_AUTHZ_REASON_RE = re.compile(r"^[a-z0-9_.:-]{1,64}$")
+_AUTHZ_REASON_RE = re.compile(r"[a-z0-9_.:-]{1,64}")
 
 
 def _validate_identifier(name: str, value: Any) -> str:
@@ -109,7 +109,7 @@ def _validate_identifier(name: str, value: Any) -> str:
 
 def _validate_digest(name: str, value: Any) -> str:
     """Return ``value`` if it is an ``"<algorithm>:<hex digest>"`` string, else raise."""
-    if not isinstance(value, str) or not _SCOPE_HASH_RE.match(value):
+    if not isinstance(value, str) or not _SCOPE_HASH_RE.fullmatch(value):
         raise ValueError(
             f"{name} must look like '<sha256|sha384|sha512|blake2b>:<hex digest>'; "
             f"use hash_{name.split('_')[0]}() to build it"
@@ -374,7 +374,7 @@ def record_authorization(
     if reason is not None:
         if decision != AUTHZ_DENY:
             raise ValueError("reason is only recorded for a 'deny' decision")
-        if not isinstance(reason, str) or not _AUTHZ_REASON_RE.match(reason):
+        if not isinstance(reason, str) or not _AUTHZ_REASON_RE.fullmatch(reason):
             raise ValueError(
                 "reason must be a short machine-readable code such as 'scope_exceeded'"
             )

@@ -110,7 +110,7 @@ _DELEGATION_DIGESTS = frozenset(
 )
 # Same rules as opentelemetry.semconv_ai.delegation: identifiers are short, have no
 # whitespace and are not shaped like a credential; digests are "<algorithm>:<hex>".
-_DELEGATION_DIGEST_RE = re.compile(r"^(sha256|sha384|sha512|blake2b):[0-9a-f]{32,128}$")
+_DELEGATION_DIGEST_RE = re.compile(r"(sha256|sha384|sha512|blake2b):[0-9a-f]{32,128}")
 _DELEGATION_JWT_RE = re.compile(r"^[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*$")
 _DELEGATION_AUTH_SCHEME_RE = re.compile(r"^(bearer|basic|token|apikey)\s", re.IGNORECASE)
 
@@ -142,7 +142,7 @@ def _validate_delegation_locally(value) -> dict:
     for name, item in value.items():
         if name in _DELEGATION_IDENTIFIERS and _is_delegation_identifier(item):
             attributes[name] = item
-        elif name in _DELEGATION_DIGESTS and isinstance(item, str) and _DELEGATION_DIGEST_RE.match(item):
+        elif name in _DELEGATION_DIGESTS and isinstance(item, str) and _DELEGATION_DIGEST_RE.fullmatch(item):
             attributes[name] = item
         elif (
             name == _DELEGATION_DEPTH

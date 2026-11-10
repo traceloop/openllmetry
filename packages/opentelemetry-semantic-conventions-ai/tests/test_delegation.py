@@ -163,7 +163,9 @@ def test_rejects_credentials_and_bad_identifiers(value):
             build_delegation_attributes("user:1", chain_id=value)
 
 
-@pytest.mark.parametrize("value", ["crm:read", "sha256:xyz", "md5:" + "0" * 32, "deadbeef" * 8])
+@pytest.mark.parametrize(
+    "value", ["crm:read", "sha256:xyz", "md5:" + "0" * 32, "deadbeef" * 8, "sha256:" + "ab" * 32 + "\n"]
+)
 def test_scope_hash_must_be_a_digest(value):
     """Only digests are accepted for the scope hash."""
     with pytest.raises(ValueError):
@@ -275,7 +277,7 @@ def test_actor_rejects_credentials_and_bad_identifiers(value):
         build_delegation_attributes("user:1", actor=value)
 
 
-@pytest.mark.parametrize("value", ["chain-1", "sha256:xyz", "md5:" + "0" * 32])
+@pytest.mark.parametrize("value", ["chain-1", "sha256:xyz", "md5:" + "0" * 32, "sha256:" + "ab" * 32 + "\n"])
 def test_chain_hash_must_be_a_digest(value):
     """Only digests are accepted for the chain hash, never the chain itself."""
     with pytest.raises(ValueError, match="hash_chain"):
@@ -335,6 +337,7 @@ def test_record_authorization_without_recording_span_is_a_no_op():
         ("allow", "scope_exceeded"),
         ("deny", "User asked for something odd"),
         ("deny", "x" * 65),
+        ("deny", "scope_exceeded\n"),
         ("deny", JWT_LIKE),
         ("deny", 403),
     ],
@@ -385,7 +388,7 @@ def test_explicit_parent_scope_hash_wins():
         detach_delegation(token)
 
 
-@pytest.mark.parametrize("value", ["crm:read", "sha256:xyz", "md5:" + "0" * 32])
+@pytest.mark.parametrize("value", ["crm:read", "sha256:xyz", "md5:" + "0" * 32, "sha256:" + "ab" * 32 + "\n"])
 def test_parent_scope_hash_must_be_a_digest(value):
     """Only digests are accepted for the parent scope hash."""
     with pytest.raises(ValueError):

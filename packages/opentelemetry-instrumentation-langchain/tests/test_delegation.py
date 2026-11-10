@@ -120,6 +120,7 @@ def test_credential_shaped_values_never_reach_the_span(instrument_legacy, span_e
         "traceloop.delegation.chain_id": "Bearer secret",
         "traceloop.delegation.actor": "has whitespace",
         "traceloop.delegation.scope_hash": "crm:read",
+        "traceloop.delegation.chain_hash": "sha256:" + "cd" * 32 + "\n",
         "traceloop.delegation.depth": -1,
         "traceloop.delegation.token": "unknown-name",
     }
