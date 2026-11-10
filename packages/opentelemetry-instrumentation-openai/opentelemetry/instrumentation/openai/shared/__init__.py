@@ -9,6 +9,7 @@ from opentelemetry.instrumentation.openai.shared.config import Config
 from opentelemetry.instrumentation.openai.utils import (
     dont_throw,
     is_openai_v1,
+    json_dumps,
 )
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -107,7 +108,7 @@ def _set_tool_definitions_json(span, tool_defs):
     """Set gen_ai.tool.definitions as a single JSON string attribute."""
     if tool_defs:
         _set_span_attribute(
-            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json.dumps(tool_defs)
+            span, GenAIAttributes.GEN_AI_TOOL_DEFINITIONS, json_dumps(tool_defs)
         )
 
 
@@ -187,7 +188,7 @@ def _set_request_attributes(span, kwargs, instance=None):
                 _set_span_attribute(
                     span,
                     SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
-                    json.dumps(schema),
+                    json_dumps(schema),
                 )
         elif (
             isinstance(response_format, pydantic.BaseModel)
@@ -199,15 +200,15 @@ def _set_request_attributes(span, kwargs, instance=None):
             _set_span_attribute(
                 span,
                 SpanAttributes.GEN_AI_REQUEST_STRUCTURED_OUTPUT_SCHEMA,
-                json.dumps(response_format.model_json_schema()),
+                json_dumps(response_format.model_json_schema()),
             )
         else:
             schema = None
             try:
-                schema = json.dumps(pydantic.TypeAdapter(response_format).json_schema())
+                schema = json_dumps(pydantic.TypeAdapter(response_format).json_schema())
             except Exception:
                 try:
-                    schema = json.dumps(response_format)
+                    schema = json_dumps(response_format)
                 except Exception:
                     pass
 
@@ -296,7 +297,7 @@ def _log_prompt_filter(span, response_dict):
         _set_span_attribute(
             span,
             f"{GenAIAttributes.GEN_AI_PROMPT}.{PROMPT_FILTER_KEY}",
-            json.dumps(response_dict.get("prompt_filter_results")),
+            json_dumps(response_dict.get("prompt_filter_results")),
         )
 
 
