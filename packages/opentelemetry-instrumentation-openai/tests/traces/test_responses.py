@@ -2,11 +2,13 @@ import json
 import threading
 import time
 import types
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from pydantic import BaseModel
 
-from openai import AsyncOpenAI, OpenAI
+from openai import AsyncOpenAI, AsyncStream, OpenAI, Stream
+from openai.types.responses import ResponseStreamEvent
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 from opentelemetry.instrumentation.openai.v1 import responses_wrappers
 from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
@@ -967,16 +969,33 @@ _RESPONSES_SSE_BODY = (
 )
 
 
+class CustomResponseStream(Stream[ResponseStreamEvent]):
+    def __iter__(self) -> Iterator[ResponseStreamEvent]:
+        return (
+            event
+            for event in super().__iter__()
+            if event.type == "response.completed"
+        )
+
+
+class CustomAsyncResponseStream(AsyncStream[ResponseStreamEvent]):
+    async def __aiter__(self) -> AsyncIterator[ResponseStreamEvent]:
+        async for event in super().__aiter__():
+            if event.type == "response.completed":
+                yield event
+
+
 @pytest.mark.asyncio
+@pytest.mark.parametrize("stream_type", [None, CustomAsyncResponseStream])
 async def test_async_responses_with_raw_response_streaming_does_not_crash(
-    instrument_legacy, span_exporter: InMemorySpanExporter
-):
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    stream_type: type[CustomAsyncResponseStream] | None,
+) -> None:
     """Regression test for https://github.com/traceloop/openllmetry/issues/4476:
     client.responses.with_raw_response.create(stream=True, ...) (what
     agent-framework-openai>=1.6 uses to read response headers before streaming) must
-    not crash. `.with_raw_response.create()` returns a LegacyAPIResponse whose
-    `.parse()` yields the `AsyncStream` itself rather than a parsed `Response`, so
-    `async_parse_response()` can't recover an `.id` to build a trace from."""
+    not crash and must emit a span after the returned stream is consumed."""
     import httpx
     from openai import AsyncOpenAI
 
@@ -995,24 +1014,43 @@ async def test_async_responses_with_raw_response_streaming_does_not_crash(
     raw = await client.responses.with_raw_response.create(
         model="gpt-4.1-nano",
         input="What is the capital of France?",
+        reasoning=None,
         stream=True,
     )
     # The raw-response contract (what agent-framework-openai relies on: reading a
     # response header before consuming the stream) must survive instrumentation.
     assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
 
-    stream = raw.parse()
+    stream = raw.parse() if stream_type is None else raw.parse(to=stream_type)
+    assert (raw.parse() if stream_type is None else raw.parse(to=stream_type)) is stream
+    if stream_type is not None:
+        assert isinstance(stream, stream_type)
     events = [event async for event in stream]
 
-    assert len(events) == 2
-    # Untraced: there's no `.id` available to key a trace off of at the point the
-    # stream is handed back, so this call is skipped rather than crashing.
-    assert span_exporter.get_finished_spans() == ()
+    expected_event_types = (
+        ["response.created", "response.completed"]
+        if stream_type is None
+        else ["response.completed"]
+    )
+    assert [event.type for event in events] == expected_event_types
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.id"] == "resp_123"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] == 1
+    assert span.attributes["gen_ai.usage.output_tokens"] == 1
 
 
+@pytest.mark.parametrize("stream_type", [None, CustomResponseStream])
 def test_responses_with_raw_response_streaming_does_not_crash(
-    instrument_legacy, span_exporter: InMemorySpanExporter
-):
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    stream_type: type[CustomResponseStream] | None,
+) -> None:
     """Sync counterpart of test_async_responses_with_raw_response_streaming_does_not_crash."""
     import httpx
     from openai import OpenAI
@@ -1032,17 +1070,69 @@ def test_responses_with_raw_response_streaming_does_not_crash(
     raw = client.responses.with_raw_response.create(
         model="gpt-4.1-nano",
         input="What is the capital of France?",
+        reasoning=None,
         stream=True,
     )
     # The raw-response contract (what agent-framework-openai relies on: reading a
     # response header before consuming the stream) must survive instrumentation.
     assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
 
-    stream = raw.parse()
+    stream = raw.parse() if stream_type is None else raw.parse(to=stream_type)
+    assert (raw.parse() if stream_type is None else raw.parse(to=stream_type)) is stream
+    if stream_type is not None:
+        assert isinstance(stream, stream_type)
     events = list(stream)
 
-    assert len(events) == 2
-    assert span_exporter.get_finished_spans() == ()
+    expected_event_types = (
+        ["response.created", "response.completed"]
+        if stream_type is None
+        else ["response.completed"]
+    )
+    assert [event.type for event in events] == expected_event_types
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "openai.response"
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.id"] == "resp_123"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.usage.input_tokens"] == 1
+    assert span.attributes["gen_ai.usage.output_tokens"] == 1
+
+
+def test_raw_response_ends_span_when_stream_proxy_construction_fails(
+    instrument_legacy,
+    monkeypatch: pytest.MonkeyPatch,
+    span_exporter: InMemorySpanExporter,
+) -> None:
+    import httpx
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/event-stream"},
+            content=_RESPONSES_SSE_BODY,
+        )
+
+    def fail_stream_proxy(**kwargs: object) -> None:
+        raise RuntimeError("proxy construction failed")
+
+    monkeypatch.setattr(responses_wrappers, "ResponseStream", fail_stream_proxy)
+    client = OpenAI(
+        api_key="test-key",
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    raw = client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        stream=True,
+    )
+
+    with pytest.raises(RuntimeError, match="proxy construction failed"):
+        raw.parse()
+
+    assert len(span_exporter.get_finished_spans()) == 1
 
 
 @pytest.fixture
@@ -1125,6 +1215,7 @@ async def test_completed_async_response_is_removed_from_responses_dict(
 
 class _FakeSyncChunkStream:
     """Minimal stand-in for the raw SDK stream that ResponseStream wraps."""
+
     def __init__(self, chunks):
         self._iter = iter(chunks)
 
