@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import traceback
+from collections.abc import Mapping
 from opentelemetry import context as context_api
 
 # Handoff span attribute names
@@ -14,6 +15,28 @@ GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
 GEN_AI_HANDOFF_PARENT_AGENT = "gen_ai.agent.handoff_parent"
 OPENAI_AGENT_HANDOFFS = "openai.agent.handoffs"
 _TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+
+# Delegation / authority attributes are opt-in: the application declares them with
+# opentelemetry.semconv_ai.delegation.delegation(...), which stores validated
+# span attributes in the OTel context under this key. Read through the plain key
+# so this also works with semconv-ai releases that predate the helper module.
+_DELEGATION_CONTEXT_KEY = "traceloop.delegation"
+
+
+def get_delegation_attributes() -> dict:
+    """Return the delegation attributes the application put in the current context."""
+    value = context_api.get_value(_DELEGATION_CONTEXT_KEY)
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        k: v
+        for k, v in value.items()
+        if isinstance(k, str)
+        and k.startswith(_DELEGATION_CONTEXT_KEY + ".")
+        and isinstance(v, (str, int))
+        and not isinstance(v, bool)
+    }
 
 
 def set_span_attribute(span, name, value):

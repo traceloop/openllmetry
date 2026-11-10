@@ -9,6 +9,7 @@ from opentelemetry.semconv._incubating.attributes import gen_ai_attributes as Ge
 from opentelemetry.semconv._incubating.attributes.gen_ai_attributes import GenAiOperationNameValues
 from opentelemetry.semconv_ai import GenAICustomOperationName, SpanAttributes
 from opentelemetry.instrumentation.langchain.span_utils import SpanHolder
+from opentelemetry.instrumentation.langchain.utils import get_delegation_attributes
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,8 @@ def _set_graph_span_attributes(
         GenAIAttributes.GEN_AI_OPERATION_NAME, GenAiOperationNameValues.INVOKE_AGENT.value
     )
     graph_span.set_attribute(GenAIAttributes.GEN_AI_AGENT_NAME, graph_name)
+    # Opt-in delegation / authority info supplied by the application.
+    graph_span.set_attributes(get_delegation_attributes())
 
     # Extract conversation ID from config
     config = kwargs.get('config') or (args[1] if len(args) > 1 else None)
@@ -259,6 +262,9 @@ def create_command_init_wrapper(tracer: Tracer):
                         span.set_attribute(
                             SpanAttributes.LANGGRAPH_COMMAND_GOTO_NODES, json.dumps(goto_destinations)
                         )
+
+                    # A goto hands control to another node: record the authority it carries.
+                    span.set_attributes(get_delegation_attributes())
 
         return result
 

@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import traceback
+from collections.abc import Mapping
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import Logger
@@ -89,3 +90,25 @@ def should_emit_events() -> bool:
 
 def is_package_available(package_name):
     return importlib.util.find_spec(package_name) is not None
+
+
+# Delegation / authority attributes are opt-in: the application declares them with
+# opentelemetry.semconv_ai.delegation.delegation(...), which stores validated
+# span attributes in the OTel context under this key. Read through the plain key
+# so this also works with semconv-ai releases that predate the helper module.
+_DELEGATION_CONTEXT_KEY = "traceloop.delegation"
+
+
+def get_delegation_attributes() -> dict:
+    """Return the delegation attributes the application put in the current context."""
+    value = context_api.get_value(_DELEGATION_CONTEXT_KEY)
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        k: v
+        for k, v in value.items()
+        if isinstance(k, str)
+        and k.startswith(_DELEGATION_CONTEXT_KEY + ".")
+        and isinstance(v, (str, int))
+        and not isinstance(v, bool)
+    }
