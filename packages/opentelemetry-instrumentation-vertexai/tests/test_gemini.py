@@ -1,18 +1,28 @@
-import vertexai
+from unittest.mock import patch
+
+import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
-from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv_ai import SpanAttributes
 from vertexai.preview.generative_models import GenerativeModel, Part
 
-vertexai.init()
+from .mocks import init_vertexai, offline_generate_content
+
+init_vertexai()
 
 
-def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporter):
+@pytest.fixture(name="mock_generate_content")
+def fixture_mock_generate_content():
+    """Patch the SDK method that would make a real gRPC call to Vertex AI."""
+    with patch.object(GenerativeModel, "generate_content", offline_generate_content):
+        yield
+
+
+def test_vertexai_generate_content(
+    mock_generate_content, instrument_legacy, span_exporter, log_exporter
+):
     multimodal_model = GenerativeModel("gemini-2.0-flash-lite")
     response = multimodal_model.generate_content(
         [
@@ -32,7 +42,7 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
     vertexai_span = spans[0]
     assert (
         "what is shown in this image?"
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     )
     assert (
         vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
@@ -61,9 +71,8 @@ def test_vertexai_generate_content(instrument_legacy, span_exporter, log_exporte
     ), "Assert that it doesn't emit logs when use_legacy_attributes is True"
 
 
-# @pytest.mark.vcr
 def test_vertexai_generate_content_with_events_with_content(
-    instrument_with_content, span_exporter, log_exporter
+    mock_generate_content, instrument_with_content, span_exporter, log_exporter
 ):
     multimodal_model = GenerativeModel("gemini-2.0-flash-lite")
     response = multimodal_model.generate_content(
@@ -123,7 +132,7 @@ def test_vertexai_generate_content_with_events_with_content(
 
 
 def test_vertexai_generate_content_with_events_with_no_content(
-    instrument_with_no_content, span_exporter, log_exporter
+    mock_generate_content, instrument_with_no_content, span_exporter, log_exporter
 ):
     multimodal_model = GenerativeModel("gemini-2.0-flash-lite")
     response = multimodal_model.generate_content(
@@ -172,7 +181,8 @@ def test_vertexai_generate_content_with_events_with_no_content(
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    # In OpenTelemetry 1.37.0+, event_name is a field on LogRecord, not in attributes
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.VERTEX_AI.value

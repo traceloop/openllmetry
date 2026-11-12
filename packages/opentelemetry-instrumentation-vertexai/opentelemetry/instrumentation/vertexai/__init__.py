@@ -108,6 +108,7 @@ WRAPPED_METHODS = [
         "method": "predict_streaming_async",
         "span_name": "vertexai.predict_streaming_async",
         "is_async": True,
+        "is_async_generator": True,
     },
     {
         "package": "vertexai.language_models",
@@ -134,6 +135,20 @@ def is_async_streaming_response(response):
     return isinstance(response, types.AsyncGeneratorType)
 
 
+def _get_llm_model(instance):
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace("publishers/google/models/", "")
+    # For ChatSession, try to get model from the parent model object
+    if hasattr(instance, "_model") and hasattr(instance._model, "_model_name"):
+        llm_model = instance._model._model_name.replace("publishers/google/models/", "")
+    elif hasattr(instance, "_model") and hasattr(instance._model, "_model_id"):
+        llm_model = instance._model._model_id
+    return llm_model
+
+
 @dont_throw
 def handle_streaming_response(span, event_logger, llm_model, response, token_usage):
     set_model_response_attributes(span, llm_model, token_usage)
@@ -151,7 +166,7 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
     for item in response:
         item_to_yield = item
         complete_response += str(item.text)
-        if item.usage_metadata:
+        if getattr(item, "usage_metadata", None):
             token_usage = item.usage_metadata
 
         yield item_to_yield
@@ -170,12 +185,14 @@ async def _abuild_from_streaming_response(span, event_logger, response, llm_mode
     async for item in response:
         item_to_yield = item
         complete_response += str(item.text)
-        if item.usage_metadata:
+        if getattr(item, "usage_metadata", None):
             token_usage = item.usage_metadata
 
         yield item_to_yield
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(
+        span, event_logger, llm_model, complete_response, token_usage
+    )
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -191,12 +208,15 @@ async def _handle_request(span, event_logger, args, kwargs, llm_model):
 
 
 def _handle_response(span, event_logger, response, llm_model):
-    set_model_response_attributes(span, llm_model, response.usage_metadata)
+    set_model_response_attributes(
+        span, llm_model, getattr(response, "usage_metadata", None)
+    )
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
+        candidates = getattr(response, "candidates", None)
         set_response_attributes(
-            span, llm_model, response.candidates[0].text if response.candidates else ""
+            span, llm_model, candidates[0].text if candidates else getattr(response, "text", "")
         )
     if span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -222,16 +242,7 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
     ):
         return await wrapped(*args, **kwargs)
 
-    llm_model = "unknown"
-    if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
-    if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
-    # For ChatSession, try to get model from the parent model object
-    if hasattr(instance, "_model") and hasattr(instance._model, "_model_name"):
-        llm_model = instance._model._model_name.replace("publishers/google/models/", "")
-    elif hasattr(instance, "_model") and hasattr(instance._model, "_model_id"):
-        llm_model = instance._model._model_id
+    llm_model = _get_llm_model(instance)
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -264,6 +275,43 @@ async def _awrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
 
 
 @_with_tracer_wrapper
+async def _awrap_streaming(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
+    """Async-generator variant of _awrap for async streaming methods.
+
+    Wrapping an async generator function with a coroutine wrapper would hand
+    the caller a coroutine instead of the generator it expects, so the
+    instrumentation must yield through it instead of awaiting it.
+    """
+    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    ):
+        async for item in wrapped(*args, **kwargs):
+            yield item
+        return
+
+    llm_model = _get_llm_model(instance)
+
+    name = to_wrap.get("span_name")
+    span = tracer.start_span(
+        name,
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_SYSTEM: "Google",
+            SpanAttributes.LLM_REQUEST_TYPE: LLMRequestTypeValues.COMPLETION.value,
+        },
+    )
+
+    await _handle_request(span, event_logger, args, kwargs, llm_model)
+
+    response = wrapped(*args, **kwargs)
+
+    async for item in _abuild_from_streaming_response(
+        span, event_logger, response, llm_model
+    ):
+        yield item
+
+
+@_with_tracer_wrapper
 def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every function defined in TO_WRAP."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
@@ -271,16 +319,7 @@ def _wrap(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs):
     ):
         return wrapped(*args, **kwargs)
 
-    llm_model = "unknown"
-    if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
-    if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
-    # For ChatSession, try to get model from the parent model object
-    if hasattr(instance, "_model") and hasattr(instance._model, "_model_name"):
-        llm_model = instance._model._model_name.replace("publishers/google/models/", "")
-    elif hasattr(instance, "_model") and hasattr(instance._model, "_model_id"):
-        llm_model = instance._model._model_id
+    llm_model = _get_llm_model(instance)
 
     name = to_wrap.get("span_name")
     span = tracer.start_span(
@@ -349,14 +388,17 @@ class VertexAIInstrumentor(BaseInstrumentor):
             wrap_object = wrapped_method.get("object")
             wrap_method = wrapped_method.get("method")
 
+            if wrapped_method.get("is_async_generator"):
+                wrapper = _awrap_streaming(tracer, event_logger, wrapped_method)
+            elif wrapped_method.get("is_async"):
+                wrapper = _awrap(tracer, event_logger, wrapped_method)
+            else:
+                wrapper = _wrap(tracer, event_logger, wrapped_method)
+
             wrap_function_wrapper(
                 wrap_package,
                 f"{wrap_object}.{wrap_method}",
-                (
-                    _awrap(tracer, event_logger, wrapped_method)
-                    if wrapped_method.get("is_async")
-                    else _wrap(tracer, event_logger, wrapped_method)
-                ),
+                wrapper,
             )
 
     def _uninstrument(self, **kwargs):
