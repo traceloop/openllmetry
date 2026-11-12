@@ -108,6 +108,27 @@ def metric_views() -> Sequence[View]:
             ),
         ),
         View(
+            instrument_name=Meters.LLM_OPERATION_DURATION,
+            aggregation=ExplicitBucketHistogramAggregation(
+                [
+                    0.01,
+                    0.02,
+                    0.04,
+                    0.08,
+                    0.16,
+                    0.32,
+                    0.64,
+                    1.28,
+                    2.56,
+                    5.12,
+                    10.24,
+                    20.48,
+                    40.96,
+                    81.92,
+                ]
+            ),
+        ),
+        View(
             instrument_name=Meters.PINECONE_DB_QUERY_DURATION,
             aggregation=ExplicitBucketHistogramAggregation(
                 [
