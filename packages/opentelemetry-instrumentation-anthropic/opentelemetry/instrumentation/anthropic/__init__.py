@@ -799,6 +799,11 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
+    # Whether instrument() is what put the native-tracing default into the
+    # environment. A class attribute: BaseInstrumentor returns a singleton, so
+    # constructing the instrumentor again must not forget this.
+    _native_tracing_disabled = False
+
     def __init__(
         self,
         enrich_token_usage: bool = False,
@@ -811,8 +816,6 @@ class AnthropicInstrumentor(BaseInstrumentor):
         use_legacy_attributes: Optional[bool] = None,
     ):
         super().__init__()
-        # whether instrument() put the native-tracing default into the environment
-        self._native_tracing_disabled = False
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
                 "Cannot pass both `use_attributes` and `use_legacy_attributes`; "
