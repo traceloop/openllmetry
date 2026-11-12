@@ -1,36 +1,45 @@
 import os
 
-import pytest
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
 
-MESSAGE = {
-    "id": "msg_1",
-    "type": "message",
-    "role": "assistant",
-    "model": "claude-sonnet-5-5",
-    "content": [{"type": "text", "text": "hi"}],
-    "stop_reason": "end_turn",
-    "stop_sequence": None,
-    "usage": {"input_tokens": 1000, "output_tokens": 200},
-}
+ENV = "ANTHROPIC_OPEN_TELEMETRY"
 
 
 def test_instrument_disables_native_sdk_tracing(monkeypatch):
     """anthropic >= 1.14 would otherwise emit a second span with the same usage."""
-    monkeypatch.delenv("ANTHROPIC_OPEN_TELEMETRY", raising=False)
+    monkeypatch.delenv(ENV, raising=False)
     instrumentor = AnthropicInstrumentor()
     instrumentor.instrument()
     try:
-        assert os.environ["ANTHROPIC_OPEN_TELEMETRY"] == "false"
+        assert os.environ[ENV] == "false"
     finally:
         instrumentor.uninstrument()
+
+
+def test_uninstrument_removes_the_default_it_wrote(monkeypatch):
+    """A client built after uninstrument() gets the SDK's native tracing again."""
+    monkeypatch.delenv(ENV, raising=False)
+    instrumentor = AnthropicInstrumentor()
+    instrumentor.instrument()
+    instrumentor.uninstrument()
+    assert ENV not in os.environ
 
 
 def test_instrument_keeps_explicit_native_tracing_setting(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_OPEN_TELEMETRY", "true")
+    monkeypatch.setenv(ENV, "true")
     instrumentor = AnthropicInstrumentor()
     instrumentor.instrument()
     try:
-        assert os.environ["ANTHROPIC_OPEN_TELEMETRY"] == "true"
+        assert os.environ[ENV] == "true"
     finally:
         instrumentor.uninstrument()
+        assert os.environ[ENV] == "true"
+
+
+def test_an_explicit_false_is_not_removed_by_uninstrument(monkeypatch):
+    """The variable can come from the environment (opentelemetry-instrument)."""
+    monkeypatch.setenv(ENV, "false")
+    instrumentor = AnthropicInstrumentor()
+    instrumentor.instrument()
+    instrumentor.uninstrument()
+    assert os.environ[ENV] == "false"
