@@ -834,6 +834,12 @@ class AnthropicInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        # anthropic >= 1.14 emits its own span per API call when a global tracer
+        # provider is registered. That span carries the same usage as the one this
+        # instrumentation creates, so cost dashboards count every call twice.
+        # Keep the SDK's native tracing off unless the user configured it.
+        os.environ.setdefault("ANTHROPIC_OPEN_TELEMETRY", "false")
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
