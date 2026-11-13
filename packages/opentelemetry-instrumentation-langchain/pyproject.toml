@@ -21,7 +21,9 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-langchain"
 
 [project.optional-dependencies]
-instruments = ["langchain"]
+# Auto-instrumentation checks this extra, not instrumentation_dependencies().
+# LangGraph and langchain-openai can use langchain-core without langchain.
+instruments = ["langchain-core>0.1.0"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 langchain = "opentelemetry.instrumentation.langchain:LangchainInstrumentor"
