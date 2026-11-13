@@ -275,6 +275,18 @@ class AnthropicStream(ObjectProxy):
         finally:
             self._complete_instrumentation()
 
+    def __enter__(self):
+        # ObjectProxy forwards __enter__ and returns the wrapped stream, which
+        # would bypass this proxy for iteration and for __exit__.
+        self.__wrapped__.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            return self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            self._complete_instrumentation()
+
     def __del__(self):
         try:
             self._complete_instrumentation()
@@ -310,7 +322,10 @@ class AnthropicStream(ObjectProxy):
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        try:
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        except Exception as e:
+            logger.warning("Failed to emit streaming response events, error: %s", str(e))
 
         if self._span.is_recording():
             self._span.set_status(Status(StatusCode.OK))
@@ -428,6 +443,18 @@ class AnthropicAsyncStream(ObjectProxy):
         finally:
             self._complete_instrumentation()
 
+    async def __aenter__(self):
+        # ObjectProxy forwards __aenter__ and returns the wrapped stream, which
+        # would bypass this proxy for iteration and for __aexit__.
+        await self.__wrapped__.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        try:
+            return await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        finally:
+            self._complete_instrumentation()
+
     def __del__(self):
         try:
             self._complete_instrumentation()
@@ -467,7 +494,10 @@ class AnthropicAsyncStream(ObjectProxy):
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        try:
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        except Exception as e:
+            logger.warning("Failed to emit streaming response events, error: %s", str(e))
 
         if self._span.is_recording():
             self._span.set_status(Status(StatusCode.OK))

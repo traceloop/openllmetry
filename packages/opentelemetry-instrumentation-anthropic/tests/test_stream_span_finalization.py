@@ -6,9 +6,13 @@ SDK cleanup that must still run.
 """
 
 import gc
+import itertools
 
 import pytest
 from opentelemetry.instrumentation.anthropic import AnthropicInstrumentor
+from opentelemetry.instrumentation.anthropic.event_emitter import emit_streaming_response_events
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter, SimpleLogRecordProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -45,6 +49,20 @@ MESSAGE_END = (
     "event: message_stop\n"
     'data: {"type":"message_stop"}\n\n'
 )
+PARTIAL_TOOL = (
+    MESSAGE_START
+    + "event: content_block_start\n"
+    'data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use",'
+    '"id":"tu_1","name":"add","input":{}}}\n\n'
+    + "event: content_block_delta\n"
+    'data: {"type":"content_block_delta","index":0,'
+    '"delta":{"type":"input_json_delta","partial_json":"{\\"a\\": 1"}}\n\n'
+    # The block stops before the message does: the accumulated tool input is
+    # the partial JSON above, which the event emitter must tolerate.
+    + "event: content_block_stop\n"
+    'data: {"type":"content_block_stop","index":0}\n\n'
+)
+
 STREAM_ERROR = 'event: error\ndata: {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}\n\n'
 
 COMPLETE = MESSAGE_START + CONTENT + MESSAGE_END
@@ -75,8 +93,12 @@ def exporter():
     span_exporter = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(span_exporter))
+    # Event emission does the tool-input json.loads; without a logger it is
+    # skipped, and the early-exit path would not be exercised at all.
+    logger_provider = LoggerProvider()
+    logger_provider.add_log_record_processor(SimpleLogRecordProcessor(InMemoryLogRecordExporter()))
     instrumentor = AnthropicInstrumentor()
-    instrumentor.instrument(tracer_provider=provider)
+    instrumentor.instrument(tracer_provider=provider, logger_provider=logger_provider)
     yield span_exporter
     instrumentor.uninstrument()
     span_exporter.clear()
@@ -183,3 +205,41 @@ async def test_async_stream_ends_span_on_completion(exporter):
     assert span.status.status_code is StatusCode.OK
     assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 1000
     assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 200
+
+
+def test_sync_stream_closed_mid_tool_use_ends_span(exporter):
+    """Closing while a tool_use block streams must not raise on the partial input."""
+    served = Served(PARTIAL_TOOL)
+    with sync_client(served).messages.stream(**CALL) as stream:
+        # Consume through content_block_stop, then leave before the message ends.
+        for _ in itertools.islice(stream, 4):
+            pass
+
+    assert only_span(exporter).status.status_code is StatusCode.OK
+
+
+@pytest.mark.asyncio
+async def test_async_stream_closed_mid_tool_use_ends_span(exporter):
+    served = Served(PARTIAL_TOOL)
+    async with async_client(served).messages.stream(**CALL) as stream:
+        consumed = 0
+        async for _ in stream:
+            consumed += 1
+            if consumed == 4:
+                break
+
+    assert only_span(exporter).status.status_code is StatusCode.OK
+
+
+def test_emit_streaming_response_events_tolerates_partial_tool_input():
+    emit_streaming_response_events(None, {"events": [{"type": "tool_use", "input": '{"a": 1'}]})
+
+
+def test_direct_stream_context_manager_keeps_the_proxy(exporter):
+    served = Served(COMPLETE)
+    with sync_client(served).messages.create(stream=True, **CALL) as stream:
+        assert hasattr(stream, "_complete_instrumentation")
+        for _ in stream:
+            pass
+
+    assert only_span(exporter).status.status_code is StatusCode.OK
