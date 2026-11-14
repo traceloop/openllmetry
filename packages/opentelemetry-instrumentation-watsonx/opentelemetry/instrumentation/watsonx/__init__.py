@@ -145,13 +145,13 @@ def _set_input_attributes(span, args=None, kwargs=None):
         for index, input_text in enumerate(prompt):
             _set_span_attribute(
                 span,
-                f"{SpanAttributes.GEN_AI_PROMPT}.{index}.user",
+                f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.user",
                 str(input_text).strip(),
             )
     else:
         _set_span_attribute(
             span,
-            f"{SpanAttributes.LLM_PROMPTS}.0.user",
+            f"{GenAIAttributes.GEN_AI_PROMPT}.0.user",
             str(prompt).strip(),
         )
 
