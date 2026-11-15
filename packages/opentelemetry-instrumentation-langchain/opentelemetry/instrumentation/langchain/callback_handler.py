@@ -1102,7 +1102,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         """Return the tracked parent span holder for a run id, if it exists."""
         if parent_run_id is None:
             return None
-        return self.spans[parent_run_id]
+        return self.spans.get(parent_run_id)
 
     def get_workflow_name(self, parent_run_id: str):
         """Resolve the workflow name inherited from a parent run."""

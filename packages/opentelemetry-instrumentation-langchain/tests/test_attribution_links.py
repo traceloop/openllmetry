@@ -93,6 +93,58 @@ def test_caused_by_generation_link_structured_tool_call(_handler, _exporter):
     assert link.context.span_id == llm_span.context.span_id
 
 
+def test_attribution_link_via_completed_llm_parent_fallback(_handler, _exporter):
+    """Tool span must still link back when its LLM parent already ended (parent_run_id fallback)."""
+    root_id = uuid4()
+    llm_id = uuid4()
+    tool_id = uuid4()
+    tc_id = "call_test_fallback123"
+
+    _handler.on_chain_start(
+        {"id": ["FakeChain"], "name": "FakeChain"},
+        {},
+        run_id=root_id,
+    )
+    _handler.on_chat_model_start(
+        {"id": ["FakeLLM"], "name": "FakeLLM"},
+        [[]],
+        run_id=llm_id,
+        parent_run_id=root_id,
+    )
+    _handler.on_llm_end(
+        _llm_result_with_tool_call(tc_id, "search"),
+        run_id=llm_id,
+        parent_run_id=root_id,
+    )
+    # No tool_call_id passed: force the parent_run_id fallback path, with the
+    # LLM parent already ended (its holder was removed when the span ended).
+    # Before the get_parent_span fix this raised KeyError in on_tool_start.
+    _handler.on_tool_start(
+        {"id": ["SearchTool"], "name": "search"},
+        "test query",
+        run_id=tool_id,
+        parent_run_id=llm_id,
+    )
+    _handler.on_tool_end("result", run_id=tool_id, parent_run_id=llm_id)
+    _handler.on_chain_end({}, run_id=root_id)
+
+    finished = _exporter.get_finished_spans()
+    tool_spans = [s for s in finished if "execute_tool" in s.name]
+    assert len(tool_spans) == 1, f"Unexpected spans: {[s.name for s in finished]}"
+
+    tool_span = tool_spans[0]
+    assert len(tool_span.links) == 1, "Tool span must have exactly one attribution link"
+
+    link = tool_span.links[0]
+    assert link.attributes.get("gen_ai.attribution.link_type") == "CAUSED_BY_GENERATION"
+
+    llm_spans = [s for s in finished if ".chat" in s.name]
+    assert len(llm_spans) == 1
+    llm_span = llm_spans[0]
+    assert link.context.trace_id == llm_span.context.trace_id
+    assert link.context.span_id == llm_span.context.span_id
+
+
 def test_no_attribution_link_without_tool_call_id(_handler, _exporter):
     """Tool span without a structured tool_call_id must carry no attribution link."""
     root_id = uuid4()
