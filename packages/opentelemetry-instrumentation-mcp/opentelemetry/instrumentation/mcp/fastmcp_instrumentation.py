@@ -85,18 +85,22 @@ class FastMCPInstrumentor:
             if not self._tracer:
                 return await wrapped(*args, **kwargs)
 
-            # Extract tool name from arguments - FastMCP has different call patterns
-            tool_key = None
-            tool_arguments = {}
-
-            # Pattern 1: kwargs with 'key' parameter
-            if kwargs and 'key' in kwargs:
-                tool_key = kwargs.get('key')
-                tool_arguments = kwargs.get('arguments', {})
-            # Pattern 2: positional args (tool_name, arguments)
-            elif args and len(args) >= 1:
-                tool_key = args[0]
-                tool_arguments = args[1] if len(args) > 1 else {}
+            # Extract tool name and arguments for the span only; the call below
+            # gets the original args/kwargs. The name is `key` on fastmcp 2's
+            # ToolManager.call_tool and `name` on fastmcp 3's FastMCP.call_tool,
+            # passed by keyword or positionally; `arguments` likewise, so a
+            # positional name with keyword arguments is covered too.
+            if 'key' in kwargs or 'name' in kwargs:
+                tool_key = kwargs.get('key', kwargs.get('name'))
+                rest = args
+            else:
+                tool_key = args[0] if args else None
+                rest = args[1:]
+            if 'arguments' in kwargs:
+                tool_arguments = kwargs['arguments']
+            else:
+                tool_arguments = rest[0] if rest else {}
+            tool_arguments = tool_arguments or {}
 
             entity_name = tool_key if tool_key else "unknown_tool"
 

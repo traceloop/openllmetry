@@ -1,3 +1,6 @@
+import pytest
+
+
 async def test_fastmcp_server_mcp_parent_span(span_exporter, tracer_provider) -> None:
     """Test that FastMCP tool calls have mcp.server as parent span."""
     from fastmcp import FastMCP, Client
@@ -71,3 +74,38 @@ async def test_fastmcp_server_mcp_parent_span(span_exporter, tracer_provider) ->
         "Tool span should have tool span kind"
     assert tool_span.attributes.get('traceloop.entity.name') == 'test_tool', \
         "Tool span should have correct entity name"
+
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda s: s.call_tool("double", {"x": 5}, run_middleware=False),
+        lambda s: s.call_tool(name="double", arguments={"x": 5}, run_middleware=False),
+        lambda s: s.call_tool("double", arguments={"x": 5}, run_middleware=False),
+    ],
+    ids=["positional", "keywords", "mixed"],
+)
+async def test_fastmcp3_server_span_reads_name_and_arguments(call, span_exporter) -> None:
+    """FastMCP.call_tool(run_middleware=False) is what the server span wraps on
+    fastmcp 3; its name and arguments may come positionally or by keyword."""
+    import json
+
+    from fastmcp import FastMCP
+
+    if not hasattr(FastMCP, "call_tool"):
+        pytest.skip("FastMCP.call_tool is fastmcp 3+")
+
+    server = FastMCP("test-server")
+
+    @server.tool()
+    async def double(x: int) -> int:
+        return x * 2
+
+    await call(server)
+
+    tool_spans = [s for s in span_exporter.get_finished_spans() if s.name.endswith(".tool")]
+    assert [s.name for s in tool_spans] == ["double.tool"]
+    assert tool_spans[0].attributes["traceloop.entity.name"] == "double"
+    tool_input = json.loads(tool_spans[0].attributes["traceloop.entity.input"])
+    assert tool_input == {"tool_name": "double", "arguments": {"x": 5}}
