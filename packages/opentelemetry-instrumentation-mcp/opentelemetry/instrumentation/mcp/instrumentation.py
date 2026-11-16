@@ -14,7 +14,6 @@ from wrapt import ObjectProxy, register_post_import_hook, wrap_function_wrapper
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
-from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 
 from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import (
@@ -24,7 +23,9 @@ from opentelemetry.instrumentation.mcp.utils import (
     error_status,
     guard_trace,
     guarded_span,
+    is_create_task_result,
     record_error,
+    record_tool_error,
     should_send_prompts,
 )
 from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import (
@@ -241,7 +242,6 @@ class McpInstrumentor(BaseInstrumentor):
         # would hand the MCP SDK a None in place of its CallToolResult and break
         # the traced call. Only the instrumentation's own work is guarded.
         async def traced_method(wrapped, instance, args, kwargs):
-            meta = None
             method = None
             params = None
             # The MCP SDK passes a ClientRequest positionally; fastmcp 3 passes
@@ -249,16 +249,12 @@ class McpInstrumentor(BaseInstrumentor):
             request = args[0] if len(args) > 0 else kwargs.get("request")
             root = getattr(request, "root", request)
             with guard_trace(logger, "mcp.client.send_request"):
-                if root is not None and hasattr(root, "method"):
-                    method = root.method
-                if root is not None and hasattr(root, "params"):
-                    params = root.params
-                if params:
-                    if hasattr(params, "meta"):
-                        meta = params.meta
+                method = getattr(root, "method", None)
+                params = getattr(root, "params", None)
+                meta = getattr(params, "meta", None)
 
                 # Handle trace context propagation
-                if meta and root is not None:
+                if meta:
                     carrier = {}
                     TraceContextTextMapPropagator().inject(carrier)
                     # inject() writes no traceparent when there is no span
@@ -269,7 +265,6 @@ class McpInstrumentor(BaseInstrumentor):
                     traceparent = carrier.get("traceparent")
                     if traceparent is not None:
                         meta.traceparent = traceparent
-                        root.params.meta = meta
 
             # Call the original method. Nothing from here on catches what it
             # raises or returns: a failed extraction above just leaves method
@@ -509,14 +504,13 @@ class McpInstrumentor(BaseInstrumentor):
         # Status first, in its own guard: a failure recording the response body
         # must not cost the span the one attribute that says how the call went.
         with guard_trace(logger, "mcp.client.send_request status"):
-            if hasattr(traced, "isError") and traced.isError:
-                span.set_attribute(ERROR_TYPE, "tool_error")
-                detail = error_detail(getattr(traced, "content", None))
-                span.set_status(
-                    error_status(detail)
-                    if detail is not None
-                    else Status(StatusCode.ERROR)
-                )
+            if getattr(traced, "isError", False):
+                record_tool_error(span, getattr(traced, "content", None))
+            elif is_create_task_result(traced):
+                # A task-augmented call returns as soon as the task is
+                # accepted; the tool's outcome arrives later via tasks/result.
+                # Leave the status unset rather than claim a success.
+                pass
             else:
                 span.set_status(Status(StatusCode.OK))
         with guard_trace(logger, "mcp.client.send_request decorate"):
@@ -607,6 +601,14 @@ class McpInstrumentor(BaseInstrumentor):
                 # Check if this is an error response
                 if hasattr(result, "isError") and result.isError:
                     output["is_error"] = True
+
+                # A task-augmented call: record the accepted task, which the
+                # later tasks/result span can be matched to.
+                if is_create_task_result(result):
+                    output["task"] = {
+                        "id": result.task.taskId,
+                        "status": result.task.status,
+                    }
 
                 return output
             elif method == "tools/list":
