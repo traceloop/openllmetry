@@ -91,11 +91,73 @@ class TestSetInputAttributesAsync:
             span, (), {"contents": ["first", "second"]}, "gemini-pro"
         )
 
+        # A bare list of strings is one user turn with several parts, which is
+        # how google.genai's t_contents sends it.
         messages = _recorded_input_messages(span)
-        assert messages is not None
-        assert len(messages) == 2
-        assert messages[0]["parts"][0]["content"] == "first"
-        assert messages[1]["parts"][0]["content"] == "second"
+        assert messages == [
+            {
+                "role": "user",
+                "parts": [
+                    {"type": "text", "content": "first"},
+                    {"type": "text", "content": "second"},
+                ],
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_single_content_object(self, monkeypatch):
+        """A Content passed directly (not in a list) is one turn."""
+        from google.genai import types
+
+        monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+        span = self._make_span()
+
+        content = types.Content(role="user", parts=[types.Part(text="Hi there")])
+        await su.set_input_attributes(span, (), {"contents": content}, "gemini-pro")
+
+        messages = _recorded_input_messages(span)
+        assert messages == [
+            {"role": "user", "parts": [{"type": "text", "content": "Hi there"}]}
+        ]
+
+    @pytest.mark.asyncio
+    async def test_bare_parts_grouped_between_contents(self, monkeypatch):
+        """Bare parts are grouped into turns; function calls form a model turn."""
+        from google.genai import types
+
+        monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+        span = self._make_span()
+
+        contents = [
+            "What is the weather?",
+            types.Part(text="In Paris."),
+            types.Part(
+                function_call=types.FunctionCall(
+                    id="c1", name="get_weather", args={"city": "Paris"}
+                )
+            ),
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part(
+                        function_response=types.FunctionResponse(
+                            id="c1", name="get_weather", response={"temp": 20}
+                        )
+                    )
+                ],
+            ),
+        ]
+        await su.set_input_attributes(span, (), {"contents": contents}, "gemini-pro")
+
+        messages = _recorded_input_messages(span)
+        assert [m["role"] for m in messages] == ["user", "assistant", "user"]
+        assert [p["content"] for p in messages[0]["parts"]] == [
+            "What is the weather?",
+            "In Paris.",
+        ]
+        assert messages[1]["parts"][0]["type"] == "tool_call"
+        assert messages[1]["parts"][0]["name"] == "get_weather"
+        assert messages[2]["parts"][0]["type"] == "tool_call_response"
 
     @pytest.mark.asyncio
     async def test_prompt_kwarg(self, monkeypatch):
@@ -206,6 +268,27 @@ class TestAsyncSyncParity:
         sync_messages = _recorded_input_messages(span_sync)
         async_messages = _recorded_input_messages(span_async)
         assert sync_messages == async_messages
+
+    @pytest.mark.asyncio
+    async def test_single_content_object_match(self, monkeypatch):
+        from google.genai import types
+
+        monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+        contents = types.Content(role="user", parts=[types.Part(text="Hi")])
+
+        span_sync = MagicMock()
+        span_sync.is_recording.return_value = True
+        su.set_input_attributes_sync(span_sync, (), {"contents": contents}, "gemini-pro")
+
+        span_async = MagicMock()
+        span_async.is_recording.return_value = True
+        await su.set_input_attributes(
+            span_async, (), {"contents": contents}, "gemini-pro"
+        )
+
+        sync_messages = _recorded_input_messages(span_sync)
+        assert sync_messages is not None
+        assert sync_messages == _recorded_input_messages(span_async)
 
     @pytest.mark.asyncio
     async def test_prompt_kwarg_match(self, monkeypatch):
