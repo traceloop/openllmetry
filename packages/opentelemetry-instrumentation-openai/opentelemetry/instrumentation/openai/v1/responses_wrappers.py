@@ -1,4 +1,3 @@
-import json
 import pydantic
 import re
 import threading
@@ -34,6 +33,7 @@ from opentelemetry.instrumentation.openai.shared import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
+    json_dumps,
     should_send_prompts,
 )
 
@@ -431,7 +431,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     }],
                 })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json_dumps(input_messages))
 
     # Build output messages
     output_messages = []
@@ -453,7 +453,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 summary = block_dict.get("summary")
                 if summary is not None and summary != []:
                     if isinstance(summary, (dict, list)):
-                        parts.append({"type": "reasoning", "content": json.dumps(summary)})
+                        parts.append({"type": "reasoning", "content": json_dumps(summary)})
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
@@ -463,7 +463,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 "finish_reason": _derive_finish_reason(traced_response),
             })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json_dumps(output_messages))
 
     # Tool definitions as JSON
     if traced_response.tools:

@@ -31,3 +31,15 @@ To disable logging, set the `TRACELOOP_TRACE_CONTENT` environment variable to `f
 ```bash
 TRACELOOP_TRACE_CONTENT=false
 ```
+
+## Diagnostics
+
+A failure inside this instrumentation never reaches your application: the traced call still goes out, and its result -- or its own exception -- is what the caller sees. Such a failure is logged at `WARNING` on the `opentelemetry.instrumentation.mcp` logger, with the stack at `DEBUG`.
+
+Some of these failures sit on a per-message path (the stream writer), so a persistent one logs a line per MCP message. To quiet it without touching the rest of your logging:
+
+```python
+import logging
+
+logging.getLogger("opentelemetry.instrumentation.mcp").setLevel(logging.ERROR)
+```

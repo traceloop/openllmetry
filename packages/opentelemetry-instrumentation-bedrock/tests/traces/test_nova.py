@@ -1,3 +1,4 @@
+import io
 import json
 
 import pytest
@@ -1385,3 +1386,116 @@ def test_nova_cross_region_invoke_with_events_with_no_content(
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
+
+def _nova_request_body():
+    return {
+        "schemaVersion": "messages-v1",
+        "messages": [{"role": "user", "content": [{"text": "A camping trip"}]}],
+        "system": [{"text": "tell me a very two sentence story."}],
+        "inferenceConfig": {"maxTokens": 500, "topP": 0.9, "topK": 20, "temperature": 0.7},
+    }
+
+
+@pytest.mark.vcr
+def test_nova_completion_file_like_body(instrument_legacy, brt, span_exporter, log_exporter):
+    """boto3 accepts a file-like `body`; it must be traced like a bytes body."""
+    request_body = _nova_request_body()
+
+    response = brt.invoke_model(
+        body=io.BytesIO(json.dumps(request_body).encode()),
+        modelId="amazon.nova-lite-v1:0",
+        accept="application/json",
+        contentType="application/json",
+    )
+    response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "chat nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.7
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.9
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] == 30
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] == 51
+
+    input_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
+    generated_text = response_body["output"]["message"]["content"]
+    output_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["parts"][0]["content"] == generated_text[0]["text"]
+
+    assert len(log_exporter.get_finished_logs()) == 0
+
+
+@pytest.mark.vcr
+def test_nova_completion_file_like_body_with_events_with_content(
+    instrument_with_content, brt, span_exporter, log_exporter
+):
+    request_body = _nova_request_body()
+
+    response = brt.invoke_model(
+        body=io.BytesIO(json.dumps(request_body).encode()),
+        modelId="amazon.nova-lite-v1:0",
+        accept="application/json",
+        contentType="application/json",
+    )
+    response_body = json.loads(response.get("body").read())
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+    assert spans[0].attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+    assert_message_in_logs(
+        logs[0], "gen_ai.system.message", {"content": "tell me a very two sentence story."}
+    )
+    assert_message_in_logs(
+        logs[1], "gen_ai.user.message", {"content": [{"text": "A camping trip"}]}
+    )
+    assert_message_in_logs(
+        logs[2],
+        "gen_ai.choice",
+        {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {"content": response_body["output"]["message"]["content"]},
+        },
+    )
+
+
+@pytest.mark.vcr
+def test_nova_invoke_stream_file_like_body(instrument_legacy, brt, span_exporter, log_exporter):
+    request_body = _nova_request_body()
+
+    response = brt.invoke_model_with_response_stream(
+        body=io.BytesIO(json.dumps(request_body).encode()),
+        modelId="amazon.nova-lite-v1:0",
+        accept="application/json",
+        contentType="application/json",
+    )
+
+    generated_text = []
+    for event in response.get("body"):
+        if "chunk" in event:
+            chunk = json.loads(event["chunk"].get("bytes").decode())
+            delta = chunk.get("contentBlockDelta")
+            if delta:
+                generated_text.append(delta.get("delta").get("text"))
+    assert len(generated_text) > 0
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.name == "chat nova-lite-v1:0"
+    assert span.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME] == GenAiOperationNameValues.CHAT.value
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 500
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS] > 0
+    assert span.attributes[GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS] > 0
+    input_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_INPUT_MESSAGES])
+    assert input_messages[0]["parts"] == [{"type": "text", "content": "A camping trip"}]
+    output_messages = json.loads(span.attributes[GenAIAttributes.GEN_AI_OUTPUT_MESSAGES])
+    assert output_messages[0]["parts"][0]["content"] == "".join(generated_text)
