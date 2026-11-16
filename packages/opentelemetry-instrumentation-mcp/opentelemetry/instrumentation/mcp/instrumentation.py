@@ -244,17 +244,21 @@ class McpInstrumentor(BaseInstrumentor):
             meta = None
             method = None
             params = None
+            # The MCP SDK passes a ClientRequest positionally; fastmcp 3 passes
+            # the bare request model (no `.root`) as the `request` keyword.
+            request = args[0] if len(args) > 0 else kwargs.get("request")
+            root = getattr(request, "root", request)
             with guard_trace(logger, "mcp.client.send_request"):
-                if len(args) > 0 and hasattr(args[0].root, "method"):
-                    method = args[0].root.method
-                if len(args) > 0 and hasattr(args[0].root, "params"):
-                    params = args[0].root.params
+                if root is not None and hasattr(root, "method"):
+                    method = root.method
+                if root is not None and hasattr(root, "params"):
+                    params = root.params
                 if params:
-                    if hasattr(args[0].root.params, "meta"):
-                        meta = args[0].root.params.meta
+                    if hasattr(params, "meta"):
+                        meta = params.meta
 
                 # Handle trace context propagation
-                if meta and len(args) > 0:
+                if meta and root is not None:
                     carrier = {}
                     TraceContextTextMapPropagator().inject(carrier)
                     # inject() writes no traceparent when there is no span
@@ -265,7 +269,7 @@ class McpInstrumentor(BaseInstrumentor):
                     traceparent = carrier.get("traceparent")
                     if traceparent is not None:
                         meta.traceparent = traceparent
-                        args[0].root.params.meta = meta
+                        root.params.meta = meta
 
             # Call the original method. Nothing from here on catches what it
             # raises or returns: a failed extraction above just leaves method
@@ -276,7 +280,7 @@ class McpInstrumentor(BaseInstrumentor):
                 )
             else:
                 return await self._handle_mcp_method(
-                    tracer, method, args, kwargs, wrapped
+                    tracer, method, request, args, kwargs, wrapped
                 )
 
         return traced_method
@@ -454,7 +458,7 @@ class McpInstrumentor(BaseInstrumentor):
                 span, method, args, kwargs, wrapped, clean_output=True
             )
 
-    async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
+    async def _handle_mcp_method(self, tracer, method, request, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
         with guarded_span(
             logger,
@@ -469,7 +473,7 @@ class McpInstrumentor(BaseInstrumentor):
                 # params, so it is recorded only when content capture is enabled.
                 if should_send_prompts():
                     span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(request)}"
                     )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False

@@ -30,6 +30,10 @@ class FastMCPInstrumentor:
             "fastmcp.tools.tool_manager",
         )
 
+        # fastmcp 3 removed ToolManager; tool execution goes through
+        # FastMCP.call_tool, which fastmcp 2 does not have.
+        register_post_import_hook(self._wrap_fastmcp3_call_tool, "fastmcp.server.server")
+
         # Instrument FastMCP __init__ to capture server name
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
@@ -43,6 +47,22 @@ class FastMCPInstrumentor:
         # Note: wrapt doesn't provide a clean way to unwrap post-import hooks
         # This is a limitation we'll need to document
         pass
+
+    def _wrap_fastmcp3_call_tool(self, module):
+        server_cls = getattr(module, "FastMCP", None)
+        if server_cls is None or not hasattr(server_cls, "call_tool"):
+            return
+        tool_wrapper = self._fastmcp_tool_wrapper()
+
+        async def traced_call_tool(wrapped, instance, args, kwargs):
+            # The public call (run_middleware=True) runs the middleware chain,
+            # which calls back in with run_middleware=False to execute the tool.
+            # Trace only that inner call, so each execution gets one span pair.
+            if kwargs.get("run_middleware", True):
+                return await wrapped(*args, **kwargs)
+            return await tool_wrapper(wrapped, instance, args, kwargs)
+
+        wrap_function_wrapper(module, "FastMCP.call_tool", traced_call_tool)
 
     def _fastmcp_init_wrapper(self):
         """Create wrapper for FastMCP initialization to capture server name."""
