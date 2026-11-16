@@ -84,10 +84,6 @@ select = ["E", "F", "W"]
 
 [tool.uv]
 constraint-dependencies = ["urllib3>=2.8.0", "pip>=25.3"]
-# nltk>=3.10 refuses to read hardlinked data files (CWE-59 guard), and uv
-# hardlinks from its cache on Linux, which breaks llama-index's bundled
-# nltk stopwords. Copy instead.
-link-mode = "copy"
 
 [tool.uv.sources]
 opentelemetry-instrumentation-chromadb = { path = "../opentelemetry-instrumentation-chromadb", editable = true }

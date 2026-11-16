@@ -10,6 +10,10 @@ on:
 
 env:
   PIP_NO_CACHE_DIR: 1
+  # nltk>=3.10 refuses to read hardlinked data files (CWE-59 guard), and uv
+  # hardlinks packages from its cache, which breaks llama-index's bundled nltk
+  # stopwords. Copy instead, for every package that pulls nltk.
+  UV_LINK_MODE: copy
 
 jobs:
   lint-pr:
