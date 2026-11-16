@@ -166,3 +166,56 @@ async def test_fastmcp_task_submission_is_not_traced_as_a_tool_run(span_exporter
         await tool._run({"x": 5}, task_meta=TaskMeta())
 
     assert _server_spans(span_exporter) == ([], [])
+
+
+# The server wrapper must be transparent: whatever fails in tracing, the tool
+# gets its call and the caller gets the tool's exact result or exception.
+
+def _instrumentor(tracer):
+    from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
+
+    instrumentor = FastMCPInstrumentor()
+    instrumentor._tracer = tracer
+    return instrumentor
+
+
+@pytest.mark.parametrize("tracer_fixture", ["broken_tracer", "end_raises"])
+async def test_tracing_failure_keeps_the_tool_result(tracer_fixture, request) -> None:
+    tracer = request.getfixturevalue(tracer_fixture)
+    result = object()
+
+    async def tool(*args, **kwargs):
+        return result
+
+    returned = await _instrumentor(tracer)._trace_tool_call(tool, ({"x": 1},), {}, "t", {"x": 1})
+    assert returned is result
+
+
+@pytest.mark.parametrize("tracer_fixture", ["broken_tracer", "end_raises"])
+async def test_tracing_failure_keeps_the_tool_exception(tracer_fixture, request) -> None:
+    tracer = request.getfixturevalue(tracer_fixture)
+    error = ValueError("boom")
+
+    async def tool(*args, **kwargs):
+        raise error
+
+    with pytest.raises(ValueError) as raised:
+        await _instrumentor(tracer)._trace_tool_call(tool, ({"x": 1},), {}, "t", {"x": 1})
+    assert raised.value is error
+
+
+async def test_failing_error_recording_keeps_the_tool_exception(tracer_provider, monkeypatch) -> None:
+    from opentelemetry.instrumentation.mcp import fastmcp_instrumentation
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("record_error exploded")
+
+    monkeypatch.setattr(fastmcp_instrumentation, "record_error", _boom)
+    error = ValueError("boom")
+
+    async def tool(*args, **kwargs):
+        raise error
+
+    with pytest.raises(ValueError) as raised:
+        await _instrumentor(tracer_provider.get_tracer(__name__))._trace_tool_call(tool, (), {}, "t", {})
+    assert raised.value is error

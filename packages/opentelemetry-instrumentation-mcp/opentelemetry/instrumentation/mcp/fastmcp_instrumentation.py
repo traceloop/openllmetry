@@ -1,6 +1,7 @@
 """FastMCP-specific instrumentation logic."""
 
 import json
+import logging
 import os
 
 from opentelemetry.trace import Tracer
@@ -8,7 +9,16 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv_ai import SpanAttributes, TraceloopSpanKindValues
 from wrapt import register_post_import_hook, wrap_function_wrapper
 
-from .utils import dont_throw, record_error, record_tool_error, should_send_prompts
+from .utils import (
+    dont_throw,
+    guard_trace,
+    guarded_span,
+    record_error,
+    record_tool_error,
+    should_send_prompts,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class FastMCPInstrumentor:
@@ -108,102 +118,99 @@ class FastMCPInstrumentor:
             return self._server_name
 
     async def _trace_tool_call(self, wrapped, args, kwargs, tool_key, tool_arguments):
-        """Run one tool execution inside an mcp.server span and a nested tool span."""
+        """Run one tool execution inside an mcp.server span and a nested tool span.
+
+        Transparent to the traced tool: it gets the original args/kwargs, and the
+        caller gets its exact result or exception. Every span operation is this
+        instrumentation's own work, so its failures are logged, never raised.
+        """
         if not self._tracer:
             return await wrapped(*args, **kwargs)
 
-        tool_arguments = tool_arguments or {}
         entity_name = tool_key if tool_key else "unknown_tool"
         server_name = self._current_server_name()
 
-        # Create parent server.mcp span
-        # The error paths below record the failure themselves, with the
-        # message gated on content capture. OTel's own exception recording
-        # would re-add that text ungated on the way out.
-        with self._tracer.start_as_current_span(
-            "mcp.server", record_exception=False, set_status_on_exception=False
-        ) as mcp_span:
-            mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
-            mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
-            if server_name:
-                mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
-
-            # Create nested tool span
-            span_name = f"{entity_name}.tool"
-            with self._tracer.start_as_current_span(
-                span_name, record_exception=False, set_status_on_exception=False
-            ) as tool_span:
-                tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
+        # Failures are recorded by hand below, with the message gated on
+        # content capture; OTel's own exception recording would re-add that
+        # text ungated on the way out.
+        span_kwargs = {"record_exception": False, "set_status_on_exception": False}
+        with guarded_span(
+            logger, "mcp.server", self._tracer, "mcp.server", **span_kwargs
+        ) as mcp_span, guarded_span(
+            logger, "mcp.server.tool", self._tracer, f"{entity_name}.tool", **span_kwargs
+        ) as tool_span:
+            with guard_trace(logger, "mcp.server.tool attributes"):
+                mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
+                mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
+                tool_span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
+                )
                 tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
                 if server_name:
+                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
-
                 if self._should_send_prompts():
-                    try:
-                        input_data = {
-                            "tool_name": entity_name,
-                            "arguments": tool_arguments
-                        }
-                        json_input = json.dumps(input_data, cls=self._get_json_encoder())
-                        truncated_input = self._truncate_json_if_needed(json_input)
-                        tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, truncated_input)
-                    except (TypeError, ValueError):
-                        pass  # Skip input logging if serialization fails
+                    input_data = {"tool_name": entity_name, "arguments": tool_arguments or {}}
+                    json_input = self._to_json(input_data)
+                    if json_input is not None:
+                        tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_INPUT, json_input)
 
-                try:
-                    result = await wrapped(*args, **kwargs)
-                except Exception as e:
+            try:
+                result = await wrapped(*args, **kwargs)
+            except Exception as e:
+                with guard_trace(logger, "mcp.server.tool record"):
                     record_error(tool_span, e)
                     record_error(mcp_span, e)
-                    raise
+                raise
 
-                try:
-                    # Add output in traceloop format to tool span
-                    if self._should_send_prompts() and result:
-                        try:
-                            # Convert FastMCP Content objects to serializable format
-                            # Note: result.content for fastmcp 2.12.2+, fallback to result for older versions
-                            output_data = []
-                            result_items = getattr(result, "content", result)
-                            if not isinstance(result_items, (list, tuple)):
-                                result_items = []
-                            for item in result_items:
-                                if hasattr(item, 'text'):
-                                    output_data.append({"type": "text", "content": item.text})
-                                elif hasattr(item, '__dict__'):
-                                    output_data.append(item.__dict__)
-                                else:
-                                    output_data.append(str(item))
+            # Status first, in its own guard: a failure recording the output
+            # must not cost the spans the attribute that says how the call went.
+            with guard_trace(logger, "mcp.server.tool status"):
+                # A tool can fail without raising: fastmcp 3 returns
+                # ToolResult(is_error=True), MCP a CallToolResult(isError=True).
+                if getattr(result, "is_error", False) or getattr(result, "isError", False):
+                    content = getattr(result, "content", None)
+                    record_tool_error(tool_span, content)
+                    record_tool_error(mcp_span, content)
+                else:
+                    tool_span.set_status(Status(StatusCode.OK))
+                    mcp_span.set_status(Status(StatusCode.OK))
 
-                            json_output = json.dumps(output_data, cls=self._get_json_encoder())
-                            truncated_output = self._truncate_json_if_needed(json_output)
-                            tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, truncated_output)
+            with guard_trace(logger, "mcp.server.tool output"):
+                if self._should_send_prompts() and result:
+                    # result.content for fastmcp 2.12.2+ and 3; older fastmcp
+                    # returned the content list itself.
+                    items = getattr(result, "content", result)
+                    if isinstance(items, (list, tuple)):
+                        output_data = []
+                        for item in items:
+                            if hasattr(item, "text"):
+                                output_data.append({"type": "text", "content": item.text})
+                            elif hasattr(item, "__dict__"):
+                                output_data.append(item.__dict__)
+                            else:
+                                output_data.append(str(item))
+                        output = self._to_json(output_data)
+                        if output is not None:
+                            tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_OUTPUT, output)
+                            mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, output)
 
-                            # Also add response to MCP span
-                            mcp_span.set_attribute(SpanAttributes.MCP_RESPONSE_VALUE, truncated_output)
-                        except (TypeError, ValueError):
-                            pass  # Skip output logging if serialization fails
-
-                    # A tool can fail without raising: fastmcp 3 returns
-                    # ToolResult(is_error=True), MCP a CallToolResult(isError=True).
-                    if getattr(result, "is_error", False) or getattr(result, "isError", False):
-                        content = getattr(result, "content", None)
-                        record_tool_error(tool_span, content)
-                        record_tool_error(mcp_span, content)
-                    else:
-                        tool_span.set_status(Status(StatusCode.OK))
-                        mcp_span.set_status(Status(StatusCode.OK))
-                except Exception:
-                    pass
-                return result
+            return result
 
     def _should_send_prompts(self):
         """Check if content tracing is enabled (matches traceloop SDK)"""
         return should_send_prompts()
 
-    def _get_json_encoder(self):
-        """Get JSON encoder class (simplified - traceloop SDK uses custom JSONEncoder)"""
-        return None  # Use default JSON encoder
+    def _to_json(self, data):
+        """Truncated JSON for a span attribute, or None if `data` doesn't serialize.
+
+        Content that isn't JSON-serializable is simply not recorded, quietly:
+        it is a property of the tool's data, not a tracing failure.
+        """
+        try:
+            return self._truncate_json_if_needed(json.dumps(data))
+        except (TypeError, ValueError):
+            return None
 
     def _truncate_json_if_needed(self, json_str: str) -> str:
         """Truncate JSON if it exceeds OTEL limits (matches traceloop SDK)"""
