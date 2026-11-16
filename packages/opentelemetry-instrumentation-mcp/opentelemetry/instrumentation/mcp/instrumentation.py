@@ -497,12 +497,21 @@ class McpInstrumentor(BaseInstrumentor):
             raise
         # The result is in hand from here on. Decorating the span is this
         # instrumentation's own work, so its failures are logged, never raised.
+        # fastmcp 3's call_tool(task=True) asks for a RootModel union
+        # (ToolTaskResponseUnion), so read the span data from its .root; the
+        # caller still gets the wrapper it asked for.
+        # (pydantic marks RootModel classes with __pydantic_root_model__.)
+        traced = (
+            result.root
+            if getattr(type(result), "__pydantic_root_model__", False)
+            else result
+        )
         # Status first, in its own guard: a failure recording the response body
         # must not cost the span the one attribute that says how the call went.
         with guard_trace(logger, "mcp.client.send_request status"):
-            if hasattr(result, "isError") and result.isError:
+            if hasattr(traced, "isError") and traced.isError:
                 span.set_attribute(ERROR_TYPE, "tool_error")
-                detail = error_detail(getattr(result, "content", None))
+                detail = error_detail(getattr(traced, "content", None))
                 span.set_status(
                     error_status(detail)
                     if detail is not None
@@ -516,7 +525,7 @@ class McpInstrumentor(BaseInstrumentor):
             if not should_send_prompts():
                 pass
             elif clean_output:
-                clean_output_data = self._extract_clean_output(method, result)
+                clean_output_data = self._extract_clean_output(method, traced)
                 if clean_output_data:
                     try:
                         span.set_attribute(
@@ -530,7 +539,7 @@ class McpInstrumentor(BaseInstrumentor):
                         )
             else:
                 span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
+                    SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(traced)
                 )
         return result
 
