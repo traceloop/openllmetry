@@ -1,21 +1,63 @@
 import asyncio
+from unittest.mock import patch
 
 import pytest
-import vertexai
 from opentelemetry.sdk._logs import ReadableLogRecord
-from opentelemetry.semconv._incubating.attributes import (
-    event_attributes as EventAttributes,
-)
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from vertexai.language_models import ChatModel, InputOutputTextPair, TextGenerationModel
+from vertexai.language_models import (
+    ChatModel,
+    ChatSession,
+    InputOutputTextPair,
+    TextGenerationModel,
+)
 
-vertexai.init()
+from .mocks import (
+    init_vertexai,
+    offline_from_pretrained,
+    offline_predict,
+    offline_predict_async,
+    offline_predict_streaming,
+    offline_predict_streaming_async,
+    offline_send_message,
+    offline_send_message_streaming,
+)
+
+init_vertexai()
 
 
-@pytest.mark.vcr
-def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
+@pytest.fixture(name="mock_language_models")
+def fixture_mock_language_models():
+    """Patch the SDK methods that would make real gRPC calls to Vertex AI."""
+    with (
+        patch.object(
+            TextGenerationModel, "from_pretrained", classmethod(offline_from_pretrained)
+        ),
+        patch.object(TextGenerationModel, "predict", offline_predict),
+        patch.object(TextGenerationModel, "predict_async", offline_predict_async),
+        patch.object(
+            TextGenerationModel, "predict_streaming", offline_predict_streaming
+        ),
+        patch.object(
+            TextGenerationModel,
+            "predict_streaming_async",
+            offline_predict_streaming_async,
+        ),
+        patch.object(
+            ChatModel, "from_pretrained", classmethod(offline_from_pretrained)
+        ),
+        patch.object(ChatSession, "send_message", offline_send_message),
+        patch.object(
+            ChatSession, "send_message_streaming", offline_send_message_streaming
+        ),
+    ):
+        yield
+
+
+def test_vertexai_predict(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     parameters = {
         "max_output_tokens": 256,
         "top_p": 0.8,
@@ -37,11 +79,12 @@ def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
 
     vertexai_span = spans[0]
     assert (
-        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "text-bison@001"
+        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "text-bison@001"
     )
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
@@ -52,8 +95,9 @@ def test_vertexai_predict(instrument_legacy, span_exporter, log_exporter):
     )
 
 
-@pytest.mark.vcr
-def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
+def test_vertexai_predict_async(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     async def async_predict_text() -> str:
         """Ideation example with a Large Language Model"""
 
@@ -75,16 +119,17 @@ def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict",
+        "vertexai.predict_async",
     ]
 
     vertexai_span = spans[0]
     assert (
-        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "text-bison@001"
+        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "text-bison@001"
     )
     assert (
         "Give me ten interview questions for the role of program manager."
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
@@ -95,8 +140,9 @@ def test_vertexai_predict_async(instrument_legacy, span_exporter, log_exporter):
     )
 
 
-@pytest.mark.vcr
-def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
+def test_vertexai_stream(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     text_generation_model = TextGenerationModel.from_pretrained("text-bison")
     parameters = {
         "max_output_tokens": 256,
@@ -113,7 +159,7 @@ def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict",
+        "vertexai.predict_streaming",
     ]
 
     vertexai_span = spans[0]
@@ -130,8 +176,9 @@ def test_vertexai_stream(instrument_legacy, span_exporter, log_exporter):
     ] == "".join(response)
 
 
-@pytest.mark.vcr
-def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
+def test_vertexai_stream_async(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     async def async_streaming_prediction() -> list:
         """Streaming Text Example with a Large Language Model"""
 
@@ -153,7 +200,7 @@ def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.predict",
+        "vertexai.predict_streaming_async",
     ]
 
     vertexai_span = spans[0]
@@ -170,8 +217,9 @@ def test_vertexai_stream_async(instrument_legacy, span_exporter, log_exporter):
     ] == "".join(response)
 
 
-@pytest.mark.vcr
-def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
+def test_vertexai_chat(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     chat_model = ChatModel.from_pretrained("chat-bison@001")
 
     parameters = {
@@ -203,11 +251,12 @@ def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
 
     vertexai_span = spans[0]
     assert (
-        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "chat-bison@001"
+        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "chat-bison@001"
     )
     assert (
         "How many planets are there in the solar system?"
-        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.user"]
+        in vertexai_span.attributes[f"{GenAIAttributes.GEN_AI_PROMPT}.0.content"]
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 256
@@ -218,8 +267,9 @@ def test_vertexai_chat(instrument_legacy, span_exporter, log_exporter):
     )
 
 
-@pytest.mark.vcr
-def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
+def test_vertexai_chat_stream(
+    mock_language_models, instrument_legacy, span_exporter, log_exporter
+):
     chat_model = ChatModel.from_pretrained("chat-bison@001")
 
     parameters = {
@@ -248,12 +298,13 @@ def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
 
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == [
-        "vertexai.send_message",
+        "vertexai.send_message_streaming",
     ]
 
     vertexai_span = spans[0]
     assert (
-        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "chat-bison@001"
+        vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL]
+        == "chat-bison@001"
     )
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.95
     assert vertexai_span.attributes[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.8
@@ -265,7 +316,8 @@ def test_vertexai_chat_stream(instrument_legacy, span_exporter, log_exporter):
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.attributes.get(EventAttributes.EVENT_NAME) == event_name
+    # In OpenTelemetry 1.37.0+, event_name is a field on LogRecord, not in attributes
+    assert log.log_record.event_name == event_name
     assert (
         log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM)
         == GenAIAttributes.GenAiSystemValues.VERTEX_AI.value
