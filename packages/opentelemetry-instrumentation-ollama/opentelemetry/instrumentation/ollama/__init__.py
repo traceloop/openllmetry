@@ -125,6 +125,7 @@ def _accumulate_streaming_response(
             elif llm_request_type == LLMRequestTypeValues.COMPLETION:
                 text = res.get("response", "")
                 accumulated_response["response"] += text
+
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -146,6 +147,7 @@ def _accumulate_streaming_response(
             last_response.model_dump()
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
+        )
         ) or {}
         _handle_response(
             span=span,
@@ -154,6 +156,10 @@ def _accumulate_streaming_response(
             token_histogram=token_histogram,
             response=response_data | accumulated_response,
         )
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
+        raise
     finally:
         span.end()
 
@@ -196,6 +202,7 @@ async def _aaccumulate_streaming_response(
             elif llm_request_type == LLMRequestTypeValues.COMPLETION:
                 text = res.get("response", "")
                 accumulated_response["response"] += text
+
     except Exception as e:
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
@@ -217,6 +224,7 @@ async def _aaccumulate_streaming_response(
             last_response.model_dump()
             if last_response and hasattr(last_response, 'model_dump')
             else last_response
+        )
         ) or {}
         _handle_response(
             span,
@@ -225,6 +233,10 @@ async def _aaccumulate_streaming_response(
             token_histogram,
             response_data | accumulated_response,
         )
+    except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
+        raise
     finally:
         span.end()
 
@@ -327,6 +339,8 @@ def _wrap(
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
@@ -409,6 +423,8 @@ async def _awrap(
     try:
         response = await wrapped(*args, **kwargs)
     except Exception as e:
+        span.set_status(Status(StatusCode.ERROR, str(e)))
+        span.record_exception(e)
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
