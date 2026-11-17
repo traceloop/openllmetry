@@ -2,7 +2,9 @@ from typing import List, TypedDict
 
 import pytest
 from langchain.agents.middleware.types import AgentMiddleware
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph
+from langgraph.types import Command, interrupt
 from openai import OpenAI
 from opentelemetry import trace
 from opentelemetry.semconv._incubating.attributes import (
@@ -853,3 +855,31 @@ def test_create_react_agent_with_toolnode(instrument_legacy, span_exporter):
     )
     tool_names = {td["name"] for td in tool_defs}
     assert tool_names == {"get_weather", "get_time"}
+
+
+def test_langgraph_interrupt_resume_no_callback_errors(instrument_legacy, span_exporter, caplog):
+    """interrupt()/Command(resume=...) must not log AttributeError from the handler."""
+
+    class State(TypedDict):
+        val: int
+
+    def node(state: State):
+        answer = interrupt({"q": "continue?"})
+        return {"val": state["val"] + (1 if answer else 0)}
+
+    workflow = StateGraph(State)
+    workflow.add_node("node", node)
+    workflow.set_entry_point("node")
+    graph = workflow.compile(checkpointer=MemorySaver())
+
+    config = {"configurable": {"thread_id": "test-thread"}}
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="langchain_core.callbacks.manager"):
+        interrupted = graph.invoke({"val": 0}, config)
+        resumed = graph.invoke(Command(resume=True), config)
+
+    assert "__interrupt__" in interrupted
+    assert resumed["val"] == 1
+    assert "TraceloopCallbackHandler" not in caplog.text
