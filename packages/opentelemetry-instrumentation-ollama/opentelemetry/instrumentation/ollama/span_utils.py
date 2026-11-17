@@ -111,6 +111,30 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
     )
     _set_span_attribute(span, GenAIAttributes.GEN_AI_SYSTEM, "Ollama")
 
+    _set_span_attribute(
+        span,
+        "llm.ollama.total_duration",
+        response.get("total_duration"),
+    )
+
+    _set_span_attribute(
+        span,
+        "llm.ollama.load_duration",
+        response.get("load_duration"),
+    )
+
+    _set_span_attribute(
+        span,
+        "llm.ollama.prompt_eval_duration",
+        response.get("prompt_eval_duration"),
+    )
+
+    _set_span_attribute(
+        span,
+        "llm.ollama.eval_duration",
+        response.get("eval_duration"),
+    )
+
     if (
         token_histogram is not None
         and isinstance(input_tokens, int)
