@@ -20,8 +20,10 @@ from opentelemetry.instrumentation.mcp.version import __version__
 from opentelemetry.instrumentation.mcp.utils import (
     Config,
     dont_throw,
+    error_detail,
     error_status,
     guard_trace,
+    guarded_span,
     record_error,
     should_send_prompts,
 )
@@ -234,27 +236,40 @@ class McpInstrumentor(BaseInstrumentor):
         return traced_method
 
     def patch_mcp_client(self, tracer: Tracer):
-        @dont_throw
+        # Not @dont_throw: this wraps BaseSession.send_request, whose return
+        # value is the RPC result. Swallowing an instrumentation failure here
+        # would hand the MCP SDK a None in place of its CallToolResult and break
+        # the traced call. Only the instrumentation's own work is guarded.
         async def traced_method(wrapped, instance, args, kwargs):
             meta = None
             method = None
             params = None
-            if len(args) > 0 and hasattr(args[0].root, "method"):
-                method = args[0].root.method
-            if len(args) > 0 and hasattr(args[0].root, "params"):
-                params = args[0].root.params
-            if params:
-                if hasattr(args[0].root.params, "meta"):
-                    meta = args[0].root.params.meta
+            with guard_trace(logger, "mcp.client.send_request"):
+                if len(args) > 0 and hasattr(args[0].root, "method"):
+                    method = args[0].root.method
+                if len(args) > 0 and hasattr(args[0].root, "params"):
+                    params = args[0].root.params
+                if params:
+                    if hasattr(args[0].root.params, "meta"):
+                        meta = args[0].root.params.meta
 
-            # Handle trace context propagation
-            if meta and len(args) > 0:
-                carrier = {}
-                TraceContextTextMapPropagator().inject(carrier)
-                meta.traceparent = carrier["traceparent"]
-                args[0].root.params.meta = meta
+                # Handle trace context propagation
+                if meta and len(args) > 0:
+                    carrier = {}
+                    TraceContextTextMapPropagator().inject(carrier)
+                    # inject() writes no traceparent when there is no span
+                    # current (an invalid span context) -- there is then no
+                    # context to propagate, so leaving meta alone is the right
+                    # outcome, not a degraded one. A sampled-out span does still
+                    # propagate, with the sampled flag clear.
+                    traceparent = carrier.get("traceparent")
+                    if traceparent is not None:
+                        meta.traceparent = traceparent
+                        args[0].root.params.meta = meta
 
-            # Create different span types based on method
+            # Call the original method. Nothing from here on catches what it
+            # raises or returns: a failed extraction above just leaves method
+            # None, and the request still goes out.
             if method == "tools/call":
                 return await self._handle_tool_call(
                     tracer, method, params, args, kwargs, wrapped
@@ -398,31 +413,42 @@ class McpInstrumentor(BaseInstrumentor):
         # _execute_and_handle_result records the failure itself, with the
         # message gated on content capture; OTel's own exception recording
         # would re-add that text ungated on the way out.
-        with tracer.start_as_current_span(
-            span_name, record_exception=False, set_status_on_exception=False
+        with guarded_span(
+            logger,
+            "mcp.client.tool",
+            tracer,
+            span_name,
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
-            # Set tool-specific attributes
-            span.set_attribute(
-                SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value
-            )
-            span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
+            # Everything up to the call is this instrumentation's own work, so a
+            # failure in it is logged and the call still goes out.
+            clean_input = None
+            with guard_trace(logger, "mcp.client.tool attributes"):
+                # Set tool-specific attributes
+                span.set_attribute(
+                    SpanAttributes.TRACELOOP_SPAN_KIND,
+                    TraceloopSpanKindValues.TOOL.value,
+                )
+                span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
 
-            # Add input. Tool arguments are request content, so they are
-            # recorded only when content capture is enabled.
-            clean_input = (
-                self._extract_clean_input(method, params)
-                if should_send_prompts()
-                else None
-            )
-            if clean_input:
-                try:
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, json.dumps(clean_input)
-                    )
-                except (TypeError, ValueError):
-                    span.set_attribute(
-                        SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
-                    )
+                # Add input. Tool arguments are request content, so they are
+                # recorded only when content capture is enabled.
+                clean_input = (
+                    self._extract_clean_input(method, params)
+                    if should_send_prompts()
+                    else None
+                )
+                if clean_input:
+                    try:
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT,
+                            json.dumps(clean_input),
+                        )
+                    except (TypeError, ValueError):
+                        span.set_attribute(
+                            SpanAttributes.TRACELOOP_ENTITY_INPUT, str(clean_input)
+                        )
 
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=True
@@ -430,15 +456,21 @@ class McpInstrumentor(BaseInstrumentor):
 
     async def _handle_mcp_method(self, tracer, method, args, kwargs, wrapped):
         """Handle non-tool MCP methods with simple serialization"""
-        with tracer.start_as_current_span(
-            f"{method}.mcp", record_exception=False, set_status_on_exception=False
+        with guarded_span(
+            logger,
+            "mcp.client.method",
+            tracer,
+            f"{method}.mcp",
+            record_exception=False,
+            set_status_on_exception=False,
         ) as span:
-            # The serialized request is content: it carries caller-supplied
-            # params, so it is recorded only when content capture is enabled.
-            if should_send_prompts():
-                span.set_attribute(
-                    SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
-                )
+            with guard_trace(logger, "mcp.client.method attributes"):
+                # The serialized request is content: it carries caller-supplied
+                # params, so it is recorded only when content capture is enabled.
+                if should_send_prompts():
+                    span.set_attribute(
+                        SpanAttributes.TRACELOOP_ENTITY_INPUT, f"{serialize(args[0])}"
+                    )
             return await self._execute_and_handle_result(
                 span, method, args, kwargs, wrapped, clean_output=False
             )
@@ -446,9 +478,35 @@ class McpInstrumentor(BaseInstrumentor):
     async def _execute_and_handle_result(
         self, span, method, args, kwargs, wrapped, clean_output=False
     ):
-        """Execute the wrapped function and handle the result"""
+        """Execute the wrapped function and handle the result.
+
+        The call is the only thing here that is not instrumentation: its result
+        is what ``send_request`` returns, so nothing below may discard it and
+        nothing may replace the exception it raises.
+        """
         try:
             result = await wrapped(*args, **kwargs)
+        except Exception as e:
+            # Guarded: recording the failure must not mask the failure itself.
+            with guard_trace(logger, "mcp.client.send_request record"):
+                record_error(span, e)
+            raise
+        # The result is in hand from here on. Decorating the span is this
+        # instrumentation's own work, so its failures are logged, never raised.
+        # Status first, in its own guard: a failure recording the response body
+        # must not cost the span the one attribute that says how the call went.
+        with guard_trace(logger, "mcp.client.send_request status"):
+            if hasattr(result, "isError") and result.isError:
+                span.set_attribute(ERROR_TYPE, "tool_error")
+                detail = error_detail(getattr(result, "content", None))
+                span.set_status(
+                    error_status(detail)
+                    if detail is not None
+                    else Status(StatusCode.ERROR)
+                )
+            else:
+                span.set_status(Status(StatusCode.OK))
+        with guard_trace(logger, "mcp.client.send_request decorate"):
             # Add output. The response body is content, so it is recorded only
             # when content capture is enabled.
             if not should_send_prompts():
@@ -470,17 +528,7 @@ class McpInstrumentor(BaseInstrumentor):
                 span.set_attribute(
                     SpanAttributes.TRACELOOP_ENTITY_OUTPUT, serialize(result)
                 )
-            # Handle errors
-            if hasattr(result, "isError") and result.isError:
-                span.set_attribute(ERROR_TYPE, "tool_error")
-                if len(result.content) > 0:
-                    span.set_status(error_status(f"{result.content[0].text}"))
-            else:
-                span.set_status(Status(StatusCode.OK))
-            return result
-        except Exception as e:
-            record_error(span, e)
-            raise
+        return result
 
     def _extract_clean_input(self, method: str, params: Any) -> dict:
         """Extract clean input parameters for different MCP method types"""
@@ -721,8 +769,11 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                         )
                     if "isError" in request.result:
                         if request.result["isError"] is True:
+                            detail = error_detail(request.result.get("content"))
                             span.set_status(
-                                error_status(f"{request.result['content'][0]['text']}")
+                                error_status(detail)
+                                if detail is not None
+                                else Status(StatusCode.ERROR)
                             )
                 if hasattr(request, "id"):
                     span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
