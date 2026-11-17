@@ -3,10 +3,9 @@ import datetime
 import importlib.util
 import json
 import logging
-import os
 import traceback
 
-from opentelemetry import context as context_api
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.langchain.config import Config
 from opentelemetry.semconv._incubating.attributes import (
@@ -44,12 +43,6 @@ class CallbackFilteredJSONEncoder(json.JSONEncoder):
             logger = logging.getLogger(__name__)
             logger.debug("Failed to serialize object of type: %s", type(o).__name__)
             return ""
-
-
-def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def dont_throw(func):

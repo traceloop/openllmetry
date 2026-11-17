@@ -4,16 +4,15 @@ import functools
 import inspect
 import json
 import logging
-import os
 import traceback
-from opentelemetry import context as context_api
+
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 
 # Handoff span attribute names
 GEN_AI_HANDOFF_FROM_AGENT = "gen_ai.handoff.from_agent"
 GEN_AI_HANDOFF_TO_AGENT = "gen_ai.handoff.to_agent"
 GEN_AI_HANDOFF_PARENT_AGENT = "gen_ai.agent.handoff_parent"
 OPENAI_AGENT_HANDOFFS = "openai.agent.handoffs"
-_TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
 
 def set_span_attribute(span, name, value):
@@ -21,20 +20,6 @@ def set_span_attribute(span, name, value):
         if value != "":
             span.set_attribute(name, value)
     return
-
-
-def _is_truthy(value):
-    return str(value).strip().lower() in ("true", "1", "yes", "on")
-
-
-def should_send_prompts() -> bool:
-    """Determine if LLM content tracing should be enabled.
-
-    Content includes not only prompts, but also responses.
-    """
-    env_setting = os.getenv(_TRACELOOP_TRACE_CONTENT, "true")
-    override = context_api.get_value("override_enable_content_tracing")
-    return _is_truthy(env_setting) or _is_truthy(override)
 
 
 class JSONEncoder(json.JSONEncoder):

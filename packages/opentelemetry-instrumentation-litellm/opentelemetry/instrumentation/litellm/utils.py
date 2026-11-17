@@ -2,16 +2,8 @@ import logging
 import os
 import traceback
 
-from opentelemetry import context as context_api
 from opentelemetry.instrumentation.litellm.config import Config
-
-TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
-
-
-def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 
 
 def is_metrics_enabled() -> bool:
