@@ -66,12 +66,17 @@ def emit_message_events(llm_request_type, args, kwargs, event_logger):
                 MessageEvent(content=content, role=role, tool_calls=tool_calls),
                 event_logger,
             )
-    elif (
-        llm_request_type == LLMRequestTypeValues.COMPLETION
-        or LLMRequestTypeValues.EMBEDDING
-    ):
+    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
         prompt = json_data.get("prompt", "")
         emit_event(MessageEvent(content=prompt, role="user"), event_logger)
+    elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
+        prompt = json_data.get("prompt", "")
+        prompt = json_data.get("input", prompt)
+        if isinstance(prompt, (list, tuple)):
+            for prompt_content in prompt:
+                emit_event(MessageEvent(content=prompt_content, role="user"), event_logger)
+        else:
+            emit_event(MessageEvent(content=prompt, role="user"), event_logger)
     else:
         raise ValueError(
             "It wasn't possible to emit the input events due to an unknown llm_request_type."
@@ -104,14 +109,22 @@ def emit_choice_events(llm_request_type, response: dict, event_logger):
             event_logger,
         )
     elif llm_request_type == LLMRequestTypeValues.EMBEDDING:
-        emit_event(
-            ChoiceEvent(
-                index=0,
-                message={"content": response.get("embedding"), "role": "assistant"},
-                finish_reason="unknown",
-            ),
-            event_logger,
-        )
+        embedding = response.get("embedding")
+        if embedding is not None:
+            embeddings = [embedding]
+        else:
+            embeddings = response.get("embeddings")
+            if not isinstance(embeddings, (list, tuple)):
+                embeddings = [embeddings]
+        for index, embedding in enumerate(embeddings):
+            emit_event(
+                ChoiceEvent(
+                    index=index,
+                    message={"content": embedding, "role": "assistant"},
+                    finish_reason="unknown",
+                ),
+                event_logger,
+            )
     else:
         raise ValueError(
             "It wasn't possible to emit the choice events due to an unknown llm_request_type."
