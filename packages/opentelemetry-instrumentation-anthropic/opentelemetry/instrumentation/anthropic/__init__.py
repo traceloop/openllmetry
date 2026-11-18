@@ -60,6 +60,34 @@ from anthropic._streaming import AsyncStream, Stream
 
 logger = logging.getLogger(__name__)
 
+# Request arguments the Anthropic SDK accepts as any iterable. The
+# instrumentation consumes these while recording request content, so one-shot
+# iterables (generators, map() objects, iter() results) are materialized once
+# and written back into kwargs before the wrapped call runs — otherwise the
+# SDK receives an exhausted iterator and sends an empty request (see #4537).
+_ONE_SHOT_ITERABLE_ARGS = ("messages", "tools", "system")
+
+
+def _materialize_one_shot_iterables(kwargs):
+    """Materialize one-shot iterables in ``kwargs`` once, in place.
+
+    Lists, tuples and other re-iterable values are left untouched; only true
+    iterators (``iter(value) is value``, e.g. generators, ``map`` objects)
+    are replaced with the materialized list so both the span recording and
+    the wrapped SDK call see the same items.
+    """
+
+    for key in _ONE_SHOT_ITERABLE_ARGS:
+        value = kwargs.get(key)
+        if value is None:
+            continue
+        try:
+            is_one_shot = iter(value) is value
+        except TypeError:
+            continue
+        if is_one_shot:
+            kwargs[key] = list(value)
+
 _instruments = ("anthropic >= 0.3.11",)
 
 WRAPPED_METHODS = [
@@ -484,6 +512,9 @@ def _create_metrics(meter: Meter):
 
 @dont_throw
 def _handle_input(span: Span, event_logger: Optional[Logger], kwargs):
+    # Materialize one-shot iterables before anything consumes them, so the
+    # wrapped call receives the same items the instrumentation records (#4537).
+    _materialize_one_shot_iterables(kwargs)
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
@@ -494,6 +525,9 @@ def _handle_input(span: Span, event_logger: Optional[Logger], kwargs):
 
 @dont_throw
 async def _ahandle_input(span: Span, event_logger: Optional[Logger], kwargs):
+    # Materialize one-shot iterables before anything consumes them, so the
+    # wrapped call receives the same items the instrumentation records (#4537).
+    _materialize_one_shot_iterables(kwargs)
     if should_emit_events() and event_logger:
         emit_input_events(event_logger, kwargs)
     else:
