@@ -439,3 +439,27 @@ class TestMetersVendorNamespacesKept:
         assert Meters.LLM_WATSONX_COMPLETIONS_EXCEPTIONS == "llm.watsonx.completions.exceptions"
         assert Meters.LLM_WATSONX_COMPLETIONS_RESPONSES == "llm.watsonx.completions.responses"
         assert Meters.LLM_WATSONX_COMPLETIONS_TOKENS == "llm.watsonx.completions.tokens"
+# ---------------------------------------------------------------------------
+# SpanAttributes — AIPOU external work-receipt reference (opt-in, issue #4340)
+# ---------------------------------------------------------------------------
+
+
+class TestSpanAttributesAIPOU:
+    """
+    AIPOU (AI Proof of Us) work-receipt reference attributes. These are opt-in:
+    traces may carry a reference to an externally-issued, externally-validated
+    work receipt, but tracing must never derive or validate the receipt itself.
+    """
+
+    def test_aipou_work_receipt_id(self):
+        assert SpanAttributes.AIPOU_WORK_RECEIPT_ID == "aipou.work_receipt_id"
+
+    def test_aipou_evidence_class(self):
+        assert SpanAttributes.AIPOU_EVIDENCE_CLASS == "aipou.evidence_class"
+
+    def test_aipou_scheme(self):
+        assert SpanAttributes.AIPOU_SCHEME == "aipou.scheme"
+
+    def test_aipou_validation_status(self):
+        assert SpanAttributes.AIPOU_VALIDATION_STATUS == "aipou.validation_status"
+    
