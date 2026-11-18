@@ -661,17 +661,15 @@ def responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        # A failed retrieve() poll is not an operation of its own; only create/parse failures count.
-        if not response_id:
-            _record_metrics(
-                token_histogram,
-                duration_histogram,
-                instance,
-                start_time,
-                non_sentinel_kwargs.get("model"),
-                is_streaming=bool(non_sentinel_kwargs.get("stream")),
-                error_type=e.__class__.__name__,
-            )
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            start_time,
+            non_sentinel_kwargs.get("model"),
+            is_streaming=bool(non_sentinel_kwargs.get("stream")),
+            error_type=e.__class__.__name__,
+        )
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
@@ -856,17 +854,15 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        # A failed retrieve() poll is not an operation of its own; only create/parse failures count.
-        if not response_id:
-            _record_metrics(
-                token_histogram,
-                duration_histogram,
-                instance,
-                start_time,
-                non_sentinel_kwargs.get("model"),
-                is_streaming=bool(non_sentinel_kwargs.get("stream")),
-                error_type=e.__class__.__name__,
-            )
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            start_time,
+            non_sentinel_kwargs.get("model"),
+            is_streaming=bool(non_sentinel_kwargs.get("stream")),
+            error_type=e.__class__.__name__,
+        )
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
