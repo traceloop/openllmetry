@@ -87,15 +87,22 @@ def _set_input_attributes(span, llm_request_type, to_wrap, kwargs):
         if llm_request_type == LLMRequestTypeValues.CHAT:
             _set_span_attribute(span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.role", "user")
             for index, message in enumerate(kwargs.get("messages")):
+                # Messages may be SDK models or plain dicts, which the client accepts too.
+                if isinstance(message, dict):
+                    content = message.get("content")
+                    role = message.get("role")
+                else:
+                    content = message.content
+                    role = message.role
                 _set_span_attribute(
                     span,
                     f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.content",
-                    message.content,
+                    _content_as_str(content),
                 )
                 _set_span_attribute(
                     span,
                     f"{GenAIAttributes.GEN_AI_PROMPT}.{index}.role",
-                    message.role,
+                    role,
                 )
         else:
             input = kwargs.get("input") or kwargs.get("inputs")
