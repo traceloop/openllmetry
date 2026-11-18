@@ -5,7 +5,9 @@ from opentelemetry.trace.status import StatusCode
 
 
 def test_mistralai_error_sets_span_status(instrument_legacy, mistralai_client, span_exporter):
-    with patch("httpx.Client.send", side_effect=Exception("API connection error")):
+    # Patch the SDK's own HTTP client: mistralai >= 3.0 uses httpx2 instead of httpx
+    http_client = mistralai_client.sdk_configuration.client
+    with patch.object(http_client, "send", side_effect=Exception("API connection error")):
         with pytest.raises(Exception, match="API connection error"):
             mistralai_client.chat.complete(
                 model="mistral-tiny",
@@ -25,7 +27,8 @@ def test_mistralai_error_sets_span_status(instrument_legacy, mistralai_client, s
 
 @pytest.mark.asyncio
 async def test_async_mistralai_error_sets_span_status(instrument_legacy, mistralai_async_client, span_exporter):
-    with patch("httpx.AsyncClient.send", side_effect=Exception("Async API error")):
+    http_client = mistralai_async_client.sdk_configuration.async_client
+    with patch.object(http_client, "send", side_effect=Exception("Async API error")):
         with pytest.raises(Exception, match="Async API error"):
             await mistralai_async_client.chat.complete_async(
                 model="mistral-tiny",

@@ -36,19 +36,35 @@ from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from wrapt import wrap_function_wrapper
 
-from mistralai.models import (
-    ChatCompletionResponse,
-    ChatCompletionChoice,
-    AssistantMessage,
-    UserMessage,
-    SystemMessage,
-    UsageInfo,
-    EmbeddingResponse,
-)
+try:
+    from mistralai.models import (
+        ChatCompletionResponse,
+        ChatCompletionChoice,
+        AssistantMessage,
+        UserMessage,
+        SystemMessage,
+        UsageInfo,
+        EmbeddingResponse,
+    )
+
+    _MISTRAL_SDK_MODULE = "mistralai"
+except ImportError:
+    # mistralai >= 2.0 moved the SDK under the `mistralai.client` package
+    from mistralai.client.models import (
+        ChatCompletionResponse,
+        ChatCompletionChoice,
+        AssistantMessage,
+        UserMessage,
+        SystemMessage,
+        UsageInfo,
+        EmbeddingResponse,
+    )
+
+    _MISTRAL_SDK_MODULE = "mistralai.client"
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("mistralai >= 1.0.0",)
+_instruments = ("mistralai >= 1.0.0, < 4",)
 
 WRAPPED_METHODS = [
     {
@@ -148,6 +164,19 @@ def _content_as_str(content):
     )
 
 
+def _choice_role_and_content(choice):
+    # mistralai >= 2.10 can return `messages` (e.g. the tool call, tool result and
+    # answer of a connector turn) instead of `message`; the last one is the answer.
+    message = getattr(choice, "message", None)
+    if message is not None:
+        return message.role, _content_as_str(message.content)
+    messages = getattr(choice, "messages", None)
+    if not messages:
+        return None, None
+    # Unset fields on these messages are falsy sentinels, not None
+    return messages[-1].role or None, _content_as_str(messages[-1].content or None)
+
+
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
@@ -161,16 +190,9 @@ def _set_response_attributes(span, llm_request_type, response):
                 f"{prefix}.finish_reason",
                 choice.finish_reason,
             )
-            _set_span_attribute(
-                span,
-                f"{prefix}.content",
-                _content_as_str(choice.message.content),
-            )
-            _set_span_attribute(
-                span,
-                f"{prefix}.role",
-                choice.message.role,
-            )
+            role, content = _choice_role_and_content(choice)
+            _set_span_attribute(span, f"{prefix}.content", content)
+            _set_span_attribute(span, f"{prefix}.role", role)
 
 
 @dont_throw
@@ -419,12 +441,13 @@ def _emit_choice_events(
     # Handle chat events
     if isinstance(response, ChatCompletionResponse):
         for choice in response.choices:
+            role, content = _choice_role_and_content(choice)
             emit_event(
                 ChoiceEvent(
                     index=choice.index,
                     message={
-                        "content": _content_as_str(choice.message.content),
-                        "role": choice.message.role or "assistant",
+                        "content": content,
+                        "role": role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",
                 ),
@@ -601,13 +624,13 @@ class MistralAiInstrumentor(BaseInstrumentor):
             module_name = wrapped_method.get("module")
             # Wrap sync methods on the class
             wrap_function_wrapper(
-                f"mistralai.{module_name}",
+                f"{_MISTRAL_SDK_MODULE}.{module_name}",
                 f"{module_name.capitalize()}.{wrap_method}",
                 _wrap(tracer, event_logger, wrapped_method),
             )
             # Wrap async methods on the class
             wrap_function_wrapper(
-                f"mistralai.{module_name}",
+                f"{_MISTRAL_SDK_MODULE}.{module_name}",
                 f"{module_name.capitalize()}.{wrap_method}_async",
                 _awrap(tracer, event_logger, wrapped_method),
             )
@@ -616,5 +639,5 @@ class MistralAiInstrumentor(BaseInstrumentor):
         for wrapped_method in WRAPPED_METHODS:
             wrap_method = wrapped_method.get("method")
             module_name = wrapped_method.get("module")
-            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", wrap_method)
-            unwrap(f"mistralai.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")
+            unwrap(f"{_MISTRAL_SDK_MODULE}.{module_name}.{module_name.capitalize()}", wrap_method)
+            unwrap(f"{_MISTRAL_SDK_MODULE}.{module_name}.{module_name.capitalize()}", f"{wrap_method}_async")

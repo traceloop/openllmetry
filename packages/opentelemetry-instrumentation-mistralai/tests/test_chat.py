@@ -1,5 +1,8 @@
 import pytest
-from mistralai.models import UserMessage
+try:
+    from mistralai.models import UserMessage
+except ImportError:  # mistralai >= 2.0
+    from mistralai.client.models import UserMessage
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,

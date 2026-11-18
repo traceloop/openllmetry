@@ -3,7 +3,10 @@
 import os
 
 import pytest
-from mistralai import Mistral
+try:
+    from mistralai import Mistral
+except ImportError:  # mistralai >= 2.0
+    from mistralai.client import Mistral
 from opentelemetry.instrumentation.mistralai import MistralAiInstrumentor
 from opentelemetry.instrumentation.mistralai.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.sdk._logs import LoggerProvider
