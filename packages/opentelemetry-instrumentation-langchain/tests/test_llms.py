@@ -1622,3 +1622,51 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+def test_openai_zero_token_usage(instrument_legacy, span_exporter):
+    """Ensure 0-token usage reports do not crash the handler or drop spans."""
+    mock_client = httpx.Client(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "id": "chatcmpl-zero-test",
+                    "object": "chat.completion",
+                    "created": 1234567890,
+                    "model": "gpt-4o-mini",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {"role": "assistant", "content": "Hello!"},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0,
+                    },
+                },
+            )
+        )
+    )
+
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",
+        api_key="mock-key",
+        base_url="http://mock/v1",
+        http_client=mock_client,
+    )
+    llm.invoke("Hi")
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1, "Span must not be dropped when token usage is 0"
+
+    span = spans[0]
+    assert span.attributes.get("gen_ai.usage.input_tokens") == 0
+    assert span.attributes.get("gen_ai.usage.output_tokens") == 0
+    assert span.attributes.get("gen_ai.usage.total_tokens") == 0
+
+    span_exporter.clear()
+    llm.invoke("Hi again")
+    assert len(span_exporter.get_finished_spans()) == 1, "Subsequent calls must not be suppressed"
