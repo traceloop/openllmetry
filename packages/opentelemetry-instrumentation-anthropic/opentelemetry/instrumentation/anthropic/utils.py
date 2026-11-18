@@ -86,6 +86,9 @@ async def _aextract_response_data(response):
         try:
             # For with_raw_response, parse() gives us the actual response object
             parsed_response = response.parse()
+            # AsyncAPIResponse (with_streaming_response) has an async parse()
+            if inspect.isawaitable(parsed_response):
+                parsed_response = await parsed_response
             if not isinstance(parsed_response, dict):
                 parsed_response = parsed_response.__dict__
             return parsed_response
@@ -159,6 +162,9 @@ async def ashared_metrics_attributes(response):
         if response and hasattr(response, "parse") and callable(response.parse):
             try:
                 response = response.parse()
+                # AsyncAPIResponse (with_streaming_response) has an async parse()
+                if inspect.isawaitable(response):
+                    response = await response
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
