@@ -60,6 +60,12 @@ from anthropic._streaming import AsyncStream, Stream
 
 logger = logging.getLogger(__name__)
 
+# Anthropic's with_raw_response / with_streaming_response are cached_property
+# accessors that capture the bound create/stream method on first use. After
+# unwrap(), those accessors still hold the wrapt wrapper. Gate tracing so
+# uninstrument() disables them without needing to find every client instance.
+_INSTRUMENTATION_ACTIVE = False
+
 _instruments = ("anthropic >= 0.3.11",)
 
 WRAPPED_METHODS = [
@@ -541,8 +547,10 @@ def _wrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    if (
+        not _INSTRUMENTATION_ACTIVE
+        or context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY)
+        or context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
     ):
         return wrapped(*args, **kwargs)
 
@@ -674,8 +682,10 @@ async def _awrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    if (
+        not _INSTRUMENTATION_ACTIVE
+        or context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY)
+        or context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
     ):
         return await wrapped(*args, **kwargs)
 
@@ -834,6 +844,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        global _INSTRUMENTATION_ACTIVE
+        _INSTRUMENTATION_ACTIVE = True
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -915,6 +928,9 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
+        global _INSTRUMENTATION_ACTIVE
+        _INSTRUMENTATION_ACTIVE = False
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
