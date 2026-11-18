@@ -1171,7 +1171,7 @@ class BedrockInstrumentor(BaseInstrumentor):
 
     def __init__(
         self,
-        enrich_token_usage: bool = False,
+        enrich_token_usage: Optional[bool] = None,
         exception_logger=None,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
@@ -1196,6 +1196,13 @@ class BedrockInstrumentor(BaseInstrumentor):
             use_attributes = use_legacy_attributes
         if use_attributes is None:
             use_attributes = True
+        # Collect token usage by default so standalone instrumentation matches
+        # Traceloop.init() behavior (#3168). Explicit arg wins, otherwise the
+        # TRACELOOP_ENRICH_TOKEN_USAGE env var applies (default "true").
+        if enrich_token_usage is None:
+            enrich_token_usage = (
+                os.getenv("TRACELOOP_ENRICH_TOKEN_USAGE") or "true"
+            ).lower() == "true"
         Config.enrich_token_usage = enrich_token_usage
         Config.exception_logger = exception_logger
         Config.use_legacy_attributes = use_attributes
