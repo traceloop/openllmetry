@@ -1,7 +1,8 @@
-<p align="center">
-<a href="https://www.traceloop.com/openllmetry#gh-light-mode-only">
-<img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-light.png">
-</a>
+\<p align="center">\
+\<a href="https\://www\.traceloop.com/openllmetry#gh-light-mode-only">\
+\<img width="600" src="https\://raw\.githubusercontent.com/traceloop/openllmetry/main/img/logo-light.png">\
+\</a>\
+\</p>\
 <a href="https://www.traceloop.com/openllmetry#gh-dark-mode-only">
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
@@ -59,6 +60,10 @@ The repo contains standard OpenTelemetry instrumentations for LLM providers and 
 If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
 
 ## 🚀 Getting Started
+
+```bash
+pip install traceloop-sdk
+```
 
 The easiest way to get started is to use our SDK.
 For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started-python).
