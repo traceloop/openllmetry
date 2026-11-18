@@ -18,14 +18,19 @@ pytest_plugins = []
 
 @pytest.fixture(scope="session")
 def exporter():
-    exporter = InMemorySpanExporter()
-    Traceloop.init(
-        app_name="test",
-        resource_attributes={"something": "yes"},
-        disable_batch=True,
-        exporter=exporter,
-    )
-    return exporter
+    inherited_limit = os.environ.pop("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", None)
+    try:
+        exporter = InMemorySpanExporter()
+        Traceloop.init(
+            app_name="test",
+            resource_attributes={"something": "yes"},
+            disable_batch=True,
+            exporter=exporter,
+        )
+        yield exporter
+    finally:
+        if inherited_limit is not None:
+            os.environ["OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT"] = inherited_limit
 
 
 @pytest.fixture(autouse=True)
