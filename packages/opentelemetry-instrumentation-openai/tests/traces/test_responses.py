@@ -1093,7 +1093,7 @@ def test_completed_sync_response_is_removed_from_responses_dict(
     def wrapped(*args, **kwargs):
         return fake_response
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
 
@@ -1114,7 +1114,7 @@ async def test_completed_async_response_is_removed_from_responses_dict(
     async def wrapped(*args, **kwargs):
         return fake_response
 
-    await async_responses_get_or_create_wrapper(tracer)(
+    await async_responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
 
@@ -1176,10 +1176,10 @@ def test_duplicate_retrieve_after_completion_does_not_emit_second_span(
     def wrapped(*args, **kwargs):
         return fake_response
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"response_id": "resp_dup_retrieve"}
     )
 
@@ -1200,10 +1200,10 @@ async def test_async_duplicate_retrieve_after_completion_does_not_emit_second_sp
     async def wrapped(*args, **kwargs):
         return fake_response
 
-    await async_responses_get_or_create_wrapper(tracer)(
+    await async_responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
-    await async_responses_get_or_create_wrapper(tracer)(
+    await async_responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"response_id": "resp_async_dup_retrieve"}
     )
 
@@ -1244,7 +1244,7 @@ def test_retrieve_after_completed_stream_does_not_emit_second_span(
     )
     list(stream)
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: fake_response, None, (), {"response_id": "resp_stream_then_retrieve"}
     )
 
@@ -1261,11 +1261,11 @@ def test_polled_response_emits_one_span_with_original_input_then_is_removed(
     in_progress = _make_fake_response(response_id="resp_polled", status="in_progress")
     completed = _make_fake_response(response_id="resp_polled", status="completed")
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "original question"}
     )
     between_create_and_retrieve = time.time_ns()
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: completed, None, (), {"response_id": "resp_polled"}
     )
 
@@ -1286,7 +1286,7 @@ def test_many_completed_turns_leave_responses_dict_empty(
 
     for i in range(turns):
         fake_response = _make_fake_response(response_id=f"resp_turn_{i}")
-        responses_get_or_create_wrapper(tracer)(
+        responses_get_or_create_wrapper(tracer, None, None)(
             lambda *a, _r=fake_response, **kw: _r, None, (), {"model": "gpt-4.1-nano", "input": f"turn {i}"}
         )
         assert len(responses_wrappers.responses) == 0
@@ -1315,7 +1315,7 @@ def test_retrieve_after_interrupted_stream_keeps_original_input(
     )
     list(stream)
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: completed, None, (), {"response_id": "resp_bg_interrupted"}
     )
 
@@ -1345,7 +1345,7 @@ def test_concurrent_completed_retrieves_emit_one_span(
     monkeypatch.setattr(responses_wrappers, "set_data_attributes", set_data_attributes_waiting_for_other_thread)
 
     def retrieve():
-        responses_get_or_create_wrapper(tracer)(
+        responses_get_or_create_wrapper(tracer, None, None)(
             lambda *a, **kw: fake_response, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
         )
 
@@ -1368,7 +1368,7 @@ def test_delayed_in_progress_poll_does_not_restore_entry_after_completion(
     tracer = tracer_provider.get_tracer(__name__)
     in_progress = _make_fake_response(response_id="resp_delayed_poll", status="in_progress")
     completed = _make_fake_response(response_id="resp_delayed_poll", status="completed")
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
 
@@ -1387,13 +1387,13 @@ def test_delayed_in_progress_poll_does_not_restore_entry_after_completion(
 
     delayed_poll = threading.Thread(
         name="delayed-poll",
-        target=lambda: responses_get_or_create_wrapper(tracer)(
+        target=lambda: responses_get_or_create_wrapper(tracer, None, None)(
             lambda *a, **kw: in_progress, None, (), {"response_id": "resp_delayed_poll"}
         ),
     )
     delayed_poll.start()
     assert delayed_read_entry.wait(timeout=2)
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: completed, None, (), {"response_id": "resp_delayed_poll"}
     )
     completion_done.set()
@@ -1412,7 +1412,7 @@ def test_terminal_sync_response_is_removed_and_emits_span(
     tracer = tracer_provider.get_tracer(__name__)
     fake_response = _make_fake_response(response_id=f"resp_sync_{status}", status=status)
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: fake_response, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
 
@@ -1433,7 +1433,7 @@ async def test_terminal_async_response_is_removed_and_emits_span(
     async def wrapped(*args, **kwargs):
         return fake_response
 
-    await async_responses_get_or_create_wrapper(tracer)(
+    await async_responses_get_or_create_wrapper(tracer, None, None)(
         wrapped, None, (), {"model": "gpt-4.1-nano", "input": "hi"}
     )
 
@@ -1476,13 +1476,13 @@ def test_retrieve_after_cancel_does_not_restore_entry_or_emit_second_span(
     in_progress = _make_fake_response(response_id="resp_cancel", status="in_progress")
     cancelled = _make_fake_response(response_id="resp_cancel", status="cancelled")
 
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: in_progress, None, (), {"model": "gpt-4.1-nano", "input": "hi", "background": True}
     )
     responses_cancel_wrapper(tracer)(
         lambda *a, **kw: cancelled, None, (), {"response_id": "resp_cancel"}
     )
-    responses_get_or_create_wrapper(tracer)(
+    responses_get_or_create_wrapper(tracer, None, None)(
         lambda *a, **kw: cancelled, None, (), {"response_id": "resp_cancel"}
     )
 

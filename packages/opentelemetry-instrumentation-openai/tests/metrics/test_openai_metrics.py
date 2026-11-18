@@ -1,11 +1,13 @@
+import httpx
 import pytest
-from openai import OpenAI
+from openai import InternalServerError, OpenAI
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 from opentelemetry.semconv._incubating.metrics import (
     gen_ai_metrics as GenAIMetrics,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import Meters
 from pydantic import BaseModel
 
@@ -309,3 +311,117 @@ def test_image_gen_metrics(instrument_legacy, reader, openai_client):
                             assert len(data_point.attributes["server.address"]) > 0
 
     assert found_duration_metric
+
+
+def _responses_mock_client(ok: bool) -> OpenAI:
+    """Client hitting a local mock transport, so responses metrics tests need
+    no cassette and no network."""
+
+    def respond(request):
+        if not ok:
+            return httpx.Response(500, json={"error": {"message": "boom"}})
+        return httpx.Response(
+            200,
+            json={
+                "id": "resp_1",
+                "object": "response",
+                "created_at": 0,
+                "status": "completed",
+                "model": "gpt-4o-mini",
+                "output": [
+                    {
+                        "type": "message",
+                        "id": "msg_1",
+                        "status": "completed",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "output_text", "text": "hi", "annotations": []}
+                        ],
+                    }
+                ],
+                "parallel_tool_calls": True,
+                "tool_choice": "auto",
+                "tools": [],
+                "usage": {
+                    "input_tokens": 7,
+                    "output_tokens": 3,
+                    "total_tokens": 10,
+                    "input_tokens_details": {"cached_tokens": 0},
+                    "output_tokens_details": {"reasoning_tokens": 0},
+                },
+            },
+        )
+
+    return OpenAI(
+        api_key="test-key",
+        max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(respond)),
+    )
+
+
+def test_responses_create_metrics(instrument_legacy, reader):
+    client = _responses_mock_client(ok=True)
+    client.responses.create(model="gpt-4o-mini", input="hello")
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_token_metric = False
+    found_duration_metric = False
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == Meters.LLM_TOKEN_USAGE:
+                    found_token_metric = True
+                    for data_point in metric.data.data_points:
+                        assert data_point.attributes[
+                            GenAIAttributes.GEN_AI_TOKEN_TYPE
+                        ] in ["output", "input"]
+                        assert data_point.sum > 0
+                        assert (
+                            data_point.attributes[GenAIAttributes.GEN_AI_OPERATION_NAME]
+                            == "chat"
+                        )
+                        assert (
+                            data_point.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL]
+                            == "gpt-4o-mini"
+                        )
+                        assert len(data_point.attributes["server.address"]) > 0
+
+                if metric.name == Meters.LLM_OPERATION_DURATION:
+                    found_duration_metric = True
+                    assert any(
+                        data_point.count > 0 and data_point.sum > 0
+                        for data_point in metric.data.data_points
+                    )
+
+    assert found_token_metric is True
+    assert found_duration_metric is True
+
+
+def test_responses_create_error_metrics(instrument_legacy, reader):
+    client = _responses_mock_client(ok=False)
+    with pytest.raises(InternalServerError):
+        client.responses.create(model="gpt-4o-mini", input="hello")
+
+    metrics_data = reader.get_metrics_data()
+    resource_metrics = metrics_data.resource_metrics
+    assert len(resource_metrics) > 0
+
+    found_duration_metric = False
+    found_token_metric = False
+    for rm in resource_metrics:
+        for sm in rm.scope_metrics:
+            for metric in sm.metrics:
+                if metric.name == Meters.LLM_OPERATION_DURATION:
+                    found_duration_metric = True
+                    assert any(
+                        data_point.attributes.get(ERROR_TYPE) == "InternalServerError"
+                        for data_point in metric.data.data_points
+                    )
+                if metric.name == Meters.LLM_TOKEN_USAGE:
+                    found_token_metric = True
+
+    assert found_duration_metric is True
+    assert found_token_metric is False
