@@ -30,6 +30,7 @@ class GenAISystem(Enum):
     AWS = "aws.bedrock"
     GOOGLE = "gcp.gen_ai"
     OPENROUTER = "openrouter"
+    BLOCKRUN = "blockrun"
 
     LANGCHAIN = "langchain"
     CREWAI = "crewai"
