@@ -438,6 +438,19 @@ def _output_messages_from_generate_response(span, response):
     return messages
 
 
+def _normalize_contents(contents):
+    """Return ``contents`` as a list when google.genai would accept it as one.
+
+    The SDK also accepts a tuple, or a single ``Content`` object or dict, and
+    converts them to a list itself.
+    """
+    if isinstance(contents, tuple):
+        return list(contents)
+    if isinstance(contents, dict) or hasattr(contents, "parts"):
+        return [contents]
+    return contents
+
+
 @dont_throw
 async def set_input_attributes(span, args, kwargs, llm_model):
     if not span.is_recording():
@@ -447,7 +460,7 @@ async def set_input_attributes(span, args, kwargs, llm_model):
 
     messages = []
     if "contents" in kwargs:
-        contents = kwargs["contents"]
+        contents = _normalize_contents(kwargs["contents"])
         if isinstance(contents, str):
             messages.append(
                 {
@@ -498,7 +511,7 @@ def set_input_attributes_sync(span, args, kwargs, llm_model):
 
     messages = []
     if "contents" in kwargs:
-        contents = kwargs["contents"]
+        contents = _normalize_contents(kwargs["contents"])
         if isinstance(contents, str):
             messages.append(
                 {
