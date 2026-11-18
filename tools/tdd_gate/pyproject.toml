@@ -1,0 +1,22 @@
+[project]
+name = "tdd-gate"
+version = "0.1.0"
+description = "Mechanically enforces test-driven bug fixing on a commit range (repo tooling, not published)"
+requires-python = ">=3.10,<4"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2.2,<9",
+  "ruff>=0.4.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+exclude = [".git", "__pycache__", "build", "dist", ".venv", ".pytest_cache"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
