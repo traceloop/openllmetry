@@ -113,7 +113,7 @@ def _sanitize_sentinel_values(kwargs: dict[str, Any]) -> dict[str, Any]:
         if not _OPENAI_SENTINEL_TYPES
         or not isinstance(value, _OPENAI_SENTINEL_TYPES)
     }
-    if sanitized.get("reasoning") is None and "reasoning" in sanitized:
+    if "reasoning" in sanitized and sanitized["reasoning"] is None:
         sanitized["reasoning"] = {}
     return sanitized
 
@@ -548,7 +548,11 @@ def _create_response_stream(
     request_kwargs: dict[str, Any],
     instance: Any,
     context: Context,
-) -> "ResponseStream":
+) -> Union[Stream, AsyncStream, "ResponseStream"]:
+    """Wrap response in a traced ResponseStream.
+
+    If tracing setup fails, the span ends with an error status and the stream is returned untraced.
+    """
     span = tracer.start_span(
         SPAN_NAME,
         kind=SpanKind.CLIENT,
@@ -568,9 +572,12 @@ def _create_response_stream(
             request_kwargs=request_kwargs,
             tracer=tracer,
         )
-    except Exception:
+    except Exception as e:
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR, str(e))
         span.end()
-        raise
+        return response
 
 
 def _instrument_raw_response_stream_parser(
@@ -581,7 +588,10 @@ def _instrument_raw_response_stream_parser(
     request_kwargs: dict[str, Any],
     instance: Any,
 ) -> None:
-    options = response._options
+    # _options is a private SDK attribute: if it moves, leave the stream untraced instead of failing the call.
+    options = getattr(response, "_options", None)
+    if not hasattr(options, "post_parser"):
+        return
     existing_post_parser = options.post_parser
     context = context_api.get_current()
 
@@ -1123,6 +1133,8 @@ class ResponseStream(ObjectProxy):
 
     def __iter__(self) -> Iterator[Any]:
         """Synchronous iterator"""
+        # Not `return self`: iterating the wrapped stream keeps the own __iter__ of a custom
+        # raw.parse(to=...) stream class, which __next__ would bypass.
         try:
             for chunk in self.__wrapped__:
                 self._process_chunk(chunk)
@@ -1149,6 +1161,7 @@ class ResponseStream(ObjectProxy):
 
     async def __aiter__(self) -> AsyncIterator[Any]:
         """Async iterator"""
+        # Same as __iter__: not `return self`.
         try:
             async for chunk in self.__wrapped__:
                 self._process_chunk(chunk)
