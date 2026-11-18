@@ -31,16 +31,12 @@ from opentelemetry.instrumentation.llamaindex.utils import (
     should_send_prompts,
 )
 
-import llama_index.llms
-
 try:
     from llama_index.core.llms.custom import CustomLLM
-
-    MODULE_NAME = "llama_index.llms"
 except ModuleNotFoundError:
     from llama_index.llms import CustomLLM
 
-    MODULE_NAME = "llama_index.llms"
+MODULE_NAME = "llama_index.llms"
 
 
 class CustomLLMInstrumentor:
@@ -48,7 +44,22 @@ class CustomLLMInstrumentor:
         self._tracer = tracer
 
     def instrument(self):
-        packages = pkgutil.iter_modules(llama_index.llms.__path__)
+        """Wrap the LLM methods of every ``CustomLLM`` subclass in ``llama_index.llms``.
+
+        ``llama_index.llms`` is a namespace package that only exists once a
+        ``llama-index-llms-*`` integration is installed, so it is imported lazily
+        here instead of at module load time, and skipped when it is absent.
+        """
+        try:
+            llms_package = importlib.import_module(MODULE_NAME)
+        except ModuleNotFoundError as exc:
+            # Only skip when the namespace itself is missing; a broken integration
+            # (one of its own dependencies missing) should still surface.
+            if exc.name != MODULE_NAME:
+                raise
+            return
+
+        packages = pkgutil.iter_modules(llms_package.__path__)
         modules = [
             importlib.import_module(f"llama_index.llms.{p.name}") for p in packages
         ]
