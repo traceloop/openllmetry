@@ -23,14 +23,17 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _build_tool_def_dict,
     _extract_model_name_from_provider_format,
+    _get_openai_base_url,
     _parse_arguments,
     _set_request_attributes,
     _set_span_attribute,
     _set_tool_definitions_json,
+    metric_shared_attributes,
     model_as_dict,
 )
 
 from opentelemetry.instrumentation.openai.utils import (
+    _with_responses_telemetry_wrapper,
     _with_tracer_wrapper,
     dont_throw,
     json_dumps,
@@ -535,8 +538,39 @@ def set_data_attributes(traced_response: TracedData, span: Span):
 
 
 @dont_throw
-@_with_tracer_wrapper
-def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+def _record_metrics(
+    token_histogram,
+    duration_histogram,
+    instance,
+    start_time: int,
+    response_model: Optional[str],
+    usage=None,
+    is_streaming: bool = False,
+    error_type: Optional[str] = None,
+):
+    """Record one operation's duration (with error.type on failure) and its input/output token usage."""
+    attributes = metric_shared_attributes(
+        response_model=response_model,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=is_streaming,
+    )
+    if error_type:
+        attributes[ERROR_TYPE] = error_type
+    if duration_histogram:
+        duration_histogram.record((time.time_ns() - start_time) / 1e9, attributes=attributes)
+    if usage and token_histogram:
+        for token_type, count in (("input", usage.input_tokens), ("output", usage.output_tokens)):
+            token_histogram.record(
+                count, attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type}
+            )
+
+
+@dont_throw
+@_with_responses_telemetry_wrapper
+def responses_get_or_create_wrapper(
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -627,6 +661,17 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        # A failed retrieve() poll is not an operation of its own; only create/parse failures count.
+        if not response_id:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                start_time,
+                non_sentinel_kwargs.get("model"),
+                is_streaming=bool(non_sentinel_kwargs.get("stream")),
+                error_type=e.__class__.__name__,
+            )
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
@@ -708,14 +753,22 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            int(traced_data.start_time),
+            traced_data.response_model,
+            traced_data.usage,
+        )
 
     return response
 
 
 @dont_throw
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -803,6 +856,17 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        # A failed retrieve() poll is not an operation of its own; only create/parse failures count.
+        if not response_id:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                start_time,
+                non_sentinel_kwargs.get("model"),
+                is_streaming=bool(non_sentinel_kwargs.get("stream")),
+                error_type=e.__class__.__name__,
+            )
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
@@ -886,6 +950,14 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            int(traced_data.start_time),
+            traced_data.response_model,
+            traced_data.usage,
+        )
 
     return response
 
