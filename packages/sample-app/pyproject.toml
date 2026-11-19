@@ -9,9 +9,9 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11.5,<3.13"
 dependencies = [
-  "openai>=1.52.2,<2",
+  "openai>=2.20.0,<3",
   "requests>=2.32.3,<3",
   "pinecone>=5.1.0,<9",
   "llama-index>=0.14.12,<0.15.0",
@@ -21,7 +21,7 @@ dependencies = [
   "tokenizers>=0.22.0,<0.24.0",
   "boto3>=1.35.49,<2",
   "aioboto3>=13.0.0,<15",
-  "transformers>=4.46.0,<5",
+  "transformers>=5.10.0,<6",
   "replicate>=0.22.0,<0.23.0",
   "cohere>=5.11.1,<6",
   "anthropic>=0.86.0,<1",
@@ -31,12 +31,12 @@ dependencies = [
   "langchain-classic>=1.0.0,<2.0.0",
   "langchain-community>=0.4.0,<0.5.0",
   "haystack-ai>=2.6.1,<2.7.0",
-  "datasets>=2.21.0,<2.22.0",
+  "datasets>=4.0.0,<6",
   "llama-index-embeddings-huggingface>=0.6.1,<0.7.0",
   "llama-index-embeddings-openai>=0.5.0,<0.6.0",
-  "llama-index-llms-huggingface>=0.6.0,<0.7.0",
+  "llama-index-llms-huggingface>=0.8.0,<0.10.0",
   "llama-index-llms-huggingface-api>=0.6.0,<0.7.0",
-  "litellm>=1.51.0,<2",
+  "litellm>=1.95.0,<2",
   "llama-index-vector-stores-chroma>=0.5.0,<0.6.0",
   "langchain-openai>=1.0.0,<2.0.0",
   "google-generativeai>=0.8.3,<0.9.0",
@@ -45,12 +45,13 @@ dependencies = [
   "llama-index-llms-openai>=0.6.0,<0.7.0",
   "ibm-watson-machine-learning>=1.0.367,<2",
   "ollama>=0.4.7,<0.5.0",
-  "mcp>=1.26.0,<2",
+  "mcp>=1.28.1,<2",
   "crewai>=1.0.0,<2",
-  "openai-agents>=0.2.7,<0.3.0",
-  "fastmcp>=2.12.3,<3",
+  "openai-agents>=0.14.2,<0.25.0",
+  "fastmcp>=3.2.0,<4",
   "agno>=2.4.0,<3",
   "voyageai>=0.3.7",
+  "redis>=6.0.0,<8",
   "opentelemetry-instrumentation-openai",
   "opentelemetry-instrumentation-haystack",
   "opentelemetry-instrumentation-pinecone",
@@ -68,7 +69,7 @@ dependencies = [
 ]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "langgraph-checkpoint>=4.0.0", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "langgraph-checkpoint>=4.0.0", "pip>=25.3", "fsspec>=2026.6.0", "json-repair>=0.60.1", "langgraph-sdk>=0.4.4", "pyarrow>=23.0.1,<26"]
 
 [tool.uv.sources]
 opentelemetry-instrumentation-openai = { path = "../opentelemetry-instrumentation-openai", editable = true }
