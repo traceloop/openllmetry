@@ -62,6 +62,12 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("anthropic >= 0.3.11",)
 
+# anthropic >= 1.14 reads this once per client, when the client is constructed,
+# and emits its own span when it is not "false". That span carries the same
+# usage as the one this instrumentation reports, so cost dashboards count every
+# call twice.
+_NATIVE_TRACING_ENV = "ANTHROPIC_OPEN_TELEMETRY"
+
 WRAPPED_METHODS = [
     {
         "package": "anthropic.resources.completions",
@@ -793,6 +799,11 @@ def is_metrics_enabled() -> bool:
 class AnthropicInstrumentor(BaseInstrumentor):
     """An instrumentor for Anthropic's client library."""
 
+    # Whether instrument() is what put the native-tracing default into the
+    # environment. A class attribute: BaseInstrumentor returns a singleton, so
+    # constructing the instrumentor again must not forget this.
+    _native_tracing_disabled = False
+
     def __init__(
         self,
         enrich_token_usage: bool = False,
@@ -834,6 +845,16 @@ class AnthropicInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        # anthropic >= 1.14 emits its own span per API call when a client is
+        # constructed while a global tracer provider is registered. That span
+        # carries the same usage as the one this instrumentation creates, so cost
+        # dashboards count every call twice. The SDK resolves the variable once
+        # per client, so the default has to be in place before clients exist;
+        # setdefault leaves an explicit user setting alone.
+        if _NATIVE_TRACING_ENV not in os.environ:
+            os.environ[_NATIVE_TRACING_ENV] = "false"
+            self._native_tracing_disabled = True
+
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
@@ -915,6 +936,15 @@ class AnthropicInstrumentor(BaseInstrumentor):
                 pass  # that's ok, we don't want to fail if some methods do not exist
 
     def _uninstrument(self, **kwargs):
+        # Put the environment back the way we found it, so that a client built
+        # after uninstrument() gets the SDK's native tracing again. Only the
+        # default this instrumentor wrote is removed; a value that was already
+        # there, including an explicit "false", stays.
+        if self._native_tracing_disabled:
+            if os.environ.get(_NATIVE_TRACING_ENV) == "false":
+                os.environ.pop(_NATIVE_TRACING_ENV, None)
+            self._native_tracing_disabled = False
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_package = wrapped_method.get("package")
             wrap_object = wrapped_method.get("object")
