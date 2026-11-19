@@ -131,12 +131,19 @@ def emit_streaming_response_events(
     for message in complete_response.get("events", []):
         # Parse tool calls
         if message.get("type") == "tool_use":
+            raw_arguments = message.get("input")
+            try:
+                arguments = json.loads(raw_arguments) if raw_arguments else {}
+            except (TypeError, ValueError):
+                # A stream closed while a tool_use block was still arriving
+                # hands us partial JSON. Keep the tool call, drop the payload.
+                arguments = {}
             tool_calls = [
                 ToolCall(
                     id=message.get("id"),
                     function={
                         "name": message.get("name"),
-                        "arguments": json.loads(message.get("input", '{}')),
+                        "arguments": arguments,
                     },
                     type="function",
                 )
