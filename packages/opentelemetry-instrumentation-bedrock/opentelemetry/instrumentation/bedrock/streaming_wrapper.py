@@ -81,11 +81,25 @@ class AsyncStreamingWrapper(ObjectProxy):
     def _accumulate_events(self, event):
         for key in event:
             if key == "contentBlockDelta":
-                delta = event.get(key).get("delta", {}).get("text")
-                if "outputText" in self._accumulating_body:
-                    self._accumulating_body["outputText"] += delta
-                else:
-                    self._accumulating_body["outputText"] = delta
+                delta = event.get(key).get("delta", {})
+                if "toolUse" in delta:
+                    # Merge delta input into the last tool block (created by contentBlockStart)
+                    tool_blocks = self._accumulating_body.setdefault("tool_blocks", [])
+                    if tool_blocks:
+                        tool_blocks[-1]["input"] += delta["toolUse"].get("input", "")
+                    else:
+                        tool_blocks.append(delta["toolUse"])
+                elif "text" in delta:
+                    if "outputText" in self._accumulating_body:
+                        self._accumulating_body["outputText"] += delta["text"]
+                    else:
+                        self._accumulating_body["outputText"] = delta["text"]
+            elif key == "contentBlockStart":
+                tool_use = event.get(key).get("start", {}).get("toolUse")
+                if tool_use:
+                    self._accumulating_body.setdefault("tool_blocks", []).append(
+                        {**tool_use, "input": ""}
+                    )
             elif key in self._accumulating_body:
                 self._accumulating_body[key] += event.get(key)
             elif key == "messageStop":
@@ -167,11 +181,25 @@ class StreamingWrapper(ObjectProxy):
         logger.debug("Accumulating body: %s", self._accumulating_body)
         for key in event:
             if key == "contentBlockDelta":
-                delta = event.get(key).get("delta", {}).get("text")
-                if "outputText" in self._accumulating_body:
-                    self._accumulating_body["outputText"] += delta
-                else:
-                    self._accumulating_body["outputText"] = delta
+                delta = event.get(key).get("delta", {})
+                if "toolUse" in delta:
+                    # Merge delta input into the last tool block (created by contentBlockStart)
+                    tool_blocks = self._accumulating_body.setdefault("tool_blocks", [])
+                    if tool_blocks:
+                        tool_blocks[-1]["input"] += delta["toolUse"].get("input", "")
+                    else:
+                        tool_blocks.append(delta["toolUse"])
+                elif "text" in delta:
+                    if "outputText" in self._accumulating_body:
+                        self._accumulating_body["outputText"] += delta["text"]
+                    else:
+                        self._accumulating_body["outputText"] = delta["text"]
+            elif key == "contentBlockStart":
+                tool_use = event.get(key).get("start", {}).get("toolUse")
+                if tool_use:
+                    self._accumulating_body.setdefault("tool_blocks", []).append(
+                        {**tool_use, "input": ""}
+                    )
             elif key in self._accumulating_body:
                 self._accumulating_body[key] += event.get(key)
             elif key == "messageStop":
