@@ -166,7 +166,7 @@ WRAPPED_METHODS_v4 = [
         "span_name": "db.weaviate.collections.batch.add_object",
     },
     {
-        "module": "weaviate.collections.queries.fetch_object_by_id.query",
+        "module": "weaviate.collections.queries.fetch_object_by_id",
         "object": "_FetchObjectByIDQuery",
         "method": "fetch_object_by_id",
         "span_name": "db.weaviate.collections.query.fetch_object_by_id",
@@ -183,6 +183,21 @@ WRAPPED_METHODS_v4 = [
         "method": "get",
         "span_name": "db.weaviate.collections.query.get",
     },
+    {
+        "module": "weaviate.client",
+        "object": "WeaviateClient",
+        "method": "graphql_raw_query",
+        "span_name": "db.weaviate.client.graphql_raw_query",
+    },
+]
+
+#: Methods that existed in the first 4.x releases and were removed later in the
+#: same major. Kept out of ``WRAPPED_METHODS_v4`` so that list means "this has to
+#: resolve on the client we test against": these only resolve where the SDK
+#: still ships them, and the guard in ``_instrument`` skips the rest. Dropping
+#: them would lose the spans for the 4.x versions that do have them, which is
+#: the same mistake as keeping a stale entry -- a client nobody is looking at.
+WRAPPED_METHODS_v4_legacy = [
     {
         "module": "weaviate.gql.filter",
         "object": "GraphQL",
@@ -201,14 +216,10 @@ WRAPPED_METHODS_v4 = [
         "method": "do",
         "span_name": "db.weaviate.gql.get.do",
     },
-    {
-        "module": "weaviate.client",
-        "object": "WeaviateClient",
-        "method": "graphql_raw_query",
-        "span_name": "db.weaviate.client.graphql_raw_query",
-    },
 ]
-WRAPPED_METHODS = WRAPPED_METHODS_v3 + WRAPPED_METHODS_v4
+WRAPPED_METHODS = (
+    WRAPPED_METHODS_v3 + WRAPPED_METHODS_v4 + WRAPPED_METHODS_v4_legacy
+)
 
 
 class WeaviateInstrumentor(BaseInstrumentor):

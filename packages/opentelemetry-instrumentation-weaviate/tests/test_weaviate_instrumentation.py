@@ -1,3 +1,4 @@
+import importlib
 import json
 
 import pytest
@@ -6,6 +7,7 @@ import weaviate
 # Skip this entire module if weaviate.classes is not available (v3)
 wvc = pytest.importorskip("weaviate.classes")
 
+from opentelemetry.instrumentation.weaviate import WRAPPED_METHODS_v4  # noqa: E402
 from opentelemetry.semconv_ai import SpanAttributes  # noqa: E402
 
 
@@ -357,3 +359,28 @@ def test_weaviate_query_raw(client, exporter):
     assert "author" in traced_raw_query
     assert "text" in traced_raw_query
     assert len(result.get["Article"]) == 2
+
+
+@pytest.mark.parametrize(
+    "wrapped",
+    WRAPPED_METHODS_v4,
+    ids=[f"{entry['object']}.{entry['method']}" for entry in WRAPPED_METHODS_v4],
+)
+def test_every_wrapped_method_resolves_on_the_installed_client(wrapped):
+    """A path the SDK moved is a span nobody emits, and nothing says so.
+
+    ``_instrument`` skips an entry it cannot resolve instead of raising, which is
+    the right call in a client library and also why this drifts unnoticed:
+    ``weaviate.collections.queries.fetch_object_by_id.query`` stopped existing in
+    a later 4.x, so ``fetch_object_by_id`` quietly stopped producing spans.
+    ``WRAPPED_METHODS_v4`` is the list that has to hold on the client the package
+    runs on; the entries that legitimately disappear upstream live in
+    ``WRAPPED_METHODS_v4_legacy``.
+    """
+    module = importlib.import_module(wrapped["module"])
+    holder = getattr(module, wrapped["object"])
+
+    assert hasattr(holder, wrapped["method"]), (
+        f"{wrapped['module']}.{wrapped['object']} has no {wrapped['method']} on "
+        f"weaviate-client {weaviate.__version__}: no span will be emitted"
+    )
