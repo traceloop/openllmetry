@@ -1,3 +1,9 @@
+## v0.63.1 (2026-11-16)
+
+### Fix
+
+- **sdk**: replace deprecated cuid with cuid2 to resolve sonatype-2023-2645 (#4187)
+
 ## v0.63.0 (2026-11-05)
 
 ### Feat
