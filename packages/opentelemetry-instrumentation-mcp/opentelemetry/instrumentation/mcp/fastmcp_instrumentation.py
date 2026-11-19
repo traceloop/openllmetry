@@ -2,6 +2,7 @@
 
 import json
 import os
+import weakref
 
 from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -16,7 +17,10 @@ class FastMCPInstrumentor:
 
     def __init__(self):
         self._tracer = None
-        self._server_name = None
+        # One process can host several FastMCP servers, so the workflow name is
+        # kept per server's tool manager. A single name on the instrumentor
+        # would let the last server constructed rename every other server.
+        self._server_names = weakref.WeakKeyDictionary()
 
     def instrument(self, tracer: Tracer):
         """Apply FastMCP-specific instrumentation."""
@@ -51,10 +55,13 @@ class FastMCPInstrumentor:
             # Call the original __init__ first
             result = wrapped(*args, **kwargs)
 
-            if args and len(args) > 0:
-                self._server_name = f"{args[0]}.mcp"
-            elif 'name' in kwargs:
-                self._server_name = f"{kwargs['name']}.mcp"
+            # Read the name the server actually ended up with: it may have been
+            # positional, keyword, or generated when omitted. The tool manager
+            # identifies that server when its tools run.
+            tool_manager = getattr(instance, "_tool_manager", None)
+            name = getattr(instance, "name", None)
+            if tool_manager is not None and name:
+                self._server_names[tool_manager] = f"{name}.mcp"
 
             return result
         return traced_method
@@ -79,6 +86,7 @@ class FastMCPInstrumentor:
                 tool_arguments = args[1] if len(args) > 1 else {}
 
             entity_name = tool_key if tool_key else "unknown_tool"
+            server_name = self._server_names.get(instance)
 
             # Create parent server.mcp span
             # The error paths below record the failure themselves, with the
@@ -89,8 +97,8 @@ class FastMCPInstrumentor:
             ) as mcp_span:
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, "server")
                 mcp_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, "mcp.server")
-                if self._server_name:
-                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, self._server_name)
+                if server_name:
+                    mcp_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
 
                 # Create nested tool span
                 span_name = f"{entity_name}.tool"
@@ -99,8 +107,8 @@ class FastMCPInstrumentor:
                 ) as tool_span:
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_SPAN_KIND, TraceloopSpanKindValues.TOOL.value)
                     tool_span.set_attribute(SpanAttributes.TRACELOOP_ENTITY_NAME, entity_name)
-                    if self._server_name:
-                        tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, self._server_name)
+                    if server_name:
+                        tool_span.set_attribute(SpanAttributes.TRACELOOP_WORKFLOW_NAME, server_name)
 
                     if self._should_send_prompts():
                         try:
