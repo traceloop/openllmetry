@@ -118,10 +118,17 @@ _ProviderName = GenAIAttributes.GenAiProviderNameValues
 _PROVIDER_ALIASES = {
     "azure": _ProviderName.AZURE_AI_OPENAI.value,
     "azure_ai": _ProviderName.AZURE_AI_INFERENCE.value,
+    "azure_text": _ProviderName.AZURE_AI_OPENAI.value,
     "bedrock": _ProviderName.AWS_BEDROCK.value,
+    "bedrock_mantle": _ProviderName.AWS_BEDROCK.value,
+    "cohere_chat": _ProviderName.COHERE.value,
     "vertex_ai": _ProviderName.GCP_VERTEX_AI.value,
+    "vertex_ai_beta": _ProviderName.GCP_VERTEX_AI.value,
     "gemini": _ProviderName.GCP_GEMINI.value,
     "mistral": _ProviderName.MISTRAL_AI.value,
+    "watsonx": _ProviderName.IBM_WATSONX_AI.value,
+    "watsonx_text": _ProviderName.IBM_WATSONX_AI.value,
+    "xai": _ProviderName.X_AI.value,
 }
 
 
