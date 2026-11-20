@@ -284,3 +284,29 @@ def test_set_model_response_attributes_missing_token_counts(
         for c in token_histogram.record.call_args_list
     }
     assert recorded["output"] == expected_output
+
+
+def test_set_model_response_attributes_none_output_tokens_does_not_crash_histogram():
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+    from opentelemetry.sdk.metrics import MeterProvider
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+
+    meter_provider = MeterProvider()
+    meter = meter_provider.get_meter("test")
+    real_token_histogram = meter.create_histogram("gen_ai.client.token.usage")
+
+    response = types.GenerateContentResponse(
+        usage_metadata=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=10,
+            candidates_token_count=None,
+            thoughts_token_count=None,
+        )
+    )
+
+    su.set_model_response_attributes(
+        span, response, "gemini-2.5-flash", token_histogram=real_token_histogram
+    )
+
