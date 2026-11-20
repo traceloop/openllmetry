@@ -18,6 +18,24 @@ DEFAULT_MESSAGE = {
 }
 
 
+def _default_message():
+    """A message no stream shares with another.
+
+    ``DEFAULT_MESSAGE`` is a template. Handing it out by reference, or as a shallow
+    ``{**DEFAULT_MESSAGE}``, gives every stream the same ``content`` and
+    ``tool_calls`` lists, and ``content-end`` appends into them: one stream's text
+    ends up in the next stream's span, and in the template for the rest of the
+    process.
+    """
+
+    return {
+        "content": [],
+        "role": DEFAULT_MESSAGE["role"],
+        "tool_calls": [],
+        "tool_plan": DEFAULT_MESSAGE["tool_plan"],
+    }
+
+
 @dont_throw
 def process_chat_v1_streaming_response(span, event_logger, llm_request_type, response):
     # This naive version assumes we've always successfully streamed till the end
@@ -71,7 +89,7 @@ async def aprocess_chat_v1_streaming_response(span, event_logger, llm_request_ty
 def process_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": DEFAULT_MESSAGE,
+        "message": _default_message(),
         "usage": {},
         "id": "",
         "error": None,
@@ -111,7 +129,7 @@ def process_chat_v2_streaming_response(span, event_logger, llm_request_type, res
 async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_type, response):
     final_response = {
         "finish_reason": None,
-        "message": DEFAULT_MESSAGE,
+        "message": _default_message(),
         "usage": {},
         "id": "",
         "error": None,
@@ -148,7 +166,7 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
 def _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response):
     item_dict = to_dict(item)
     if item_dict.get("type") == "message-start":
-        final_response["message"] = (item_dict.get("delta") or {}).get("message") or {**DEFAULT_MESSAGE}
+        final_response["message"] = (item_dict.get("delta") or {}).get("message") or _default_message()
         final_response["id"] = item_dict.get("id")
     elif item_dict.get("type") == "content-start":
         new_content_item = ((item_dict.get("delta") or {}).get("message") or {}).get("content")
