@@ -729,7 +729,7 @@ def set_model_response_attributes(
     if um is not None:
         # candidates_token_count excludes thinking tokens, which are billed as
         # output, so output_tokens is the sum of the two.
-        output_tokens = um.candidates_token_count
+        output_tokens = getattr(um, "candidates_token_count", None)
         thoughts_token_count = getattr(um, "thoughts_token_count", None)
         if thoughts_token_count:
             output_tokens = (output_tokens or 0) + thoughts_token_count
@@ -741,7 +741,7 @@ def set_model_response_attributes(
         _set_span_attribute(
             span,
             SpanAttributes.GEN_AI_USAGE_TOTAL_TOKENS,
-            um.total_token_count,
+            getattr(um, "total_token_count", None),
         )
         _set_span_attribute(
             span,
@@ -751,7 +751,7 @@ def set_model_response_attributes(
         _set_span_attribute(
             span,
             GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS,
-            um.prompt_token_count,
+            getattr(um, "prompt_token_count", None),
         )
 
         cached_content_token_count = getattr(um, "cached_content_token_count", None)
@@ -763,25 +763,28 @@ def set_model_response_attributes(
             )
 
     if token_histogram and um is not None:
-        token_histogram.record(
-            um.prompt_token_count,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
-        token_histogram.record(
-            output_tokens,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
+        prompt_token_count = getattr(um, "prompt_token_count", None)
+        if prompt_token_count is not None:
+            token_histogram.record(
+                prompt_token_count,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
+            )
+        if output_tokens is not None:
+            token_histogram.record(
+                output_tokens,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
+            )
 
     span.set_status(Status(StatusCode.OK))
