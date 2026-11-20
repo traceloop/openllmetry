@@ -278,3 +278,114 @@ def test_json_truncation_preserves_short_content(exporter, monkeypatch):
     # Check that short output was preserved completely
     output_data = json.loads(task_span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
     assert output_data == result
+
+
+class _UnserializableOnJson:
+    """Has a ``.json()`` that raises ``ValueError`` (like a non-JSON ``Response``)."""
+
+    def json(self):
+        raise json.JSONDecodeError("Expecting value", "<html>", 0)
+
+
+class _UnserializableOnToJson:
+    def to_json(self):
+        raise RuntimeError("to_json failed")
+
+
+def _circular():
+    items = []
+    items.append(items)
+    return items
+
+
+UNSERIALIZABLE_VALUES = [
+    pytest.param(_UnserializableOnJson, id="json-method-raises-valueerror"),
+    pytest.param(_UnserializableOnToJson, id="to_json-raises-runtimeerror"),
+    pytest.param(_circular, id="circular-reference"),
+]
+
+
+@pytest.mark.parametrize("make_value", UNSERIALIZABLE_VALUES)
+def test_task_input_serialization_failure_does_not_break_call(exporter, make_value):
+    @task(name="io_task")
+    def io_task(value):
+        return "done"
+
+    assert io_task(make_value()) == "done"
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["io_task.task"]
+    assert SpanAttributes.TRACELOOP_ENTITY_INPUT not in spans[0].attributes
+    assert spans[0].attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT] == '"done"'
+
+
+@pytest.mark.parametrize("make_value", UNSERIALIZABLE_VALUES)
+def test_task_output_serialization_failure_does_not_break_call(exporter, make_value):
+    value = make_value()
+
+    @task(name="io_task")
+    def io_task():
+        return value
+
+    assert io_task() is value
+
+    spans = exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["io_task.task"]
+    assert SpanAttributes.TRACELOOP_ENTITY_OUTPUT not in spans[0].attributes
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("make_value", UNSERIALIZABLE_VALUES)
+async def test_async_task_serialization_failure_does_not_break_call(exporter, make_value):
+    value = make_value()
+
+    @task(name="io_task")
+    async def io_task(arg):
+        return arg
+
+    assert await io_task(value) is value
+    assert [span.name for span in exporter.get_finished_spans()] == ["io_task.task"]
+
+
+@pytest.mark.parametrize("make_value", UNSERIALIZABLE_VALUES)
+def test_generator_task_input_serialization_failure_does_not_break_call(exporter, make_value):
+    @task(name="io_task")
+    def io_task(arg):
+        yield 1
+        yield 2
+
+    assert list(io_task(make_value())) == [1, 2]
+    assert [span.name for span in exporter.get_finished_spans()] == ["io_task.task"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("make_value", UNSERIALIZABLE_VALUES)
+async def test_async_generator_task_input_serialization_failure_does_not_break_call(
+    exporter, make_value
+):
+    @task(name="io_task")
+    async def io_task(arg):
+        yield 1
+        yield 2
+
+    assert [item async for item in io_task(make_value())] == [1, 2]
+    assert [span.name for span in exporter.get_finished_spans()] == ["io_task.task"]
+
+
+def test_workflow_name_does_not_leak_after_serialization_failure(exporter):
+    from traceloop.sdk.decorators import workflow
+
+    @workflow(name="leaky_workflow")
+    def leaky_workflow(arg):
+        return 1
+
+    @task(name="sibling")
+    def sibling():
+        return 2
+
+    assert leaky_workflow(_UnserializableOnJson()) == 1
+    sibling()
+
+    spans = {span.name: span for span in exporter.get_finished_spans()}
+    assert set(spans) == {"leaky_workflow.workflow", "sibling.task"}
+    assert SpanAttributes.TRACELOOP_WORKFLOW_NAME not in spans["sibling.task"].attributes

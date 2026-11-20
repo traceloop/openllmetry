@@ -229,7 +229,11 @@ def _handle_span_input(span, args, kwargs, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_INPUT,
                 truncated_json,
             )
-    except TypeError:
+    except Exception:
+        # Serializing entity input/output is best effort: it must never break
+        # (or leak the span/context of) the decorated function. This covers
+        # more than TypeError, e.g. circular references (ValueError) and
+        # objects whose to_json()/json()/dict() raise.
         pass
 
 
@@ -243,7 +247,11 @@ def _handle_span_output(span, res, cls=None):
                 SpanAttributes.TRACELOOP_ENTITY_OUTPUT,
                 truncated_json,
             )
-    except TypeError:
+    except Exception:
+        # Serializing entity input/output is best effort: it must never break
+        # (or leak the span/context of) the decorated function. This covers
+        # more than TypeError, e.g. circular references (ValueError) and
+        # objects whose to_json()/json()/dict() raise.
         pass
 
 
