@@ -22,6 +22,7 @@ from agents.tracing.processors import TracingProcessor
 from .utils import (
     should_send_prompts,
     dont_throw,
+    get_delegation_attributes,
     GEN_AI_HANDOFF_FROM_AGENT,
     GEN_AI_HANDOFF_TO_AGENT,
     GEN_AI_HANDOFF_PARENT_AGENT,
@@ -881,6 +882,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             if handoff_parent:
                 attributes[GEN_AI_HANDOFF_PARENT_AGENT] = handoff_parent
 
+            # Opt-in delegation / authority info supplied by the application.
+            attributes.update(get_delegation_attributes())
+
             if hasattr(span_data, "handoffs") and span_data.handoffs:
                 handoffs_list = []
                 trace_content = should_send_prompts()
@@ -931,6 +935,9 @@ class OpenTelemetryTracingProcessor(TracingProcessor):
             handoff_attributes[GenAIAttributes.GEN_AI_AGENT_NAME] = from_agent
         if to_agent and to_agent != "unknown":
             handoff_attributes[GEN_AI_HANDOFF_TO_AGENT] = to_agent
+
+        # Record the authority the target agent receives with the handoff.
+        handoff_attributes.update(get_delegation_attributes())
 
         return self.tracer.start_span(
             f"{from_agent} → {to_agent}.handoff",
