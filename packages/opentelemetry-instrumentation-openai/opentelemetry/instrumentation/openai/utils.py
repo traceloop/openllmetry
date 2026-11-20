@@ -129,6 +129,24 @@ def _with_chat_telemetry_wrapper(func):
     return _with_chat_telemetry
 
 
+def _with_responses_telemetry_wrapper(func):
+    def _with_responses_telemetry(tracer, token_histogram=None, duration_histogram=None):
+        def wrapper(wrapped, instance, args, kwargs):
+            return func(
+                tracer,
+                token_histogram,
+                duration_histogram,
+                wrapped,
+                instance,
+                args,
+                kwargs,
+            )
+
+        return wrapper
+
+    return _with_responses_telemetry
+
+
 def _with_tracer_wrapper(func):
     def _with_tracer(tracer):
         def wrapper(wrapped, instance, args, kwargs):
