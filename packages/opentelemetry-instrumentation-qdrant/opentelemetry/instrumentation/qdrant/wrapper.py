@@ -105,8 +105,13 @@ def _set_upsert_attributes(span, args, kwargs):
 
 @dont_throw
 def _set_upload_attributes(span, args, kwargs, method_name, param_name):
-    points = list(kwargs.get(param_name) or args[1])
-    _set_span_attribute(span, f"qdrant.{method_name}.points_count", len(points))
+    points = kwargs.get(param_name)
+    if points is None:
+        points = args[1]
+    # Iterators and generators are single-pass: counting them here would
+    # leave nothing for the wrapped call to upload.
+    if hasattr(points, "__len__"):
+        _set_span_attribute(span, f"qdrant.{method_name}.points_count", len(points))
 
 
 @dont_throw
