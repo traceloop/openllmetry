@@ -40,6 +40,8 @@ version_files = [
     "packages/opentelemetry-instrumentation-mistralai/opentelemetry/instrumentation/mistralai/version.py",
     "packages/opentelemetry-instrumentation-ollama/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-ollama/opentelemetry/instrumentation/ollama/version.py",
+    "packages/opentelemetry-instrumentation-oci-genai/pyproject.toml:^version",
+    "packages/opentelemetry-instrumentation-oci-genai/opentelemetry/instrumentation/oci_genai/version.py",
     "packages/opentelemetry-instrumentation-openai/pyproject.toml:^version",
     "packages/opentelemetry-instrumentation-openai/opentelemetry/instrumentation/openai/version.py",
     "packages/opentelemetry-instrumentation-openai-agents/pyproject.toml:^version",

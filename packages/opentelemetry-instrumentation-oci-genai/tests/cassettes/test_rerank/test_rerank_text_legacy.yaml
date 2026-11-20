@@ -1,0 +1,37 @@
+interactions:
+- request:
+    body: '{"input": "What is the capital of France?", "compartmentId": "ocid1.compartment.oc1..redacted",
+      "servingMode": {"servingType": "ON_DEMAND", "modelId": "cohere.rerank-v4.0-fast"},
+      "documents": ["Paris is the capital of France.", "Berlin is the capital of Germany.",
+      "The Eiffel Tower is located in Paris."], "topN": 2}'
+    headers:
+      Content-Length:
+      - '369'
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-type:
+      - application/json
+      host:
+      - inference.generativeai.us-chicago-1.oci.oraclecloud.com
+    method: POST
+    uri: https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions/rerankText
+  response:
+    body:
+      string: '{"id":"REDACTED/REDACTED/REDACTED","modelId":"cohere.rerank-v4.0-fast","documentRanks":[{"index":0,"relevanceScore":0.8570099},{"index":2,"relevanceScore":0.42403036}]}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 18 Sep 2026 19:51:44 GMT
+      content-length:
+      - '240'
+    status:
+      code: 200
+      message: OK
+version: 1
