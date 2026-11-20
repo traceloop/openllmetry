@@ -1,5 +1,5 @@
 import time
-from opentelemetry.instrumentation.milvus.utils import dont_throw
+from opentelemetry.instrumentation.milvus.utils import dont_throw, get_call_arguments
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry import context as context_api
@@ -80,22 +80,23 @@ def _wrap(
         span.set_attribute(SpanAttributes.DB_SYSTEM, "milvus")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
+        call_args = get_call_arguments(wrapped, args, kwargs)
         if method == "insert":
-            _set_insert_attributes(span, kwargs)
+            _set_insert_attributes(span, call_args)
         elif method == "upsert":
-            _set_upsert_attributes(span, kwargs)
+            _set_upsert_attributes(span, call_args)
         elif method == "delete":
-            _set_delete_attributes(span, kwargs)
+            _set_delete_attributes(span, call_args)
         elif method == "search":
-            _set_search_attributes(span, kwargs)
+            _set_search_attributes(span, call_args)
         elif method == "get":
-            _set_get_attributes(span, kwargs)
+            _set_get_attributes(span, call_args)
         elif method == "query":
-            _set_query_attributes(span, kwargs)
+            _set_query_attributes(span, call_args)
         elif method == "create_collection":
-            _set_create_collection_attributes(span, kwargs)
+            _set_create_collection_attributes(span, call_args)
         elif method == "hybrid_search":
-            _set_hybrid_search_attributes(span, kwargs)
+            _set_hybrid_search_attributes(span, call_args)
 
         try:
             start_time = time.time()
