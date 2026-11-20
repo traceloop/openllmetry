@@ -2,11 +2,13 @@ import json
 import threading
 import time
 import types
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from pydantic import BaseModel
 
-from openai import AsyncOpenAI, OpenAI
+from openai import AsyncOpenAI, AsyncStream, OpenAI, Stream
+from openai.types.responses import ResponseStreamEvent
 from opentelemetry.instrumentation.openai.utils import is_reasoning_supported
 from opentelemetry.instrumentation.openai.v1 import responses_wrappers
 from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
@@ -16,8 +18,9 @@ from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
     responses_cancel_wrapper,
     responses_get_or_create_wrapper,
 )
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import StatusCode
 
 from .utils import get_input_messages, get_output_messages
 
@@ -956,92 +959,343 @@ def test_parse_response_passes_through_plain_response():
     assert result is plain
 
 
-_RESPONSES_SSE_BODY = (
-    b'event: response.created\n'
-    b'data: {"type":"response.created","response":{"id":"resp_123","object":"response",'
-    b'"created_at":0,"status":"in_progress","model":"gpt-4.1-nano","output":[]}}\n\n'
-    b'event: response.completed\n'
-    b'data: {"type":"response.completed","response":{"id":"resp_123","object":"response",'
-    b'"created_at":0,"status":"completed","model":"gpt-4.1-nano","output":[],'
-    b'"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}\n\n'
-)
+# with_raw_response sends the same request as create(), so the raw-response tests replay the
+# recordings of test_responses_streaming and test_responses_streaming_async instead of a hand-made body.
+_STORY_PROMPT = "Tell me a three sentence bedtime story about a unicorn."
+_FORWARDED_EVENT_TYPES = ("response.output_text.delta", "response.completed")
 
 
+class CustomResponseStream(Stream[ResponseStreamEvent]):
+    def __iter__(self) -> Iterator[ResponseStreamEvent]:
+        return (
+            event
+            for event in super().__iter__()
+            if event.type in _FORWARDED_EVENT_TYPES
+        )
+
+
+class CustomAsyncResponseStream(AsyncStream[ResponseStreamEvent]):
+    async def __aiter__(self) -> AsyncIterator[ResponseStreamEvent]:
+        async for event in super().__aiter__():
+            if event.type in _FORWARDED_EVENT_TYPES:
+                yield event
+
+
+def _streamed_text(events: list[ResponseStreamEvent]) -> str:
+    return "".join(
+        event.delta for event in events if event.type == "response.output_text.delta"
+    )
+
+
+def _assert_event_types(
+    events: list[ResponseStreamEvent], stream_type: type[Stream] | type[AsyncStream] | None
+) -> None:
+    """A custom stream class keeps its own __iter__, which drops the lifecycle events."""
+    event_types = {event.type for event in events}
+    if stream_type is None:
+        assert "response.created" in event_types
+    else:
+        assert event_types == set(_FORWARDED_EVENT_TYPES)
+
+
+def _assert_streamed_span(
+    span_exporter: InMemorySpanExporter, events: list[ResponseStreamEvent]
+) -> ReadableSpan:
+    """Assert the one openai.response span holds the prompt and the streamed text, and return it."""
+    full_text = _streamed_text(events)
+    assert full_text != "", "Should have received streaming content"
+    (span,) = [
+        span for span in span_exporter.get_finished_spans() if span.name == "openai.response"
+    ]
+    assert span.status.status_code == StatusCode.OK
+    assert span.attributes["gen_ai.provider.name"] == "openai"
+    assert span.attributes["gen_ai.request.model"] == "gpt-4.1-nano"
+    assert span.attributes["gen_ai.response.model"] == "gpt-4.1-nano-2025-04-14"
+    assert get_input_messages(span)[0]["parts"][0]["content"] == _STORY_PROMPT
+    assert get_output_messages(span)[0]["parts"][0]["content"] == full_text
+    return span
+
+
+def _assert_tracing_failure_span(
+    span_exporter: InMemorySpanExporter, events: list[ResponseStreamEvent]
+) -> None:
+    """The stream still works and the only span ended with the tracing error."""
+    assert _streamed_text(events) != ""
+    (span,) = span_exporter.get_finished_spans()
+    assert span.name == "openai.response"
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.status.description == "proxy construction failed"
+    assert span.attributes["error.type"] == "RuntimeError"
+
+
+def _fail_stream_proxy(**kwargs: object) -> None:
+    raise RuntimeError("proxy construction failed")
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
 @pytest.mark.asyncio
+@pytest.mark.parametrize("stream_type", [None, CustomAsyncResponseStream])
 async def test_async_responses_with_raw_response_streaming_does_not_crash(
-    instrument_legacy, span_exporter: InMemorySpanExporter
-):
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+    stream_type: type[CustomAsyncResponseStream] | None,
+) -> None:
     """Regression test for https://github.com/traceloop/openllmetry/issues/4476:
     client.responses.with_raw_response.create(stream=True, ...) (what
     agent-framework-openai>=1.6 uses to read response headers before streaming) must
-    not crash. `.with_raw_response.create()` returns a LegacyAPIResponse whose
-    `.parse()` yields the `AsyncStream` itself rather than a parsed `Response`, so
-    `async_parse_response()` can't recover an `.id` to build a trace from."""
-    import httpx
-    from openai import AsyncOpenAI
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            200,
-            headers={"content-type": "text/event-stream", "x-ms-served-model": "gpt-4.1-nano"},
-            content=_RESPONSES_SSE_BODY,
-        )
-
-    client = AsyncOpenAI(
-        api_key="test-key",
-        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
-    )
-
-    raw = await client.responses.with_raw_response.create(
+    not crash and must emit a span after the returned stream is consumed."""
+    raw = await async_openai_client.responses.with_raw_response.create(
         model="gpt-4.1-nano",
-        input="What is the capital of France?",
+        input=_STORY_PROMPT,
+        reasoning=None,
         stream=True,
     )
     # The raw-response contract (what agent-framework-openai relies on: reading a
     # response header before consuming the stream) must survive instrumentation.
-    assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
+    assert raw.headers["openai-version"] == "2020-10-01"
 
-    stream = raw.parse()
+    stream = raw.parse(to=stream_type)
+    assert raw.parse(to=stream_type) is stream
+    if stream_type is not None:
+        assert isinstance(stream, stream_type)
     events = [event async for event in stream]
 
-    assert len(events) == 2
-    # Untraced: there's no `.id` available to key a trace off of at the point the
-    # stream is handed back, so this call is skipped rather than crashing.
-    assert span_exporter.get_finished_spans() == ()
+    _assert_event_types(events, stream_type)
+    _assert_streamed_span(span_exporter, events)
 
 
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+@pytest.mark.parametrize("stream_type", [None, CustomResponseStream])
 def test_responses_with_raw_response_streaming_does_not_crash(
-    instrument_legacy, span_exporter: InMemorySpanExporter
-):
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+    stream_type: type[CustomResponseStream] | None,
+) -> None:
     """Sync counterpart of test_async_responses_with_raw_response_streaming_does_not_crash."""
-    import httpx
-    from openai import OpenAI
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(
-            200,
-            headers={"content-type": "text/event-stream", "x-ms-served-model": "gpt-4.1-nano"},
-            content=_RESPONSES_SSE_BODY,
-        )
-
-    client = OpenAI(
-        api_key="test-key",
-        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
-    )
-
-    raw = client.responses.with_raw_response.create(
+    raw = openai_client.responses.with_raw_response.create(
         model="gpt-4.1-nano",
-        input="What is the capital of France?",
+        input=_STORY_PROMPT,
+        reasoning=None,
         stream=True,
     )
     # The raw-response contract (what agent-framework-openai relies on: reading a
     # response header before consuming the stream) must survive instrumentation.
-    assert raw.headers["x-ms-served-model"] == "gpt-4.1-nano"
+    assert raw.headers["openai-version"] == "2020-10-01"
 
-    stream = raw.parse()
+    stream = raw.parse(to=stream_type)
+    assert raw.parse(to=stream_type) is stream
+    if stream_type is not None:
+        assert isinstance(stream, stream_type)
     events = list(stream)
 
-    assert len(events) == 2
+    _assert_event_types(events, stream_type)
+    _assert_streamed_span(span_exporter, events)
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_responses_with_raw_response_parsed_outside_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider: TracerProvider,
+    openai_client: OpenAI,
+) -> None:
+    """The span joins the trace that was active when the request was made, even if
+    raw.parse() runs after that parent span has ended."""
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("raw-response-parent") as parent_span:
+        raw = openai_client.responses.with_raw_response.create(
+            model="gpt-4.1-nano",
+            input=_STORY_PROMPT,
+            stream=True,
+        )
+
+    events = list(raw.parse())
+
+    span = _assert_streamed_span(span_exporter, events)
+    parent_context = parent_span.get_span_context()
+    assert span.context.trace_id == parent_context.trace_id
+    assert span.parent.span_id == parent_context.span_id
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
+@pytest.mark.asyncio
+async def test_async_responses_with_raw_response_parsed_outside_parent_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    tracer_provider: TracerProvider,
+    async_openai_client: AsyncOpenAI,
+) -> None:
+    """Async counterpart of test_responses_with_raw_response_parsed_outside_parent_span."""
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("raw-response-parent") as parent_span:
+        raw = await async_openai_client.responses.with_raw_response.create(
+            model="gpt-4.1-nano",
+            input=_STORY_PROMPT,
+            stream=True,
+        )
+
+    events = [event async for event in raw.parse()]
+
+    span = _assert_streamed_span(span_exporter, events)
+    parent_context = parent_span.get_span_context()
+    assert span.context.trace_id == parent_context.trace_id
+    assert span.parent.span_id == parent_context.span_id
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_responses_streaming_with_reasoning_none(
+    instrument_legacy, span_exporter: InMemorySpanExporter, openai_client: OpenAI
+) -> None:
+    """reasoning=None used to raise AttributeError from create(stream=True)."""
+    stream = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        reasoning=None,
+        stream=True,
+    )
+
+    _assert_streamed_span(span_exporter, list(stream))
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
+@pytest.mark.asyncio
+async def test_responses_streaming_with_reasoning_none_async(
+    instrument_legacy, span_exporter: InMemorySpanExporter, async_openai_client: AsyncOpenAI
+) -> None:
+    """Async counterpart of test_responses_streaming_with_reasoning_none."""
+    stream = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        reasoning=None,
+        stream=True,
+    )
+
+    _assert_streamed_span(span_exporter, [event async for event in stream])
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses")
+def test_responses_with_reasoning_none(
+    clean_responses_registry,
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+) -> None:
+    """reasoning=None used to drop the span of a non-streaming create()."""
+    response = openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        reasoning=None,
+    )
+
+    (span,) = span_exporter.get_finished_spans()
+    assert span.name == "openai.response"
+    assert get_output_messages(span)[0]["parts"][0]["content"] == response.output_text
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses")
+@pytest.mark.asyncio
+async def test_responses_with_reasoning_none_async(
+    clean_responses_registry,
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+) -> None:
+    """Async counterpart of test_responses_with_reasoning_none."""
+    response = await async_openai_client.responses.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+        reasoning=None,
+    )
+
+    (span,) = span_exporter.get_finished_spans()
+    assert span.name == "openai.response"
+    assert get_output_messages(span)[0]["parts"][0]["content"] == response.output_text
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+@pytest.mark.parametrize("raw_response", [False, True])
+def test_stream_tracing_failure_returns_untraced_stream(
+    instrument_legacy,
+    monkeypatch: pytest.MonkeyPatch,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+    raw_response: bool,
+) -> None:
+    """A tracing failure must not reach the caller, directly or through raw.parse()."""
+    monkeypatch.setattr(responses_wrappers, "ResponseStream", _fail_stream_proxy)
+    responses = (
+        openai_client.responses.with_raw_response if raw_response else openai_client.responses
+    )
+
+    result = responses.create(model="gpt-4.1-nano", input=_STORY_PROMPT, stream=True)
+    stream = result.parse() if raw_response else result
+
+    _assert_tracing_failure_span(span_exporter, list(stream))
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
+@pytest.mark.asyncio
+@pytest.mark.parametrize("raw_response", [False, True])
+async def test_stream_tracing_failure_returns_untraced_stream_async(
+    instrument_legacy,
+    monkeypatch: pytest.MonkeyPatch,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+    raw_response: bool,
+) -> None:
+    """Async counterpart of test_stream_tracing_failure_returns_untraced_stream."""
+    monkeypatch.setattr(responses_wrappers, "ResponseStream", _fail_stream_proxy)
+    responses = (
+        async_openai_client.responses.with_raw_response
+        if raw_response
+        else async_openai_client.responses
+    )
+
+    result = await responses.create(model="gpt-4.1-nano", input=_STORY_PROMPT, stream=True)
+    stream = result.parse() if raw_response else result
+
+    _assert_tracing_failure_span(span_exporter, [event async for event in stream])
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_raw_response_without_sdk_options_is_left_untraced(
+    instrument_legacy,
+    monkeypatch: pytest.MonkeyPatch,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+) -> None:
+    """The instrumentation reads the SDK's private _options; without it create() still
+    returns the raw response, untraced."""
+    from openai._legacy_response import LegacyAPIResponse
+
+    original_init = LegacyAPIResponse.__init__
+
+    def init_without_options(self: LegacyAPIResponse, **kwargs: object) -> None:
+        original_init(self, **kwargs)
+        del self._options
+
+    monkeypatch.setattr(LegacyAPIResponse, "__init__", init_without_options)
+
+    raw = openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        stream=True,
+    )
+
+    assert raw.headers["openai-version"] == "2020-10-01"
     assert span_exporter.get_finished_spans() == ()
 
 
@@ -1125,6 +1379,7 @@ async def test_completed_async_response_is_removed_from_responses_dict(
 
 class _FakeSyncChunkStream:
     """Minimal stand-in for the raw SDK stream that ResponseStream wraps."""
+
     def __init__(self, chunks):
         self._iter = iter(chunks)
 
