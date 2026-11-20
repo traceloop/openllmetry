@@ -284,3 +284,27 @@ def test_set_model_response_attributes_missing_token_counts(
         for c in token_histogram.record.call_args_list
     }
     assert recorded["output"] == expected_output
+
+
+def test_set_model_response_attributes_skips_absent_token_counts():
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import span_utils as su
+
+    span = MagicMock()
+    span.is_recording.return_value = True
+    token_histogram = MagicMock()
+    response = types.GenerateContentResponse(
+        usage_metadata=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=2, total_token_count=2
+        )
+    )
+
+    su.set_model_response_attributes(
+        span, response, "gemini-2.5-flash", token_histogram=token_histogram
+    )
+
+    recorded = {
+        c.kwargs["attributes"][GenAIAttributes.GEN_AI_TOKEN_TYPE]: c.args[0]
+        for c in token_histogram.record.call_args_list
+    }
+    assert recorded == {"input": 2}
