@@ -20,7 +20,9 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-writer"
 
 [project.optional-dependencies]
-instruments = ["writer"]
+# The Python SDK is distributed as writer-sdk (imported as writerai).
+# Keep the supported 2.x range in sync with instrumentation_dependencies().
+instruments = ["writer-sdk>=2.2.1,<3"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 writer = "opentelemetry.instrumentation.writer:WriterInstrumentor"
