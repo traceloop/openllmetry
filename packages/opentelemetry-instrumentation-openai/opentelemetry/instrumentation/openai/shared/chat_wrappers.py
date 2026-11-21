@@ -160,6 +160,7 @@ def chat_wrapper(
             choice_counter,
             duration_histogram,
             duration,
+            request_model=kwargs.get("model"),
         )
 
         span.end()
@@ -261,6 +262,7 @@ async def achat_wrapper(
             choice_counter,
             duration_histogram,
             duration,
+            request_model=kwargs.get("model"),
         )
 
         span.end()
@@ -311,6 +313,7 @@ def _handle_response(
     duration_histogram=None,
     duration=None,
     is_streaming: bool = False,
+    request_model: str = None,
 ):
     if is_openai_v1():
         response_dict = model_as_dict(response)
@@ -326,6 +329,7 @@ def _handle_response(
         response_dict,
         duration,
         is_streaming,
+        request_model,
     )
 
     # span attributes
@@ -372,12 +376,14 @@ def _set_chat_metrics(
     response_dict,
     duration,
     is_streaming: bool = False,
+    request_model: str = None,
 ):
     shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="chat",
         server_address=_get_openai_base_url(instance),
         is_streaming=is_streaming,
+        request_model=request_model,
     )
 
     # token metrics
@@ -767,6 +773,10 @@ class ChatStream(ObjectProxy):
         self._span.add_event(
             name=SpanAttributes.GEN_AI_CONTENT_COMPLETION_CHUNK)
 
+        # Accumulate first so gen_ai.response.model reflects the model reported
+        # by the stream itself, without falling back to the requested model
+        _accumulate_stream_items(item, self._complete_response)
+
         if self._first_token and self._streaming_time_to_first_token:
             self._time_of_first_token = time.time()
             self._streaming_time_to_first_token.record(
@@ -775,16 +785,16 @@ class ChatStream(ObjectProxy):
             )
             self._first_token = False
 
-        _accumulate_stream_items(item, self._complete_response)
-
     def _shared_attributes(self):
+        request_model = (
+            self._request_kwargs.get("model") if self._request_kwargs else None
+        )
         return metric_shared_attributes(
-            response_model=self._complete_response.get("model")
-            or self._request_kwargs.get("model")
-            or None,
+            response_model=self._complete_response.get("model") or None,
             operation="chat",
             server_address=_get_openai_base_url(self._instance),
             is_streaming=True,
+            request_model=request_model,
         )
 
     @dont_throw
@@ -946,6 +956,7 @@ def _build_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: (request_kwargs or {}).get("model") or None,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
@@ -1017,6 +1028,7 @@ async def _abuild_from_streaming_response(
         yield item_to_yield
 
     shared_attributes = {
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: (request_kwargs or {}).get("model") or None,
         GenAIAttributes.GEN_AI_RESPONSE_MODEL: complete_response.get("model") or None,
         "server.address": _get_openai_base_url(instance),
         "stream": True,
