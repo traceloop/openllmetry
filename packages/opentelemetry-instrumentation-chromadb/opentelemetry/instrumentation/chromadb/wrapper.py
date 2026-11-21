@@ -103,10 +103,16 @@ def _encode_include(include):
 
 
 def count_or_none(obj):
-    if obj:
-        return len(obj)
+    if obj is None:
+        return None
 
-    return None
+    try:
+        # `len` works for numpy arrays and other sized containers where a plain
+        # truthiness check would raise ("truth value of an array ... is
+        # ambiguous") and silently drop the attribute.
+        return len(obj) or None
+    except TypeError:
+        return None
 
 
 @dont_throw
