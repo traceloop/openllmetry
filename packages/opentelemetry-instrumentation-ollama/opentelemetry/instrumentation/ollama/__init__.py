@@ -569,16 +569,16 @@ class OllamaInstrumentor(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         try:
-            import ollama
             from ollama._client import AsyncClient, Client
-
-            for wrapped_method in WRAPPED_METHODS:
-                method_name = wrapped_method.get("method")
-                unwrap(Client, method_name)
-                unwrap(AsyncClient, method_name)
-                unwrap(ollama, method_name)
         except ImportError:
             logger.warning("Failed to import ollama modules for uninstrumentation.")
+            return
+
+        # _instrument() wraps the low level request dispatchers, not the public
+        # chat/generate/embeddings helpers, so those are the attributes that
+        # have to be restored.
+        unwrap(Client, "_request")
+        unwrap(AsyncClient, "_request")
 
 
 def _dispatch_wrap(
