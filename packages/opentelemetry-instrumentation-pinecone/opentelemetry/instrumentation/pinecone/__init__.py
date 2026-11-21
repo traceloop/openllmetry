@@ -34,7 +34,7 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone >= 5.1.0, <9",)
+_instruments = ("pinecone >= 5.1.0, <11",)
 
 WRAPPED_METHODS = [
     {
@@ -75,13 +75,23 @@ def _set_input_attributes(span, instance, kwargs):
     set_span_attribute(span, SpanAttributes.SERVER_ADDRESS, instance._config.host)
 
 
+def _get_usage_field(usage, field):
+    # pinecone < 10 returns usage as a dict-like object, pinecone 10 returns a
+    # Usage struct that only exposes read_units / write_units as attributes.
+    value = getattr(usage, field, None)
+    if value is None and hasattr(usage, "get"):
+        value = usage.get(field)
+    return value
+
+
 @dont_throw
 def _set_response_attributes(
     span, read_units_metric, write_units_metric, shared_attributes, response
 ):
-    if response.get("usage"):
-        read_units = response.get("usage").get("read_units") or 0
-        write_units = response.get("usage").get("write_units") or 0
+    usage = response.get("usage")
+    if usage:
+        read_units = _get_usage_field(usage, "read_units") or 0
+        write_units = _get_usage_field(usage, "write_units") or 0
 
         read_units_metric.add(read_units, shared_attributes)
         span.set_attribute(AISpanAttributes.PINECONE_USAGE_READ_UNITS, read_units)
