@@ -7,6 +7,22 @@ from opentelemetry.instrumentation.transformers.config import Config
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 
+# The pipeline input is a required argument whose name differs between pipeline
+# classes (``text_inputs`` on TextGenerationPipeline, ``inputs`` on Pipeline).
+PIPELINE_INPUT_KWARGS = ("text_inputs", "inputs")
+
+
+def resolve_prompts(args, kwargs):
+    """Return the pipeline input, whether it was passed positionally or by keyword."""
+    if args and len(args) > 0:
+        return args[0]
+
+    for key in PIPELINE_INPUT_KWARGS:
+        if key in kwargs:
+            return kwargs[key]
+
+    return None
+
 
 def should_send_prompts():
     return (
