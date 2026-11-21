@@ -177,6 +177,14 @@ def _set_request_attributes(span, kwargs):
         span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
     )
 
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("seed"))
+    stop = kwargs.get("stop")
+    if isinstance(stop, str) and stop:
+        stop = [stop]
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, stop)
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY, kwargs.get("frequency_penalty"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
+
 
 def _build_tool_def(tool):
     """Build a tool definition dict matching the OTel source-system format."""
