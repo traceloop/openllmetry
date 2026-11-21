@@ -198,9 +198,18 @@ class TogetherAiInstrumentor(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
+        # Imported here: the instrumentation package has to stay importable when
+        # the together SDK is not installed.
+        import together
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"together.{wrap_object}",
-                wrapped_method.get("method"),
-            )
+            wrap_method = wrapped_method.get("method")
+            # ``wrap_method`` is a dotted path to the wrapped method
+            # ("chat.completions.ChatCompletions.create"), so walk it down to the
+            # object that owns the attribute before unwrapping it.
+            owner = getattr(together, wrap_object)
+            *path, attribute = wrap_method.split(".")
+            for part in path:
+                owner = getattr(owner, part)
+            unwrap(owner, attribute)
