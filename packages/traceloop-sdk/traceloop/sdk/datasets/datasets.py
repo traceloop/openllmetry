@@ -155,7 +155,12 @@ class Datasets:
             sample = csvfile.read(1024)
             csvfile.seek(0)
             sniffer = csv.Sniffer()
-            delimiter = sniffer.sniff(sample).delimiter
+            try:
+                delimiter = sniffer.sniff(sample).delimiter
+            except csv.Error:
+                # The sniffer cannot pick a delimiter when there is nothing to
+                # split on, e.g. a single-column CSV. Fall back to a comma.
+                delimiter = ","
 
             reader = csv.DictReader(csvfile, delimiter=delimiter)
 
