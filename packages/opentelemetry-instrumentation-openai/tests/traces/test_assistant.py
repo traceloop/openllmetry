@@ -1155,3 +1155,115 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+# --- Messages.list with non-text thread message content blocks ---------------
+
+def _thread_messages_page_with_image_block():
+    """Thread messages page where the assistant reply starts with an
+    image_file content block, followed by a text block."""
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "msg_user",
+                "object": "thread.message",
+                "created_at": 1700000001,
+                "thread_id": "thread_test",
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": {"value": "What is 3+4?", "annotations": []},
+                    },
+                ],
+                "assistant_id": None,
+                "run_id": None,
+            },
+            {
+                "id": "msg_asst",
+                "object": "thread.message",
+                "created_at": 1700000002,
+                "thread_id": "thread_test",
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "image_file",
+                        "image_file": {"file_id": "file-abc", "detail": "auto"},
+                    },
+                    {
+                        "type": "text",
+                        "text": {"value": "The answer is 7.", "annotations": []},
+                    },
+                ],
+                "assistant_id": "asst_test",
+                "run_id": "run_test",
+            },
+        ],
+        "first_id": "msg_asst",
+        "last_id": "msg_user",
+        "has_more": False,
+    }
+
+
+def test_messages_list_with_non_text_content_block():
+    """A thread message whose first content block is not text (e.g. image_file)
+    must not crash the Messages.list wrapper; the text of the following text
+    block is still recorded and the run span still ends."""
+    import time as _time
+
+    from opentelemetry.instrumentation.openai.v1.assistant_wrappers import (
+        messages_list_wrapper,
+        runs,
+    )
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    from opentelemetry.instrumentation.openai.shared.config import Config
+
+    exporter = InMemorySpanExporter()
+    tracer_provider = TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = tracer_provider.get_tracer("test")
+
+    enrich_assistant_backup = Config.enrich_assistant
+    Config.enrich_assistant = False
+    runs["thread_test"] = {
+        "start_time": _time.time_ns(),
+        "end_time": _time.time_ns(),
+        "assistant_id": "asst_test",
+        "instructions": "Please address the user as Jane Doe.",
+        "run_id": "run_test",
+    }
+    try:
+        wrapper = messages_list_wrapper(tracer)
+        response = wrapper(
+            lambda *args, **kwargs: _thread_messages_page_with_image_block(),
+            None,
+            (),
+            {"thread_id": "thread_test"},
+        )
+        assert response["object"] == "list"
+
+        spans = exporter.get_finished_spans()
+        assert [span.name for span in spans] == ["openai.assistant.run"]
+        open_ai_span = spans[0]
+
+        input_messages = get_input_messages(open_ai_span)
+        assert input_messages[0]["role"] == "system"
+        assert input_messages[0]["parts"][0]["content"] == (
+            "Please address the user as Jane Doe."
+        )
+        user_messages = [m for m in input_messages if m["role"] == "user"]
+        assert user_messages[0]["parts"][0]["content"] == "What is 3+4?"
+
+        output_messages = get_output_messages(open_ai_span)
+        assert output_messages[0]["role"] == "assistant"
+        assert output_messages[0]["parts"][0]["content"] == "The answer is 7."
+        assert open_ai_span.attributes["gen_ai.response.0.id"] == "msg_asst"
+    finally:
+        Config.enrich_assistant = enrich_assistant_backup
+        runs.pop("thread_test", None)
