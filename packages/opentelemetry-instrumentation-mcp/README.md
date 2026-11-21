@@ -20,6 +20,11 @@ from opentelemetry.instrumentation.mcp import McpInstrumentor
 McpInstrumentor().instrument()
 ```
 
+To stop tracing, finish the active client sessions and call
+`McpInstrumentor().uninstrument()`. Calling `instrument()` again restores tracing
+without adding duplicate spans. Re-enabling can also accept a new tracer provider.
+Switching instrumentation while a client session is still open is not supported.
+
 ## Privacy
 
 **By default, this instrumentation logs prompts, completions, and embeddings to span attributes**. This gives you a clear visibility into how your LLM application tool usage is working, and can make it easy to debug and evaluate the tool usage.
