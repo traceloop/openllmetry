@@ -122,3 +122,22 @@ def test_qdrant_search(exporter, qdrant):
         == COLLECTION_NAME
     )
     assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 4
+
+
+def test_qdrant_search_batch_requests_positional(exporter, qdrant):
+    """`requests` is the second positional argument of the batch search methods."""
+    upload_collection(qdrant)
+
+    qdrant.query_batch_points(
+        COLLECTION_NAME,
+        [
+            models.QueryRequest(query=[0.1] * EMBEDDING_DIM, limit=10),
+            models.QueryRequest(query=[0.2] * EMBEDDING_DIM, limit=5),
+            models.QueryRequest(query=[0.42] * EMBEDDING_DIM, limit=2),
+        ],
+    )
+
+    spans = exporter.get_finished_spans()
+    span = next(span for span in spans if span.name == "qdrant.query_batch_points")
+
+    assert span.attributes.get(SpanAttributes.QDRANT_SEARCH_BATCH_REQUESTS_COUNT) == 3

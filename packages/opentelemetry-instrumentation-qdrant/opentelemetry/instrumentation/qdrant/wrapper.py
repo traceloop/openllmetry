@@ -117,7 +117,11 @@ def _set_search_attributes(span, args, kwargs):
 
 @dont_throw
 def _set_batch_search_attributes(span, args, kwargs, method):
-    requests = kwargs.get("requests") or []
+    # `requests` is the second positional argument of every batch search method,
+    # so fall back to args the same way the other attribute setters do.
+    requests = kwargs.get("requests")
+    if requests is None and len(args) > 1:
+        requests = args[1]
     # Map query_batch_points to search_batch for backward compatibility
     attribute_method = "search_batch" if method == "query_batch_points" else method
-    _set_span_attribute(span, f"qdrant.{attribute_method}.requests_count", len(requests))
+    _set_span_attribute(span, f"qdrant.{attribute_method}.requests_count", len(requests or []))
