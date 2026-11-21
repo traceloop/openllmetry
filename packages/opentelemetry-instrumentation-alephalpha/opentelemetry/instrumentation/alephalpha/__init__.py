@@ -167,7 +167,14 @@ def _wrap(
     input_event = _parse_prompt_event(args, kwargs)
     _handle_message_event(input_event, span, event_logger, kwargs)
 
-    response = wrapped(*args, **kwargs)
+    try:
+        response = wrapped(*args, **kwargs)
+    except Exception as ex:  # pylint: disable=broad-except
+        if span.is_recording():
+            span.record_exception(ex)
+            span.set_status(Status(StatusCode.ERROR, str(ex)))
+        span.end()
+        raise
 
     if response:
         response_event = _parse_completion_event(response)
