@@ -1,5 +1,6 @@
 from opentelemetry.instrumentation.transformers.utils import (
     dont_throw,
+    resolve_prompts,
     should_send_prompts,
 )
 from opentelemetry.semconv._incubating.attributes import (
@@ -22,10 +23,7 @@ def set_input_attributes(span, instance, args, kwargs):
     if not span.is_recording():
         return
 
-    if args and len(args) > 0:
-        prompts_list = args[0]
-    else:
-        prompts_list = kwargs.get("args")
+    prompts_list = resolve_prompts(args, kwargs)
 
     _set_span_prompts(span, prompts_list)
 
