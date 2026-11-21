@@ -700,6 +700,36 @@ class TestRealtimeFullFlow:
         session_span = next(s for s in spans if s.name == "openai.session")
         assert session_span.status.status_code == StatusCode.ERROR
 
+    @pytest.mark.asyncio
+    async def test_failed_connect_ends_session_span(self, tracer_provider_and_exporter):
+        """If the underlying connection manager fails to open, __aexit__ is
+        never invoked, so __aenter__ must end the session span itself."""
+        from opentelemetry.instrumentation.openai.v1.realtime_wrappers import (
+            RealtimeConnectionManagerWrapper,
+        )
+
+        provider, exporter = tracer_provider_and_exporter
+        tracer = provider.get_tracer("test")
+
+        mock_manager = AsyncMock()
+        mock_manager.__aenter__ = AsyncMock(side_effect=ConnectionError("handshake failed"))
+        mock_manager.__aexit__ = AsyncMock(return_value=None)
+        wrapper = RealtimeConnectionManagerWrapper(
+            mock_manager, tracer, "gpt-4o-realtime-preview"
+        )
+
+        with pytest.raises(ConnectionError):
+            await wrapper.__aenter__()
+
+        spans = exporter.get_finished_spans()
+        assert [s.name for s in spans] == ["openai.session"]
+        session_span = spans[0]
+        assert session_span.status.status_code == StatusCode.ERROR
+        assert any(
+            event.attributes.get("exception.type") == "ConnectionError"
+            for event in session_span.events
+        )
+
 
 class TestRealtimeConnectWrapper:
     """Test the main realtime_connect_wrapper function."""
