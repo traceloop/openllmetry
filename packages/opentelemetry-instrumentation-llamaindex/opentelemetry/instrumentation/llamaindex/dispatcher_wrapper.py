@@ -295,6 +295,12 @@ class OpenLLMetrySpanHandler(BaseSpanHandler[SpanHolder]):
         if id_ in self.open_spans:
             with self.lock:
                 span_holder = self.open_spans[id_]
+            # The call failed (or the dispatcher is shutting down): end the
+            # span and detach the context attached in new_span, mirroring the
+            # non-streaming exit path, so failed calls are exported and the
+            # LLM suppression flag does not leak into the outer context.
+            instance = kwargs.get("instance")
+            span_holder.end(should_detach_context=not isinstance(instance, Workflow))
             return span_holder
         return None
 
