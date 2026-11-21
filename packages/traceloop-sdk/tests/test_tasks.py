@@ -6,6 +6,7 @@ from typing import Generator, AsyncGenerator
 
 from langchain_openai import ChatOpenAI
 from traceloop.sdk.decorators import task
+from opentelemetry import trace
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import StatusCode
 
@@ -389,3 +390,30 @@ def test_workflow_name_does_not_leak_after_serialization_failure(exporter):
     spans = {span.name: span for span in exporter.get_finished_spans()}
     assert set(spans) == {"leaky_workflow.workflow", "sibling.task"}
     assert SpanAttributes.TRACELOOP_WORKFLOW_NAME not in spans["sibling.task"].attributes
+
+
+def test_task_entity_path_does_not_leak_after_input_serialization_failure(exporter):
+    from traceloop.sdk.decorators import workflow
+
+    tracer = trace.get_tracer(__name__)
+
+    @task(name="failing_task")
+    def failing_task(value):
+        with tracer.start_as_current_span("failing.child"):
+            pass
+
+    @task(name="sibling")
+    def sibling():
+        with tracer.start_as_current_span("sibling.child"):
+            pass
+
+    @workflow(name="parent")
+    def parent():
+        failing_task(_UnserializableOnJson())
+        sibling()
+
+    parent()
+
+    spans = {span.name: span for span in exporter.get_finished_spans()}
+    assert spans["failing.child"].attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "failing_task"
+    assert spans["sibling.child"].attributes[SpanAttributes.TRACELOOP_ENTITY_PATH] == "sibling"
