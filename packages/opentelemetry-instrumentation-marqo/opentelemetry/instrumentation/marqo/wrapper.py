@@ -6,7 +6,6 @@ from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
 )
 from opentelemetry.semconv_ai import SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, Events
-from opentelemetry.semconv_ai import SpanAttributes as AISpanAttributes
 
 
 def _with_tracer_wrapper(func):
@@ -75,7 +74,7 @@ def _set_add_documents_attributes(span, kwargs):
     """
     _set_span_attribute(
         span,
-        AISpanAttributes.CHROMADB_ADD_DOCUMENTS_COUNT,
+        "db.marqo.add_documents.documents_count",
         count_or_none(kwargs.get("documents")),
     )
 
@@ -88,7 +87,7 @@ def _set_search_attributes(span, kwargs):
 @dont_throw
 def _set_delete_documents_attributes(span, kwargs):
     _set_span_attribute(
-        span, AISpanAttributes.MILVUS_DELETE_IDS_COUNT, count_or_none(kwargs.get("ids"))
+        span, "db.marqo.delete_documents.ids_count", count_or_none(kwargs.get("ids"))
     )
 
 
