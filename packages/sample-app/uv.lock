@@ -4326,7 +4326,7 @@ test = [
     { name = "llama-index-postprocessor-cohere-rerank", specifier = ">=0.5.0,<0.6.0" },
     { name = "llama-index-vector-stores-chroma", specifier = ">=0.5.0,<0.6.0" },
     { name = "llama-parse", specifier = ">=0.6.0,<0.7.0" },
-    { name = "onnxruntime", specifier = "<1.20.0" },
+    { name = "onnxruntime", specifier = ">=1.19.2,<2" },
     { name = "openai", specifier = ">=1.52.2,<2" },
     { name = "opentelemetry-instrumentation-chromadb", editable = "../opentelemetry-instrumentation-chromadb" },
     { name = "opentelemetry-instrumentation-cohere", editable = "../opentelemetry-instrumentation-cohere" },

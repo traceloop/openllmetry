@@ -145,7 +145,10 @@ jobs:
       contents: "read"
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
+    env:
+      # Without this, uv uses each package's .python-version and ignores the matrix.
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Free up disk space
