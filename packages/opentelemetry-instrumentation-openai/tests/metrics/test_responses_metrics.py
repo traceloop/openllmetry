@@ -87,7 +87,7 @@ def _assert_starts_with_span(duration, span, finished_ns):
     assert (span.end_time - span.start_time) / 1e9 <= duration.sum <= (finished_ns - span.start_time) / 1e9
 
 
-def _assert_success_metrics(points, span_exporter, finished_ns, usage=True):
+def _assert_success_metrics(points, span_exporter, finished_ns):
     [span] = span_exporter.get_finished_spans()
     [duration] = points[Meters.LLM_OPERATION_DURATION]
     assert duration.count == 1
@@ -101,7 +101,7 @@ def _assert_success_metrics(points, span_exporter, finished_ns, usage=True):
     tokens = {
         p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in points.get(Meters.LLM_TOKEN_USAGE, [])
     }
-    assert tokens == ({"input": 7, "output": 3} if usage else {})
+    assert tokens == {"input": 7, "output": 3}
 
 
 def _assert_error_metrics(points, span_exporter, stream, finished_ns):
@@ -176,31 +176,64 @@ _retrieve_calls = pytest.mark.parametrize(
 )
 
 
-def test_background_poll_records_one_duration_and_final_usage(instrument_legacy, span_exporter, metric_points):
-    response_id, respond = _background("queued", "in_progress", "completed", "completed")
+def test_reread_of_finished_response_records_no_duration(instrument_legacy, metric_points):
+    response_id, respond = _background("queued", "completed", "completed", "completed")
     client = _client(respond)
     client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
     client.responses.retrieve(response_id)
-    client.responses.retrieve(response_id)
+    metric_points()  # drop the operation's own point
 
-    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
     client.responses.retrieve(response_id)
+    client.responses.cancel(response_id)
     assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
 
 
 @pytest.mark.asyncio
-async def test_async_background_poll_records_one_duration_and_final_usage(
-    instrument_legacy, span_exporter, metric_points
-):
-    response_id, respond = _background("queued", "in_progress", "completed", "completed")
+async def test_async_reread_of_finished_response_records_no_duration(instrument_legacy, metric_points):
+    response_id, respond = _background("queued", "completed", "completed", "completed")
     client = _async_client(respond)
     await client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
     await client.responses.retrieve(response_id)
-    await client.responses.retrieve(response_id)
+    metric_points()  # drop the operation's own point
 
-    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
     await client.responses.retrieve(response_id)
+    await client.responses.cancel(response_id)
     assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
+
+
+def _assert_untracked_spans_only(points, span_exporter):
+    # The terminal retrieve and the cancel still end their spans, as before.
+    assert len(span_exporter.get_finished_spans()) == 2
+    assert not points.get(Meters.LLM_OPERATION_DURATION)
+    assert not points.get(Meters.LLM_TOKEN_USAGE)
+
+
+def test_untracked_retrieve_records_no_duration(instrument_legacy, span_exporter, metric_points):
+    # Responses another process created: polled here to completion, polled then cancelled, and only cancelled.
+    polled_id, polled = _background("queued", "completed")
+    _client(polled).responses.retrieve(polled_id)
+    _client(polled).responses.retrieve(polled_id)
+    cancelled_id, cancelled = _background("queued", "cancelled")
+    _client(cancelled).responses.retrieve(cancelled_id)
+    _client(cancelled).responses.cancel(cancelled_id)
+    untracked_id, untracked = _background("cancelled")
+    _client(untracked).responses.cancel(untracked_id)
+
+    _assert_untracked_spans_only(metric_points(), span_exporter)
+
+
+@pytest.mark.asyncio
+async def test_async_untracked_retrieve_records_no_duration(instrument_legacy, span_exporter, metric_points):
+    polled_id, polled = _background("queued", "completed")
+    await _async_client(polled).responses.retrieve(polled_id)
+    await _async_client(polled).responses.retrieve(polled_id)
+    cancelled_id, cancelled = _background("queued", "cancelled")
+    await _async_client(cancelled).responses.retrieve(cancelled_id)
+    await _async_client(cancelled).responses.cancel(cancelled_id)
+    untracked_id, untracked = _background("cancelled")
+    await _async_client(untracked).responses.cancel(untracked_id)
+
+    _assert_untracked_spans_only(metric_points(), span_exporter)
 
 
 def _assert_failed_poll_span_only(points, span_exporter):
@@ -236,41 +269,3 @@ async def test_async_failed_poll_records_no_duration(instrument_legacy, span_exp
     _assert_failed_poll_span_only(metric_points(), span_exporter)
     await retrieve(client.responses, response_id)
     _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
-
-
-def _assert_cancel_metrics(points, span_exporter, finished_ns):
-    _assert_success_metrics(points, span_exporter, finished_ns, usage=False)
-    [span] = span_exporter.get_finished_spans()
-    assert span.status.status_code != StatusCode.ERROR
-
-
-def test_cancel_records_one_duration_for_tracked_response(instrument_legacy, span_exporter, metric_points):
-    response_id, respond = _background("queued", "cancelled", "cancelled", "cancelled")
-    client = _client(respond)
-    client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
-    client.responses.cancel(response_id)
-
-    _assert_cancel_metrics(metric_points(), span_exporter, time.time_ns())
-    # Neither the already-finished id nor an untracked one adds a point.
-    client.responses.retrieve(response_id)
-    client.responses.cancel(response_id)
-    untracked_id, untracked = _background("cancelled")
-    _client(untracked).responses.cancel(untracked_id)
-    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
-
-
-@pytest.mark.asyncio
-async def test_async_cancel_records_one_duration_for_tracked_response(
-    instrument_legacy, span_exporter, metric_points
-):
-    response_id, respond = _background("queued", "cancelled", "cancelled", "cancelled")
-    client = _async_client(respond)
-    await client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
-    await client.responses.cancel(response_id)
-
-    _assert_cancel_metrics(metric_points(), span_exporter, time.time_ns())
-    await client.responses.retrieve(response_id)
-    await client.responses.cancel(response_id)
-    untracked_id, untracked = _background("cancelled")
-    await _async_client(untracked).responses.cancel(untracked_id)
-    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)

@@ -1,0 +1,180 @@
+interactions:
+- request:
+    body: '{"background":true,"input":"Write a long story about the sea.","max_output_tokens":1024,"model":"gpt-6-luna"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '109'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - Linux
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.11.18
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61USXLbMBC8+xUunuUUtVFSvpJKoYbAkGKMhcHiWOXS3zMACZi0nVuOnJ6lp6fB
+        t4fHx2oQ1ffHyqIbWX3eN604nLZw6AD5ua6btt7Xu3ODreDnk9gRehDtcY/HE29O7bbaxBam/YXc
+        5zZGO5zi3CJ4FAwitj1djvvjZd80CXMefHCx5nfAgGKqAM7ROTZa01tQEdZBygS1wJ97a4KOfL0N
+        OI0wapRYhpRstNbYZaCzSIM0v7ERNUh/I7D+VidsUNAjfb/RR+qpPb56FnvTQm4wOvIUg4NWElPK
+        uk91Oo9nAj0MckV40GPwzFvQrjNWgac+MeHHzxl2tAXP0VKm4JWZ4FOtecYEbuvdoYDeGMk4yPU0
+        ZQTKSLMf/VPzJIOGqgA2DV+mTxPe2YxgqSPKdfcic9SBxMMvxCPoZTDBsXx7lhxVJtEt1UhiAr8i
+        e8bbPzFLOuqZZ7U7XCf6ZCFn9KD7T/eJacST+WBJpM2EYUdaJ0ihGILK8ahCjJLttAArctwFpcBm
+        UuWyDjr0N9okMuoGXFnJoX0ZSAs/xSsI3lSzqY3FpW4e1RjVDym8nSWb2c/rTOYo3xG/jYlsykvB
+        +0z3BW1r3JAOkDcspKfTXQ1xW9NKQHArkyfPsx71cvBs2Wy7evMVsPB6Liz9PpfO6y6QGbiX5h/d
+        Xn+N/Pe53niQHxOy0n+wZQ7B8utSIB0USz8S5xclqwssnrg3I5OmJ5e3hVsKjun9XM5TwAbN8wN9
+        /8skLB+teC+4tRcVaSLAQyR5f7j/BdVkwznSBQAA
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID, Server-Timing-Total, X-OpenAI-Inference-Capacity-Reason
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - redacted
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - Sun, 22 Nov 2026 14:56:08 GMT
+      openai-organization:
+      - redacted
+      openai-processing-ms:
+      - '1154'
+      openai-project:
+      - redacted
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - redacted
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      Host:
+      - api.openai.com
+      User-Agent:
+      - AsyncOpenAI/Python 1.99.7
+      X-Stainless-Arch:
+      - arm64
+      X-Stainless-Async:
+      - async:asyncio
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - Linux
+      X-Stainless-Package-Version:
+      - 1.99.7
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.11.18
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.openai.com/v1/responses/resp_0836bd471a4faec8006b030286ebdc87d2bd44db53e57c67b1/cancel
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61Uy27bMBC85ysCnZNCfslOf6UoiBW5ltXwoZLLNEbgf++SEhUpSW89cmcfw9kh
+        3+7u76teVd/vK49hEPVp17Rqf9zA/gwoT3XdtPWu3p4abJU8HdWW0b1qDzs8HGVzbDfVQ2rh2l8o
+        qbRxNuAYlx6BUAlI2Ob4dNgdnnZNk7FAQDGkGglWotaoxiKQEkMQg3edB5MybNQ6Qy3I5867aBNl
+        8hHHKc4MGj/POWUUvXd+2eTs8XdEK69iQAuargzW3+qM9QY65PMbH3JnS/hKIk3gm4Xe2URY9QHa
+        xJezbmOdLSSEQoJer2j3dogkyIMNZ+cNEPdJCT9+TnDgu8gSncsMvAoXKde6Z8zgpt7uZ5Cc00KC
+        Xk8zTqFONLuBHptHHS1UM+Dz8GX6OOGdzQCeO6Jed5/FTjqwePiFeAy99C4GUUwgsrXmSbxRM7CY
+        IC8onvH6T8yzjnbiWW33l5E+eyk429vu035SGvMUFD2L9DBieGatM2RQ9dGUeFIhRdl/VoFXJR6i
+        MeALqXmzAc5IV75JYnTucWWlgP6lZy1ojFcQyVWTu53HpW6EZkjqxxzeTJJN7KfrjOaYzwm/Dpls
+        zsvB20T3BX3rQp8XUG44kx5Xd3HMbU0rAzGsTJ49Lzq0y8GTZYvt6oevgIXXS+Hc73PpdN0FMgG3
+        uflHt9dfI/99LjkC/TGhKP0HWxEQvLwsBbLRiPyRBFqUrDaweOLkBqFdxy5vZ245OOT38zR+VWwW
+        K8sDff9lMlaWNnsvhrUXDWuigCCRvN3d/gJpkrof2wUAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID, Server-Timing-Total, X-OpenAI-Inference-Capacity-Reason
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - redacted
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - Sun, 22 Nov 2026 14:56:09 GMT
+      openai-organization:
+      - redacted
+      openai-processing-ms:
+      - '1146'
+      openai-project:
+      - redacted
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - redacted
+    status:
+      code: 200
+      message: OK
+version: 1

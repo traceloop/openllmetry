@@ -195,6 +195,9 @@ class TracedData(pydantic.BaseModel):
     # Trace context - to maintain trace continuity across async operations
     trace_context: Any = pydantic.Field(default=None)
 
+    # False when first seen by a retrieve(), e.g. another worker's response: its metrics are not ours to record
+    started_here: bool = pydantic.Field(default=True)
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -737,6 +740,7 @@ def responses_get_or_create_wrapper(
             ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
+            started_here=existing_data.get("started_here", not is_poll),
         )
     except Exception:
         return response
@@ -753,14 +757,15 @@ def responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(traced_data.start_time),
-            traced_data.response_model,
-            traced_data.usage,
-        )
+        if traced_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(traced_data.start_time),
+                traced_data.response_model,
+                traced_data.usage,
+            )
 
     return response
 
@@ -935,6 +940,7 @@ async def async_responses_get_or_create_wrapper(
             ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
+            started_here=existing_data.get("started_here", not is_poll),
         )
     except Exception:
         return response
@@ -951,14 +957,15 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(traced_data.start_time),
-            traced_data.response_model,
-            traced_data.usage,
-        )
+        if traced_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(traced_data.start_time),
+                traced_data.response_model,
+                traced_data.usage,
+            )
 
     return response
 
@@ -992,14 +999,15 @@ def responses_cancel_wrapper(
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(existing_data.start_time),
-            existing_data.response_model,
-            existing_data.usage,
-        )
+        if existing_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(existing_data.start_time),
+                existing_data.response_model,
+                existing_data.usage,
+            )
     return response
 
 
@@ -1032,14 +1040,15 @@ async def async_responses_cancel_wrapper(
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(existing_data.start_time),
-            existing_data.response_model,
-            existing_data.usage,
-        )
+        if existing_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(existing_data.start_time),
+                existing_data.response_model,
+                existing_data.usage,
+            )
     return response
 
 
