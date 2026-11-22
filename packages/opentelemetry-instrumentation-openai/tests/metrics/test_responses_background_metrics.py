@@ -26,6 +26,12 @@ def metric_points(reader):
     return collect
 
 
+@pytest.fixture
+def poll_interval(vcr):
+    # Only a live recording has to wait for the background response; a replayed cassette doesn't.
+    return 0 if vcr.write_protected else 3
+
+
 def _assert_one_duration(points, span_exporter, finished_ns, response_model):
     [span] = span_exporter.get_finished_spans()
     assert span.status.status_code != StatusCode.ERROR
@@ -46,7 +52,7 @@ def _tokens(points):
 
 @pytest.mark.vcr
 def test_background_poll_records_one_duration_and_final_usage(
-    instrument_legacy, span_exporter, metric_points, openai_client
+    instrument_legacy, span_exporter, metric_points, openai_client, poll_interval
 ):
     response = openai_client.responses.create(
         model="gpt-6-luna", input="Say hello in one word.", background=True, max_output_tokens=16
@@ -54,7 +60,7 @@ def test_background_poll_records_one_duration_and_final_usage(
     assert response.status in ("queued", "in_progress")
     assert response.usage is None
     for _ in range(5):
-        time.sleep(3)
+        time.sleep(poll_interval)
         response = openai_client.responses.retrieve(response.id)
         if response.status not in ("queued", "in_progress"):
             break
@@ -68,7 +74,7 @@ def test_background_poll_records_one_duration_and_final_usage(
 @pytest.mark.vcr
 @pytest.mark.asyncio
 async def test_async_background_poll_records_one_duration_and_final_usage(
-    instrument_legacy, span_exporter, metric_points, async_openai_client
+    instrument_legacy, span_exporter, metric_points, async_openai_client, poll_interval
 ):
     response = await async_openai_client.responses.create(
         model="gpt-6-luna", input="Say hello in one word.", background=True, max_output_tokens=16
@@ -76,7 +82,7 @@ async def test_async_background_poll_records_one_duration_and_final_usage(
     assert response.status in ("queued", "in_progress")
     assert response.usage is None
     for _ in range(5):
-        await asyncio.sleep(3)
+        await asyncio.sleep(poll_interval)
         response = await async_openai_client.responses.retrieve(response.id)
         if response.status not in ("queued", "in_progress"):
             break
