@@ -1,3 +1,7 @@
+import pytest
+from opentelemetry.trace import StatusCode
+
+
 async def test_fastmcp_server_mcp_parent_span(span_exporter, tracer_provider) -> None:
     """Test that FastMCP tool calls have mcp.server as parent span."""
     from fastmcp import FastMCP, Client
@@ -71,3 +75,147 @@ async def test_fastmcp_server_mcp_parent_span(span_exporter, tracer_provider) ->
         "Tool span should have tool span kind"
     assert tool_span.attributes.get('traceloop.entity.name') == 'test_tool', \
         "Tool span should have correct entity name"
+
+
+def _fastmcp_with_mount():
+    from fastmcp import FastMCP
+
+    if not hasattr(FastMCP, "mount") or not hasattr(FastMCP, "call_tool"):
+        pytest.skip("needs FastMCP.mount and FastMCP.call_tool")
+    return FastMCP
+
+
+def _server_spans(span_exporter):
+    """The server-side span pairs: mcp.server spans and the tool spans under them."""
+    spans = span_exporter.get_finished_spans()
+    server_spans = [s for s in spans if s.name == "mcp.server"]
+    server_ids = {s.get_span_context().span_id for s in server_spans}
+    tool_spans = [s for s in spans if s.parent and s.parent.span_id in server_ids]
+    return server_spans, tool_spans
+
+
+async def test_fastmcp_mounted_server_traces_each_tool_run_once(span_exporter) -> None:
+    """A mounted server's tool runs through the parent's provider and the
+    child's call_tool; it is still one execution, so one span pair, attributed
+    to the child server."""
+    FastMCP = _fastmcp_with_mount()
+    from fastmcp import Client
+
+    child = FastMCP("child")
+    parent = FastMCP("parent")
+
+    @child.tool()
+    async def double(x: int) -> int:
+        return x * 2
+
+    parent.mount(child, namespace="c")
+
+    async with Client(parent) as client:
+        result = await client.call_tool("c_double", {"x": 5})
+    assert result.content[0].text == "10"
+
+    server_spans, tool_spans = _server_spans(span_exporter)
+    assert [s.name for s in tool_spans] == ["double.tool"]
+    assert len(server_spans) == 1
+    assert tool_spans[0].parent.span_id == server_spans[0].get_span_context().span_id
+    for span in (server_spans[0], tool_spans[0]):
+        assert span.attributes["traceloop.workflow.name"] == "child.mcp"
+
+
+async def test_fastmcp_error_result_marks_server_spans_as_error(span_exporter) -> None:
+    """A tool can fail without raising, by returning ToolResult(is_error=True)."""
+    FastMCP = _fastmcp_with_mount()
+    from fastmcp import Client
+    from fastmcp.tools.base import ToolResult
+    from mcp.types import TextContent
+
+    server = FastMCP("test-server")
+
+    @server.tool()
+    async def bad() -> ToolResult:
+        return ToolResult(content=[TextContent(type="text", text="nope")], is_error=True)
+
+    async with Client(server) as client:
+        result = await client.call_tool("bad", {}, raise_on_error=False)
+    assert result.is_error
+
+    server_spans, tool_spans = _server_spans(span_exporter)
+    assert len(server_spans) == 1 and len(tool_spans) == 1
+    for span in (server_spans[0], tool_spans[0]):
+        assert span.status.status_code is StatusCode.ERROR
+        assert span.attributes["error.type"] == "tool_error"
+        assert "nope" in span.status.description
+
+
+async def test_fastmcp_task_submission_is_not_traced_as_a_tool_run(span_exporter) -> None:
+    """With task_meta, Tool._run only submits a background task and returns a
+    CreateTaskResult; the tool has not run, so no server span pair is opened.
+    (This tool forbids tasks, so the submission is refused before reaching
+    docket, which keeps the test free of a task backend.)"""
+    FastMCP = _fastmcp_with_mount()
+    from fastmcp.utilities.tasks import TaskMeta
+
+    server = FastMCP("test-server")
+
+    @server.tool()
+    async def double(x: int) -> int:
+        return x * 2
+
+    tool = await server.get_tool("double")
+    with pytest.raises(Exception, match="does not support task-augmented execution"):
+        await tool._run({"x": 5}, task_meta=TaskMeta())
+
+    assert _server_spans(span_exporter) == ([], [])
+
+
+# The server wrapper must be transparent: whatever fails in tracing, the tool
+# gets its call and the caller gets the tool's exact result or exception.
+
+def _instrumentor(tracer):
+    from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
+
+    instrumentor = FastMCPInstrumentor()
+    instrumentor._tracer = tracer
+    return instrumentor
+
+
+@pytest.mark.parametrize("tracer_fixture", ["broken_tracer", "end_raises"])
+async def test_tracing_failure_keeps_the_tool_result(tracer_fixture, request) -> None:
+    tracer = request.getfixturevalue(tracer_fixture)
+    result = object()
+
+    async def tool(*args, **kwargs):
+        return result
+
+    returned = await _instrumentor(tracer)._trace_tool_call(tool, ({"x": 1},), {}, "t", {"x": 1})
+    assert returned is result
+
+
+@pytest.mark.parametrize("tracer_fixture", ["broken_tracer", "end_raises"])
+async def test_tracing_failure_keeps_the_tool_exception(tracer_fixture, request) -> None:
+    tracer = request.getfixturevalue(tracer_fixture)
+    error = ValueError("boom")
+
+    async def tool(*args, **kwargs):
+        raise error
+
+    with pytest.raises(ValueError) as raised:
+        await _instrumentor(tracer)._trace_tool_call(tool, ({"x": 1},), {}, "t", {"x": 1})
+    assert raised.value is error
+
+
+async def test_failing_error_recording_keeps_the_tool_exception(tracer_provider, monkeypatch) -> None:
+    from opentelemetry.instrumentation.mcp import fastmcp_instrumentation
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("record_error exploded")
+
+    monkeypatch.setattr(fastmcp_instrumentation, "record_error", _boom)
+    error = ValueError("boom")
+
+    async def tool(*args, **kwargs):
+        raise error
+
+    with pytest.raises(ValueError) as raised:
+        await _instrumentor(tracer_provider.get_tracer(__name__))._trace_tool_call(tool, (), {}, "t", {})
+    assert raised.value is error
